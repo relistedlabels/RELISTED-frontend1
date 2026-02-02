@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+
+:root {
+  --primary: #1B1F26B8;
+  --p-black: #1B1F26B8;
+  --bggray: #FBFBFB;
+  
+
+  
+
+
+
+
+  
+
+  --background: #ffffff;
+  --foreground: #000000;
+}
+
+@theme {
+  --color-primary: var(--primary);
+  --color-p_black: var(--p-black);
+  --color-bg_gray: var(--bg-gray);
+  --color-secondary: var(--secondary);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+
+html, body {
+  width: 100%;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+.hide-scrollbar {
+  overflow: auto;              /* or overflow-x/overflow-y as needed */
+  -ms-overflow-style: none;    /* IE and Edge */
+  scrollbar-width: none;       /* Firefox */
+}
+
+
+
+/* Chrome, Safari, Opera */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+body{
+  background-color: #FAFAF8;
+  color: #121212;
+}
+
+/* Hide scrollbar but keep scrolling */
+html {
+  scrollbar-width: none; /* Firefox */
+}
+html::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+
+/* ✅ Optional: Also fix some elements that can cause overflow */
+* {
+  box-sizing: border-box;
+}
+
+/* ✅ Optional: smooth scrolling for better UX */
+html {
+  scroll-behavior: smooth;
+}
