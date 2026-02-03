@@ -1,9 +1,8 @@
 "use client";
 
 import React from "react";
-import AccountRoleSelector from "../components/AccountRoleSelector";
 import { motion } from "framer-motion";
-import ForgotPasswordEmail from "../components/ForgotPasswordEmail";
+import ForgotPasswordEmail from "./components/ForgotPasswordEmail";
 
 function Page() {
   return (

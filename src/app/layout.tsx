@@ -65,20 +65,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className=" ">
-        <DevGuard>
+        {/* <DevGuard> */}
           <QueryProvider>
             <UploaderProvider>
               <DesktopNavbar />
               <MobileNavbar />
               <Header />
-
               {children}
               <Toaster position="top-right" />
-
               <Footer />
             </UploaderProvider>
           </QueryProvider>
-        </DevGuard>
+        {/* </DevGuard> */}
       </body>
     </html>
   );

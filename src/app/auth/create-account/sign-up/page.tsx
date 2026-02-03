@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 
 import { useUserStore } from "@/store/useUserStore";
-import CreateAccountForm from "../../components/CreateAccountForm";
+import CreateAccountForm from "../components/CreateAccountForm";
 
 function Page() {
   const router = useRouter();

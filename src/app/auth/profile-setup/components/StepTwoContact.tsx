@@ -43,6 +43,7 @@ const StepTwoContact: React.FC<StepTwoContactProps> = ({ onBack }) => {
     });
 
     // 2️⃣ Commit profile using create endpoint (same as business flow)
+    
     createProfile.mutate(undefined, {
       onSuccess: () => {
         router.replace("/auth/profile-complete"); // ✅ redirect on success

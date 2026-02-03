@@ -11,7 +11,7 @@ import {
   HiOutlineEye,
   HiEyeSlash,
 } from "react-icons/hi2";
-import SocialSignInOptions from "./SocialSignInOptions";
+import SocialSignInOptions from "../../sign-in/components/SocialSignInOptions";
 import { useSignup } from "@/lib/queries/auth/useSignup";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/store/useUserStore"; // ✅ add
@@ -70,7 +70,7 @@ const CreateAccountForm: React.FC = () => {
               email: values.email,
               role: role, // ✅ from user store
             });
-           console.log("ROLE FROM STORE:", role);
+            console.log("ROLE FROM STORE:", role);
 
             signup.mutate(
               {

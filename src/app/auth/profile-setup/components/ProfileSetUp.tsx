@@ -12,13 +12,13 @@ function ProfileSetUp() {
   const router = useRouter();
   const role = useUserStore((s) => s.role);
 
-  useEffect(() => {
-    if (!role) {
-      router.replace("/auth/sign-in");
-    }
-  }, [role, router]);
+  // useEffect(() => {
+  //   if (!role) {
+  //     router.replace("/auth/sign-in");
+  //   }
+  // }, [role, router]);
 
-  if (!role) return null;
+  // if (!role) return null;
 
   return (
     <div className="relative w-full bg-gray-100 bg-cover bg-center">

@@ -1,11 +1,11 @@
 import React from "react";
-import ProfileSetUp from "../components/ProfileSetUp";
+import ProfileSetUp from "./components/ProfileSetUp";
 
 function page() {
   return (
-      <div>
-        <ProfileSetUp />
-      </div>
+    <div>
+      <ProfileSetUp />
+    </div>
   );
 }
 

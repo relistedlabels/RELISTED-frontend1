@@ -72,7 +72,8 @@ const StepTwoBusinessDetails: React.FC<StepTwoBusinessDetailsProps> = ({
       onSuccess: () => {
         // ✅ Show friendly success toast
         toast.success(`Welcome, ${businessName}! 🎉`, {
-          description: "Your business profile is all set. Let's get started!",
+          description:
+            "You're all set to browse rentals and snag great finds — happy shopping!",
           duration: 4000,
         });
 

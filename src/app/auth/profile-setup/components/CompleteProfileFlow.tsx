@@ -13,7 +13,7 @@ import StepTwoContact from "./StepTwoContact"; // Placeholder for the next step
 // Titles for each step (keeps structure consistent with business flow)
 const stepTitles = [
   "Personal Information",
-  "Emergency Contact",
+  // "Emergency Contact",
   // "Emergency Contact",
   // "Bank Account Details",
 ];
@@ -46,9 +46,9 @@ const CompleteProfileFlow: React.FC = () => {
       case 1:
         // Pass the function to move to the next step
         return <StepOnePersonal onNext={handleNextStep} />;
-      case 2:
-        // Pass the function to handle final submission (or a back button)
-        return <StepTwoContact onBack={handlePrevStep} />;
+      // case 2:
+      //   // Pass the function to handle final submission (or a back button)
+      //   return <StepTwoContact onBack={handlePrevStep} />;
       default:
         return <div>Error: Invalid Step</div>;
     }
@@ -76,22 +76,22 @@ const CompleteProfileFlow: React.FC = () => {
 
         {/* Step Indicator & Progress Bar */}
         <div className="mb-8">
-          <Paragraph3 className="text-xl font-bold text-center text-black mb-2">
+          {/* <Paragraph3 className="text-xl font-bold text-center text-black mb-2">
             {currentStep}/{MAX_STEPS}
-          </Paragraph3>
+          </Paragraph3> */}
 
           {/* Titles for each step */}
-          <Paragraph3 className="text-2xl font-bold text-center text-black mb-4">
+          {/* <Paragraph3 className="text-2xl font-bold text-center text-black mb-4">
             {stepTitles[currentStep - 1]}
-          </Paragraph3>
+          </Paragraph3> */}
 
           {/* Progress Bar */}
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
+          {/* <div className="w-full bg-gray-200 rounded-full h-2.5">
             <div
               className="bg-black h-2.5 rounded-full transition-all duration-500 ease-in-out"
               style={{ width: `${progressPercentage}%` }}
             ></div>
-          </div>
+          </div> */}
         </div>
 
         {/* Dynamic Step Component */}

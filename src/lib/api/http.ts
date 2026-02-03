@@ -15,9 +15,10 @@ export function getAuthToken(): string | null {
   try {
     const raw = localStorage.getItem(USER_STORE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as
-      | { state?: { token?: string | null }; token?: string | null }
-      | null;
+    const parsed = JSON.parse(raw) as {
+      state?: { token?: string | null };
+      token?: string | null;
+    } | null;
     if (!parsed) return null;
     return parsed?.state?.token ?? parsed?.token ?? null;
   } catch {
@@ -65,9 +66,9 @@ export async function apiFetch<T>(
       errorMessage = error?.message ?? errorMessage;
     } catch {}
 
-    if (res.status === 401) {
-      useUserStore.getState().clearUser();
-    }
+    // if (res.status === 401) {
+    //   useUserStore.getState().clearUser();
+    // }
 
     throw new Error(errorMessage);
   }

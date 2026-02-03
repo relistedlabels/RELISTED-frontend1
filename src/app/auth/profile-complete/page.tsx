@@ -1,5 +1,5 @@
 import React from "react";
-import ProfileComplete from "../components/ProfileComplete";
+import ProfileComplete from "./components/ProfileComplete";
 
 function page() {
   return (

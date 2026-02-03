@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import AccountRoleSelector from "../components/AccountRoleSelector";
+import AccountRoleSelector from "./components/AccountRoleSelector";
 import { motion } from "framer-motion";
 
 function Page() {
