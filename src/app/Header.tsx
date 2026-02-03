@@ -9,6 +9,7 @@ export function Header() {
   useEffect(() => {
     if (isLoading) return;
 
+    
     if (user) {
       console.log("Logged in:", {
         email: user.email,
@@ -20,5 +21,7 @@ export function Header() {
   }, [user, isLoading]);
 
   return null;
-  
+
 }
+
+
