@@ -121,7 +121,7 @@ const RentalCartView: React.FC = () => {
         onClick={() => setIsOpen(true)}
         className="flex rounded-lg whitespace-nowrap bg-black text-white  items-center  gap-1 cursor-pointer  transition "
       >
-        <ShoppingBagIcon className="w-6 h-6" /> <Paragraph1> 4</Paragraph1>
+        <ShoppingBagIcon className="w-6 h-6" /> <Paragraph1> 0</Paragraph1>
       </button>
 
       {/* Filter Panel */}

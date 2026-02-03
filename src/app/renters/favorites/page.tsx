@@ -3,14 +3,13 @@ import React from "react";
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import UserDashboardLayout from "../components/UserDashboardLayout";
 import DashboardOrderList from "../components/DashboardOrderList";
-import ExampleDisputesDashboard from "../components/DisputesDashboard";
-import ExampleDisputesListTable from "../components/DisputesListTable";
+import Favorites from "../components/Favorites";
 
 function page() {
   const path = [
     { label: "Home", href: "/" },
-    { label: "Shop", href: "/shop" },
-    { label: "Orders", href: null }, // Current page, href is null
+    { label: "Dashboard", href: "/orders" },
+    { label: "Favorites", href: null }, // Current page, href is null
   ];
 
   return (
@@ -21,8 +20,7 @@ function page() {
       </div>
       <UserDashboardLayout>
         <div>
-          <ExampleDisputesDashboard />
-          <ExampleDisputesListTable />
+          <Favorites />{" "}
         </div>
       </UserDashboardLayout>
     </div>

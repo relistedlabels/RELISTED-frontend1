@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { SlidersVertical, X, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import { Paragraph1 } from "@/common/ui/Text";
 import PriceRangeSlider from "./PriceRangeSlider";
-import { useProductsStore } from "@/store/useProductsStore";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // --------------------
 // Mock Data
@@ -36,40 +36,57 @@ interface FilterPanelProps {
 }
 
 const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
-  const {
-    filters,
-    setSearch,
-    setGender,
-    setCategories,
-    setBrands,
-    setSizes,
-    setPriceRange,
-    clearFilters,
-    applyFilters,
-  } = useProductsStore();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [localFilters, setLocalFilters] = useState({
+    search: searchParams.get("search") || "",
+    gender: searchParams.get("gender") || "",
+    categories: searchParams.getAll("categories"),
+    brands: searchParams.getAll("brands"),
+    sizes: searchParams.get("sizes") || "",
+    priceRange: [
+      searchParams.get("priceMin")
+        ? parseInt(searchParams.get("priceMin")!)
+        : 50000,
+      searchParams.get("priceMax")
+        ? parseInt(searchParams.get("priceMax")!)
+        : 200000,
+    ] as [number, number],
+  });
 
   const handleCategoryChange = (category: string, checked: boolean) => {
     const newCategories = checked
-      ? [...filters.categories, category]
-      : filters.categories.filter((c: string) => c !== category);
-    setCategories(newCategories);
+      ? [...localFilters.categories, category]
+      : localFilters.categories.filter((c: string) => c !== category);
+    setLocalFilters({ ...localFilters, categories: newCategories });
   };
 
   const handleBrandChange = (brand: string, checked: boolean) => {
     const newBrands = checked
-      ? [...filters.brands, brand]
-      : filters.brands.filter((b: string) => b !== brand);
-    setBrands(newBrands);
+      ? [...localFilters.brands, brand]
+      : localFilters.brands.filter((b: string) => b !== brand);
+    setLocalFilters({ ...localFilters, brands: newBrands });
   };
 
   const handleApplyFilters = () => {
-    applyFilters();
+    const params = new URLSearchParams();
+    if (localFilters.search) params.set("search", localFilters.search);
+    if (localFilters.gender) params.set("gender", localFilters.gender);
+    localFilters.categories.forEach((cat) => params.append("categories", cat));
+    localFilters.brands.forEach((brand) => params.append("brands", brand));
+    if (localFilters.sizes) params.set("sizes", localFilters.sizes);
+    if (localFilters.priceRange[0] > 50000)
+      params.set("priceMin", localFilters.priceRange[0].toString());
+    if (localFilters.priceRange[1] < 200000)
+      params.set("priceMax", localFilters.priceRange[1].toString());
+
+    router.push(`?${params.toString()}`);
     onClose();
   };
 
   const handleClearFilters = () => {
-    clearFilters();
-    applyFilters();
+    router.push("/shop");
+    onClose();
   };
 
   return (
@@ -116,8 +133,13 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
                   <input
                     type="text"
                     placeholder="Search"
-                    value={filters.search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    value={localFilters.search}
+                    onChange={(e) =>
+                      setLocalFilters({
+                        ...localFilters,
+                        search: e.target.value,
+                      })
+                    }
                     className="w-full pl-10 pr-4 py-3 border-gray-100 bg-gray-100 outline-none "
                   />
                   <Search
@@ -140,8 +162,13 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
                       type="radio"
                       name="gender"
                       value={item}
-                      checked={filters.gender === item}
-                      onChange={(e) => setGender(e.target.value)}
+                      checked={localFilters.gender === item}
+                      onChange={(e) =>
+                        setLocalFilters({
+                          ...localFilters,
+                          gender: e.target.value,
+                        })
+                      }
                       className="h-4 w-4 text-black border-gray-300 rounded-full focus:ring-black"
                     />
                     <Paragraph1>{item}</Paragraph1>
@@ -160,7 +187,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
                   >
                     <input
                       type="checkbox"
-                      checked={filters.categories.includes(item)}
+                      checked={localFilters.categories.includes(item)}
                       onChange={(e) =>
                         handleCategoryChange(item, e.target.checked)
                       }
@@ -182,7 +209,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
                   >
                     <input
                       type="checkbox"
-                      checked={filters.brands.includes(item)}
+                      checked={localFilters.brands.includes(item)}
                       onChange={(e) =>
                         handleBrandChange(item, e.target.checked)
                       }
@@ -206,8 +233,13 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
                       type="radio"
                       name="sizes"
                       value={item}
-                      checked={filters.sizes === item}
-                      onChange={(e) => setSizes(e.target.value)}
+                      checked={localFilters.sizes === item}
+                      onChange={(e) =>
+                        setLocalFilters({
+                          ...localFilters,
+                          sizes: e.target.value,
+                        })
+                      }
                       className="h-4 w-4 text-black border-gray-300 rounded-full focus:ring-black"
                     />
                     <Paragraph1>{item}</Paragraph1>
@@ -218,9 +250,11 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
               <PriceRangeSlider
                 min={50000}
                 max={200000}
-                value={filters.priceRange}
-                onChange={setPriceRange}
-              />{" "}
+                value={localFilters.priceRange}
+                onChange={(priceRange) =>
+                  setLocalFilters({ ...localFilters, priceRange })
+                }
+              />
             </div>
 
             {/* Footer */}

@@ -1,6 +1,6 @@
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import DashboardLayout from "../components/DashboardLayout";
-import AccountTabs from "@/app/dressers/components/AccountTabs";
+import AccountTabs from "@/app/renters/components/AccountTabs";
 import { Paragraph2 } from "@/common/ui/Text";
 
 export default function Page() {

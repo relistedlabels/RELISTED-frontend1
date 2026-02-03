@@ -118,7 +118,12 @@ export default function TopCuratorsSection() {
         <Header1Plus className="tracking-wide">TOP LISTERS</Header1Plus>
         <Paragraph1 className="text-gray-500 mt-1">
           Wardrobe liked by many.{" "}
-          <a className="underline cursor-pointer">VIEW ALL</a>
+          <a
+            href="/listers-marketplace"
+            className="underline cursor-pointer hover:opacity-70 transition"
+          >
+            VIEW ALL
+          </a>
         </Paragraph1>
       </div>
 

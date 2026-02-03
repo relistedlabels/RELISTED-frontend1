@@ -7,15 +7,14 @@ import { usePathname } from "next/navigation";
 export default function Footer() {
   const pathname = usePathname();
 
-  
-if (
-  pathname.includes("/auth") ||
-  pathname.includes("/listers") ||
-  pathname.startsWith("/admin") ||
-  pathname.startsWith("/waitlist") ||
-  pathname.startsWith("/dev")
-)
-  return null;
+  if (
+    pathname.includes("/auth") ||
+    pathname.includes("/listers") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/waitlist") ||
+    pathname.startsWith("/dev")
+  )
+    return null;
 
   return (
     <footer className="w-full bg-black text-white py-14 px-4 sm:px-0  font-light tracking-wide">
@@ -56,6 +55,13 @@ if (
                   </ParagraphLink2>
                 </Link>
               </li>
+              <li>
+                <Link href="/terms-and-conditions">
+                  <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
+                    Terms & Conditions
+                  </ParagraphLink2>
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -63,18 +69,34 @@ if (
           <div className="space-y-3.5">
             <ParagraphLink2 className=" text-[#8F8F8F]">SHOP</ParagraphLink2>
             <ul className="flex flex-col space-y-3.5 text-sm opacity-70">
-              <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
-                Browse all
-              </ParagraphLink2>
-              <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
-                Mens
-              </ParagraphLink2>
-              <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
-                Womens
-              </ParagraphLink2>
-              <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
-                Kids
-              </ParagraphLink2>
+              <li>
+                <Link href="/shop">
+                  <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
+                    Browse all
+                  </ParagraphLink2>
+                </Link>
+              </li>
+              <li>
+                <Link href="/shop?gender=Men&title=Men%27s+Collections&description=Shop+men%27s+fashion">
+                  <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
+                    Mens
+                  </ParagraphLink2>
+                </Link>
+              </li>
+              <li>
+                <Link href="/shop?gender=Woman&title=Women%27s+Collections&description=Shop+women%27s+fashion">
+                  <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
+                    Womens
+                  </ParagraphLink2>
+                </Link>
+              </li>
+              <li>
+                <Link href="/shop?gender=Kids&title=Kids+Collections&description=Shop+kids+fashion">
+                  <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
+                    Kids
+                  </ParagraphLink2>
+                </Link>
+              </li>
             </ul>
           </div>
 

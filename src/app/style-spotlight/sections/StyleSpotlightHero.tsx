@@ -3,22 +3,15 @@
 import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Header1, Header5, Paragraph1, SpecialH1 } from "@/common/ui/Text";
-import Button from "@/common/ui/Button";
-import { useSearchParams } from "next/navigation";
+import { Header1, Header5 } from "@/common/ui/Text";
 
-export default function EndlessStyleHero() {
-  const searchParams = useSearchParams();
-
-  // Get title and description from URL params
-  const pageTitle = searchParams.get("title") || "Shop amazing";
-  const pageDescription = searchParams.get("description") || "Style Brands";
+export default function StyleSpotlightHero() {
   return (
-    <section className="relative w-full h-[20vh] mt-16   sm:h-[50vh] overflow-hidden">
+    <section className="relative w-full h-[20vh] mt-16 sm:h-[50vh] overflow-hidden">
       {/* Background Image */}
       <Image
         src="/images/shoph.jpg"
-        alt="Hero Background"
+        alt="Style Spotlight Hero"
         fill
         className="object-cover object-top"
         priority
@@ -59,7 +52,7 @@ export default function EndlessStyleHero() {
             }}
             transition={{ duration: 0.8 }}
           >
-            <Header1 className="">{pageTitle}</Header1>
+            <Header1 className="">Style Spotlight</Header1>
           </motion.div>
 
           {/* Sub Text */}
@@ -72,7 +65,7 @@ export default function EndlessStyleHero() {
             transition={{ duration: 0.9 }}
           >
             <Header5 className="line-clamp-1 sm:line-clamp-none">
-              {pageDescription}
+              Curated collections for every occasion
             </Header5>
           </motion.p>
         </motion.div>

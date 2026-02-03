@@ -1,12 +1,19 @@
-"use client"
+"use client";
 
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { Search, Heart, ShoppingCart, ChevronDown, ShoppingBag, ShoppingBagIcon } from "lucide-react";
+import {
+  Search,
+  Heart,
+  ShoppingCart,
+  ChevronDown,
+  ShoppingBag,
+  ShoppingBagIcon,
+} from "lucide-react";
 import { ParagraphLink1 } from "../ui/Text";
-import Button from "../ui/Button"; 
+import Button from "../ui/Button";
 import BrandsDropdown from "./BrandsDropdown";
 import ShopDropdown from "./ShopDropdown";
 import RentalCartView from "./RentalCartView";
@@ -16,17 +23,16 @@ import { AuthActions } from "./AuthActions";
 
 export default function DesktopNavbar() {
   const pathname = usePathname();
-  
-    
-if (
-  pathname.includes("/auth") ||
-  pathname.includes("/listers") ||
-  pathname.startsWith("/admin") ||
-  pathname.startsWith("/waitlist") ||
-  pathname.startsWith("/dev")
-)
-  return null;
-  
+
+  if (
+    pathname.includes("/auth") ||
+    pathname.includes("/listers") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/waitlist") ||
+    pathname.startsWith("/dev")
+  )
+    return null;
+
   return (
     <nav className="bg-black/95  backdrop-blur-md hidden xl:block text-white fixed w-full z-50">
       <div className="relative flex items-center justify-between container mx-auto w-full py-4 [20px]">
@@ -34,7 +40,7 @@ if (
         <div className="flex items-center space-x-8  ">
           <ShopDropdown />
           {/* <BrandsDropdown /> */}
-          <Link href="#">
+          <Link href="/style-spotlight">
             <ParagraphLink1>Style Spotlight</ParagraphLink1>
           </Link>
           <Link href="/how-it-works">
@@ -52,7 +58,7 @@ if (
           <SearchModal />
 
           <Link
-            href="/dressers/favourites"
+            href="/renters/favorites"
             className="flex items-center space-x-1"
           >
             <Heart className="w-5 h-5" />

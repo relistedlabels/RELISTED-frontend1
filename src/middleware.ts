@@ -47,16 +47,16 @@ export function middleware(req: NextRequest) {
   }
 
   // Listers and Dressers: require authentication
-  if (pathname.startsWith("/listers") || pathname.startsWith("/dressers")) {
-    if (!token && !devAuth) {
-      return NextResponse.redirect(new URL("/auth/sign-in", req.url));
-    }
-    return NextResponse.next();
-  }
+  // if (pathname.startsWith("/listers") || pathname.startsWith("/renters")) {
+  //   if (!token && !devAuth) {
+  //     return NextResponse.redirect(new URL("/auth/sign-in", req.url));
+  //   }
+  //   return NextResponse.next();
+  // }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/listers/:path*", "/dressers/:path*"],
+  matcher: ["/admin/:path*", "/listers/:path*", "/renters/:path*"],
 };

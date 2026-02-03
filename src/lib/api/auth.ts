@@ -23,7 +23,27 @@ export const login = (data: {
   email: string;
   password: string;
 }): Promise<{
-  success: boolean;
+  success?: boolean;
+  token?: string;
+  user?: {
+    id: string;
+    email: string;
+    role: string;
+    name: string;
+  };
+  requiresMfa?: boolean;
+  sessionToken?: string;
+  message?: string;
+}> =>
+  apiFetch("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const verifyAdminMfa = (data: {
+  code: string;
+  sessionToken: string;
+}): Promise<{
   token: string;
   user: {
     id: string;
@@ -31,12 +51,25 @@ export const login = (data: {
     role: string;
     name: string;
   };
+  message?: string;
 }> =>
-  apiFetch("/auth/login", {
+  apiFetch("/auth/verify-admin-mfa", {
     method: "POST",
     body: JSON.stringify(data),
   });
 
+export const checkDashboardSelection = (): Promise<{
+  isAdmin: boolean;
+  user: {
+    id: string;
+    email: string;
+    role: string;
+    name: string;
+  };
+}> =>
+  apiFetch("/auth/check-dashboard-selection", {
+    method: "GET",
+  });
 
 export const forgotPassword = (data: { email: string }) =>
   apiFetch("/auth/forgot-password", {
@@ -58,8 +91,9 @@ export const getMe = () =>
   apiFetch<{
     id: string;
     email: string;
+    name: string;
     role: string;
-    profile:{id:string}
+    profile: { id: string };
   }>("/auth/user");
 
 export const resendOtp = (data: { email: string }) =>

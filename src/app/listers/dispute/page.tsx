@@ -3,8 +3,8 @@ import DashboardLayout from "../components/DashboardLayout";
 import { Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import WalletBalanceCard from "../components/WalletBalanceCard";
 import TransactionList from "../components/TransactionList";
-import ExampleDisputesDashboard from "@/app/dressers/components/DisputesDashboard";
-import ExampleDisputesListTable from "@/app/dressers/components/DisputesListTable";
+import ExampleDisputesDashboard from "@/app/renters/components/DisputesDashboard";
+import ExampleDisputesListTable from "@/app/renters/components/DisputesListTable";
 
 export default function Page() {
   const path = [
