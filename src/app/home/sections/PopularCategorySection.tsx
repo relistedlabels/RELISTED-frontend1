@@ -73,7 +73,10 @@ const PopularCategorySection = () => {
           Popular Categories
         </Header1Plus>
         <Paragraph1 className="text-gray-600 ">
-          Explore categories curated for every season, mood, and moment.
+          Explore categories curated for every season, mood, and moment.{" "}
+          <Link href="/style-spotlight" className="underline hover:opacity-80">
+            view more
+          </Link>
         </Paragraph1>
       </div>
       <div className="grid grid-cols-1  xl:grid-cols-3 gap-2 sm:gap-[23px]">

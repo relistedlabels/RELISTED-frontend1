@@ -109,14 +109,17 @@ export default function MobileNavbar() {
               <Link href="/" onClick={() => setOpen(false)}>
                 <Paragraph1>Home</Paragraph1>
               </Link>
-              <button className=" flex  " onClick={() => setIsShopMenuOpen(true)}>
+              <button
+                className=" flex  "
+                onClick={() => setIsShopMenuOpen(true)}
+              >
                 <Paragraph1>Shop</Paragraph1>
               </button>
               <ShopDropdownMobile
                 isOpen={isShopMenuOpen}
                 onClose={() => setIsShopMenuOpen(false)}
               />
-              <Link href="/style-spotlight " onClick={() => setOpen(false)}>
+              <Link href="/style-spotlight" onClick={() => setOpen(false)}>
                 <Paragraph1>Style Spotlight</Paragraph1>
               </Link>
               <Link href="/how-it-works" onClick={() => setOpen(false)}>
@@ -128,7 +131,7 @@ export default function MobileNavbar() {
               <Link href="/contact-us" onClick={() => setOpen(false)}>
                 <Paragraph1>Contact</Paragraph1>
               </Link>
-              <Link href="/renters/favourites" onClick={() => setOpen(false)}>
+              <Link href="/dressers/favourites" onClick={() => setOpen(false)}>
                 <Paragraph1>Favourites</Paragraph1>
               </Link>
               <div className="mt-8 flex flex-col gap-3">
