@@ -190,9 +190,6 @@ fix: resolve auth redirect issue
 refactor: simplify api service logic
 ```
 
-
-
-
 ---
 
 ## 🛡 Best Practices
