@@ -13,7 +13,7 @@ export function useLogin() {
       if (data.requiresMfa && data.sessionToken) {
         setMfaSession({
           sessionToken: data.sessionToken,
-          email: data.email || "",
+          email: data.user?.email || "",
         });
       }
       // If MFA is not required (regular user)
