@@ -20,4 +20,5 @@ export function Header() {
   }, [user, isLoading]);
 
   return null;
+  
 }
