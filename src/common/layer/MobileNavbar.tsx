@@ -131,7 +131,7 @@ export default function MobileNavbar() {
               <Link href="/contact-us" onClick={() => setOpen(false)}>
                 <Paragraph1>Contact</Paragraph1>
               </Link>
-              <Link href="/dressers/favourites" onClick={() => setOpen(false)}>
+              <Link href="/renters/favorites" onClick={() => setOpen(false)}>
                 <Paragraph1>Favourites</Paragraph1>
               </Link>
               <div className="mt-8 flex flex-col gap-3">

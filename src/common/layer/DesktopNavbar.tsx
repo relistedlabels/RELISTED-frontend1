@@ -58,7 +58,7 @@ export default function DesktopNavbar() {
           <SearchModal />
 
           <Link
-            href="/dressers/favourites"
+            href="/renters/favorites"
             className="flex items-center space-x-1"
           >
             <Heart className="w-5 h-5" />

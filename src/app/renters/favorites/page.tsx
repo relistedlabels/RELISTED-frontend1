@@ -8,8 +8,8 @@ import Favorites from "../components/Favorites";
 function page() {
   const path = [
     { label: "Home", href: "/" },
-    { label: "Shop", href: "/shop" },
-    { label: "Favourites", href: null }, // Current page, href is null
+    { label: "Dashboard", href: "/orders" },
+    { label: "Favorites", href: null }, // Current page, href is null
   ];
 
   return (

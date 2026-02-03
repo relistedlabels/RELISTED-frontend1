@@ -20,11 +20,11 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { name: "My Orders", icon: ShoppingBag, href: "/dressers/orders" },
-  { name: "Wallet", icon: Wallet, href: "/dressers/wallet" },
-  { name: "Favourites", icon: Heart, href: "/dressers/favourites" },
-  { name: "My Disputes", icon: FileText, href: "/dressers/dispute" },
-  { name: "My Account", icon: Users, href: "/dressers/account" },
+  { name: "My Orders", icon: ShoppingBag, href: "/renters/orders" },
+  { name: "Wallet", icon: Wallet, href: "/renters/wallet" },
+  { name: "Favourites", icon: Heart, href: "/renters/favorites" },
+  { name: "My Disputes", icon: FileText, href: "/renters/dispute" },
+  { name: "My Account", icon: Users, href: "/renters/account" },
 ];
 
 export default function UserDashboardLayout({

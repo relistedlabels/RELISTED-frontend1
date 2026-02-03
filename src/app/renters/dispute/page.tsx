@@ -9,7 +9,7 @@ import ExampleDisputesListTable from "../components/DisputesListTable";
 function page() {
   const path = [
     { label: "Home", href: "/" },
-    { label: "Shop", href: "/shop" },
+    { label: "Dashboard", href: "/orders" },
     { label: "Orders", href: null }, // Current page, href is null
   ];
 

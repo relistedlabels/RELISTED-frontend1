@@ -8,6 +8,8 @@ type UserState = {
   name: string | null;
   email: string | null;
   role: string | null;
+  sessionToken: string | null;
+  requiresMfa: boolean;
 
   setUser: (user: {
     name?: string | null;
@@ -23,6 +25,8 @@ type UserState = {
     name: string;
   }) => void;
 
+  setMfaSession: (data: { sessionToken: string; email: string }) => void;
+
   clearUser: () => void;
 };
 
@@ -34,6 +38,8 @@ export const useUserStore = create<UserState>()(
       name: null,
       email: null,
       role: null,
+      sessionToken: null,
+      requiresMfa: false,
 
       setUser: (user) =>
         set((state) => ({
@@ -48,6 +54,15 @@ export const useUserStore = create<UserState>()(
           email,
           role,
           name,
+          sessionToken: null,
+          requiresMfa: false,
+        }),
+
+      setMfaSession: ({ sessionToken, email }) =>
+        set({
+          sessionToken,
+          email,
+          requiresMfa: true,
         }),
 
       clearUser: () =>
@@ -57,6 +72,8 @@ export const useUserStore = create<UserState>()(
           name: null,
           email: null,
           role: null,
+          sessionToken: null,
+          requiresMfa: false,
         }),
     }),
     {
@@ -68,6 +85,8 @@ export const useUserStore = create<UserState>()(
         name: state.name,
         email: state.email,
         role: state.role,
+        sessionToken: state.sessionToken,
+        requiresMfa: state.requiresMfa,
       }),
     },
   ),
