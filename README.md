@@ -5,7 +5,9 @@ It delivers a fast, responsive, and scalable user experience while communicating
 
 The frontend is built using modern React and Next.js architecture, optimized for performance, SEO, and maintainability.
 
----
+--- 
+
+...
 
 ## 📌 Project Overview
 
