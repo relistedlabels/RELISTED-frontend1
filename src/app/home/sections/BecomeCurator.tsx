@@ -53,7 +53,7 @@ export default function BecomeCurator() {
             }}
             transition={{ duration: 0.8 }}
           >
-            <Header1 className=" mb-4 sm:mb-12">Become a Curator</Header1>
+            <Header1 className=" mb-4 sm:mb-12">Become a Lister</Header1>
           </motion.div>
 
           {/* Sub Text */}

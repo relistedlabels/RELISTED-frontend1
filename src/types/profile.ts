@@ -3,7 +3,7 @@ export interface FullProfile {
   id: string;
   name: string | null;
   avatar: string | null;
-  role: "curator" | "dresser";
+  role: "lister" | "renter";
 
   phoneNumber?: string;
   bvn?: string;
@@ -44,8 +44,6 @@ export interface FullProfile {
   createdAt?: string;
   updatedAt?: string;
 }
-
-
 
 /** API contract */
 export interface UpdateProfilePayload {

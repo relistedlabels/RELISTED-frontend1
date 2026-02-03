@@ -8,25 +8,13 @@ import {
   Paragraph2,
   ParagraphLink1,
 } from "@/common/ui/Text";
+import { useUsers } from "@/lib/queries/user/useUsers";
 
 interface Curator {
   name: string;
   image: string;
   shopLink: string;
 }
-
-const curators: Curator[] = [
-  {
-    name: "Estelle Hansworth",
-    image: "/images/cro1.jpg",
-    shopLink: "/shop/estelle",
-  },
-  { name: "Sam Kays", image: "/images/cro2.jpg", shopLink: "/shop/sam" },
-  { name: "Jerry Brown", image: "/images/cro3.jpg", shopLink: "/shop/jerry" },
-  { name: "D2 Collections", image: "/images/cro4.jpg", shopLink: "/shop/d2" },
-];
-
-const duplicatedCurators = [...curators, ...curators];
 
 export default function TopCuratorsSection() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -36,6 +24,8 @@ export default function TopCuratorsSection() {
   const [distance, setDistance] = useState(0);
   const [autoScrolling, setAutoScrolling] = useState(true);
   const [speed, setSpeed] = useState(40);
+
+  const { data: users, isLoading, error } = useUsers();
 
   // Adjust speed for screen size
   useEffect(() => {
@@ -85,54 +75,101 @@ export default function TopCuratorsSection() {
     }, 200); // small delay to avoid jump
   };
 
+  if (isLoading) {
+    return (
+      <section className="w-full py-6 sm:py-[50px] bg-white">
+        <div className="text-center mb-4 sm:mb-10">
+          <Header1Plus className="tracking-wide">TOP LISTERS</Header1Plus>
+          <Paragraph1 className="text-gray-500 mt-1">
+            Loading listers...
+          </Paragraph1>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="w-full py-6 sm:py-[50px] bg-white">
+        <div className="text-center mb-4 sm:mb-10">
+          <Header1Plus className="tracking-wide">TOP LISTERS</Header1Plus>
+          <Paragraph1 className="text-gray-500 mt-1">
+            Failed to load listers. Please try again later.
+          </Paragraph1>
+        </div>
+      </section>
+    );
+  }
+
+  const curators: Curator[] = users
+    ? users.map((user) => ({
+        name: user.name || "Unknown Curator",
+        image: user.avatar || "/images/default-avatar.jpg",
+        shopLink: `/shop/${user.id}`,
+      }))
+    : [];
+
+  const duplicatedCurators =
+    curators.length > 0 ? [...curators, ...curators] : [];
+
   return (
     <section className="w-full py-6 sm:py-[50px] bg-white">
       <div className="text-center mb-4 sm:mb-10">
-        <Header1Plus className="tracking-wide">TOP CURATORS</Header1Plus>
+        <Header1Plus className="tracking-wide">TOP LISTERS</Header1Plus>
         <Paragraph1 className="text-gray-500 mt-1">
           Wardrobe liked by many.{" "}
           <a className="underline cursor-pointer">VIEW ALL</a>
         </Paragraph1>
       </div>
 
-      <div className="relative overflow-hidden w-full">
-        <motion.div
-          ref={containerRef}
-          className="flex gap-2 sm:gap-[25px] cursor-grab active:cursor-grabbing"
-          drag="x"
-          style={{ x }}
-          dragConstraints={{ left: -distance, right: 0 }}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          animate={controls}
-        >
-          {duplicatedCurators.map((curator, index) => (
-            <div
-              key={index}
-              className="min-w-[200px] sm:min-w-[345px] h-[270px] sm:h-[435px] overflow-hidden relative shadow-md "
-              style={{
-                backgroundImage: `url(${curator.image})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
-            >
-              <div className="absolute bottom-0 w-full py-[60px] px-[30px] text-white bg-linear-to-t from-black/70 to-transparent">
-                <Paragraph1 className="text-xs opacity-80">
-                  CURATED BY
-                </Paragraph1>
-                <Paragraph2 className="font-medium">{curator.name}</Paragraph2>
+      {duplicatedCurators.length === 0 ? (
+        <div className="text-center py-12">
+          <Paragraph1 className="text-gray-500">
+            No listers here currently...
+          </Paragraph1>
+        </div>
+      ) : (
+        <div className="relative overflow-hidden w-full">
+          <motion.div
+            ref={containerRef}
+            className="flex gap-2 sm:gap-[25px] cursor-grab active:cursor-grabbing"
+            drag="x"
+            style={{ x }}
+            dragConstraints={{ left: -distance, right: 0 }}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            animate={controls}
+          >
+            {duplicatedCurators.map((curator, index) => (
+              <div
+                key={`${curator.name}-${index}`}
+                className="min-w-[200px] sm:min-w-[345px] h-[270px] sm:h-[435px] overflow-hidden relative shadow-md "
+                style={{
+                  backgroundImage: `url(${curator.image})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }}
+              >
+                <div className="absolute bottom-0 w-full py-[60px] px-[30px] text-white bg-linear-to-t from-black/70 to-transparent">
+                  <Paragraph1 className="text-xs opacity-80">
+                    LISTED BY
+                  </Paragraph1>
+                  <Paragraph2 className="font-medium">
+                    {curator.name}
+                  </Paragraph2>
 
-                <a
-                  href={curator.shopLink}
-                  className="text-sm underline mt-1 inline-flex items-center gap-1"
-                >
-                  <ParagraphLink1>Shop Now</ParagraphLink1>
-                </a>
+                  <a
+                    href={curator.shopLink}
+                    className="text-sm underline mt-1 inline-flex items-center gap-1"
+                  >
+                    <ParagraphLink1>Shop Now</ParagraphLink1>
+                  </a>
+                </div>
               </div>
-            </div>
-          ))}
-        </motion.div>
-      </div>
+            ))}
+          </motion.div>
+        </div>
+      )}
     </section>
   );
 }

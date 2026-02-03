@@ -1,14 +1,13 @@
 "use client";
 
 import ProductCard from "@/common/ui/ProductCard";
-import { products } from "@/data/productsData";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import { useRef } from "react";
+import { useProducts } from "@/lib/queries/product/useProducts";
 
-const duplicatedProducts = [...products, ...products];
-
-export default function TopListingSection() {
+const TopListingSection = () => {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const { data: products, isLoading, error } = useProducts();
 
   // Convert vertical wheel to horizontal scroll for mouse users
   const onWheel = (e: React.WheelEvent) => {
@@ -27,6 +26,43 @@ export default function TopListingSection() {
     e.preventDefault();
   };
 
+  if (isLoading) {
+    return (
+      <section className="py-6 sm:py-12 px-4 sm:px-0 bg-white">
+        <div className="container mx-auto">
+          <div className="text-center mb-2 sm:mb-6">
+            <Header1Plus className="tracking-wide uppercase">
+              TOP LISTINGS
+            </Header1Plus>
+            <Paragraph1 className="text-gray-600">
+              Loading products...
+            </Paragraph1>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="py-6 sm:py-12 px-4 sm:px-0 bg-white">
+        <div className="container mx-auto">
+          <div className="text-center mb-2 sm:mb-6">
+            <Header1Plus className="tracking-wide uppercase">
+              TOP LISTINGS
+            </Header1Plus>
+            <Paragraph1 className="text-gray-600">
+              Failed to load products. Please try again later.
+            </Paragraph1>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const displayProducts =
+    products && products.length > 0 ? [...products, ...products] : [];
+
   return (
     <section className="py-6 sm:py-12 px-4 sm:px-0 bg-white">
       <div className="container mx-auto">
@@ -41,34 +77,51 @@ export default function TopListingSection() {
           </Paragraph1>
         </div>
 
-        {/* Native horizontal scroll — gestures will work */}
-        <div
-          ref={scrollerRef}
-          onWheel={onWheel}
-          // styles: horizontal scroll, hide vertical overflow, enable momentum scrolling on iOS
-          style={{
-            WebkitOverflowScrolling: "touch",
-          }}
-          className="w-full relative overflow-x-auto hide-scrollbar overflow-y-hidden"
-        >
-          <div
-            // keep items in a single row
-            className="flex gap-2 sm:gap-4 px-2"
-            // prefer native touch behavior (don't intercept pointer events)
-          >
-            {duplicatedProducts.map((item, index) => (
-              <div key={index} className="min-w-[170px] max-w-[170px] shrink-0">
-                <ProductCard
-                  image={item.image}
-                  brand={item.brand}
-                  name={item.name}
-                  price={item.price}
-                />
-              </div>
-            ))}
+        {/* Products or No Products Message */}
+        {displayProducts.length === 0 ? (
+          <div className="text-center py-12">
+            <Paragraph1 className="text-gray-600">
+              No products here currently...
+            </Paragraph1>
           </div>
-        </div>
+        ) : (
+          /* Native horizontal scroll — gestures will work */
+          <div
+            ref={scrollerRef}
+            onWheel={onWheel}
+            // styles: horizontal scroll, hide vertical overflow, enable momentum scrolling on iOS
+            style={{
+              WebkitOverflowScrolling: "touch",
+            }}
+            className="w-full relative overflow-x-auto hide-scrollbar overflow-y-hidden"
+          >
+            <div
+              // keep items in a single row
+              className="flex gap-2 sm:gap-4 px-2"
+              // prefer native touch behavior (don't intercept pointer events)
+            >
+              {displayProducts.map((product, index) => (
+                <div
+                  key={`${product.id}-${index}`}
+                  className="min-w-[170px] max-w-[170px] shrink-0"
+                >
+                  <ProductCard
+                    image={
+                      product.attachments?.uploads?.[0]?.url ||
+                      "/placeholder.jpg"
+                    }
+                    brand={product.brandId || "BRAND"} // TODO: Fetch brand name
+                    name={product.name}
+                    price={`₦${product.originalValue.toLocaleString()}`}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
-}
+};
+
+export default TopListingSection;

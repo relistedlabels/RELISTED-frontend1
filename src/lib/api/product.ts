@@ -79,11 +79,22 @@ export type UserProductsResponse = {
   data: UserProduct[];
 };
 
+export type ProductsResponse = {
+  success: boolean;
+  message: string;
+  data: UserProduct[];
+};
+
 export const productApi = {
   create: (data: ProductPayload) =>
     apiFetch<ProductResponse>("/product", {
       method: "POST",
       body: JSON.stringify(data),
+    }),
+
+  getAll: () =>
+    apiFetch<ProductsResponse>("/products", {
+      method: "GET",
     }),
 
   getById: (id: string) =>

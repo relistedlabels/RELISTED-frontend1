@@ -123,7 +123,7 @@ if (
         </div>
         <hr className=" mt-14 text-gray-500" />
         <ParagraphLink2 className="mt-8  text-center sm:text-start">
-          Copyright © 2025, RLUSTED
+          Copyright © 2026, RELISTED
         </ParagraphLink2>
         {/* COPYRIGHT TEXT */}
         <div className=" text-center sm:hidden flex justify-center py-8">
