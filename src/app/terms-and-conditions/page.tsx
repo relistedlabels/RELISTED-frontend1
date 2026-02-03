@@ -141,7 +141,7 @@ export default function TermsAndConditions() {
                   Rental Agreement
                 </h3>
                 <Paragraph1>
-                  By renting an item (as a "Dresser"), you enter into a rental
+                  By renting an item (as a "Renter"), you enter into a rental
                   agreement with the lister ("Lister"). RELISTED facilitates
                   this transaction but is not a party to the rental agreement
                   itself. The rental terms, including duration, price, and
@@ -204,7 +204,7 @@ export default function TermsAndConditions() {
                   Damage and Loss
                 </h3>
                 <Paragraph1>
-                  The Dresser is responsible for any damage beyond normal wear
+                  The Renter is responsible for any damage beyond normal wear
                   and tear. This includes, but is not limited to:
                 </Paragraph1>
                 <ul className="list-disc list-inside space-y-2 mt-2 ml-2">
@@ -216,8 +216,8 @@ export default function TermsAndConditions() {
                 <Paragraph1 className="mt-3">
                   The Lister may request compensation for damages. RELISTED may
                   facilitate dispute resolution, but the final determination
-                  rests with the Lister and Dresser or, if unresolved,
-                  RELISTED's dispute resolution team.
+                  rests with the Lister and Renter or, if unresolved, RELISTED's
+                  dispute resolution team.
                 </Paragraph1>
               </div>
 
@@ -266,7 +266,7 @@ export default function TermsAndConditions() {
               </li>
               <li>
                 Ship items promptly and provide tracking information to the
-                Dresser
+                Renter
               </li>
               <li>
                 Handle returns promptly and refund deposits for items in
@@ -286,7 +286,7 @@ export default function TermsAndConditions() {
               </li>
               <li>
                 Indemnify RELISTED for damage claims exceeding rental price by
-                the Dresser
+                the Renter
               </li>
             </ul>
           </div>
@@ -464,10 +464,10 @@ export default function TermsAndConditions() {
                 </h3>
                 <Paragraph1>
                   In the event of a dispute between you and another User
-                  (Dresser/Lister), or between you and RELISTED, we encourage
-                  you to first attempt to resolve the matter directly with the
-                  other party. If direct resolution is unsuccessful, you may
-                  submit a formal dispute to RELISTED.
+                  (Renter/Lister), or between you and RELISTED, we encourage you
+                  to first attempt to resolve the matter directly with the other
+                  party. If direct resolution is unsuccessful, you may submit a
+                  formal dispute to RELISTED.
                 </Paragraph1>
               </div>
 
