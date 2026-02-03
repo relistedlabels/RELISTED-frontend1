@@ -15,6 +15,7 @@ interface Brand {
   userId?: string;
 }
 
+
 export const BrandSelector: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
