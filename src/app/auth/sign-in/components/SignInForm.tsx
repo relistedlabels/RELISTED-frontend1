@@ -12,8 +12,7 @@ import SocialSignInOptions from "./SocialSignInOptions";
 import Link from "next/link";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { useLogin } from "@/lib/queries/auth/useLogin";
-import { useResendOtp } from "@/lib/queries/auth/useResendOtp";
+import { useLogin, useResendOtp } from "@/lib/mutations";
 import { useRouter } from "next/navigation";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 

@@ -8,6 +8,7 @@ import DevGuard from "@/common/layer/DevGuard";
 import { Header } from "./Header";
 import { UploaderProvider } from "@/context/UploaderProvider";
 import { Toaster } from "sonner";
+import AdminAccessPrompt from "@/common/ui/AdminAccessPrompt";
 
 export const metadata: Metadata = {
   title:
@@ -66,16 +67,17 @@ export default function RootLayout({
     <html lang="en">
       <body className=" ">
         {/* <DevGuard> */}
-          <QueryProvider>
-            <UploaderProvider>
-              <DesktopNavbar />
-              <MobileNavbar />
-              <Header />
-              {children}
-              <Toaster position="top-right" />
-              <Footer />
-            </UploaderProvider>
-          </QueryProvider>
+        <QueryProvider>
+          <UploaderProvider>
+            <DesktopNavbar />
+            <MobileNavbar />
+            <Header />
+            {/* <AdminAccessPrompt /> */}
+            {children}
+            <Toaster position="top-right" />
+            <Footer />
+          </UploaderProvider>
+        </QueryProvider>
         {/* </DevGuard> */}
       </body>
     </html>

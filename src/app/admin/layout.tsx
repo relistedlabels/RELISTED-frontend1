@@ -4,7 +4,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import AdminSidebar from "./dashboard/components/AdminSidebar";
 import AdminTopNavbar from "./components/AdminTopNavbar";
-import { useLogout } from "@/lib/queries/auth/useLogout";
+import { useLogout } from "@/lib/mutations";
 
 interface AdminLayoutProps {
   children: React.ReactNode;

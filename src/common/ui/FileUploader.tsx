@@ -3,16 +3,14 @@
 import { useState } from "react";
 import { UploadCloud } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
-import { useUpload } from "@/lib/queries/useUpload";
+import { useUpload } from "@/lib/mutations";
 import { v4 as uuid } from "uuid";
 type FileUploaderProps = {
- 
   onUploaded: (data: { id: string; url?: string }) => void;
   helperText?: string;
 };
 
 export function FileUploader({
-  
   onUploaded,
   helperText = "International Passport, NIN, Driver's License",
 }: FileUploaderProps) {
@@ -20,31 +18,30 @@ export function FileUploader({
   const [preview, setPreview] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
 
- const handleFile = (file: File) => {
-  setFileName(file.name);
+  const handleFile = (file: File) => {
+    setFileName(file.name);
 
-  if (file.type.startsWith("image/")) {
-    setPreview(URL.createObjectURL(file));
-  } else {
-    setPreview(null);
-  }
-
-  upload.mutate(
-    {
-      file,
-      id:uuid(), 
-      onProgress: (percent) => {
-        console.log("Upload progress:", percent);
-      },
-    },
-    {
-      onSuccess: (data) => {
-        onUploaded(data);
-      },
+    if (file.type.startsWith("image/")) {
+      setPreview(URL.createObjectURL(file));
+    } else {
+      setPreview(null);
     }
-  );
-};
 
+    upload.mutate(
+      {
+        file,
+        id: uuid(),
+        onProgress: (percent) => {
+          console.log("Upload progress:", percent);
+        },
+      },
+      {
+        onSuccess: (data) => {
+          onUploaded(data);
+        },
+      },
+    );
+  };
 
   const handleFileUpload = (
     e: React.ChangeEvent<HTMLInputElement> | React.DragEvent<HTMLDivElement>,
@@ -66,7 +63,7 @@ export function FileUploader({
     <div>
       <label className="block mb-2">
         <Paragraph1 className="text-sm font-medium text-gray-800">
-          Means of Identification 
+          Means of Identification
         </Paragraph1>
       </label>
       <div

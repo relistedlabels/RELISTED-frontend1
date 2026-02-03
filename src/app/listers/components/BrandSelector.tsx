@@ -5,6 +5,7 @@ import React, { useState, useMemo } from "react";
 import { ChevronDown, Check } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useBrands } from "@/lib/queries/brand/useBrands";
+import { useCreateBrand } from "@/lib/mutations";
 import { useProductDraftStore } from "@/store/useProductDraftStore";
 
 interface Brand {
@@ -25,15 +26,13 @@ export const BrandSelector: React.FC = () => {
   const filtered = useMemo(
     () =>
       (brands as Brand[]).filter((b) =>
-        b.name.toLowerCase().includes(query.toLowerCase())
+        b.name.toLowerCase().includes(query.toLowerCase()),
       ),
-    [brands, query]
+    [brands, query],
   );
 
   // Selected brand from store
-  const selectedBrand = (brands as Brand[]).find(
-    (b) => b.id === data.brandId
-  );
+  const selectedBrand = (brands as Brand[]).find((b) => b.id === data.brandId);
 
   return (
     <div className="relative w-full">

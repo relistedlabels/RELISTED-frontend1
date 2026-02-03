@@ -4,7 +4,7 @@ import { Paragraph1 } from "@/common/ui/Text";
 import { User, Users, MapPin, ChevronDown } from "lucide-react";
 import { PhoneInput } from "./PhoneInput";
 import { useProfileStore } from "@/store/useProfileStore";
-import { useCreateProfile } from "@/lib/queries/user/useCreateProfile";
+import { useCreateProfile } from "@/lib/mutations";
 import { useRouter } from "next/navigation";
 
 interface StepTwoContactProps {
@@ -43,7 +43,7 @@ const StepTwoContact: React.FC<StepTwoContactProps> = ({ onBack }) => {
     });
 
     // 2️⃣ Commit profile using create endpoint (same as business flow)
-    
+
     createProfile.mutate(undefined, {
       onSuccess: () => {
         router.replace("/auth/profile-complete"); // ✅ redirect on success

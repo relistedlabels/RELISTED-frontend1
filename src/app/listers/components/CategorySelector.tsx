@@ -4,7 +4,7 @@
 import React, { useState, useMemo } from "react";
 import { ChevronDown, Check } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
-import { useCategory } from "@/lib/queries/category/useCategories";
+import { useCategories } from "@/lib/queries/category/useCategories";
 import { useProductDraftStore } from "@/store/useProductDraftStore";
 
 // Match your backend schema
@@ -20,21 +20,21 @@ export const CategorySelector: React.FC = () => {
   const [query, setQuery] = useState("");
 
   // fetch categories from backend
-  const { data: categories = [] } = useCategory();
-  const { data, setField } = useProductDraftStore(); 
+  const { data: categories = [] } = useCategories();
+  const { data, setField } = useProductDraftStore();
 
   // filter by search
   const filtered = useMemo(
     () =>
       (categories as Category[]).filter((c) =>
-        c.name.toLowerCase().includes(query.toLowerCase())
+        c.name.toLowerCase().includes(query.toLowerCase()),
       ),
-    [categories, query]
+    [categories, query],
   );
 
   // find currently selected category in store
   const selectedCategory = (categories as Category[]).find(
-    (c) => c.id === data.categoryId
+    (c) => c.id === data.categoryId,
   );
 
   return (

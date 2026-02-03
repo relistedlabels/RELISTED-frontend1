@@ -1,4 +1,3 @@
-// lib/queries/auth/useVerifyOtp.ts
 import { useMutation } from "@tanstack/react-query";
 import { verifyOtp } from "@/lib/api/auth";
 

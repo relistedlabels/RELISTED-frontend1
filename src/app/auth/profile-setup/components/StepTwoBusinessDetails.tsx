@@ -7,7 +7,7 @@ import { useProfileStore } from "@/store/useProfileStore";
 import { CityLGASelect } from "./CityLGASelect";
 import { StateSelect } from "./StateSelect";
 import { useRouter } from "next/navigation";
-import { useCreateProfile } from "@/lib/queries/user/useCreateProfile";
+import { useCreateProfile } from "@/lib/mutations";
 import { ToolInfo } from "@/common/ui/ToolInfo";
 import { toast } from "sonner";
 

@@ -12,7 +12,7 @@ import {
   HiEyeSlash,
 } from "react-icons/hi2";
 import SocialSignInOptions from "../../sign-in/components/SocialSignInOptions";
-import { useSignup } from "@/lib/queries/auth/useSignup";
+import { useSignup } from "@/lib/mutations";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/store/useUserStore"; // ✅ add
 

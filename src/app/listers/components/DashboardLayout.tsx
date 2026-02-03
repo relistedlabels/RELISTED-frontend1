@@ -22,7 +22,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useUserStore } from "@/store/useUserStore";
-import { useLogout } from "@/lib/queries/auth/useLogout";
+import { useLogout } from "@/lib/mutations";
 import {
   Header2Plus,
   HeaderAny,

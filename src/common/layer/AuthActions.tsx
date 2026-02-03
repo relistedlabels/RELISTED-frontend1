@@ -1,7 +1,7 @@
 "use client";
 
 import { useMe } from "@/lib/queries/auth/useMe";
-import { useLogout } from "@/lib/queries/auth/useLogout";
+import { useLogout } from "@/lib/mutations";
 import Button from "../ui/Button";
 
 export function AuthActions() {

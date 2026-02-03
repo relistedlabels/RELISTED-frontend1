@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Paragraph1 } from "@/common/ui/Text";
 import BackHeader from "@/common/ui/BackHeader";
-import { useUpdateProduct } from "@/lib/queries/product/useUpdateProduct";
+import { useUpdateProduct } from "@/lib/mutations";
 import { useProductDraftStore } from "@/store/useProductDraftStore";
 import { toast } from "sonner";
 

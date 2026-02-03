@@ -5,13 +5,12 @@ import { Paragraph1 } from "@/common/ui/Text";
 import { CreditCard, User, Loader2 } from "lucide-react";
 import { useProfileStore } from "@/store/useProfileStore";
 import { useRouter } from "next/navigation";
-import { useCreateProfile } from "@/lib/queries/user/useCreateProfile";
+import { useCreateProfile } from "@/lib/mutations";
 import { BankSelect } from "./BankSelect";
 
 interface StepFourPaymentProps {
   onBack: () => void;
 }
-
 
 const StepFourPayment: React.FC<StepFourPaymentProps> = ({ onBack }) => {
   const bankAccounts = useProfileStore((s) => s.bankAccounts);

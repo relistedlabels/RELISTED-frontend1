@@ -6,8 +6,8 @@ import * as Yup from "yup";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
-import { useVerifyOtp } from "@/lib/queries/auth/useVerifyOtp";
-import { useResendOtp } from "@/lib/queries/auth/useResendOtp";
+import { useVerifyOtp } from "@/lib/mutations";
+import { useResendOtp } from "@/lib/mutations";
 import { useUserStore } from "@/store/useUserStore";
 
 const OTP_LENGTH = 6;

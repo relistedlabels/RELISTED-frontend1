@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
-import { useVerifyOtp } from "@/lib/queries/auth/useVerifyOtp";
+import { useVerifyOtp } from "@/lib/mutations";
 import Link from "next/link";
 
 export default function VerifyEmailPage() {
@@ -24,7 +24,7 @@ export default function VerifyEmailPage() {
       {
         onSuccess: () => setVerified(true),
         onSettled: () => {},
-      }
+      },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run once when token is present
   }, [token]);
@@ -76,13 +76,13 @@ export default function VerifyEmailPage() {
               {token &&
                 verifyOtp.isPending &&
                 "Please wait while we verify your email."}
-              {token && verified &&
+              {token &&
+                verified &&
                 "Your email is verified. Redirecting you to sign in…"}
               {token && verifyOtp.isError && (
                 <>
-                  {(verifyOtp.error as Error).message}
-                  {" "}
-                  The link may have expired. You can request a new one from the sign-in page.
+                  {(verifyOtp.error as Error).message} The link may have
+                  expired. You can request a new one from the sign-in page.
                 </>
               )}
             </Paragraph1>

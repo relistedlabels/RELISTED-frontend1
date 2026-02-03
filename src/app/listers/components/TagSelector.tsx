@@ -5,7 +5,9 @@ import { Plus } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { ToolInfo } from "@/common/ui/ToolInfo";
 import { useProductDraftStore } from "@/store/useProductDraftStore";
-import { useTags, useCreateTag } from "@/lib/queries/tag/useTags";
+import { useCreateTag } from "@/lib/mutations";
+import { useTags,  } from "@/lib/queries/tag/useTags";
+
 
 // Tags that show in the box (first 12 when no search)
 const BOX_TAG_NAMES = [
@@ -33,7 +35,7 @@ export const TagSelector: React.FC = () => {
 
   const sortedTags = useMemo(() => {
     const boxOrderMap = new Map(
-      BOX_TAG_NAMES.map((n, i) => [n.toLowerCase(), i])
+      BOX_TAG_NAMES.map((n, i) => [n.toLowerCase(), i]),
     );
     const boxSet = new Set(BOX_TAG_NAMES.map((n) => n.toLowerCase()));
     const inBox: typeof tags = [];
@@ -46,7 +48,7 @@ export const TagSelector: React.FC = () => {
       (a, b) =>
         (boxOrderMap.get(a.name.toLowerCase()) ?? 999) -
           (boxOrderMap.get(b.name.toLowerCase()) ?? 999) ||
-        a.name.localeCompare(b.name)
+        a.name.localeCompare(b.name),
     );
     return [...inBox, ...rest];
   }, [tags]);

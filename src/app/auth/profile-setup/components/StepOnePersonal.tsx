@@ -10,7 +10,7 @@ import { CityLGASelect } from "./CityLGASelect";
 import { ToolInfo } from "@/common/ui/ToolInfo";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useCreateProfile } from "@/lib/queries/user/useCreateProfile";
+import { useCreateProfile } from "@/lib/mutations";
 
 interface StepOnePersonalProps {
   onNext: () => void;

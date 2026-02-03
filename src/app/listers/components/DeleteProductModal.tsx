@@ -4,7 +4,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
-import { useDeleteProduct } from "@/lib/queries/product/useDeleteProduct";
+import { useDeleteProduct } from "@/lib/mutations";
 import { useRouter } from "next/navigation";
 
 interface DeleteProductModalProps {

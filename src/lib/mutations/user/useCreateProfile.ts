@@ -1,4 +1,3 @@
-// lib/queries/user/useCreateProfile.ts
 import { useMutation } from "@tanstack/react-query";
 import { createProfile } from "@/lib/api/profile";
 import { useProfileStore } from "@/store/useProfileStore";
@@ -12,8 +11,8 @@ export function useCreateProfile() {
       return createProfile(profile);
     },
     onSuccess: () => {
-      //   resetProfile();
-      console.log("Profile sent");
+      resetProfile();
+      console.log("Profile sent and profile store reset");
     },
   });
 }
