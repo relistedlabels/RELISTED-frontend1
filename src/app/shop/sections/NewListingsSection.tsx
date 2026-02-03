@@ -1,20 +1,66 @@
 "use client";
 
-import { useState } from "react";
-import { products } from "@/data/productsData";
+import { useEffect } from "react";
 import ProductCard from "@/common/ui/ProductCard";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import { SlidersVertical } from "lucide-react";
 import Filters from "../components/Filters";
+import { useProductsStore } from "@/store/useProductsStore";
+import { useProductsQuery } from "@/lib/queries/product/useProductsQuery";
 
 export default function NewListingsSection() {
-  const [search, setSearch] = useState("");
+  const { filteredProducts, loading, error, setSearch, applyFilters } =
+    useProductsStore();
+  const { refetch } = useProductsQuery();
 
-  const filteredProducts = products.filter(
-    (item) =>
-      item.name.toLowerCase().includes(search.toLowerCase()) ||
-      item.brand.toLowerCase().includes(search.toLowerCase())
-  );
+  // Apply filters whenever search changes
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
+
+  const handleSearchChange = (search: string) => {
+    setSearch(search);
+  };
+
+  if (loading) {
+    return (
+      <section className="w-full px-4 md:px-10 bg-white py-4 sm:py-10">
+        <div className="container mx-auto">
+          <div className="text-center mb-2 sm:mb-6">
+            <Header1Plus className="sm:text-center font-light flex-1">
+              New Listings
+            </Header1Plus>
+            <Paragraph1 className="text-gray-600 mt-4">
+              Loading products...
+            </Paragraph1>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="w-full px-4 md:px-10 bg-white py-4 sm:py-10">
+        <div className="container mx-auto">
+          <div className="text-center mb-2 sm:mb-6">
+            <Header1Plus className="sm:text-center font-light flex-1">
+              New Listings
+            </Header1Plus>
+            <Paragraph1 className="text-gray-600 mt-4">
+              Failed to load products. Please try again later.
+            </Paragraph1>
+            <button
+              onClick={() => refetch()}
+              className="mt-4 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="w-full px-4 md:px-10 bg-white py-4 sm:py-10">
@@ -40,25 +86,34 @@ export default function NewListingsSection() {
             <input
               type="text"
               placeholder="Search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="border w-full px-4 py-2  text-sm focus:outline-none"
             />
           </div>
         </div>
 
         {/* Product Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
-          {filteredProducts.map((item, index) => (
-            <ProductCard
-              key={index}
-              image={item.image}
-              brand={item.brand}
-              name={item.name}
-              price={item.price}
-            />
-          ))}
-        </div>
+        {filteredProducts.length === 0 ? (
+          <div className="text-center py-12">
+            <Paragraph1 className="text-gray-600">
+              No products found matching your criteria.
+            </Paragraph1>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
+            {filteredProducts.map((product: any) => (
+              <ProductCard
+                key={product.id}
+                image={
+                  product.attachments?.uploads?.[0]?.url || "/placeholder.jpg"
+                }
+                brand={product.brandId || "BRAND"}
+                name={product.name}
+                price={`₦${product.originalValue.toLocaleString()}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

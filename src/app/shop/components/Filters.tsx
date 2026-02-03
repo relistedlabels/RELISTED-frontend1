@@ -1,18 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SlidersVertical, X, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import PriceRangeSlider from "./PriceRangeSlider";
-
-// --------------------
-// Types
-// --------------------
-type FilterItemProps = {
-  label: string;
-  type?: "radio" | "checkbox";
-};
+import { useProductsStore } from "@/store/useProductsStore";
 
 // --------------------
 // Mock Data
@@ -31,39 +24,53 @@ const filterData = {
 };
 
 // --------------------
-// Filter Item Component
+// Animation Variants
 // --------------------
-const FilterItem: React.FC<FilterItemProps> = ({ label, type = "radio" }) => (
-  <label className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900">
-    <input
-      type={type}
-      name={label}
-      className={`h-4 w-4 text-black border-gray-300 rounded-full focus:ring-black`}
-    />
-    <Paragraph1>{label}</Paragraph1>
-  </label>
-);
-
-// --------------------
-// Slide-in Filter Panel
-// --------------------
+const variants = {
+  hidden: { x: "100%" },
+  visible: { x: 0 },
+};
 interface FilterPanelProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
 const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
-  const [priceRange, setPriceRange] = useState(125000);
+  const {
+    filters,
+    setSearch,
+    setGender,
+    setCategories,
+    setBrands,
+    setSizes,
+    setPriceRange,
+    clearFilters,
+    applyFilters,
+  } = useProductsStore();
 
-  const minPrice = 50000;
-  const maxPrice = 200000;
-
-  const variants = {
-    hidden: { x: "100%" },
-    visible: { x: 0 },
+  const handleCategoryChange = (category: string, checked: boolean) => {
+    const newCategories = checked
+      ? [...filters.categories, category]
+      : filters.categories.filter((c: string) => c !== category);
+    setCategories(newCategories);
   };
 
-  const [price, setPrice] = useState({ min: 50000, max: 200000 });
+  const handleBrandChange = (brand: string, checked: boolean) => {
+    const newBrands = checked
+      ? [...filters.brands, brand]
+      : filters.brands.filter((b: string) => b !== brand);
+    setBrands(newBrands);
+  };
+
+  const handleApplyFilters = () => {
+    applyFilters();
+    onClose();
+  };
+
+  const handleClearFilters = () => {
+    clearFilters();
+    applyFilters();
+  };
 
   return (
     <AnimatePresence>
@@ -109,6 +116,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
                   <input
                     type="text"
                     placeholder="Search"
+                    value={filters.search}
+                    onChange={(e) => setSearch(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 border-gray-100 bg-gray-100 outline-none "
                   />
                   <Search
@@ -123,7 +132,20 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
                   Gender
                 </Paragraph1>
                 {filterData.gender.map((item) => (
-                  <FilterItem key={item} label={item} />
+                  <label
+                    key={item}
+                    className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
+                  >
+                    <input
+                      type="radio"
+                      name="gender"
+                      value={item}
+                      checked={filters.gender === item}
+                      onChange={(e) => setGender(e.target.value)}
+                      className="h-4 w-4 text-black border-gray-300 rounded-full focus:ring-black"
+                    />
+                    <Paragraph1>{item}</Paragraph1>
+                  </label>
                 ))}
               </section>
               {/* Categories */}
@@ -132,7 +154,20 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
                   Categories
                 </Paragraph1>
                 {filterData.categories.map((item) => (
-                  <FilterItem key={item} label={item} type="checkbox" />
+                  <label
+                    key={item}
+                    className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filters.categories.includes(item)}
+                      onChange={(e) =>
+                        handleCategoryChange(item, e.target.checked)
+                      }
+                      className="h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
+                    />
+                    <Paragraph1>{item}</Paragraph1>
+                  </label>
                 ))}
               </section>
               {/* Brands */}
@@ -141,7 +176,20 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
                   Brands
                 </Paragraph1>
                 {filterData.brands.map((item) => (
-                  <FilterItem key={item} label={item} type="checkbox" />
+                  <label
+                    key={item}
+                    className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filters.brands.includes(item)}
+                      onChange={(e) =>
+                        handleBrandChange(item, e.target.checked)
+                      }
+                      className="h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
+                    />
+                    <Paragraph1>{item}</Paragraph1>
+                  </label>
                 ))}
               </section>
               {/* Sizes */}
@@ -150,25 +198,44 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
                   Size
                 </Paragraph1>
                 {filterData.sizes.map((item) => (
-                  <FilterItem key={item} label={item} />
+                  <label
+                    key={item}
+                    className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
+                  >
+                    <input
+                      type="radio"
+                      name="sizes"
+                      value={item}
+                      checked={filters.sizes === item}
+                      onChange={(e) => setSizes(e.target.value)}
+                      className="h-4 w-4 text-black border-gray-300 rounded-full focus:ring-black"
+                    />
+                    <Paragraph1>{item}</Paragraph1>
+                  </label>
                 ))}
               </section>
               {/* Price Slider */}
               <PriceRangeSlider
                 min={50000}
                 max={200000}
-                value={price}
-                onChange={setPrice}
+                value={filters.priceRange}
+                onChange={setPriceRange}
               />{" "}
             </div>
 
             {/* Footer */}
             <div className="mt-auto py-2 bg-white flex justify-between gap-4 sticky bottom-0">
-              <button className="flex-1 px-4 py-3 text-sm font-semibold border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+              <button
+                onClick={handleClearFilters}
+                className="flex-1 px-4 py-3 text-sm font-semibold border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+              >
                 <Paragraph1>Clear Filters </Paragraph1>
               </button>
 
-              <button className="flex-1 px-4 py-3 text-sm font-semibold bg-black text-white rounded-lg hover:bg-gray-800 transition flex items-center justify-center gap-2">
+              <button
+                onClick={handleApplyFilters}
+                className="flex-1 px-4 py-3 text-sm font-semibold bg-black text-white rounded-lg hover:bg-gray-800 transition flex items-center justify-center gap-2"
+              >
                 <SlidersVertical size={16} />
                 <Paragraph1>Apply Filters </Paragraph1>
               </button>

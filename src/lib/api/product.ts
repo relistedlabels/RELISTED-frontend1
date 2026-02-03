@@ -92,10 +92,35 @@ export const productApi = {
       body: JSON.stringify(data),
     }),
 
-  getAll: () =>
-    apiFetch<ProductsResponse>("/products", {
+  getAll: (filters?: {
+    search?: string;
+    gender?: string;
+    categories?: string[];
+    brands?: string[];
+    sizes?: string;
+    priceMin?: number;
+    priceMax?: number;
+  }) => {
+    const params = new URLSearchParams();
+    if (filters?.search) params.append("search", filters.search);
+    if (filters?.gender) params.append("gender", filters.gender);
+    if (filters?.categories?.length)
+      params.append("categories", filters.categories.join(","));
+    if (filters?.brands?.length)
+      params.append("brands", filters.brands.join(","));
+    if (filters?.sizes) params.append("sizes", filters.sizes);
+    if (filters?.priceMin !== undefined)
+      params.append("priceMin", filters.priceMin.toString());
+    if (filters?.priceMax !== undefined)
+      params.append("priceMax", filters.priceMax.toString());
+
+    const queryString = params.toString();
+    const url = queryString ? `/products?${queryString}` : "/products";
+
+    return apiFetch<ProductsResponse>(url, {
       method: "GET",
-    }),
+    });
+  },
 
   getById: (id: string) =>
     apiFetch<UserProduct>(`/product/${id}`, {

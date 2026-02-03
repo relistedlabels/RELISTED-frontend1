@@ -6,19 +6,19 @@ import React from "react";
 type Props = {
   min: number;
   max: number;
-  value: { min: number; max: number };
-  onChange: (val: { min: number; max: number }) => void;
+  value: [number, number];
+  onChange: (val: [number, number]) => void;
 };
 
 export default function PriceRangeSlider({ min, max, value, onChange }: Props) {
   const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newMin = Math.min(Number(e.target.value), value.max - 1);
-    onChange({ min: newMin, max: value.max });
+    const newMin = Math.min(Number(e.target.value), value[1] - 1);
+    onChange([newMin, value[1]]);
   };
 
   const handleMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newMax = Math.max(Number(e.target.value), value.min + 1);
-    onChange({ min: value.min, max: newMax });
+    const newMax = Math.max(Number(e.target.value), value[0] + 1);
+    onChange([value[0], newMax]);
   };
 
   return (
@@ -32,7 +32,7 @@ export default function PriceRangeSlider({ min, max, value, onChange }: Props) {
       <div className="flex justify-between text-sm mb-4">
         <Paragraph1 className="font-bold text-gray-400">Range</Paragraph1>
         <Paragraph1 className="font-semibold">
-          ₦{value.min.toLocaleString()} - ₦{value.max.toLocaleString()}
+          ₦{value[0].toLocaleString()} - ₦{value[1].toLocaleString()}
         </Paragraph1>
       </div>
 
@@ -45,8 +45,8 @@ export default function PriceRangeSlider({ min, max, value, onChange }: Props) {
         <div
           className="absolute h-1 bg-black rounded"
           style={{
-            left: `${((value.min - min) / (max - min)) * 100}%`,
-            width: `${((value.max - value.min) / (max - min)) * 100}%`,
+            left: `${((value[0] - min) / (max - min)) * 100}%`,
+            width: `${((value[1] - value[0]) / (max - min)) * 100}%`,
           }}
         />
 
@@ -55,7 +55,7 @@ export default function PriceRangeSlider({ min, max, value, onChange }: Props) {
           type="range"
           min={min}
           max={max}
-          value={value.min}
+          value={value[0]}
           onChange={handleMinChange}
           className="absolute -top-1 w-full pointer-events-none appearance-none 
                      [&::-webkit-slider-thumb]:appearance-none 
@@ -71,7 +71,7 @@ export default function PriceRangeSlider({ min, max, value, onChange }: Props) {
           type="range"
           min={min}
           max={max}
-          value={value.max}
+          value={value[1]}
           onChange={handleMaxChange}
           className="absolute -top-1 w-full pointer-events-none appearance-none 
                      [&::-webkit-slider-thumb]:appearance-none 
