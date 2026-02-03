@@ -1,25 +1,29 @@
 "use client";
 
-import { useEffect } from "react";
 import ProductCard from "@/common/ui/ProductCard";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
-import { SlidersVertical } from "lucide-react";
 import Filters from "../components/Filters";
-import { useProductsStore } from "@/store/useProductsStore";
 import { useProductsQuery } from "@/lib/queries/product/useProductsQuery";
+import { useSearchParams, useRouter } from "next/navigation";
 
 export default function NewListingsSection() {
-  const { filteredProducts, loading, error, setSearch, applyFilters } =
-    useProductsStore();
-  const { refetch } = useProductsQuery();
-
-  // Apply filters whenever search changes
-  useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
+  const {
+    data: filteredProducts = [],
+    isLoading: loading,
+    error,
+    refetch,
+  } = useProductsQuery();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleSearchChange = (search: string) => {
-    setSearch(search);
+    const params = new URLSearchParams(searchParams);
+    if (search) {
+      params.set("search", search);
+    } else {
+      params.delete("search");
+    }
+    router.push(`?${params.toString()}`);
   };
 
   if (loading) {
@@ -28,7 +32,7 @@ export default function NewListingsSection() {
         <div className="container mx-auto">
           <div className="text-center mb-2 sm:mb-6">
             <Header1Plus className="sm:text-center font-light flex-1">
-              New Listings
+              Available Listings
             </Header1Plus>
             <Paragraph1 className="text-gray-600 mt-4">
               Loading products...
@@ -45,7 +49,7 @@ export default function NewListingsSection() {
         <div className="container mx-auto">
           <div className="text-center mb-2 sm:mb-6">
             <Header1Plus className="sm:text-center font-light flex-1">
-              New Listings
+              Available Listings
             </Header1Plus>
             <Paragraph1 className="text-gray-600 mt-4">
               Failed to load products. Please try again later.
@@ -71,11 +75,6 @@ export default function NewListingsSection() {
           <div className=" hidden sm:flex items-center gap-4">
             <Filters />
           </div>
-
-          {/* Title */}
-          <Header1Plus className="sm:text-center  font-light flex-1">
-            New Listings
-          </Header1Plus>
 
           <div className="flex sm:hidden  items-center gap-4">
             <Filters />

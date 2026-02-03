@@ -14,7 +14,15 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({
   description,
   link,
   height,
+  filterType,
+  filterValue,
 }) => {
+  // Build URL with filters if available
+  const shopUrl =
+    filterType && filterValue
+      ? `/shop?${filterType}=${encodeURIComponent(filterValue)}&title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}`
+      : link;
+
   return (
     <div
       className={`relative w-full group overflow-hidden cursor-pointer h-[200px] sm:h-auto`}
@@ -37,8 +45,10 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({
       {/* Text content */}
       <div className="absolute sm:bottom-[35px] bottom-4 left-4 sm:left-[34px] text-white z-10">
         <Header2 className="text-lg font-bold">{title}</Header2>
-        <Paragraph1 className="text-sm hidden sm:flex">{description}</Paragraph1>
-        <Link className=" hidden sm:block" href={link}>
+        <Paragraph1 className="text-sm hidden sm:flex">
+          {description}
+        </Paragraph1>
+        <Link className=" hidden sm:block" href={shopUrl}>
           <button className="mt-2 py-1 text-white border-b font-semibold">
             <Paragraph1>Shop Now</Paragraph1>
           </button>
@@ -47,7 +57,6 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({
     </div>
   );
 };
-
 
 const PopularCategorySection = () => {
   // Split into 3 columns of 2 boxes each
@@ -69,7 +78,10 @@ const PopularCategorySection = () => {
       </div>
       <div className="grid grid-cols-1  xl:grid-cols-3 gap-2 sm:gap-[23px]">
         {columns.map((col, colIndex) => (
-          <div key={colIndex} className="flex flex-row xl:flex-col gap-2 sm:gap-[23px]">
+          <div
+            key={colIndex}
+            className="flex flex-row xl:flex-col gap-2 sm:gap-[23px]"
+          >
             {col.map((box, idx) => (
               <CategoryBox key={idx} {...box} />
             ))}

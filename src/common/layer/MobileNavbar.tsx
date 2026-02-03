@@ -10,19 +10,21 @@ import Button from "../ui/Button";
 import RentalCartView from "./RentalCartView";
 import { usePathname } from "next/navigation";
 import SearchModal from "./SearchModal";
+import ShopDropdownMobile from "./ShopDropdownMobile";
 
 export default function MobileNavbar() {
   const [open, setOpen] = useState(false);
+  const [isShopMenuOpen, setIsShopMenuOpen] = useState(false);
   const pathname = usePathname();
 
-if (
-  pathname.includes("/auth") ||
-  pathname.includes("/listers") ||
-  pathname.startsWith("/admin") ||
-  pathname.startsWith("/waitlist") ||
-  pathname.startsWith("/dev")
-)
-  return null;
+  if (
+    pathname.includes("/auth") ||
+    pathname.includes("/listers") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/waitlist") ||
+    pathname.startsWith("/dev")
+  )
+    return null;
 
   return (
     <div className="fixed top-0 left-0 w-full bg-black text-white  px-4 py-5 z-50 xl:hidden">
@@ -107,19 +109,28 @@ if (
               <Link href="/" onClick={() => setOpen(false)}>
                 <Paragraph1>Home</Paragraph1>
               </Link>
-              <Link href="/shop" onClick={() => setOpen(false)}>
+              <button className=" flex  " onClick={() => setIsShopMenuOpen(true)}>
                 <Paragraph1>Shop</Paragraph1>
-              </Link>
-              <Link href="/about" onClick={() => setOpen(false)}>
-                <Paragraph1>About</Paragraph1>
+              </button>
+              <ShopDropdownMobile
+                isOpen={isShopMenuOpen}
+                onClose={() => setIsShopMenuOpen(false)}
+              />
+              <Link href="/style-spotlight " onClick={() => setOpen(false)}>
+                <Paragraph1>Style Spotlight</Paragraph1>
               </Link>
               <Link href="/how-it-works" onClick={() => setOpen(false)}>
                 <Paragraph1>How it works</Paragraph1>
               </Link>
+              <Link href="/about" onClick={() => setOpen(false)}>
+                <Paragraph1>About</Paragraph1>
+              </Link>
               <Link href="/contact-us" onClick={() => setOpen(false)}>
                 <Paragraph1>Contact</Paragraph1>
               </Link>
-
+              <Link href="/renters/favourites" onClick={() => setOpen(false)}>
+                <Paragraph1>Favourites</Paragraph1>
+              </Link>
               <div className="mt-8 flex flex-col gap-3">
                 <Button
                   text="Sign In"

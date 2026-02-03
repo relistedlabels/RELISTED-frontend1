@@ -1,47 +1,43 @@
 import { useQuery } from "@tanstack/react-query";
 import { productApi } from "@/lib/api/product";
-import { useProductsStore } from "@/store/useProductsStore";
-import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 
 export const useProductsQuery = () => {
-  const { filters, setProducts, setLoading, setError } = useProductsStore();
+  const searchParams = useSearchParams();
+
+  // Parse URL parameters
+  const search = searchParams.get("search") || undefined;
+  const gender = searchParams.get("gender") || undefined;
+  const categories = searchParams.getAll("categories");
+  const brands = searchParams.getAll("brands");
+  const sizes = searchParams.get("sizes") || undefined;
+  const priceMin = searchParams.get("priceMin")
+    ? parseInt(searchParams.get("priceMin")!)
+    : undefined;
+  const priceMax = searchParams.get("priceMax")
+    ? parseInt(searchParams.get("priceMax")!)
+    : undefined;
 
   const query = useQuery({
-    queryKey: ["products", filters],
+    queryKey: [
+      "products",
+      { search, gender, categories, brands, sizes, priceMin, priceMax },
+    ],
     queryFn: async () => {
       const response = await productApi.getAll({
-        search: filters.search || undefined,
-        gender: filters.gender || undefined,
-        categories:
-          filters.categories.length > 0 ? filters.categories : undefined,
-        brands: filters.brands.length > 0 ? filters.brands : undefined,
-        sizes: filters.sizes || undefined,
-        priceMin: filters.priceRange[0] > 0 ? filters.priceRange[0] : undefined,
-        priceMax:
-          filters.priceRange[1] < 1000000 ? filters.priceRange[1] : undefined,
+        search,
+        gender,
+        categories: categories.length > 0 ? categories : undefined,
+        brands: brands.length > 0 ? brands : undefined,
+        sizes,
+        priceMin,
+        priceMax,
       });
       return response.data;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,
   });
-
-  // Update store when query state changes
-  useEffect(() => {
-    setLoading(query.isLoading);
-    setError(query.error?.message || null);
-
-    if (query.data) {
-      setProducts(query.data);
-    }
-  }, [
-    query.isLoading,
-    query.error,
-    query.data,
-    setLoading,
-    setError,
-    setProducts,
-  ]);
 
   return query;
 };

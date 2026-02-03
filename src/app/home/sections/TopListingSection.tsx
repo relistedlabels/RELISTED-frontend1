@@ -4,6 +4,7 @@ import ProductCard from "@/common/ui/ProductCard";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import { useRef } from "react";
 import { useProducts } from "@/lib/queries/product/useProducts";
+import Link from "next/link";
 
 const TopListingSection = () => {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
@@ -73,7 +74,9 @@ const TopListingSection = () => {
           </Header1Plus>
           <Paragraph1 className="text-gray-600">
             Discover popular looks this week.{" "}
-            <a className="underline cursor-pointer">SHOP NOW</a>
+            <Link href="/shop?title=Top+Listings&description=Discover+popular+looks+this+week">
+              <span className="underline cursor-pointer">SHOP NOW</span>
+            </Link>
           </Paragraph1>
         </div>
 

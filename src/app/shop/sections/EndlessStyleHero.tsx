@@ -5,8 +5,14 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { Header1, Header5, Paragraph1, SpecialH1 } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
+import { useSearchParams } from "next/navigation";
 
 export default function EndlessStyleHero() {
+  const searchParams = useSearchParams();
+
+  // Get title and description from URL params
+  const pageTitle = searchParams.get("title") || "Shop amazing";
+  const pageDescription = searchParams.get("description") || "Style Brands";
   return (
     <section className="relative w-full h-[20vh] mt-16   sm:h-[50vh] overflow-hidden">
       {/* Background Image */}
@@ -53,7 +59,7 @@ export default function EndlessStyleHero() {
             }}
             transition={{ duration: 0.8 }}
           >
-            <Header1 className="">Shop amazing </Header1>
+            <Header1 className="">{pageTitle}</Header1>
           </motion.div>
 
           {/* Sub Text */}
@@ -65,7 +71,9 @@ export default function EndlessStyleHero() {
             }}
             transition={{ duration: 0.9 }}
           >
-            <Header5>Style Brands</Header5>
+            <Header5 className="line-clamp-1 sm:line-clamp-none">
+              {pageDescription}
+            </Header5>
           </motion.p>
         </motion.div>
       </motion.div>

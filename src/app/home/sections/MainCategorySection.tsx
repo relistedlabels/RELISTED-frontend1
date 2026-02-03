@@ -46,17 +46,17 @@ export default function MainCategorySection() {
           <div className="absolute inset-0 bg-black/30"></div>
 
           <Link
-            href="/shop"
+            href="/shop?gender=Woman&title=Women%27s+Collections&description=Discover+our+curated+collection+of+women%27s+fashion"
             className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4"
           >
             <HeaderAny className=" text-[14px] sm:text-[28px] font-semibold mb-1 sm:mb-4">
-              Women’s Collections
+              Women's Collections
             </HeaderAny>
             <div className=" hidden- sm: block">
               <Button
                 text="Shop Now"
                 isLink={true}
-                href="/shop"
+                href="/shop?gender=Woman&title=Women%27s+Collections&description=Discover+our+curated+collection+of+women%27s+fashion"
                 backgroundColor="bg-transparent"
                 border="border border-white"
                 color="text-white"
@@ -83,7 +83,9 @@ export default function MainCategorySection() {
           <div className="absolute inset-0 bg-black/30"></div>
 
           <Link
-            href="/shop" className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4">
+            href="/shop?gender=Men&title=Men%27s+Collections&description=Discover+our+curated+collection+of+men%27s+fashion"
+            className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4"
+          >
             <HeaderAny className=" text-[14px] sm:text-[28px] font-semibold mb-2 sm:mb-4">
               Men's Collections
             </HeaderAny>
@@ -91,7 +93,7 @@ export default function MainCategorySection() {
               <Button
                 text="Shop Now"
                 isLink={true}
-                href="/shop"
+                href="/shop?gender=Men&title=Men%27s+Collections&description=Discover+our+curated+collection+of+men%27s+fashion"
                 backgroundColor="bg-transparent"
                 border="border border-white"
                 color="text-white"
