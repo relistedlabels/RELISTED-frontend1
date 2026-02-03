@@ -7,10 +7,7 @@ export function Header() {
   const { data: user, isLoading } = useMe();
 
 
-
-
-
-  
+ 
   
   useEffect(() => {
     if (isLoading) return;
