@@ -6,10 +6,12 @@ import { useMe } from "@/lib/queries/auth/useMe";
 export function Header() {
   const { data: user, isLoading } = useMe();
 
+
+  
   useEffect(() => {
     if (isLoading) return;
 
-    
+
     if (user) {
       console.log("Logged in:", {
         email: user.email,
