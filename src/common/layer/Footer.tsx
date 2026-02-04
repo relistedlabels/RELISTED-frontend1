@@ -90,13 +90,13 @@ export default function Footer() {
                   </ParagraphLink2>
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link href="/shop?gender=Kids&title=Kids+Collections&description=Shop+kids+fashion">
                   <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
                     Kids
                   </ParagraphLink2>
                 </Link>
-              </li>
+              </li> */}
             </ul>
           </div>
 
@@ -110,7 +110,7 @@ export default function Footer() {
               <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
                 TikTok
               </ParagraphLink2>
-              <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
+              {/* <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
                 YouTube
               </ParagraphLink2>
               <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
@@ -118,7 +118,7 @@ export default function Footer() {
               </ParagraphLink2>
               <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
                 Facebook
-              </ParagraphLink2>
+              </ParagraphLink2> */}
             </ul>
           </div>
 

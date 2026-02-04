@@ -69,8 +69,11 @@ export default function RootLayout({
         {/* <DevGuard> */}
         <QueryProvider>
           <UploaderProvider>
+
             <DesktopNavbar />
             <MobileNavbar />
+
+            {/* <AdminAccessPrompt /> */}
             <Header />
             {/* <AdminAccessPrompt /> */}
             {children}

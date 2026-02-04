@@ -9,18 +9,27 @@ if (!BASE_URL) {
 
 /** Token from store, or from localStorage if store not yet rehydrated */
 export function getAuthToken(): string | null {
-  const fromStore = useUserStore.getState().token;
+  const state = useUserStore.getState();
+  // Prefer token, but fall back to sessionToken (for MFA flow)
+  const fromStore = state.token || state.sessionToken;
   if (fromStore) return fromStore;
   if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(USER_STORE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as {
-      state?: { token?: string | null };
+      state?: { token?: string | null; sessionToken?: string | null };
       token?: string | null;
+      sessionToken?: string | null;
     } | null;
     if (!parsed) return null;
-    return parsed?.state?.token ?? parsed?.token ?? null;
+    return (
+      parsed?.state?.token ??
+      parsed?.state?.sessionToken ??
+      parsed?.token ??
+      parsed?.sessionToken ??
+      null
+    );
   } catch {
     return null;
   }
