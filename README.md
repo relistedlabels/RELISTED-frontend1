@@ -7,7 +7,7 @@ The frontend is built using modern React and Next.js architecture, optimized for
 
 --- 
 
-......
+.........
 
 ## 📌 Project Overview
 
