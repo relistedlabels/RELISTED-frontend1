@@ -34,7 +34,7 @@ export default function MainCategorySection() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.3 }}
-          className="relative h-[210px] md:h-[650px] group overflow-hidden  cursor-pointer"
+          className="relative h-[250px] md:h-[650px] group overflow-hidden  cursor-pointer"
         >
           <Image
             src="/images/womansec.jpg"
@@ -71,7 +71,7 @@ export default function MainCategorySection() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.3 }}
-          className="relative h-[210px] md:h-[650px] group overflow-hidden  cursor-pointer"
+          className="relative h-[250px] md:h-[650px] group overflow-hidden  cursor-pointer"
         >
           <Image
             src="/images/mensec.jpg"
