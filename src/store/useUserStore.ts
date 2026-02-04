@@ -65,7 +65,12 @@ export const useUserStore = create<UserState>()(
           requiresMfa: true,
         }),
 
-      clearUser: () =>
+      clearUser: () => {
+        // Clear cookies on the server
+        fetch("/api/auth/clear-token", { method: "POST" }).catch((err) =>
+          console.error("Failed to clear token cookie:", err),
+        );
+
         set({
           token: null,
           userId: null,
@@ -74,7 +79,8 @@ export const useUserStore = create<UserState>()(
           role: null,
           sessionToken: null,
           requiresMfa: false,
-        }),
+        });
+      },
     }),
     {
       name: "user-store",

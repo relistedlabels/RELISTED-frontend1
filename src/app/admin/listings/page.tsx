@@ -13,129 +13,206 @@ import {
   Eye,
 } from "lucide-react";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import { usePendingProducts } from "@/lib/queries/product/usePendingProducts";
+import {
+  useApproveProduct,
+  useRejectProduct,
+} from "@/lib/mutations/product/useProductApproval";
 import ListingDetailModal from "./components/ListingDetailModal";
 
-interface Listing {
+interface ListingData {
   id: string;
-  image: string;
-  itemName: string;
-  brand: string;
-  category: string;
+  name: string;
+  subText: string;
+  description: string;
+  condition: string;
+  dailyPrice: number;
+  originalValue: number;
+  quantity: number;
+  status: string;
+  productVerified: boolean;
+  isActive: boolean;
   curator: {
     name: string;
-    verified: boolean;
+    id: string;
   };
-  itemValue: string;
-  pricePerDay: string;
-  status: "Pending" | "Active" | "Rejected";
+  attachments: {
+    uploads: Array<{ url: string }>;
+  } | null;
+  categoryId?: string | null;
+  brandId?: string | null;
 }
 
-const LISTINGS: Listing[] = [
-  {
-    id: "1",
-    image:
-      "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=100&h=100&fit=crop",
-    itemName: "Hermès Birkin 30",
-    brand: "Hermès",
-    category: "Bags",
-    curator: { name: "Blessing Okafor", verified: true },
-    itemValue: "₦850,000",
-    pricePerDay: "₦85,000",
-    status: "Pending",
-  },
-  {
-    id: "2",
-    image:
-      "https://images.unsplash.com/photo-1543163521-9145f93210e6?w=100&h=100&fit=crop",
-    itemName: "Louboutin So Kate Heels",
-    brand: "Christian Louboutin",
-    category: "Shoes",
-    curator: { name: "Blessing Okafor", verified: true },
-    itemValue: "₦220,000",
-    pricePerDay: "₦22,000",
-    status: "Pending",
-  },
-];
-
-type TabType = "Pending" | "Active" | "Rejected";
+type TabType = "Pending" | "Approved" | "Rejected";
 
 const STATS = [
   {
     label: "Total Listings",
-    value: "6",
+    value: "24",
     icon: Globe,
     bgColor: "bg-gray-50",
     iconColor: "text-gray-700",
   },
   {
-    label: "Active",
-    value: "2",
-    icon: CheckCircle,
-    bgColor: "bg-green-50",
-    iconColor: "text-green-600",
-  },
-  {
-    label: "Pending",
-    value: "2",
+    label: "Pending Review",
+    value: "8",
     icon: AlertCircle,
     bgColor: "bg-yellow-50",
     iconColor: "text-yellow-600",
   },
   {
+    label: "Approved",
+    value: "14",
+    icon: CheckCircle,
+    bgColor: "bg-green-50",
+    iconColor: "text-green-600",
+  },
+  {
     label: "Rejected",
-    value: "1",
+    value: "2",
     icon: XCircle,
     bgColor: "bg-red-50",
     iconColor: "text-red-600",
   },
 ];
 
-const TABS: TabType[] = ["Pending", "Active", "Rejected"];
-const TAB_COUNTS: Record<TabType, number> = {
-  Pending: 2,
-  Active: 2,
-  Rejected: 1,
-};
+const TABS: TabType[] = ["Pending", "Approved", "Rejected"];
 
 export default function ListingsPage() {
   const [activeTab, setActiveTab] = useState<TabType>("Pending");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [selectedListing, setSelectedListing] = useState<ListingData | null>(
+    null,
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [rejectingProductId, setRejectingProductId] = useState<string | null>(
+    null,
+  );
+  const [rejectionComment, setRejectionComment] = useState("");
+  const [page, setPage] = useState(1);
+
+  // Fetch pending products
+  const {
+    data: pendingData,
+    isLoading: pendingLoading,
+    error: pendingError,
+  } = usePendingProducts(page, 10);
+  const pendingProducts = pendingData?.data || [];
+
+  // Mutations
+  const approveMutation = useApproveProduct();
+  const rejectMutation = useRejectProduct();
+
+  const getImageUrl = (listing: ListingData): string => {
+    if (listing.attachments?.uploads?.[0]?.url) {
+      return listing.attachments.uploads[0].url;
+    }
+    return "https://via.placeholder.com/100?text=No+Image";
+  };
+
+  const handleApprove = (productId: string) => {
+    approveMutation.mutate(productId, {
+      onSuccess: () => {
+        setPage(1);
+      },
+    });
+  };
+
+  const handleRejectClick = (productId: string) => {
+    setRejectingProductId(productId);
+    setRejectionComment("");
+  };
+
+  const handleConfirmReject = () => {
+    if (rejectingProductId && rejectionComment.trim()) {
+      rejectMutation.mutate(
+        {
+          productId: rejectingProductId,
+          rejectionComment,
+        },
+        {
+          onSuccess: () => {
+            setRejectingProductId(null);
+            setRejectionComment("");
+            setPage(1);
+          },
+        },
+      );
+    }
+  };
+
+  const getDisplayProducts = (): ListingData[] => {
+    const allProducts = pendingProducts;
+
+    return allProducts.filter((product) => {
+      const matchesTab =
+        activeTab === "Pending" ||
+        (activeTab === "Approved" && product.productVerified) ||
+        (activeTab === "Rejected" && !product.productVerified);
+
+      const matchesSearch =
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.curator.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+      return matchesTab && matchesSearch;
+    });
+  };
 
   return (
-    <div className="min-h-screen ">
-      {/* Modal */}
-      <ListingDetailModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        product={
-          selectedListing
-            ? {
-                id: selectedListing.id,
-                image: selectedListing.image,
-                itemName: selectedListing.itemName,
-                brand: selectedListing.brand,
-                category: selectedListing.category,
-                condition: "New",
-                itemValue: "₦12,500,000",
-                pricePerDay: selectedListing.pricePerDay,
-                quantity: 1,
-                description:
-                  "Brand new " +
-                  selectedListing.itemName +
-                  " in classic black. Never worn. Comes with original box, dust bag, and authentication card. Investment-grade luxury piece.",
-                images: [
-                  selectedListing.image,
-                  selectedListing.image,
-                  selectedListing.image,
-                  selectedListing.image,
-                ],
-                status: selectedListing.status,
-              }
-            : undefined
-        }
-      />
+    <div className="min-h-screen">
+      {/* Modal for viewing details */}
+      {selectedListing && (
+        <ListingDetailModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          product={{
+            id: selectedListing.id,
+            image: getImageUrl(selectedListing),
+            itemName: selectedListing.name,
+            brand: selectedListing.subText,
+            category: selectedListing.categoryId || "Uncategorized",
+            condition: selectedListing.condition,
+            itemValue: `₦${selectedListing.originalValue?.toLocaleString() || 0}`,
+            pricePerDay: `₦${selectedListing.dailyPrice?.toLocaleString() || 0}`,
+            quantity: selectedListing.quantity,
+            description: selectedListing.description,
+            images: selectedListing.attachments?.uploads?.map((u) => u.url) || [
+              getImageUrl(selectedListing),
+            ],
+            status: selectedListing.productVerified ? "Active" : "Pending",
+          }}
+        />
+      )}
+
+      {/* Rejection Modal */}
+      {rejectingProductId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-bold mb-4">Reject Product</h3>
+            <textarea
+              value={rejectionComment}
+              onChange={(e) => setRejectionComment(e.target.value)}
+              placeholder="Enter rejection reason..."
+              className="w-full p-3 border border-gray-300 rounded-lg mb-4 min-h-24 focus:outline-none focus:ring-2 focus:ring-black"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setRejectingProductId(null)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmReject}
+                disabled={!rejectionComment.trim() || rejectMutation.isPending}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium disabled:opacity-50"
+              >
+                {rejectMutation.isPending ? "Rejecting..." : "Reject"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <div className="mb-6">
@@ -207,14 +284,17 @@ export default function ListingsPage() {
           {TABS.map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => {
+                setActiveTab(tab);
+                setPage(1);
+              }}
               className={`py-4 px-0 font-medium text-sm transition-colors border-b-2 ${
                 activeTab === tab
                   ? "text-gray-900 border-black"
                   : "text-gray-500 border-transparent hover:text-gray-700"
               }`}
             >
-              {tab} ({TAB_COUNTS[tab]})
+              {tab}
             </button>
           ))}
         </div>
@@ -222,119 +302,160 @@ export default function ListingsPage() {
 
       {/* Listings Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                  Image
-                </th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                  Item Name
-                </th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                  Category
-                </th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                  Curator
-                </th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                  Item Value
-                </th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                  Price / Day
-                </th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {LISTINGS.filter((l) => l.status === activeTab).map((listing) => (
-                <tr
-                  key={listing.id}
-                  className="border-b border-gray-200 hover:bg-gray-50 transition"
-                >
-                  <td className="py-4 px-6">
-                    <img
-                      src={listing.image}
-                      alt={listing.itemName}
-                      className="w-16 h-16 rounded object-cover"
-                    />
-                  </td>
-                  <td className="py-4 px-6">
-                    <Paragraph1 className="font-medium text-gray-900">
-                      {listing.itemName}
-                    </Paragraph1>
-                    <Paragraph1 className="text-xs text-gray-500">
-                      {listing.brand}
-                    </Paragraph1>
-                  </td>
-                  <td className="py-4 px-6">
-                    <Paragraph1 className="text-sm text-gray-700">
-                      {listing.category}
-                    </Paragraph1>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-                      <div>
-                        <Paragraph1 className="text-sm text-gray-900">
-                          {listing.curator.name}
-                        </Paragraph1>
-                        {listing.curator.verified && (
-                          <Paragraph1 className="text-xs text-green-600">
-                            Verified
-                          </Paragraph1>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <Paragraph1 className="font-medium text-gray-900">
-                      {listing.itemValue}
-                    </Paragraph1>
-                  </td>
-                  <td className="py-4 px-6">
-                    <Paragraph1 className="font-medium text-gray-900">
-                      {listing.pricePerDay}
-                    </Paragraph1>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-2">
-                      <button
-                        title="Approve"
-                        className="px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition flex items-center justify-center gap-2 font-medium text-sm"
-                      >
-                        <Check size={18} />
-                        Approve
-                      </button>
-                      <button
-                        title="Reject"
-                        className="px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-sm"
-                      >
-                        <X size={18} />
-                        Reject
-                      </button>
-                      <button
-                        title="View"
-                        onClick={() => {
-                          setSelectedListing(listing);
-                          setIsModalOpen(true);
-                        }}
-                        className="px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-sm"
-                      >
-                        <Eye size={18} />
-                        View
-                      </button>
-                    </div>
-                  </td>
+        {pendingLoading ? (
+          <div className="p-8 text-center">
+            <p className="text-gray-500">Loading products...</p>
+          </div>
+        ) : pendingError ? (
+          <div className="p-8 text-center">
+            <p className="text-red-500">Failed to load products</p>
+          </div>
+        ) : getDisplayProducts().length === 0 ? (
+          <div className="p-8 text-center">
+            <p className="text-gray-500">No products found</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200 bg-gray-50">
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    Image
+                  </th>
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    Item Name
+                  </th>
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    Curator
+                  </th>
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    Item Value
+                  </th>
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    Price / Day
+                  </th>
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    Status
+                  </th>
+                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {getDisplayProducts().map((product) => (
+                  <tr
+                    key={product.id}
+                    className="border-b border-gray-200 hover:bg-gray-50 transition"
+                  >
+                    <td className="py-4 px-6">
+                      <img
+                        src={getImageUrl(product)}
+                        alt={product.name}
+                        className="w-16 h-16 rounded object-cover"
+                      />
+                    </td>
+                    <td className="py-4 px-6">
+                      <Paragraph1 className="font-medium text-gray-900">
+                        {product.name}
+                      </Paragraph1>
+                      <Paragraph1 className="text-xs text-gray-500">
+                        {product.subText}
+                      </Paragraph1>
+                    </td>
+                    <td className="py-4 px-6">
+                      <Paragraph1 className="text-sm text-gray-900">
+                        {product.curator.name}
+                      </Paragraph1>
+                    </td>
+                    <td className="py-4 px-6">
+                      <Paragraph1 className="font-medium text-gray-900">
+                        ₦{product.originalValue?.toLocaleString() || 0}
+                      </Paragraph1>
+                    </td>
+                    <td className="py-4 px-6">
+                      <Paragraph1 className="font-medium text-gray-900">
+                        ₦{product.dailyPrice?.toLocaleString() || 0}
+                      </Paragraph1>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          product.productVerified
+                            ? "bg-green-100 text-green-700"
+                            : "bg-yellow-100 text-yellow-700"
+                        }`}
+                      >
+                        {product.productVerified ? "Approved" : "Pending"}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-2">
+                        {activeTab === "Pending" &&
+                          !product.productVerified && (
+                            <>
+                              <button
+                                onClick={() => handleApprove(product.id)}
+                                disabled={approveMutation.isPending}
+                                className="px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition flex items-center justify-center gap-2 font-medium text-sm disabled:opacity-50"
+                              >
+                                <Check size={18} />
+                                {approveMutation.isPending
+                                  ? "Approving..."
+                                  : "Approve"}
+                              </button>
+                              <button
+                                onClick={() => handleRejectClick(product.id)}
+                                className="px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-sm"
+                              >
+                                <X size={18} />
+                                Reject
+                              </button>
+                            </>
+                          )}
+                        <button
+                          onClick={() => {
+                            setSelectedListing(product);
+                            setIsModalOpen(true);
+                          }}
+                          className="px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-sm"
+                        >
+                          <Eye size={18} />
+                          View
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
+
+      {/* Pagination */}
+      {!pendingLoading && pendingProducts.length > 0 && (
+        <div className="mt-6 flex items-center justify-between">
+          <Paragraph1 className="text-sm text-gray-600">
+            Page {page} of {Math.ceil((pendingProducts.length || 0) / 10)}
+          </Paragraph1>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPage(Math.max(1, page - 1))}
+              disabled={page === 1}
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition font-medium text-sm"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => setPage(page + 1)}
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium text-sm"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
