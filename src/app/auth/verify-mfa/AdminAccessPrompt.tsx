@@ -44,9 +44,9 @@ export default function AdminAccessPrompt({ autoShow = true }: Props) {
   if (!isAdmin) return null;
   if (!open) return null;
 
-  const handleAdminDashboard = () => {
-    setShowOtpVerification(true);
-  };
+  // const handleAdminDashboard = () => {
+  //   setShowOtpVerification(true);
+  // };
 
   const handleVerifyOtp = async () => {
     if (!otp.trim() || !sessionToken) return;
@@ -91,7 +91,7 @@ export default function AdminAccessPrompt({ autoShow = true }: Props) {
           <div className="space-y-3">
             {/* Admin Dashboard */}
             <button
-              onClick={handleAdminDashboard}
+              onClick={() => handleNavigation("/admin/dashboard")}
               className="w-full p-4 text-left border border-gray-300 rounded-lg hover:bg-gray-50 transition flex items-start gap-4"
             >
               <div className="p-3 bg-red-100 text-red-600 rounded-lg flex-shrink-0 mt-1">
