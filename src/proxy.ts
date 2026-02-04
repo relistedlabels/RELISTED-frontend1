@@ -15,7 +15,7 @@ import type { NextRequest } from "next/server";
  * middleware call a secure server endpoint to validate the token and retrieve the role.
  */
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Ignore next internals, public assets and api routes
