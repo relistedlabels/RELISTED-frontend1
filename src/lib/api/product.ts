@@ -142,4 +142,27 @@ export const productApi = {
     apiFetch<UserProductsResponse>("/product/user-products", {
       method: "GET",
     }),
+
+  // Admin product management
+  getPendingProducts: (page: number = 1, count: number = 10) =>
+    apiFetch<ProductsResponse>(`/product/pending?page=${page}&count=${count}`, {
+      method: "GET",
+    }),
+
+  approveProduct: (id: string) =>
+    apiFetch<ProductResponse>(`/product/${id}/approve`, {
+      method: "PATCH",
+    }),
+
+  rejectProduct: (id: string, rejectionComment: string) =>
+    apiFetch<ProductResponse>(`/product/${id}/reject`, {
+      method: "PATCH",
+      body: JSON.stringify({ rejectionComment }),
+    }),
+
+  toggleAvailability: (id: string, isAvailable: boolean) =>
+    apiFetch<ProductResponse>(`/product/${id}/availability`, {
+      method: "PATCH",
+      body: JSON.stringify({ isAvailable }),
+    }),
 };

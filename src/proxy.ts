@@ -1,24 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-/**
- * Simple route protection middleware.
- *
- * How it works:
- * - Checks for a `token` cookie (recommended to be httpOnly and set by your backend) or
- *   a `dev_auth` cookie (development fallback used by the repo).
- * - Blocks access to `/listers` and `/dressers` for unauthenticated users.
- * - Blocks access to `/admin` for users without `user_role=ADMIN` cookie.
- *
- * IMPORTANT: For production security, set an httpOnly cookie containing a session
- * token on successful login and (optionally) a separate `user_role` cookie or have the
- * middleware call a secure server endpoint to validate the token and retrieve the role.
- */
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Ignore next internals, public assets and api routes
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api/") ||

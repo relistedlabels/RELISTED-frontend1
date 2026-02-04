@@ -8,7 +8,7 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: login,
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       // If MFA is required (admin user)
       if (data.requiresMfa && data.sessionToken) {
         setMfaSession({
@@ -25,6 +25,20 @@ export function useLogin() {
           role: data.user.role,
           name: data.user.name,
         });
+
+        // Set token in httpOnly cookie for middleware
+        try {
+          await fetch("/api/auth/set-token", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              token: data.token,
+              userRole: data.user.role,
+            }),
+          });
+        } catch (err) {
+          console.error("Failed to set token cookie:", err);
+        }
       }
     },
   });

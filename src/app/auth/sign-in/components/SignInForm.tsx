@@ -55,7 +55,10 @@ const SignInForm: React.FC = () => {
           onSubmit={(values) => {
             setEmailForResend(values.email);
             login.mutate(values, {
-              onSuccess: () => {
+              onSuccess: async () => {
+                // Wait a bit for state to be fully updated and cookies to be set
+                await new Promise((resolve) => setTimeout(resolve, 500));
+
                 const state = useUserStore.getState();
                 if (state.requiresMfa) {
                   router.push("/auth/verify-mfa");

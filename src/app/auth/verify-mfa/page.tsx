@@ -1,30 +1,39 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/store/useUserStore";
 import FullPageLoader from "@/common/ui/FullPageLoader";
-import AdminAccessPrompt from "@/common/ui/AdminAccessPrompt";
+import AdminAccessPrompt from "@/app/auth/verify-mfa/AdminAccessPrompt";
 import { motion } from "framer-motion";
 
 export default function VerifyMfaPage() {
   const router = useRouter();
-  const { sessionToken, requiresMfa } = useUserStore();
+  const { sessionToken, requiresMfa, token } = useUserStore();
+  const initialRenderRef = useRef(true);
 
   useEffect(() => {
-    // If no session token or MFA is not required, redirect back to sign in
-    if (!sessionToken || !requiresMfa) {
-      router.replace("/auth/sign-in");
+    // On initial render, check if user came here without MFA state
+    if (initialRenderRef.current) {
+      initialRenderRef.current = false;
+      if (!sessionToken && !requiresMfa) {
+        router.replace("/auth/sign-in");
+        return;
+      }
     }
-  }, [sessionToken, requiresMfa, router]);
 
-  if (!sessionToken || !requiresMfa) {
+    // If user completed MFA (has token now), let AdminAccessPrompt handle navigation
+    // Don't redirect automatically
+  }, [sessionToken, requiresMfa, token, router]);
+
+  // Only show loader if truly no session on initial load
+  if (!sessionToken && !requiresMfa && !token) {
     return <FullPageLoader />;
   }
 
   return (
-   <div
-      className="relative w-full h-screen bg-black bg-cover bg-center"
+    <div
+      className="relative w-full h-full min-h-screen bg-black bg-cover bg-center"
       style={{ backgroundImage: "url('/images/authbg.jpg')" }}
     >
       {/* Dark Overlay */}
@@ -37,7 +46,7 @@ export default function VerifyMfaPage() {
 
       {/* Center Content */}
       <motion.div
-        className="relative flex flex-col sm:items-center justify-center  text-white px-0 sm:px-6 sm:py-20"
+        className="relative flex flex-col sm:items-center justify-center px-0 sm:px-6 sm:py-20 min-h-screen"
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1.1, ease: "easeOut" }}
@@ -54,15 +63,9 @@ export default function VerifyMfaPage() {
             },
           }}
         >
-               <AdminAccessPrompt autoShow={true} />
-
+          <AdminAccessPrompt autoShow={true} />
         </motion.div>
       </motion.div>
-    </div> 
+    </div>
   );
 }
-
-
-
-
-

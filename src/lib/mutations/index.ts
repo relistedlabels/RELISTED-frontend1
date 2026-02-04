@@ -7,6 +7,8 @@ export * from "./auth/useVerifyAdminMfa";
 export * from "./product/useCreateProduct";
 export * from "./product/useUpdateProduct";
 export * from "./product/useDeleteProduct";
+export * from "./product/useProductApproval";
+export * from "./product/useToggleAvailability";
 export * from "./user/useCreateProfile";
 export * from "./user/useUpdateProfile";
 export * from "./brand.mutations";

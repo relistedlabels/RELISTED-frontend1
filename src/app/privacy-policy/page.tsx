@@ -7,7 +7,7 @@ export default function PrivacyPolicy() {
   return (
     <div className="w-full bg-white">
       {/* Hero Section */}
-      <section className="w-full bg-black text-white py-12 sm:py-20 px-4 sm:px-0">
+      <section className="w-full bg-black text-white pt-20 py-12 sm:py-20 px-4 sm:px-0">
         <div className="container mx-auto">
           <Header1Plus className="text-3xl sm:text-4xl tracking-wide uppercase mb-4">
             Privacy Policy

@@ -40,6 +40,7 @@ function ProfileSetUp() {
         >
           {role === "RENTER" && <CompleteProfileFlow />}
           {role === "LISTER" && <CompleteBusinessProfileFlow />}
+          {role === "ADMIN" && <CompleteBusinessProfileFlow />}
         </motion.div>
       </motion.div>
     </div>
