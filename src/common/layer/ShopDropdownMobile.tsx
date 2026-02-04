@@ -104,7 +104,7 @@ const ShopDropdownMobile: React.FC<ShopDropdownMobileProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex justify-between items-center p-4 border-b">
+            <div className="flex justify-between items-center p-4 ">
               <Paragraph1 className="font-bold">Shop</Paragraph1>
               <button
                 onClick={onClose}
@@ -121,7 +121,7 @@ const ShopDropdownMobile: React.FC<ShopDropdownMobileProps> = ({
               <Link
                 href="/shop?title=Shop&description=Browse+all+collections"
                 onClick={onClose}
-                className="flex items-center justify-between px-4 py-3 hover:bg-gray-900 border-b"
+                className="flex items-center justify-between px-4 py-3 hover:bg-gray-900 "
               >
                 <ParagraphLink1>All Products</ParagraphLink1>
               </Link>
@@ -143,7 +143,7 @@ const ShopDropdownMobile: React.FC<ShopDropdownMobileProps> = ({
                 return (
                   <div key={item.name}>
                     <div
-                      className="flex items-center justify-between px-4 py-3 hover:bg-gray-900 border-b cursor-pointer"
+                      className="flex items-center justify-between px-4 py-3 hover:bg-gray-900  cursor-pointer"
                       onClick={() =>
                         handleCategoryClick(item.name, !!hasSubMenu)
                       }
@@ -167,7 +167,7 @@ const ShopDropdownMobile: React.FC<ShopDropdownMobileProps> = ({
                           animate={{ height: "auto", opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
                           transition={{ duration: 0.2 }}
-                          className="overflow-hidden bg-gray-50"
+                          className="overflow-hidden bg-black"
                         >
                           {item.subMenu!.map((subItem) => {
                             const subUrl = buildShopUrl(
@@ -183,7 +183,7 @@ const ShopDropdownMobile: React.FC<ShopDropdownMobileProps> = ({
                                 key={subItem}
                                 href={subUrl}
                                 onClick={onClose}
-                                className="flex items-center px-8 py-3 hover:bg-gray-100 text-sm"
+                                className="flex items-center px-8 py-3 hover:bg-gray-900 text-sm"
                               >
                                 <ParagraphLink1>{subItem}</ParagraphLink1>
                               </Link>

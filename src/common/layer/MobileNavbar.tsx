@@ -117,7 +117,10 @@ export default function MobileNavbar() {
               </button>
               <ShopDropdownMobile
                 isOpen={isShopMenuOpen}
-                onClose={() => setIsShopMenuOpen(false)}
+                onClose={() => {
+                  setIsShopMenuOpen(false);
+                  setOpen(false);
+                }}
               />
               <Link href="/style-spotlight" onClick={() => setOpen(false)}>
                 <Paragraph1>Style Spotlight</Paragraph1>
