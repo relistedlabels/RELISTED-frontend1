@@ -24,7 +24,8 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({
       : link;
 
   return (
-    <div
+    <Link
+      href={shopUrl}
       className={`relative w-full group overflow-hidden cursor-pointer h-[200px] sm:h-auto`}
       style={{ height: undefined, ...(height && { ["--h"]: height }) }}
     >
@@ -54,7 +55,7 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({
           </button>
         </Link>
       </div>
-    </div>
+    </Link>
   );
 };
 

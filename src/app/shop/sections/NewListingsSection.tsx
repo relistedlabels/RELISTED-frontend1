@@ -5,8 +5,12 @@ import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import Filters from "../components/Filters";
 import { useProductsQuery } from "@/lib/queries/product/useProductsQuery";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function NewListingsSection() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   const {
     data: filteredProducts = [],
     isLoading: loading,
