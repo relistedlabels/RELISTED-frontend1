@@ -49,19 +49,19 @@ const NAV_LINKS: NavItem[] = [
     title: "Women",
     description: "Shop women's collections",
   },
-  {
-    name: "Kids",
-    subMenu: null,
-    filter: { key: "gender", value: "Kids" },
-    title: "Kids",
-    description: "Shop kids' collections",
-  },
-  {
-    name: "Sale",
-    subMenu: null,
-    title: "Sale",
-    description: "Browse our sale items",
-  },
+  // {
+  //   name: "Kids",
+  //   subMenu: null,
+  //   filter: { key: "gender", value: "Kids" },
+  //   title: "Kids",
+  //   description: "Shop kids' collections",
+  // },
+  // {
+  //   name: "Sale",
+  //   subMenu: null,
+  //   title: "Sale",
+  //   description: "Browse our sale items",
+  // },
 ];
 
 interface ShopDropdownMobileProps {

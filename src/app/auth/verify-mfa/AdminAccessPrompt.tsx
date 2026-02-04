@@ -72,8 +72,8 @@ export default function AdminAccessPrompt({ autoShow = true }: Props) {
   };
 
   return (
-    <div className="font-sans  flex items-center justify-center  p-4">
-      <div className="max-w-xl w-full bg-white p-8 sm:rounded-3xl text-gray-600 shadow-md">
+    <div className="font-sans   flex items-center justify-center  ">
+      <div className="max-w-xl w-full h-screen sm:h-fit bg-white py-8 p-4 sm:p-8 sm:rounded-3xl text-gray-600 shadow-md">
         {/* Header */}
         <div className="mb-8 text-center flex flex-col items-center">
           <img src="/images/logo1.svg" alt="Logo" className="h-10 w-10 mb-4" />
@@ -130,7 +130,7 @@ export default function AdminAccessPrompt({ autoShow = true }: Props) {
 
             {/* Renter Dashboard */}
             <button
-              onClick={() => handleNavigation("/")}
+              onClick={() => handleNavigation("/renters/orders")}
               className="w-full p-4 text-left border border-gray-300 rounded-lg hover:bg-gray-50 transition flex items-start gap-4"
             >
               <div className="p-3 bg-purple-100 text-purple-600 rounded-lg flex-shrink-0 mt-1">
@@ -138,7 +138,7 @@ export default function AdminAccessPrompt({ autoShow = true }: Props) {
               </div>
               <div className="flex-1">
                 <Paragraph3 className="font-semibold text-black mb-1">
-                  Renter Page
+                  Renter Dashboard
                 </Paragraph3>
                 <Paragraph1 className="text-xs text-gray-600">
                   Browse, rent & manage your wardrobe
