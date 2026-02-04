@@ -15,6 +15,7 @@ import * as Yup from "yup";
 import { useLogin, useResendOtp } from "@/lib/mutations";
 import { useRouter } from "next/navigation";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
+import { useUserStore } from "@/store/useUserStore";
 
 const LoginSchema = Yup.object({
   email: Yup.string().email("Invalid email").required("Email is required"),
@@ -55,7 +56,12 @@ const SignInForm: React.FC = () => {
             setEmailForResend(values.email);
             login.mutate(values, {
               onSuccess: () => {
-                router.push("/listers/inventory");
+                const state = useUserStore.getState();
+                if (state.requiresMfa) {
+                  router.push("/auth/verify-mfa");
+                } else {
+                  router.push("/listers/inventory");
+                }
               },
             });
           }}
