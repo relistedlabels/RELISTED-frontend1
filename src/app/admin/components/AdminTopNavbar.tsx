@@ -2,28 +2,15 @@
 
 import React from "react";
 import { LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useAdminIdStore } from "@/store/useAdminIdStore";
-import { useUserStore } from "@/store/useUserStore";
 
 interface AdminTopNavbarProps {
   onLogout?: () => void;
 }
 
 export default function AdminTopNavbar({ onLogout }: AdminTopNavbarProps) {
-  const router = useRouter();
-  const adminId = useAdminIdStore((state) => state.adminId);
-  const { clearUser } = useUserStore();
-
   const handleLogout = () => {
     if (onLogout) {
       onLogout();
-    }
-    clearUser();
-    if (adminId) {
-      router.push(`/admin/${adminId}/auth/login`);
-    } else {
-      router.push("/auth/sign-in");
     }
   };
 

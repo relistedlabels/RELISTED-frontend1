@@ -20,18 +20,12 @@ import RentalCartView from "./RentalCartView";
 import { usePathname } from "next/navigation";
 import SearchModal from "./SearchModal";
 import { AuthActions } from "./AuthActions";
+import { shouldShowNavBar } from "@/lib/navbarRoutes";
 
 export default function DesktopNavbar() {
   const pathname = usePathname();
 
-  if (
-    pathname.includes("/auth") ||
-    pathname.includes("/listers") ||
-    pathname.startsWith("/admin") ||
-    pathname.startsWith("/waitlist") ||
-    pathname.startsWith("/dev")
-  )
-    return null;
+  if (!shouldShowNavBar(pathname)) return null;
 
   return (
     <nav className="bg-black/95  backdrop-blur-md hidden xl:block text-white fixed w-full z-50">

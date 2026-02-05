@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { validateAdminId } from "@/lib/adminSecretId";
 import { ReactNode } from "react";
 import AdminLayoutWrapper from "../components/AdminLayoutWrapper";
-import AdminIdSync from "./AdminIdSync";
+import AdminIdSync from "../components/AdminIdSync";
 
 interface AdminDashboardLayoutProps {
   children: ReactNode;

@@ -4,6 +4,8 @@ export * from "./auth/useLogout";
 export * from "./auth/useVerifyOtp";
 export * from "./auth/useResendOtp";
 export * from "./auth/useVerifyAdminMfa";
+export * from "./auth/useForgotPassword";
+export * from "./auth/useResetPassword";
 export * from "./product/useCreateProduct";
 export * from "./product/useUpdateProduct";
 export * from "./product/useDeleteProduct";

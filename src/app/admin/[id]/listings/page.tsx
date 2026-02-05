@@ -97,7 +97,9 @@ export default function ListingsPage() {
     isLoading: pendingLoading,
     error: pendingError,
   } = usePendingProducts(page, 10);
-  const pendingProducts = pendingData?.data || [];
+  const pendingProducts = Array.isArray(pendingData?.data)
+    ? pendingData.data
+    : [];
 
   // Mutations
   const approveMutation = useApproveProduct();

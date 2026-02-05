@@ -12,7 +12,7 @@ import Link from "next/link";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useLogin, useResendOtp } from "@/lib/mutations";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { useUserStore } from "@/store/useUserStore";
 
@@ -27,7 +27,9 @@ export default function AdminSignInForm() {
   const login = useLogin();
   const resendOtp = useResendOtp();
   const router = useRouter();
+  const params = useParams();
   const adminId = useAdminIdStore((state) => state.adminId);
+  const paramAdminId = params.id;
 
   const isVerificationError = (msg: string) =>
     /verify|verification|inbox/i.test(msg);
@@ -129,7 +131,7 @@ export default function AdminSignInForm() {
 
                 <div className="flex justify-end mt-2">
                   <Link
-                    href="/auth/forgot-password"
+                    href={`/auth/forgot-password?returnTo=${encodeURIComponent(`/admin/${adminId}/auth/login`)}`}
                     className="text-sm font-medium"
                   >
                     Forgot password?

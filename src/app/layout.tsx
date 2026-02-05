@@ -71,7 +71,7 @@ export default function RootLayout({
             <DesktopNavbar />
             <MobileNavbar />
 
-            <Header />
+            {/* <Header /> */}
             {children}
             <Toaster position="top-right" />
             <Footer />

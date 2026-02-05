@@ -11,20 +11,15 @@ import RentalCartView from "./RentalCartView";
 import { usePathname } from "next/navigation";
 import SearchModal from "./SearchModal";
 import ShopDropdownMobile from "./ShopDropdownMobile";
+import { shouldShowNavBar } from "@/lib/navbarRoutes";
+import { AuthActions } from "./AuthActions";
 
 export default function MobileNavbar() {
   const [open, setOpen] = useState(false);
   const [isShopMenuOpen, setIsShopMenuOpen] = useState(false);
   const pathname = usePathname();
 
-  if (
-    pathname.includes("/auth") ||
-    pathname.includes("/listers") ||
-    pathname.startsWith("/admin") ||
-    pathname.startsWith("/waitlist") ||
-    pathname.startsWith("/dev")
-  )
-    return null;
+  if (!shouldShowNavBar(pathname)) return null;
 
   return (
     <div className="fixed top-0 left-0 w-full bg-black text-white  px-4 py-5 z-50 xl:hidden">
@@ -138,22 +133,7 @@ export default function MobileNavbar() {
                 <Paragraph1>Favourites</Paragraph1>
               </Link>
               <div className="mt-8 flex flex-col gap-3">
-                <Button
-                  text="Sign In"
-                  isLink={true}
-                  href="/auth/sign-in"
-                  backgroundColor="bg-transparent"
-                  border="border border-white "
-                  color="text-white"
-                />
-                <Button
-                  text="Sign Up"
-                  isLink={true}
-                  href="/auth/create-account"
-                  backgroundColor="bg-white"
-                  color="text-black hover:text-white"
-                  border="border border-white "
-                />
+                <AuthActions />
               </div>
             </motion.div>
           </motion.div>

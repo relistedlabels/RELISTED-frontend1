@@ -3,16 +3,16 @@
 import React, { useState } from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { HiOutlineEnvelope } from "react-icons/hi2";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useForgotPassword } from "@/lib/mutations";
-import { AlertCircle, CheckCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
-const ForgotPasswordEmail: React.FC = () => {
+const AdminForgotPasswordEmail: React.FC = () => {
   const [email, setEmail] = useState("");
   const [rateLimitError, setRateLimitError] = useState("");
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const returnTo = searchParams.get("returnTo");
+  const params = useParams();
+  const adminId = params.id;
   const forgotPasswordMutation = useForgotPassword();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -22,17 +22,13 @@ const ForgotPasswordEmail: React.FC = () => {
     forgotPasswordMutation.mutate(
       { email },
       {
-        onSuccess: (response: any) => {
-          if (response.success) {
-            // Store email and return path in session storage for the verification step
+        onSuccess: (response: unknown) => {
+          const data = response as { success: boolean };
+          if (data.success) {
+            // Store email and adminId in session storage
             sessionStorage.setItem("resetEmail", email);
-            sessionStorage.setItem(
-              "forgotPasswordReturnTo",
-              returnTo || "/auth/sign-in",
-            );
-            router.push(
-              `/auth/forgot-password/verify?returnTo=${encodeURIComponent(returnTo || "/auth/sign-in")}`,
-            );
+            sessionStorage.setItem("adminId", String(adminId));
+            router.push(`/admin/${adminId}/auth/forgot-password/verify`);
           }
         },
         onError: (error: any) => {
@@ -107,7 +103,7 @@ const ForgotPasswordEmail: React.FC = () => {
           <div className="text-center">
             <button
               type="button"
-              onClick={() => router.push(returnTo || "/auth/sign-in")}
+              onClick={() => router.push(`/admin/${adminId}/auth/login`)}
               className="text-sm text-gray-600 hover:text-black transition-colors"
             >
               Back to Sign In
@@ -119,4 +115,4 @@ const ForgotPasswordEmail: React.FC = () => {
   );
 };
 
-export default ForgotPasswordEmail;
+export default AdminForgotPasswordEmail;

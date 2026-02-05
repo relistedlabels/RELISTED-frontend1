@@ -6,6 +6,7 @@ import AdminSidebar from "./AdminSidebar";
 import AdminTopNavbar from "./AdminTopNavbar";
 import { useLogout } from "@/lib/mutations";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
+import MobileDesktopRecommendation from "@/common/ui/MobileDesktopRecommendation";
 
 interface AdminLayoutWrapperProps {
   children: ReactNode;
@@ -41,6 +42,7 @@ export default function AdminLayoutWrapper({
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
+      <MobileDesktopRecommendation />
       <AdminTopNavbar onLogout={handleLogout} />
       <AdminSidebar
         userAvatarUrl="https://i.pravatar.cc/150?img=30"

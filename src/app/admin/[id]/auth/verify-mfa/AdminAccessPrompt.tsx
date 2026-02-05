@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
-import { useMe } from "@/lib/queries/auth/useMe";
 import { useRouter } from "next/navigation";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { useVerifyAdminMfa } from "@/lib/mutations";
@@ -16,11 +15,10 @@ export default function AdminAccessPrompt({
   autoShow?: boolean;
 }) {
   const inputsRef = useRef<HTMLInputElement[]>([]);
-  const { data: user } = useMe();
   const router = useRouter();
   const adminId = useAdminIdStore((state) => state.adminId);
   const verifyMfa = useVerifyAdminMfa();
-  const { sessionToken, requiresMfa } = useUserStore();
+  const { sessionToken, requiresMfa, name } = useUserStore();
 
   const [open, setOpen] = useState(false);
   const [otp, setOtp] = useState("");
@@ -29,25 +27,24 @@ export default function AdminAccessPrompt({
   // Auto-show when admin logs in with MFA pending
   useEffect(() => {
     if (!autoShow) return;
-    if (!user) return;
+    if (!sessionToken) return;
     if (!requiresMfa) return;
 
     setOpen(true);
-  }, [autoShow, user, requiresMfa]);
+  }, [autoShow, sessionToken, requiresMfa]);
 
   // Redirect after successful verification
   useEffect(() => {
     if (isSuccess) {
       const timer = setTimeout(() => {
         router.push(`/admin/${adminId}/dashboard`);
-      }, 1500);
+      }, 2500);
       return () => clearTimeout(timer);
     }
   }, [isSuccess, adminId, router]);
 
-  if (!user) return null;
-  const isAdmin = user.role?.toUpperCase() === "ADMIN";
-  if (!isAdmin) return null;
+  if (!sessionToken) return null;
+  if (!requiresMfa) return null;
   if (!open) return null;
 
   const handleVerifyOtp = async () => {
@@ -64,13 +61,13 @@ export default function AdminAccessPrompt({
   };
 
   return (
-    <div className="font-sans flex items-center justify-center">
-      <div className="max-w-xl w-full h-screen sm:h-fit bg-white py-8 p-4 sm:p-8 sm:rounded-3xl text-gray-600 shadow-md">
+    <div className="font-sans flex items-center justify-center min-h-screen p-4">
+      <div className="max-w-xl w-full bg-white py-8 p-4 sm:p-8 sm:rounded-3xl text-gray-600 shadow-md min-h-fit">
         {/* Header */}
         <div className="mb-8 text-center flex flex-col items-center">
           <img src="/images/logo1.svg" alt="Logo" className="h-10 w-10 mb-4" />
           <Paragraph3 className="text-2xl font-bold text-black mb-1">
-            Welcome, {user.name || "Admin"}
+            Welcome, {name || "Admin"}
           </Paragraph3>
           <Paragraph1 className="text-sm text-gray-600 max-w-[350px]">
             {isSuccess
@@ -81,9 +78,9 @@ export default function AdminAccessPrompt({
 
         {isSuccess ? (
           /* Loading State */
-          <div className="flex flex-col items-center justify-center py-12">
+          <div className="flex flex-col items-center justify-center w-full py-16">
             <div className="w-12 h-12 border-4 border-gray-200 border-t-black rounded-full animate-spin mb-6"></div>
-            <div className="text-center">
+            <div className="text-center w-full">
               <Paragraph3 className="text-lg font-semibold text-black mb-2">
                 Getting your dashboard ready
               </Paragraph3>

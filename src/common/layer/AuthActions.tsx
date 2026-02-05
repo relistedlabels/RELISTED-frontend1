@@ -1,26 +1,22 @@
 "use client";
 
 import { useMe } from "@/lib/queries/auth/useMe";
-import { useLogout } from "@/lib/mutations";
 import Button from "../ui/Button";
+import UserProfileDropdown from "./UserProfileDropdown";
 
 export function AuthActions() {
   const { data: user, isLoading } = useMe();
-  const logout = useLogout();
 
   // Avoid flicker while auth state is resolving
   if (isLoading) return null;
 
-  // ✅ Logged in → show Logout
+  // ✅ Logged in → show User Profile Dropdown
   if (user) {
     return (
-      <Button
-        text={logout.isPending ? "Logging out..." : "Log out"}
-        onClick={() => logout.mutate()}
-        backgroundColor="bg-transparent"
-        border="border border-white"
-        color="text-white"
-        disabled={logout.isPending}
+      <UserProfileDropdown
+        userName={user.name}
+        userAvatar={null}
+        userRole={user.role}
       />
     );
   }
