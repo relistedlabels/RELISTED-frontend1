@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
+import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 
 interface UserDetailsCardProps {
@@ -21,9 +22,12 @@ interface UserDetailsCardProps {
 
 export default function UserDetailsCard({ user }: UserDetailsCardProps) {
   const router = useRouter();
+  const adminId = useAdminIdStore((state) => state.adminId);
 
   const handleViewProfile = () => {
-    router.push(`/admin/users/${user.id}`);
+    if (adminId) {
+      router.push(`/admin/${adminId}/users/${user.id}`);
+    }
   };
 
   return (

@@ -12,6 +12,7 @@ import {
   Heart,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import UserProfileOverview from "./components/UserProfileOverview";
 import UserRecords from "./components/UserRecords";
@@ -21,7 +22,7 @@ import SavedItems from "./components/SavedItems";
 
 interface UserDetailPageProps {
   params: {
-    id: string;
+    userId: string;
   };
 }
 
@@ -63,6 +64,7 @@ const TABS = [
 
 export default function UserDetailPage({ params }: UserDetailPageProps) {
   const router = useRouter();
+  const adminId = useAdminIdStore((state) => state.adminId);
   const [activeTab, setActiveTab] = useState("summary");
   const [direction, setDirection] = useState(0);
 
@@ -71,6 +73,14 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
     const newIndex = TABS.findIndex((t) => t.id === tabId);
     setDirection(newIndex > currentIndex ? 1 : -1);
     setActiveTab(tabId);
+  };
+
+  const handleGoBack = () => {
+    if (adminId) {
+      router.push(`/admin/${adminId}/users`);
+    } else {
+      router.back();
+    }
   };
 
   const renderTabContent = () => {
@@ -96,20 +106,18 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
         {/* Header */}
         <div className="flex items-center justify-between gap-4 mb-6 border-b border-gray-200 pb-6">
           <div className="flex items-center gap-4 flex-1">
-            <div className="flex items-center gap-4">
-              <img
-                src={DEMO_USER.avatar}
-                alt={DEMO_USER.name}
-                className="w-12 h-12 rounded-full object-cover"
-              />
-              <div>
-                <Paragraph2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-                  {DEMO_USER.name}
-                </Paragraph2>
-                <Paragraph1 className="text-xs text-gray-500">
-                  Joined {DEMO_USER.joinDate}
-                </Paragraph1>
-              </div>
+            <img
+              src={DEMO_USER.avatar}
+              alt={DEMO_USER.name}
+              className="w-12 h-12 rounded-full object-cover"
+            />
+            <div>
+              <Paragraph2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
+                {DEMO_USER.name}
+              </Paragraph2>
+              <Paragraph1 className="text-xs text-gray-500">
+                Joined {DEMO_USER.joinDate}
+              </Paragraph1>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -120,7 +128,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
               Suspend
             </button>
             <button
-              onClick={() => router.back()}
+              onClick={handleGoBack}
               className="text-gray-400 hover:text-gray-600"
             >
               ✕

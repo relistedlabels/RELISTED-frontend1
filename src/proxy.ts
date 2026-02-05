@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -18,15 +17,25 @@ export function proxy(req: NextRequest) {
   const devAuth = req.cookies.get("dev_auth")?.value ?? null;
   const userRole = req.cookies.get("user_role")?.value ?? null;
 
+  // Admin auth routes: public (no auth required)
+  if (pathname.match(/^\/admin\/[^/]+\/auth\//)) {
+    return NextResponse.next();
+  }
+
   // Admin routes: require authenticated + ADMIN role
   if (pathname.startsWith("/admin")) {
     if (!token && !devAuth) {
-      return NextResponse.redirect(new URL("/auth/sign-in", req.url));
+      // Rewrite to not-found page for users without token
+      return NextResponse.rewrite(new URL("/not-found", req.url), {
+        status: 404,
+      });
     }
 
     if (userRole !== "ADMIN") {
-      // Redirect non-admins to home (or a 403 page if you prefer)
-      return NextResponse.redirect(new URL("/", req.url));
+      // Rewrite to not-found page for non-admins
+      return NextResponse.rewrite(new URL("/not-found", req.url), {
+        status: 404,
+      });
     }
 
     return NextResponse.next();

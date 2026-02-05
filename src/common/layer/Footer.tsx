@@ -3,18 +3,12 @@ import React from "react";
 import { Header1, Header1Plus, ParagraphLink2 } from "../ui/Text";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { shouldShowNavBar } from "@/lib/navbarRoutes";
 
 export default function Footer() {
   const pathname = usePathname();
 
-  if (
-    pathname.includes("/auth") ||
-    pathname.includes("/listers") ||
-    pathname.startsWith("/admin") ||
-    pathname.startsWith("/waitlist") ||
-    pathname.startsWith("/dev")
-  )
-    return null;
+  if (!shouldShowNavBar(pathname)) return null;
 
   return (
     <footer className="w-full bg-black text-white py-14 px-4 sm:px-0  font-light tracking-wide">

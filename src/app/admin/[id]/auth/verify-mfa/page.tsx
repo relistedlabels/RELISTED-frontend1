@@ -2,13 +2,14 @@
 
 import React, { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { useUserStore } from "@/store/useUserStore";
-import FullPageLoader from "@/common/ui/FullPageLoader";
-import AdminAccessPrompt from "@/app/auth/verify-mfa/AdminAccessPrompt";
 import { motion } from "framer-motion";
+import AdminAccessPrompt from "./AdminAccessPrompt";
 
-export default function VerifyMfaPage() {
+export default function AdminVerifyMfaPage() {
   const router = useRouter();
+  const adminId = useAdminIdStore((state) => state.adminId);
   const { sessionToken, requiresMfa, token } = useUserStore();
   const initialRenderRef = useRef(true);
 
@@ -17,19 +18,16 @@ export default function VerifyMfaPage() {
     if (initialRenderRef.current) {
       initialRenderRef.current = false;
       if (!sessionToken && !requiresMfa) {
-        router.replace("/auth/sign-in");
+        if (adminId) {
+          router.replace(`/admin/${adminId}/auth/login`);
+        }
         return;
       }
     }
 
     // If user completed MFA (has token now), let AdminAccessPrompt handle navigation
     // Don't redirect automatically
-  }, [sessionToken, requiresMfa, token, router]);
-
-  // Only show loader if truly no session on initial load
-  if (!sessionToken && !requiresMfa && !token) {
-    return <FullPageLoader />;
-  }
+  }, [sessionToken, requiresMfa, token, router, adminId]);
 
   return (
     <div
