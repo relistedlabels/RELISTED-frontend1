@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
   HiOutlineHome,
@@ -20,46 +21,51 @@ interface NavItem {
   id: string;
   label: string;
   icon: React.ElementType;
-  href: string;
+  getHref: (adminId: string) => string;
 }
 
-const navItems: NavItem[] = [
+const getNavItems = (adminId: string): NavItem[] => [
   {
     id: "overview",
     label: "Overview",
     icon: HiOutlineHome,
-    href: "/admin/dashboard",
+    getHref: (id) => `/admin/${id}/dashboard`,
   },
-  { id: "users", label: "Users", icon: HiOutlineUsers, href: "/admin/users" },
+  {
+    id: "users",
+    label: "Users",
+    icon: HiOutlineUsers,
+    getHref: (id) => `/admin/${id}/users`,
+  },
   {
     id: "listings",
     label: "Listings",
     icon: HiOutlineCube,
-    href: "/admin/listings",
+    getHref: (id) => `/admin/${id}/listings`,
   },
   {
     id: "orders",
     label: "Orders",
     icon: HiOutlineShoppingCart,
-    href: "/admin/orders",
+    getHref: (id) => `/admin/${id}/orders`,
   },
   {
     id: "wallet",
     label: "Wallet & Escrow",
     icon: HiOutlineCreditCard,
-    href: "/admin/wallet",
+    getHref: (id) => `/admin/${id}/wallet`,
   },
   {
     id: "dispute",
     label: "Dispute",
     icon: HiOutlineFolder,
-    href: "/admin/dispute",
+    getHref: (id) => `/admin/${id}/dispute`,
   },
   {
     id: "settings",
     label: "Settings",
     icon: HiOutlineCog6Tooth,
-    href: "/admin/settings",
+    getHref: (id) => `/admin/${id}/settings`,
   },
 ];
 
@@ -77,7 +83,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   onLogout,
 }) => {
   const pathname = usePathname();
+  const adminId = useAdminIdStore((state) => state.adminId);
   const [isMobileExpanded, setIsMobileExpanded] = useState(false);
+
+  const navItems = getNavItems(adminId || "");
 
   const linkBaseClasses =
     "flex items-center w-full p-3 mb-2 rounded-xl transition-colors duration-200 group";
@@ -133,13 +142,14 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
       <nav className="flex-1 px-4 overflow-y-auto hide-scrollbar">
         <ul>
           {navItems.map((item) => {
+            const href = item.getHref(adminId || "");
             const isActive =
-              pathname === item.href || pathname.startsWith(item.href + "/");
+              pathname === href || pathname.startsWith(href + "/");
 
             return (
               <li key={item.id}>
                 <Link
-                  href={item.href}
+                  href={href}
                   onClick={() => setIsMobileExpanded(false)}
                   className={`${linkBaseClasses} ${
                     isActive ? activeLinkClasses : inactiveLinkClasses

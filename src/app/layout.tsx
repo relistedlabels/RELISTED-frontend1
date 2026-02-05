@@ -8,7 +8,6 @@ import DevGuard from "@/common/layer/DevGuard";
 import { Header } from "./Header";
 import { UploaderProvider } from "@/context/UploaderProvider";
 import { Toaster } from "sonner";
-import AdminAccessPrompt from "@/app/auth/verify-mfa/AdminAccessPrompt";
 
 export const metadata: Metadata = {
   title:
@@ -72,7 +71,6 @@ export default function RootLayout({
             <DesktopNavbar />
             <MobileNavbar />
 
-            {/* <AdminAccessPrompt /> */}
             <Header />
             {children}
             <Toaster position="top-right" />
