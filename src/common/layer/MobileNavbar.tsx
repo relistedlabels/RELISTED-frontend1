@@ -12,7 +12,7 @@ import { usePathname } from "next/navigation";
 import SearchModal from "./SearchModal";
 import ShopDropdownMobile from "./ShopDropdownMobile";
 import { shouldShowNavBar } from "@/lib/navbarRoutes";
-import { AuthActions } from "./AuthActions";
+import { MobileAuthActions } from "./MobileAuthActions";
 
 export default function MobileNavbar() {
   const [open, setOpen] = useState(false);
@@ -132,8 +132,8 @@ export default function MobileNavbar() {
               <Link href="/renters/favorites" onClick={() => setOpen(false)}>
                 <Paragraph1>Favourites</Paragraph1>
               </Link>
-              <div className="mt-8 flex flex-col gap-3">
-                <AuthActions />
+              <div className="mt- flex flex-col gap-3">
+                <MobileAuthActions onClose={() => setOpen(false)} />
               </div>
             </motion.div>
           </motion.div>

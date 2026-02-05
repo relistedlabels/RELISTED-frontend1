@@ -8,40 +8,21 @@ import {
   CheckCircle,
   AlertCircle,
   XCircle,
-  Check,
-  X,
-  Eye,
 } from "lucide-react";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import { usePendingProducts } from "@/lib/queries/product/usePendingProducts";
+import { useApprovedProducts } from "@/lib/queries/product/useApprovedProducts";
+import { useRejectedProducts } from "@/lib/queries/product/useRejectedProducts";
 import {
   useApproveProduct,
   useRejectProduct,
 } from "@/lib/mutations/product/useProductApproval";
+import { UserProduct } from "@/lib/api/product";
+import { useQueryClient } from "@tanstack/react-query";
 import ListingDetailModal from "./components/ListingDetailModal";
-
-interface ListingData {
-  id: string;
-  name: string;
-  subText: string;
-  description: string;
-  condition: string;
-  dailyPrice: number;
-  originalValue: number;
-  quantity: number;
-  status: string;
-  productVerified: boolean;
-  isActive: boolean;
-  curator: {
-    name: string;
-    id: string;
-  };
-  attachments: {
-    uploads: Array<{ url: string }>;
-  } | null;
-  categoryId?: string | null;
-  brandId?: string | null;
-}
+import PendingListingsTable from "./components/PendingListingsTable";
+import ApprovedListingsTable from "./components/ApprovedListingsTable";
+import RejectedListingsTable from "./components/RejectedListingsTable";
 
 type TabType = "Pending" | "Approved" | "Rejected";
 
@@ -79,9 +60,10 @@ const STATS = [
 const TABS: TabType[] = ["Pending", "Approved", "Rejected"];
 
 export default function ListingsPage() {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabType>("Pending");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedListing, setSelectedListing] = useState<ListingData | null>(
+  const [selectedListing, setSelectedListing] = useState<UserProduct | null>(
     null,
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -91,31 +73,44 @@ export default function ListingsPage() {
   const [rejectionComment, setRejectionComment] = useState("");
   const [page, setPage] = useState(1);
 
-  // Fetch pending products
+  // Fetch products based on active tab
   const {
     data: pendingData,
     isLoading: pendingLoading,
     error: pendingError,
   } = usePendingProducts(page, 10);
-  const pendingProducts = Array.isArray(pendingData?.data)
-    ? pendingData.data
+  const pendingProducts = Array.isArray(pendingData?.data?.products)
+    ? pendingData.data.products
+    : [];
+
+  const {
+    data: approvedData,
+    isLoading: approvedLoading,
+    error: approvedError,
+  } = useApprovedProducts(page, 10);
+  const approvedProducts = Array.isArray(approvedData?.data?.products)
+    ? approvedData.data.products
+    : [];
+
+  const {
+    data: rejectedData,
+    isLoading: rejectedLoading,
+    error: rejectedError,
+  } = useRejectedProducts(page, 10);
+  const rejectedProducts = Array.isArray(rejectedData?.data?.products)
+    ? rejectedData.data.products
     : [];
 
   // Mutations
   const approveMutation = useApproveProduct();
   const rejectMutation = useRejectProduct();
 
-  const getImageUrl = (listing: ListingData): string => {
-    if (listing.attachments?.uploads?.[0]?.url) {
-      return listing.attachments.uploads[0].url;
-    }
-    return "https://via.placeholder.com/100?text=No+Image";
-  };
-
   const handleApprove = (productId: string) => {
     approveMutation.mutate(productId, {
       onSuccess: () => {
-        setPage(1);
+        // Invalidate both pending and approved queries
+        queryClient.invalidateQueries({ queryKey: ["products", "pending"] });
+        queryClient.invalidateQueries({ queryKey: ["products", "approved"] });
       },
     });
   };
@@ -136,28 +131,17 @@ export default function ListingsPage() {
           onSuccess: () => {
             setRejectingProductId(null);
             setRejectionComment("");
-            setPage(1);
+            // Invalidate both pending and rejected queries
+            queryClient.invalidateQueries({
+              queryKey: ["products", "pending"],
+            });
+            queryClient.invalidateQueries({
+              queryKey: ["products", "rejected"],
+            });
           },
         },
       );
     }
-  };
-
-  const getDisplayProducts = (): ListingData[] => {
-    const allProducts = pendingProducts;
-
-    return allProducts.filter((product) => {
-      const matchesTab =
-        activeTab === "Pending" ||
-        (activeTab === "Approved" && product.productVerified) ||
-        (activeTab === "Rejected" && !product.productVerified);
-
-      const matchesSearch =
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.curator.name.toLowerCase().includes(searchQuery.toLowerCase());
-
-      return matchesTab && matchesSearch;
-    });
   };
 
   return (
@@ -169,7 +153,9 @@ export default function ListingsPage() {
           onClose={() => setIsModalOpen(false)}
           product={{
             id: selectedListing.id,
-            image: getImageUrl(selectedListing),
+            image:
+              selectedListing.attachments?.uploads?.[0]?.url ||
+              "https://via.placeholder.com/100?text=No+Image",
             itemName: selectedListing.name,
             brand: selectedListing.subText,
             category: selectedListing.categoryId || "Uncategorized",
@@ -179,7 +165,8 @@ export default function ListingsPage() {
             quantity: selectedListing.quantity,
             description: selectedListing.description,
             images: selectedListing.attachments?.uploads?.map((u) => u.url) || [
-              getImageUrl(selectedListing),
+              selectedListing.attachments?.uploads?.[0]?.url ||
+                "https://via.placeholder.com/100?text=No+Image",
             ],
             status: selectedListing.productVerified ? "Active" : "Pending",
           }}
@@ -304,160 +291,89 @@ export default function ListingsPage() {
 
       {/* Listings Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        {pendingLoading ? (
-          <div className="p-8 text-center">
-            <p className="text-gray-500">Loading products...</p>
-          </div>
-        ) : pendingError ? (
-          <div className="p-8 text-center">
-            <p className="text-red-500">Failed to load products</p>
-          </div>
-        ) : getDisplayProducts().length === 0 ? (
-          <div className="p-8 text-center">
-            <p className="text-gray-500">No products found</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                    Image
-                  </th>
-                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                    Item Name
-                  </th>
-                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                    Curator
-                  </th>
-                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                    Item Value
-                  </th>
-                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                    Price / Day
-                  </th>
-                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                    Status
-                  </th>
-                  <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {getDisplayProducts().map((product) => (
-                  <tr
-                    key={product.id}
-                    className="border-b border-gray-200 hover:bg-gray-50 transition"
-                  >
-                    <td className="py-4 px-6">
-                      <img
-                        src={getImageUrl(product)}
-                        alt={product.name}
-                        className="w-16 h-16 rounded object-cover"
-                      />
-                    </td>
-                    <td className="py-4 px-6">
-                      <Paragraph1 className="font-medium text-gray-900">
-                        {product.name}
-                      </Paragraph1>
-                      <Paragraph1 className="text-xs text-gray-500">
-                        {product.subText}
-                      </Paragraph1>
-                    </td>
-                    <td className="py-4 px-6">
-                      <Paragraph1 className="text-sm text-gray-900">
-                        {product.curator.name}
-                      </Paragraph1>
-                    </td>
-                    <td className="py-4 px-6">
-                      <Paragraph1 className="font-medium text-gray-900">
-                        ₦{product.originalValue?.toLocaleString() || 0}
-                      </Paragraph1>
-                    </td>
-                    <td className="py-4 px-6">
-                      <Paragraph1 className="font-medium text-gray-900">
-                        ₦{product.dailyPrice?.toLocaleString() || 0}
-                      </Paragraph1>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          product.productVerified
-                            ? "bg-green-100 text-green-700"
-                            : "bg-yellow-100 text-yellow-700"
-                        }`}
-                      >
-                        {product.productVerified ? "Approved" : "Pending"}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-2">
-                        {activeTab === "Pending" &&
-                          !product.productVerified && (
-                            <>
-                              <button
-                                onClick={() => handleApprove(product.id)}
-                                disabled={approveMutation.isPending}
-                                className="px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition flex items-center justify-center gap-2 font-medium text-sm disabled:opacity-50"
-                              >
-                                <Check size={18} />
-                                {approveMutation.isPending
-                                  ? "Approving..."
-                                  : "Approve"}
-                              </button>
-                              <button
-                                onClick={() => handleRejectClick(product.id)}
-                                className="px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-sm"
-                              >
-                                <X size={18} />
-                                Reject
-                              </button>
-                            </>
-                          )}
-                        <button
-                          onClick={() => {
-                            setSelectedListing(product);
-                            setIsModalOpen(true);
-                          }}
-                          className="px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-sm"
-                        >
-                          <Eye size={18} />
-                          View
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        {activeTab === "Pending" && (
+          <PendingListingsTable
+            products={pendingProducts}
+            isLoading={pendingLoading}
+            error={pendingError}
+            searchQuery={searchQuery}
+            onApprove={handleApprove}
+            onReject={handleRejectClick}
+            onView={(product) => {
+              setSelectedListing(product);
+              setIsModalOpen(true);
+            }}
+            isApprovingPending={approveMutation.isPending}
+          />
+        )}
+        {activeTab === "Approved" && (
+          <ApprovedListingsTable
+            products={approvedProducts}
+            isLoading={approvedLoading}
+            error={approvedError}
+            searchQuery={searchQuery}
+            onView={(product) => {
+              setSelectedListing(product);
+              setIsModalOpen(true);
+            }}
+          />
+        )}
+        {activeTab === "Rejected" && (
+          <RejectedListingsTable
+            products={rejectedProducts}
+            isLoading={rejectedLoading}
+            error={rejectedError}
+            searchQuery={searchQuery}
+            onView={(product) => {
+              setSelectedListing(product);
+              setIsModalOpen(true);
+            }}
+          />
         )}
       </div>
 
       {/* Pagination */}
-      {!pendingLoading && pendingProducts.length > 0 && (
-        <div className="mt-6 flex items-center justify-between">
-          <Paragraph1 className="text-sm text-gray-600">
-            Page {page} of {Math.ceil((pendingProducts.length || 0) / 10)}
-          </Paragraph1>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setPage(Math.max(1, page - 1))}
-              disabled={page === 1}
-              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition font-medium text-sm"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => setPage(page + 1)}
-              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium text-sm"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
+      {(() => {
+        const currentProducts = (() => {
+          if (activeTab === "Pending") return pendingProducts;
+          if (activeTab === "Approved") return approvedProducts;
+          if (activeTab === "Rejected") return rejectedProducts;
+          return [];
+        })();
+
+        const loading = (() => {
+          if (activeTab === "Pending") return pendingLoading;
+          if (activeTab === "Approved") return approvedLoading;
+          if (activeTab === "Rejected") return rejectedLoading;
+          return false;
+        })();
+
+        return (
+          !loading &&
+          currentProducts.length > 0 && (
+            <div className="mt-6 flex items-center justify-between">
+              <Paragraph1 className="text-sm text-gray-600">
+                Page {page} of {Math.ceil((currentProducts.length || 0) / 10)}
+              </Paragraph1>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPage(Math.max(1, page - 1))}
+                  disabled={page === 1}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition font-medium text-sm"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setPage(page + 1)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium text-sm"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )
+        );
+      })()}
     </div>
   );
 }

@@ -4,7 +4,6 @@ import React, { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { useUserStore } from "@/store/useUserStore";
-import FullPageLoader from "@/common/ui/FullPageLoader";
 import { motion } from "framer-motion";
 import AdminAccessPrompt from "./AdminAccessPrompt";
 
@@ -29,11 +28,6 @@ export default function AdminVerifyMfaPage() {
     // If user completed MFA (has token now), let AdminAccessPrompt handle navigation
     // Don't redirect automatically
   }, [sessionToken, requiresMfa, token, router, adminId]);
-
-  // Only show loader if truly no session on initial load
-  if (!sessionToken && !requiresMfa && !token) {
-    return <FullPageLoader />;
-  }
 
   return (
     <div

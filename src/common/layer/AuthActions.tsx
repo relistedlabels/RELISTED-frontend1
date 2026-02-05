@@ -16,7 +16,7 @@ export function AuthActions() {
       <UserProfileDropdown
         userName={user.name}
         userAvatar={null}
-        userRole={user.role}
+        userRole={user.role?.toLowerCase() === "lister" ? "lister" : "renter"}
       />
     );
   }

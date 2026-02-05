@@ -11,9 +11,17 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "upload.wikimedia.org",
       },
+      {
+        protocol: "https",
+        hostname: "api.dicebear.com",
+      },
+      {
+        protocol: "https",
+        hostname: "i.pravatar.cc",
+      },
     ],
   },
-   experimental: {
+  experimental: {
     serverActions: {
       bodySizeLimit: "20mb", // 👈 FIXES 1MB LIMIT
     },

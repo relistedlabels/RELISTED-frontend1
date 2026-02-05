@@ -57,7 +57,7 @@ const CuratorProfileCard: React.FC<CuratorProfileCardProps> = ({
         <div className="flex items-center space-x-2">
           <BackButton />
           <Paragraph3 className=" font-bold text-gray-900">
-            Curator's Profile
+            Lister's Profile
           </Paragraph3>
         </div>
         <button className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition duration-150">

@@ -10,6 +10,7 @@ import {
   User,
   LogOut,
   ChevronDown,
+  LayoutDashboard,
 } from "lucide-react";
 import LogoutConfirmModal from "./LogoutConfirmModal";
 import { useLogout } from "@/lib/mutations";
@@ -34,62 +35,45 @@ export default function UserProfileDropdown({
   const firstLetter = userName?.charAt(0).toUpperCase() || "U";
 
   // Menu items based on user role
+  const baseMenuItems = [
+    {
+      label: "Orders",
+      icon: ShoppingBag,
+      href: "/renters/orders",
+    },
+    {
+      label: "Favorites",
+      icon: ShoppingBag,
+      href: "/renters/favorites",
+    },
+    {
+      label: "Wallet",
+      icon: Wallet,
+      href: "/renters/wallet",
+    },
+    {
+      label: "Disputes",
+      icon: AlertCircle,
+      href: "/renters/dispute",
+    },
+    {
+      label: "Account",
+      icon: User,
+      href: "/renters/account",
+    },
+  ];
+
   const menuItems =
     userRole === "lister"
       ? [
           {
-            label: "Inventory",
-            icon: ShoppingBag,
-            href: "/listers/inventory",
+            label: "Your Lister Dashboard",
+            icon: LayoutDashboard,
+            href: "/listers/dashboard",
           },
-          {
-            label: "Orders",
-            icon: ShoppingBag,
-            href: "/listers/orders",
-          },
-          {
-            label: "Wallet",
-            icon: Wallet,
-            href: "/listers/wallet",
-          },
-          {
-            label: "Disputes",
-            icon: AlertCircle,
-            href: "/listers/dispute",
-          },
-          {
-            label: "Account",
-            icon: User,
-            href: "/listers/settings",
-          },
+          ...baseMenuItems,
         ]
-      : [
-          {
-            label: "Orders",
-            icon: ShoppingBag,
-            href: "/renters/orders",
-          },
-          {
-            label: "Favorites",
-            icon: ShoppingBag,
-            href: "/renters/favorites",
-          },
-          {
-            label: "Wallet",
-            icon: Wallet,
-            href: "/renters/wallet",
-          },
-          {
-            label: "Disputes",
-            icon: AlertCircle,
-            href: "/renters/dispute",
-          },
-          {
-            label: "Account",
-            icon: User,
-            href: "/renters/account",
-          },
-        ];
+      : baseMenuItems;
 
   // Close dropdown when clicking outside
   useEffect(() => {

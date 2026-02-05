@@ -14,6 +14,7 @@ export type ProductAttachment = {
 export type ProductCurator = {
   name: string;
   id: string;
+  email: string;
 };
 
 export type UserProduct = {
@@ -82,7 +83,9 @@ export type UserProductsResponse = {
 export type ProductsResponse = {
   success: boolean;
   message: string;
-  data: UserProduct[];
+  data: {
+    products: UserProduct[];
+  };
 };
 
 export const productApi = {
@@ -148,6 +151,22 @@ export const productApi = {
     apiFetch<ProductsResponse>(`/product/pending?page=${page}&count=${count}`, {
       method: "GET",
     }),
+
+  getApprovedProducts: (page: number = 1, count: number = 10) =>
+    apiFetch<ProductsResponse>(
+      `/product/approved?page=${page}&count=${count}`,
+      {
+        method: "GET",
+      },
+    ),
+
+  getRejectedProducts: (page: number = 1, count: number = 10) =>
+    apiFetch<ProductsResponse>(
+      `/product/rejected?page=${page}&count=${count}`,
+      {
+        method: "GET",
+      },
+    ),
 
   approveProduct: (id: string) =>
     apiFetch<ProductResponse>(`/product/${id}/approve`, {

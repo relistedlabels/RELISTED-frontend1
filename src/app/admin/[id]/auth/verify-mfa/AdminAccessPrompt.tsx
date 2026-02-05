@@ -43,9 +43,9 @@ export default function AdminAccessPrompt({
     }
   }, [isSuccess, adminId, router]);
 
-  if (!sessionToken) return null;
-  if (!requiresMfa) return null;
-  if (!open) return null;
+  if (!sessionToken && !isSuccess) return null;
+  if (!requiresMfa && !isSuccess) return null;
+  if (!open && !isSuccess) return null;
 
   const handleVerifyOtp = async () => {
     if (!otp.trim() || !sessionToken) return;
