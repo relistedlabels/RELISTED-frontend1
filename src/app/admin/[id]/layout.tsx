@@ -7,7 +7,7 @@ import AdminIdSync from "../components/AdminIdSync";
 
 interface AdminDashboardLayoutProps {
   children: ReactNode;
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function AdminDashboardLayout({

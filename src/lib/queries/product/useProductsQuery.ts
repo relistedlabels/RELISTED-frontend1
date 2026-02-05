@@ -33,7 +33,7 @@ export const useProductsQuery = () => {
         priceMin,
         priceMax,
       });
-      return response.data;
+      return response.data.products;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,
