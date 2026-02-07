@@ -88,6 +88,20 @@ export type ProductsResponse = {
   };
 };
 
+export type ProductStatistics = {
+  getTotalProducts: { count: number; products: UserProduct[] };
+  getApprovedProducts: { count: number; products: UserProduct[] };
+  getRejectedProducts: { count: number; products: UserProduct[] };
+  getPendingProducts: { count: number; products: UserProduct[] };
+  getActiveProducts: { count: number; products: UserProduct[] };
+};
+
+export type ProductStatisticsResponse = {
+  success: boolean;
+  message: string;
+  data: ProductStatistics;
+};
+
 export const productApi = {
   create: (data: ProductPayload) =>
     apiFetch<ProductResponse>("/product", {
@@ -143,6 +157,11 @@ export const productApi = {
 
   getUserProducts: () =>
     apiFetch<UserProductsResponse>("/product/user-products", {
+      method: "GET",
+    }),
+
+  getStatistics: () =>
+    apiFetch<ProductStatisticsResponse>("/product/statistics", {
       method: "GET",
     }),
 

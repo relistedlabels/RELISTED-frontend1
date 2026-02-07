@@ -50,10 +50,10 @@ export default function EndlessStyleHero() {
           <motion.p
             className="text-[58px] md:text-[58px] italic -mt-2 sm:-mt-1 mb-4"
             variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 },
+              hidden: { opacity: 0, y: 20, scale: 0.8 },
+              visible: { opacity: 1, y: 0, scale: 1 },
             }}
-            transition={{ duration: 0.9 }}
+            transition={{ duration: 0.9, ease: "easeOut" }}
           >
             <SpecialH1>short plans, long compliments</SpecialH1>
           </motion.p>

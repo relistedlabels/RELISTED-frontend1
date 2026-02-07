@@ -13,6 +13,7 @@ import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import { usePendingProducts } from "@/lib/queries/product/usePendingProducts";
 import { useApprovedProducts } from "@/lib/queries/product/useApprovedProducts";
 import { useRejectedProducts } from "@/lib/queries/product/useRejectedProducts";
+import { useProductStatistics } from "@/lib/queries/product/useProductStatistics";
 import {
   useApproveProduct,
   useRejectProduct,
@@ -26,39 +27,6 @@ import RejectedListingsTable from "./components/RejectedListingsTable";
 
 type TabType = "Pending" | "Approved" | "Rejected";
 
-const STATS = [
-  {
-    label: "Total Listings",
-    value: "24",
-    icon: Globe,
-    bgColor: "bg-gray-50",
-    iconColor: "text-gray-700",
-  },
-  {
-    label: "Pending Review",
-    value: "8",
-    icon: AlertCircle,
-    bgColor: "bg-yellow-50",
-    iconColor: "text-yellow-600",
-  },
-  {
-    label: "Approved",
-    value: "14",
-    icon: CheckCircle,
-    bgColor: "bg-green-50",
-    iconColor: "text-green-600",
-  },
-  {
-    label: "Rejected",
-    value: "2",
-    icon: XCircle,
-    bgColor: "bg-red-50",
-    iconColor: "text-red-600",
-  },
-];
-
-const TABS: TabType[] = ["Pending", "Approved", "Rejected"];
-
 export default function ListingsPage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabType>("Pending");
@@ -71,7 +39,15 @@ export default function ListingsPage() {
     null,
   );
   const [rejectionComment, setRejectionComment] = useState("");
+  const [approvingProductId, setApprovingProductId] = useState<string | null>(
+    null,
+  );
   const [page, setPage] = useState(1);
+
+  // Fetch statistics from API
+  const { data: stats, isLoading: statsLoading } = useProductStatistics();
+
+  const TABS: TabType[] = ["Pending", "Approved", "Rejected"];
 
   // Fetch products based on active tab
   const {
@@ -106,11 +82,24 @@ export default function ListingsPage() {
   const rejectMutation = useRejectProduct();
 
   const handleApprove = (productId: string) => {
+    setApprovingProductId(productId);
     approveMutation.mutate(productId, {
       onSuccess: () => {
-        // Invalidate both pending and approved queries
-        queryClient.invalidateQueries({ queryKey: ["products", "pending"] });
-        queryClient.invalidateQueries({ queryKey: ["products", "approved"] });
+        setApprovingProductId(null);
+        // Only refetch queries that are currently active/visible
+        queryClient.invalidateQueries({ 
+          queryKey: ["products", "pending"],
+          refetchType: 'active'
+        });
+        queryClient.invalidateQueries({ 
+          queryKey: ["products", "approved"],
+          refetchType: 'active'
+        });
+        // Update statistics if it's active
+        queryClient.invalidateQueries({
+          queryKey: ["product", "statistics"],
+          refetchType: 'active'
+        });
       },
     });
   };
@@ -131,12 +120,19 @@ export default function ListingsPage() {
           onSuccess: () => {
             setRejectingProductId(null);
             setRejectionComment("");
-            // Invalidate both pending and rejected queries
+            // Only refetch queries that are currently active/visible
             queryClient.invalidateQueries({
               queryKey: ["products", "pending"],
+              refetchType: 'active'
             });
             queryClient.invalidateQueries({
               queryKey: ["products", "rejected"],
+              refetchType: 'active'
+            });
+            // Update statistics if it's active
+            queryClient.invalidateQueries({
+              queryKey: ["product", "statistics"],
+              refetchType: 'active'
             });
           },
         },
@@ -243,28 +239,81 @@ export default function ListingsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {STATS.map((stat) => {
-          const IconComponent = stat.icon;
-          return (
-            <div
-              key={stat.label}
-              className="bg-white p-6 rounded-lg border border-gray-200"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <div className={`${stat.bgColor} p-3 rounded-lg`}>
-                  <IconComponent size={24} className={stat.iconColor} />
-                </div>
-              </div>
-              <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                {stat.label}
-              </Paragraph1>
-              <Paragraph3 className="text-3xl font-bold text-gray-900">
-                {stat.value}
-              </Paragraph3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        {/* Total Listings */}
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="bg-gray-50 p-3 rounded-lg">
+              <Globe size={24} className="text-gray-700" />
             </div>
-          );
-        })}
+          </div>
+          <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            Total Listings
+          </Paragraph1>
+          <Paragraph3 className="text-3xl font-bold text-gray-900">
+            {statsLoading ? "-" : stats?.getTotalProducts?.count || 0}
+          </Paragraph3>
+        </div>
+
+        {/* Pending Review */}
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="bg-yellow-50 p-3 rounded-lg">
+              <AlertCircle size={24} className="text-yellow-600" />
+            </div>
+          </div>
+          <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            Pending Review
+          </Paragraph1>
+          <Paragraph3 className="text-3xl font-bold text-gray-900">
+            {statsLoading ? "-" : stats?.getPendingProducts?.count || 0}
+          </Paragraph3>
+        </div>
+
+        {/* Approved */}
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="bg-green-50 p-3 rounded-lg">
+              <CheckCircle size={24} className="text-green-600" />
+            </div>
+          </div>
+          <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            Approved
+          </Paragraph1>
+          <Paragraph3 className="text-3xl font-bold text-gray-900">
+            {statsLoading ? "-" : stats?.getApprovedProducts?.count || 0}
+          </Paragraph3>
+        </div>
+
+        {/* Rejected */}
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="bg-red-50 p-3 rounded-lg">
+              <XCircle size={24} className="text-red-600" />
+            </div>
+          </div>
+          <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            Rejected
+          </Paragraph1>
+          <Paragraph3 className="text-3xl font-bold text-gray-900">
+            {statsLoading ? "-" : stats?.getRejectedProducts?.count || 0}
+          </Paragraph3>
+        </div>
+
+        {/* Active Products */}
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <CheckCircle size={24} className="text-blue-600" />
+            </div>
+          </div>
+          <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            Active
+          </Paragraph1>
+          <Paragraph3 className="text-3xl font-bold text-gray-900">
+            {statsLoading ? "-" : stats?.getActiveProducts?.count || 0}
+          </Paragraph3>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -303,7 +352,7 @@ export default function ListingsPage() {
               setSelectedListing(product);
               setIsModalOpen(true);
             }}
-            isApprovingPending={approveMutation.isPending}
+            approvingProductId={approvingProductId}
           />
         )}
         {activeTab === "Approved" && (

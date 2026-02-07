@@ -8,6 +8,7 @@ import DevGuard from "@/common/layer/DevGuard";
 import { Header } from "./Header";
 import { UploaderProvider } from "@/context/UploaderProvider";
 import { Toaster } from "sonner";
+import ApiTestComponent from "@/common/debug/ApiTestComponent";
 
 export const metadata: Metadata = {
   title:
@@ -75,6 +76,7 @@ export default function RootLayout({
             {children}
             <Toaster position="top-right" />
             <Footer />
+            {/* <ApiTestComponent /> */}
           </UploaderProvider>
         </QueryProvider>
         {/* </DevGuard> */}

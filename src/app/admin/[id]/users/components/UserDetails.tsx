@@ -125,7 +125,12 @@ const UserDetailsPanel: React.FC<UserDetailsPanelProps> = ({
 // --------------------
 // Main Component
 // --------------------
-const UserDetails: React.FC = () => {
+interface UserDetailsProps {
+  userId?: string;
+  isSuspended?: boolean;
+}
+
+const UserDetails: React.FC<UserDetailsProps> = ({ userId, isSuspended }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (

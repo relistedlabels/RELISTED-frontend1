@@ -5,101 +5,64 @@ import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { Search, ChevronDown } from "lucide-react";
 import DresserTable from "./DresserTable";
 import CuratorTable from "./CuratorTable";
+import { useGetAllUsers } from "@/lib/queries/user/useGetAllUsers";
 
-// Mock Data
-const DRESSERS_DATA = [
-  {
-    id: 1,
-    name: "Chioma Adeyemi",
-    role: "Dresser",
-    email: "chioma.adeyemi@example.com",
-    status: "Active",
-    wallet: "₦125,000",
-    rentals: 47,
-    joined: "Oct 2024",
-    avatar: "https://i.pravatar.cc/150?u=1",
-  },
-  {
-    id: 2,
-    name: "Fatima Bello",
-    role: "Dresser",
-    email: "fatima.bello@example.com",
-    status: "Suspended",
-    wallet: "₦45,000",
-    rentals: 23,
-    joined: "Sep 2024",
-    avatar: "https://i.pravatar.cc/150?u=2",
-  },
-  {
-    id: 3,
-    name: "Grace Adebayo",
-    role: "Dresser",
-    email: "grace.adebayo@example.com",
-    status: "Pending",
-    wallet: "₦0",
-    rentals: 0,
-    joined: "Nov 2024",
-    avatar: "https://i.pravatar.cc/150?u=3",
-  },
-  {
-    id: 4,
-    name: "Ngozi Eze",
-    role: "Dresser",
-    email: "ngozi.eze@example.com",
-    status: "Active",
-    wallet: "₦78,000",
-    rentals: 34,
-    joined: "Oct 2024",
-    avatar: "https://i.pravatar.cc/150?u=4",
-  },
-];
-
-const CURATORS_DATA = [
-  {
-    id: 1,
-    name: "Anita Cole",
-    role: "Curator",
-    email: "anita.cole@example.com",
-    status: "Active",
-    wallet: "₦820,000",
-    rentals: 132,
-    joined: "Jan 2024",
-    avatar: "https://i.pravatar.cc/150?u=5",
-  },
-  {
-    id: 2,
-    name: "Blessing Okafor",
-    role: "Curator",
-    email: "blessing.o@example.com",
-    status: "Active",
-    wallet: "₦745,000",
-    rentals: 118,
-    joined: "Feb 2024",
-    avatar: "https://i.pravatar.cc/150?u=6",
-  },
-];
+type UserRole = "LISTER" | "DRESSER" | "ADMIN";
 
 export default function UsersPage() {
-  const [activeTab, setActiveTab] = useState<"Dressers" | "Curators">(
-    "Dressers"
-  );
+  const [activeTab, setActiveTab] = useState<UserRole>("LISTER");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Status");
 
+  // Fetch all users from API
+  const { data: usersData, isLoading, error } = useGetAllUsers(1, 100);
+  const users = usersData?.users || [];
+
   // Filtering Logic
   const filteredData = useMemo(() => {
-    const data = activeTab === "Dressers" ? DRESSERS_DATA : CURATORS_DATA;
-
-    return data.filter((user) => {
+    return users.filter((user) => {
       const matchesSearch =
         user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.email.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus =
-        statusFilter === "All Status" || user.status === statusFilter;
 
-      return matchesSearch && matchesStatus;
+      const matchesStatus =
+        statusFilter === "All Status"
+          ? true
+          : statusFilter === "Active"
+            ? !user.isSuspended
+            : user.isSuspended;
+
+      const matchesRole = user.role === activeTab;
+
+      return matchesSearch && matchesStatus && matchesRole;
     });
-  }, [activeTab, searchQuery, statusFilter]);
+  }, [users, activeTab, searchQuery, statusFilter]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col space-y-6">
+        <Paragraph3 className="text-3xl font-bold">Users</Paragraph3>
+        <div className="text-center py-12">
+          <Paragraph1 className="text-gray-500">Loading users...</Paragraph1>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col space-y-6">
+        <Paragraph3 className="text-3xl font-bold">Users</Paragraph3>
+        <div className="text-center py-12">
+          <Paragraph1 className="text-red-500">
+            Error loading users. Please try again.
+          </Paragraph1>
+        </div>
+      </div>
+    );
+  }
+
+  const TABS: UserRole[] = ["LISTER", "DRESSER", "ADMIN"];
 
   return (
     <div className="flex flex-col space-y-6">
@@ -127,7 +90,6 @@ export default function UsersPage() {
             <option>All Status</option>
             <option>Active</option>
             <option>Suspended</option>
-            <option>Pending</option>
           </select>
           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-5 h-5" />
         </div>
@@ -135,10 +97,10 @@ export default function UsersPage() {
 
       {/* Tabs */}
       <div className="flex border-b border-gray-200">
-        {["Dressers", "Curators"].map((tab) => (
+        {TABS.map((tab) => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab as any)}
+            onClick={() => setActiveTab(tab)}
             className={`px-6 py-3 transition-all relative ${
               activeTab === tab ? "text-black font-semibold" : "text-gray-400"
             }`}
@@ -153,10 +115,14 @@ export default function UsersPage() {
 
       {/* Tables */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        {activeTab === "Dressers" ? (
-          <DresserTable data={filteredData} />
+        {filteredData.length === 0 ? (
+          <div className="text-center py-12">
+            <Paragraph1 className="text-gray-500">
+              No users found matching your criteria.
+            </Paragraph1>
+          </div>
         ) : (
-          <CuratorTable data={filteredData} />
+          <DresserTable data={filteredData} role={activeTab} />
         )}
       </div>
     </div>

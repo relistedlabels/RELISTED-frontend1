@@ -11,8 +11,7 @@ interface PendingListingsTableProps {
   onApprove: (productId: string) => void;
   onReject: (productId: string) => void;
   onView: (product: UserProduct) => void;
-  isApprovingId?: string;
-  isApprovingPending?: boolean;
+  approvingProductId?: string | null;
 }
 
 export default function PendingListingsTable({
@@ -23,7 +22,7 @@ export default function PendingListingsTable({
   onApprove,
   onReject,
   onView,
-  isApprovingPending,
+  approvingProductId,
 }: PendingListingsTableProps) {
   const getImageUrl = (listing: UserProduct): string => {
     if (listing.attachments?.uploads?.[0]?.url) {
@@ -128,11 +127,11 @@ export default function PendingListingsTable({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => onApprove(product.id)}
-                    disabled={isApprovingPending}
+                    disabled={approvingProductId === product.id}
                     className="px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition flex items-center justify-center gap-2 font-medium text-sm disabled:opacity-50"
                   >
                     <Check size={18} />
-                    {isApprovingPending ? "Approving..." : "Approve"}
+                    {approvingProductId === product.id ? "Approving..." : "Approve"}
                   </button>
                   <button
                     onClick={() => onReject(product.id)}
