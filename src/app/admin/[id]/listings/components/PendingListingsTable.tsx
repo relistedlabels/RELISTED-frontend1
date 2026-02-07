@@ -131,7 +131,9 @@ export default function PendingListingsTable({
                     className="px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition flex items-center justify-center gap-2 font-medium text-sm disabled:opacity-50"
                   >
                     <Check size={18} />
-                    {approvingProductId === product.id ? "Approving..." : "Approve"}
+                    {approvingProductId === product.id
+                      ? "Approving..."
+                      : "Approve"}
                   </button>
                   <button
                     onClick={() => onReject(product.id)}
