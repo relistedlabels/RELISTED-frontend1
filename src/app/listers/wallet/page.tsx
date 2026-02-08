@@ -1,3 +1,4 @@
+// ENDPOINTS: GET /api/listers/wallet/stats, GET /api/listers/wallet/transactions, GET /api/listers/wallet/bank-accounts
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import DashboardLayout from "../components/DashboardLayout";
 import { Paragraph2, Paragraph3 } from "@/common/ui/Text";
@@ -21,7 +22,6 @@ export default function Page() {
         <WalletBalanceCard />
         <TransactionList />
       </div>
-      
     </DashboardLayout>
   );
 }

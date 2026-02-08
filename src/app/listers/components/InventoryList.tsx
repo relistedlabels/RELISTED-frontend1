@@ -195,7 +195,7 @@ const InventoryList: React.FC = () => {
       isActive: product.isActive,
       imageUrl:
         product.attachments?.uploads?.[0]?.url ?? "/images/placeholder.png",
-      curatorName: product.curator.name,
+      curatorName: product.curator?.name ?? "",
     }),
   );
 

@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/renters/disputes/:disputeId/overview, GET /api/renters/disputes/:disputeId/messages, POST /api/renters/disputes/:disputeId/messages
+
 import React from "react";
 import { Paragraph1 } from "@/common/ui/Text"; // Assuming your custom text component
 import ExampleDisputeConversationLog from "./DisputeConversationLog";

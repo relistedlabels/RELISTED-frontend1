@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/renters/verifications/status, POST /api/renters/verifications/id-document
+
 import React from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
@@ -26,9 +28,7 @@ const VerificationBadge: React.FC<{
       break;
   }
   return (
-    <span
-      className={`px-4 py-2 rounded-sm text-xs font-medium ${colorClass}`}
-    >
+    <span className={`px-4 py-2 rounded-sm text-xs font-medium ${colorClass}`}>
       {status}
     </span>
   );

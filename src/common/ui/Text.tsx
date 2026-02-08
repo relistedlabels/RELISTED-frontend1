@@ -50,18 +50,14 @@ export const Header1Plus: React.FC<{
   >
     {children}
   </h1>
-  );
+);
 
-  export const Header2Plus: React.FC<{
-    children: React.ReactNode;
-    className?: string;
-  }> = ({ children, className = "" }) => (
-    <h1
-      className={` ${body_Font_Regular.className} ${className}`}
-    >
-      {children}
-    </h1>
-  );
+export const Header2Plus: React.FC<{
+  children: React.ReactNode;
+  className?: string;
+}> = ({ children, className = "" }) => (
+  <h1 className={` ${body_Font_Regular.className} ${className}`}>{children}</h1>
+);
 
 export const Header2: React.FC<{
   children: React.ReactNode;
@@ -118,7 +114,11 @@ export const SpecialH1: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ children, className = "" }) => (
-  <h4 className={` text-[20px] sm:text-[50px] ${body_S_light.className} ${className}`}>{children}</h4>
+  <h4
+    className={` text-[20px] sm:text-[50px] ${body_S_light.className} ${className}`}
+  >
+    {children}
+  </h4>
 );
 
 // Paragraph Component
@@ -126,23 +126,19 @@ export const Paragraph1: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ children, className = "" }) => (
-  <h1
+  <p
     className={`text-[13px] sm:text-[13px]     ${body_p_regular.className} ${className}`}
   >
     {children}
-  </h1>
-  );
+  </p>
+);
 
-  export const ParagraphAny: React.FC<{
-    children: React.ReactNode;
-    className?: string;
-  }> = ({ children, className = "" }) => (
-    <h1
-      className={` ${body_p_regular.className} ${className}`}
-    >
-      {children}
-    </h1>
-  );
+export const ParagraphAny: React.FC<{
+  children: React.ReactNode;
+  className?: string;
+}> = ({ children, className = "" }) => (
+  <p className={` ${body_p_regular.className} ${className}`}>{children}</p>
+);
 
 export const Paragraph2: React.FC<{
   children: React.ReactNode;
@@ -170,20 +166,20 @@ export const ParagraphLink1: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ children, className = "" }) => (
-  <h1
+  <p
     className={`text-[13px] sm:text-[13px] font-medium   leading-6 sm:leading-7  hover:scale-105 transition-transform duration-300  ${body_p_regular.className} ${className}`}
   >
     {children}
-  </h1>
+  </p>
 );
 
 export const ParagraphLink2: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ children, className = "" }) => (
-  <h1
+  <p
     className={`   hover:scale-105 transition-transform duration-300 text-[13px] sm:text-[13px] ${body_p_regular.className} ${className}`}
   >
     {children}
-  </h1>
+  </p>
 );

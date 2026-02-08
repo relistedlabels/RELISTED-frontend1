@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/public/users/:userId
+
 import React from "react";
 import { Paragraph1, ParagraphLink1 } from "@/common/ui/Text"; // Using your custom text component
 import {

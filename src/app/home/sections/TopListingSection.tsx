@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/public/products
+
 "use client";
 
 import ProductCard from "@/common/ui/ProductCard";

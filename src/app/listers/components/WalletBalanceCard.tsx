@@ -1,4 +1,5 @@
 "use client";
+// ENDPOINTS: GET /api/listers/wallet/stats (balance info)
 
 import React, { useMemo } from "react";
 import { motion } from "framer-motion";
@@ -37,7 +38,7 @@ function generateScatter(
   sizeRange: [number, number],
   z: number,
   opacityClass: string,
-  durationBase: number
+  durationBase: number,
 ): BoxConfig[] {
   const edgeBias = [5, 10, 15, 80, 85, 90]; // forces edge presence
 
@@ -78,7 +79,7 @@ const WalletBalanceCard: React.FC<{ balance?: string }> = ({
         [60, 80],
         30,
         "bg-white/12 border border-white/10",
-        4.5
+        4.5,
       ),
 
       // MID – 5 (behind)

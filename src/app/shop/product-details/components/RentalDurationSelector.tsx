@@ -4,6 +4,22 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 
+// ============================================================================
+// API ENDPOINTS USED:
+// ============================================================================
+// GET /api/public/products/:productId/availability - Fetch available dates for calendar
+//   Returns: Available dates, unavailable dates, monthly availability percentages
+//
+// POST /api/renters/rental-requests - Send availability check to lister
+//   Body Params: productId, listerId, rentalStartDate, rentalEndDate, rentalDays,
+//               estimatedRentalPrice, deliveryAddressId, autoPay, currency
+//   Requirements: Authentication required (show login modal if not authenticated)
+//   Response includes: 15-minute countdown timer, requestId, cartItemId
+//
+// DELETE /api/renters/rental-requests/:requestId - Remove item from cart
+//   Used when user removes pending requests
+// ============================================================================
+
 // --- Data for predefined durations ---
 const rentalOptions = [
   { days: 3, price: "₦150,000" },
@@ -132,7 +148,7 @@ const Calendar = () => {
 
 export default function RentalDurationSelector() {
   const [selectedDuration, setSelectedDuration] = useState<number | "custom">(
-    3
+    3,
   );
 
   return (

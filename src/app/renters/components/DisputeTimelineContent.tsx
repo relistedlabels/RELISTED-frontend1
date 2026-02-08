@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/renters/disputes/:disputeId/timeline
+
 import React from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 

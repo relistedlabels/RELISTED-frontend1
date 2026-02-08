@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/renters/orders
+
 import React from "react";
 
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";

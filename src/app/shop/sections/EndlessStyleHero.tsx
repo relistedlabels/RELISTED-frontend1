@@ -63,7 +63,7 @@ export default function EndlessStyleHero() {
           </motion.div>
 
           {/* Sub Text */}
-          <motion.p
+          <motion.div
             className=" sm:mt-8 mt-2"
             variants={{
               hidden: { opacity: 0, y: 20 },
@@ -74,7 +74,7 @@ export default function EndlessStyleHero() {
             <Header5 className="line-clamp-1 sm:line-clamp-none">
               {pageDescription}
             </Header5>
-          </motion.p>
+          </motion.div>
         </motion.div>
       </motion.div>
     </section>

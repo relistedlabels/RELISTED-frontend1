@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/renters/orders
+
 "use client";
 
 import React, { useState } from "react";
@@ -55,7 +57,7 @@ const initialOrders: Order[] = [
 
 export default function DashboardOrderList() {
   const [orderView, setOrderView] = useState<"ongoing" | "completed">(
-    "ongoing"
+    "ongoing",
   );
 
   const orders = initialOrders.filter((order) => order.view === orderView);
@@ -156,7 +158,7 @@ export default function DashboardOrderList() {
                   </Paragraph1>{" "}
                 </div>
                 {/* Right Side: Action Button */}
-               <OrderDetails />
+                <OrderDetails />
               </div>
             </div>
           </div>

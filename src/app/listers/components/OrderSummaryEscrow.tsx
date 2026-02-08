@@ -1,4 +1,5 @@
 "use client";
+// ENDPOINTS: GET /api/listers/orders/:orderId (payment & escrow summary)
 
 import React from "react";
 import { Lock } from "lucide-react";
@@ -15,7 +16,9 @@ const OrderSummaryEscrow: React.FC<OrderSummaryEscrowProps> = ({
 }) => {
   return (
     <div className="w-full  bg-white border border-gray-300 rounded-2xl p-4 ">
-      <Paragraph1 className="text-xl font-bold uppercase text-black mb-4">Order Summary</Paragraph1>
+      <Paragraph1 className="text-xl font-bold uppercase text-black mb-4">
+        Order Summary
+      </Paragraph1>
 
       {/* Financial Totals */}
       <div className="space-y-4 mb-4">

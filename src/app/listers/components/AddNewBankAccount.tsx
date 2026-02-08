@@ -1,4 +1,5 @@
 "use client";
+// ENDPOINTS: POST /api/listers/wallet/bank-accounts (add new bank account), GET /api/banks (list of banks)
 
 import React, { useState } from "react";
 import {
@@ -117,8 +118,6 @@ const AddNewBankAccount: React.FC = () => {
   return (
     <>
       {/* Toggle Button */}
-
-     
 
       <button
         onClick={() => setIsOpen(true)}

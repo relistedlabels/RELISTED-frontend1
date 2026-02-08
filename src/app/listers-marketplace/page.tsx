@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/public/users
+
 "use client";
 
 import React, { useState } from "react";

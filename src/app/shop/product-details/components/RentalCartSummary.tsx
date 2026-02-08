@@ -4,6 +4,34 @@ import React from "react";
 import { Trash2 } from "lucide-react";
 import { Header1, Paragraph1 } from "@/common/ui/Text";
 
+// ============================================================================
+// API ENDPOINTS USED:
+// ============================================================================
+// GET /api/renters/rental-requests - Fetch user's pending availability requests
+//   Returns: Array of cart items with 15-minute timers, each item has:
+//   - requestId, productId, productName, listerId, listerName
+//   - rentalStartDate, rentalEndDate, rentalDays, totalPrice
+//   - status: "pending_lister_approval"
+//   - expiresAt (15 minutes from request creation)
+//   - timeRemainingSeconds, timeRemainingMinutes (for countdown timer)
+//   - autoPay (whether user agreed to auto-pay)
+//   Frontend should poll/refresh every 5 seconds to update timers
+//
+// DELETE /api/renters/rental-requests/:requestId - Remove item from cart
+//   Used when user clicks trash icon to remove pending request
+//   Frontend should also auto-remove items when timeRemaining <= 0
+//
+// GET /api/renters/rental-requests/:requestId - Monitor status of pending request
+//   Used to check if lister approved/rejected when cart item is showing
+//   Once approved, switch from "Request Processing..." to order confirmation
+//   Once rejected or expired, remove item from cart
+//
+// POST /api/renters/rental-requests/:requestId/confirm - Finalize rental order
+//   Called automatically when lister approves (if autoPay=true)
+//   OR manually when lister rejects and user clicks confirm after adding funds
+//   Creates order and deducts payment from wallet
+// ============================================================================
+
 // --- Data Structure for a single item ---
 interface CartItem {
   id: number;

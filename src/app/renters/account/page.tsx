@@ -1,3 +1,5 @@
+// ENDPOINTS: Multiple account endpoints - see AccountTabs and component files for specific endpoints used
+
 import React from "react";
 
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";

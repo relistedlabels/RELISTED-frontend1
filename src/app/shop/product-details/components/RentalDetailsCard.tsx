@@ -8,6 +8,16 @@ import { TiTick } from "react-icons/ti";
 import { Paragraph1 } from "@/common/ui/Text"; // Assuming custom text components based on previous context
 import RentalPeriods from "./RentalPeriods";
 
+// ============================================================================
+// API ENDPOINTS USED:
+// ============================================================================
+// GET /api/public/products/:productId - Fetch product details including pricing
+//   Returns: Daily rental price, security deposit, delivery fees, cleaning fees
+//
+// GET /api/renters/verifications/status - Check if user can place rental requests
+//   Ensures renter has verified ID before allowing rental requests
+// ============================================================================
+
 interface UserProfileProps {
   name: string;
   rating: number;

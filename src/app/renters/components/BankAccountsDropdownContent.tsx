@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/renters/wallet/bank-accounts
+
 "use client";
 
 import React, { useState } from "react";

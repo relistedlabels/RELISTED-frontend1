@@ -1,3 +1,35 @@
+// ============================================================================
+// API ENDPOINTS USED - SHOPPING & RENTAL FLOW:
+// ============================================================================
+// GET /api/public/products/:productId - Fetch product details page info
+//   Returns: Product name, images, description, brand, category, lister info, reviews
+//   Location: TitleProductCard, ProductMediaGallery, ProductAccordion components
+//
+// GET /api/public/products/:productId/availability - Fetch calendar dates
+//   Returns: Available dates, unavailable dates for calendar selection
+//   Location: RentalDurationSelector calendar component
+//
+// POST /api/renters/rental-requests - Submit availability check to lister
+//   Auth Required: YES (show login modal if not authenticated)
+//   Body: productId, listerId, rentalStartDate, rentalEndDate, rentalDays,
+//         estimatedRentalPrice, deliveryAddressId, autoPay, currency
+//   Returns: 15-minute countdown timer, cart item added
+//   Location: RentalDurationSelector "Check Availability" button
+//
+// GET /api/renters/rental-requests - Fetch cart items with timers
+//   Returns: Pending requests with countdown timers (15 minutes)
+//   Location: RentalCartSummary component (cart display)
+//
+// GET /api/renters/rental-requests/:requestId - Monitor request status
+//   For tracking lister approval/rejection while waiting
+//
+// DELETE /api/renters/rental-requests/:requestId - Remove from cart
+//   Location: RentalCartSummary trash icon
+//
+// POST /api/renters/rental-requests/:requestId/confirm - Finalize order
+//   Called when lister approves and deducts payment from wallet
+// ============================================================================
+
 import React from "react";
 import TitleProductCard from "./components/TitleProductCard";
 import RentalDetailsCard from "./components/RentalDetailsCard";
@@ -29,7 +61,6 @@ function page() {
           <ProductAccordion />
         </div>
       </div>
-
       <TopListingSection />
     </div>
   );

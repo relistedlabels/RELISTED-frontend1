@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/public/users, GET /api/public/categories
+
 import React from "react";
 import StyleSpotlightHero from "./sections/StyleSpotlightHero";
 import StyleCategoriesSection from "./sections/StyleCategoriesSection";

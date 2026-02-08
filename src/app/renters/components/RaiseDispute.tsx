@@ -1,3 +1,5 @@
+// ENDPOINTS: POST /api/renters/disputes
+
 "use client";
 
 import React, { useState } from "react";

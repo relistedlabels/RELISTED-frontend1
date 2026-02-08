@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/renters/profile, PUT /api/renters/profile, GET /api/renters/profile/addresses, POST /api/renters/profile/addresses, POST /api/renters/profile/avatar
+
 "use client";
 
 import React, { useState, useEffect } from "react";

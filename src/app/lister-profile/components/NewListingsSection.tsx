@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/public/users/:userId/products
+
 "use client";
 
 import { useState } from "react";
@@ -13,7 +15,7 @@ export default function NewListingsSection() {
   const filteredProducts = products.filter(
     (item) =>
       item.name.toLowerCase().includes(search.toLowerCase()) ||
-      item.brand.toLowerCase().includes(search.toLowerCase())
+      item.brand.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (

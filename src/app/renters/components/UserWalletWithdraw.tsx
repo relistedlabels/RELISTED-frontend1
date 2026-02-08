@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/renters/wallet/bank-accounts, POST /api/renters/wallet/withdraw
+
 import React from "react";
 import { Paragraph1 } from "@/common/ui/Text"; // Assuming your custom text component
 import { HiOutlineInformationCircle } from "react-icons/hi2";
@@ -48,14 +50,14 @@ const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
       </div>
 
       {/* Bank Account Selection */}
-     <ExampleBankAccountsDropdown />
+      <ExampleBankAccountsDropdown />
 
       {/* Information Notice */}
       <div className="p-3 bg-blue-50/50 border border-blue-200 rounded-lg flex items-start space-x-2 mb-6">
         <HiOutlineInformationCircle className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
         <Paragraph1 className="text-xs text-gray-700 leading-snug">
-          Withdrawals typically process within 24/48 hours. A confirmation
-          email will be sent once processed.
+          Withdrawals typically process within 24/48 hours. A confirmation email
+          will be sent once processed.
         </Paragraph1>
       </div>
     </div>

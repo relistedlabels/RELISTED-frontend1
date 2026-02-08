@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/public/reviews
+
 "use client";
 
 import { useState } from "react";
@@ -132,9 +134,7 @@ function SmallReviewCard({ review }: { review: Review }) {
           <ParagraphAny className="text-gray-700 text-[12px] leading-relaxed sm:mb-3 ">
             {review.text}
           </ParagraphAny>
-          <div className="text-[#FCA120] my-2 sm:my-5 text-[12px]  ">
-            ★★★★★
-          </div>
+          <div className="text-[#FCA120] my-2 sm:my-5 text-[12px]  ">★★★★★</div>
           <div className=" border-t pt-[11px] w-[fit]">
             <p className=" text-[12px] font-semibold ">{review.name}</p>
             <p className="text-[12px] text-gray-500">{review.role}</p>

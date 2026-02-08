@@ -1,4 +1,5 @@
 "use client";
+// ENDPOINTS: GET /api/listers/wallet/transactions (list with pagination & filters)
 
 import React from "react";
 import { ArrowUpRight, ArrowDownLeft } from "lucide-react";

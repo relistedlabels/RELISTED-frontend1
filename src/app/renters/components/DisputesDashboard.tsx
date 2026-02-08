@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/renters/disputes/stats
+
 import React from "react";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text"; // Assuming your custom text component
 import { FaPlus } from "react-icons/fa";
@@ -44,14 +46,13 @@ const DisputesDashboard: React.FC<DisputesDashboardProps> = ({
       {/* Header and Action Button */}
       <div className="flex flex-wrap gap-4 justify-between items-start mb-6">
         <div>
-          
           <Paragraph1 className="text-sm text-gray-600 mt-1">
             Track and manage disputes you've raised.
           </Paragraph1>
         </div>
 
         {/* Raise New Dispute Button */}
-       <RaiseDispute />
+        <RaiseDispute />
       </div>
 
       {/* Summary Cards Grid */}

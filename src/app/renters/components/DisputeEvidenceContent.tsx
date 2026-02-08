@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/renters/disputes/:disputeId/evidence
+
 import React from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { HiOutlinePhoto, HiOutlineDocument } from "react-icons/hi2";

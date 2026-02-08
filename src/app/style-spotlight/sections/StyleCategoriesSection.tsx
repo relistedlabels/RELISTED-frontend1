@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/public/categories
+
 "use client";
 
 import React from "react";

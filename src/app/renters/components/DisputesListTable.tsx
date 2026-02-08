@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/renters/disputes
+
 import React from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 // Import necessary icons from Lucide

@@ -1,4 +1,4 @@
-// ENDPOINTS: GET /api/admin/analytics/stats, GET /api/admin/analytics/rentals-revenue-trend, GET /api/admin/analytics/category-breakdown, GET /api/admin/analytics/revenue-by-category
+// ENDPOINTS: GET /api/admin/analytics/stats, GET /api/admin/analytics/rentals-revenue-trend, GET /api/admin/analytics/category-breakdown, GET /api/admin/analytics/revenue-by-category, GET /api/admin/analytics/top-curators, GET /api/admin/analytics/top-items
 import React from "react";
 import AnalyticsHeader from "./components/AnalyticsHeader";
 import AnalyticsStats from "./components/AnalyticsStats";

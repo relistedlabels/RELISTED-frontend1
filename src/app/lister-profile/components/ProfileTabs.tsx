@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/public/users/:userId/products, GET /api/public/users/:userId/reviews
+
 "use client";
 
 import React, { useState } from "react";

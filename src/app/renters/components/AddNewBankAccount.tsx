@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/renters/wallet/bank-accounts, POST /api/renters/wallet/bank-accounts
+
 "use client";
 
 import React, { useState } from "react";
@@ -117,8 +119,6 @@ const AddNewBankAccount: React.FC = () => {
   return (
     <>
       {/* Toggle Button */}
-
-     
 
       <button
         onClick={() => setIsOpen(true)}

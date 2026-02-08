@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/public/users/:userId, GET /api/public/users/:userId/products, GET /api/public/users/:userId/reviews
+
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import React from "react";
 import ExampleCuratorProfile from "../components/CuratorProfileCardProps";
@@ -13,7 +15,7 @@ export default function ListerProfilePage({ params }: ListerProfilePageProps) {
   const path = [
     { label: "Home", href: "/" },
     { label: "Shop", href: "/shop" },
-    { label: "Curator Profile", href: null }, // Current page, href is null
+    { label: "Lister Profile", href: null }, // Current page, href is null
   ];
 
   return (

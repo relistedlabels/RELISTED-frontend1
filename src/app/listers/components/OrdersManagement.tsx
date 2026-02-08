@@ -1,8 +1,9 @@
 "use client";
+// ENDPOINTS: GET /api/listers/orders (list), POST /api/listers/orders/:orderId/approve, POST /api/listers/orders/:orderId/reject
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Package } from "lucide-react";
+import { Calendar, Package, Clock } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import Link from "next/link";
 
@@ -16,6 +17,8 @@ interface Order {
   itemCount: number;
   amount: string;
   statusLabel: string;
+  expiresAt?: string; // ISO timestamp for pending approval orders
+  createdAt?: string; // ISO timestamp
 }
 
 const ordersData: Record<OrderStatus, Order[]> = {
@@ -27,22 +30,28 @@ const ordersData: Record<OrderStatus, Order[]> = {
       itemCount: 5,
       amount: "₦550,000",
       statusLabel: "Pending Approval",
+      createdAt: new Date(Date.now() - 3 * 60000).toISOString(), // 3 minutes ago
+      expiresAt: new Date(Date.now() + 12 * 60000).toISOString(), // expires in 12 minutes
     },
     {
       id: "2",
-      orderNumber: "20394RRS4",
+      orderNumber: "20394RRS5",
       date: "05 May, 2025",
       itemCount: 5,
       amount: "₦550,000",
       statusLabel: "Pending Approval",
+      createdAt: new Date(Date.now() - 10 * 60000).toISOString(), // 10 minutes ago
+      expiresAt: new Date(Date.now() + 5 * 60000).toISOString(), // expires in 5 minutes (low time warning)
     },
     {
       id: "3",
-      orderNumber: "20394RRS4",
+      orderNumber: "20394RRS6",
       date: "05 May, 2025",
       itemCount: 5,
       amount: "₦550,000",
       statusLabel: "Pending Approval",
+      createdAt: new Date(Date.now() - 8 * 60000).toISOString(), // 8 minutes ago
+      expiresAt: new Date(Date.now() + 7 * 60000).toISOString(), // expires in 7 minutes
     },
   ],
   Ongoing: [],
@@ -122,7 +131,11 @@ const OrdersManagement: React.FC = () => {
           >
             {ordersData[activeTab].length > 0 ? (
               ordersData[activeTab].map((order) => (
-                <OrderCard key={order.id} order={order} />
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  isPending={activeTab === "Pending"}
+                />
               ))
             ) : (
               <motion.div
@@ -144,21 +157,64 @@ const OrdersManagement: React.FC = () => {
 };
 
 // --- Sub-component: Order Card ---
-const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
+const OrderCard: React.FC<{ order: Order; isPending?: boolean }> = ({
+  order,
+  isPending = false,
+}) => {
+  const [secondsRemaining, setSecondsRemaining] = useState(0);
+  const [isExpired, setIsExpired] = useState(false);
+
+  // Initialize countdown timer
+  useEffect(() => {
+    if (!isPending || !order.expiresAt) return;
+
+    const updateTimer = () => {
+      const now = new Date().getTime();
+      const expiresTime = new Date(order.expiresAt!).getTime();
+      const remaining = Math.max(0, Math.floor((expiresTime - now) / 1000));
+
+      if (remaining === 0) {
+        setIsExpired(true);
+      } else {
+        setSecondsRemaining(remaining);
+        setIsExpired(false);
+      }
+    };
+
+    updateTimer(); // Initial call
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [isPending, order.expiresAt]);
+
+  // Format seconds to MM:SS
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const isLowTime = secondsRemaining < 300; // 5 minutes
+
   return (
     <motion.div
       variants={{
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0 },
       }}
-      className="bg-white border border-gray-300 rounded-2xl p-4 mb-4  flex flex-col space-y-4"
+      className={`bg-white border rounded-2xl p-4 mb-4 flex flex-col space-y-4 ${
+        isPending && isExpired
+          ? "border-red-300"
+          : isPending && isLowTime
+            ? "border-orange-300"
+            : "border-gray-300"
+      }`}
     >
       <div className="flex justify-between items-start">
         <div className="space-y-1">
           <Paragraph1 className="text-sm font-bold text-black uppercase tracking-tight">
             ORDER {order.orderNumber}
           </Paragraph1>
-          <div className="flex items-center space-x-4 text-gray-500">
+          <div className="flex items-center space-x-4 text-gray-500 flex-wrap">
             <div className="flex items-center space-x-1">
               <Calendar className="w-4 h-4" />
               <span className="text-xs font-medium">{order.date}</span>
@@ -169,10 +225,31 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
                 {order.itemCount} Items
               </Paragraph1>
             </div>
+            {/* Countdown Timer for Pending Approval */}
+            {isPending && (
+              <div
+                className={`flex items-center space-x-1 ${isExpired ? "text-red-600" : isLowTime ? "text-orange-500" : "text-gray-500"}`}
+              >
+                <Clock className="w-4 h-4" />
+                <span
+                  className={`text-xs font-bold ${isExpired ? "text-red-600" : isLowTime ? "text-orange-600" : ""}`}
+                >
+                  {isExpired ? "Expired" : formatTime(secondsRemaining)}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
-        <Paragraph1 className="px-4 py-1.5 bg-[#FFF9E5] text-[#D4A017] text-[10px] font-bold rounded-lg uppercase tracking-wider">
+        <Paragraph1
+          className={`px-4 py-1.5 text-[10px] font-bold rounded-lg uppercase tracking-wider ${
+            isExpired
+              ? "bg-red-100 text-red-700"
+              : isLowTime
+                ? "bg-orange-100 text-orange-700"
+                : "bg-[#FFF9E5] text-[#D4A017]"
+          }`}
+        >
           {order.statusLabel}
         </Paragraph1>
       </div>
@@ -191,11 +268,38 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
 
         <Link
           href="/listers/orders/id"
-          className="px-6 py-2.5 bg-[#33332D] text-white rounded-xl text-sm font-bold hover:bg-black transition-all active:scale-95"
+          className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 ${
+            isExpired
+              ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+              : "bg-[#33332D] text-white hover:bg-black"
+          }`}
+          onClick={(e) => {
+            if (isExpired) e.preventDefault();
+          }}
         >
           View Details
         </Link>
       </div>
+
+      {/* Low Time Warning */}
+      {isPending && isLowTime && !isExpired && (
+        <div className="pt-3 border-t border-orange-200 bg-orange-50 -mx-4 -mb-4 px-4 py-3 rounded-b-2xl">
+          <Paragraph1 className="text-xs font-bold text-orange-700">
+            ⚠ Approval deadline approaching - {formatTime(secondsRemaining)}{" "}
+            remaining
+          </Paragraph1>
+        </div>
+      )}
+
+      {/* Expired Notice */}
+      {isExpired && (
+        <div className="pt-3 border-t border-red-200 bg-red-50 -mx-4 -mb-4 px-4 py-3 rounded-b-2xl">
+          <Paragraph1 className="text-xs font-bold text-red-700">
+            ✕ This order's approval deadline has expired and will be
+            auto-cancelled.
+          </Paragraph1>
+        </div>
+      )}
     </motion.div>
   );
 };

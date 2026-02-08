@@ -1,4 +1,5 @@
-// ENDPOINTS: GET /brands
+// ENDPOINTS: GET /api/public/brands
+
 "use client";
 
 import { useBrands } from "@/lib/queries/brand/useBrands";

@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/public/users/:userId
+
 import React from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text"; // Using your custom text component
 import { HiOutlineShare, HiOutlineChevronLeft } from "react-icons/hi2";
@@ -107,7 +109,7 @@ const CuratorProfileCard: React.FC<CuratorProfileCardProps> = ({
               <a
                 href={`https://instagram.com/${instagramHandle.replace(
                   "@",
-                  ""
+                  "",
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"

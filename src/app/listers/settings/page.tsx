@@ -1,6 +1,8 @@
+// ENDPOINTS: Multiple settings endpoints - see AccountTabs and component files for specific endpoints used
+
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import DashboardLayout from "../components/DashboardLayout";
-import AccountTabs from "@/app/renters/components/AccountTabs";
+import AccountTabs from "../components/AccountTabs";
 import { Paragraph2 } from "@/common/ui/Text";
 
 export default function Page() {

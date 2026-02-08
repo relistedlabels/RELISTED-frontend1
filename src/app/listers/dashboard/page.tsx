@@ -1,4 +1,5 @@
 "use client";
+// ENDPOINTS: GET /api/listers/stats, GET /api/listers/rentals/overtime, GET /api/listers/inventory/top-items, GET /api/listers/rentals/recent
 
 import { motion, Variants } from "framer-motion";
 import DashboardLayout from "../components/DashboardLayout";

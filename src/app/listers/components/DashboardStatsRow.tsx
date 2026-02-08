@@ -1,4 +1,5 @@
 "use client";
+// ENDPOINTS: GET /api/listers/stats (Total Earnings, Total Orders, Active Rentals, Pending Payouts)
 
 import React from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";

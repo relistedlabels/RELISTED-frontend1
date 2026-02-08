@@ -1,4 +1,5 @@
 "use client";
+// ENDPOINTS: GET /api/listers/orders/:orderId/progress (current order status/step)
 
 import React from "react";
 import { motion } from "framer-motion";
@@ -26,7 +27,9 @@ const OrderProgress: React.FC<{ currentStep?: number }> = ({
 }) => {
   return (
     <div className="w-full bg-white border border-gray-300 rounded-2xl p-4 ">
-      <Paragraph1 className="text-xl font-bold uppercase text-black mb-4">Order Progress</Paragraph1>
+      <Paragraph1 className="text-xl font-bold uppercase text-black mb-4">
+        Order Progress
+      </Paragraph1>
 
       <div className="relative flex justify-between">
         {/* Background Line */}

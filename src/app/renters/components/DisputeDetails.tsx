@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/renters/disputes/:disputeId
+
 "use client";
 
 import React, { useState } from "react";

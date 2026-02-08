@@ -47,7 +47,7 @@ export default function EndlessStyleHero() {
           </motion.div>
 
           {/* Sub Text */}
-          <motion.p
+          <motion.div
             className="text-[58px] md:text-[58px] italic -mt-2 sm:-mt-1 mb-4"
             variants={{
               hidden: { opacity: 0, y: 20, scale: 0.8 },
@@ -56,7 +56,7 @@ export default function EndlessStyleHero() {
             transition={{ duration: 0.9, ease: "easeOut" }}
           >
             <SpecialH1>short plans, long compliments</SpecialH1>
-          </motion.p>
+          </motion.div>
 
           {/* Buttons */}
           <motion.div

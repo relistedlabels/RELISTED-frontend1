@@ -1,4 +1,5 @@
 "use client";
+// ENDPOINTS: GET /api/listers/inventory/top-items (top performing rental items with availability)
 
 import React from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";

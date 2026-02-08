@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/renters/orders/:orderId/progress
+
 "use client";
 
 import React from "react";
@@ -10,7 +12,7 @@ import {
   RefreshCw,
   Thermometer,
 } from "lucide-react";
-import {  Paragraph1 } from "@/common/ui/Text";
+import { Paragraph1 } from "@/common/ui/Text";
 
 // --- Configuration for Timeline Stages ---
 interface TimelineStage {
@@ -103,8 +105,8 @@ export default function OrderProgressTimeline({
                                   active
                                     ? "bg-black text-white"
                                     : completed
-                                    ? "bg-green-500 text-white"
-                                    : "bg-gray-200 text-gray-500"
+                                      ? "bg-green-500 text-white"
+                                      : "bg-gray-200 text-gray-500"
                                 }`}
               >
                 <Icon size={16} />
@@ -121,8 +123,8 @@ export default function OrderProgressTimeline({
                     active
                       ? "text-black"
                       : completed
-                      ? "text-gray-800"
-                      : "text-gray-500"
+                        ? "text-gray-800"
+                        : "text-gray-500"
                   }`}
                 >
                   {stage.label}

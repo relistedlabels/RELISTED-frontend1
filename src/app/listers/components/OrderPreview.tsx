@@ -1,4 +1,5 @@
 "use client";
+// ENDPOINTS: GET /api/listers/orders/:orderId, GET /api/listers/orders/:orderId/items (for preview)
 
 import React, { useState } from "react";
 import {

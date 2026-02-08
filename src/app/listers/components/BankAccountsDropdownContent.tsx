@@ -1,4 +1,5 @@
 "use client";
+// ENDPOINTS: GET /api/listers/wallet/bank-accounts (list saved accounts), POST /api/listers/wallet/bank-accounts (add new)
 
 import React, { useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";

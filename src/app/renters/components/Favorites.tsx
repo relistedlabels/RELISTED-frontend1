@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/renters/favorites, POST /api/renters/favorites/:itemId, DELETE /api/renters/favorites/:itemId
+
 "use client";
 
 import { useState } from "react";
@@ -12,7 +14,7 @@ export default function Favorites() {
   const filteredProducts = products.filter(
     (item) =>
       item.name.toLowerCase().includes(search.toLowerCase()) ||
-      item.brand.toLowerCase().includes(search.toLowerCase())
+      item.brand.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (

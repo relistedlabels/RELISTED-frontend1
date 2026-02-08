@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/renters/orders/:orderId, GET /api/renters/orders/:orderId/progress, POST /api/renters/orders/:orderId/return
+
 "use client";
 
 import React, { useState } from "react";

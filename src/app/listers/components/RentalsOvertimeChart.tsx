@@ -1,4 +1,5 @@
 "use client";
+// ENDPOINTS: GET /api/listers/rentals/overtime?timeframe=year (revenue & orders over time)
 
 import React from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";

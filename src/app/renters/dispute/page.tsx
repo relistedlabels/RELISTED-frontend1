@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/renters/disputes/stats, GET /api/renters/disputes
+
 import React from "react";
 
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";

@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/renters/wallet/transactions, GET /api/renters/wallet/withdraw/:withdrawalId
+
 import React, { useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { HiOutlineArrowUpRight, HiOutlineArrowDownLeft } from "react-icons/hi2";
@@ -129,14 +131,13 @@ interface AllTransactionsListProps {
 const AllTransactionsList: React.FC<AllTransactionsListProps> = ({
   transactions,
 }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
 
-const [isOpen, setIsOpen] = useState(false);
-const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
-
-const openDetails = (tx: Transaction) => {
-  setSelectedTx(tx);
-  setIsOpen(true);
-};
+  const openDetails = (tx: Transaction) => {
+    setSelectedTx(tx);
+    setIsOpen(true);
+  };
 
   return (
     <div className="font-sans  pt-[30px]">
@@ -167,7 +168,6 @@ const openDetails = (tx: Transaction) => {
 // --- Example Usage matching the provided image content ---
 
 const ExampleAllTransactionsList: React.FC = () => {
- 
   const sampleTransactions: Transaction[] = [
     {
       id: "345GFDVR4346764",

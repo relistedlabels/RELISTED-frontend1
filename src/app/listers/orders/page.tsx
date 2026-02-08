@@ -1,3 +1,4 @@
+// ENDPOINTS: GET /api/listers/orders (list with pagination & filters), POST /api/listers/orders/:orderId/approve, POST /api/listers/orders/:orderId/reject
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import DashboardLayout from "../components/DashboardLayout";
 import { Paragraph2 } from "@/common/ui/Text";

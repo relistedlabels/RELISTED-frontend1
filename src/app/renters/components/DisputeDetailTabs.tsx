@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/renters/disputes/:disputeId, GET /api/renters/disputes/:disputeId/overview, GET /api/renters/disputes/:disputeId/evidence, GET /api/renters/disputes/:disputeId/timeline, GET /api/renters/disputes/:disputeId/resolution, GET /api/renters/disputes/:disputeId/messages
+
 import React, { useState, useRef, useEffect } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { FileText } from "lucide-react";
@@ -48,9 +50,7 @@ const DisputeDetailTabs: React.FC = () => {
     <ExampleDisputeTimeline />
   ));
 
-  const ResolutionContent: React.FC = () => (
-   <ExampleDisputeResolution />
-  );
+  const ResolutionContent: React.FC = () => <ExampleDisputeResolution />;
 
   const contentMap: Record<TabKey, React.ReactNode> = {
     overview: <OverviewContent />,

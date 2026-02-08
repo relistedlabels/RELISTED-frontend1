@@ -1,4 +1,5 @@
 "use client";
+// ENDPOINTS: GET /api/listers/rentals/recent (recent rental transactions with status)
 
 import React from "react";
 // Assuming Paragraph components are available
@@ -128,7 +129,7 @@ const RentalRow: React.FC<RentalTransaction> = ({
       {/* View Order Button */}
       <div className="w-1/6 text-right flex justify-end">
         <Link
-          href="/curators/orders/id"
+          href="/listers/orders/id"
           type="button"
           className="text-sm font-semibold text-gray-600 hover:text-black transition duration-150 underline"
         >

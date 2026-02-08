@@ -1,3 +1,5 @@
+// ENDPOINTS: POST /api/renters/wallet/withdraw, GET /api/renters/wallet/bank-accounts
+
 "use client";
 
 import React, { useState } from "react";
@@ -24,10 +26,7 @@ interface WithdrawPanelProps {
   onClose: () => void;
 }
 
-const WithdrawPanel: React.FC<WithdrawPanelProps> = ({
-  isOpen,
-  onClose,
-}) => {
+const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
   const minPrice = 50000;
   const maxPrice = 200000;
 
@@ -118,8 +117,6 @@ const Withdraw: React.FC = () => {
   return (
     <>
       {/* Toggle Button */}
-
-     
 
       <button
         onClick={() => setIsOpen(true)}

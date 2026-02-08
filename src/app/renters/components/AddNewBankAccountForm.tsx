@@ -1,3 +1,5 @@
+// ENDPOINTS: POST /api/renters/wallet/bank-accounts, GET /api/banks
+
 import React from "react";
 import { Paragraph1 } from "@/common/ui/Text"; // Assuming your custom text component
 import { HiOutlineChevronDown } from "react-icons/hi2";
@@ -5,8 +7,6 @@ import { HiOutlineChevronDown } from "react-icons/hi2";
 const AddNewBankAccountForm: React.FC = () => {
   return (
     <div className="">
-      
-
       {/* Bank Name Dropdown */}
       <div className="mb-4">
         <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
@@ -53,8 +53,6 @@ const AddNewBankAccountForm: React.FC = () => {
           className="w-full p-3 border border-gray-300 rounded-lg focus:ring-black focus:border-black transition duration-150"
         />
       </div>
-
-     
     </div>
   );
 };

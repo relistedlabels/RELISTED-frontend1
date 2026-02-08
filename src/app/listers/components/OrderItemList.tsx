@@ -1,4 +1,5 @@
 "use client";
+// ENDPOINTS: GET /api/listers/orders/:orderId/items
 
 import React from "react";
 import Image from "next/image";

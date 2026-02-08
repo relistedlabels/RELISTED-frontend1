@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/public/users/:userId/reviews
+
 import React from "react";
 import { Paragraph1 } from "@/common/ui/Text"; // Using your custom text component
 import { TiTick } from "react-icons/ti"; // Using the Tick icon if needed for verification/badges

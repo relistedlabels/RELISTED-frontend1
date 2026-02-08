@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/renters/favorites, POST /api/renters/favorites/:itemId, DELETE /api/renters/favorites/:itemId
+
 import React from "react";
 
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";

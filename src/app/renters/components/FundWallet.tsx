@@ -1,3 +1,5 @@
+// ENDPOINTS: POST /api/renters/wallet/deposit
+
 "use client";
 
 import React, { useState } from "react";
@@ -116,7 +118,6 @@ const FundWallet: React.FC = () => {
   return (
     <>
       {/* Toggle Button */}
-    
 
       <button
         onClick={() => setIsOpen(true)}

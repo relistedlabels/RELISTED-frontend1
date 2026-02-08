@@ -242,9 +242,190 @@ GET /api/admin/analytics/revenue-by-category?timeframe=month&month=02&year=2026
 
 ---
 
+### 5. GET /api/admin/analytics/top-curators
+
+**Location:** `src/app/admin/[id]/dashboard/components/TopCurators.tsx`
+
+**UX Explanation:**
+Show the highest-performing curators (listers) on the platform ranked by:
+
+- Number of successful rentals completed
+- Total revenue generated
+
+This helps admins identify:
+
+- Most trusted and active sellers
+- Performance trends
+- Potential influencers/ambassadors
+- Users for case studies or featured listings
+
+**Request Format:**
+
+```json
+GET /api/admin/analytics/top-curators?limit=5
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "topCurators": [
+      {
+        "id": "curator_001",
+        "name": "Anita Cole",
+        "avatar": "https://...",
+        "rentals": 132,
+        "revenue": 820000,
+        "rating": 4.8
+      },
+      {
+        "id": "curator_002",
+        "name": "Blessing Okafor",
+        "avatar": "https://...",
+        "rentals": 118,
+        "revenue": 745000,
+        "rating": 4.7
+      },
+      {
+        "id": "curator_003",
+        "name": "Chioma Eze",
+        "avatar": "https://...",
+        "rentals": 97,
+        "revenue": 680000,
+        "rating": 4.6
+      },
+      {
+        "id": "curator_004",
+        "name": "Fatima Bello",
+        "avatar": "https://...",
+        "rentals": 89,
+        "revenue": 590000,
+        "rating": 4.5
+      },
+      {
+        "id": "curator_005",
+        "name": "Grace Adebayo",
+        "avatar": "https://...",
+        "rentals": 76,
+        "revenue": 520000,
+        "rating": 4.4
+      }
+    ],
+    "generatedAt": "2026-02-08T10:30:00Z"
+  }
+}
+```
+
+---
+
+### 6. GET /api/admin/analytics/top-items
+
+**Location:** `src/app/admin/[id]/dashboard/components/TopItems.tsx`
+
+**UX Explanation:**
+Display the most popular and profitable items on the platform:
+
+- Item name and category
+- Total earnings generated from that item being rented
+
+This helps admins:
+
+- Understand product demand and trends
+- Identify high-value categories
+- Make recommendations to curators about what to list
+- Plan marketing campaigns around bestsellers
+
+**Request Format:**
+
+```json
+GET /api/admin/analytics/top-items?limit=5
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "topItems": [
+      {
+        "id": "item_001",
+        "name": "Fendi Arco Boots",
+        "category": "Shoes",
+        "image": "https://...",
+        "totalEarnings": 230000,
+        "rentals": 45,
+        "rating": 4.9,
+        "curator": {
+          "id": "curator_002",
+          "name": "Blessing Okafor"
+        }
+      },
+      {
+        "id": "item_002",
+        "name": "Chanel Classic Flap",
+        "category": "Bags",
+        "image": "https://...",
+        "totalEarnings": 420000,
+        "rentals": 78,
+        "rating": 4.8,
+        "curator": {
+          "id": "curator_001",
+          "name": "Anita Cole"
+        }
+      },
+      {
+        "id": "item_003",
+        "name": "Versace Silk Dress",
+        "category": "Dresses",
+        "image": "https://...",
+        "totalEarnings": 385000,
+        "rentals": 62,
+        "rating": 4.7,
+        "curator": {
+          "id": "curator_003",
+          "name": "Chioma Eze"
+        }
+      },
+      {
+        "id": "item_004",
+        "name": "Gucci Loafers",
+        "category": "Shoes",
+        "image": "https://...",
+        "totalEarnings": 195000,
+        "rentals": 38,
+        "rating": 4.6,
+        "curator": {
+          "id": "curator_004",
+          "name": "Fatima Bello"
+        }
+      },
+      {
+        "id": "item_005",
+        "name": "Dior Saddle Bag",
+        "category": "Bags",
+        "image": "https://...",
+        "totalEarnings": 340000,
+        "rentals": 55,
+        "rating": 4.8,
+        "curator": {
+          "id": "curator_005",
+          "name": "Grace Adebayo"
+        }
+      }
+    ],
+    "generatedAt": "2026-02-08T10:30:00Z"
+  }
+}
+```
+
+---
+
 ## Admin User Detail & Analysis
 
-### 5. GET /api/admin/users/:userId
+### 7. GET /api/admin/users/:userId
 
 **Location:** `src/app/admin/[id]/users/[userId]/`
 
@@ -308,7 +489,7 @@ GET /api/admin/users/:userId
 
 ---
 
-### 6. GET /api/admin/users/:userId/rentals
+### 8. GET /api/admin/users/:userId/rentals
 
 **Location:** `src/app/admin/[id]/users/[userId]/components/UserRecords.tsx`
 
@@ -368,7 +549,7 @@ GET /api/admin/users/:userId/rentals?page=1&limit=20
 
 ---
 
-### 7. GET /api/admin/users/:userId/listings
+### 9. GET /api/admin/users/:userId/listings
 
 **Location:** `src/app/admin/[id]/users/[userId]/components/UserListings.tsx`
 
@@ -434,7 +615,7 @@ GET /api/admin/users/:userId/listings?page=1&limit=20
 
 ---
 
-### 8. GET /api/admin/users/:userId/wallet
+### 10. GET /api/admin/users/:userId/wallet
 
 **Location:** `src/app/admin/[id]/users/[userId]/components/UserWallet.tsx`
 
@@ -541,7 +722,7 @@ GET /api/admin/users/:userId/transactions?page=1&limit=20
 
 ---
 
-### 10. GET /api/admin/users/:userId/disputes
+### 12. GET /api/admin/users/:userId/disputes
 
 **Location:** `src/app/admin/[id]/users/[userId]/components/UserDisputes.tsx`
 
@@ -604,7 +785,7 @@ GET /api/admin/users/:userId/disputes?page=1&limit=20
 
 ---
 
-### 11. GET /api/admin/users/:userId/favorites
+### 13. GET /api/admin/users/:userId/favorites
 
 **Location:** `src/app/admin/[id]/users/[userId]/components/SavedItems.tsx`
 
@@ -699,7 +880,7 @@ All analytics endpoints should support:
 - Separate items can have different statuses
 - But they're linked via payment reference for financial reconciliation
 
-### 12. GET /api/admin/orders
+### 14. GET /api/admin/orders
 
 **Location:** `src/app/admin/[id]/orders/page.tsx`
 
@@ -771,7 +952,7 @@ GET /api/admin/orders?page=1&limit=20&status=Disputed&tab=all
 
 ---
 
-### 13. GET /api/admin/orders/:orderId
+### 15. GET /api/admin/orders/:orderId
 
 **Location:** `src/app/admin/[id]/orders/components/OrderDetailModal.tsx`
 
@@ -1040,7 +1221,7 @@ POST /api/admin/orders/:orderId/cancel
 
 ---
 
-### 17. GET /api/admin/orders/:orderId/activity
+### 19. GET /api/admin/orders/:orderId/activity
 
 **Location:** `src/app/admin/[id]/orders/components/OrderSection4.tsx`
 
@@ -1122,7 +1303,7 @@ GET /api/admin/orders/:orderId/activity
 
 ---
 
-### 18. GET /api/admin/orders/export
+### 20. GET /api/admin/orders/export
 
 **Location:** `src/app/admin/[id]/orders/page.tsx`
 
@@ -1200,7 +1381,7 @@ All list endpoints support pagination:
 
 **5 Tabs:** Profile & Security, Platform Controls, Roles & Permissions, Admin Management, Audit Logs
 
-### 19. GET /api/admin/settings/profile
+### 21. GET /api/admin/settings/profile
 
 **Location:** `src/app/admin/[id]/settings/` components: UserHeader, ProfileSecurityTab
 
@@ -2829,6 +3010,8 @@ For CSV transactions: Transaction ID, User, Type, Amount, Balance, Description, 
 - [ ] GET /api/admin/analytics/rentals-revenue-trend
 - [ ] GET /api/admin/analytics/category-breakdown
 - [ ] GET /api/admin/analytics/revenue-by-category
+- [ ] GET /api/admin/analytics/top-curators
+- [ ] GET /api/admin/analytics/top-items
 - [ ] GET /api/admin/users/:userId
 - [ ] GET /api/admin/users/:userId/rentals
 - [ ] GET /api/admin/users/:userId/listings

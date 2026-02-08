@@ -1,3 +1,5 @@
+// ENDPOINTS: GET /api/renters/wallet, GET /api/renters/wallet/transactions
+
 import React from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text"; // Assuming your custom text component
 import { HiOutlineArrowDownRight } from "react-icons/hi2";

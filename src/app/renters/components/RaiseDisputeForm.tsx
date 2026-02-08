@@ -1,3 +1,5 @@
+// ENDPOINTS: POST /api/renters/disputes, GET /api/issue-categories
+
 import React, { useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { HiOutlineArrowUpTray, HiOutlineChevronDown } from "react-icons/hi2";
@@ -23,8 +25,6 @@ const RaiseDisputeForm: React.FC = () => {
 
   return (
     <div className="font-sans ">
-      
-
       {/* Order ID Display (Static in image, but would be an input or display in real app) */}
       <div className="mb-4">
         <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
