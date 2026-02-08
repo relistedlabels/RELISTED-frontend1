@@ -35,6 +35,11 @@ export type UsersListResponse = {
 };
 
 export const userApi = {
+  getUserById: (userId: string) =>
+    apiFetch<UserResponse>(`/user/${userId}`, {
+      method: "GET",
+    }),
+
   getAllUsers: (page: number = 1, count: number = 10) =>
     apiFetch<UsersListResponse>(`/user/all?page=${page}&count=${count}`, {
       method: "GET",

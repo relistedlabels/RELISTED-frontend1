@@ -1,3 +1,4 @@
+// ENDPOINTS: GET /api/admin/orders/:orderId (payment breakdown), GET /api/admin/orders/:orderId/receipt
 "use client";
 
 import React from "react";

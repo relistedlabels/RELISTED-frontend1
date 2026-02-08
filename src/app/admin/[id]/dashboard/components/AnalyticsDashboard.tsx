@@ -1,5 +1,6 @@
+// ENDPOINTS: GET /api/admin/analytics/rentals-revenue-trend, GET /api/admin/analytics/category-breakdown, GET /api/admin/analytics/revenue-by-category
 // AnalyticsDashboard.tsx
-"use client"
+"use client";
 
 import React from "react";
 import RentalsRevenueTrend from "./RentalsRevenueTrend";

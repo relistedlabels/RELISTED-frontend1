@@ -1,3 +1,4 @@
+// ENDPOINTS: GET /api/admin/users/:userId
 "use client";
 
 import React, { useState } from "react";

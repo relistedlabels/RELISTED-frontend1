@@ -1,3 +1,4 @@
+// ENDPOINTS: GET /api/admin/users/:userId/wallet, GET /api/admin/users/:userId/transactions
 "use client";
 
 import React from "react";

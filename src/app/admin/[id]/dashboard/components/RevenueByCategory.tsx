@@ -1,3 +1,4 @@
+// ENDPOINTS: GET /api/admin/analytics/revenue-by-category
 // RevenueByCategory.tsx
 import { Paragraph3 } from "@/common/ui/Text";
 import React from "react";

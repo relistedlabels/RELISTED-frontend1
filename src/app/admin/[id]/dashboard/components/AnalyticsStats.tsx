@@ -1,3 +1,4 @@
+// ENDPOINTS: GET /api/admin/analytics/stats
 import {
   HiOutlineUsers,
   HiOutlineScale,

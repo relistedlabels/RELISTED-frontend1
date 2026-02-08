@@ -1,13 +1,35 @@
-
 // SuspendUserButton.tsx
 "use client";
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { useSuspendUser } from "@/lib/queries/user/useSuspendUser";
+import { useQueryClient } from "@tanstack/react-query";
 
-const SuspendUserButton = () => {
+interface SuspendUserButtonProps {
+  userId: string;
+  userName?: string;
+}
+
+const SuspendUserButton = ({
+  userId,
+  userName = "User",
+}: SuspendUserButtonProps) => {
   const [open, setOpen] = useState(false);
+  const { mutate: suspendUser, isPending } = useSuspendUser();
+  const queryClient = useQueryClient();
+
+  const handleSuspend = () => {
+    suspendUser(userId, {
+      onSuccess: () => {
+        setOpen(false);
+        // Invalidate user queries to refresh the UI
+        queryClient.invalidateQueries({ queryKey: ["users"] });
+        queryClient.invalidateQueries({ queryKey: ["user", userId] });
+      },
+    });
+  };
 
   return (
     <>
@@ -41,23 +63,28 @@ const SuspendUserButton = () => {
               </Paragraph1>
 
               <Paragraph3 className="text-gray-500 mb-6">
-                Are you sure you want to suspend Chioma Adeyemi?
+                Are you sure you want to suspend {userName}?
                 <br />
-                They’ll lose access until reactivated.
+                They'll lose access until reactivated.
               </Paragraph3>
 
               <div className="flex gap-3">
                 <button
                   onClick={() => setOpen(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                  disabled={isPending}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50"
                 >
                   <Paragraph1>Cancel</Paragraph1>
                 </button>
 
                 <button
-                  className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+                  onClick={handleSuspend}
+                  disabled={isPending}
+                  className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition disabled:opacity-50"
                 >
-                  <Paragraph1>Confirm Suspension</Paragraph1>
+                  <Paragraph1>
+                    {isPending ? "Suspending..." : "Confirm Suspension"}
+                  </Paragraph1>
                 </button>
               </div>
             </motion.div>
@@ -68,4 +95,4 @@ const SuspendUserButton = () => {
   );
 };
 
-export default SuspendUserButton
+export default SuspendUserButton;

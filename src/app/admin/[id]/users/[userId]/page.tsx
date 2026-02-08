@@ -1,3 +1,4 @@
+// ENDPOINTS: GET /api/admin/users/:userId, GET /api/admin/users/:userId/rentals, GET /api/admin/users/:userId/listings, GET /api/admin/users/:userId/wallet, GET /api/admin/users/:userId/transactions, GET /api/admin/users/:userId/disputes, GET /api/admin/users/:userId/favorites
 "use client";
 
 import React, { useState } from "react";
@@ -9,6 +10,7 @@ import {
   Wallet,
   AlertCircle,
   CreditCard,
+  Package,
   Heart,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -16,6 +18,7 @@ import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import UserProfileOverview from "./components/UserProfileOverview";
 import UserRecords from "./components/UserRecords";
+import UserListings from "./components/UserListings";
 import UserWallet from "./components/UserWallet";
 import UserDisputes from "./components/UserDisputes";
 import SavedItems from "./components/SavedItems";
@@ -57,6 +60,7 @@ const DEMO_USER = {
 const TABS = [
   { id: "summary", label: "Summary", icon: BarChart3 },
   { id: "rentals", label: "Rentals", icon: ShoppingBag },
+  { id: "listings", label: "Listings", icon: Package },
   { id: "wallet", label: "Wallet", icon: Wallet },
   { id: "disputes", label: "Disputes", icon: AlertCircle },
   { id: "transactions", label: "Favorites", icon: Heart },
@@ -89,6 +93,8 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
         return <UserProfileOverview user={DEMO_USER} />;
       case "rentals":
         return <UserRecords user={DEMO_USER} />;
+      case "listings":
+        return <UserListings user={DEMO_USER} />;
       case "wallet":
         return <UserWallet user={DEMO_USER} />;
       case "disputes":

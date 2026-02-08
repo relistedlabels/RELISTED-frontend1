@@ -125,7 +125,11 @@ export default function DresserTable({
                 </Paragraph1>
               </td>
               <td className="px-6 py-4">
-                <UserDetails userId={user.id} isSuspended={user.isSuspended} />
+                <UserDetails
+                  userId={user.id}
+                  userRole={role}
+                  isSuspended={user.isSuspended}
+                />
               </td>
             </tr>
           ))}

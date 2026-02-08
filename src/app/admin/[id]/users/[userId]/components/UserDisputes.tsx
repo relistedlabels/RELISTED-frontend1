@@ -1,3 +1,4 @@
+// ENDPOINTS: GET /api/admin/users/:userId/disputes
 "use client";
 
 import React from "react";

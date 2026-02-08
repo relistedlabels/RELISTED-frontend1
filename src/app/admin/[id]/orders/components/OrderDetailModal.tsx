@@ -1,3 +1,4 @@
+// ENDPOINTS: GET /api/admin/orders/:orderId
 "use client";
 
 import React from "react";

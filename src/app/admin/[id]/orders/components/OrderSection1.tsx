@@ -1,3 +1,4 @@
+// ENDPOINTS: PUT /api/admin/orders/:orderId/status, POST /api/admin/orders/:orderId/cancel
 "use client";
 
 import React from "react";

@@ -1,3 +1,4 @@
+// ENDPOINTS: GET /api/admin/analytics/category-breakdown
 // CategoryBreakdown.tsx
 import { Paragraph3 } from "@/common/ui/Text";
 import React from "react";

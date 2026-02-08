@@ -1,3 +1,4 @@
+// ENDPOINTS: GET /api/admin/analytics/rentals-revenue-trend
 // RentalsRevenueTrend.tsx
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import React from "react";
