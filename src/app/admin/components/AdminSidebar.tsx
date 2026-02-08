@@ -55,13 +55,13 @@ const getNavItems = (adminId: string): NavItem[] => [
     id: "wallet",
     label: "Wallet & Escrow",
     icon: HiOutlineCreditCard,
-    getHref: (id) => `/admin/${id}/wallet`,
+    getHref: (id) => `/admin/${id}/wallets`,
   },
   {
     id: "dispute",
     label: "Dispute",
     icon: HiOutlineFolder,
-    getHref: (id) => `/admin/${id}/dispute`,
+    getHref: (id) => `/admin/${id}/disputes`,
   },
   {
     id: "settings",
@@ -170,7 +170,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 overflow-y-auto hide-scrollbar">
+      <nav className="flex-1-  px-4 overflow-y-auto-  hide-scrollbar-">
         <ul>
           {navItems.map((item) => {
             const href = item.getHref(adminId || "");

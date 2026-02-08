@@ -15,7 +15,7 @@ export default function AdminTopNavbar({ onLogout }: AdminTopNavbarProps) {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 px-8 flex items-center justify-between z-40 shadow-sm">
+    <div className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 px-8 flex items-center justify-between z-40 ">
       {/* Logo */}
       <div className="flex items-center">
         <h1 className="text-lg font-bold text-gray-900">RELISTED LABELS</h1>
