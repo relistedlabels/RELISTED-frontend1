@@ -44,12 +44,7 @@ export default function AdminLayoutWrapper({
     <div className="flex h-screen bg-gray-100 overflow-hidden">
       <MobileDesktopRecommendation />
       <AdminTopNavbar onLogout={handleLogout} />
-      <AdminSidebar
-        userAvatarUrl="https://i.pravatar.cc/150?img=30"
-        userName="Jane Graham"
-        userRole="ADMIN"
-        onLogout={handleLogout}
-      />
+      <AdminSidebar onLogout={handleLogout} />
 
       <main className="flex-1 bg-white p-2 sm:p-8 pt-20 sm:pt-[100px] hide-scrollbar overflow-auto">
         {children}

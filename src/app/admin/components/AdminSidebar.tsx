@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
+import { useMe } from "@/lib/queries/auth/useMe";
+import { useProfile } from "@/lib/queries/user/useProfile";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
   HiOutlineHome,
@@ -70,18 +72,37 @@ const getNavItems = (adminId: string): NavItem[] => [
 ];
 
 interface AdminSidebarProps {
-  userAvatarUrl: string;
-  userName: string;
-  userRole: string;
   onLogout: () => void;
 }
 
-const AdminSidebar: React.FC<AdminSidebarProps> = ({
-  userAvatarUrl,
-  userName,
-  userRole,
-  onLogout,
-}) => {
+const getInitials = (name: string): string => {
+  if (!name) return "";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length > 0) {
+    return parts[0].substring(0, 2).toUpperCase();
+  }
+  return "";
+};
+
+const getAvatarBgColor = (name: string): string => {
+  const colors = [
+    "bg-red-400",
+    "bg-blue-400",
+    "bg-green-400",
+    "bg-yellow-400",
+    "bg-purple-400",
+    "bg-pink-400",
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+};
+
+const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
+  const { data: user } = useMe();
+  const { data: profile } = useProfile();
   const pathname = usePathname();
   const adminId = useAdminIdStore((state) => state.adminId);
   const [isMobileExpanded, setIsMobileExpanded] = useState(false);
@@ -121,18 +142,28 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             !isMobileExpanded ? "justify-center lg:justify-start" : ""
           }`}
         >
-          <img
-            src={userAvatarUrl}
-            alt={userName}
-            className="w-12 h-12 rounded-full border"
-          />
+          {profile?.avatar ? (
+            <img
+              src={profile.avatar}
+              alt={user?.name || "Admin"}
+              className="w-12 h-12 rounded-full border border-gray-200 object-cover"
+            />
+          ) : (
+            <div
+              className={`w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center font-bold text-white text-sm ${getAvatarBgColor(
+                user?.name || "",
+              )}`}
+            >
+              {getInitials(user?.name || "")}
+            </div>
+          )}
 
           <div className={`${!isMobileExpanded ? "hidden lg:block" : "block"}`}>
             <Paragraph1 className="text-sm font-bold truncate">
-              {userName}
+              {user?.name || "Loading..."}
             </Paragraph1>
             <Paragraph1 className="text-[10px] text-gray-500 uppercase">
-              -{userRole}-
+              -{user?.role || "ADMIN"}-
             </Paragraph1>
           </div>
         </div>
