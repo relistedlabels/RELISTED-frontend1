@@ -428,7 +428,34 @@ When lister approves and `autoPay=true`:
 
 ### Detection Point
 
-When renter clicks "Check Availability" with insufficient wallet balance.
+When renter clicks "Check Availability" with insufficient **available** wallet balance.
+
+### What Gets Deducted
+
+When a rental order is confirmed (immediately, not at lister approval):
+
+| Component            | Amount            | Purpose                              | When Refunded                                                              |
+| -------------------- | ----------------- | ------------------------------------ | -------------------------------------------------------------------------- |
+| **Rental Fee**       | Daily rate × days | Cost to rent the item                | Locked for 3 days after renter receives item, then released if no disputes |
+| **Delivery Fee**     | Fixed per area    | Logistics & shipping                 | Released when item returned to lister                                      |
+| **Security Deposit** | Item value        | Covers damage/loss                   | Released when item confirmed in good condition                             |
+| **TOTAL CHARGED**    | Sum of above      | Example: ₦165k + ₦2k + ₦500k = ₦667k | Varies by component                                                        |
+
+### Example Scenario
+
+**User attempts to rent item:**
+
+- Item: FENDI ARCO BOOTS
+- Rental Period: 3 days @ ₦55,000/day = ₦165,000
+- Delivery Fee: ₦2,000
+- Security Deposit (Item Value): ₦500,000
+- **Total Deduction: ₦667,000**
+
+**Renter's Wallet:**
+
+- Available Balance: ₦500,000
+- Shortfall: ₦167,000 (₦667,000 - ₦500,000)
+- ❌ Transaction BLOCKED
 
 ### Error Response from Backend
 
@@ -437,13 +464,22 @@ When renter clicks "Check Availability" with insufficient wallet balance.
 ```json
 {
   "success": false,
-  "message": "Insufficient wallet balance",
+  "message": "Your current cart is above your wallet balance",
   "error": "INSUFFICIENT_FUNDS",
   "data": {
-    "requiredAmount": 165000,
-    "availableBalance": 42000,
-    "shortfall": 123000,
-    "currency": "NGN"
+    "requiredAmount": 667000,
+    "requiredBreakdown": {
+      "rentalFee": 165000,
+      "deliveryFee": 2000,
+      "securityDeposit": 500000
+    },
+    "availableBalance": 500000,
+    "lockedBalance": 350000,
+    "totalBalance": 850000,
+    "shortfall": 167000,
+    "currency": "NGN",
+    "suggestion": "You need ₦167,000 more in your available balance. Add funds to your wallet to proceed.",
+    "walletLink": "/renters/wallet"
   }
 }
 ```
@@ -475,8 +511,9 @@ async function handleCheckAvailability() {
 
       if (error.error === "INSUFFICIENT_FUNDS") {
         showInsufficientFundsModal({
-          required: error.data.requiredAmount,
-          available: error.data.availableBalance,
+          requiredAmount: error.data.requiredAmount,
+          breakdown: error.data.requiredBreakdown,
+          availableBalance: error.data.availableBalance,
           shortfall: error.data.shortfall,
         });
         return;
@@ -538,6 +575,31 @@ Response: {
   "amount": 123000
 }
 ```
+
+### Key Points on Wallet & Funds Locking
+
+1. **Available Balance Only:** Cart validation checks **available balance**, NOT total balance
+   - Available = Total - Locked balances
+   - Locked funds are from active rentals and disputes
+
+2. **Why Check Available?** Renter may have ₦850,000 total but ₦350,000 locked in other rentals, so only ₦500,000 is spendable
+
+3. **When Funds Are Deducted:**
+   - **Timing:** At order confirmation (when lister approves, or immediately if autoPay=false and manual confirm)
+   - **Amount:** Rental fee + Delivery fee + Security deposit total
+   - **Order:** Deducted from renter's available balance
+
+4. **When Funds Are Released Back:**
+   - **Rental Fee:** Locked for 3 days after renter receives item, then becomes available if no disputes
+   - **Delivery Fee:** Released when item is returned to lister
+   - **Security Deposit:** Released when item is confirmed in good condition by lister
+
+5. **User Options for Insufficient Funds:**
+   - Add funds (reduces shortfall to ₦0)
+   - Reduce rental period (lower daily rate, reduce total cost)
+   - Select different item (lower value/deposit)
+
+6. **Locked Balance Details:** Renter can view what's locked by visiting Wallet page → tap "Locked Balance" card
 
 ---
 

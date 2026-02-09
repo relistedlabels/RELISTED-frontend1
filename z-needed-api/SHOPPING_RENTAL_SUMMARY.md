@@ -69,12 +69,13 @@ AUTHENTICATION CHECKPOINT (Login Modal if Not Authenticated)
 RENTAL REQUEST SUBMISSION (Login Required)
 │
 ├─ POST /api/renters/rental-requests (Submit availability check)
+│   ├─ Validates: Rental fee + Delivery fee + Security deposit ≤ Available balance
 │   ├─ 🟢 SUCCESS: Item added to cart with 15-min timer
-│   ├─ 🔴 INSUFFICIENT_FUNDS: Show wallet modal
+│   ├─ 🔴 INSUFFICIENT_FUNDS: Show wallet modal (need ₦X more)
 │   └─ 🔴 UNAVAILABLE: Item not available for dates
 │
 ↓
-CART & PROCESSING
+CART & PROCESSING (15 Min Timer)
 │
 ├─ GET /api/renters/rental-requests (Display cart items with timers)
 ├─ GET /api/renters/rental-requests/:id (Monitor request status)
@@ -84,16 +85,40 @@ CART & PROCESSING
 LISTER RESPONSE
 │
 ├─ APPROVED → POST /api/renters/rental-requests/:id/confirm
-│   (Auto if autoPay=true, Manual if autoPay=false)
+│   │
+│   ├─ 💰 DEDUCT from Renter Wallet:
+│   │   ├─ Rental Fee: ₦165,000
+│   │   ├─ Delivery Fee: ₦2,000
+│   │   └─ Security Deposit: ₦500,000
+│   │   └─ TOTAL: ₦667,000
+│   │
+│   ├─ 🔒 LOCK in Lister Wallet:
+│   │   ├─ Rental Fee: ₦165,000 (locked for 3 days)
+│   │   └─ Status: "locked_rent al_fee_3day_hold"
+│   │
+│   ├─ Auto if autoPay=true, Manual if autoPay=false
+│   └─ Order created, item removed from cart
 │
 ├─ REJECTED → Remove from cart
 │
 └─ EXPIRED (15 min) → Auto-remove from cart
 │
 ↓
-ORDER CREATED
+SECURITY DEPOSIT REFUND (When Item Returned)
 │
-└─ Item moves from cart to Orders section
+├─ Renter returns item to lister
+├─ Lister confirms receipt & item condition
+├─ ✅ IF good condition: ₦500,000 refunded to renter
+└─ ❌ IF damaged: Deposit forfeited, used for damage claim
+│
+↓
+RENTAL FEE UNLOCK (After 3-Day Hold)
+│
+├─ Renter received item on: Feb 8
+├─ 3-day lock period: Feb 8 → Feb 11
+├─ On Feb 11: If no disputes raised:
+│   └─ ₦165,000 becomes available in lister's wallet
+└─ If dispute raised: Fee remains locked until resolved
 ```
 
 ---
@@ -132,11 +157,20 @@ Each Cart Item
 ### 4. **Insufficient Funds Detection**
 
 ```
-When: Rental cost exceeds wallet balance
+When: Available balance < (Rental fee + Delivery fee + Security deposit)
 Detection: At POST /api/renters/rental-requests
 Response: 400 error with INSUFFICIENT_FUNDS code
-Data: required amount, available balance, shortfall
+Data: Required breakdown, available balance, shortfall, suggestion
 Action: Show modal → Add Funds to Wallet → Retry
+
+Example:
+  Rental Fee:        ₦165,000
+  Delivery Fee:      ₦2,000
+  Security Deposit:  ₦500,000
+  ─────────────────────────
+  TOTAL REQUIRED:    ₦667,000
+  Available Balance: ₦500,000
+  SHORTFALL:         ₦167,000 (show "need ₦167,000 more")
 ```
 
 ### 5. **Auto-Pay Option**
@@ -154,7 +188,28 @@ When Disabled:
   └─ More deliberate checkout
 ```
 
-### 6. **Processing State (No Checkout Button)**
+### 6. **Wallet Lock Mechanics (3-Day Hold)**
+
+```
+RENTER SIDE:
+  Deductions at order confirmation:
+  ├─ Rental Fee: Locked for 3 days after receipt
+  ├─ Delivery Fee: Locked until item returned
+  └─ Security Deposit: Locked until item verified
+
+LISTER SIDE:
+  Rental Fee Lock:
+  ├─ Received at order confirmation
+  ├─ Locked (non-spendable) for 3 days after renter receipt
+  ├─ Auto-unlock after 3 days if no disputes
+  └─ Example: Item received Feb 8 → Unlock Feb 11
+
+DISPUTE IMPACT:
+  ├─ IF dispute raised during 3-day lock: Fee stays locked
+  └─ ONCE dispute resolved: Fee unlocked or forfeited per verdict
+```
+
+### 7. **Processing State (No Checkout Button)**
 
 ```
 While Waiting for Lister:
@@ -166,7 +221,7 @@ While Waiting for Lister:
 └─ Auto-refresh: Status via GET polling
 
 When Lister Responds:
-├─ Approved → Order confirmation screen
+├─ Approved → Order confirmation screen (payment deducted)
 ├─ Rejected → "Request declined" message
 └─ Expired → "Request expired" message
 ```
