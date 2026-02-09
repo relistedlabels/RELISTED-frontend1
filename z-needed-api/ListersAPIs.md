@@ -876,15 +876,19 @@ PUT /api/listers/orders/:orderId/status
 **Location:** `src/app/listers/wallet/page.tsx` & `src/app/listers/components/WalletBalanceCard.tsx`
 
 **UX Explanation:**
-Listers need to monitor their earning balance and wallet status:
+Listers need to monitor their earning balance and wallet status, including locked rental fees:
 
-- **Current Balance**: Total amount available to withdraw (₦500,000.00)
-- **Pending Earnings**: Money from approved orders not yet released (escrow)
+- **Available Balance**: Total amount available to withdraw immediately (₦500,000.00)
+- **Locked Balance**: Rental fees locked from recent approved orders (₦165,000.00)
+- **Total Balance**: Available + Locked (₦665,000.00)
+- **Locked Breakdown**: Shows which orders have locked rental fees and when they unlock
+- **Pending Earnings**: Money from approved orders not yet released (escrow/dispute holds)
 - **Total Earnings**: Cumulative earnings from all completed rentals
 - **Withdrawal Limit**: Monthly withdrawal limit remaining (e.g., 5 withdrawals per month)
 - **Last Withdrawal**: When the lister last withdrew funds
+- **Lock Release Schedule**: Timeline for when locked rental fees become available
 
-This is displayed prominently as a balance card with animated decorative background.
+**Important:** Rental fees are locked for **3 days after the renter receives the item**. After 3 days, if there are no disputes, the rental fee becomes available for withdrawal. If a dispute is raised, the fee remains locked until dispute resolution.
 
 **Request Format:**
 
@@ -899,9 +903,29 @@ GET /api/listers/wallet/stats
   "success": true,
   "data": {
     "wallet": {
-      "currentBalance": 500000,
+      "availableBalance": 500000,
+      "lockedBalance": 165000,
+      "totalBalance": 665000,
       "currency": "NGN",
-      "formattedBalance": "₦500,000.00",
+      "formattedAvailableBalance": "₦500,000.00",
+      "formattedLockedBalance": "₦165,000.00",
+      "formattedTotalBalance": "₦665,000.00",
+      "lockedBreakdown": [
+        {
+          "orderId": "ORD-001",
+          "dresserId": "renter_123",
+          "dresserName": "Chioma Eze",
+          "itemName": "FENDI ARCO BOOTS",
+          "rentalFeeAmount": 165000,
+          "lockedSince": "2026-02-08T14:30:00Z",
+          "unlocksAt": "2026-02-11T14:30:00Z",
+          "daysUntilUnlock": 3,
+          "status": "locked_pending_3day_hold",
+          "renterReceivedDate": "2026-02-08T14:30:00Z",
+          "reason": "Locked for 3 days after renter receives item (per RELISTED policy)"
+        }
+      ],
+      "totalLockedAmount": 165000,
       "pendingEarnings": 280000,
       "totalEarnings": 2100000,
       "withdrawalLimitThisMonth": {
@@ -915,11 +939,21 @@ GET /api/listers/wallet/stats
         "status": "completed"
       },
       "minimumWithdrawalAmount": 10000,
+      "nextUnlockDate": "2026-02-11T14:30:00Z",
+      "nextUnlockAmount": 165000,
       "updatedAt": "2026-02-08T10:30:00Z"
     }
   }
 }
 ```
+
+**Lock Period Timeline:**
+
+- **Rental Fee Lock:** Starts when order is created (renter deducted, lister receives locked rental fee)
+- **Duration:** 3 days after renter receives item
+- **Release Condition:** If no disputes are raised
+- **Dispute Impact:** If dispute is raised during lock period, fee remains locked until dispute resolved
+- **After Release:** Fee becomes part of available balance and can be withdrawn
 
 ---
 
@@ -1348,6 +1382,128 @@ GET /api/listers/wallet/withdraw/:withdrawalId
   }
 }
 ```
+
+---
+
+### 19. GET /api/listers/wallet/locked-balances
+
+**Location:** `src/app/listers/components/LockedBalanceCard.tsx` & `src/app/listers/wallet/page.tsx`
+
+**UX Explanation:**
+Retrieve detailed breakdown of rental fees locked in the lister's wallet. This shows:
+
+- Rental fees locked from recent approved orders
+- Timeline for when each fee becomes available (3-day lock period)
+- Orders that have disputes affecting lock status
+- Total locked amount and breakdown by order
+- Lock release schedule with expected dates
+
+**Request Format:**
+
+```json
+GET /api/listers/wallet/locked-balances
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "lockedBalances": {
+      "totalLocked": 165000,
+      "currency": "NGN",
+      "lockedOrders": [
+        {
+          "orderId": "ORD-001",
+          "rentalNumber": "#REN-001",
+          "dresserId": "renter_123",
+          "dresserName": "Chioma Eze",
+          "dresserImage": "https://cloudinary.com/dresser-123.jpg",
+          "itemName": "FENDI ARCO BOOTS",
+          "itemImage": "https://cloudinary.com/item-123.jpg",
+          "rentalFee": {
+            "amount": 165000,
+            "lockedAt": "2026-02-08T14:30:00Z",
+            "rentalStartDate": "2026-02-15T10:00:00Z",
+            "rentalEndDate": "2026-02-18T10:00:00Z",
+            "renterReceivedDate": "2026-02-15T10:00:00Z",
+            "unlocksAt": "2026-02-18T10:00:00Z",
+            "daysUntilUnlock": 3,
+            "hoursUntilUnlock": 72,
+            "status": "locked",
+            "lockReason": "3-day hold period after renter receives item (per RELISTED rental policy)",
+            "releaseCondition": "If no disputes are raised during rental period"
+          },
+          "rentalStatus": "active",
+          "disputeStatus": "none",
+          "deliveryStatus": "completed"
+        },
+        {
+          "orderId": "ORD-003",
+          "rentalNumber": "#REN-003",
+          "dresserId": "renter_456",
+          "dresserName": "Adeola Adeyemi",
+          "itemName": "CHANEL CLASSIC FLAP",
+          "itemImage": "https://cloudinary.com/item-456.jpg",
+          "rentalFee": {
+            "amount": 220000,
+            "lockedAt": "2026-02-07T09:00:00Z",
+            "renterReceivedDate": "2026-02-07T09:00:00Z",
+            "unlocksAt": "2026-02-10T09:00:00Z",
+            "daysUntilUnlock": 2,
+            "status": "locked",
+            "lockReason": "3-day hold period after renter receives item"
+          },
+          "rentalStatus": "completed",
+          "disputeStatus": "under_review",
+          "deliveryStatus": "returned"
+        }
+      ],
+      "disputeHolds": [
+        {
+          "orderId": "ORD-003",
+          "rentalNumber": "#REN-003",
+          "itemName": "CHANEL CLASSIC FLAP",
+          "heldAmount": 220000,
+          "holdReason": "Item condition dispute raised by dresser",
+          "disputeInitiatedDate": "2026-02-08T14:30:00Z",
+          "expectedResolutionDate": "2026-02-15T14:30:00Z",
+          "daysUntilResolution": 7,
+          "status": "under_review",
+          "impact": "Rental fee will remain locked until dispute is resolved"
+        }
+      ],
+      "lockReleaseSchedule": {
+        "nextReleaseDate": "2026-02-10T09:00:00Z",
+        "nextReleaseAmount": 165000,
+        "totalUpcomingReleases": 165000,
+        "schedule": [
+          {
+            "date": "2026-02-10T09:00:00Z",
+            "amount": 165000,
+            "orderId": "ORD-001",
+            "dresserName": "Chioma Eze",
+            "itemName": "FENDI ARCO BOOTS",
+            "status": "pending_release"
+          }
+        ]
+      },
+      "summary": {
+        "totalLockedAmount": 165000,
+        "totalUnderDispute": 220000,
+        "allLockedAmount": 385000,
+        "averageUnlockTime": "2.5 days"
+      }
+    }
+  }
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Locked balances retrieved successfully
+- `401 Unauthorized` - User not authenticated
 
 ---
 

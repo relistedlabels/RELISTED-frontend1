@@ -584,12 +584,18 @@ Content-Type: application/json
 **UX Explanation:**
 Retrieve renter's wallet balance and basic wallet info. The Wallet page displays:
 
-- **Current Balance**: Amount available to spend
+- **Available Balance**: Amount available to spend on new rentals (not locked in active rentals)
+- **Locked Balance**: Money deducted from active rentals (rental fee + delivery fee + security deposits)
+- **Total Balance**: Available + Locked (complete wallet balance)
+- **Breakdown of Locked Funds**: By rental order and dispute holds
 - **Total Deposits**: Sum of all funds added to wallet
-- **Total Spent**: Cumulative amount spent on rentals
-- **Pending**: Money held for ongoing rentals
+- **Total Spent**: Cumulative amount spent on completed rentals
 - **Transaction History**: Recent deposits and deductions
 - **Quick Actions**: Fund Wallet, Withdraw Money buttons
+
+**Important:** Cart validation checks **available balance** only, not total balance. When a renter attempts to create a rental request, the system verifies:
+
+- Rental fee + Delivery fee + Security deposit ≤ Available balance
 
 **Request Format:**
 
@@ -607,29 +613,66 @@ GET /api/renters/wallet
       "walletId": "wallet_renter_123",
       "userId": "user_456",
       "balance": {
-        "available": 50000,
-        "pending": 12000,
-        "total": 62000,
-        "currency": "NGN"
+        "availableBalance": 50000,
+        "lockedBalance": 667000,
+        "totalBalance": 717000,
+        "currency": "NGN",
+        "lastUpdated": "2026-02-08T14:30:00Z"
+      },
+      "lockedBreakdown": {
+        "activeRentals": [
+          {
+            "orderId": "ORD-001",
+            "itemName": "Vintage Gucci Handbag",
+            "rentalFeeLockedAmount": 165000,
+            "deliveryFeeLockedAmount": 2000,
+            "securityDepositLockedAmount": 500000,
+            "totalLockedAmount": 667000,
+            "lockExpiryDate": "2026-02-18T10:00:00Z",
+            "status": "locked_in_active_rental"
+          }
+        ],
+        "disputeHolds": [
+          {
+            "orderId": "ORD-002",
+            "reason": "Item condition dispute",
+            "heldAmount": 150000,
+            "disputeStartDate": "2026-02-05T10:00:00Z",
+            "expectedResolutionDate": "2026-02-12T10:00:00Z"
+          }
+        ],
+        "totalLockedAmount": 667000
       },
       "statistics": {
         "totalDeposits": 200000,
         "totalSpent": 150000,
         "totalRefunds": 12000,
-        "lifetimeTransactions": 25
+        "lifetimeTransactions": 25,
+        "activeRentalOrders": 1,
+        "activeDisputes": 1
       },
       "lastTransaction": {
         "type": "debit",
-        "amount": 12000,
-        "description": "Rental charge for ORD-001",
-        "date": "2026-01-15T10:00:00Z"
+        "amount": 667000,
+        "description": "Rental deduction for ORD-001 (Rental fee ₦165,000 + Delivery ₦2,000 + Security Deposit ₦500,000)",
+        "date": "2026-02-08T14:30:00Z"
       },
       "linkedBankAccounts": 1,
-      "canWithdraw": true
+      "canWithdraw": true,
+      "minimumFundsForTransaction": 10000
     }
   }
 }
 ```
+
+**Key Differences - Available vs Locked Balance:**
+
+| Type                 | When Locked         | When Released                                        | Example                              |
+| -------------------- | ------------------- | ---------------------------------------------------- | ------------------------------------ |
+| **Rental Fee**       | At order creation   | 3 days after renter receives item (if no disputes)   | ₦165,000 locked for 3 days           |
+| **Delivery Fee**     | At order creation   | When lister receives return                          | ₦2,000 locked during rental period   |
+| **Security Deposit** | At order creation   | When lister confirms item received in good condition | ₦500,000 locked, refunded if item OK |
+| **Disputed Amount**  | When dispute raised | When dispute is resolved                             | Amount varies by case                |
 
 **Status Codes:**
 
@@ -1109,9 +1152,111 @@ GET /api/renters/wallet/withdraw/:withdrawalId
 
 ---
 
+### 17. GET /api/renters/wallet/locked-balances
+
+**Location:** `src/app/renters/components/LockedBalanceCard.tsx` & `src/app/renters/wallet/page.tsx`
+
+**UX Explanation:**
+Retrieve detailed breakdown of locked funds in the renter's wallet. This shows:
+
+- Security deposits locked in active rentals (when released)
+- Rental fees locked in active orders
+- Amount locked due to disputes
+- Detailed timeline for when each amount becomes available
+- Lock release schedule
+
+**Request Format:**
+
+```json
+GET /api/renters/wallet/locked-balances
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "lockedBalances": {
+      "totalLocked": 667000,
+      "currency": "NGN",
+      "activeRentals": [
+        {
+          "orderId": "ORD-001",
+          "itemName": "Vintage Gucci Handbag",
+          "listerName": "Betty Daniels",
+          "productImage": "https://cloudinary.com/item-123.jpg",
+          "breakdown": {
+            "rentalFee": {
+              "amount": 165000,
+              "lockedAt": "2026-02-08T14:30:00Z",
+              "releasesAt": "2026-02-18T14:30:00Z",
+              "daysRemaining": 10,
+              "reason": "Locked for 3 days after renter receives item"
+            },
+            "deliveryFee": {
+              "amount": 2000,
+              "lockedAt": "2026-02-08T14:30:00Z",
+              "releasesAt": "2026-02-15T14:30:00Z",
+              "daysRemaining": 7,
+              "reason": "Locked until item returned to lister"
+            },
+            "securityDeposit": {
+              "amount": 500000,
+              "lockedAt": "2026-02-08T14:30:00Z",
+              "releasesAt": "2026-02-15T14:30:00Z",
+              "daysRemaining": 7,
+              "reason": "Refundable when item confirmed in good condition by lister"
+            }
+          },
+          "totalLockedForThisOrder": 667000,
+          "rentalStatus": "active",
+          "estimatedReturnDate": "2026-02-18T10:00:00Z"
+        }
+      ],
+      "disputeHolds": [
+        {
+          "orderId": "ORD-002",
+          "itemName": "Chanel Classic Flap",
+          "heldAmount": 150000,
+          "reason": "Item condition dispute raised",
+          "disputeStatus": "under_review",
+          "initiatedDate": "2026-02-05T10:00:00Z",
+          "expectedResolutionDate": "2026-02-12T10:00:00Z",
+          "daysUntilResolution": 4
+        }
+      ],
+      "lockReleaseSchedule": {
+        "nextReleaseDate": "2026-02-15T14:30:00Z",
+        "nextReleaseAmount": 502000,
+        "upcomingReleases": [
+          {
+            "date": "2026-02-15T14:30:00Z",
+            "amount": 502000,
+            "reason": "Delivery fee + security deposit for ORD-001"
+          },
+          {
+            "date": "2026-02-18T14:30:00Z",
+            "amount": 165000,
+            "reason": "Rental fee for ORD-001 (if no disputes)"
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Locked balances retrieved successfully
+- `401 Unauthorized` - User not authenticated
+
+---
+
 ## Renter Account & Settings
 
-### 17. GET /api/renters/profile
+### 18. GET /api/renters/profile
 
 **Location:** `src/app/renters/components/AccountProfileDetails.tsx` (Profile tab)
 
@@ -2285,7 +2430,7 @@ Content-Type: application/json
 - `rentalStartDate` (ISO string, required): Start date of rental
 - `rentalEndDate` (ISO string, required): End date of rental
 - `rentalDays` (number, required): Number of days for rental
-- `estimatedRentalPrice` (number, required): Total price for rental period
+- `estimatedRentalPrice` (number, required): Daily rental price × number of days (e.g., ₦55,000/day × 3 days = ₦165,000)
 - `deliveryAddressId` (string, required): Renter's delivery address ID
 - `autoPay` (boolean, required): Whether renter agrees to auto-pay if seller accepts
 - `currency` (string, required): Currency code (NGN)
@@ -2300,13 +2445,20 @@ Content-Type: application/json
     "requestId": "req_001",
     "productId": "prod_001",
     "productName": "FENDI ARCO BOOTS",
+    "productValue": 500000,
     "listerId": "lister_456",
     "listerName": "Betty Daniels",
     "rentalStartDate": "2026-02-15T10:00:00Z",
     "rentalEndDate": "2026-02-18T10:00:00Z",
     "rentalDays": 3,
-    "estimatedPrice": 165000,
-    "currency": "NGN",
+    "estimatedPrice": {
+      "rentalFee": 165000,
+      "deliveryFee": 2000,
+      "securityDeposit": 500000,
+      "total": 667000,
+      "currency": "NGN"
+    },
+    "deductionExplanation": "At order confirmation, ₦165,000 rental fee + ₦2,000 delivery fee + ₦500,000 security deposit will be deducted from your wallet. Security deposit is refunded when item is returned to lister in good condition. Rental fee is locked in lister's wallet for 3 days after you receive the item.",
     "autoPay": true,
     "status": "pending_lister_approval",
     "requestCreatedAt": "2026-02-08T14:30:00Z",
@@ -2327,19 +2479,37 @@ Content-Type: application/json
 
 **Error Response (Insufficient Funds):**
 
+When a renter's **available balance** is less than the required total (rental fee + delivery fee + security deposit):
+
 ```json
 {
   "success": false,
-  "message": "Insufficient wallet balance",
+  "message": "Your current cart is above your wallet balance",
   "error": "INSUFFICIENT_FUNDS",
   "data": {
-    "requiredAmount": 165000,
-    "availableBalance": 42000,
-    "shortfall": 123000,
-    "currency": "NGN"
+    "requiredAmount": 667000,
+    "requiredBreakdown": {
+      "rentalFee": 165000,
+      "deliveryFee": 2000,
+      "securityDeposit": 500000
+    },
+    "availableBalance": 500000,
+    "lockedBalance": 350000,
+    "totalBalance": 850000,
+    "shortfall": 167000,
+    "currency": "NGN",
+    "suggestion": "You need ₦167,000 more in your available balance. Add funds to your wallet to proceed.",
+    "walletLink": "/renters/wallet"
   }
 }
 ```
+
+**Key Points:**
+
+- Only the **available balance** is checked for cart validation, not locked balance
+- **What gets deducted:** Rental fee (₦165,000) + Delivery fee (₦2,000) + Security deposit (₦500,000) = ₦667,000 total
+- **Security deposit timing:** Refunded when product is returned to lister and condition is verified
+- **Rental fee locking:** Locked in lister's wallet for 3 days after renter receives item, then becomes available if no disputes
 
 ---
 

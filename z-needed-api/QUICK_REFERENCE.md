@@ -88,20 +88,76 @@ Auto-removed from cart → "Request expired" message
 ## 💰 Insufficient Funds Flow
 
 **Detection Point:** When submitting `POST /api/renters/rental-requests`
-**Error:**
+**What's Checked:** Available balance only (not locked balance)
+
+**Deduction Breakdown:**
+
+| Component        | Amount            | Example                         |
+| ---------------- | ----------------- | ------------------------------- |
+| Rental Fee       | Daily rate × days | ₦55,000/day × 3 days = ₦165,000 |
+| Delivery Fee     | Fixed amount      | ₦2,000                          |
+| Security Deposit | Item value        | ₦500,000                        |
+| **TOTAL**        | Sum of above      | **₦667,000**                    |
+
+**Error Response:**
 
 ```json
 {
   "error": "INSUFFICIENT_FUNDS",
+  "message": "Your current cart is above your wallet balance",
   "data": {
-    "requiredAmount": 165000,
-    "availableBalance": 42000,
-    "shortfall": 123000
+    "requiredAmount": 667000,
+    "requiredBreakdown": {
+      "rentalFee": 165000,
+      "deliveryFee": 2000,
+      "securityDeposit": 500000
+    },
+    "availableBalance": 500000,
+    "shortfall": 167000
   }
 }
 ```
 
-**User Action:** "Add Funds to Wallet" button → Deposit funds → Retry
+**User Action:** "Add Funds to Wallet" → Deposit ₦167,000+ → Retry
+
+---
+
+## 🔒 Wallet Lock Mechanism (3-Day Hold)
+
+**RENTER SIDE - What Gets Deducted:**
+
+- ✅ Rental Fee (locked 3 days, then released if no disputes)
+- ✅ Delivery Fee (released when item returned)
+- ✅ Security Deposit (released when item confirmed good condition)
+
+**LISTER SIDE - What Gets Locked:**
+
+- ✅ Rental Fee locked in wallet for **3 days after renter receives item**
+- ✅ After 3 days: If no disputes raised, fee becomes available for withdrawal
+- ✅ If dispute raised: Fee stays locked until dispute resolved
+
+**Timeline Example:**
+
+```
+Feb 8 @ 2:30 PM  - Renter confirms (₦165,000 rental fee locked in lister wallet)
+Feb 8 @ 2:30 PM  - Renter wallet: ₦165,000 rental fee deducted
+                 - Renter wallet: ₦2,000 delivery fee deducted
+                 - Renter wallet: ₦500,000 security deposit deducted
+Feb 8 @ 2:30 PM  - Lister sees rental fee locked (shows as "locked_3day_hold")
+Feb 11 @ 2:30 PM - 3-day lock period expires
+Feb 11 @ 2:30 PM - IF no disputes: ₦165,000 becomes available in lister wallet
+                 - IF dispute raised: Fee stays locked until resolved
+Feb 15 @ 2:30 PM - Item returned to lister
+                 - ₦500,000 security deposit returned to renter (if item OK)
+                 - ₦2,000 delivery fee returned to renter
+```
+
+**Key Points:**
+
+- **Available Balance:** What the renter can spend right now (minus locked funds)
+- **Locked Balance:** What's tied up in active rentals + disputes
+- **Wallet Page:** Renter can see "Locked Balance" breakdown by order
+- **Lister Wallet:** Shows locked rental fees + unlock dates
 
 ---
 
