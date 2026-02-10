@@ -15,12 +15,16 @@ export default function UsersPage() {
   const [statusFilter, setStatusFilter] = useState("All Status");
 
   // Fetch all users from API
-  const { data: usersData, isLoading, error } = useGetAllUsers(1, 100);
+  const {
+    data: usersData,
+    isLoading,
+    error,
+  } = useGetAllUsers();
   const users = usersData?.users || [];
 
   // Filtering Logic
   const filteredData = useMemo(() => {
-    return users.filter((user) => {
+    return users.filter((user: any) => {
       const matchesSearch =
         user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.email.toLowerCase().includes(searchQuery.toLowerCase());
@@ -122,7 +126,10 @@ export default function UsersPage() {
             </Paragraph1>
           </div>
         ) : (
-          <DresserTable data={filteredData} role={activeTab} />
+          <DresserTable
+            data={filteredData}
+            role={activeTab}
+          />
         )}
       </div>
     </div>

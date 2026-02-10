@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import UserDetails from "./UserDetails";
 import Image from "next/image";
