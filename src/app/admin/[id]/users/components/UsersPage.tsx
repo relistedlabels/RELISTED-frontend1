@@ -15,11 +15,7 @@ export default function UsersPage() {
   const [statusFilter, setStatusFilter] = useState("All Status");
 
   // Fetch all users from API
-  const {
-    data: usersData,
-    isLoading,
-    error,
-  } = useGetAllUsers();
+  const { data: usersData, isLoading, error } = useGetAllUsers();
   const users = usersData?.users || [];
 
   // Filtering Logic
@@ -126,10 +122,7 @@ export default function UsersPage() {
             </Paragraph1>
           </div>
         ) : (
-          <DresserTable
-            data={filteredData}
-            role={activeTab}
-          />
+          <DresserTable data={filteredData} role={activeTab} />
         )}
       </div>
     </div>

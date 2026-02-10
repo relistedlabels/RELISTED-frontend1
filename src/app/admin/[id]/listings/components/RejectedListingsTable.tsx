@@ -28,7 +28,7 @@ export default function RejectedListingsTable({
   const filteredProducts = products.filter((product: UserProduct) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.curator.name.toLowerCase().includes(searchQuery.toLowerCase());
+      product.curator?.name?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
 
@@ -107,7 +107,7 @@ export default function RejectedListingsTable({
               </td>
               <td className="py-4 px-6">
                 <Paragraph1 className="text-sm text-gray-900">
-                  {product.curator.name}
+                  {product.curator?.name || "N/A"}
                 </Paragraph1>
               </td>
               <td className="py-4 px-6">

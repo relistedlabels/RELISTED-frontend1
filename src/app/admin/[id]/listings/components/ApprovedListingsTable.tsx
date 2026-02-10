@@ -107,7 +107,7 @@ export default function ApprovedListingsTable({
               </td>
               <td className="py-4 px-6">
                 <Paragraph1 className="text-sm text-gray-900">
-                  {product.curator.name}
+                  {product.curator?.name || "N/A"}
                 </Paragraph1>
               </td>
               <td className="py-4 px-6">

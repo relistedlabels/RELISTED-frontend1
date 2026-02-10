@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Search,
   Download,
@@ -10,9 +10,6 @@ import {
   XCircle,
 } from "lucide-react";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
-import { usePendingProducts } from "@/lib/queries/product/usePendingProducts";
-import { useApprovedProducts } from "@/lib/queries/product/useApprovedProducts";
-import { useRejectedProducts } from "@/lib/queries/product/useRejectedProducts";
 import { useProductStatistics } from "@/lib/queries/product/useProductStatistics";
 import {
   useApproveProduct,
@@ -42,40 +39,25 @@ export default function ListingsPage() {
   const [approvingProductId, setApprovingProductId] = useState<string | null>(
     null,
   );
-  const [page, setPage] = useState(1);
 
-  // Fetch statistics from API
+  // Fetch all statistics from API - includes products for each status
   const { data: stats, isLoading: statsLoading } = useProductStatistics();
 
   const TABS: TabType[] = ["Pending", "Approved", "Rejected"];
 
-  // Fetch products based on active tab
-  const {
-    data: pendingData,
-    isLoading: pendingLoading,
-    error: pendingError,
-  } = usePendingProducts(page, 10);
-  const pendingProducts = Array.isArray(pendingData?.data?.products)
-    ? pendingData.data.products
-    : [];
-
-  const {
-    data: approvedData,
-    isLoading: approvedLoading,
-    error: approvedError,
-  } = useApprovedProducts(page, 10);
-  const approvedProducts = Array.isArray(approvedData?.data?.products)
-    ? approvedData.data.products
-    : [];
-
-  const {
-    data: rejectedData,
-    isLoading: rejectedLoading,
-    error: rejectedError,
-  } = useRejectedProducts(page, 10);
-  const rejectedProducts = Array.isArray(rejectedData?.data?.products)
-    ? rejectedData.data.products
-    : [];
+  // Extract products from statistics for each tab
+  const pendingProducts = useMemo(
+    () => stats?.getPendingProducts?.products || [],
+    [stats],
+  );
+  const approvedProducts = useMemo(
+    () => stats?.getApprovedProducts?.products || [],
+    [stats],
+  );
+  const rejectedProducts = useMemo(
+    () => stats?.getRejectedProducts?.products || [],
+    [stats],
+  );
 
   // Mutations
   const approveMutation = useApproveProduct();
@@ -86,19 +68,9 @@ export default function ListingsPage() {
     approveMutation.mutate(productId, {
       onSuccess: () => {
         setApprovingProductId(null);
-        // Only refetch queries that are currently active/visible
-        queryClient.invalidateQueries({ 
-          queryKey: ["products", "pending"],
-          refetchType: 'active'
-        });
-        queryClient.invalidateQueries({ 
-          queryKey: ["products", "approved"],
-          refetchType: 'active'
-        });
-        // Update statistics if it's active
+        // Refetch statistics
         queryClient.invalidateQueries({
           queryKey: ["product", "statistics"],
-          refetchType: 'active'
         });
       },
     });
@@ -120,19 +92,9 @@ export default function ListingsPage() {
           onSuccess: () => {
             setRejectingProductId(null);
             setRejectionComment("");
-            // Only refetch queries that are currently active/visible
-            queryClient.invalidateQueries({
-              queryKey: ["products", "pending"],
-              refetchType: 'active'
-            });
-            queryClient.invalidateQueries({
-              queryKey: ["products", "rejected"],
-              refetchType: 'active'
-            });
-            // Update statistics if it's active
+            // Refetch statistics
             queryClient.invalidateQueries({
               queryKey: ["product", "statistics"],
-              refetchType: 'active'
             });
           },
         },
@@ -154,12 +116,12 @@ export default function ListingsPage() {
               "https://via.placeholder.com/100?text=No+Image",
             itemName: selectedListing.name,
             brand: selectedListing.subText,
-            category: selectedListing.categoryId || "Uncategorized",
-            condition: selectedListing.condition,
+            category: "Uncategorized",
+            condition: selectedListing.condition || "Not Specified",
             itemValue: `₦${selectedListing.originalValue?.toLocaleString() || 0}`,
             pricePerDay: `₦${selectedListing.dailyPrice?.toLocaleString() || 0}`,
             quantity: selectedListing.quantity,
-            description: selectedListing.description,
+            description: selectedListing.description || "",
             images: selectedListing.attachments?.uploads?.map((u) => u.url) || [
               selectedListing.attachments?.uploads?.[0]?.url ||
                 "https://via.placeholder.com/100?text=No+Image",
@@ -324,7 +286,6 @@ export default function ListingsPage() {
               key={tab}
               onClick={() => {
                 setActiveTab(tab);
-                setPage(1);
               }}
               className={`py-4 px-0 font-medium text-sm transition-colors border-b-2 ${
                 activeTab === tab
@@ -343,8 +304,8 @@ export default function ListingsPage() {
         {activeTab === "Pending" && (
           <PendingListingsTable
             products={pendingProducts}
-            isLoading={pendingLoading}
-            error={pendingError}
+            isLoading={statsLoading}
+            error={null}
             searchQuery={searchQuery}
             onApprove={handleApprove}
             onReject={handleRejectClick}
@@ -358,8 +319,8 @@ export default function ListingsPage() {
         {activeTab === "Approved" && (
           <ApprovedListingsTable
             products={approvedProducts}
-            isLoading={approvedLoading}
-            error={approvedError}
+            isLoading={statsLoading}
+            error={null}
             searchQuery={searchQuery}
             onView={(product) => {
               setSelectedListing(product);
@@ -370,8 +331,8 @@ export default function ListingsPage() {
         {activeTab === "Rejected" && (
           <RejectedListingsTable
             products={rejectedProducts}
-            isLoading={rejectedLoading}
-            error={rejectedError}
+            isLoading={statsLoading}
+            error={null}
             searchQuery={searchQuery}
             onView={(product) => {
               setSelectedListing(product);
@@ -381,48 +342,22 @@ export default function ListingsPage() {
         )}
       </div>
 
-      {/* Pagination */}
-      {(() => {
-        const currentProducts = (() => {
-          if (activeTab === "Pending") return pendingProducts;
-          if (activeTab === "Approved") return approvedProducts;
-          if (activeTab === "Rejected") return rejectedProducts;
-          return [];
-        })();
-
-        const loading = (() => {
-          if (activeTab === "Pending") return pendingLoading;
-          if (activeTab === "Approved") return approvedLoading;
-          if (activeTab === "Rejected") return rejectedLoading;
-          return false;
-        })();
-
-        return (
-          !loading &&
-          currentProducts.length > 0 && (
-            <div className="mt-6 flex items-center justify-between">
-              <Paragraph1 className="text-sm text-gray-600">
-                Page {page} of {Math.ceil((currentProducts.length || 0) / 10)}
-              </Paragraph1>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPage(Math.max(1, page - 1))}
-                  disabled={page === 1}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition font-medium text-sm"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => setPage(page + 1)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium text-sm"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )
-        );
-      })()}
+      {/* Pagination Info */}
+      {!statsLoading &&
+        ((activeTab === "Pending" && pendingProducts.length > 0) ||
+          (activeTab === "Approved" && approvedProducts.length > 0) ||
+          (activeTab === "Rejected" && rejectedProducts.length > 0)) && (
+          <div className="mt-6">
+            <Paragraph1 className="text-sm text-gray-600">
+              {activeTab === "Pending" &&
+                `${pendingProducts.length} pending products`}
+              {activeTab === "Approved" &&
+                `${approvedProducts.length} approved products`}
+              {activeTab === "Rejected" &&
+                `${rejectedProducts.length} rejected products`}
+            </Paragraph1>
+          </div>
+        )}
     </div>
   );
 }
