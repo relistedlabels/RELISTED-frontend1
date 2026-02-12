@@ -1,82 +1,71 @@
 "use client";
 // ENDPOINTS: GET /api/listers/orders (list), POST /api/listers/orders/:orderId/approve, POST /api/listers/orders/:orderId/reject
 
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Package, Clock } from "lucide-react";
-import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import Link from "next/link";
+import type React from "react";
+import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Calendar, Clock, Package } from "lucide-react";
 
-// --- Types & Mock Data ---
-type OrderStatus = "Pending" | "Ongoing" | "Completed" | "Cancelled";
+import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { useOrders } from "@/lib/queries/listers/useOrders";
 
-interface Order {
-  id: string;
-  orderNumber: string;
-  date: string;
-  itemCount: number;
-  amount: string;
-  statusLabel: string;
-  expiresAt?: string; // ISO timestamp for pending approval orders
-  createdAt?: string; // ISO timestamp
-}
+// --- Types ---
+type OrderLabel = "pending_approval" | "approved" | "completed" | "cancelled";
 
-const ordersData: Record<OrderStatus, Order[]> = {
-  Pending: [
-    {
-      id: "1",
-      orderNumber: "20394RRS4",
-      date: "05 May, 2025",
-      itemCount: 5,
-      amount: "₦550,000",
-      statusLabel: "Pending Approval",
-      createdAt: new Date(Date.now() - 3 * 60000).toISOString(), // 3 minutes ago
-      expiresAt: new Date(Date.now() + 12 * 60000).toISOString(), // expires in 12 minutes
-    },
-    {
-      id: "2",
-      orderNumber: "20394RRS5",
-      date: "05 May, 2025",
-      itemCount: 5,
-      amount: "₦550,000",
-      statusLabel: "Pending Approval",
-      createdAt: new Date(Date.now() - 10 * 60000).toISOString(), // 10 minutes ago
-      expiresAt: new Date(Date.now() + 5 * 60000).toISOString(), // expires in 5 minutes (low time warning)
-    },
-    {
-      id: "3",
-      orderNumber: "20394RRS6",
-      date: "05 May, 2025",
-      itemCount: 5,
-      amount: "₦550,000",
-      statusLabel: "Pending Approval",
-      createdAt: new Date(Date.now() - 8 * 60000).toISOString(), // 8 minutes ago
-      expiresAt: new Date(Date.now() + 7 * 60000).toISOString(), // expires in 7 minutes
-    },
-  ],
-  Ongoing: [],
-  Completed: [],
-  Cancelled: [],
+const statusLabelMap: Record<string, OrderLabel> = {
+  pending_approval: "pending_approval",
+  ongoing: "approved",
+  completed: "completed",
+  cancelled: "cancelled",
+};
+
+const displayStatusMap: Record<OrderLabel, string> = {
+  pending_approval: "Pending Approval",
+  approved: "Approved",
+  completed: "Completed",
+  cancelled: "Cancelled",
 };
 
 const OrdersManagement: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<OrderStatus>("Pending");
-  const tabs: OrderStatus[] = ["Pending", "Ongoing", "Completed", "Cancelled"];
+  const [activeTab, setActiveTab] = useState<OrderLabel>("pending_approval");
+  const tabs: OrderLabel[] = [
+    "pending_approval",
+    "approved",
+    "completed",
+    "cancelled",
+  ];
+
+  const { data: ordersData, isLoading } = useOrders(
+    activeTab === "pending_approval"
+      ? "pending_approval"
+      : activeTab === "approved"
+        ? "ongoing"
+        : activeTab,
+    1,
+    20,
+  );
+
+  const orders = useMemo(
+    () =>
+      ordersData?.data.map((order) => ({
+        ...order,
+        statusLabel:
+          displayStatusMap[statusLabelMap[order.status] || order.status],
+        expiresAt: order.timeRemainingSeconds
+          ? new Date(
+              Date.now() + order.timeRemainingSeconds * 1000,
+            ).toISOString()
+          : undefined,
+      })) || [],
+    [ordersData],
+  );
 
   return (
     <div className="w-full">
       {/* 1. Tab Switcher with Motion Pill */}
       <div className="relative mb-8 w-full overflow-hidden">
-        {/* Scroll container */}
-        <div
-          className="
-      max-w-full w-[340px] hide-scrollbar sm:w-full
-      overflow-x-auto
-      sm:overflow-visible
-      scrollbar-hide
-    "
-        >
-          {/* Actual tabs */}
+        <div className="max-w-full w-[340px] hide-scrollbar sm:w-full overflow-x-auto sm:overflow-visible scrollbar-hide">
           <div
             className="
         inline-flex gap-1 p-1
@@ -84,12 +73,13 @@ const OrdersManagement: React.FC = () => {
         whitespace-nowrap
       "
           >
-            {tabs.map((tab) => {
+            {tabs.map((tab, _tabIndex) => {
               const isActive = activeTab === tab;
 
               return (
                 <button
                   key={tab}
+                  type="button"
                   onClick={() => setActiveTab(tab)}
                   className={`relative shrink-0 px-4 sm:px-8 py-2.5 text-sm font-bold transition-colors duration-300 z-10 ${
                     isActive ? "text-white" : "text-gray-500 hover:text-black"
@@ -106,7 +96,11 @@ const OrdersManagement: React.FC = () => {
                       }}
                     />
                   )}
-                  <Paragraph1>{tab}</Paragraph1>
+                  <Paragraph1 className="capitalize">
+                    {activeTab === "pending_approval"
+                      ? "Pending"
+                      : displayStatusMap[activeTab]}
+                  </Paragraph1>
                 </button>
               );
             })}
@@ -117,39 +111,67 @@ const OrdersManagement: React.FC = () => {
       {/* 2. Orders List with Staggered Reveal */}
       <div className="space-y-4">
         <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-            variants={{
-              visible: { transition: { staggerChildren: 0.1 } },
-              hidden: {
-                transition: { staggerChildren: 0.05, staggerDirection: -1 },
-              },
-            }}
-          >
-            {ordersData[activeTab].length > 0 ? (
-              ordersData[activeTab].map((order) => (
-                <OrderCard
-                  key={order.id}
-                  order={order}
-                  isPending={activeTab === "Pending"}
-                />
-              ))
-            ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="py-20 text-center border-2 border-dashed border-gray-300 rounded-2xl text-gray-400"
-              >
-                <Paragraph3>
-                  {" "}
-                  No {activeTab.toLowerCase()} orders found.
-                </Paragraph3>
-              </motion.div>
-            )}
-          </motion.div>
+          {isLoading ? (
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div
+                  key={`skeleton-${i}`}
+                  className="bg-white border border-gray-300 rounded-2xl p-4 animate-pulse"
+                >
+                  <div className="h-4 bg-gray-200 rounded w-1/3 mb-4" />
+                  <div className="h-3 bg-gray-100 rounded w-1/2" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <motion.div
+              key={activeTab}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              variants={{
+                visible: { transition: { staggerChildren: 0.1 } },
+                hidden: {
+                  transition: { staggerChildren: 0.05, staggerDirection: -1 },
+                },
+              }}
+            >
+              {orders.length > 0 ? (
+                orders.map((order) => (
+                  <OrderCard
+                    key={order.id}
+                    order={{
+                      id: order.id,
+                      orderNumber: order.orderNumber,
+                      date: new Date(order.createdAt).toLocaleDateString(
+                        "en-US",
+                        {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        },
+                      ),
+                      itemCount: order.itemCount,
+                      amount: `₦${order.totalAmount.toLocaleString()}`,
+                      statusLabel: order.statusLabel,
+                      expiresAt: order.expiresAt,
+                    }}
+                    isPending={activeTab === "pending_approval"}
+                  />
+                ))
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="py-20 text-center border-2 border-dashed border-gray-300 rounded-2xl text-gray-400"
+                >
+                  <Paragraph3>
+                    No {activeTab.toLowerCase()} orders found.
+                  </Paragraph3>
+                </motion.div>
+              )}
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
     </div>
@@ -157,10 +179,18 @@ const OrdersManagement: React.FC = () => {
 };
 
 // --- Sub-component: Order Card ---
-const OrderCard: React.FC<{ order: Order; isPending?: boolean }> = ({
-  order,
-  isPending = false,
-}) => {
+const OrderCard: React.FC<{
+  order: {
+    id: string;
+    orderNumber: string;
+    date: string;
+    itemCount: number;
+    amount: string;
+    statusLabel: string;
+    expiresAt?: string;
+  };
+  isPending?: boolean;
+}> = ({ order, isPending = false }) => {
   const [secondsRemaining, setSecondsRemaining] = useState(0);
   const [isExpired, setIsExpired] = useState(false);
 
@@ -169,8 +199,10 @@ const OrderCard: React.FC<{ order: Order; isPending?: boolean }> = ({
     if (!isPending || !order.expiresAt) return;
 
     const updateTimer = () => {
-      const now = new Date().getTime();
-      const expiresTime = new Date(order.expiresAt!).getTime();
+      const now = Date.now();
+      const expiresTime = order.expiresAt
+        ? new Date(order.expiresAt).getTime()
+        : 0;
       const remaining = Math.max(0, Math.floor((expiresTime - now) / 1000));
 
       if (remaining === 0) {
@@ -267,7 +299,7 @@ const OrderCard: React.FC<{ order: Order; isPending?: boolean }> = ({
         </div>
 
         <Link
-          href="/listers/orders/id"
+          href={`/listers/orders/${order.id}`}
           className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 ${
             isExpired
               ? "bg-gray-300 text-gray-600 cursor-not-allowed"

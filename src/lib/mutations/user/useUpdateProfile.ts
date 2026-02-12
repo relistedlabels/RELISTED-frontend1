@@ -1,20 +1,15 @@
 import { useMutation } from "@tanstack/react-query";
 import { updateProfile } from "@/lib/api/profile";
-import { useProfileStore } from "@/store/useProfileStore";
-import { useUserStore } from "@/store/useUserStore";
+import type { UpdateProfilePayload } from "@/types/profile";
+import { useInvalidateProfile } from "@/lib/queries/user/useProfile";
 
 export function useUpdateProfile() {
-  const userId = useUserStore((s) => s.userId);
-  const profile = useProfileStore((s) => s);
-  const resetProfile = useProfileStore((s) => s.resetProfile);
+  const invalidateProfile = useInvalidateProfile();
 
   return useMutation({
-    mutationFn: () => {
-      if (!userId) throw new Error("No user id");
-      return updateProfile( profile);
-    },
+    mutationFn: (data: UpdateProfilePayload) => updateProfile(data),
     onSuccess: () => {
-      resetProfile(); // optional but recommended
+      invalidateProfile();
     },
   });
 }

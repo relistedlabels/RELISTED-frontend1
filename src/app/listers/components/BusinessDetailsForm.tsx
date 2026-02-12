@@ -1,7 +1,7 @@
 // ENDPOINTS: GET /api/listers/profile/business, PUT /api/listers/profile/business
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
   HiOutlineBriefcase,
@@ -12,31 +12,74 @@ import {
   HiOutlinePhone,
   HiOutlineEnvelope,
 } from "react-icons/hi2";
+import { useBusinessProfile } from "@/lib/queries/listers/useBusinessProfile";
+import { useUpdateBusinessProfile } from "@/lib/mutations/listers/useUpdateBusinessProfile";
 
 const BusinessDetailsForm: React.FC = () => {
+  const { data } = useBusinessProfile();
+  const updateBusinessProfileMutation = useUpdateBusinessProfile();
+
   const [formData, setFormData] = useState({
-    businessName: "Vintage Chic Curations",
+    businessName: "",
     businessCategory: "Fashion & Accessories",
-    businessDescription:
-      "Premium vintage and contemporary fashion rental service",
-    businessAddress: "123 Fashion St, Lagos, Nigeria",
-    businessEmail: "info@vintagechiccurations.com",
-    businessPhone: "+234 (0) 907 123 4567",
-    taxId: "12345678901",
-    website: "www.vintagechiccurations.com",
-    businessRegistration: "CAC-2024-001234",
+    businessDescription: "",
+    businessAddress: "",
+    businessEmail: "",
+    businessPhone: "",
+    taxId: "",
+    website: "",
+    businessRegistration: "",
   });
 
   const [isEditing, setIsEditing] = useState(false);
+
+  // Populate from backend /listers/profile/business when available
+  useEffect(() => {
+    const businessProfile = data?.data.businessProfile;
+    if (!businessProfile) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      businessName: businessProfile.businessName || "",
+      businessCategory:
+        businessProfile.businessCategory || "Fashion & Accessories",
+      businessDescription: businessProfile.businessDescription || "",
+      businessAddress: businessProfile.businessAddress || "",
+      businessEmail: businessProfile.businessEmail || "",
+      businessPhone: businessProfile.businessPhone || "",
+      website: businessProfile.website || "",
+      taxId: businessProfile.taxId || "",
+      businessRegistration: businessProfile.businessRegistration || "",
+    }));
+  }, [data]);
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSave = () => {
-    // Call API to save business details
-    console.log("Saving business details:", formData);
-    setIsEditing(false);
+    const businessProfile = data?.data.businessProfile;
+    if (!businessProfile) return;
+
+    updateBusinessProfileMutation.mutate(
+      {
+        businessName: formData.businessName || businessProfile.businessName,
+        businessCategory:
+          formData.businessCategory || businessProfile.businessCategory,
+        businessDescription:
+          formData.businessDescription || businessProfile.businessDescription,
+        businessEmail: formData.businessEmail || businessProfile.businessEmail,
+        businessPhone: formData.businessPhone || businessProfile.businessPhone,
+        businessAddress:
+          formData.businessAddress || businessProfile.businessAddress,
+        website: formData.website || businessProfile.website,
+      },
+      {
+        onSuccess: () => {
+          setIsEditing(false);
+        },
+      },
+    );
   };
 
   return (

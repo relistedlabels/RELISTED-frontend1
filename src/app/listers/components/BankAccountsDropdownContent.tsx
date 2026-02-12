@@ -3,38 +3,36 @@
 
 import React, { useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
-import { HiOutlineChevronRight, HiOutlineChevronDown } from "react-icons/hi2";
-import { FaPlus } from "react-icons/fa";
+import { HiOutlineChevronDown } from "react-icons/hi2";
 import { motion, AnimatePresence } from "framer-motion";
 import AddNewBankAccount from "./AddNewBankAccount";
-
-interface BankAccount {
-  bankName: string;
-  accountNumber: string;
-  accountName: string;
-}
+import { useBankAccounts } from "@/lib/queries/listers/useBankAccounts";
 
 interface BankAccountsDropdownContentProps {
-  accounts: BankAccount[];
-  onSelectAccount: (account: BankAccount) => void;
-  onAddNewAccount: () => void;
+  accounts: {
+    id: string;
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
+  }[];
+  onSelectAccount: (accountId: string, account: any) => void;
 }
 
 const BankAccountsDropdownContent: React.FC<
   BankAccountsDropdownContentProps
-> = ({ accounts, onSelectAccount, onAddNewAccount }) => {
+> = ({ accounts, onSelectAccount }) => {
   return (
     <div className="font-sans bg-white rounded-xl border border-gray-200 shadow-lg p-3">
       {/* List of Existing Accounts */}
       <div className="space-y-2">
         {accounts.map((account) => (
           <button
-            key={account.accountNumber}
-            onClick={() => onSelectAccount(account)}
+            key={account.id}
+            onClick={() => onSelectAccount(account.id, account)}
             className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition duration-150"
           >
             <Paragraph1 className="text-sm font-semibold text-gray-900 leading-tight">
-              {account.bankName} - {account.accountNumber}
+              {account.bankName} - {account.accountNumber.slice(-4)}
             </Paragraph1>
             <Paragraph1 className="text-xs text-gray-500 mt-0.5">
               {account.accountName}
@@ -52,35 +50,36 @@ const BankAccountsDropdownContent: React.FC<
 
 // ---- DROPDOWN CONTAINER WITH ANIMATION ----
 
-const ExampleBankAccountsDropdown: React.FC = () => {
+interface BankAccountsDropdownProps {
+  onSelect?: (accountId: string) => void;
+}
+
+const ExampleBankAccountsDropdown: React.FC<BankAccountsDropdownProps> = ({
+  onSelect,
+}) => {
   const [open, setOpen] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
+  const { data: bankAccountsData, isLoading } = useBankAccounts(true);
 
-  const sampleAccounts: BankAccount[] = [
-    {
-      bankName: "Access Bank",
-      accountNumber: "02345676555",
-      accountName: "John Bassey",
-    },
-    {
-      bankName: "GTBank",
-      accountNumber: "02345676555",
-      accountName: "John Bassey",
-    },
-  ];
+  const accounts = bankAccountsData?.data || [];
 
-  const handleSelect = (account: BankAccount) => {
-    alert(`Selected: ${account.bankName}`);
-    setOpen(false);
-  };
+  const selectedAccountLabel = accounts.find(
+    (acc) => acc.id === selectedAccount,
+  )
+    ? `${accounts.find((acc) => acc.id === selectedAccount)?.bankName} - ****${accounts.find((acc) => acc.id === selectedAccount)?.accountNumber.slice(-4)}`
+    : "Select Bank Account";
 
-  const handleAdd = () => {
-    alert("Navigating to add new bank account form...");
+  const handleSelect = (accountId: string, account: any) => {
+    setSelectedAccount(accountId);
+    if (onSelect) {
+      onSelect(accountId);
+    }
     setOpen(false);
   };
 
   return (
-    <div className=" mb-4">
-      <div className="w-full  relative">
+    <div className="mb-4">
+      <div className="w-full relative">
         <Paragraph1 className="text-sm font-medium text-gray-900 mb-1">
           Bank Account
         </Paragraph1>
@@ -88,9 +87,12 @@ const ExampleBankAccountsDropdown: React.FC = () => {
         {/* Select button */}
         <button
           onClick={() => setOpen(!open)}
-          className="w-full p-3 bg-white border border-gray-300 rounded-lg flex justify-between items-center hover:bg-gray-50 transition"
+          disabled={isLoading}
+          className="w-full p-3 bg-white border border-gray-300 rounded-lg flex justify-between items-center hover:bg-gray-50 disabled:bg-gray-100 transition"
         >
-          <span className="text-sm text-gray-700">Select Bank Account</span>
+          <span className="text-sm text-gray-700">
+            {isLoading ? "Loading accounts..." : selectedAccountLabel}
+          </span>
           <HiOutlineChevronDown
             className={`w-5 h-5 text-gray-600 transition-transform ${
               open ? "rotate-180" : "rotate-0"
@@ -100,7 +102,7 @@ const ExampleBankAccountsDropdown: React.FC = () => {
 
         {/* Dropdown Animation */}
         <AnimatePresence>
-          {open && (
+          {open && !isLoading && (
             <motion.div
               initial={{ opacity: 0, height: 0, y: -5 }}
               animate={{ opacity: 1, height: "auto", y: 0 }}
@@ -109,9 +111,8 @@ const ExampleBankAccountsDropdown: React.FC = () => {
               className="absolute left-0 right-0 mt-2 z-20"
             >
               <BankAccountsDropdownContent
-                accounts={sampleAccounts}
+                accounts={accounts}
                 onSelectAccount={handleSelect}
-                onAddNewAccount={handleAdd}
               />
             </motion.div>
           )}

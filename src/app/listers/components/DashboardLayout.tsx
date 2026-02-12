@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, ReactNode } from "react";
+import React, { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
 import {
   Bell,
@@ -31,6 +32,7 @@ import {
 } from "@/common/ui/Text";
 import { UserProfileBadge } from "./UserProfileBadge";
 import { UserProfileBadge2 } from "./UserProfileBadge2";
+import { useProfile } from "@/lib/queries/user/useProfile";
 
 // --------------------
 // Types
@@ -52,6 +54,36 @@ interface DashboardLayoutProps {
   children: ReactNode;
   brand?: string;
 }
+
+const BrandHeader: React.FC = () => {
+  const { data: profile } = useProfile();
+  const businessName = profile?.businessInfo?.businessName?.trim();
+
+  // If no business name yet, show plain text brand with NO logo
+  if (!businessName) {
+    return (
+      <HeaderAny className="text-[20px] md:text-[18px] mb-0 uppercase truncate text-white">
+        Relisted labels
+      </HeaderAny>
+    );
+  }
+
+  // If business name exists, show logo + business name
+  return (
+    <div className="flex items-center gap-2">
+      <Image
+        src="/images/logo.svg"
+        alt="Relisted logo"
+        width={28}
+        height={28}
+        className="rounded-full"
+      />
+      <HeaderAny className="text-[20px] md:text-[18px] mb-0 uppercase truncate text-white">
+        {businessName}
+      </HeaderAny>
+    </div>
+  );
+};
 
 // --------------------
 // Reusable Sidebar Nav
@@ -202,10 +234,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     <div className="flex min-h-screen bg-gray-50">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 h-screen overflow-hidden hide-scrollbar  overflow-y-auto bg-[#241F20] text-white p-6 sticky top-0">
-        <HeaderAny className="text-[20px]  mb-10 uppercase">
-          Relisted labels
-        </HeaderAny>
-
+        <div className="mb-10">
+          <BrandHeader />
+        </div>
 
         {/* Profile */}
         <div className="flex items-center border-b border-gray-800 pb-4 mb-4 space-x-3">
@@ -229,10 +260,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         }`}
       >
         <div className="flex justify-between items-start mb-8">
-          {/* <Paragraph3 className="text-xl font-bold">{brand}</Paragraph3> */}
-          <HeaderAny className="text-[16px]   uppercase">
-            Relisted labels
-          </HeaderAny>
+          <div className="max-w-[180px]">
+            <BrandHeader />
+          </div>
 
           <button onClick={toggleMobile}>
             <X className="w-6 h-6" />
@@ -265,8 +295,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             </button>
           </div>
 
-          <div />
-
+          <div className="hidden md:block">
+            {/* <BrandHeader /> */}
+          </div>
 
           <div className="flex items-center gap-4">
             <Mail className="w-5 h-5 text-white cursor-pointer" />

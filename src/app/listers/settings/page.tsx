@@ -7,7 +7,7 @@ import { Paragraph2 } from "@/common/ui/Text";
 
 export default function Page() {
   const path = [
-    { label: "Dashboard", href: "/curators/dashboard" },
+    { label: "Dashboard", href: "/listers/dashboard" },
     { label: "Settings", href: null }, // Current page, href is null
   ];
   return (

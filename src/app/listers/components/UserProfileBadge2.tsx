@@ -4,15 +4,15 @@ import { useState, useRef, useEffect } from "react";
 import { ChevronDown, User, LayoutDashboard, ShoppingBag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { useProfileStore } from "@/store/profileStore";
+import { useProfile } from "@/lib/queries/user/useProfile";
 
 export function UserProfileBadge2() {
   const [isOpen, setIsOpen] = useState(false);
-  const profile = useProfileStore((s) => s.profile);
+  const { data: profile } = useProfile();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const name = profile?.data?.user?.name?.trim() || "New user";
-  const avatar = profile?.data?.avatarUrl || null;
+  const name = profile?.user?.name?.trim() || "New user";
+  const avatar = null; // avatar URL not yet exposed from profile API
 
   // Close dropdown when clicking outside
   useEffect(() => {

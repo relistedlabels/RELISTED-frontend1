@@ -7,7 +7,7 @@ import ExampleDisputesListTable from "../components/DisputesListTable";
 
 export default function Page() {
   const path = [
-    { label: "Dashboard", href: "/curators/dashboard" },
+    { label: "Dashboard", href: "/listers/dashboard" },
     { label: "Dispute", href: null }, // Current page, href is null
   ];
   return (

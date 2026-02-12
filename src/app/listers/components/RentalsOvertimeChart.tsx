@@ -1,22 +1,21 @@
 "use client";
 // ENDPOINTS: GET /api/listers/rentals/overtime?timeframe=year (revenue & orders over time)
 
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { ToolInfo } from "@/common/ui/ToolInfo";
+import { useRentalsOvertime } from "@/lib/queries/listers/useRentalsOvertime";
+
+type TimeframeType = "month" | "quarter" | "year";
 
 const RentalsOvertimeChart: React.FC = () => {
+  const [timeframe, setTimeframe] = useState<TimeframeType>("year");
+  const { data: chartData, isLoading, isError } = useRentalsOvertime(timeframe);
+
   const legendData = [
     { label: "Revenue", color: "text-blue-600", dotClass: "bg-blue-600" },
     { label: "Orders", color: "text-purple-600", dotClass: "bg-purple-600" },
   ];
-
-  const averageData = [
-    { label: "Aug 2025", value: "₦5.8k", dotClass: "bg-blue-600" },
-    { label: "Aug 2024", value: "₦8.5k", dotClass: "bg-purple-600" },
-  ];
-
-  const yAxisLabels = ["₦ 5M", "₦ 1M", "₦ 500k", "₦ 50k", "₦ 0"];
 
   const xAxisLabels = [
     "Jan",
@@ -33,15 +32,62 @@ const RentalsOvertimeChart: React.FC = () => {
     "Dec",
   ];
 
+  const yAxisLabels = ["₦ 5M", "₦ 1M", "₦ 500k", "₦ 50k", "₦ 0"];
+
+  const averageData = useMemo(() => {
+    if (!chartData?.data || chartData.data.length === 0) {
+      return [
+        { label: "Avg Revenue", value: "₦0", dotClass: "bg-blue-600" },
+        { label: "Avg Orders", value: "0", dotClass: "bg-purple-600" },
+      ];
+    }
+    const avgRevenue =
+      chartData.data.reduce((sum, d) => sum + d.revenue, 0) /
+      chartData.data.length;
+    const avgOrders =
+      chartData.data.reduce((sum, d) => sum + d.orders, 0) /
+      chartData.data.length;
+
+    return [
+      {
+        label: `Avg Revenue`,
+        value: `₦${(avgRevenue / 1000).toFixed(1)}k`,
+        dotClass: "bg-blue-600",
+      },
+      {
+        label: `Avg Orders`,
+        value: Math.round(avgOrders).toString(),
+        dotClass: "bg-purple-600",
+      },
+    ];
+  }, [chartData]);
+
   return (
     <div className="bg-white sm:col-span-3 p-6 rounded-xl border border-gray-300 w-full">
       {/* Header and Legend */}
       <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <Paragraph3 className="text-xl font-semibold text-black">
             Rentals Overtime
           </Paragraph3>
           <ToolInfo content="Tracks rental revenue and order volume over time to identify growth trends and seasonality." />
+
+          {/* Timeframe Selector */}
+          <div className="ml-4 flex gap-2">
+            {(["month", "quarter", "year"] as TimeframeType[]).map((tf) => (
+              <button
+                key={tf}
+                onClick={() => setTimeframe(tf)}
+                className={`px-3 py-1 rounded text-sm font-medium transition ${
+                  timeframe === tf
+                    ? "bg-black text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {tf.charAt(0).toUpperCase() + tf.slice(1)}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex space-x-4">
@@ -65,9 +111,19 @@ const RentalsOvertimeChart: React.FC = () => {
         </div>
 
         <div className="flex-1 relative border-l border-gray-200 ml-2">
-          <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-            [Placeholder for Chart Library Rendering Area]
-          </div>
+          {isLoading || isError ? (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="h-32 bg-gray-200 rounded w-full animate-pulse" />
+            </div>
+          ) : chartData?.data && chartData.data.length > 0 ? (
+            <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+              [Chart visualization - Backend data loaded]
+            </div>
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+              No data available for selected period
+            </div>
+          )}
 
           <div
             className="absolute p-3 bg-white border border-gray-300 rounded-lg"

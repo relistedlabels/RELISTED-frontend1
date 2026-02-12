@@ -1,14 +1,13 @@
+"use client";
 // ENDPOINTS: GET /api/listers/disputes (with pagination & filtering)
-import React from "react";
+
+import React, { useMemo, useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
-// Import necessary icons from Lucide
-import {
-  ChevronRight, // Action
-  XCircle, // Rejected (x icon)
-  Clock, // Pending Review (clock icon)
-  FileText, // In Review (docs icon - commonly used in Lucide for documents)
-  CheckCircle, // Resolved (circle checked icon)
-} from "lucide-react";
+import { XCircle, Clock, FileText, CheckCircle } from "lucide-react";
+import type { Dispute as ApiDispute } from "@/lib/api/listers";
+import { useDisputes } from "@/lib/queries/listers/useDisputes";
+import DisputeSearchBar from "./DisputeSearchBar";
+import DisputeDetails from "./DisputeDetails";
 
 interface Dispute {
   disputeId: string;
@@ -21,6 +20,34 @@ interface Dispute {
 interface DisputeTableProps {
   disputes: Dispute[];
 }
+
+const mapApiStatusToLabel = (
+  status: ApiDispute["status"],
+): Dispute["status"] => {
+  switch (status) {
+    case "pending_review":
+      return "Pending Review";
+    case "in_review":
+      return "In Review";
+    case "resolved":
+      return "Resolved";
+    case "rejected":
+      return "Rejected";
+    default:
+      return "Pending Review";
+  }
+};
+
+const formatDate = (date: string): string => {
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return date;
+
+  return parsed.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
 
 // Helper to determine badge styling AND icon
 const getStatusBadge = (status: Dispute["status"]) => {
@@ -140,7 +167,7 @@ const DisputeTable: React.FC<DisputeTableProps> = ({ disputes }) => {
 
             {/* Action - Full width on mobile, col-span-1 on desktop, placed at the end of the mobile stack */}
             <div className="flex justify-end sm:col-span-1 sm:items-center pt-2 sm:pt-0 border-t border-gray-100 sm:border-t-0">
-              <DisputeDetails />{" "}
+              <DisputeDetails disputeId={dispute.disputeId} />{" "}
             </div>
           </div>
         ))}
@@ -151,47 +178,65 @@ const DisputeTable: React.FC<DisputeTableProps> = ({ disputes }) => {
   );
 };
 
-// --- Example Usage (remains the same) ---
-
-import DisputeSearchBar from "./DisputeSearchBar";
-import DisputeDetails from "./DisputeDetails";
-
 const ExampleDisputesList: React.FC = () => {
-  const sampleDisputes: Dispute[] = [
-    {
-      disputeId: "DQ-0234",
-      itemName: "Vintage Chanel Blazer",
-      curator: "Sarah Mitchell",
-      status: "In Review",
-      dateSubmitted: "28 Oct 2025",
-    },
-    {
-      disputeId: "DQ-0189",
-      itemName: "Dior Saddle Bag",
-      curator: "Emma Johnson",
-      status: "Pending Review",
-      dateSubmitted: "01 Nov 2025",
-    },
-    {
-      disputeId: "DQ-0156",
-      itemName: "Hermès Silk Scarf",
-      curator: "Olivia Brown",
-      status: "Resolved",
-      dateSubmitted: "15 Oct 2025",
-    },
-    {
-      disputeId: "DQ-0098",
-      itemName: "Gucci Loafers",
-      curator: "Sophia Davis",
-      status: "Rejected",
-      dateSubmitted: "05 Oct 2025",
-    },
-  ];
+  const [statusLabel, setStatusLabel] = useState<string>("All Statuses");
+  const [searchValue, setSearchValue] = useState<string>("");
+
+  const statusParam = useMemo(() => {
+    if (statusLabel === "All Statuses") return "all";
+    if (statusLabel === "Pending Review") return "pending_review";
+    if (statusLabel === "In Review") return "in_review";
+    if (statusLabel === "Resolved") return "resolved";
+    if (statusLabel === "Rejected") return "rejected";
+    return "all";
+  }, [statusLabel]);
+
+  const {
+    data: disputesResponse,
+    isLoading,
+    isError,
+  } = useDisputes(1, 10, statusParam, searchValue || undefined);
+
+  const mappedDisputes: Dispute[] =
+    disputesResponse?.data.map((dispute) => ({
+      disputeId: dispute.disputeId,
+      itemName: dispute.itemName,
+      curator: dispute.curatorName,
+      status: mapApiStatusToLabel(dispute.status),
+      dateSubmitted: formatDate(dispute.dateSubmitted),
+    })) ?? [];
+
+  const showSkeleton = isLoading || isError;
 
   return (
     <div className="mt-8 bg-gray-50">
-      <DisputeSearchBar />
-      <DisputeTable disputes={sampleDisputes} />
+      <DisputeSearchBar
+        onStatusChange={setStatusLabel}
+        onSearchChange={setSearchValue}
+      />
+
+      {showSkeleton ? (
+        <div className="font-sans mb-8 bg-white rounded-lg border border-gray-200">
+          <div className="sm:min-w-full">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div
+                // eslint-disable-next-line react/no-array-index-key
+                key={`dispute-skeleton-${index}`}
+                className="flex flex-col sm:grid sm:grid-cols-12 gap-2 sm:gap-4 px-4 py-4 sm:px-6 sm:py-4 border-b border-gray-100 animate-pulse"
+              >
+                <div className="h-4 bg-gray-200 rounded w-24 sm:col-span-2" />
+                <div className="h-4 bg-gray-200 rounded w-40 sm:col-span-3" />
+                <div className="h-4 bg-gray-200 rounded w-32 sm:col-span-2" />
+                <div className="h-4 bg-gray-200 rounded w-28 sm:col-span-2" />
+                <div className="h-4 bg-gray-200 rounded w-24 sm:col-span-2" />
+                <div className="h-4 bg-gray-200 rounded w-8 sm:col-span-1" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <DisputeTable disputes={mappedDisputes} />
+      )}
     </div>
   );
 };

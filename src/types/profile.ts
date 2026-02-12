@@ -1,48 +1,65 @@
-/** Full API response shape */
-export interface FullProfile {
+export interface ProfileUser {
   id: string;
-  name: string | null;
-  avatar: string | null;
-  role: "lister" | "renter";
-
-  phoneNumber?: string;
-  bvn?: string;
-
-  emergencyContacts?: {
-    name: string;
-    relationship: string;
-    phoneNumber: string;
-    city: string;
-    state: string;
-  };
-
-  businessInfo?: {
-    businessName: string;
-    businessEmail: string;
-    businessRegistrationNumber: string;
-    businessAddress: string;
-    businessCity: string;
-    businessState: string;
-  };
-
-  bankAccounts?: {
-    bankName: string;
-    accountNumber: string;
-    nameOfAccount: string;
-  };
-
-  address?: {
-    street: string;
-    city: string;
-    state: string;
-    country: string;
-  };
-
-  avatarUploadId?: string;
-  ninUploadId?: string;
-
+  email: string;
+  name: string;
+  role: string; // e.g. "LISTER" | "RENTER"
+  isVerified: boolean;
+  isSuspended: boolean;
+  tokenVersion?: number;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface ProfileEmergencyContact {
+  id: string;
+  profileId: string;
+  name: string;
+  relationship: string;
+  phoneNumber: string;
+  city: string;
+  state: string;
+}
+
+export interface ProfileBusinessInfo {
+  id: string;
+  profileId: string;
+  businessName: string;
+  businessEmail: string;
+  businessRegistrationNumber: string;
+  businessAddress: string;
+  businessCity: string;
+  businessState: string;
+}
+
+export interface ProfileAddress {
+  id: string;
+  profileId: string;
+  street: string;
+  city: string;
+  state: string;
+  country: string;
+  zipCode: string | null;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Shape of `data` returned from GET /profile/user-profile */
+export interface FullProfile {
+  id: string;
+  userId: string;
+  phoneNumber: string;
+  bvn: string | null;
+  isApproved: boolean;
+  avatarUploadId: string | null;
+  ninUploadId: string | null;
+  createdAt: string;
+  updatedAt: string;
+
+  emergencyContact: ProfileEmergencyContact;
+  businessInfo: ProfileBusinessInfo;
+  address: ProfileAddress;
+  user: ProfileUser;
 }
 
 /** API contract */

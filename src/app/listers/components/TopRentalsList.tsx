@@ -4,54 +4,26 @@
 import React from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { ToolInfo } from "@/common/ui/ToolInfo";
+import { useTopItems } from "@/lib/queries/listers/useTopItems";
+import Link from "next/link";
 
-interface RentalItem {
+const RentalListItem: React.FC<{
   name: string;
-  rentalsCount: number;
-  price: string;
-  isAvailable: boolean;
-  imageUrl: string;
-}
-
-const topRentalsData: RentalItem[] = [
-  {
-    name: "FENDI ARCO BOOTS",
-    rentalsCount: 20,
-    price: "₦550,000",
-    isAvailable: true,
-    imageUrl: "/products/p1.jpg",
-  },
-  {
-    name: "FENDI ARCO BOOTS",
-    rentalsCount: 20,
-    price: "₦550,000",
-    isAvailable: false,
-    imageUrl: "/products/p1.jpg",
-  },
-  {
-    name: "FENDI ARCO BOOTS",
-    rentalsCount: 20,
-    price: "₦550,000",
-    isAvailable: true,
-    imageUrl: "/products/p1.jpg",
-  },
-];
-
-const RentalListItem: React.FC<RentalItem> = ({
-  name,
-  rentalsCount,
-  price,
-  isAvailable,
-  imageUrl,
-}) => {
-  const statusText = isAvailable ? "Available" : "Unavailable";
-  const statusColor = isAvailable ? "text-green-600" : "text-orange-500";
-  const dotClass = isAvailable ? "bg-green-600" : "bg-orange-500";
+  rentalCount: number;
+  rentalPrice: number;
+  availability: "Available" | "Unavailable";
+  image: string;
+}> = ({ name, rentalCount, rentalPrice, availability, image }) => {
+  const statusText = availability === "Available" ? "Available" : "Unavailable";
+  const statusColor =
+    availability === "Available" ? "text-green-600" : "text-orange-500";
+  const dotClass =
+    availability === "Available" ? "bg-green-600" : "bg-orange-500";
 
   return (
     <div className="flex items-center space-x-3 p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition duration-150">
       <div className="w-16 h-16 bg-gray-200 rounded-lg shrink-0 overflow-hidden">
-        <img src={imageUrl} alt={name} className="w-full h-full object-cover" />
+        <img src={image} alt={name} className="w-full h-full object-cover" />
       </div>
 
       <div className="flex-1 min-w-0">
@@ -59,7 +31,7 @@ const RentalListItem: React.FC<RentalItem> = ({
           {name}
         </Paragraph1>
         <Paragraph1 className="text-sm text-gray-500">
-          {rentalsCount} Rentals
+          {rentalCount} Rentals
         </Paragraph1>
       </div>
 
@@ -71,7 +43,7 @@ const RentalListItem: React.FC<RentalItem> = ({
           </Paragraph1>
         </div>
         <Paragraph1 className="text-base font-semibold text-black">
-          {price}
+          ₦{rentalPrice.toLocaleString()}
         </Paragraph1>
       </div>
     </div>
@@ -79,6 +51,8 @@ const RentalListItem: React.FC<RentalItem> = ({
 };
 
 const TopRentalsList: React.FC = () => {
+  const { data: topItemsData, isLoading, isError } = useTopItems(5);
+
   return (
     <div className="bg-white sm:col-span-2 p-6 rounded-xl border border-gray-300 w-full">
       <div className="flex justify-between items-center mb-6">
@@ -89,18 +63,44 @@ const TopRentalsList: React.FC = () => {
           <ToolInfo content="Shows the most rented items, their availability status, and current pricing." />
         </div>
 
-        <button
-          type="button"
+        <Link
+          href="/listers/inventory"
           className="px-3 py-1 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition duration-150"
         >
           See Inventory
-        </button>
+        </Link>
       </div>
 
       <div className="space-y-4">
-        {topRentalsData.map((item, index) => (
-          <RentalListItem key={index} {...item} />
-        ))}
+        {isLoading || isError ? (
+          Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex items-center space-x-3 p-4 animate-pulse"
+            >
+              <div className="w-16 h-16 bg-gray-200 rounded-lg shrink-0" />
+              <div className="flex-1">
+                <div className="h-4 bg-gray-200 rounded mb-2" />
+                <div className="h-3 bg-gray-100 rounded w-1/2" />
+              </div>
+            </div>
+          ))
+        ) : topItemsData?.data && topItemsData.data.length > 0 ? (
+          topItemsData.data.map((item, index) => (
+            <RentalListItem
+              key={index}
+              name={item.name}
+              rentalCount={item.rentalCount}
+              rentalPrice={item.rentalPrice}
+              availability={item.availability}
+              image={item.image}
+            />
+          ))
+        ) : (
+          <div className="text-center py-8">
+            <Paragraph1 className="text-gray-500">No items yet</Paragraph1>
+          </div>
+        )}
       </div>
     </div>
   );

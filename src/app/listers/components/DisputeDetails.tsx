@@ -25,11 +25,13 @@ import ExampleDisputeOverview from "./DisputeOverviewContent";
 interface DisputeDetailsPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  disputeId?: string;
 }
 
 const DisputeDetailsPanel: React.FC<DisputeDetailsPanelProps> = ({
   isOpen,
   onClose,
+  disputeId,
 }) => {
   const minPrice = 50000;
   const maxPrice = 200000;
@@ -79,7 +81,7 @@ const DisputeDetailsPanel: React.FC<DisputeDetailsPanelProps> = ({
               </button>
 
               <Paragraph1 className=" font-bold uppercase tracking-widest text-gray-800">
-                Dispute #DQ-0234{" "}
+                Dispute {disputeId ? `#${disputeId}` : "#DQ-0234"}{" "}
               </Paragraph1>
               <button
                 onClick={onClose}
@@ -118,7 +120,11 @@ const DisputeDetailsPanel: React.FC<DisputeDetailsPanelProps> = ({
 // --------------------
 // Main Component
 // --------------------
-const DisputeDetails: React.FC = () => {
+interface DisputeDetailsProps {
+  disputeId?: string;
+}
+
+const DisputeDetails: React.FC<DisputeDetailsProps> = ({ disputeId }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -128,7 +134,11 @@ const DisputeDetails: React.FC = () => {
       </button>
 
       {/* Filter Panel */}
-      <DisputeDetailsPanel isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <DisputeDetailsPanel
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        disputeId={disputeId}
+      />
     </>
   );
 };

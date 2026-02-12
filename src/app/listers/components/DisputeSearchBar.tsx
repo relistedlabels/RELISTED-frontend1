@@ -16,13 +16,23 @@ const STATUS_OPTIONS = [
   "Rejected",
 ];
 
-const DisputeSearchBar: React.FC = () => {
+interface DisputeSearchBarProps {
+  onSearchChange?: (value: string) => void;
+  onStatusChange?: (status: string) => void;
+}
+
+const DisputeSearchBar: React.FC<DisputeSearchBarProps> = ({
+  onSearchChange,
+  onStatusChange,
+}) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState(STATUS_OPTIONS[0]);
+  const [searchValue, setSearchValue] = useState("");
 
   const handleStatusChange = (status: string) => {
     setSelectedStatus(status);
     setIsDropdownOpen(false);
+    onStatusChange?.(status);
   };
 
   return (
@@ -34,6 +44,12 @@ const DisputeSearchBar: React.FC = () => {
           <input
             type="text"
             placeholder="Search by Dispute ID, Order ID, or Category..."
+            value={searchValue}
+            onChange={(event) => {
+              const value = event.target.value;
+              setSearchValue(value);
+              onSearchChange?.(value);
+            }}
             className="w-full p-3 pl-10 border border-gray-200 rounded-lg outline-none transition duration-150 text-sm"
           />
         </div>

@@ -1,11 +1,12 @@
 "use client";
 // ENDPOINTS: GET /api/listers/wallet/stats (balance info)
 
-import React, { useMemo } from "react";
+import type React from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { ArrowUpRight } from "lucide-react";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import Withdraw from "./Withdraw";
+import { useWalletStats } from "@/lib/queries/listers/useWalletStats";
 
 /* ---------- Motion ---------- */
 
@@ -42,7 +43,7 @@ function generateScatter(
 ): BoxConfig[] {
   const edgeBias = [5, 10, 15, 80, 85, 90]; // forces edge presence
 
-  return Array.from({ length: count }).map((_, i) => {
+  return Array.from({ length: count }).map((_) => {
     const useEdge = Math.random() > 0.6;
 
     const top = useEdge
@@ -68,9 +69,9 @@ function generateScatter(
 
 /* ---------- Component ---------- */
 
-const WalletBalanceCard: React.FC<{ balance?: string }> = ({
-  balance = "₦500,000.00",
-}) => {
+const WalletBalanceCard: React.FC = () => {
+  const { data: walletStats, isLoading } = useWalletStats();
+
   const boxes = useMemo(() => {
     return [
       // FRONT – 5
@@ -89,6 +90,12 @@ const WalletBalanceCard: React.FC<{ balance?: string }> = ({
       ...generateScatter(5, [100, 130], 10, "bg-black/40", 7.5),
     ];
   }, []);
+
+  const availableBalance = walletStats?.data?.availableBalance ?? 0;
+  const displayBalance = `₦${availableBalance.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
   return (
     <motion.div
@@ -124,7 +131,13 @@ const WalletBalanceCard: React.FC<{ balance?: string }> = ({
         <Paragraph1 className="text-sm mb-2 font-medium text-gray-400">
           Your Total balance:
         </Paragraph1>
-        <Paragraph2 className=" font-bold text-white ">{balance}</Paragraph2>
+        {isLoading ? (
+          <div className="h-8 bg-gray-700 rounded w-1/2 animate-pulse" />
+        ) : (
+          <Paragraph2 className="font-bold text-white">
+            {displayBalance}
+          </Paragraph2>
+        )}
       </div>
 
       <div className="relative z-40">

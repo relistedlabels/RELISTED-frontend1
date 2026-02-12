@@ -1,66 +1,28 @@
 "use client";
 // ENDPOINTS: GET /api/listers/rentals/recent (recent rental transactions with status)
 
-import React from "react";
-// Assuming Paragraph components are available
+import React, { useState } from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import Link from "next/link";
-
-// --- Item Data Structure ---
-interface RentalTransaction {
-  id: number;
-  name: string;
-  size: string;
-  color: string;
-  returnDue: string;
-  amount: string;
-  status: "Delivered" | "Return Due";
-  imageUrl: string; // Placeholder for the actual image path
-}
-
-// Data matching the provided image
-const recentRentalsData: RentalTransaction[] = [
-  {
-    id: 1,
-    name: "FENDI ARCO BOOTS",
-    size: "S",
-    color: "Black",
-    returnDue: "Oct 19, 2025",
-    amount: "₦550,000",
-    status: "Delivered",
-    imageUrl: "/products/p2.jpg", // Placeholder path
-  },
-  {
-    id: 2,
-    name: "FENDI ARCO BOOTS",
-    size: "S",
-    color: "Black",
-    returnDue: "Oct 19, 2025",
-    amount: "₦550,000",
-    status: "Return Due",
-    imageUrl: "/products/p2.jpg", // Placeholder path
-  },
-  {
-    id: 3,
-    name: "FENDI ARCO BOOTS",
-    size: "S",
-    color: "Black",
-    returnDue: "Oct 19, 2025",
-    amount: "₦550,000",
-    status: "Return Due",
-    imageUrl: "/products/p2.jpg", // Placeholder path
-  },
-];
+import { useRecentRentals } from "@/lib/queries/listers/useRecentRentals";
 
 // --- Status Badge Component ---
-const StatusBadge: React.FC<{ status: "Delivered" | "Return Due" }> = ({
-  status,
-}) => {
+const StatusBadge: React.FC<{
+  status: "Delivered" | "Return Due" | "Completed";
+}> = ({ status }) => {
   let classes = "";
-  if (status === "Delivered") {
-    classes = "bg-blue-100 text-blue-800";
-  } else if (status === "Return Due") {
-    classes = "bg-yellow-100 text-yellow-800";
+  switch (status) {
+    case "Delivered":
+      classes = "bg-blue-100 text-blue-800";
+      break;
+    case "Return Due":
+      classes = "bg-yellow-100 text-yellow-800";
+      break;
+    case "Completed":
+      classes = "bg-green-100 text-green-800";
+      break;
+    default:
+      classes = "bg-gray-100 text-gray-800";
   }
 
   return (
@@ -71,35 +33,41 @@ const StatusBadge: React.FC<{ status: "Delivered" | "Return Due" }> = ({
 };
 
 // --- Individual Rental Row Component ---
-const RentalRow: React.FC<RentalTransaction> = ({
-  name,
+const RentalRow: React.FC<{
+  id: string;
+  itemName: string;
+  size: string;
+  color: string;
+  returnDueDate: string;
+  rentalAmount: number;
+  status: "Delivered" | "Return Due" | "Completed";
+  renterName: string;
+  renterImage: string;
+}> = ({
+  id,
+  itemName,
   size,
   color,
-  returnDue,
-  amount,
+  returnDueDate,
+  rentalAmount,
   status,
-  imageUrl,
+  renterName,
+  renterImage,
 }) => {
-  const handleViewOrder = () => {
-    alert(`Viewing order for: ${name}`);
-    // In a real application, this would navigate to the order detail page
-  };
-
   return (
-    <div className="flex bg-white items-center border border-gray-300 justify-between py-4 mb-4 rounded-lg p-4 ">
+    <div className="flex bg-white items-center border border-gray-300 justify-between py-4 mb-4 rounded-lg p-4">
       {/* Item Details (Image, Name, Size/Color) */}
       <div className="flex items-center space-x-4 w-1/4 min-w-[200px] shrink-0">
         <div className="w-12 h-12 bg-gray-200 rounded-lg overflow-hidden shrink-0">
-          {/* Image placeholder */}
           <img
-            src={imageUrl}
-            alt={name}
+            src={renterImage}
+            alt={itemName}
             className="w-full h-full object-cover"
           />
         </div>
         <div>
           <Paragraph1 className="font-semibold text-gray-800 truncate">
-            {name}
+            {itemName}
           </Paragraph1>
           <Paragraph1 className="text-sm text-gray-500">
             Size: {size} | Color: {color}
@@ -111,14 +79,20 @@ const RentalRow: React.FC<RentalTransaction> = ({
       <div className="w-1/6 text-left hidden sm:block">
         <Paragraph1 className="text-sm text-gray-500">Return Due</Paragraph1>
         <Paragraph1 className="font-semibold text-gray-800">
-          {returnDue}
+          {new Date(returnDueDate).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })}
         </Paragraph1>
       </div>
 
       {/* Amount */}
       <div className="w-1/6 text-left hidden md:block">
         <Paragraph1 className="text-sm text-gray-500">Amount</Paragraph1>
-        <Paragraph1 className="font-semibold text-black">{amount}</Paragraph1>
+        <Paragraph1 className="font-semibold text-black">
+          ₦{rentalAmount.toLocaleString()}
+        </Paragraph1>
       </div>
 
       {/* Status Badge */}
@@ -129,8 +103,7 @@ const RentalRow: React.FC<RentalTransaction> = ({
       {/* View Order Button */}
       <div className="w-1/6 text-right flex justify-end">
         <Link
-          href="/listers/orders/id"
-          type="button"
+          href={`/listers/orders/${id}`}
           className="text-sm font-semibold text-gray-600 hover:text-black transition duration-150 underline"
         >
           View Order
@@ -142,18 +115,39 @@ const RentalRow: React.FC<RentalTransaction> = ({
 
 // --- Main Component ---
 const RecentRentalsList: React.FC = () => {
+  const [page] = useState(1);
+  const {
+    data: rentalsData,
+    isLoading,
+    isError,
+  } = useRecentRentals(page, 10, "all");
+
   return (
-    <div className=" w-full ">
+    <div className="w-full">
       {/* Header */}
-      <Paragraph3 className="text-xl mb-4 font-semibold  text-black">
+      <Paragraph3 className="text-xl mb-4 font-semibold text-black">
         Recent Rentals
       </Paragraph3>
 
       {/* List of Rental Rows */}
       <div className="divide-y divide-gray-100">
-        {recentRentalsData.map((item) => (
-          <RentalRow key={item.id} {...item} />
-        ))}
+        {isLoading || isError ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex items-center py-4 mb-4 animate-pulse">
+              <div className="w-12 h-12 bg-gray-200 rounded-lg mr-4" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-gray-200 rounded w-1/3" />
+                <div className="h-3 bg-gray-100 rounded w-1/2" />
+              </div>
+            </div>
+          ))
+        ) : rentalsData?.data && rentalsData.data.length > 0 ? (
+          rentalsData.data.map((item) => <RentalRow key={item.id} {...item} />)
+        ) : (
+          <div className="text-center py-8">
+            <Paragraph1 className="text-gray-500">No recent rentals</Paragraph1>
+          </div>
+        )}
       </div>
     </div>
   );

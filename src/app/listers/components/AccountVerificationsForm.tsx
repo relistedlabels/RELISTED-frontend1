@@ -1,6 +1,10 @@
-// ENDPOINTS: GET /api/listers/verifications/status, GET /api/listers/verifications/documents, POST /api/listers/verifications/nin, GET /api/listers/verifications/bvn, PUT /api/listers/verifications/emergency-contact
+"use client";
 
-import React from "react";
+// ENDPOINTS: GET /api/listers/verifications/status, GET /api/listers/verifications/documents,
+// POST /api/listers/verifications/nin, GET /api/listers/verifications/bvn,
+// PUT /api/listers/verifications/emergency-contact
+
+import React, { useMemo, useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
   HiOutlineDocumentText,
@@ -10,6 +14,11 @@ import {
   HiOutlineUsers,
   HiOutlineHome,
 } from "react-icons/hi2";
+import { useProfile } from "@/lib/queries/user/useProfile";
+import { useVerificationStatus } from "@/lib/queries/listers/useVerificationStatus";
+import { useVerificationDocuments } from "@/lib/queries/listers/useVerificationDocuments";
+import { useBvnVerification } from "@/lib/queries/listers/useBvnVerification";
+import { useUpdateEmergencyContact } from "@/lib/mutations/listers/useUpdateEmergencyContact";
 
 // Sub-component for displaying a verification status on a document or field
 const VerificationBadge: React.FC<{
@@ -35,6 +44,66 @@ const VerificationBadge: React.FC<{
 };
 
 const AccountVerificationsForm: React.FC = () => {
+  const { data: profile, isLoading } = useProfile();
+  const { data: statusData } = useVerificationStatus();
+  const { data: documentsData } = useVerificationDocuments();
+  const { data: bvnData } = useBvnVerification();
+  const updateEmergencyContactMutation = useUpdateEmergencyContact();
+
+  const emergencyContact = profile?.emergencyContact;
+
+  const [emergencyForm, setEmergencyForm] = useState({
+    fullName: emergencyContact?.name || "",
+    email: "",
+    phone: emergencyContact?.phoneNumber || "",
+    relationship: emergencyContact?.relationship || "",
+  });
+
+  const handleEmergencyChange = (
+    field: keyof typeof emergencyForm,
+    value: string,
+  ) => {
+    setEmergencyForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const emergencyAddress = useMemo(() => {
+    if (!emergencyContact) return "";
+    const parts = [emergencyContact.city, emergencyContact.state].filter(
+      Boolean,
+    );
+    return parts.join(", ");
+  }, [emergencyContact]);
+
+  const ninStatusRaw = statusData?.data.verifications.nin.status ?? "pending";
+  const bvnStatusRaw =
+    statusData?.data.verifications.bvn.status ?? bvnData?.data.bvn.status;
+
+  const mapStatus = (
+    status: string | undefined,
+  ): "Verified" | "Pending" | "Failed" => {
+    const lower = (status || "").toLowerCase();
+    if (lower === "verified") return "Verified";
+    if (lower === "pending") return "Pending";
+    if (lower === "failed" || lower === "not_verified") return "Failed";
+    return "Pending";
+  };
+
+  const ninStatus = mapStatus(ninStatusRaw);
+  const bvnStatus = mapStatus(bvnStatusRaw);
+
+  if (isLoading && !profile) {
+    return (
+      <div className="font-sans w-full">
+        <Paragraph1 className="mb-6 uppercase font-bold">
+          Verifications
+        </Paragraph1>
+        <Paragraph1 className="text-sm text-gray-500">
+          Loading verification details...
+        </Paragraph1>
+      </div>
+    );
+  }
+
   return (
     <div className="font-sans w-full">
       <Paragraph1 className="mb-6 uppercase font-bold">
@@ -46,22 +115,24 @@ const AccountVerificationsForm: React.FC = () => {
         Identification
       </Paragraph1>
 
-      {/* Uploaded NIN Document */}
+      {/* Uploaded NIN Document (basic status driven by profile for now) */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 p-3 border border-gray-300 rounded-lg bg-white mb-6">
         <div className="flex items-center gap-3 min-w-0">
           <HiOutlineDocumentText className="w-10 h-10 sm:w-14 sm:h-14 text-gray-500 shrink-0" />
           <div className="min-w-0">
             <Paragraph1 className="text-sm font-medium text-gray-900 truncate">
-              NIN_Document_2025.pdf
+              NIN Verification Document
             </Paragraph1>
             <Paragraph1 className="text-xs text-gray-500">
-              PDF • 2.4 MB
+              {documentsData?.data.documents.find((d) => d.type === "NIN")
+                ? "Document uploaded"
+                : "No NIN document uploaded yet"}
             </Paragraph1>
           </div>
         </div>
 
         <div className="sm:self-center">
-          <VerificationBadge status="Verified" />
+          <VerificationBadge status={ninStatus} />
         </div>
       </div>
 
@@ -77,12 +148,15 @@ const AccountVerificationsForm: React.FC = () => {
         <div className=" border bg-gray-50 border-gray-300 rounded-lg flex justify-between items-center p-4">
           <input
             type="text"
-            defaultValue="********34-345"
+            value={bvnData?.data.bvn.maskedValue || ""}
+            placeholder={
+              bvnData?.data.bvn.maskedValue ? "BVN on file" : "No BVN added yet"
+            }
             readOnly
             className="w-full outline-none  text-lg tracking-wider text-gray-700 font-mono"
           />
 
-          <VerificationBadge status="Verified" />
+          <VerificationBadge status={bvnStatus} />
         </div>
 
         <Paragraph1 className="text-xs text-gray-500 mt-2">
@@ -100,7 +174,7 @@ const AccountVerificationsForm: React.FC = () => {
 
       {/* Grid becomes 1-column on mobile */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        {/* Full Name */}
+        {/* Full Name (from profile.emergencyContact.name) */}
         <div>
           <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
             Full Name
@@ -109,13 +183,17 @@ const AccountVerificationsForm: React.FC = () => {
             <HiOutlineUser className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              defaultValue="Sarah Jessica Parker"
+              value={emergencyForm.fullName}
+              placeholder="Not provided yet"
+              onChange={(e) =>
+                handleEmergencyChange("fullName", e.target.value)
+              }
               className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-black focus:border-black"
             />
           </div>
         </div>
 
-        {/* Email Address */}
+        {/* Email Address (managed via verifications emergency-contact endpoint) */}
         <div>
           <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
             Email Address
@@ -124,13 +202,15 @@ const AccountVerificationsForm: React.FC = () => {
             <HiOutlineEnvelope className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="email"
-              defaultValue="samathadani@gmail.com"
+              value={emergencyForm.email}
+              placeholder="Enter emergency contact email"
+              onChange={(e) => handleEmergencyChange("email", e.target.value)}
               className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-black focus:border-black"
             />
           </div>
         </div>
 
-        {/* Phone */}
+        {/* Phone (from profile.emergencyContact.phoneNumber) */}
         <div>
           <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
             Phone Number
@@ -139,13 +219,15 @@ const AccountVerificationsForm: React.FC = () => {
             <HiOutlinePhone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="tel"
-              defaultValue="0923848556"
+              value={emergencyForm.phone}
+              placeholder="Not provided yet"
+              onChange={(e) => handleEmergencyChange("phone", e.target.value)}
               className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-black focus:border-black"
             />
           </div>
         </div>
 
-        {/* Relationship */}
+        {/* Relationship (from profile.emergencyContact.relationship) */}
         <div>
           <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
             Relationship
@@ -154,7 +236,11 @@ const AccountVerificationsForm: React.FC = () => {
             <HiOutlineUsers className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              defaultValue="Sibling"
+              value={emergencyForm.relationship}
+              placeholder="Not provided yet"
+              onChange={(e) =>
+                handleEmergencyChange("relationship", e.target.value)
+              }
               className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-black focus:border-black"
             />
           </div>
@@ -164,22 +250,38 @@ const AccountVerificationsForm: React.FC = () => {
       {/* Address */}
       <div className="mb-6">
         <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
-          Address
+          Address (City, State)
         </Paragraph1>
         <div className="relative">
           <HiOutlineHome className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            defaultValue="20, Allen Street, Diamond Bay Estate, Lekki Lagos state, Nigeria"
-            className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-black focus:border-black"
+            value={emergencyAddress}
+            placeholder="Not provided yet"
+            readOnly
+            className="w-full p-3 pl-10 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
           />
         </div>
       </div>
 
       {/* Save Button */}
       <div className="flex justify-end pt-4 pb-6">
-        <button className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition">
-          Save Changes
+        <button
+          className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          type="button"
+          disabled={updateEmergencyContactMutation.isPending}
+          onClick={() => {
+            updateEmergencyContactMutation.mutate({
+              fullName: emergencyForm.fullName,
+              email: emergencyForm.email,
+              phone: emergencyForm.phone,
+              relationship: emergencyForm.relationship,
+            });
+          }}
+        >
+          {updateEmergencyContactMutation.isPending
+            ? "Saving..."
+            : "Save Changes"}
         </button>
       </div>
     </div>

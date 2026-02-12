@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
   HiOutlineUser,
@@ -14,12 +14,19 @@ import {
   HiOutlinePlus,
 } from "react-icons/hi2";
 import { HiOutlineMail } from "react-icons/hi";
-import { useProfileStore } from "@/store/profileStore";
-import { FullProfile } from "@/types/profile";
+import { useListerProfile } from "@/lib/queries/listers/useListerProfile";
+import { useUpdateListerProfile } from "@/lib/mutations/listers/useUpdateListerProfile";
+import { uploadListerAvatar } from "@/lib/api/listers";
 
 const AccountProfileDetails: React.FC = () => {
-  const profile = useProfileStore((s) => s.profile);
-  const setProfile = useProfileStore((s) => s.setProfile);
+  const { data: profileResponse } = useListerProfile();
+  const updateProfileMutation = useUpdateListerProfile();
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [updateStatus, setUpdateStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
 
   // ✅ Local form state synced from store
   const [formData, setFormData] = useState({
@@ -32,36 +39,71 @@ const AccountProfileDetails: React.FC = () => {
 
   // ✅ Sync store data to form on mount/store change
   useEffect(() => {
+    const profile = profileResponse?.data.profile;
     if (profile) {
+      const defaultAddress = profile.addresses?.find((a) => a.isDefault);
       setFormData({
-        fullName: profile.firstName + " " + profile.lastName || "",
+        fullName: profile.fullName || "",
         email: profile.email || "",
-        phone: profile.phoneNumber || "",
-        role: profile.role || "Dresser",
-        defaultAddress: profile.address?.street || "",
+        phone: profile.phone || "",
+        role: profile.role || "LISTER",
+        defaultAddress: defaultAddress?.street || "",
       });
     }
-  }, [profile]);
+  }, [profileResponse]);
 
   // ✅ Handle form input changes
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
-    // ✅ Update store in real-time
-    const [firstName, lastName] = formData.fullName.split(" ");
+    // No local store sync here; we rely on server profile + form state
+  };
 
-    setProfile({
-      ...profile,
-      ...(field === "fullName" && {
-        firstName: firstName || "",
-        lastName: lastName || "",
-      }),
-      ...(field === "email" && { email: value }),
-      ...(field === "phone" && { phoneNumber: value }),
-      ...(field === "defaultAddress" && {
-        address: { ...profile?.address, street: value },
-      }),
-    } as FullProfile);
+  const handleUpdateProfile = () => {
+    const profile = profileResponse?.data.profile;
+    if (!profile) return;
+
+    updateProfileMutation.mutate(
+      {
+        fullName: formData.fullName || profile.fullName,
+        phone: formData.phone || profile.phone,
+      },
+      {
+        onSuccess: () => {
+          setUpdateStatus("success");
+          setTimeout(() => setUpdateStatus("idle"), 3000);
+        },
+        onError: () => {
+          setUpdateStatus("error");
+          setTimeout(() => setUpdateStatus("idle"), 3000);
+        },
+      },
+    );
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange: React.ChangeEventHandler<HTMLInputElement> = async (
+    event,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const formDataUpload = new FormData();
+    formDataUpload.append("avatar", file);
+    setIsUploadingAvatar(true);
+    try {
+      await uploadListerAvatar(formDataUpload);
+      setUpdateStatus("success");
+      setTimeout(() => setUpdateStatus("idle"), 3000);
+    } catch {
+      setUpdateStatus("error");
+      setTimeout(() => setUpdateStatus("idle"), 3000);
+    } finally {
+      setIsUploadingAvatar(false);
+    }
   };
 
   return (
@@ -69,27 +111,29 @@ const AccountProfileDetails: React.FC = () => {
       {/* Profile Header and Image Upload */}
       <div className="flex flex-col bg-[#3A3A32] p-6 items-center mb-6 rounded-lg">
         <div className="relative w-28 h-28 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-          {/* Profile Picture or Placeholder */}
-          {profile?.profileImage ? (
-            <img
-              src={profile.profileImage}
-              alt="Profile"
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <HiOutlineUser className="w-16 h-16 text-gray-500" />
-          )}
+          {/* Profile Picture or Placeholder (no avatar URL yet from API) */}
+          <HiOutlineUser className="w-16 h-16 text-gray-500" />
 
           {/* Upload Button Overlay */}
           <button
             type="button"
+            onClick={handleAvatarClick}
             className="absolute bottom-0 right-0 w-8 h-8 bg-black rounded-full flex items-center justify-center cursor-pointer border-2 border-white hover:bg-gray-800 transition"
           >
             <HiOutlineCamera className="w-4 h-4 text-white" />
           </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleAvatarChange}
+          />
         </div>
         <Paragraph1 className="text-sm text-center mt-4 text-white">
-          Upload a profile photo <br /> (Max 2MB)
+          {isUploadingAvatar
+            ? "Uploading profile photo..."
+            : "Upload a profile photo (Max 2MB)"}
         </Paragraph1>
       </div>
 
@@ -205,11 +249,24 @@ const AccountProfileDetails: React.FC = () => {
         </button>
         <button
           type="button"
-          className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition duration-150"
+          onClick={handleUpdateProfile}
+          disabled={updateProfileMutation.isPending}
+          className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Update Profile
+          {updateProfileMutation.isPending ? "Updating..." : "Update Profile"}
         </button>
       </div>
+
+      {updateStatus === "success" && (
+        <Paragraph1 className="mt-3 text-sm text-green-600">
+          Profile updated successfully.
+        </Paragraph1>
+      )}
+      {updateStatus === "error" && (
+        <Paragraph1 className="mt-3 text-sm text-red-600">
+          Failed to update profile. Please try again.
+        </Paragraph1>
+      )}
     </div>
   );
 };
