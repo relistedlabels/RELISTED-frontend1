@@ -2882,13 +2882,31 @@ Content-Type: application/json
 **Location:** `src/app/listers/components/AccountSecurity.tsx` - Update Password button
 
 **UX Explanation:**
-Change the user's account password. The "Security" tab contains a password change form where users must enter:
+Change the user's account password with OTP verification for security. The "Security" tab contains a password change form where users must enter:
 
 1. Current Password (for verification)
 2. New Password (with complexity requirements: 8+ chars, uppercase, lowercase, numbers, symbols)
 3. Confirm New Password
 
 The form displays password complexity requirements and allows eye toggle to show/hide password.
+
+**OTP Verification Flow:**
+Before submitting the password change to the backend:
+
+1. User fills in the password fields and clicks "Update Password"
+2. A centered popup modal appears asking for OTP verification (same styling as auth verify page)
+3. Modal displays a 6-digit OTP input with:
+   - 6 separate input fields (one digit per field)
+   - Auto-focus navigation between fields
+   - Backspace support to move backwards
+   - Close button (X) at top-right
+   - Smooth framer-motion animations
+4. User enters the OTP code sent to their email
+5. Upon successful OTP verification via `useVerifyOtp` hook, the password change request is submitted to this endpoint
+6. Success/error messages display accordingly
+
+**Pre-Request Security Step:**
+OTP verification via POST `/auth/verify-otp` must succeed before this password change endpoint is called.
 
 **Request Format:**
 

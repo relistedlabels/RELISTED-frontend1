@@ -32,7 +32,7 @@ import {
 } from "@/common/ui/Text";
 import { UserProfileBadge } from "./UserProfileBadge";
 import { UserProfileBadge2 } from "./UserProfileBadge2";
-import { useProfile } from "@/lib/queries/user/useProfile";
+import { useBusinessProfile } from "@/lib/queries/listers/useBusinessProfile";
 
 // --------------------
 // Types
@@ -56,8 +56,10 @@ interface DashboardLayoutProps {
 }
 
 const BrandHeader: React.FC = () => {
-  const { data: profile } = useProfile();
-  const businessName = profile?.businessInfo?.businessName?.trim();
+  const { data: businessProfileResponse } = useBusinessProfile();
+
+  const businessName =
+    businessProfileResponse?.data.businessProfile.businessName?.trim();
 
   // If no business name yet, show plain text brand with NO logo
   if (!businessName) {
@@ -295,9 +297,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             </button>
           </div>
 
-          <div className="hidden md:block">
-            {/* <BrandHeader /> */}
-          </div>
+          <div className="hidden md:block">{/* <BrandHeader /> */}</div>
 
           <div className="flex items-center gap-4">
             <Mail className="w-5 h-5 text-white cursor-pointer" />

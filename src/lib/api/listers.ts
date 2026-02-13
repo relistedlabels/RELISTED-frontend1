@@ -61,7 +61,7 @@ export interface RecentRentalsResponse {
 export async function getDashboardStats(
   timeframe: "week" | "month" | "year" = "month",
 ): Promise<DashboardStats> {
-  return apiFetch("/listers/stats", {
+  return apiFetch("/api/listers/stats", {
     method: "GET",
   });
 }
@@ -74,7 +74,7 @@ export async function getRentalsOvertime(
     timeframe,
     ...(year && { year: year.toString() }),
   });
-  return apiFetch(`/listers/rentals/overtime?${params}`, {
+  return apiFetch(`/api/listers/rentals/overtime?${params}`, {
     method: "GET",
   });
 }
@@ -82,7 +82,7 @@ export async function getRentalsOvertime(
 export async function getTopItems(
   limit: number = 5,
 ): Promise<TopItemsResponse> {
-  return apiFetch(`/listers/inventory/top-items?limit=${limit}`, {
+  return apiFetch(`/api/listers/inventory/top-items?limit=${limit}`, {
     method: "GET",
   });
 }
@@ -97,7 +97,7 @@ export async function getRecentRentals(
     limit: limit.toString(),
     status,
   });
-  return apiFetch(`/listers/rentals/recent?${params}`, {
+  return apiFetch(`/api/listers/rentals/recent?${params}`, {
     method: "GET",
   });
 }
@@ -191,7 +191,7 @@ export async function getOrders(
     sort,
     ...(status && { status }),
   });
-  return apiFetch(`/listers/orders?${params}`, {
+  return apiFetch(`/api/listers/orders?${params}`, {
     method: "GET",
   });
 }
@@ -199,7 +199,7 @@ export async function getOrders(
 export async function getOrderDetails(
   orderId: string,
 ): Promise<OrderDetailsResponse> {
-  return apiFetch(`/listers/orders/${orderId}`, {
+  return apiFetch(`/api/listers/orders/${orderId}`, {
     method: "GET",
   });
 }
@@ -207,7 +207,7 @@ export async function getOrderDetails(
 export async function getOrderItems(
   orderId: string,
 ): Promise<OrderItemsResponse> {
-  return apiFetch(`/listers/orders/${orderId}/items`, {
+  return apiFetch(`/api/listers/orders/${orderId}/items`, {
     method: "GET",
   });
 }
@@ -215,7 +215,7 @@ export async function getOrderItems(
 export async function getOrderProgress(
   orderId: string,
 ): Promise<OrderProgressResponse> {
-  return apiFetch(`/listers/orders/${orderId}/progress`, {
+  return apiFetch(`/api/listers/orders/${orderId}/progress`, {
     method: "GET",
   });
 }
@@ -224,7 +224,7 @@ export async function approveOrder(
   orderId: string,
   notes?: string,
 ): Promise<{ success: boolean; message: string; data: Order }> {
-  return apiFetch(`/listers/orders/${orderId}/approve`, {
+  return apiFetch(`/api/listers/orders/${orderId}/approve`, {
     method: "POST",
     body: JSON.stringify({ notes }),
   });
@@ -235,7 +235,7 @@ export async function rejectOrder(
   reason: string,
   refundType: "full" = "full",
 ): Promise<{ success: boolean; message: string }> {
-  return apiFetch(`/listers/orders/${orderId}/reject`, {
+  return apiFetch(`/api/listers/orders/${orderId}/reject`, {
     method: "POST",
     body: JSON.stringify({ reason, refundType }),
   });
@@ -252,7 +252,7 @@ export async function updateOrderStatus(
     | "completed",
   estimatedDeliveryDate?: string,
 ): Promise<{ success: boolean; message: string; data: Order }> {
-  return apiFetch(`/listers/orders/${orderId}/status`, {
+  return apiFetch(`/api/listers/orders/${orderId}/status`, {
     method: "PUT",
     body: JSON.stringify({ status, estimatedDeliveryDate }),
   });
@@ -365,7 +365,7 @@ export interface LockedBalancesResponse {
 }
 
 export async function getWalletStats(): Promise<WalletStatsResponse> {
-  return apiFetch("/listers/wallet/stats", {
+  return apiFetch("/api/listers/wallet/stats", {
     method: "GET",
   });
 }
@@ -382,7 +382,7 @@ export async function getTransactions(
     type,
     sortBy,
   });
-  return apiFetch(`/listers/wallet/transactions?${params}`, {
+  return apiFetch(`/api/listers/wallet/transactions?${params}`, {
     method: "GET",
   });
 }
@@ -393,7 +393,7 @@ export async function getBankAccounts(
   const params = new URLSearchParams({
     verified: verified.toString(),
   });
-  return apiFetch(`/listers/wallet/bank-accounts?${params}`, {
+  return apiFetch(`/api/listers/wallet/bank-accounts?${params}`, {
     method: "GET",
   });
 }
@@ -404,14 +404,14 @@ export async function addBankAccount(data: {
   accountName: string;
   accountType?: "savings" | "current";
 }): Promise<{ success: boolean; data: BankAccount; message: string }> {
-  return apiFetch("/listers/wallet/bank-accounts", {
+  return apiFetch("/api/listers/wallet/bank-accounts", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
 export async function getBanks(country: string = "NG"): Promise<BanksResponse> {
-  return apiFetch(`/banks?country=${country}`, {
+  return apiFetch(`/api/banks?country=${country}`, {
     method: "GET",
   });
 }
@@ -421,7 +421,7 @@ export async function withdrawFunds(data: {
   bankAccountId: string;
   notes?: string;
 }): Promise<WithdrawalResponse> {
-  return apiFetch("/listers/wallet/withdraw", {
+  return apiFetch("/api/listers/wallet/withdraw", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -430,13 +430,13 @@ export async function withdrawFunds(data: {
 export async function getWithdrawalStatus(
   withdrawalId: string,
 ): Promise<WithdrawalResponse> {
-  return apiFetch(`/listers/wallet/withdraw/${withdrawalId}`, {
+  return apiFetch(`/api/listers/wallet/withdraw/${withdrawalId}`, {
     method: "GET",
   });
 }
 
 export async function getLockedBalances(): Promise<LockedBalancesResponse> {
-  return apiFetch("/listers/wallet/locked-balances", {
+  return apiFetch("/api/listers/wallet/locked-balances", {
     method: "GET",
   });
 }
@@ -482,7 +482,7 @@ export interface DisputesResponse {
 export async function getDisputeStats(
   timeframe: "week" | "month" | "year" = "month",
 ): Promise<DisputeStatsResponse> {
-  return apiFetch(`/listers/disputes/stats?timeframe=${timeframe}`, {
+  return apiFetch(`/api/listers/disputes/stats?timeframe=${timeframe}`, {
     method: "GET",
   });
 }
@@ -501,8 +501,263 @@ export async function getDisputes(
     sortBy,
     ...(search && { search }),
   });
-  return apiFetch(`/listers/disputes?${params}`, {
+  return apiFetch(`/api/listers/disputes?${params}`, {
     method: "GET",
+  });
+}
+
+export interface DisputeOverviewDetails {
+  itemName: string;
+  curator: string;
+  category: string;
+  dateSubmitted: string;
+  preferredResolution: string;
+  description: string;
+}
+
+export interface DisputeEvidenceFile {
+  fileId: string;
+  fileName: string;
+  fileType: "image" | "document" | string;
+  fileUrl: string;
+  fileSize?: string;
+  uploadedAt: string;
+  uploadedBy?: string;
+}
+
+export interface DisputeTimelineEvent {
+  eventId: string;
+  status: string;
+  date: string;
+  displayDate: string;
+  description: string;
+  timestamp: string;
+}
+
+export interface DisputeResolutionDetails {
+  status: string;
+  statusLabel: string;
+  resolutionDetails: string | null;
+  refundAmount: number | null;
+  currency?: string;
+  formattedAmount?: string;
+  refundDate: string | null;
+  refundStatus?: string | null;
+  resolvedAt: string | null;
+  resolvedBy: string | null;
+  appealAvailable: boolean;
+}
+
+export interface DisputeMessage {
+  messageId: string;
+  type: "user" | "admin" | "status" | string;
+  content: string;
+  createdAt: string;
+  createdBy: string;
+  adminName?: string;
+  displayTimestamp?: string;
+}
+
+export interface DisputeDetailResponse {
+  success: boolean;
+  data: {
+    dispute: {
+      disputeId: string;
+      orderNumber: string;
+      status: string;
+      statusLabel: string;
+      statusIcon?: string;
+      statusColor?: string;
+      createdAt: string;
+      lastUpdatedAt: string;
+      estimatedResolutionDate?: string;
+      overview: DisputeOverviewDetails;
+      evidence: {
+        filesCount: number;
+        files: DisputeEvidenceFile[];
+      };
+      timeline: {
+        events: DisputeTimelineEvent[];
+      };
+      resolution: DisputeResolutionDetails;
+      messages: {
+        count: number;
+        lastMessage?: DisputeMessage;
+      };
+    };
+  };
+}
+
+export async function getDisputeDetail(
+  disputeId: string,
+): Promise<DisputeDetailResponse> {
+  return apiFetch(`/api/listers/disputes/${disputeId}`, {
+    method: "GET",
+  });
+}
+
+export interface DisputeOverviewResponse {
+  success: boolean;
+  data: {
+    overview: {
+      itemInformation: {
+        itemName: string;
+        curator: string;
+        orderId: string;
+      };
+      disputeDetails: {
+        category: string;
+        dateSubmitted: string;
+        preferredResolution: string;
+        description: string;
+      };
+    };
+  };
+}
+
+export async function getDisputeOverview(
+  disputeId: string,
+): Promise<DisputeOverviewResponse> {
+  return apiFetch(`/api/listers/disputes/${disputeId}/overview`, {
+    method: "GET",
+  });
+}
+
+export interface DisputeEvidenceResponse {
+  success: boolean;
+  data: {
+    evidence: {
+      files: DisputeEvidenceFile[];
+      totalFiles: number;
+      totalSize?: string;
+    };
+  };
+}
+
+export async function getDisputeEvidence(
+  disputeId: string,
+): Promise<DisputeEvidenceResponse> {
+  return apiFetch(`/api/listers/disputes/${disputeId}/evidence`, {
+    method: "GET",
+  });
+}
+
+export interface DisputeTimelineResponse {
+  success: boolean;
+  data: {
+    timeline: {
+      events: DisputeTimelineEvent[];
+      totalEvents: number;
+      currentStatus: string;
+    };
+  };
+}
+
+export async function getDisputeTimeline(
+  disputeId: string,
+): Promise<DisputeTimelineResponse> {
+  return apiFetch(`/api/listers/disputes/${disputeId}/timeline`, {
+    method: "GET",
+  });
+}
+
+export interface DisputeResolutionResponse {
+  success: boolean;
+  data: {
+    resolution: DisputeResolutionDetails;
+  };
+}
+
+export async function getDisputeResolution(
+  disputeId: string,
+): Promise<DisputeResolutionResponse> {
+  return apiFetch(`/api/listers/disputes/${disputeId}/resolution`, {
+    method: "GET",
+  });
+}
+
+export interface DisputeMessagesResponse {
+  success: boolean;
+  data: {
+    messages: DisputeMessage[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      pages: number;
+    };
+  };
+}
+
+export async function getDisputeMessages(
+  disputeId: string,
+  page: number = 1,
+  limit: number = 50,
+): Promise<DisputeMessagesResponse> {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+  return apiFetch(`/api/listers/disputes/${disputeId}/messages?${params}`, {
+    method: "GET",
+  });
+}
+
+export interface SendDisputeMessagePayload {
+  content: string;
+  mediaIds?: string[];
+}
+
+export interface SendDisputeMessageResponse {
+  success: boolean;
+  message: string;
+  data: DisputeMessage;
+}
+
+export async function sendDisputeMessage(
+  disputeId: string,
+  data: SendDisputeMessagePayload,
+): Promise<SendDisputeMessageResponse> {
+  return apiFetch(`/api/listers/disputes/${disputeId}/messages`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export interface WithdrawDisputeResponse {
+  success: boolean;
+  message: string;
+}
+
+export async function withdrawDispute(
+  disputeId: string,
+): Promise<WithdrawDisputeResponse> {
+  return apiFetch(`/api/listers/disputes/${disputeId}/withdraw`, {
+    method: "POST",
+  });
+}
+
+export interface CreateDisputePayload {
+  orderId: string;
+  issueCategory: string;
+  description: string;
+  evidenceFileIds?: string[];
+}
+
+export interface CreateDisputeResponse {
+  success: boolean;
+  message: string;
+  data: {
+    disputeId: string;
+  };
+}
+
+export async function createDispute(
+  data: CreateDisputePayload,
+): Promise<CreateDisputeResponse> {
+  return apiFetch("/api/listers/disputes", {
+    method: "POST",
+    body: JSON.stringify(data),
   });
 }
 
@@ -541,7 +796,7 @@ export interface ListerProfileResponse {
 }
 
 export async function getListerProfile(): Promise<ListerProfileResponse> {
-  return apiFetch("/listers/profile", {
+  return apiFetch("/api/listers/profile", {
     method: "GET",
   });
 }
@@ -555,7 +810,7 @@ export interface ListerAddressesResponse {
 }
 
 export async function getListerAddresses(): Promise<ListerAddressesResponse> {
-  return apiFetch("/listers/profile/addresses", {
+  return apiFetch("/api/listers/profile/addresses", {
     method: "GET",
   });
 }
@@ -570,15 +825,27 @@ export interface AddAddressPayload {
   isDefault?: boolean;
 }
 
-export async function addListerAddress(
-  data: AddAddressPayload,
+export async function addListerAddress(data: AddAddressPayload): Promise<{
+  success: boolean;
+  message: string;
+  data: { address: ListerAddress };
+}> {
+  return apiFetch("/api/listers/profile/addresses", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateListerAddress(
+  addressId: string,
+  data: Partial<AddAddressPayload>,
 ): Promise<{
   success: boolean;
   message: string;
   data: { address: ListerAddress };
 }> {
-  return apiFetch("/listers/profile/addresses", {
-    method: "POST",
+  return apiFetch(`/api/listers/profile/addresses/${addressId}`, {
+    method: "PUT",
     body: JSON.stringify(data),
   });
 }
@@ -595,7 +862,7 @@ export interface AvatarUploadResponse {
 export async function uploadListerAvatar(
   formData: FormData,
 ): Promise<AvatarUploadResponse> {
-  return apiFetch("/listers/profile/avatar", {
+  return apiFetch("/api/listers/profile/avatar", {
     method: "POST",
     body: formData,
   });
@@ -629,7 +896,7 @@ export interface BusinessProfileResponse {
 }
 
 export async function getBusinessProfile(): Promise<BusinessProfileResponse> {
-  return apiFetch("/listers/profile/business", {
+  return apiFetch("/api/listers/profile/business", {
     method: "GET",
   });
 }
@@ -651,7 +918,7 @@ export async function updateBusinessProfile(
   message: string;
   data: { businessProfile: BusinessProfile };
 }> {
-  return apiFetch("/listers/profile/business", {
+  return apiFetch("/api/listers/profile/business", {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -669,7 +936,7 @@ export async function updateListerProfile(
   message: string;
   data: { profile: ListerProfile };
 }> {
-  return apiFetch("/listers/profile", {
+  return apiFetch("/api/listers/profile", {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -700,7 +967,7 @@ export interface VerificationStatusResponse {
 }
 
 export async function getVerificationStatus(): Promise<VerificationStatusResponse> {
-  return apiFetch("/listers/verifications/status", {
+  return apiFetch("/api/listers/verifications/status", {
     method: "GET",
   });
 }
@@ -723,7 +990,7 @@ export interface VerificationDocumentsResponse {
 }
 
 export async function getVerificationDocuments(): Promise<VerificationDocumentsResponse> {
-  return apiFetch("/listers/verifications/documents", {
+  return apiFetch("/api/listers/verifications/documents", {
     method: "GET",
   });
 }
@@ -739,7 +1006,7 @@ export interface NinUploadResponse {
 export async function uploadNinDocument(
   formData: FormData,
 ): Promise<NinUploadResponse> {
-  return apiFetch("/listers/verifications/nin", {
+  return apiFetch("/api/listers/verifications/nin", {
     method: "POST",
     body: formData,
   });
@@ -761,7 +1028,7 @@ export interface BvnVerificationResponse {
 }
 
 export async function getBvnVerification(): Promise<BvnVerificationResponse> {
-  return apiFetch("/listers/verifications/bvn", {
+  return apiFetch("/api/listers/verifications/bvn", {
     method: "GET",
   });
 }
@@ -791,7 +1058,7 @@ export interface EmergencyContactResponse {
 export async function updateEmergencyContact(
   data: EmergencyContactPayload,
 ): Promise<EmergencyContactResponse> {
-  return apiFetch("/listers/verifications/emergency-contact", {
+  return apiFetch("/api/listers/verifications/emergency-contact", {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -819,7 +1086,7 @@ export interface ChangePasswordResponse {
 export async function changeListerPassword(
   data: ChangePasswordPayload,
 ): Promise<ChangePasswordResponse> {
-  return apiFetch("/listers/security/password", {
+  return apiFetch("/api/listers/security/password", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -849,7 +1116,7 @@ export interface NotificationPreferencesResponse {
 }
 
 export async function getNotificationPreferences(): Promise<NotificationPreferencesResponse> {
-  return apiFetch("/listers/notifications/preferences", {
+  return apiFetch("/api/listers/notifications/preferences", {
     method: "GET",
   });
 }
@@ -876,7 +1143,7 @@ export interface UpdateNotificationPreferencesResponse {
 export async function updateNotificationPreferences(
   data: UpdateNotificationPreferencesPayload,
 ): Promise<UpdateNotificationPreferencesResponse> {
-  return apiFetch("/listers/notifications/preferences", {
+  return apiFetch("/api/listers/notifications/preferences", {
     method: "PUT",
     body: JSON.stringify(data),
   });

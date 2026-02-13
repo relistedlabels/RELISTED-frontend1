@@ -1,7 +1,6 @@
 // ENDPOINTS: GET /api/listers/disputes/:disputeId/overview, GET /api/listers/disputes/:disputeId/messages
 import React from "react";
 import { Paragraph1 } from "@/common/ui/Text"; // Assuming your custom text component
-import ExampleDisputeConversationLog from "./DisputeConversationLog";
 
 interface DisputeOverviewContentProps {
   // Item Information
@@ -109,9 +108,8 @@ const ExampleDisputeOverview: React.FC = () => {
         preferredResolution="Full Refund"
         description="The blazer arrived with a visible tear on the right sleeve. This damage was not mentioned in the item description and significantly affects the wearability."
       />
-      <ExampleDisputeConversationLog />
     </>
   );
 };
-
+export { DisputeOverviewContent };
 export default ExampleDisputeOverview;

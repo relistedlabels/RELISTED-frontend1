@@ -100,5 +100,5 @@ const ExampleDisputeEvidence: React.FC = () => {
 
   return <DisputeEvidenceContent files={sampleFiles} />;
 };
-
+export { DisputeEvidenceContent };
 export default ExampleDisputeEvidence;

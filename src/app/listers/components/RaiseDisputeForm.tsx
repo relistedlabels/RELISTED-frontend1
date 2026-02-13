@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { HiOutlineArrowUpTray, HiOutlineChevronDown } from "react-icons/hi2";
+import { useCreateDispute } from "@/lib/mutations/listers";
 
 // Define possible dispute categories
 const ISSUE_CATEGORIES = [
@@ -16,10 +17,24 @@ const ISSUE_CATEGORIES = [
 const RaiseDisputeForm: React.FC = () => {
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("Select Issue");
+  const [description, setDescription] = useState("");
+  const createDisputeMutation = useCreateDispute();
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
     setIsCategoryDropdownOpen(false);
+  };
+
+  const handleSubmit = () => {
+    if (selectedCategory === "Select Issue" || description.trim().length < 20) {
+      return;
+    }
+
+    createDisputeMutation.mutate({
+      orderId: "20394RRS4",
+      issueCategory: selectedCategory,
+      description: description.trim(),
+    });
   };
 
   return (
@@ -83,6 +98,8 @@ const RaiseDisputeForm: React.FC = () => {
         </Paragraph1>
         <textarea
           placeholder="Explain the issue clearly..."
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
           className="w-full p-3 border border-gray-300 rounded-lg focus:ring-black focus:border-black transition duration-150 min-h-[100px] text-sm"
           minLength={20}
         />
@@ -115,9 +132,20 @@ const RaiseDisputeForm: React.FC = () => {
       </div>
 
       {/* Action Button */}
-      {/* <button className="w-full py-3 text-lg font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition duration-150">
-        Submit Dispute
-      </button> */}
+      <button
+        type="button"
+        onClick={handleSubmit}
+        disabled={
+          createDisputeMutation.isPending ||
+          selectedCategory === "Select Issue" ||
+          description.trim().length < 20
+        }
+        className="w-full py-3 text-lg font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <Paragraph1>
+          {createDisputeMutation.isPending ? "Submitting..." : "Submit Dispute"}
+        </Paragraph1>
+      </button>
     </div>
   );
 };

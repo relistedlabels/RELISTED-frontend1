@@ -3,7 +3,7 @@
 import { ReactNode, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useMe } from "@/lib/queries/auth/useMe";
-import { useProfile } from "@/lib/queries/user/useProfile";
+import { useListerProfile } from "@/lib/queries/listers/useListerProfile";
 import { useUserStore } from "@/store/useUserStore";
 import FullPageLoader from "@/common/ui/FullPageLoader";
 import ProfileFromStore from "@/common/ui/ProfileFromStore";
@@ -13,7 +13,11 @@ export default function CuratorsLayout({ children }: { children: ReactNode }) {
   const { sessionToken, requiresMfa, token } = useUserStore();
 
   const { data: user, isLoading: userLoading, isError: userError } = useMe();
-  const { data: profile, isLoading: profileLoading } = useProfile();
+  const {
+    data: listerProfile,
+    isLoading: listerProfileLoading,
+    isError: listerProfileError,
+  } = useListerProfile();
 
   useEffect(() => {
     // If user is in MFA state, redirect to verify MFA
@@ -22,7 +26,7 @@ export default function CuratorsLayout({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (!userLoading && !profileLoading) {
+    if (!userLoading && !listerProfileLoading) {
       // If no token at all, redirect to sign in
       if (!token) {
         router.replace("/auth/sign-in");
@@ -32,15 +36,15 @@ export default function CuratorsLayout({ children }: { children: ReactNode }) {
       // Check user and profile
       if (!user) {
         router.replace("/auth/sign-in");
-      } else if (!profile) {
+      } else if (!listerProfile) {
         router.replace("/auth/profile-setup");
       }
     }
   }, [
     user,
-    profile,
+    listerProfile,
     userLoading,
-    profileLoading,
+    listerProfileLoading,
     sessionToken,
     requiresMfa,
     token,
@@ -52,11 +56,11 @@ export default function CuratorsLayout({ children }: { children: ReactNode }) {
     return <FullPageLoader />;
   }
 
-  if (userLoading || profileLoading) {
+  if (userLoading || listerProfileLoading) {
     return <FullPageLoader />;
   }
 
-  if (!user || !profile) {
+  if (!user || !listerProfile) {
     return <FullPageLoader />;
   }
 

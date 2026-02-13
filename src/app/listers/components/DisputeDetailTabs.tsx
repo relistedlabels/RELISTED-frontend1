@@ -1,11 +1,24 @@
 // ENDPOINTS: GET /api/listers/disputes/:disputeId (full details with all tabs)
+"use client";
+
 import React, { useState, useRef, useEffect } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { FileText } from "lucide-react";
-import ExampleDisputeOverview from "./DisputeOverviewContent";
-import ExampleDisputeEvidence from "./DisputeEvidenceContent";
-import ExampleDisputeTimeline from "./DisputeTimelineContent";
-import ExampleDisputeResolution from "./DisputeResolutionContent";
+import { DisputeOverviewContent } from "./DisputeOverviewContent";
+import { DisputeEvidenceContent } from "./DisputeEvidenceContent";
+import { DisputeTimelineContent } from "./DisputeTimelineContent";
+import {
+  DisputeResolutionContent,
+  type Resolution,
+} from "./DisputeResolutionContent";
+import DisputeConversationLog from "./DisputeConversationLog";
+import {
+  useDisputeDetail,
+  useDisputeOverview,
+  useDisputeEvidence,
+  useDisputeTimeline,
+  useDisputeResolution,
+} from "@/lib/queries/listers";
 
 type TabKey = "overview" | "evidence" | "timeline" | "resolution";
 
@@ -22,7 +35,11 @@ const DISPUTE_TABS: Tab[] = [
   { key: "resolution", label: "Resolution" },
 ];
 
-const DisputeDetailTabs: React.FC = () => {
+interface DisputeDetailTabsProps {
+  disputeId: string;
+}
+
+const DisputeDetailTabs: React.FC<DisputeDetailTabsProps> = ({ disputeId }) => {
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [indicatorStyle, setIndicatorStyle] = useState({});
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -40,24 +57,67 @@ const DisputeDetailTabs: React.FC = () => {
     }
   }, [activeTab]);
 
-  // --- Placeholder Content Components ---
-  const OverviewContent: React.FC = () => <ExampleDisputeOverview />;
+  const { data: overviewData } = useDisputeOverview(disputeId);
+  const { data: evidenceData } = useDisputeEvidence(disputeId);
+  const { data: timelineData } = useDisputeTimeline(disputeId);
+  const { data: resolutionData } = useDisputeResolution(disputeId);
 
-  const EvidenceContent: React.FC = () => <ExampleDisputeEvidence />;
+  const overview = overviewData?.data.overview;
+  const evidence = evidenceData?.data.evidence;
+  const timeline = timelineData?.data.timeline;
+  const resolutionApi = resolutionData?.data.resolution;
 
-  const TimelineContent: React.FC = React.memo(() => (
-    <ExampleDisputeTimeline />
-  ));
-
-  const ResolutionContent: React.FC = () => <ExampleDisputeResolution />;
+  const resolution: Resolution | undefined = resolutionApi
+    ? {
+        status:
+          resolutionApi.status.toLowerCase() === "resolved"
+            ? "Resolved"
+            : "Reviewing",
+        resolutionDetails: resolutionApi.resolutionDetails || undefined,
+        refundAmount: resolutionApi.formattedAmount || undefined,
+        refundDate: resolutionApi.refundDate || undefined,
+      }
+    : undefined;
 
   const contentMap: Record<TabKey, React.ReactNode> = {
-    overview: <OverviewContent />,
-    evidence: <EvidenceContent />,
-    timeline: <TimelineContent />,
-    resolution: <ResolutionContent />,
+    overview: overview && (
+      <>
+        <DisputeOverviewContent
+          itemName={overview.itemInformation.itemName}
+          curator={overview.itemInformation.curator}
+          orderID={overview.itemInformation.orderId}
+          category={overview.disputeDetails.category}
+          dateSubmitted={overview.disputeDetails.dateSubmitted}
+          preferredResolution={overview.disputeDetails.preferredResolution}
+          description={overview.disputeDetails.description}
+        />
+        <div className="mt-6">
+          <DisputeConversationLog disputeId={disputeId} />
+        </div>
+      </>
+    ),
+    evidence: (
+      <DisputeEvidenceContent
+        files={(evidence?.files || []).map((f) => ({
+          fileName: f.fileName,
+          fileType: f.fileType === "document" ? "document" : "image",
+          fileUrl: f.fileUrl,
+        }))}
+      />
+    ),
+    timeline: (
+      <DisputeTimelineContent
+        events={(timeline?.events || []).map((e) => ({
+          status: e.status,
+          date: e.displayDate,
+          description: e.description,
+        }))}
+      />
+    ),
+    resolution: resolution ? (
+      <DisputeResolutionContent resolution={resolution} />
+    ) : null,
   };
-  // ------------------------------------
 
   return (
     <div className="font-sans">
@@ -98,14 +158,16 @@ const DisputeDetailTabs: React.FC = () => {
   );
 };
 
-const ExampleDisputeDetail: React.FC = () => {
+const ExampleDisputeDetail: React.FC<{ disputeId: string }> = ({
+  disputeId,
+}) => {
   return (
     <div className="">
       <div className="inline-flex items-center px-3 py-2 mb-4 rounded-full bg-yellow-500/50 text-gray-900 font-semibold text-sm">
         <FileText />
         <Paragraph1> In Review </Paragraph1>
       </div>
-      <DisputeDetailTabs />
+      <DisputeDetailTabs disputeId={disputeId} />
     </div>
   );
 };

@@ -2,14 +2,15 @@
 
 import { User } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
-import { useProfile } from "@/lib/queries/user/useProfile";
+import { useListerProfile } from "@/lib/queries/listers/useListerProfile";
 
 export function UserProfileBadge() {
-  const { data: profile } = useProfile();
+  const { data } = useListerProfile();
+  const profile = data?.data.profile;
 
-  const name = profile?.user?.name?.trim() || "New user";
-  const role = profile?.user?.role;
-  const avatar = null; // avatar URL not yet exposed from profile API
+  const name = profile?.fullName?.trim() || "New user";
+  const role = profile?.role;
+  const avatar = profile?.profileImage ?? null;
 
   return (
     <div className="flex items-center gap-3">

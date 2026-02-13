@@ -19,6 +19,7 @@ import { useVerificationStatus } from "@/lib/queries/listers/useVerificationStat
 import { useVerificationDocuments } from "@/lib/queries/listers/useVerificationDocuments";
 import { useBvnVerification } from "@/lib/queries/listers/useBvnVerification";
 import { useUpdateEmergencyContact } from "@/lib/mutations/listers/useUpdateEmergencyContact";
+import { useUploadNinDocument } from "@/lib/mutations/listers/useUploadNinDocument";
 
 // Sub-component for displaying a verification status on a document or field
 const VerificationBadge: React.FC<{
@@ -49,6 +50,7 @@ const AccountVerificationsForm: React.FC = () => {
   const { data: documentsData } = useVerificationDocuments();
   const { data: bvnData } = useBvnVerification();
   const updateEmergencyContactMutation = useUpdateEmergencyContact();
+  const uploadNinMutation = useUploadNinDocument();
 
   const emergencyContact = profile?.emergencyContact;
 
@@ -90,6 +92,42 @@ const AccountVerificationsForm: React.FC = () => {
 
   const ninStatus = mapStatus(ninStatusRaw);
   const bvnStatus = mapStatus(bvnStatusRaw);
+
+  const [ninNumber, setNinNumber] = useState("");
+  const [ninFile, setNinFile] = useState<File | null>(null);
+  const [ninError, setNinError] = useState<string | null>(null);
+
+  const handleNinFileChange: React.ChangeEventHandler<HTMLInputElement> = (
+    event,
+  ) => {
+    const file = event.target.files?.[0] ?? null;
+    setNinFile(file);
+    setNinError(null);
+  };
+
+  const handleUploadNin = () => {
+    if (!ninFile) {
+      setNinError("Please select a NIN document to upload.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("ninDocument", ninFile);
+    if (ninNumber.trim()) {
+      formData.append("ninNumber", ninNumber.trim());
+    }
+
+    setNinError(null);
+    uploadNinMutation.mutate(formData, {
+      onSuccess: () => {
+        setNinNumber("");
+        setNinFile(null);
+      },
+      onError: () => {
+        setNinError("Failed to upload NIN document. Please try again.");
+      },
+    });
+  };
 
   if (isLoading && !profile) {
     return (
@@ -134,6 +172,54 @@ const AccountVerificationsForm: React.FC = () => {
         <div className="sm:self-center">
           <VerificationBadge status={ninStatus} />
         </div>
+      </div>
+
+      {/* NIN Upload Controls */}
+      <div className="mb-6 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4">
+        <Paragraph1 className="mb-2 text-sm font-medium text-gray-900">
+          Upload NIN Document
+        </Paragraph1>
+        <Paragraph1 className="mb-3 text-xs text-gray-600">
+          Accepted formats: JPEG, PNG. Maximum size 5MB.
+        </Paragraph1>
+        <div className="mb-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div>
+            <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
+              NIN Number (optional)
+            </Paragraph1>
+            <input
+              type="text"
+              value={ninNumber}
+              onChange={(e) => setNinNumber(e.target.value)}
+              className="w-full rounded-md border border-gray-300 p-2 text-sm"
+              placeholder="Enter NIN number"
+            />
+          </div>
+          <div>
+            <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
+              NIN Document
+            </Paragraph1>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,application/pdf"
+              onChange={handleNinFileChange}
+              className="w-full text-xs text-gray-700"
+            />
+          </div>
+        </div>
+        {ninError && (
+          <Paragraph1 className="mb-2 text-xs text-red-600">
+            {ninError}
+          </Paragraph1>
+        )}
+        <button
+          type="button"
+          onClick={handleUploadNin}
+          disabled={uploadNinMutation.isPending}
+          className="mt-1 inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {uploadNinMutation.isPending ? "Uploading..." : "Upload NIN"}
+        </button>
       </div>
 
       {/* Bank Verification */}

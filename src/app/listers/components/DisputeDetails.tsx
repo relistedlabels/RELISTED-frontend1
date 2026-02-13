@@ -17,6 +17,8 @@ import ProductCuratorDetails from "./ProductCuratorDetails";
 import OrderProgressTimeline from "./OrderProgressTimeline";
 import OrderStatusDetails from "./OrderStatusDetails";
 import ExampleDisputeDetail from "./DisputeDetailTabs";
+import { useDisputeDetail } from "@/lib/queries/listers";
+import { useWithdrawDispute } from "@/lib/mutations/listers";
 import ExampleDisputeOverview from "./DisputeOverviewContent";
 
 // --------------------
@@ -41,12 +43,10 @@ const DisputeDetailsPanel: React.FC<DisputeDetailsPanelProps> = ({
     visible: { x: 0 },
   };
 
-  const ExampleData = {
-    rentalDays: 3,
-    rentalFeePerPeriod: 165000,
-    securityDeposit: 15000,
-    cleaningFee: 10000,
-  };
+  const { data: disputeDetail } = useDisputeDetail(disputeId);
+  const withdrawMutation = useWithdrawDispute(disputeId || "");
+
+  const statusLabel = disputeDetail?.data.dispute.statusLabel || "In Review";
 
   return (
     <AnimatePresence>
@@ -81,7 +81,8 @@ const DisputeDetailsPanel: React.FC<DisputeDetailsPanelProps> = ({
               </button>
 
               <Paragraph1 className=" font-bold uppercase tracking-widest text-gray-800">
-                Dispute {disputeId ? `#${disputeId}` : "#DQ-0234"}{" "}
+                Dispute #
+                {disputeDetail?.data.dispute.disputeId || disputeId || "---"}
               </Paragraph1>
               <button
                 onClick={onClose}
@@ -94,13 +95,22 @@ const DisputeDetailsPanel: React.FC<DisputeDetailsPanelProps> = ({
 
             {/* Content */}
             <div className="grow pt-4 pb-20 space-y-8">
-              <ExampleDisputeDetail />
+              {disputeId && <ExampleDisputeDetail disputeId={disputeId} />}
             </div>
 
             {/* Footer */}
             <div className="mt-auto py-2 bg-white flex justify-between gap-4 sticky bottom-0">
-              <button className="flex-1  px-4 py-3 text-sm font-semibold border border-red-500 text-red-500 rounded-lg hover:bg-gray-50 transition">
-                <Paragraph1>Withdraw Dispute </Paragraph1>
+              <button
+                type="button"
+                disabled={withdrawMutation.isPending || !disputeId}
+                onClick={() => disputeId && withdrawMutation.mutate()}
+                className="flex-1  px-4 py-3 text-sm font-semibold border border-red-500 text-red-500 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Paragraph1>
+                  {withdrawMutation.isPending
+                    ? "Withdrawing..."
+                    : "Withdraw Dispute"}
+                </Paragraph1>
               </button>
 
               <button

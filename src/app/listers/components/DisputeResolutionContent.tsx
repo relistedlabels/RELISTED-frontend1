@@ -96,5 +96,5 @@ const ExampleDisputeResolution: React.FC = () => {
 
   return <DisputeResolutionContent resolution={sampleReviewingResolution} />;
 };
-
+export { DisputeResolutionContent, type Resolution };
 export default ExampleDisputeResolution;

@@ -1,17 +1,17 @@
 // ENDPOINTS: GET /api/listers/disputes/:disputeId/messages (chat history), POST /api/listers/disputes/:disputeId/messages (send message)
-import React from "react";
+"use client";
+
+import React, { useMemo, useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { HiOutlineCamera, HiOutlinePaperAirplane } from "react-icons/hi2";
+import { useDisputeMessages } from "@/lib/queries/listers/useDisputeMessages";
+import { useSendDisputeMessage } from "@/lib/mutations/listers/useSendDisputeMessage";
 
 interface Message {
   id: number;
   type: "user" | "admin" | "status";
   content: string;
   timestamp?: string; // Only for user/admin messages
-}
-
-interface DisputeConversationLogProps {
-  messages: Message[];
 }
 
 // Sub-component for rendering a single chat bubble/status update
@@ -62,9 +62,30 @@ const ChatMessage: React.FC<{ message: Message }> = ({ message }) => {
   }
 };
 
-const DisputeConversationLog: React.FC<DisputeConversationLogProps> = ({
-  messages,
+const DisputeConversationLog: React.FC<{ disputeId: string }> = ({
+  disputeId,
 }) => {
+  const [inputValue, setInputValue] = useState("");
+  const { data, isLoading } = useDisputeMessages(disputeId, 1, 50);
+  const sendMessageMutation = useSendDisputeMessage(disputeId);
+
+  const messages: Message[] = useMemo(() => {
+    if (!data?.data.messages) return [];
+    return data.data.messages.map((m) => ({
+      id: Number.isNaN(Number(m.messageId)) ? Date.now() : Number(m.messageId),
+      type: m.type as Message["type"],
+      content: m.content,
+      timestamp: m.displayTimestamp,
+    }));
+  }, [data]);
+
+  const handleSend = () => {
+    const trimmed = inputValue.trim();
+    if (!trimmed) return;
+    sendMessageMutation.mutate({ content: trimmed });
+    setInputValue("");
+  };
+
   return (
     <div className="font-sans mt-6 bg-white border border-gray-200 rounded-xl flex flex-col h-[500px]">
       {/* Header (Implicit in image, often includes "Conversation") */}
@@ -76,9 +97,17 @@ const DisputeConversationLog: React.FC<DisputeConversationLogProps> = ({
 
       {/* Message Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-2">
-        {messages.map((msg) => (
-          <ChatMessage key={msg.id} message={msg} />
-        ))}
+        {isLoading ? (
+          <Paragraph1 className="text-xs text-gray-500">
+            Loading conversation...
+          </Paragraph1>
+        ) : messages.length === 0 ? (
+          <Paragraph1 className="text-xs text-gray-500">
+            No messages yet. Start the conversation.
+          </Paragraph1>
+        ) : (
+          messages.map((msg) => <ChatMessage key={msg.id} message={msg} />)
+        )}
       </div>
 
       {/* Input Area */}
@@ -92,11 +121,24 @@ const DisputeConversationLog: React.FC<DisputeConversationLogProps> = ({
         <input
           type="text"
           placeholder="Type your message..."
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleSend();
+            }
+          }}
           className="flex-1 p-3 border border-gray-300 rounded-full focus:ring-black focus:border-black transition duration-150"
         />
 
         {/* Send Button */}
-        <button className="p-2 bg-black text-white rounded-full hover:bg-gray-800 transition duration-150">
+        <button
+          type="button"
+          onClick={handleSend}
+          disabled={sendMessageMutation.isPending}
+          className="p-2 bg-black text-white rounded-full hover:bg-gray-800 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           <HiOutlinePaperAirplane className="w-5 h-5 -rotate-45" />
         </button>
       </div>
@@ -106,37 +148,4 @@ const DisputeConversationLog: React.FC<DisputeConversationLogProps> = ({
 
 // --- Example Usage matching the provided image content ---
 
-const ExampleDisputeConversationLog: React.FC = () => {
-  const sampleMessages: Message[] = [
-    {
-      id: 1,
-      type: "status",
-      content: "Dispute created and submitted for review",
-    },
-    {
-      id: 2,
-      type: "user",
-      content: "The item arrived damaged.",
-      timestamp: "28 Oct 2025, 10:32 AM",
-    },
-    { id: 3, type: "status", content: "Admin joined the conversation" },
-    {
-      id: 4,
-      type: "admin",
-      content:
-        "Thank you for bringing this to our attention. We're reviewing the evidence you provided. Could you please provide more details about when you first noticed the damage?",
-      timestamp: "28 Oct 2025, 2:16 PM",
-    },
-    {
-      id: 5,
-      type: "user",
-      content:
-        "I noticed the damage immediately upon opening the package. The tear on the sleeve was very visible.",
-      timestamp: "28 Oct 2025, 3:45 PM",
-    },
-  ];
-
-  return <DisputeConversationLog messages={sampleMessages} />;
-};
-
-export default ExampleDisputeConversationLog;
+export default DisputeConversationLog;

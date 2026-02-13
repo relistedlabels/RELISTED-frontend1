@@ -75,5 +75,5 @@ const ExampleDisputeTimeline: React.FC = () => {
 
   return <DisputeTimelineContent events={sampleEvents} />;
 };
-
+export { DisputeTimelineContent };
 export default ExampleDisputeTimeline;
