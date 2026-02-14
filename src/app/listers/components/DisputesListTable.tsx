@@ -197,14 +197,15 @@ const ExampleDisputesList: React.FC = () => {
     isError,
   } = useDisputes(1, 10, statusParam, searchValue || undefined);
 
-  const mappedDisputes: Dispute[] =
-    disputesResponse?.data.map((dispute) => ({
-      disputeId: dispute.disputeId,
-      itemName: dispute.itemName,
-      curator: dispute.curatorName,
-      status: mapApiStatusToLabel(dispute.status),
-      dateSubmitted: formatDate(dispute.dateSubmitted),
-    })) ?? [];
+  const mappedDisputes: Dispute[] = Array.isArray(disputesResponse?.data)
+    ? disputesResponse.data.map((dispute) => ({
+        disputeId: dispute.disputeId,
+        itemName: dispute.itemName,
+        curator: dispute.curatorName,
+        status: mapApiStatusToLabel(dispute.status),
+        dateSubmitted: formatDate(dispute.dateSubmitted),
+      }))
+    : [];
 
   const showSkeleton = isLoading || isError;
 

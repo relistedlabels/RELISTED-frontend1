@@ -46,20 +46,17 @@ const OrdersManagement: React.FC = () => {
     20,
   );
 
-  const orders = useMemo(
-    () =>
-      ordersData?.data.map((order) => ({
-        ...order,
-        statusLabel:
-          displayStatusMap[statusLabelMap[order.status] || order.status],
-        expiresAt: order.timeRemainingSeconds
-          ? new Date(
-              Date.now() + order.timeRemainingSeconds * 1000,
-            ).toISOString()
-          : undefined,
-      })) || [],
-    [ordersData],
-  );
+  const orders = useMemo(() => {
+    if (!Array.isArray(ordersData?.data)) return [];
+    return ordersData.data.map((order) => ({
+      ...order,
+      statusLabel:
+        displayStatusMap[statusLabelMap[order.status] || order.status],
+      expiresAt: order.timeRemainingSeconds
+        ? new Date(Date.now() + order.timeRemainingSeconds * 1000).toISOString()
+        : undefined,
+    }));
+  }, [ordersData]);
 
   return (
     <div className="w-full">
