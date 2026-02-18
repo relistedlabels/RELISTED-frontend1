@@ -8,6 +8,7 @@ import Filters from "../components/Filters";
 import { useProductsQuery } from "@/lib/queries/product/useProductsQuery";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
 
 export default function NewListingsSection() {
   useEffect(() => {
@@ -57,16 +58,8 @@ export default function NewListingsSection() {
             <Header1Plus className="sm:text-center font-light flex-1">
               Available Listings
             </Header1Plus>
-            <Paragraph1 className="text-gray-600 mt-4">
-              Failed to load products. Please try again later.
-            </Paragraph1>
-            <button
-              onClick={() => refetch()}
-              className="mt-4 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition"
-            >
-              Retry
-            </button>
           </div>
+          <ProductCardSkeleton count={9} />
         </div>
       </section>
     );

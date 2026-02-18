@@ -4,6 +4,13 @@
 import { useState } from "react";
 import { Search, Download, FileText } from "lucide-react";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import { MetricCardsSkeleton } from "@/common/ui/SkeletonLoaders";
+import {
+  useWalletStats,
+  useWallets,
+  useEscrows,
+  useWalletTransactions,
+} from "@/lib/queries/admin/useWallets";
 import WalletTable from "./components/WalletTable";
 import EscrowTable from "./components/EscrowTable";
 import TransactionsTable from "./components/TransactionsTable";
@@ -19,91 +26,130 @@ interface MetricData {
   icon: React.ReactNode;
 }
 
+const walletIcon = (
+  <div className="bg-black text-white p-2 rounded">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+    >
+      <rect x="2" y="4" width="16" height="12" rx="1" />
+      <line x1="2" y1="8" x2="18" y2="8" />
+    </svg>
+  </div>
+);
+
+const escrowIcon = (
+  <div className="bg-black text-white p-2 rounded">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+    >
+      <rect x="3" y="5" width="14" height="11" rx="1" />
+      <path d="M7 5V3a1 1 0 011-1h4a1 1 0 011 1v2" />
+    </svg>
+  </div>
+);
+
+const curatorIcon = (
+  <div className="bg-black text-white p-2 rounded">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+    >
+      <polyline points="23 6 13 16 8 11"></polyline>
+    </svg>
+  </div>
+);
+
+const earningsIcon = (
+  <div className="bg-black text-white p-2 rounded">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+    >
+      <polyline points="23 6 13 16"></polyline>
+      <polyline points="13 6 23 16"></polyline>
+    </svg>
+  </div>
+);
+
 export default function WalletsPage() {
   const [activeTab, setActiveTab] = useState<TabType>("wallet");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const metrics: MetricData[] = [
-    {
-      label: "Total Wallet Balance",
-      value: "54,000,000",
-      currency: "₦",
-      percentage: 15.2,
-      icon: (
-        <div className="bg-black text-white p-2 rounded">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-          >
-            <rect x="2" y="4" width="16" height="12" rx="1" />
-            <line x1="2" y1="8" x2="18" y2="8" />
-          </svg>
-        </div>
-      ),
-    },
-    {
-      label: "Total Escrow (Locked)",
-      value: "12,500,000",
-      currency: "₦",
-      percentage: 12.8,
-      icon: (
-        <div className="bg-black text-white p-2 rounded">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-          >
-            <rect x="3" y="5" width="14" height="11" rx="1" />
-            <path d="M7 5V3a1 1 0 011-1h4a1 1 0 011 1v2" />
-          </svg>
-        </div>
-      ),
-    },
-    {
-      label: "Released to Curators",
-      value: "41,500,000",
-      currency: "₦",
-      percentage: 18.4,
-      icon: (
-        <div className="bg-black text-white p-2 rounded">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-          >
-            <polyline points="23 6 13 16 8 11"></polyline>
-          </svg>
-        </div>
-      ),
-    },
-    {
-      label: "Platform Earnings",
-      value: "5,200,000",
-      currency: "₦",
-      percentage: 18.4,
-      icon: (
-        <div className="bg-black text-white p-2 rounded">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-          >
-            <polyline points="23 6 13 16"></polyline>
-            <polyline points="13 6 23 16"></polyline>
-          </svg>
-        </div>
-      ),
-    },
-  ];
+  // Fetch data from APIs
+  const statsQuery = useWalletStats();
+  const walletsQuery = useWallets({ search: searchQuery });
+  const escrowsQuery = useEscrows({ search: searchQuery });
+  const transactionsQuery = useWalletTransactions({ search: searchQuery });
+
+  // Log errors
+  if (statsQuery.isError) {
+    console.error("Wallet stats error:", statsQuery.error);
+  }
+  if (walletsQuery.isError) {
+    console.error("Failed to fetch wallets:", walletsQuery.error);
+  }
+  if (escrowsQuery.isError) {
+    console.error("Failed to fetch escrows:", escrowsQuery.error);
+  }
+  if (transactionsQuery.isError) {
+    console.error("Failed to fetch transactions:", transactionsQuery.error);
+  }
+
+  // Format currency
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  // Build metrics from real data
+  const metrics: MetricData[] = statsQuery.data?.data
+    ? [
+        {
+          label: "Total Wallet Balance",
+          value: formatCurrency(statsQuery.data.data.totalWalletBalance.amount),
+          currency: statsQuery.data.data.totalWalletBalance.currency,
+          percentage: statsQuery.data.data.totalWalletBalance.percentage,
+          icon: walletIcon,
+        },
+        {
+          label: "Total Escrow (Locked)",
+          value: formatCurrency(statsQuery.data.data.totalEscrowLocked.amount),
+          currency: statsQuery.data.data.totalEscrowLocked.currency,
+          percentage: statsQuery.data.data.totalEscrowLocked.percentage,
+          icon: escrowIcon,
+        },
+        {
+          label: "Released to Curators",
+          value: formatCurrency(statsQuery.data.data.releasedToCurators.amount),
+          currency: statsQuery.data.data.releasedToCurators.currency,
+          percentage: statsQuery.data.data.releasedToCurators.percentage,
+          icon: curatorIcon,
+        },
+        {
+          label: "Platform Earnings",
+          value: formatCurrency(statsQuery.data.data.platformEarnings.amount),
+          currency: statsQuery.data.data.platformEarnings.currency,
+          percentage: statsQuery.data.data.platformEarnings.percentage,
+          icon: earningsIcon,
+        },
+      ]
+    : [];
 
   return (
     <div className="min-h-screen ">
@@ -120,9 +166,13 @@ export default function WalletsPage() {
 
       {/* Metrics Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {metrics.map((metric, index) => (
-          <MetricsCard key={index} {...metric} />
-        ))}
+        {statsQuery.isPending ? (
+          <MetricCardsSkeleton count={4} />
+        ) : (
+          metrics.map((metric, index) => (
+            <MetricsCard key={index} {...metric} />
+          ))
+        )}
       </div>
 
       {/* Filters and Export Section */}

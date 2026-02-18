@@ -38,7 +38,13 @@ import ProductMediaGallery from "./components/ProductMediaGallery";
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import TopListingSection from "./components/TopListingSection";
 
-function page() {
+interface ProductDetailsPageProps {
+  params: {
+    id: string;
+  };
+}
+
+function page({ params }: ProductDetailsPageProps) {
   const path = [
     { label: "Home", href: "/" },
     { label: "Shop", href: "/shop" },
@@ -53,12 +59,12 @@ function page() {
           <div className=" mb-4">
             <Breadcrumbs items={path} />{" "}
           </div>
-          <ProductMediaGallery />
+          <ProductMediaGallery productId={params.id} />
         </div>
         <div className=" sm:py-[100px] bg-white sm:px-[100px] p-4 flex flex-col gap-4 ">
-          <TitleProductCard />
-          <RentalDetailsCard />
-          <ProductAccordion />
+          <TitleProductCard productId={params.id} />
+          <RentalDetailsCard productId={params.id} />
+          <ProductAccordion productId={params.id} />
         </div>
       </div>
       <TopListingSection />

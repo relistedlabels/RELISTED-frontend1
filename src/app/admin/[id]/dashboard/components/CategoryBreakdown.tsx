@@ -1,6 +1,8 @@
-// ENDPOINTS: GET /api/admin/analytics/category-breakdown
-// CategoryBreakdown.tsx
+"use client";
+
 import { Paragraph3 } from "@/common/ui/Text";
+import { ChartSkeleton } from "@/common/ui/SkeletonLoaders";
+import { useCategoryBreakdown } from "@/lib/queries/admin/useAnalytics";
 import React from "react";
 import {
   BarChart,
@@ -12,15 +14,37 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const data = [
-  { name: "Dresses", value: 1300 },
-  { name: "Bags", value: 700 },
-  { name: "Shoes", value: 550 },
-  { name: "Jewelry", value: 280 },
-  { name: "Accessories", value: 100 },
-];
+interface CategoryBreakdownProps {
+  timeframe: "all_time" | "year" | "month";
+  year?: number;
+  month?: number;
+}
 
-const CategoryBreakdown = () => {
+const CategoryBreakdown = ({
+  timeframe,
+  year,
+  month,
+}: CategoryBreakdownProps) => {
+  const { data, isPending, error } = useCategoryBreakdown({
+    timeframe,
+    year,
+    month,
+  });
+
+  if (error) {
+    console.log("CategoryBreakdown error:", error);
+  }
+
+  const chartData =
+    data?.data?.breakdown?.map((item) => ({
+      name: item.category,
+      value: item.quantity,
+    })) || [];
+
+  if (isPending || error) {
+    return <ChartSkeleton />;
+  }
+
   return (
     <div className="bg-white p-6 rounded-xl h-full border border-gray-200">
       <Paragraph3 className="text-xl font-semibold mb-4 text-gray-900">
@@ -28,7 +52,7 @@ const CategoryBreakdown = () => {
       </Paragraph3>
       <ResponsiveContainer width="100%" height={300}>
         <BarChart
-          data={data}
+          data={chartData}
           margin={{
             top: 20,
             right: 30,
@@ -46,13 +70,7 @@ const CategoryBreakdown = () => {
             interval={0}
             height={60}
           />
-          <YAxis
-            stroke="#6B7280"
-            tickLine={false}
-            axisLine={false}
-            domain={[0, 1400]}
-            ticks={[0, 350, 700, 1050, 1400]}
-          />
+          <YAxis stroke="#6B7280" tickLine={false} axisLine={false} />
           <Tooltip cursor={{ fill: "transparent" }} />
           <Bar
             dataKey="value"

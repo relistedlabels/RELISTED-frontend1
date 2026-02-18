@@ -2,12 +2,66 @@
 
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
+import { useContactSubmit } from "@/lib/queries/contact/useContactSubmit";
 
 export default function ContactSection() {
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    message: "",
+  });
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const mutation = useContactSubmit();
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    // Basic validation
+    if (
+      !formData.firstName ||
+      !formData.lastName ||
+      !formData.email ||
+      !formData.message
+    ) {
+      setErrorMessage("Please fill in all fields");
+      return;
+    }
+
+    try {
+      await mutation.mutateAsync(formData);
+      setSuccessMessage(
+        "Thank you! Your message has been received. We will get back to you within 24 hours.",
+      );
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        message: "",
+      });
+    } catch (error) {
+      setErrorMessage("Failed to send message. Please try again later.");
+    }
+  };
+
   return (
     <section className="w-full bg-gray-100  pt-[85px] sm:pt-[100px] ">
       <div className="grid grid-cols-1 md:grid-cols-2 justify-center items-center gap-10 ">
@@ -26,7 +80,20 @@ export default function ContactSection() {
           <Header1Plus className="text-3xl uppercase text-center font-serif mb-6">
             Contact Us
           </Header1Plus>
-          <form className="grid grid-cols-1 gap-4">
+
+          {successMessage && (
+            <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+              <Paragraph1>{successMessage}</Paragraph1>
+            </div>
+          )}
+
+          {errorMessage && (
+            <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+              <Paragraph1>{errorMessage}</Paragraph1>
+            </div>
+          )}
+
+          <form className="grid grid-cols-1 gap-4" onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col">
                 <label htmlFor="firstName" className="mb-1 font-medium">
@@ -36,7 +103,10 @@ export default function ContactSection() {
                   id="firstName"
                   type="text"
                   placeholder="Enter first name"
+                  value={formData.firstName}
+                  onChange={handleChange}
                   className="w-full bg-white  p-3 rounded focus:outline-none focus:ring-2 focus:ring-black"
+                  required
                 />
               </div>
               <div className="flex flex-col">
@@ -47,7 +117,10 @@ export default function ContactSection() {
                   id="lastName"
                   type="text"
                   placeholder="Enter last name"
+                  value={formData.lastName}
+                  onChange={handleChange}
                   className="w-full bg-white p-3 rounded focus:outline-none focus:ring-2 focus:ring-black"
+                  required
                 />
               </div>
             </div>
@@ -60,7 +133,10 @@ export default function ContactSection() {
                 id="email"
                 type="email"
                 placeholder="Enter email"
+                value={formData.email}
+                onChange={handleChange}
                 className="w-full bg-white p-3 rounded focus:outline-none focus:ring-2 focus:ring-black"
+                required
               />
             </div>
 
@@ -72,17 +148,21 @@ export default function ContactSection() {
                 id="message"
                 placeholder="Leave us a message"
                 rows={5}
+                value={formData.message}
+                onChange={handleChange}
                 className="w-full bg-white p-3 rounded focus:outline-none focus:ring-2 focus:ring-black"
+                required
               />
             </div>
 
             <div className="mt-4 flex flex-col gap-3">
               <Button
                 type="submit"
-                text="Sign In"
+                text={mutation.isPending ? "Sending..." : "Send Message"}
                 backgroundColor="bg-black"
                 border="border border-black "
                 color="text-white"
+                disabled={mutation.isPending}
               />
             </div>
           </form>

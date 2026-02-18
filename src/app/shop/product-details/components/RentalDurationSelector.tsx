@@ -1,8 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { ChevronLeft, ChevronRight, AlertCircle, Loader2 } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
+import { useUserStore } from "@/store/useUserStore";
+import { useMe } from "@/lib/queries/auth/useMe";
+import LoginModal from "@/common/modals/LoginModal";
+import { RentalCheckSkeleton } from "@/common/ui/SkeletonAuth";
+import { useRentalError } from "@/common/components/RentalErrorBoundary";
 
 // ============================================================================
 // API ENDPOINTS USED:
@@ -150,68 +155,210 @@ export default function RentalDurationSelector() {
   const [selectedDuration, setSelectedDuration] = useState<number | "custom">(
     3,
   );
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<boolean>(false);
+  const { error, triggerError, clearError } = useRentalError();
+
+  // Get user from store
+  const user = useUserStore((state) => ({
+    token: state.token,
+    userId: state.userId,
+  }));
+
+  // Check auth status
+  const { isLoading: isCheckingAuth, isError: authError } = useMe();
+
+  const handleCheckAvailability = useCallback(async () => {
+    try {
+      clearError();
+
+      // If user is not authenticated, show login modal
+      if (!user.token) {
+        console.log("User not authenticated, showing login modal");
+        setIsLoginModalOpen(true);
+        return;
+      }
+
+      // User is authenticated, proceed with availability check
+      setPendingAction(true);
+      console.log("Checking availability for duration:", selectedDuration);
+
+      // TODO: Call POST /api/renters/rental-requests endpoint
+      // Example:
+      // const response = await submitAvailabilityRequest({
+      //   productId: productId,
+      //   listerId: listerId,
+      //   rentalStartDate,
+      //   rentalEndDate,
+      //   rentalDays: selectedDuration,
+      //   estimatedRentalPrice,
+      //   autoPay: true,
+      //   currency: "NGN"
+      // });
+
+      // Simulating API call for now
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      console.log("Availability check successful");
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to check availability";
+      console.error("Error checking availability:", error);
+      triggerError(errorMessage);
+    } finally {
+      setPendingAction(false);
+    }
+  }, [user.token, selectedDuration, clearError, triggerError]);
+
+  const handleLoginSuccess = useCallback(() => {
+    console.log("Login successful, proceeding with availability check");
+    // After successful login, automatically proceed with availability check
+    setTimeout(() => {
+      handleCheckAvailability();
+    }, 500);
+  }, [handleCheckAvailability]);
+
+  // Show loading state while checking auth
+  if (isCheckingAuth) {
+    return (
+      <div className="py-6">
+        <Paragraph1 className="text-xl font-bold text-gray-800 mb-4 tracking-wider">
+          RENTAL DURATION
+        </Paragraph1>
+        <RentalCheckSkeleton />
+      </div>
+    );
+  }
 
   return (
-    <div className="py-6 ">
-      <Paragraph1 className="text-xl font-bold text-gray-800 mb-4 tracking-wider">
-        RENTAL DURATION
-      </Paragraph1>
+    <>
+      <div className="py-6 ">
+        <Paragraph1 className="text-xl font-bold text-gray-800 mb-4 tracking-wider">
+          RENTAL DURATION
+        </Paragraph1>
 
-      {/* Duration Buttons */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 mb-8">
-        {rentalOptions.map((option) => (
+        {/* Auth Error Alert */}
+        {authError && (
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex gap-3">
+            <AlertCircle size={20} className="text-yellow-600 flex-shrink-0" />
+            <div>
+              <Paragraph1 className="text-sm text-yellow-800">
+                Having trouble verifying your session. Please refresh the page.
+              </Paragraph1>
+            </div>
+          </div>
+        )}
+
+        {/* Request Error Alert */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex gap-3">
+            <AlertCircle size={20} className="text-red-600 flex-shrink-0" />
+            <div className="flex-1">
+              <Paragraph1 className="text-sm text-red-800 font-medium">
+                {error.message}
+              </Paragraph1>
+            </div>
+            <button
+              onClick={clearError}
+              className="text-red-600 hover:text-red-800"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* Duration Buttons */}
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 mb-8">
+          {rentalOptions.map((option) => (
+            <button
+              key={option.days}
+              onClick={() => setSelectedDuration(option.days)}
+              className={`
+                p-3 px-5 rounded-lg border text-sm font-semibold transition-colors
+                ${
+                  selectedDuration === option.days
+                    ? "bg-black text-white border-black" // Selected style
+                    : "bg-white text-gray-800 border-gray-300 hover:border-gray-500" // Default style
+                }
+              `}
+            >
+              <Paragraph1>
+                {" "}
+                {option.days} Days <br /> {option.price}
+              </Paragraph1>
+            </button>
+          ))}
+
+          {/* Custom Button */}
           <button
-            key={option.days}
-            onClick={() => setSelectedDuration(option.days)}
+            onClick={() => setSelectedDuration("custom")}
             className={`
               p-3 px-5 rounded-lg border text-sm font-semibold transition-colors
               ${
-                selectedDuration === option.days
-                  ? "bg-black text-white border-black" // Selected style
+                selectedDuration === "custom"
+                  ? "bg-black text-white border-black" // Selected style (Matches image)
                   : "bg-white text-gray-800 border-gray-300 hover:border-gray-500" // Default style
               }
             `}
           >
             <Paragraph1>
               {" "}
-              {option.days} Days <br /> {option.price}
+              Custom <br /> NO
             </Paragraph1>
           </button>
-        ))}
+        </div>
 
-        {/* Custom Button */}
+        {/* Calendar Section */}
+        <Calendar />
+
+        {/* Legends */}
+        <div className="flex justify-center gap-6 mt-6 text-sm text-gray-600">
+          <div className="flex items-center gap-2">
+            <span className="w-4 h-4 bg-yellow-400 rounded"></span>
+            <Paragraph1>Selected range</Paragraph1>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-4 h-4 bg-gray-300 rounded"></span>
+            <Paragraph1>Unavailable</Paragraph1>
+          </div>
+        </div>
+
+        {/* Check Availability Button */}
         <button
-          onClick={() => setSelectedDuration("custom")}
+          onClick={handleCheckAvailability}
+          disabled={pendingAction || isCheckingAuth || authError}
           className={`
-            p-3 px-5 rounded-lg border text-sm font-semibold transition-colors
+            w-full mt-6 py-3 px-4 rounded-lg font-semibold transition-all
+            flex items-center justify-center gap-2
             ${
-              selectedDuration === "custom"
-                ? "bg-black text-white border-black" // Selected style (Matches image)
-                : "bg-white text-gray-800 border-gray-300 hover:border-gray-500" // Default style
+              pendingAction || isCheckingAuth || authError
+                ? "bg-gray-400 text-white cursor-not-allowed opacity-70"
+                : "bg-black text-white hover:bg-gray-900 active:scale-95"
             }
           `}
         >
-          <Paragraph1>
-            {" "}
-            Custom <br /> NO
-          </Paragraph1>
+          {pendingAction ? (
+            <>
+              <Loader2 size={18} className="animate-spin" />
+              <span>Checking Availability...</span>
+            </>
+          ) : isCheckingAuth ? (
+            <>
+              <Loader2 size={18} className="animate-spin" />
+              <span>Verifying...</span>
+            </>
+          ) : (
+            "Check Availability"
+          )}
         </button>
       </div>
 
-      {/* Calendar Section */}
-      <Calendar />
-
-      {/* Legends */}
-      <div className="flex justify-center gap-6 mt-6 text-sm text-gray-600">
-        <div className="flex items-center gap-2">
-          <span className="w-4 h-4 bg-yellow-400 rounded"></span>
-          <Paragraph1>Selected range</Paragraph1>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-4 h-4 bg-gray-300 rounded"></span>
-          <Paragraph1>Unavailable</Paragraph1>
-        </div>
-      </div>
-    </div>
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
+    </>
   );
 }

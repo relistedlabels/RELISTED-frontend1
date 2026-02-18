@@ -4,13 +4,29 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
 import { Edit2, X } from "lucide-react";
+import { useRoles } from "@/lib/queries/admin/useSettings";
+import { useCreateRole, useUpdateRolePermissions } from "@/lib/mutations/admin";
 
 export default function RolesPermissionsTab() {
+  // API Query
+  const { data: rolesData, isLoading, error } = useRoles();
+
+  // Log errors to console only
+  if (error) {
+    console.error("Failed to load roles:", error);
+  }
+
+  const roles = rolesData?.data?.roles || [];
+  const showSkeleton = isLoading || !!error;
+
   const [showAddRoleModal, setShowAddRoleModal] = useState(false);
   const [showEditPermissionsModal, setShowEditPermissionsModal] =
     useState(false);
-  const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState<(typeof roles)[0] | null>(
+    null,
+  );
   const [roleName, setRoleName] = useState("");
   const [roleDescription, setRoleDescription] = useState("");
   const [permissions, setPermissions] = useState({
@@ -21,28 +37,6 @@ export default function RolesPermissionsTab() {
     payments: true,
     platformSettings: true,
   });
-  const roles = [
-    {
-      name: "Super Admin",
-      description: "Full system access and control",
-      admins: 2,
-    },
-    {
-      name: "Admin",
-      description: "General administrative access",
-      admins: 5,
-    },
-    {
-      name: "Operations",
-      description: "Manage orders and disputes",
-      admins: 8,
-    },
-    {
-      name: "Customer Support",
-      description: "View-only access for support",
-      admins: 12,
-    },
-  ];
 
   return (
     <div>
@@ -50,78 +44,94 @@ export default function RolesPermissionsTab() {
         <Paragraph3 className="font-bold text-gray-900">Admin Roles</Paragraph3>
         <button
           onClick={() => setShowAddRoleModal(true)}
-          className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium"
+          disabled={showSkeleton}
+          className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium disabled:opacity-50"
         >
           <Paragraph1 className="text-white">+ Add Role</Paragraph1>
         </button>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-300">
-              <th className="text-left py-4 px-4">
-                <Paragraph1 className="text-gray-900 font-bold">
-                  ROLE NAME
-                </Paragraph1>
-              </th>
-              <th className="text-left py-4 px-4">
-                <Paragraph1 className="text-gray-900 font-bold">
-                  DESCRIPTION
-                </Paragraph1>
-              </th>
-              <th className="text-left py-4 px-4">
-                <Paragraph1 className="text-gray-900 font-bold">
-                  NUMBER OF ADMINS
-                </Paragraph1>
-              </th>
-              <th className="text-left py-4 px-4">
-                <Paragraph1 className="text-gray-900 font-bold">
-                  ACTION
-                </Paragraph1>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {roles.map((role, index) => (
-              <tr
-                key={index}
-                className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
-              >
-                <td className="py-4 px-4">
-                  <Paragraph1 className="text-gray-900 font-medium">
-                    {role.name}
+      {showSkeleton ? (
+        <TableSkeleton rows={4} columns={4} />
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-300">
+                <th className="text-left py-4 px-4">
+                  <Paragraph1 className="text-gray-900 font-bold">
+                    ROLE NAME
                   </Paragraph1>
-                </td>
-                <td className="py-4 px-4">
-                  <Paragraph1 className="text-gray-600">
-                    {role.description}
+                </th>
+                <th className="text-left py-4 px-4">
+                  <Paragraph1 className="text-gray-900 font-bold">
+                    DESCRIPTION
                   </Paragraph1>
-                </td>
-                <td className="py-4 px-4">
-                  <Paragraph1 className="text-gray-900 font-medium">
-                    {role.admins}
+                </th>
+                <th className="text-left py-4 px-4">
+                  <Paragraph1 className="text-gray-900 font-bold">
+                    NUMBER OF ADMINS
                   </Paragraph1>
-                </td>
-                <td className="py-4 px-4">
-                  <button
-                    onClick={() => {
-                      setSelectedRole(role.name);
-                      setShowEditPermissionsModal(true);
-                    }}
-                    className="px-4 py-2 border border-gray-900 text-gray-900 rounded-lg hover:bg-gray-50 font-medium flex items-center gap-2"
-                  >
-                    <Edit2 size={16} />
-                    <Paragraph1 className="text-gray-900">
-                      Edit Permissions
-                    </Paragraph1>
-                  </button>
-                </td>
+                </th>
+                <th className="text-left py-4 px-4">
+                  <Paragraph1 className="text-gray-900 font-bold">
+                    ACTION
+                  </Paragraph1>
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {roles.length > 0 ? (
+                roles.map((role) => (
+                  <tr
+                    key={role.id}
+                    className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="py-4 px-4">
+                      <Paragraph1 className="text-gray-900 font-medium">
+                        {role.name}
+                      </Paragraph1>
+                    </td>
+                    <td className="py-4 px-4">
+                      <Paragraph1 className="text-gray-600">
+                        {role.description}
+                      </Paragraph1>
+                    </td>
+                    <td className="py-4 px-4">
+                      <Paragraph1 className="text-gray-900 font-medium">
+                        {role.adminCount}
+                      </Paragraph1>
+                    </td>
+                    <td className="py-4 px-4">
+                      <button
+                        onClick={() => {
+                          setSelectedRole(role);
+                          setPermissions(role.permissions);
+                          setShowEditPermissionsModal(true);
+                        }}
+                        className="px-4 py-2 border border-gray-900 text-gray-900 rounded-lg hover:bg-gray-50 font-medium flex items-center gap-2"
+                      >
+                        <Edit2 size={16} />
+                        <Paragraph1 className="text-gray-900">
+                          Edit Permissions
+                        </Paragraph1>
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="py-8 px-4 text-center">
+                    <Paragraph1 className="text-gray-500">
+                      No roles found
+                    </Paragraph1>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Create Role Modal */}
       {showAddRoleModal && (
@@ -239,7 +249,7 @@ export default function RolesPermissionsTab() {
                 </button>
               </div>
               <Paragraph1 className="text-gray-500 mb-8">
-                Manage permissions for {selectedRole}
+                Manage permissions for {selectedRole?.name}
               </Paragraph1>
 
               {/* Permissions */}

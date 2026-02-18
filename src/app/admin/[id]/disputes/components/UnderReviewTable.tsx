@@ -3,6 +3,7 @@
 
 import React, { useMemo } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
+import type { Dispute } from "@/lib/api/admin/disputes";
 
 interface UnderReviewDisputeData {
   id: string;
@@ -19,6 +20,7 @@ interface UnderReviewDisputeData {
 
 interface UnderReviewTableProps {
   searchQuery: string;
+  disputes?: Dispute[];
 }
 
 const mockUnderReviewData: UnderReviewDisputeData[] = [
@@ -48,17 +50,41 @@ const mockUnderReviewData: UnderReviewDisputeData[] = [
   },
 ];
 
+// Transform Dispute API response to display format
+function transformDisputeData(dispute: Dispute): UnderReviewDisputeData {
+  return {
+    id: dispute.id,
+    raisedBy: dispute.raisedBy.name,
+    raiserRole: dispute.raisedBy.role,
+    raisedByAvatar: dispute.raisedBy.avatar,
+    category: dispute.category,
+    orderId: dispute.orderId,
+    priority: dispute.priority,
+    dateCreated: new Date(dispute.dateCreated).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }),
+    assignedTo: dispute.assignedTo?.name ?? "Unassigned",
+    status: "Under Review",
+  };
+}
+
 export default function UnderReviewTable({
   searchQuery,
+  disputes,
 }: UnderReviewTableProps) {
+  const displayData =
+    disputes?.map(transformDisputeData) ?? mockUnderReviewData;
+
   const filteredData = useMemo(() => {
-    return mockUnderReviewData.filter(
+    return displayData.filter(
       (item) =>
         item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.raisedBy.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.orderId.toLowerCase().includes(searchQuery.toLowerCase()),
     );
-  }, [searchQuery]);
+  }, [searchQuery, displayData]);
 
   return (
     <div className="overflow-x-auto">

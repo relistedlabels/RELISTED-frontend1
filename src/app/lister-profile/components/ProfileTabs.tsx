@@ -1,4 +1,4 @@
-// ENDPOINTS: GET /api/public/users/:userId/products, GET /api/public/users/:userId/reviews
+// ENDPOINTS: GET /api/public/users/:userId/products, GET /api/public/users/:userId/reviews, GET /api/public/users/:userId
 
 "use client";
 
@@ -6,8 +6,8 @@ import React, { useState } from "react";
 import { Paragraph1, ParagraphLink1 } from "@/common/ui/Text";
 import NewListingsSection from "./NewListingsSection";
 import { motion, AnimatePresence } from "framer-motion";
-import ExampleCuratorFullReviews from "./DetailedReview";
-import ExampleCuratorAbout from "./CuratorAboutDetails";
+import DetailedReview from "./DetailedReview";
+import CuratorAboutDetails from "./CuratorAboutDetails";
 
 type TabKey = "items" | "reviews" | "about";
 
@@ -17,7 +17,7 @@ interface Tab {
 }
 
 interface ProfileTabsProps {
-  contentMap: Record<TabKey, React.ReactNode>;
+  userId: string;
 }
 
 const TABS: Tab[] = [
@@ -26,8 +26,14 @@ const TABS: Tab[] = [
   { key: "about", label: "About" },
 ];
 
-const ProfileTabs: React.FC<ProfileTabsProps> = ({ contentMap }) => {
+const ProfileTabs: React.FC<ProfileTabsProps> = ({ userId }) => {
   const [activeTab, setActiveTab] = useState<TabKey>("items");
+
+  const contentMap: Record<TabKey, React.ReactNode> = {
+    items: <NewListingsSection userId={userId} />,
+    reviews: <DetailedReview userId={userId} />,
+    about: <CuratorAboutDetails userId={userId} />,
+  };
 
   return (
     <div className="font-sans">
@@ -72,38 +78,4 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({ contentMap }) => {
   );
 };
 
-// ---------------- Example Usage --------------------------
-
-const ItemsContent: React.FC = () => (
-  <div className="min-h-[300px]">
-    <NewListingsSection />
-  </div>
-);
-
-const ReviewsContent: React.FC = () => (
-  <div className="min-h-[300px]">
-    <ExampleCuratorFullReviews />
-  </div>
-);
-
-const AboutContent: React.FC = () => (
-  <div className="min-h-[300px]">
-    <ExampleCuratorAbout />
-  </div>
-);
-
-const ExampleProfileTabs: React.FC = () => {
-  const contentMap = {
-    items: <ItemsContent />,
-    reviews: <ReviewsContent />,
-    about: <AboutContent />,
-  };
-
-  return (
-    <div className="mt-8">
-      <ProfileTabs contentMap={contentMap} />
-    </div>
-  );
-};
-
-export default ExampleProfileTabs;
+export default ProfileTabs;

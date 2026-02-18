@@ -4,6 +4,8 @@
 import { useState } from "react";
 import { Search, AlertCircle, Clock, CheckCircle } from "lucide-react";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import { useDisputeStats, useDisputes } from "@/lib/queries/admin/useDisputes";
+import { StatCardSkeleton, TableSkeleton } from "@/common/ui/SkeletonLoaders";
 import StatusCard from "./components/StatusCard";
 import PendingTable from "./components/PendingTable";
 import UnderReviewTable from "./components/UnderReviewTable";
@@ -22,10 +24,36 @@ export default function DisputesPage() {
   const [activeTab, setActiveTab] = useState<TabType>("pending");
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Fetch stats and disputes data
+  const {
+    data: statsData,
+    isLoading: statsLoading,
+    error: statsError,
+  } = useDisputeStats();
+  const {
+    data: disputesData,
+    isLoading: disputesLoading,
+    error: disputesError,
+  } = useDisputes({
+    status:
+      activeTab === "pending"
+        ? "pending"
+        : activeTab === "under-review"
+          ? "under-review"
+          : "resolved",
+    search: searchQuery,
+  });
+
+  // Log errors to console only
+  if (statsError) console.error("Disputes stats error:", statsError);
+  if (disputesError) console.error("Disputes error:", disputesError);
+
+  const stats = statsData?.data;
+
   const statuses: StatusData[] = [
     {
       label: "Pending Review",
-      value: 1,
+      value: stats?.pendingCount ?? 0,
       color: "warning",
       icon: (
         <div className="bg-yellow-100 text-yellow-600 p-3 rounded-lg">
@@ -35,7 +63,7 @@ export default function DisputesPage() {
     },
     {
       label: "Under Review",
-      value: 2,
+      value: stats?.underReviewCount ?? 0,
       color: "info",
       icon: (
         <div className="bg-blue-100 text-blue-600 p-3 rounded-lg">
@@ -45,7 +73,7 @@ export default function DisputesPage() {
     },
     {
       label: "Resolved This Month",
-      value: 5,
+      value: stats?.resolvedThisMonth ?? 0,
       color: "success",
       icon: (
         <div className="bg-green-100 text-green-600 p-3 rounded-lg">
@@ -67,9 +95,17 @@ export default function DisputesPage() {
 
       {/* Status Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        {statuses.map((status, index) => (
-          <StatusCard key={index} {...status} />
-        ))}
+        {statsLoading ? (
+          <>
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </>
+        ) : (
+          statuses.map((status, index) => (
+            <StatusCard key={index} {...status} />
+          ))
+        )}
       </div>
 
       {/* Search Section */}
@@ -92,30 +128,45 @@ export default function DisputesPage() {
           <TabButton
             active={activeTab === "pending"}
             onClick={() => setActiveTab("pending")}
-            label="Pending (1)"
+            label={`Pending (${stats?.pendingCount ?? 0})`}
           />
           <TabButton
             active={activeTab === "under-review"}
             onClick={() => setActiveTab("under-review")}
-            label="Under Review (2)"
+            label={`Under Review (${stats?.underReviewCount ?? 0})`}
           />
           <TabButton
             active={activeTab === "resolved"}
             onClick={() => setActiveTab("resolved")}
-            label="Resolved (2)"
+            label={`Resolved (${stats?.resolvedThisMonth ?? 0})`}
           />
         </div>
 
         {/* Table Content */}
         <div className="py-6">
-          {activeTab === "pending" && (
-            <PendingTable searchQuery={searchQuery} />
-          )}
-          {activeTab === "under-review" && (
-            <UnderReviewTable searchQuery={searchQuery} />
-          )}
-          {activeTab === "resolved" && (
-            <ResolvedTable searchQuery={searchQuery} />
+          {disputesLoading || disputesError ? (
+            <TableSkeleton />
+          ) : (
+            <>
+              {activeTab === "pending" && (
+                <PendingTable
+                  searchQuery={searchQuery}
+                  disputes={disputesData?.data.disputes}
+                />
+              )}
+              {activeTab === "under-review" && (
+                <UnderReviewTable
+                  searchQuery={searchQuery}
+                  disputes={disputesData?.data.disputes}
+                />
+              )}
+              {activeTab === "resolved" && (
+                <ResolvedTable
+                  searchQuery={searchQuery}
+                  disputes={disputesData?.data.disputes}
+                />
+              )}
+            </>
           )}
         </div>
       </div>

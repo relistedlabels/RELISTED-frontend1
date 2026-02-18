@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { Search, ChevronDown } from "lucide-react";
+import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
 import DresserTable from "./DresserTable";
 import CuratorTable from "./CuratorTable";
 import { useGetAllUsers } from "@/lib/queries/user/useGetAllUsers";
@@ -17,6 +18,11 @@ export default function UsersPage() {
   // Fetch all users from API
   const { data: usersData, isLoading, error } = useGetAllUsers();
   const users = usersData?.users || [];
+
+  // Log error to console
+  if (error) {
+    console.error("Failed to load users:", error);
+  }
 
   // Filtering Logic
   const filteredData = useMemo(() => {
@@ -42,21 +48,96 @@ export default function UsersPage() {
     return (
       <div className="flex flex-col space-y-6">
         <Paragraph3 className="text-3xl font-bold">Users</Paragraph3>
-        <div className="text-center py-12">
-          <Paragraph1 className="text-gray-500">Loading users...</Paragraph1>
+
+        {/* Filters Row */}
+        <div className="flex flex-col md:flex-row justify-between gap-4">
+          <div className="relative w-full md:w-2/3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search users..."
+              disabled
+              className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-black"
+            />
+          </div>
+
+          <div className="relative w-full md:w-1/4">
+            <select
+              disabled
+              className="w-full appearance-none px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none pr-10 cursor-pointer"
+            >
+              <option>All Status</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-5 h-5" />
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b border-gray-200">
+          {["LISTER", "DRESSER", "ADMIN"].map((tab) => (
+            <button
+              key={tab}
+              disabled
+              className="px-6 py-3 transition-all relative text-gray-400"
+            >
+              <Paragraph1>{tab}</Paragraph1>
+            </button>
+          ))}
+        </div>
+
+        {/* Skeleton Loader */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          <TableSkeleton />
         </div>
       </div>
     );
   }
 
   if (error) {
+    console.error("Failed to load users:", error);
     return (
       <div className="flex flex-col space-y-6">
         <Paragraph3 className="text-3xl font-bold">Users</Paragraph3>
-        <div className="text-center py-12">
-          <Paragraph1 className="text-red-500">
-            Error loading users. Please try again.
-          </Paragraph1>
+
+        {/* Filters Row */}
+        <div className="flex flex-col md:flex-row justify-between gap-4">
+          <div className="relative w-full md:w-2/3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search users..."
+              disabled
+              className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-black"
+            />
+          </div>
+
+          <div className="relative w-full md:w-1/4">
+            <select
+              disabled
+              className="w-full appearance-none px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none pr-10 cursor-pointer"
+            >
+              <option>All Status</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-5 h-5" />
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b border-gray-200">
+          {["LISTER", "DRESSER", "ADMIN"].map((tab) => (
+            <button
+              key={tab}
+              disabled
+              className="px-6 py-3 transition-all relative text-gray-400"
+            >
+              <Paragraph1>{tab}</Paragraph1>
+            </button>
+          ))}
+        </div>
+
+        {/* Skeleton Loader */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          <TableSkeleton />
         </div>
       </div>
     );

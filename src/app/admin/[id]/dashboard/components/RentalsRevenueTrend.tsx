@@ -1,5 +1,7 @@
 // ENDPOINTS: GET /api/admin/analytics/rentals-revenue-trend
 // RentalsRevenueTrend.tsx
+"use client";
+import { useEffect } from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import React from "react";
 import {
@@ -13,17 +15,50 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { useRentalsRevenueTrend } from "@/lib/queries/admin/useAnalytics";
+import { ChartSkeleton } from "@/common/ui/SkeletonLoaders";
 
-const data = [
-  { name: "Dec", rentals: 500, revenue: 3.5 },
-  { name: "Jan", rentals: 700, revenue: 4.5 },
-  { name: "Feb", rentals: 730, revenue: 5.5 },
-  { name: "Mar", rentals: 600, revenue: 3.8 },
-  { name: "Apr", rentals: 820, revenue: 6 },
-  { name: "May", rentals: 910, revenue: 6.5 },
-];
+interface RentalsRevenueTrendProps {
+  timeframe: "all_time" | "year" | "month";
+  year?: number;
+  month?: number;
+}
 
-const RentalsRevenueTrend = () => {
+const RentalsRevenueTrend = ({
+  timeframe,
+  year,
+  month,
+}: RentalsRevenueTrendProps) => {
+  const { data, isLoading, error } = useRentalsRevenueTrend({
+    timeframe,
+    year,
+    month,
+  });
+
+  useEffect(() => {
+    if (error) {
+      console.error("Failed to load rentals revenue trend:", error);
+    }
+  }, [error]);
+
+  if (isLoading) {
+    return (
+      <div className="bg-white border border-gray-200 p-6 rounded-xl h-full">
+        <ChartSkeleton />
+      </div>
+    );
+  }
+
+  if (error || !data?.data?.trend) {
+    return (
+      <div className="bg-white border border-gray-200 p-6 rounded-xl h-full">
+        <ChartSkeleton />
+      </div>
+    );
+  }
+
+  const chartData = data.data.trend;
+
   return (
     <div className="bg-[#111827] p-6 rounded-xl h-full text-white">
       <Paragraph3 className="text-xl font-semibold mb-4">
@@ -31,7 +66,7 @@ const RentalsRevenueTrend = () => {
       </Paragraph3>
       <ResponsiveContainer width="100%" height={300}>
         <ComposedChart
-          data={data}
+          data={chartData}
           margin={{
             top: 20,
             right: 20,
@@ -40,14 +75,12 @@ const RentalsRevenueTrend = () => {
           }}
         >
           <CartesianGrid stroke="#374151" vertical={false} />
-          <XAxis dataKey="name" stroke="#9CA3AF" tickLine={false} />
+          <XAxis dataKey="month" stroke="#9CA3AF" tickLine={false} />
           <YAxis
             yAxisId="left"
             stroke="#9CA3AF"
             tickLine={false}
             axisLine={false}
-            domain={[0, 1000]}
-            ticks={[0, 250, 500, 750, 1000]}
           />
           <YAxis
             yAxisId="right"
@@ -55,8 +88,6 @@ const RentalsRevenueTrend = () => {
             stroke="#D97706"
             tickLine={false}
             axisLine={false}
-            domain={[0, 8]}
-            ticks={[0, 2, 4, 6, 8]}
           />
           <Tooltip
             contentStyle={{ backgroundColor: "#1F2937", border: "none" }}
@@ -80,7 +111,7 @@ const RentalsRevenueTrend = () => {
             stroke="#D97706"
             strokeWidth={2}
             dot={{ r: 4, fill: "#D97706", strokeWidth: 2 }}
-            name="Revenue (k)"
+            name="Revenue (Millions)"
           />
         </ComposedChart>
       </ResponsiveContainer>

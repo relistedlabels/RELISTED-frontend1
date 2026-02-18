@@ -6,6 +6,7 @@ import ProductCard from "@/common/ui/ProductCard";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import { useRef } from "react";
 import { useProducts } from "@/lib/queries/product/useProducts";
+import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import Link from "next/link";
 
 const TopListingSection = () => {
@@ -37,10 +38,8 @@ const TopListingSection = () => {
             <Header1Plus className="tracking-wide uppercase">
               TOP LISTINGS
             </Header1Plus>
-            <Paragraph1 className="text-gray-600">
-              Loading products...
-            </Paragraph1>
           </div>
+          <ProductCardSkeleton count={6} />
         </div>
       </section>
     );
@@ -54,10 +53,8 @@ const TopListingSection = () => {
             <Header1Plus className="tracking-wide uppercase">
               TOP LISTINGS
             </Header1Plus>
-            <Paragraph1 className="text-gray-600">
-              Failed to load products. Please try again later.
-            </Paragraph1>
           </div>
+          <ProductCardSkeleton count={6} />
         </div>
       </section>
     );

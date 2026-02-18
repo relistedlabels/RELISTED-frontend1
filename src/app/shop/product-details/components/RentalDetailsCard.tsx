@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import {
   HiOutlineBuildingStorefront,
@@ -7,6 +9,8 @@ import {
 import { TiTick } from "react-icons/ti";
 import { Paragraph1 } from "@/common/ui/Text"; // Assuming custom text components based on previous context
 import RentalPeriods from "./RentalPeriods";
+import { usePublicProductById } from "@/lib/queries/product/usePublicProductById";
+import { DetailPanelSkeleton } from "@/common/ui/SkeletonLoaders";
 
 // ============================================================================
 // API ENDPOINTS USED:
@@ -21,15 +25,19 @@ import RentalPeriods from "./RentalPeriods";
 interface UserProfileProps {
   name: string;
   rating: number;
+  avatar?: string;
 }
 
-const UserProfile: React.FC<UserProfileProps> = ({ name, rating }) => (
+const UserProfile: React.FC<UserProfileProps> = ({ name, rating, avatar }) => (
   <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200  mt-4">
     <div className="flex items-center space-x-3">
       {/* Placeholder for User Image */}
       <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-        {/* Replace with actual image component or avatar */}
-        <span className="text-xl text-gray-500">👤</span>
+        {avatar ? (
+          <img src={avatar} alt={name} className="w-full h-full object-cover" />
+        ) : (
+          <span className="text-xl text-gray-500">👤</span>
+        )}
       </div>
       <div>
         <Paragraph1 className="text-sm font-semibold text-gray-900">
@@ -53,7 +61,17 @@ const UserProfile: React.FC<UserProfileProps> = ({ name, rating }) => (
   </div>
 );
 
-const RentalDetailsCard: React.FC = () => {
+interface RentalDetailsCardProps {
+  productId: string;
+}
+
+const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
+  const { data: product, isLoading } = usePublicProductById(productId);
+
+  if (isLoading || !product) {
+    return <DetailPanelSkeleton />;
+  }
+
   return (
     <div className="font-sans">
       <div className=" p-4 py-6 border border-gray-200 bg-[#FBFBFB] rounded-xl ">
@@ -63,10 +81,10 @@ const RentalDetailsCard: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 text-gray-700">
               <HiOutlineBuildingStorefront className="w-5 h-5" />
-              <Paragraph1 className="text-sm">Rental Fee ( 3 Days)</Paragraph1>
+              <Paragraph1 className="text-sm">Daily Rental</Paragraph1>
             </div>
             <Paragraph1 className="text-lg font-bold text-gray-900">
-              ₦165,000
+              ₦{product.dailyPrice.toLocaleString()}
             </Paragraph1>
           </div>
 
@@ -74,14 +92,17 @@ const RentalDetailsCard: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 text-gray-700">
               <HiOutlineTag className="w-5 h-5" />
-              <Paragraph1 className="text-sm">Item Value:</Paragraph1>
+              <Paragraph1 className="text-sm">Security Deposit:</Paragraph1>
             </div>
             <div className="flex items-center space-x-2">
               <Paragraph1 className="text-sm text-gray-500">
                 (Refundable)
               </Paragraph1>
               <Paragraph1 className="text-lg font-bold text-gray-900">
-                ₦500,000
+                ₦
+                {product.securityDeposit
+                  ? product.securityDeposit.toLocaleString()
+                  : "0"}
               </Paragraph1>
             </div>
           </div>
@@ -135,7 +156,11 @@ const RentalDetailsCard: React.FC = () => {
       </div>
 
       {/* User Profile Card */}
-      <UserProfile name="Betty Daniels" rating={4.9} />
+      <UserProfile
+        name={product.lister.name}
+        rating={product.lister.rating}
+        avatar={product.lister.avatar}
+      />
     </div>
   );
 };

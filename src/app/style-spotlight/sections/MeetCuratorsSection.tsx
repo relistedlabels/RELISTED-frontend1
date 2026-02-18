@@ -7,69 +7,22 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Header1Plus, Header2, Paragraph1, Paragraph3 } from "@/common/ui/Text";
-
-interface Curator {
-  id: string;
-  name: string;
-  listings: number;
-  image: string;
-}
-
-const CURATORS: Curator[] = [
-  {
-    id: "1",
-    name: "Savannah Nguyen",
-    listings: 100,
-    image: "https://i.pravatar.cc/150?img=1",
-  },
-  {
-    id: "2",
-    name: "Jane Cooper",
-    listings: 220,
-    image: "https://i.pravatar.cc/150?img=5",
-  },
-  {
-    id: "3",
-    name: "Leslie Alexander",
-    listings: 230,
-    image: "https://i.pravatar.cc/150?img=12",
-  },
-  {
-    id: "4",
-    name: "Jacob Jones",
-    listings: 230,
-    image: "https://i.pravatar.cc/150?img=15",
-  },
-  {
-    id: "5",
-    name: "Ralph Edwards",
-    listings: 230,
-    image: "https://i.pravatar.cc/150?img=22",
-  },
-  {
-    id: "6",
-    name: "Devon Lane",
-    listings: 230,
-    image: "https://i.pravatar.cc/150?img=30",
-  },
-  {
-    id: "7",
-    name: "Arlene McCoy",
-    listings: 230,
-    image: "https://i.pravatar.cc/150?img=42",
-  },
-  {
-    id: "8",
-    name: "Arlene Foster",
-    listings: 290,
-    image: "https://i.pravatar.cc/150?img=60",
-  },
-];
+import { useUsers } from "@/lib/queries/user/useUsers";
+import { UserCardSkeleton } from "@/common/ui/SkeletonLoaders";
 
 export default function MeetCuratorsSection() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
+
+  const {
+    data: users,
+    isLoading,
+    error,
+  } = useUsers({
+    limit: 20,
+    role: "lister",
+  });
 
   const handleScroll = () => {
     if (scrollContainerRef.current) {
@@ -89,6 +42,32 @@ export default function MeetCuratorsSection() {
       });
     }
   };
+
+  if (isLoading) {
+    return (
+      <section className="container px-4 sm:px-0 mx-auto py-6 sm:py-16">
+        <div className="mb-8 sm:mb-12">
+          <Header1Plus className="tracking-wide uppercase">
+            Meet Our Listers
+          </Header1Plus>
+        </div>
+        <UserCardSkeleton count={4} />
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="container px-4 sm:px-0 mx-auto py-6 sm:py-16">
+        <div className="mb-8 sm:mb-12">
+          <Header1Plus className="tracking-wide uppercase">
+            Meet Our Listers
+          </Header1Plus>
+        </div>
+        <UserCardSkeleton count={4} />
+      </section>
+    );
+  }
 
   return (
     <section className="container px-4 sm:px-0 mx-auto py-6 sm:py-16">
@@ -129,14 +108,14 @@ export default function MeetCuratorsSection() {
           style={{ scrollBehavior: "smooth" }}
         >
           <div className="flex gap-6 sm:gap-8 pb-4 px-4 sm:px-0">
-            {CURATORS.map((curator) => (
-              <Link key={curator.id} href={`/lister-profile/${curator.id}`}>
+            {users?.map((user) => (
+              <Link key={user.id} href={`/lister-profile/${user.id}`}>
                 <div className="flex-shrink-0 flex flex-col items-center group cursor-pointer">
                   {/* Circular Image */}
                   <div className="relative w-22 h-22 sm:w-32 sm:h-32 mb-4 rounded-full overflow-hidden border-4 border-red-400 hover:border-red-500 transition-all duration-300">
                     <Image
-                      src={curator.image}
-                      alt={curator.name}
+                      src={user.avatar || "/images/default-avatar.png"}
+                      alt={user.name}
                       fill
                       className="object-cover group-hover:scale-110 transition-transform duration-300"
                       sizes="(max-width: 640px) 100px, 100px"
@@ -145,10 +124,10 @@ export default function MeetCuratorsSection() {
 
                   {/* Curator Info */}
                   <Paragraph3 className="text-center text-sm sm:text-base font-semibold text-gray-900 mb-1">
-                    {curator.name}
+                    {user.name}
                   </Paragraph3>
                   <Paragraph1 className="text-center text-xs sm:text-sm text-gray-600">
-                    {curator.listings} Listings
+                    {user.itemCount} Listings
                   </Paragraph1>
                 </div>
               </Link>

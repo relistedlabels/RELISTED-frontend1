@@ -5,6 +5,7 @@
 import React, { useState } from "react";
 import { Header1Plus, Header2, Paragraph1 } from "@/common/ui/Text";
 import { useUsers } from "@/lib/queries/user/useUsers";
+import { UserCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import Link from "next/link";
 import Image from "next/image";
 

@@ -3,6 +3,7 @@
 
 import React, { useMemo } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
+import type { Dispute } from "@/lib/api/admin/disputes";
 
 interface PendingDisputeData {
   id: string;
@@ -18,6 +19,7 @@ interface PendingDisputeData {
 
 interface PendingTableProps {
   searchQuery: string;
+  disputes?: Dispute[];
 }
 
 const mockPendingData: PendingDisputeData[] = [
@@ -34,15 +36,39 @@ const mockPendingData: PendingDisputeData[] = [
   },
 ];
 
-export default function PendingTable({ searchQuery }: PendingTableProps) {
+// Transform Dispute API response to display format
+function transformDisputeData(dispute: Dispute): PendingDisputeData {
+  return {
+    id: dispute.id,
+    raisedBy: dispute.raisedBy.name,
+    raiserRole: dispute.raisedBy.role,
+    raisedByAvatar: dispute.raisedBy.avatar,
+    category: dispute.category,
+    orderId: dispute.orderId,
+    priority: dispute.priority,
+    dateCreated: new Date(dispute.dateCreated).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }),
+    status: "Pending",
+  };
+}
+
+export default function PendingTable({
+  searchQuery,
+  disputes,
+}: PendingTableProps) {
+  const displayData = disputes?.map(transformDisputeData) ?? mockPendingData;
+
   const filteredData = useMemo(() => {
-    return mockPendingData.filter(
+    return displayData.filter(
       (item) =>
         item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.raisedBy.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.orderId.toLowerCase().includes(searchQuery.toLowerCase()),
     );
-  }, [searchQuery]);
+  }, [searchQuery, displayData]);
 
   return (
     <div className="overflow-x-auto">

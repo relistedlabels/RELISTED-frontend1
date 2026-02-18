@@ -3,21 +3,36 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, X, Play } from "lucide-react";
+import { usePublicProductById } from "@/lib/queries/product/usePublicProductById";
+import { CardGridSkeleton } from "@/common/ui/SkeletonLoaders";
 
-// Media can be image or video
-const media = [
-  { type: "image", src: "/products/sam1.jpg" },
-  { type: "image", src: "/products/sam2.jpg" },
-  { type: "image", src: "/products/sam3.jpg" },
-  { type: "image", src: "/products/sam4.jpg" },
-  { type: "image", src: "/products/sam3.jpg" },
-  { type: "image", src: "/products/sam4.jpg" },
-  { type: "video", src: "/products/product-video.mp4" }, // LAST ITEM = VIDEO
-];
+interface ProductMediaGalleryProps {
+  productId: string;
+}
 
-const ProductMediaGallery: React.FC = () => {
+const ProductMediaGallery: React.FC<ProductMediaGalleryProps> = ({
+  productId,
+}) => {
+  const { data: product, isLoading } = usePublicProductById(productId);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
+
+  // Use product images or fallback to empty array
+  const media = product?.images
+    ? product.images.map((src) => ({ type: "image" as const, src }))
+    : [];
+
+  if (isLoading) {
+    return <CardGridSkeleton count={1} />;
+  }
+
+  if (media.length === 0) {
+    return (
+      <div className="w-full h-[250px] sm:h-[420px] bg-black/5 rounded-xl overflow-hidden flex items-center justify-center">
+        <p>No images available for this product.</p>
+      </div>
+    );
+  }
 
   const nextMedia = () => {
     setActiveIndex((prev) => (prev + 1) % media.length);
@@ -48,117 +63,113 @@ const ProductMediaGallery: React.FC = () => {
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.25 }}
-              className="w-full h-full object-contain"
+              transition={{ duration: 0.3 }}
+              className="w-full h-full object-cover"
             />
           ) : (
-            <motion.video
+            <motion.div
               key={activeItem.src}
-              src={activeItem.src}
-              controls
-              autoPlay
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.25 }}
-              className="w-full h-full object-contain"
-            />
+              transition={{ duration: 0.3 }}
+              className="w-full h-full bg-black flex items-center justify-center relative"
+            >
+              <video
+                src={activeItem.src}
+                className="w-full h-full object-cover"
+                controls
+              />
+              <Play className="absolute w-16 h-16 text-white opacity-50" />
+            </motion.div>
           )}
         </AnimatePresence>
       </motion.div>
 
-      {/* Thumbnails */}
-      <div className="sm:w-full w-[340px] - flex hide-scrollbar overflow-hidden overflow-x-auto ">
-        <div className="mt-3 flex gap-3">
-          {media.map((item, index) => (
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              key={index}
-              onClick={() => setActiveIndex(index)}
-              className={`relative h-20 w-20 rounded-lg overflow-hidden border transition ${
-                index === activeIndex
-                  ? "border-black"
-                  : "border-transparent hover:border-black/40"
-              }`}
-            >
-              {item.type === "image" ? (
-                <img
-                  src={item.src}
-                  alt="Thumbnail"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-black/50 flex items-center justify-center">
-                  <Play className="w-8 h-8 text-white" />
-                </div>
-              )}
-            </motion.button>
-          ))}
+      {/* Navigation Controls */}
+      <div className="flex justify-between items-center mt-4">
+        <button
+          onClick={prevMedia}
+          className="p-2 hover:bg-gray-200 rounded-full transition"
+        >
+          <ChevronLeft size={24} />
+        </button>
+
+        <div className="text-center text-sm text-gray-600">
+          {activeIndex + 1} of {media.length}
         </div>
+
+        <button
+          onClick={nextMedia}
+          className="p-2 hover:bg-gray-200 rounded-full transition"
+        >
+          <ChevronRight size={24} />
+        </button>
       </div>
 
-      {/* Modal Viewer */}
+      {/* Thumbnail Strip */}
+      <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
+        {media.map((item, idx) => (
+          <motion.button
+            key={idx}
+            onClick={() => setActiveIndex(idx)}
+            whileHover={{ scale: 1.05 }}
+            className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition ${
+              activeIndex === idx
+                ? "border-black"
+                : "border-gray-300 hover:border-gray-400"
+            }`}
+          >
+            <img
+              src={item.src}
+              alt={`Thumbnail ${idx + 1}`}
+              className="w-full h-full object-cover"
+            />
+          </motion.button>
+        ))}
+      </div>
+
+      {/* Fullscreen Modal */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center"
+            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+            onClick={() => setIsOpen(false)}
           >
-            {/* Close */}
-            <button
-              onClick={() => setIsOpen(false)}
-              className="absolute top-6 right-6 text-white"
+            <div
+              className="relative w-full max-w-4xl max-h-screen"
+              onClick={(e) => e.stopPropagation()}
             >
-              <X className="w-7 h-7" />
-            </button>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="absolute -top-10 right-0 text-white hover:text-gray-300 z-10"
+              >
+                <X size={32} />
+              </button>
 
-            {/* Prev */}
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={prevMedia}
-              className="absolute left-6 text-white p-2 rounded-full bg-black/40 hover:bg-black/60"
-            >
-              <ChevronLeft className="w-8 h-8" />
-            </motion.button>
+              <img
+                src={activeItem.src}
+                alt="Product fullscreen"
+                className="w-full h-auto max-h-screen object-contain"
+              />
 
-            {/* Media */}
-            <AnimatePresence mode="wait">
-              {activeItem.type === "image" ? (
-                <motion.img
-                  key={activeItem.src}
-                  src={activeItem.src}
-                  alt="Preview"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.25 }}
-                  className="max-h-[90vh] max-w-[90vw] object-contain"
-                />
-              ) : (
-                <motion.video
-                  key={activeItem.src}
-                  src={activeItem.src}
-                  controls
-                  autoPlay
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.25 }}
-                  className="max-h-[90vh] max-w-[90vw] object-contain"
-                />
-              )}
-            </AnimatePresence>
+              <button
+                onClick={prevMedia}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 p-2 bg-black/30 rounded-full"
+              >
+                <ChevronLeft size={32} />
+              </button>
 
-            {/* Next */}
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={nextMedia}
-              className="absolute right-6 text-white p-2 rounded-full bg-black/40 hover:bg-black/60"
-            >
-              <ChevronRight className="w-8 h-8" />
-            </motion.button>
+              <button
+                onClick={nextMedia}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 p-2 bg-black/30 rounded-full"
+              >
+                <ChevronRight size={32} />
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -57,8 +57,17 @@ const ProductSpecifications: React.FC<ProductSpecificationsProps> = ({
 
 // --- Example Usage matching the provided image content ---
 
-const ProductDetailsBlock: React.FC = () => {
+interface ProductDetailsBlockProps {
+  product?: {
+    description?: string;
+  };
+}
+
+const ProductDetailsBlock: React.FC<ProductDetailsBlockProps> = ({
+  product,
+}) => {
   const exampleDescription =
+    product?.description ||
     "Tubular boots with tapered toe and high heel featuring the iconic Arco line, customised with metal detail and engraved logo. Made of black shiny hagfish leather. Covered heel and leather sole.";
 
   const exampleSpecs: Specification[] = [

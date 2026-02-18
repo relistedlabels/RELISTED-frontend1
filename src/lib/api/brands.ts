@@ -4,14 +4,15 @@ import { apiFetch } from "./http";
 export type Brand = {
   id: string;
   name: string;
-  userId: string;
-  fullText: string;
-  createdAt: string;
+  userId?: string;
+  fullText?: string;
+  createdAt?: string;
+  logo?: string;
 };
 
 /** Get all brands */
 export const getBrands = () =>
-  apiFetch<Brand[]>("/brands", {
+  apiFetch<Brand[]>("/api/public/brands", {
     method: "GET",
   });
 

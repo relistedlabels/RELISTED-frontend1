@@ -1,50 +1,27 @@
-// ENDPOINTS: GET /api/admin/analytics/top-items
 "use client";
 
 import React from "react";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import { CardGridSkeleton } from "@/common/ui/SkeletonLoaders";
+import { useTopItems } from "@/lib/queries/admin/useAnalytics";
 
-interface ItemData {
-  id: string;
-  name: string;
-  category: string;
-  earnings: number;
+interface TopItemsProps {
+  limit?: number;
 }
 
-const mockTopItems: ItemData[] = [
-  {
-    id: "item_001",
-    name: "Fendi Arco Boots",
-    category: "Shoes",
-    earnings: 230000,
-  },
-  {
-    id: "item_002",
-    name: "Chanel Classic Flap",
-    category: "Bags",
-    earnings: 420000,
-  },
-  {
-    id: "item_003",
-    name: "Versace Silk Dress",
-    category: "Dresses",
-    earnings: 385000,
-  },
-  {
-    id: "item_004",
-    name: "Gucci Loafers",
-    category: "Shoes",
-    earnings: 195000,
-  },
-  {
-    id: "item_005",
-    name: "Dior Saddle Bag",
-    category: "Bags",
-    earnings: 340000,
-  },
-];
+export default function TopItems({ limit = 5 }: TopItemsProps) {
+  const { data, isPending, error } = useTopItems(limit);
 
-export default function TopItems() {
+  if (error) {
+    console.log("TopItems error:", error);
+  }
+
+  const items = data?.data?.topItems || [];
+
+  if (isPending || error) {
+    return <CardGridSkeleton count={limit} />;
+  }
+
   return (
     <div className="bg-white rounded-lg p-6 border border-gray-200">
       <div className="mb-6">
@@ -73,7 +50,7 @@ export default function TopItems() {
             </tr>
           </thead>
           <tbody>
-            {mockTopItems.map((item, index) => (
+            {items.map((item) => (
               <tr
                 key={item.id}
                 className="border-b border-gray-100 hover:bg-gray-50 transition-colors last:border-b-0"
@@ -90,7 +67,7 @@ export default function TopItems() {
                 </td>
                 <td className="px-4 py-4">
                   <Paragraph1 className="text-gray-900 font-semibold">
-                    ₦{item.earnings.toLocaleString()}
+                    ₦{item.totalEarnings.toLocaleString()}
                   </Paragraph1>
                 </td>
               </tr>

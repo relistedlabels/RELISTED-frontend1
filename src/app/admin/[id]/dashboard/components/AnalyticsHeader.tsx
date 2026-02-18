@@ -11,6 +11,15 @@ import {
 } from "react-icons/hi2";
 import { HiOutlineDownload } from "react-icons/hi";
 
+interface AnalyticsHeaderProps {
+  timeframeType: "all_time" | "year" | "month";
+  selectedYear: number;
+  selectedMonth: number;
+  onTimeframeChange: (type: "all_time" | "year" | "month") => void;
+  onYearChange: (year: number) => void;
+  onMonthChange: (month: number) => void;
+}
+
 interface StatItemProps {
   icon: React.ElementType;
   label: string;
@@ -25,7 +34,7 @@ const StatItem: React.FC<StatItemProps> = ({ icon: Icon, label }) => (
   </div>
 );
 
-type TimeframeType = "last6months" | "alltime" | "year" | "month";
+type TimeframeType = "all_time" | "year" | "month";
 
 const months = [
   "January",
@@ -84,8 +93,7 @@ const TimeframeDropdown: React.FC<{
   }, []);
 
   const getDisplayLabel = () => {
-    if (timeframeType === "last6months") return "Last 6 Months";
-    if (timeframeType === "alltime") return "All Time";
+    if (timeframeType === "all_time") return "All Time";
     if (timeframeType === "year") return `Year ${selectedYear}`;
     if (timeframeType === "month")
       return `${months[selectedMonth]} ${selectedYear}`;
@@ -114,31 +122,14 @@ const TimeframeDropdown: React.FC<{
           <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
             <button
               onClick={() => {
-                onTimeframeChange("last6months");
+                onTimeframeChange("all_time");
                 setIsOpen(false);
               }}
               className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
             >
               <Paragraph1
                 className={`text-sm font-medium ${
-                  timeframeType === "last6months"
-                    ? "text-yellow-600"
-                    : "text-gray-700"
-                }`}
-              >
-                Last 6 Months
-              </Paragraph1>
-            </button>
-            <button
-              onClick={() => {
-                onTimeframeChange("alltime");
-                setIsOpen(false);
-              }}
-              className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
-            >
-              <Paragraph1
-                className={`text-sm font-medium ${
-                  timeframeType === "alltime"
+                  timeframeType === "all_time"
                     ? "text-yellow-600"
                     : "text-gray-700"
                 }`}
@@ -316,12 +307,14 @@ const TimeframeDropdown: React.FC<{
   );
 };
 
-const AnalyticsHeader: React.FC = () => {
-  const [timeframeType, setTimeframeType] =
-    useState<TimeframeType>("last6months");
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-
+const AnalyticsHeader: React.FC<AnalyticsHeaderProps> = ({
+  timeframeType,
+  selectedYear,
+  selectedMonth,
+  onTimeframeChange,
+  onYearChange,
+  onMonthChange,
+}) => {
   return (
     <div className="w-full ">
       {/* Top Row: Title and Actions */}
@@ -336,9 +329,9 @@ const AnalyticsHeader: React.FC = () => {
             timeframeType={timeframeType}
             selectedYear={selectedYear}
             selectedMonth={selectedMonth}
-            onTimeframeChange={setTimeframeType}
-            onYearChange={setSelectedYear}
-            onMonthChange={setSelectedMonth}
+            onTimeframeChange={onTimeframeChange}
+            onYearChange={onYearChange}
+            onMonthChange={onMonthChange}
           />
 
           {/* Export Button */}

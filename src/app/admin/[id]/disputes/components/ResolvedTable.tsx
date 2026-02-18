@@ -3,6 +3,7 @@
 
 import React, { useMemo } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
+import type { Dispute } from "@/lib/api/admin/disputes";
 
 interface ResolvedDisputeData {
   id: string;
@@ -19,6 +20,7 @@ interface ResolvedDisputeData {
 
 interface ResolvedTableProps {
   searchQuery: string;
+  disputes?: Dispute[];
 }
 
 const mockResolvedData: ResolvedDisputeData[] = [
@@ -48,15 +50,41 @@ const mockResolvedData: ResolvedDisputeData[] = [
   },
 ];
 
-export default function ResolvedTable({ searchQuery }: ResolvedTableProps) {
+// Transform Dispute API response to display format
+function transformDisputeData(dispute: Dispute): ResolvedDisputeData {
+  const dateStr = new Date(dispute.dateCreated).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  return {
+    id: dispute.id,
+    raisedBy: dispute.raisedBy.name,
+    raiserRole: dispute.raisedBy.role,
+    raisedByAvatar: dispute.raisedBy.avatar,
+    category: dispute.category,
+    orderId: dispute.orderId,
+    resolution: "Resolved",
+    dateCreated: dateStr,
+    dateResolved: dateStr,
+    status: "Resolved",
+  };
+}
+
+export default function ResolvedTable({
+  searchQuery,
+  disputes,
+}: ResolvedTableProps) {
+  const displayData = disputes?.map(transformDisputeData) ?? mockResolvedData;
+
   const filteredData = useMemo(() => {
-    return mockResolvedData.filter(
+    return displayData.filter(
       (item) =>
         item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.raisedBy.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.orderId.toLowerCase().includes(searchQuery.toLowerCase()),
     );
-  }, [searchQuery]);
+  }, [searchQuery, displayData]);
 
   return (
     <div className="overflow-x-auto">

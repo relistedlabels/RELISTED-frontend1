@@ -1,51 +1,27 @@
-// ENDPOINTS: GET /api/admin/analytics/top-curators
 "use client";
 
 import React from "react";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import { ListItemSkeleton } from "@/common/ui/SkeletonLoaders";
+import { useTopCurators } from "@/lib/queries/admin/useAnalytics";
 
-interface CuratorData {
-  id: string;
-  name: string;
-  rentals: number;
-  revenue: number;
-  avatar?: string;
+interface TopCuratorsProps {
+  limit?: number;
 }
 
-const mockTopCurators: CuratorData[] = [
-  {
-    id: "curator_001",
-    name: "Anita Cole",
-    rentals: 132,
-    revenue: 820000,
-  },
-  {
-    id: "curator_002",
-    name: "Blessing Okafor",
-    rentals: 118,
-    revenue: 745000,
-  },
-  {
-    id: "curator_003",
-    name: "Chioma Eze",
-    rentals: 97,
-    revenue: 680000,
-  },
-  {
-    id: "curator_004",
-    name: "Fatima Bello",
-    rentals: 89,
-    revenue: 590000,
-  },
-  {
-    id: "curator_005",
-    name: "Grace Adebayo",
-    rentals: 76,
-    revenue: 520000,
-  },
-];
+export default function TopCurators({ limit = 5 }: TopCuratorsProps) {
+  const { data, isPending, error } = useTopCurators(limit);
 
-export default function TopCurators() {
+  if (error) {
+    console.log("TopCurators error:", error);
+  }
+
+  const curators = data?.data?.topCurators || [];
+
+  if (isPending || error) {
+    return <ListItemSkeleton count={limit} />;
+  }
+
   return (
     <div className="bg-white rounded-lg p-6 border border-gray-200">
       <div className="mb-6">
@@ -74,7 +50,7 @@ export default function TopCurators() {
             </tr>
           </thead>
           <tbody>
-            {mockTopCurators.map((curator, index) => (
+            {curators.map((curator) => (
               <tr
                 key={curator.id}
                 className="border-b border-gray-100 hover:bg-gray-50 transition-colors last:border-b-0"
@@ -86,7 +62,7 @@ export default function TopCurators() {
                 </td>
                 <td className="px-4 py-4">
                   <Paragraph1 className="text-gray-700">
-                    {curator.rentals}
+                    {curator.rentals.toLocaleString()}
                   </Paragraph1>
                 </td>
                 <td className="px-4 py-4">

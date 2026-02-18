@@ -18,7 +18,7 @@ export function useAuthRedirect() {
       return;
     }
 
-    if (!profile || !profile.name) {
+    if (!profile || !profile.user?.name) {
       router.replace("/auth/profile-setup");
       return;
     }

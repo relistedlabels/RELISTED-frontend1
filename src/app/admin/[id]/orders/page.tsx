@@ -1,75 +1,24 @@
 // ENDPOINTS: GET /api/admin/orders, GET /api/admin/orders/stats, GET /api/admin/orders/:orderId, PUT /api/admin/orders/:orderId/status, POST /api/admin/orders/:orderId/cancel, GET /api/admin/orders/export
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import { TableSkeleton, StatCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import { Calendar, Download, Eye } from "lucide-react";
 import { HiOutlineShoppingBag } from "react-icons/hi";
 import { PiCheckCircle, PiWarning, PiPackage } from "react-icons/pi";
 import { PiHash } from "react-icons/pi";
 import OrderDetailModal from "./components/OrderDetailModal";
+import { useOrders, useOrderStats } from "@/lib/queries/admin/useOrders";
+import type { Order } from "@/lib/api/admin/orders";
 
-interface Order {
-  id: string;
-  date: string;
-  curator: {
-    name: string;
-    avatar: string;
-  };
-  dresser: {
-    name: string;
-    avatar: string;
-  };
-  items: number;
-  total: string;
-  status:
-    | "Preparing"
-    | "In Transit"
-    | "Delivered"
-    | "Return Due"
-    | "Return Pickup"
-    | "Disputed";
-  returnDue: string;
-}
-
-const ORDERS: Order[] = [
-  {
-    id: "#RL5-23894",
-    date: "Oct 10, 2025",
-    curator: {
-      name: "Grace Adebayo",
-      avatar:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=32&h=32&fit=crop&radius=50",
-    },
-    dresser: {
-      name: "Chioma Eze",
-      avatar:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&radius=50",
-    },
-    items: 3,
-    total: "₦300,000",
-    status: "In Transit",
-    returnDue: "Oct 15, 2025",
-  },
-  {
-    id: "#RL5-23975",
-    date: "Oct 8, 2025",
-    curator: {
-      name: "Blessing Okafor",
-      avatar:
-        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=32&h=32&fit=crop&radius=50",
-    },
-    dresser: {
-      name: "Amaka Johnson",
-      avatar:
-        "https://images.unsplash.com/photo-1552058544-f8b08422c7f3?w=32&h=32&fit=crop&radius=50",
-    },
-    items: 2,
-    total: "₦260,000",
-    status: "Delivered",
-    returnDue: "Oct 15, 2025",
-  },
-];
+const formatCurrency = (value: number): string => {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: 0,
+  }).format(value);
+};
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -94,41 +43,71 @@ export default function OrdersPage() {
   const [activeTab, setActiveTab] = useState("all");
   const [statusFilter, setStatusFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-  const statCards = [
-    {
-      label: "TOTAL LISTINGS",
-      value: "6",
-      icon: HiOutlineShoppingBag,
-      bgColor: "bg-gray-50",
-    },
-    {
-      label: "COMPLETED ORDERS",
-      value: "2",
-      icon: PiCheckCircle,
-      bgColor: "bg-blue-50",
-    },
-    {
-      label: "ACTIVE ORDERS",
-      value: "2",
-      icon: PiPackage,
-      bgColor: "bg-green-50",
-    },
-    {
-      label: "DISPUTED ORDERS",
-      value: "2",
-      icon: PiWarning,
-      bgColor: "bg-yellow-50",
-    },
-    {
-      label: "REVENUE (in naira)",
-      value: "N0.5M",
-      icon: PiHash,
-      bgColor: "bg-pink-50",
-    },
-  ];
+  // Fetch orders and stats
+  const {
+    data: ordersData,
+    isLoading: ordersLoading,
+    isError: ordersError,
+  } = useOrders({
+    tab: activeTab,
+    status: statusFilter !== "All" ? statusFilter : undefined,
+    search: searchQuery || undefined,
+  });
+
+  const {
+    data: statsData,
+    isLoading: statsLoading,
+    isError: statsError,
+  } = useOrderStats("all_time");
+
+  // Log errors to console if they exist
+  if (statsError) console.error("Statistics error:", statsError);
+  if (ordersError) console.error("Orders error:", ordersError);
+
+  // Extract orders from the response
+  const orders = useMemo(() => {
+    return ordersData?.data?.orders || [];
+  }, [ordersData]);
+
+  // Build stat cards from real data
+  const statCards = useMemo(() => {
+    const stats = statsData?.data;
+    return [
+      {
+        label: "TOTAL LISTINGS",
+        value: stats?.totalListings?.toString() || "0",
+        icon: HiOutlineShoppingBag,
+        bgColor: "bg-gray-50",
+      },
+      {
+        label: "COMPLETED ORDERS",
+        value: stats?.completedOrders?.toString() || "0",
+        icon: PiCheckCircle,
+        bgColor: "bg-blue-50",
+      },
+      {
+        label: "ACTIVE ORDERS",
+        value: stats?.activeOrders?.toString() || "0",
+        icon: PiPackage,
+        bgColor: "bg-green-50",
+      },
+      {
+        label: "DISPUTED ORDERS",
+        value: stats?.disputedOrders?.toString() || "0",
+        icon: PiWarning,
+        bgColor: "bg-yellow-50",
+      },
+      {
+        label: "REVENUE (in naira)",
+        value: stats?.totalRevenue ? formatCurrency(stats.totalRevenue) : "₦0",
+        icon: PiHash,
+        bgColor: "bg-pink-50",
+      },
+    ];
+  }, [statsData]);
 
   return (
     <>
@@ -187,26 +166,36 @@ export default function OrdersPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-          {statCards.map((card, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-lg p-4 border border-gray-200"
-            >
-              <div className="flex items-center gap-3">
-                <div className={`p-2.5 rounded ${card.bgColor} flex-shrink-0`}>
-                  <card.icon size={20} className="text-gray-700" />
-                </div>
-                <div className="flex-1">
-                  <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    {card.label}
-                  </Paragraph1>
-                  <Paragraph3 className="text-xl font-bold text-gray-900 mt-0.5">
-                    {card.value}
-                  </Paragraph3>
+          {statsLoading ? (
+            <>
+              {[...Array(5)].map((_, index) => (
+                <StatCardSkeleton key={index} />
+              ))}
+            </>
+          ) : (
+            statCards.map((card, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-lg p-4 border border-gray-200"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`p-2.5 rounded ${card.bgColor} flex-shrink-0`}
+                  >
+                    <card.icon size={20} className="text-gray-700" />
+                  </div>
+                  <div className="flex-1">
+                    <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      {card.label}
+                    </Paragraph1>
+                    <Paragraph3 className="text-xl font-bold text-gray-900 mt-0.5">
+                      {card.value}
+                    </Paragraph3>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
 
         {/* Tabs */}
@@ -261,140 +250,150 @@ export default function OrdersPage() {
         </div>
 
         {/* Orders Table */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="px-6 py-4 text-left">
-                    <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                      Order ID
-                    </Paragraph1>
-                  </th>
-                  <th className="px-6 py-4 text-left">
-                    <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                      Date
-                    </Paragraph1>
-                  </th>
-                  <th className="px-6 py-4 text-left">
-                    <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                      Curator
-                    </Paragraph1>
-                  </th>
-                  <th className="px-6 py-4 text-left">
-                    <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                      Dresser
-                    </Paragraph1>
-                  </th>
-                  <th className="px-6 py-4 text-left">
-                    <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                      Items
-                    </Paragraph1>
-                  </th>
-                  <th className="px-6 py-4 text-left">
-                    <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                      Total
-                    </Paragraph1>
-                  </th>
-                  <th className="px-6 py-4 text-left">
-                    <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                      Status
-                    </Paragraph1>
-                  </th>
-                  <th className="px-6 py-4 text-left">
-                    <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                      Return Due
-                    </Paragraph1>
-                  </th>
-                  <th className="px-6 py-4 text-left">
-                    <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                      Action
-                    </Paragraph1>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {ORDERS.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="border-b border-gray-100 hover:bg-gray-50 transition"
-                  >
-                    <td className="px-6 py-4">
-                      <Paragraph1 className="text-sm font-medium text-gray-900">
-                        {order.id}
+        {ordersLoading || ordersError ? (
+          <TableSkeleton rows={5} columns={9} />
+        ) : (
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50">
+                    <th className="px-6 py-4 text-left">
+                      <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                        Order ID
                       </Paragraph1>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Paragraph1 className="text-sm text-gray-700">
-                        {order.date}
+                    </th>
+                    <th className="px-6 py-4 text-left">
+                      <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                        Date
                       </Paragraph1>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <img
-                          src={order.curator.avatar}
-                          alt={order.curator.name}
-                          className="w-8 h-8 rounded-full object-cover"
-                        />
-                        <Paragraph1 className="text-sm text-gray-900">
-                          {order.curator.name}
-                        </Paragraph1>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <img
-                          src={order.dresser.avatar}
-                          alt={order.dresser.name}
-                          className="w-8 h-8 rounded-full object-cover"
-                        />
-                        <Paragraph1 className="text-sm text-gray-900">
-                          {order.dresser.name}
-                        </Paragraph1>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Paragraph1 className="text-sm text-gray-700">
-                        {order.items} items
+                    </th>
+                    <th className="px-6 py-4 text-left">
+                      <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                        Curator
                       </Paragraph1>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Paragraph1 className="text-sm font-medium text-gray-900">
-                        {order.total}
+                    </th>
+                    <th className="px-6 py-4 text-left">
+                      <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                        Dresser
                       </Paragraph1>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                          order.status,
-                        )}`}
-                      >
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Paragraph1 className="text-sm text-gray-700">
-                        {order.returnDue}
+                    </th>
+                    <th className="px-6 py-4 text-left">
+                      <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                        Items
                       </Paragraph1>
-                    </td>
-                    <td className="px-6 py-4">
-                      <button
-                        onClick={() => {
-                          setSelectedOrder(order);
-                          setIsDetailModalOpen(true);
-                        }}
-                        className="flex items-center gap-1 px-3 py-1 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition font-medium text-sm"
-                      >
-                        <Eye size={16} />
-                        View Details
-                      </button>
-                    </td>
+                    </th>
+                    <th className="px-6 py-4 text-left">
+                      <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                        Total
+                      </Paragraph1>
+                    </th>
+                    <th className="px-6 py-4 text-left">
+                      <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                        Status
+                      </Paragraph1>
+                    </th>
+                    <th className="px-6 py-4 text-left">
+                      <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                        Return Due
+                      </Paragraph1>
+                    </th>
+                    <th className="px-6 py-4 text-left">
+                      <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                        Action
+                      </Paragraph1>
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {orders.map((order) => (
+                    <tr
+                      key={order.id}
+                      className="border-b border-gray-100 hover:bg-gray-50 transition"
+                    >
+                      <td className="px-6 py-4">
+                        <Paragraph1 className="text-sm font-medium text-gray-900">
+                          {order.id}
+                        </Paragraph1>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Paragraph1 className="text-sm text-gray-700">
+                          {order.date}
+                        </Paragraph1>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={order.curator.avatar}
+                            alt={order.curator.name}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                          <Paragraph1 className="text-sm text-gray-900">
+                            {order.curator.name}
+                          </Paragraph1>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={order.dresser.avatar}
+                            alt={order.dresser.name}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                          <Paragraph1 className="text-sm text-gray-900">
+                            {order.dresser.name}
+                          </Paragraph1>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Paragraph1 className="text-sm text-gray-700">
+                          {order.items} items
+                        </Paragraph1>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Paragraph1 className="text-sm font-medium text-gray-900">
+                          {formatCurrency(order.total)}
+                        </Paragraph1>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
+                            order.status,
+                          )}`}
+                        >
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Paragraph1 className="text-sm text-gray-700">
+                          {order.returnDue}
+                        </Paragraph1>
+                      </td>
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => {
+                            setSelectedOrder({
+                              ...order,
+                              total:
+                                typeof order.total === "number"
+                                  ? order.total.toString()
+                                  : order.total,
+                            } as any);
+                            setIsDetailModalOpen(true);
+                          }}
+                          className="flex items-center gap-1 px-3 py-1 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition font-medium text-sm"
+                        >
+                          <Eye size={16} />
+                          View Details
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <OrderDetailModal

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { useUserStore } from "@/store/useUserStore";
 import { motion } from "framer-motion";
@@ -9,7 +9,9 @@ import AdminAccessPrompt from "./AdminAccessPrompt";
 
 export default function AdminVerifyMfaPage() {
   const router = useRouter();
-  const adminId = useAdminIdStore((state) => state.adminId);
+  const params = useParams();
+  const storeAdminId = useAdminIdStore((state) => state.adminId);
+  const adminId = (storeAdminId || (params?.id as string | undefined)) ?? null;
   const { sessionToken, requiresMfa, token } = useUserStore();
   const initialRenderRef = useRef(true);
 
@@ -25,8 +27,12 @@ export default function AdminVerifyMfaPage() {
       }
     }
 
-    // If user completed MFA (has token now), let AdminAccessPrompt handle navigation
-    // Don't redirect automatically
+    // If user has a full auth token and no longer requires MFA,
+    // ensure they are on the dashboard (fallback in case the OTP
+    // modal navigation doesn't run for any reason).
+    if (token && !requiresMfa && !sessionToken && adminId) {
+      router.replace(`/admin/${adminId}/dashboard`);
+    }
   }, [sessionToken, requiresMfa, token, router, adminId]);
 
   return (

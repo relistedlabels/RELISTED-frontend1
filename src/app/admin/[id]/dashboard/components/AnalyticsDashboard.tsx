@@ -9,21 +9,33 @@ import RevenueByCategory from "./RevenueByCategory";
 import TopCurators from "./TopCurators";
 import TopItems from "./TopItems";
 
-const AnalyticsDashboard = () => {
+interface AnalyticsDashboardProps {
+  timeframe: "all_time" | "year" | "month";
+  year?: number;
+  month?: number;
+}
+
+const AnalyticsDashboard = ({
+  timeframe,
+  year,
+  month,
+}: AnalyticsDashboardProps) => {
+  const params = { timeframe, year, month };
+
   return (
     <div className="mt-6 min-h-screen">
       {/* The first chart spans 1 column on medium screens */}
       <div className="col-span-1">
-        <RentalsRevenueTrend />
+        <RentalsRevenueTrend {...params} />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 mt-4 gap-4">
         {/* The second chart spans 1 column */}
         <div className="col-span-1">
-          <CategoryBreakdown />
+          <CategoryBreakdown {...params} />
         </div>
         {/* The third chart spans 1 column */}
         <div className="col-span-1">
-          <RevenueByCategory />
+          <RevenueByCategory {...params} />
         </div>
       </div>
 

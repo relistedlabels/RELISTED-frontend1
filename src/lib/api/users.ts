@@ -15,10 +15,10 @@ export type UsersResponse = {
   data: User[];
 };
 
-export const getUser = (id: string) => apiFetch(`/users/${id}`);
+export const getUser = (id: string) => apiFetch(`/api/public/users/${id}`);
 
 export const getAllUsers = () =>
-  apiFetch<UsersResponse>("/users", {
+  apiFetch<UsersResponse>("/api/public/users", {
     method: "GET",
   });
 

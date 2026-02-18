@@ -6,7 +6,7 @@ import { useGetAllUsers } from "@/lib/queries/user/useGetAllUsers";
 
 const ApiTestComponent = () => {
   const statisticsQuery = useProductStatistics();
-  const usersQuery = useGetAllUsers(1, 10);
+  const usersQuery = useGetAllUsers();
 
   useEffect(() => {
     if (statisticsQuery.data) {

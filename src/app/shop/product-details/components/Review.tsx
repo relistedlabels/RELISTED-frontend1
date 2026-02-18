@@ -31,9 +31,7 @@ const ReviewItem: React.FC<Review> = ({ name, rating, comment }) => {
     <div className="py-4 border-b border-gray-100 last:border-b-0">
       {/* Name and Rating */}
       <div className="flex items-center space-x-2 mb-1">
-        <Paragraph1 className=" font-semibold text-gray-900">
-          {name}
-        </Paragraph1>
+        <Paragraph1 className=" font-semibold text-gray-900">{name}</Paragraph1>
         {renderStars(rating)}
       </div>
 
@@ -67,7 +65,13 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({ reviews }) => {
 
 // --- Example Usage matching the provided image content ---
 
-const ExampleReviewsBlock: React.FC = () => {
+interface ExampleReviewsBlockProps {
+  productId?: string;
+}
+
+const ExampleReviewsBlock: React.FC<ExampleReviewsBlockProps> = ({
+  productId,
+}) => {
   const sampleReviews: Review[] = [
     {
       name: "Emma K.",

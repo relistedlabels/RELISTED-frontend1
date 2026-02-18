@@ -4,67 +4,22 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
 import { Eye, X } from "lucide-react";
+import { useAdmins } from "@/lib/queries/admin/useSettings";
+import { useUpdateAdmin } from "@/lib/mutations/admin";
 
 export default function AdminManagementTab() {
-  const admins = [
-    {
-      id: 1,
-      name: "Jane Graham",
-      email: "admin@relisted.com",
-      role: "Super Admin",
-      status: "Active",
-      lastActive: "2 mins ago",
-      avatar: "https://i.pravatar.cc/150?img=1",
-      recentActions: [
-        { action: "Updated platform commission", time: "2 hours ago" },
-        { action: "Suspended user #12345", time: "5 hours ago" },
-        { action: "Resolved dispute #DIS-789", time: "1 day ago" },
-      ],
-    },
-    {
-      id: 2,
-      name: "Michael Chen",
-      email: "michael@relisted.com",
-      role: "Admin",
-      status: "Active",
-      lastActive: "15 mins ago",
-      avatar: "https://i.pravatar.cc/150?img=2",
-      recentActions: [
-        { action: "Reviewed new listings", time: "3 hours ago" },
-        { action: "Updated user permissions", time: "6 hours ago" },
-        { action: "Processed refund request", time: "2 days ago" },
-      ],
-    },
-    {
-      id: 3,
-      name: "Sarah Johnson",
-      email: "sarah@relisted.com",
-      role: "Operations",
-      status: "Active",
-      lastActive: "1 hour ago",
-      avatar: "https://i.pravatar.cc/150?img=3",
-      recentActions: [
-        { action: "Managed order disputes", time: "4 hours ago" },
-        { action: "Updated inventory settings", time: "8 hours ago" },
-        { action: "Generated monthly report", time: "3 days ago" },
-      ],
-    },
-    {
-      id: 4,
-      name: "David Martinez",
-      email: "david@relisted.com",
-      role: "Customer Support",
-      status: "Suspended",
-      lastActive: "3 days ago",
-      avatar: "https://i.pravatar.cc/150?img=4",
-      recentActions: [
-        { action: "Handled customer inquiries", time: "3 days ago" },
-        { action: "Updated help documentation", time: "5 days ago" },
-        { action: "Processed support tickets", time: "1 week ago" },
-      ],
-    },
-  ];
+  // API Query
+  const { data: adminsData, isLoading, error } = useAdmins(1, 20);
+
+  // Log errors to console only
+  if (error) {
+    console.error("Failed to load admins:", error);
+  }
+
+  const admins = adminsData?.data?.admins || [];
+  const showSkeleton = isLoading || !!error;
 
   const [showAdminProfile, setShowAdminProfile] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<(typeof admins)[0] | null>(
@@ -75,107 +30,127 @@ export default function AdminManagementTab() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <Paragraph3 className="text-gray-900 font-bold">Admin Users</Paragraph3>
-        <button className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium">
+        <button
+          disabled={showSkeleton}
+          className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium disabled:opacity-50"
+        >
           <Paragraph1 className="text-white">+ Add Admin</Paragraph1>
         </button>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-300">
-              <th className="text-left py-4 px-4">
-                <Paragraph1 className="text-gray-900 font-bold">
-                  ADMIN NAME
-                </Paragraph1>
-              </th>
-              <th className="text-left py-4 px-4">
-                <Paragraph1 className="text-gray-900 font-bold">
-                  EMAIL
-                </Paragraph1>
-              </th>
-              <th className="text-left py-4 px-4">
-                <Paragraph1 className="text-gray-900 font-bold">
-                  ROLE
-                </Paragraph1>
-              </th>
-              <th className="text-left py-4 px-4">
-                <Paragraph1 className="text-gray-900 font-bold">
-                  STATUS
-                </Paragraph1>
-              </th>
-              <th className="text-left py-4 px-4">
-                <Paragraph1 className="text-gray-900 font-bold">
-                  LAST ACTIVE
-                </Paragraph1>
-              </th>
-              <th className="text-left py-4 px-4">
-                <Paragraph1 className="text-gray-900 font-bold">
-                  ACTION
-                </Paragraph1>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {admins.map((admin) => (
-              <tr
-                key={admin.id}
-                className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
-              >
-                <td className="py-4 px-4">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={admin.avatar}
-                      alt={admin.name}
-                      className="w-10 h-10 rounded-full"
-                    />
-                    <Paragraph1 className="text-gray-900 font-medium">
-                      {admin.name}
-                    </Paragraph1>
-                  </div>
-                </td>
-                <td className="py-4 px-4">
-                  <Paragraph1 className="text-gray-600">
-                    {admin.email}
+      {showSkeleton ? (
+        <TableSkeleton rows={5} columns={6} />
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-300">
+                <th className="text-left py-4 px-4">
+                  <Paragraph1 className="text-gray-900 font-bold">
+                    ADMIN NAME
                   </Paragraph1>
-                </td>
-                <td className="py-4 px-4">
-                  <Paragraph1 className="text-gray-900 font-medium">
-                    {admin.role}
+                </th>
+                <th className="text-left py-4 px-4">
+                  <Paragraph1 className="text-gray-900 font-bold">
+                    EMAIL
                   </Paragraph1>
-                </td>
-                <td className="py-4 px-4">
-                  <span
-                    className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                      admin.status === "Active"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }`}
-                  >
-                    {admin.status}
-                  </span>
-                </td>
-                <td className="py-4 px-4">
-                  <Paragraph1 className="text-gray-600">
-                    {admin.lastActive}
+                </th>
+                <th className="text-left py-4 px-4">
+                  <Paragraph1 className="text-gray-900 font-bold">
+                    ROLE
                   </Paragraph1>
-                </td>
-                <td className="py-4 px-4">
-                  <button
-                    onClick={() => {
-                      setSelectedAdmin(admin);
-                      setShowAdminProfile(true);
-                    }}
-                    className="text-gray-600 hover:text-gray-900 transition-colors"
-                  >
-                    <Eye size={20} />
-                  </button>
-                </td>
+                </th>
+                <th className="text-left py-4 px-4">
+                  <Paragraph1 className="text-gray-900 font-bold">
+                    STATUS
+                  </Paragraph1>
+                </th>
+                <th className="text-left py-4 px-4">
+                  <Paragraph1 className="text-gray-900 font-bold">
+                    LAST ACTIVE
+                  </Paragraph1>
+                </th>
+                <th className="text-left py-4 px-4">
+                  <Paragraph1 className="text-gray-900 font-bold">
+                    ACTION
+                  </Paragraph1>
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {admins.length > 0 ? (
+                admins.map((admin) => (
+                  <tr
+                    key={admin.id}
+                    className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="py-4 px-4">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={
+                            admin.avatar ||
+                            "https://i.pravatar.cc/150?img=default"
+                          }
+                          alt={admin.name}
+                          className="w-10 h-10 rounded-full"
+                        />
+                        <Paragraph1 className="text-gray-900 font-medium">
+                          {admin.name}
+                        </Paragraph1>
+                      </div>
+                    </td>
+                    <td className="py-4 px-4">
+                      <Paragraph1 className="text-gray-600">
+                        {admin.email}
+                      </Paragraph1>
+                    </td>
+                    <td className="py-4 px-4">
+                      <Paragraph1 className="text-gray-900 font-medium">
+                        {admin.role}
+                      </Paragraph1>
+                    </td>
+                    <td className="py-4 px-4">
+                      <span
+                        className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                          admin.status === "Active"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {admin.status}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4">
+                      <Paragraph1 className="text-gray-600">
+                        {admin.lastActive}
+                      </Paragraph1>
+                    </td>
+                    <td className="py-4 px-4">
+                      <button
+                        onClick={() => {
+                          setSelectedAdmin(admin);
+                          setShowAdminProfile(true);
+                        }}
+                        className="text-gray-600 hover:text-gray-900 transition-colors"
+                      >
+                        <Eye size={20} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="py-8 px-4 text-center">
+                    <Paragraph1 className="text-gray-500">
+                      No admins found
+                    </Paragraph1>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Admin Profile Modal */}
       {showAdminProfile && selectedAdmin && (
@@ -278,7 +253,7 @@ export default function AdminManagementTab() {
                         {action.action}
                       </Paragraph1>
                       <Paragraph1 className="text-gray-400 text-xs">
-                        {action.time}
+                        {action.timestamp}
                       </Paragraph1>
                     </div>
                   ))}

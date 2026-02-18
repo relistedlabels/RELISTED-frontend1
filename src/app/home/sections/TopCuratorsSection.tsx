@@ -11,6 +11,7 @@ import {
   ParagraphLink1,
 } from "@/common/ui/Text";
 import { useUsers } from "@/lib/queries/user/useUsers";
+import { UserCardSkeleton } from "@/common/ui/SkeletonLoaders";
 
 interface Curator {
   name: string;
@@ -82,9 +83,9 @@ export default function TopCuratorsSection() {
       <section className="w-full py-6 sm:py-[50px] bg-white">
         <div className="text-center mb-4 sm:mb-10">
           <Header1Plus className="tracking-wide">TOP LISTERS</Header1Plus>
-          <Paragraph1 className="text-gray-500 mt-1">
-            Loading listers...
-          </Paragraph1>
+        </div>
+        <div className="container mx-auto px-4">
+          <UserCardSkeleton count={8} />
         </div>
       </section>
     );
@@ -95,9 +96,9 @@ export default function TopCuratorsSection() {
       <section className="w-full py-6 sm:py-[50px] bg-white">
         <div className="text-center mb-4 sm:mb-10">
           <Header1Plus className="tracking-wide">TOP LISTERS</Header1Plus>
-          <Paragraph1 className="text-gray-500 mt-1">
-            Failed to load listers. Please try again later.
-          </Paragraph1>
+        </div>
+        <div className="container mx-auto px-4">
+          <UserCardSkeleton count={8} />
         </div>
       </section>
     );
@@ -107,7 +108,7 @@ export default function TopCuratorsSection() {
     ? users.map((user) => ({
         name: user.name || "Unknown Curator",
         image: user.avatar || "/images/default-avatar.jpg",
-        shopLink: `/shop/${user.id}`,
+        shopLink: `/lister-profile/${user.id}`,
       }))
     : [];
 

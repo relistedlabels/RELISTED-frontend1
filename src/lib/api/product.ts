@@ -109,6 +109,7 @@ export const productApi = {
       body: JSON.stringify(data),
     }),
 
+  // Public API - Browse products (no auth required)
   getAll: (filters?: {
     search?: string;
     gender?: string;
@@ -117,6 +118,9 @@ export const productApi = {
     sizes?: string;
     priceMin?: number;
     priceMax?: number;
+    page?: number;
+    limit?: number;
+    sort?: string;
   }) => {
     const params = new URLSearchParams();
     if (filters?.search) params.append("search", filters.search);
@@ -130,15 +134,29 @@ export const productApi = {
       params.append("priceMin", filters.priceMin.toString());
     if (filters?.priceMax !== undefined)
       params.append("priceMax", filters.priceMax.toString());
+    if (filters?.page !== undefined)
+      params.append("page", filters.page.toString());
+    if (filters?.limit !== undefined)
+      params.append("limit", filters.limit.toString());
+    if (filters?.sort) params.append("sort", filters.sort);
 
     const queryString = params.toString();
-    const url = queryString ? `/products?${queryString}` : "/products";
+    const url = queryString
+      ? `/api/public/products?${queryString}`
+      : "/api/public/products";
 
     return apiFetch<ProductsResponse>(url, {
       method: "GET",
     });
   },
 
+  // Public API - Get single product details
+  getPublicById: (id: string) =>
+    apiFetch<UserProduct>(`/api/public/products/${id}`, {
+      method: "GET",
+    }),
+
+  // Authenticated API - Get user's own product
   getById: (id: string) =>
     apiFetch<UserProduct>(`/product/${id}`, {
       method: "GET",

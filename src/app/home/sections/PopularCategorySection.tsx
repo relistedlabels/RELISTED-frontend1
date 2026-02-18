@@ -6,37 +6,37 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Header1Plus, Header2, Paragraph1 } from "@/common/ui/Text";
-import { categories, Category } from "@/data/categoryData"; // import data
+import { useCategories } from "@/lib/queries/category/useCategories";
+import { CategoryCardSkeleton } from "@/common/ui/SkeletonLoaders";
 
-interface CategoryBoxProps extends Category {}
+interface CategoryBoxProps {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  itemCount?: number;
+}
 
 const CategoryBox: React.FC<CategoryBoxProps> = ({
-  image,
-  title,
+  id,
+  name,
   description,
-  link,
-  height,
-  filterType,
-  filterValue,
+  image,
 }) => {
-  // Build URL with filters if available
-  const shopUrl =
-    filterType && filterValue
-      ? `/shop?${filterType}=${encodeURIComponent(filterValue)}&title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}`
-      : link;
+  // Build URL with category filter
+  const shopUrl = `/shop?category=${encodeURIComponent(name)}&title=${encodeURIComponent(name)}&description=${encodeURIComponent(description)}`;
 
   return (
     <Link
       href={shopUrl}
       className={`relative w-full group overflow-hidden cursor-pointer h-[200px] sm:h-auto`}
-      style={{ height: undefined, ...(height && { ["--h"]: height }) }}
     >
-      <div className="hidden sm:block" style={{ height }}></div>
+      <div className="hidden sm:block" style={{ height: "280px" }}></div>
 
       {/* Background Image */}
       <Image
         src={image}
-        alt={title}
+        alt={name}
         fill
         className="object-cover transition-transform duration-2000 ease-in-out group-hover:scale-110"
         priority
@@ -47,7 +47,7 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({
 
       {/* Text content */}
       <div className="absolute sm:bottom-[35px] bottom-4 left-4 sm:left-[34px] text-white z-10">
-        <Header2 className="text-lg font-bold">{title}</Header2>
+        <Header2 className="text-lg font-bold">{name}</Header2>
         <Paragraph1 className="text-sm hidden sm:flex">
           {description}
         </Paragraph1>
@@ -62,11 +62,41 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({
 };
 
 const PopularCategorySection = () => {
-  // Split into 3 columns of 2 boxes each
+  const { data: categories, isLoading, error } = useCategories();
+
+  if (isLoading) {
+    return (
+      <section className="container px-4 sm:px-0 mx-auto py-6 sm:py-12">
+        <div className="text-center mb-6">
+          <Header1Plus className="tracking-wide uppercase">
+            Popular Categories
+          </Header1Plus>
+        </div>
+        <CategoryCardSkeleton count={6} />
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="container px-4 sm:px-0 mx-auto py-6 sm:py-12">
+        <div className="text-center mb-6">
+          <Header1Plus className="tracking-wide uppercase">
+            Popular Categories
+          </Header1Plus>
+        </div>
+        <CategoryCardSkeleton count={6} />
+      </section>
+    );
+  }
+
+  // Limit to 6 categories and split into 3 columns of 2 boxes each
+  const displayCategories =
+    (Array.isArray(categories) ? categories : [])?.slice(0, 6) || [];
   const columns = [
-    categories.slice(0, 2),
-    categories.slice(2, 4),
-    categories.slice(4, 6),
+    displayCategories.slice(0, 2),
+    displayCategories.slice(2, 4),
+    displayCategories.slice(4, 6),
   ];
 
   return (
@@ -88,8 +118,8 @@ const PopularCategorySection = () => {
             key={colIndex}
             className="flex flex-row xl:flex-col gap-2 sm:gap-[23px]"
           >
-            {col.map((box, idx) => (
-              <CategoryBox key={idx} {...box} />
+            {col.map((box) => (
+              <CategoryBox key={box.id} {...box} />
             ))}
           </div>
         ))}

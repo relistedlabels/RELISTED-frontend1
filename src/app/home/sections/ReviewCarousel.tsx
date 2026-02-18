@@ -13,18 +13,30 @@ import {
   Paragraph3,
   ParagraphAny,
 } from "@/common/ui/Text";
-import { reviews } from "@/data/reviewsData";
+import { usePublicReviews } from "@/lib/queries/review/usePublicReviews";
+import { CardGridSkeleton } from "@/common/ui/SkeletonLoaders";
 
 interface Review {
-  id: number;
+  id: string;
   name: string;
   role: string;
   text: string;
-  img: string;
+  image: string;
+  rating: number;
 }
 
 export default function ReviewCarousel() {
   const [index, setIndex] = useState(0);
+
+  // Fetch 5-star reviews for social proof
+  const {
+    data: reviews = [],
+    isLoading,
+    error,
+  } = usePublicReviews({
+    minRating: 5,
+    limit: 10,
+  });
 
   const prev = () => {
     setIndex((prev) => (prev === 0 ? reviews.length - 1 : prev - 1));
@@ -33,6 +45,38 @@ export default function ReviewCarousel() {
   const next = () => {
     setIndex((prev) => (prev === reviews.length - 1 ? 0 : prev + 1));
   };
+
+  if (isLoading) {
+    return (
+      <div className="w-full flex flex-col items-center py-6 sm:py-12 px-4 sm:px-0 bg-white">
+        <div className="text-center sm:mb-10">
+          <Header1Plus className=" ">Join 100,000+ Happy Members</Header1Plus>
+          <div className=" flex justify-center text-[24px]  gap-2 items-center text-black text-xl">
+            <p className="font-bold pr-2">5.0</p>
+            ★★★★★
+          </div>
+        </div>
+        <CardGridSkeleton count={3} />
+      </div>
+    );
+  }
+
+  if (error || reviews.length === 0) {
+    return (
+      <div className="w-full flex flex-col items-center py-6 sm:py-12 px-4 sm:px-0 bg-white">
+        <div className="text-center sm:mb-10">
+          <Header1Plus className=" ">Join 100,000+ Happy Members</Header1Plus>
+          <div className=" flex justify-center text-[24px]  gap-2 items-center text-black text-xl">
+            <p className="font-bold pr-2">5.0</p>
+            ★★★★★
+          </div>
+          <Paragraph1 className="text-gray-500 mt-1">
+            Based on 10,000+ Google Reviews
+          </Paragraph1>
+        </div>
+      </div>
+    );
+  }
 
   const leftIndex = (index - 1 + reviews.length) % reviews.length;
   const rightIndex = (index + 1) % reviews.length;
@@ -58,7 +102,7 @@ export default function ReviewCarousel() {
         {/* LEFT SMALL CARD */}
         <AnimatePresence initial={false}>
           <motion.div
-            key={leftIndex}
+            key={`left-${leftIndex}`}
             initial={{ scale: 0.85, x: -250, opacity: 0 }}
             animate={{ scale: 0.85, x: -200, opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -72,7 +116,7 @@ export default function ReviewCarousel() {
         {/* CENTER MAIN CARD */}
         <AnimatePresence initial={false}>
           <motion.div
-            key={index}
+            key={`center-${index}`}
             initial={{ scale: 0.8, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.8, opacity: 0 }}
@@ -86,7 +130,7 @@ export default function ReviewCarousel() {
         {/* RIGHT SMALL CARD */}
         <AnimatePresence initial={false}>
           <motion.div
-            key={rightIndex}
+            key={`right-${rightIndex}`}
             initial={{ scale: 0.85, x: 250, opacity: 0 }}
             animate={{ scale: 0.85, x: 200, opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -124,7 +168,7 @@ function SmallReviewCard({ review }: { review: Review }) {
     <div>
       <div className=" flex gap-2 sm:gap-4">
         <Image
-          src={review.img}
+          src={review.image}
           alt={review.name}
           width={100}
           height={100}
@@ -151,7 +195,7 @@ function MainReviewCard({ review }: { review: Review }) {
     <div>
       <div className=" flex gap-2 sm:gap-4">
         <Image
-          src={review.img}
+          src={review.image}
           alt={review.name}
           width={100}
           height={100}

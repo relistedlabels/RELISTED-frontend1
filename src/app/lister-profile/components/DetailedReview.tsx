@@ -1,10 +1,14 @@
 // ENDPOINTS: GET /api/public/users/:userId/reviews
 
-import React from "react";
-import { Paragraph1 } from "@/common/ui/Text"; // Using your custom text component
-import { TiTick } from "react-icons/ti"; // Using the Tick icon if needed for verification/badges
+"use client";
+
+import React, { useState } from "react";
+import { Paragraph1 } from "@/common/ui/Text";
+import { CardGridSkeleton } from "@/common/ui/SkeletonLoaders";
+import { usePublicUserReviews } from "@/lib/queries/user/usePublicUserReviews";
 
 interface DetailedReview {
+  id: string;
   name: string;
   date: string;
   rating: number;
@@ -13,8 +17,8 @@ interface DetailedReview {
   avatarUrl?: string;
 }
 
-interface CuratorFullReviewsProps {
-  reviews: DetailedReview[];
+interface DetailedReviewProps {
+  userId: string;
 }
 
 const FullReviewItem: React.FC<DetailedReview> = ({
@@ -35,20 +39,18 @@ const FullReviewItem: React.FC<DetailedReview> = ({
     </span>
   );
 
-  // Generate random avatar if not provided
   const avatarSrc =
     avatarUrl ?? `https://i.pravatar.cc/150?u=${encodeURIComponent(name)}`;
 
   return (
-    <div className="p-4 bg-white border border-gray-200 rounded-xl mb-4 ">
+    <div className="p-4 bg-white border border-gray-200 rounded-xl mb-4">
       {isMostHelpful && (
-        <span className="inline-flex mb-4 items-center px-2 py-0.5 rounded-md text-xs font-medium bg-yellow-400/50 text-gray-900 ">
+        <span className="inline-flex mb-4 items-center px-2 py-0.5 rounded-md text-xs font-medium bg-yellow-400/50 text-gray-900">
           Most Helpful
         </span>
       )}
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-start space-x-3">
-          {/* Avatar */}
           <div className="sm:w-16 w-12 h-12 sm:h-16 rounded-full overflow-hidden bg-gray-200 shrink-0">
             <img
               src={avatarSrc}
@@ -56,8 +58,6 @@ const FullReviewItem: React.FC<DetailedReview> = ({
               className="w-full h-full object-cover"
             />
           </div>
-
-          {/* Name and Rating */}
           <div>
             <div className="flex items-center space-x-2">
               <Paragraph1 className="text-sm font-semibold text-gray-900">
@@ -65,15 +65,11 @@ const FullReviewItem: React.FC<DetailedReview> = ({
               </Paragraph1>
             </div>
             {renderStars(rating)}
-
-            {/* Comment */}
             <Paragraph1 className="text-sm text-gray-700 leading-snug mt-2">
               {comment}
             </Paragraph1>
           </div>
         </div>
-
-        {/* Date and Badge */}
         <div className="flex flex-col items-end">
           <Paragraph1 className="text-xs text-gray-500">{date}</Paragraph1>
         </div>
@@ -82,8 +78,36 @@ const FullReviewItem: React.FC<DetailedReview> = ({
   );
 };
 
-const CuratorFullReviews: React.FC<CuratorFullReviewsProps> = ({ reviews }) => {
-  if (!reviews || reviews.length === 0) {
+const DetailedReviewComponent: React.FC<DetailedReviewProps> = ({ userId }) => {
+  const [page, setPage] = useState(1);
+  const [sortBy, setSortBy] = useState<
+    "newest" | "oldest" | "rating_high" | "rating_low"
+  >("newest");
+
+  const { data, isLoading, error } = usePublicUserReviews(userId, {
+    page,
+    limit: 10,
+    sort: sortBy,
+  });
+
+  if (isLoading) {
+    return <CardGridSkeleton />;
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 bg-white border border-gray-200 rounded-xl">
+        <Paragraph1 className="text-sm text-red-600">
+          Failed to load reviews. Please try again later.
+        </Paragraph1>
+      </div>
+    );
+  }
+
+  const reviews = data?.reviews || [];
+  const pagination = data?.pagination;
+
+  if (reviews.length === 0) {
     return (
       <div className="p-4 bg-white border border-gray-200 rounded-xl">
         <Paragraph1 className="text-sm text-gray-600">
@@ -95,53 +119,42 @@ const CuratorFullReviews: React.FC<CuratorFullReviewsProps> = ({ reviews }) => {
 
   return (
     <div className="font-sans">
-      {reviews.map((review) => (
-        <FullReviewItem key={`${review.name}-${review.date}`} {...review} />
+      {reviews.map((review: DetailedReview) => (
+        <FullReviewItem
+          key={review.id}
+          id={review.id}
+          name={review.name}
+          date={review.date}
+          rating={review.rating}
+          comment={review.comment}
+          isMostHelpful={review.isMostHelpful}
+          avatarUrl={review.avatarUrl}
+        />
       ))}
+
+      {pagination && pagination.totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-8">
+          <button
+            onClick={() => setPage(Math.max(1, page - 1))}
+            disabled={page === 1}
+            className="px-4 py-2 border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+          >
+            Previous
+          </button>
+          <span className="px-4 py-2 text-sm text-gray-600">
+            Page {page} of {pagination.totalPages}
+          </span>
+          <button
+            onClick={() => setPage(Math.min(pagination.totalPages, page + 1))}
+            disabled={page === pagination.totalPages}
+            className="px-4 py-2 border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 };
 
-// --- Example Usage ---
-const ExampleCuratorFullReviews: React.FC = () => {
-  const sampleReviews: DetailedReview[] = [
-    {
-      name: "Chioma Nnamdi",
-      date: "October 10, 2025",
-      rating: 5,
-      comment:
-        "Absolutely loved the evening gown! It fit perfectly and the quality was exceptional. Adaeze was very professional and made the entire rental process seamless. Will definitely rent again!",
-      isMostHelpful: true,
-      avatarUrl: "https://i.pravatar.cc/150?u=ChiomaNnamdi",
-    },
-    {
-      name: "Blessing Okonkwo",
-      date: "September 28, 2025",
-      rating: 5,
-      comment:
-        "Beautiful pieces and excellent service. The dress was exactly as described and in pristine condition. Highly recommend!",
-      isMostHelpful: true,
-      avatarUrl: "https://i.pravatar.cc/150?u=BlessingOkonkwo",
-    },
-    {
-      name: "Funke Adebayo",
-      date: "September 15, 2025",
-      rating: 4,
-      comment:
-        "Great experience overall. The dress was stunning and got so many compliments. Only minor issue was pickup timing, but Adaeze was accommodating.",
-      avatarUrl: "https://i.pravatar.cc/150?u=FunkeAdebayo",
-    },
-    {
-      name: "Ngozi Eze",
-      date: "August 30, 2025",
-      rating: 5,
-      comment:
-        "Perfect for my event! The quality is amazing and Adaeze provides excellent styling advice. Truly a professional curator.",
-      avatarUrl: "https://i.pravatar.cc/150?u=NgoziEze",
-    },
-  ];
-
-  return <CuratorFullReviews reviews={sampleReviews} />;
-};
-
-export default ExampleCuratorFullReviews;
+export default DetailedReviewComponent;

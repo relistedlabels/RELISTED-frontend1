@@ -17,6 +17,7 @@ import {
 } from "@/lib/mutations/product/useProductApproval";
 import { UserProduct } from "@/lib/api/product";
 import { useQueryClient } from "@tanstack/react-query";
+import { TableSkeleton, StatCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import ListingDetailModal from "./components/ListingDetailModal";
 import PendingListingsTable from "./components/PendingListingsTable";
 import ApprovedListingsTable from "./components/ApprovedListingsTable";
@@ -41,7 +42,15 @@ export default function ListingsPage() {
   );
 
   // Fetch all statistics from API - includes products for each status
-  const { data: stats, isLoading: statsLoading } = useProductStatistics();
+  const {
+    data: stats,
+    isLoading: statsLoading,
+    error: statsError,
+  } = useProductStatistics();
+
+  if (statsError) {
+    console.error("Failed to load product statistics:", statsError);
+  }
 
   const TABS: TabType[] = ["Pending", "Approved", "Rejected"];
 
@@ -202,80 +211,92 @@ export default function ListingsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-        {/* Total Listings */}
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="bg-gray-50 p-3 rounded-lg">
-              <Globe size={24} className="text-gray-700" />
+        {statsLoading || statsError ? (
+          <>
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </>
+        ) : (
+          <>
+            {/* Total Listings */}
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <Globe size={24} className="text-gray-700" />
+                </div>
+              </div>
+              <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Total Listings
+              </Paragraph1>
+              <Paragraph3 className="text-3xl font-bold text-gray-900">
+                {stats?.getTotalProducts?.count || 0}
+              </Paragraph3>
             </div>
-          </div>
-          <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Total Listings
-          </Paragraph1>
-          <Paragraph3 className="text-3xl font-bold text-gray-900">
-            {statsLoading ? "-" : stats?.getTotalProducts?.count || 0}
-          </Paragraph3>
-        </div>
 
-        {/* Pending Review */}
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="bg-yellow-50 p-3 rounded-lg">
-              <AlertCircle size={24} className="text-yellow-600" />
+            {/* Pending Review */}
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="bg-yellow-50 p-3 rounded-lg">
+                  <AlertCircle size={24} className="text-yellow-600" />
+                </div>
+              </div>
+              <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Pending Review
+              </Paragraph1>
+              <Paragraph3 className="text-3xl font-bold text-gray-900">
+                {stats?.getPendingProducts?.count || 0}
+              </Paragraph3>
             </div>
-          </div>
-          <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Pending Review
-          </Paragraph1>
-          <Paragraph3 className="text-3xl font-bold text-gray-900">
-            {statsLoading ? "-" : stats?.getPendingProducts?.count || 0}
-          </Paragraph3>
-        </div>
 
-        {/* Approved */}
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="bg-green-50 p-3 rounded-lg">
-              <CheckCircle size={24} className="text-green-600" />
+            {/* Approved */}
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="bg-green-50 p-3 rounded-lg">
+                  <CheckCircle size={24} className="text-green-600" />
+                </div>
+              </div>
+              <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Approved
+              </Paragraph1>
+              <Paragraph3 className="text-3xl font-bold text-gray-900">
+                {stats?.getApprovedProducts?.count || 0}
+              </Paragraph3>
             </div>
-          </div>
-          <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Approved
-          </Paragraph1>
-          <Paragraph3 className="text-3xl font-bold text-gray-900">
-            {statsLoading ? "-" : stats?.getApprovedProducts?.count || 0}
-          </Paragraph3>
-        </div>
 
-        {/* Rejected */}
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="bg-red-50 p-3 rounded-lg">
-              <XCircle size={24} className="text-red-600" />
+            {/* Rejected */}
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="bg-red-50 p-3 rounded-lg">
+                  <XCircle size={24} className="text-red-600" />
+                </div>
+              </div>
+              <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Rejected
+              </Paragraph1>
+              <Paragraph3 className="text-3xl font-bold text-gray-900">
+                {stats?.getRejectedProducts?.count || 0}
+              </Paragraph3>
             </div>
-          </div>
-          <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Rejected
-          </Paragraph1>
-          <Paragraph3 className="text-3xl font-bold text-gray-900">
-            {statsLoading ? "-" : stats?.getRejectedProducts?.count || 0}
-          </Paragraph3>
-        </div>
 
-        {/* Active Products */}
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <CheckCircle size={24} className="text-blue-600" />
+            {/* Active Products */}
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <CheckCircle size={24} className="text-blue-600" />
+                </div>
+              </div>
+              <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Active
+              </Paragraph1>
+              <Paragraph3 className="text-3xl font-bold text-gray-900">
+                {stats?.getActiveProducts?.count || 0}
+              </Paragraph3>
             </div>
-          </div>
-          <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            Active
-          </Paragraph1>
-          <Paragraph3 className="text-3xl font-bold text-gray-900">
-            {statsLoading ? "-" : stats?.getActiveProducts?.count || 0}
-          </Paragraph3>
-        </div>
+          </>
+        )}
       </div>
 
       {/* Tabs */}
@@ -301,44 +322,50 @@ export default function ListingsPage() {
 
       {/* Listings Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        {activeTab === "Pending" && (
-          <PendingListingsTable
-            products={pendingProducts}
-            isLoading={statsLoading}
-            error={null}
-            searchQuery={searchQuery}
-            onApprove={handleApprove}
-            onReject={handleRejectClick}
-            onView={(product) => {
-              setSelectedListing(product);
-              setIsModalOpen(true);
-            }}
-            approvingProductId={approvingProductId}
-          />
-        )}
-        {activeTab === "Approved" && (
-          <ApprovedListingsTable
-            products={approvedProducts}
-            isLoading={statsLoading}
-            error={null}
-            searchQuery={searchQuery}
-            onView={(product) => {
-              setSelectedListing(product);
-              setIsModalOpen(true);
-            }}
-          />
-        )}
-        {activeTab === "Rejected" && (
-          <RejectedListingsTable
-            products={rejectedProducts}
-            isLoading={statsLoading}
-            error={null}
-            searchQuery={searchQuery}
-            onView={(product) => {
-              setSelectedListing(product);
-              setIsModalOpen(true);
-            }}
-          />
+        {statsLoading || statsError ? (
+          <TableSkeleton rows={5} />
+        ) : (
+          <>
+            {activeTab === "Pending" && (
+              <PendingListingsTable
+                products={pendingProducts}
+                isLoading={false}
+                error={null}
+                searchQuery={searchQuery}
+                onApprove={handleApprove}
+                onReject={handleRejectClick}
+                onView={(product) => {
+                  setSelectedListing(product);
+                  setIsModalOpen(true);
+                }}
+                approvingProductId={approvingProductId}
+              />
+            )}
+            {activeTab === "Approved" && (
+              <ApprovedListingsTable
+                products={approvedProducts}
+                isLoading={false}
+                error={null}
+                searchQuery={searchQuery}
+                onView={(product) => {
+                  setSelectedListing(product);
+                  setIsModalOpen(true);
+                }}
+              />
+            )}
+            {activeTab === "Rejected" && (
+              <RejectedListingsTable
+                products={rejectedProducts}
+                isLoading={false}
+                error={null}
+                searchQuery={searchQuery}
+                onView={(product) => {
+                  setSelectedListing(product);
+                  setIsModalOpen(true);
+                }}
+              />
+            )}
+          </>
         )}
       </div>
 

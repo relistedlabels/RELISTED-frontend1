@@ -142,21 +142,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
             !isMobileExpanded ? "justify-center lg:justify-start" : ""
           }`}
         >
-          {profile?.avatar ? (
-            <img
-              src={profile.avatar}
-              alt={user?.name || "Admin"}
-              className="w-12 h-12 rounded-full border border-gray-200 object-cover"
-            />
-          ) : (
-            <div
-              className={`w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center font-bold text-white text-sm ${getAvatarBgColor(
-                user?.name || "",
-              )}`}
-            >
-              {getInitials(user?.name || "")}
-            </div>
-          )}
+          <div
+            className={`w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center font-bold text-white text-sm ${getAvatarBgColor(
+              user?.name || "",
+            )}`}
+          >
+            {getInitials(user?.name || "")}
+          </div>
 
           <div className={`${!isMobileExpanded ? "hidden lg:block" : "block"}`}>
             <Paragraph1 className="text-sm font-bold truncate">
