@@ -2,14 +2,17 @@
 
 import ProductCard from "@/common/ui/ProductCard";
 import { motion, useAnimation, useMotionValue } from "framer-motion";
-import { products } from "@/data/productsData";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import { useEffect, useRef, useState } from "react";
-
-// Duplicate items for seamless scroll
-const duplicatedProducts = [...products, ...products];
+import { useProducts } from "@/lib/queries/product/useProducts";
+import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
 
 export default function TopListingSection() {
+  const { data: products = [], isLoading, error } = useProducts();
+
+  // Duplicate items for seamless scroll
+  const duplicatedProducts = [...products, ...products];
+
   const containerRef = useRef<HTMLDivElement>(null);
   const controls = useAnimation();
   const x = useMotionValue(0); // track position
@@ -55,6 +58,21 @@ export default function TopListingSection() {
     }
   }, [autoScrolling, distance, speed]);
 
+  if (isLoading || error) {
+    return (
+      <section className="py-12 px-4 sm:px-0 bg-white">
+        <div className="container mx-auto">
+          <div className="text-center mb-12">
+            <Header1Plus className="tracking-wide uppercase">
+              You might also like
+            </Header1Plus>
+          </div>
+          <ProductCardSkeleton count={6} />
+        </div>
+      </section>
+    );
+  }
+
   const handleDragStart = () => {
     setAutoScrolling(false);
   };
@@ -71,9 +89,9 @@ export default function TopListingSection() {
     <section className="py-12 px-4 sm:px-0 bg-white">
       <div className="container mx-auto">
         {/* Header */}
-        <div className="text- mb-12">
-          <Header1Plus className="tracking-wide uppercase -">
-            You might also like{" "}
+        <div className="mb-12">
+          <Header1Plus className="tracking-wide uppercase">
+            You might also like
           </Header1Plus>
         </div>
 
@@ -90,13 +108,14 @@ export default function TopListingSection() {
             animate={controls}
           >
             {duplicatedProducts.map((item, index) => (
-              <div className="min-w-[260px] max-w-[260px]">
+              <div key={index} className="min-w-[260px] max-w-[260px]">
                 <ProductCard
-                  key={index}
-                  image={item.image}
-                  brand={item.brand}
+                  image={
+                    item.attachments?.uploads?.[0]?.url || "/placeholder.jpg"
+                  }
+                  brand={item.brandId || "BRAND"}
                   name={item.name}
-                  price={item.price}
+                  price={`₦${item.originalValue.toLocaleString()}`}
                 />
               </div>
             ))}
