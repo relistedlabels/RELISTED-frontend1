@@ -1,30 +1,35 @@
 // productsData.ts
 export const products = [
   {
+    id: "prod_001",
     image: "/products/p1.jpg",
     brand: "GUCCI",
     name: "Classic Easy Zipper Tote",
     price: "₦85,000",
   },
   {
+    id: "prod_002",
     image: "/products/p2.jpg",
     brand: "DOLCE & GABBANA",
     name: "Concertina Phone Bag",
     price: "₦105,000",
   },
   {
+    id: "prod_003",
     image: "/products/p3.jpg",
     brand: "LOUIS VUITTON",
     name: "Wool Cashmere Sweater Coat",
     price: "₦165,000",
   },
   {
+    id: "prod_004",
     image: "/products/p4.jpg",
     brand: "CHANNEL",
     name: "Single-Origin Cashmere Beanie",
     price: "₦165,000",
   },
   {
+    id: "prod_005",
     image: "/products/p5.jpg",
     brand: "FENDI",
     name: "Alpaca Wool Cardigan",

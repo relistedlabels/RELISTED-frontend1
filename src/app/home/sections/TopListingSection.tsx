@@ -105,14 +105,15 @@ const TopListingSection = () => {
               {displayProducts.map((product, index) => (
                 <div
                   key={`${product.id}-${index}`}
-                  className="min-w-[170px] max-w-[170px] shrink-0"
+                  className="w-[170px] sm:w-[250px] shrink-0"
                 >
                   <ProductCard
+                    id={product.id}
                     image={
                       product.attachments?.uploads?.[0]?.url ||
                       "/placeholder.jpg"
                     }
-                    brand={product.brandId || "BRAND"} // TODO: Fetch brand name
+                    brand={product.brand?.name || "BRAND"}
                     name={product.name}
                     price={`₦${product.originalValue.toLocaleString()}`}
                   />

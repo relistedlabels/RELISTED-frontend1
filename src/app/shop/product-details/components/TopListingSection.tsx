@@ -110,10 +110,11 @@ export default function TopListingSection() {
             {duplicatedProducts.map((item, index) => (
               <div key={index} className="min-w-[260px] max-w-[260px]">
                 <ProductCard
+                  id={item.id}
                   image={
                     item.attachments?.uploads?.[0]?.url || "/placeholder.jpg"
                   }
-                  brand={item.brandId || "BRAND"}
+                  brand={item.brand?.name || "BRAND"}
                   name={item.name}
                   price={`₦${item.originalValue.toLocaleString()}`}
                 />

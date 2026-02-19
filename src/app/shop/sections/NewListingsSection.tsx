@@ -102,14 +102,15 @@ export default function NewListingsSection() {
             {filteredProducts.map((product: any) => (
               <ProductCard
                 key={product.id}
+                id={product.id}
                 image={
                   product.attachments?.uploads?.[0]?.url || "/placeholder.jpg"
                 }
-                brand={product.brandId || "BRAND"}
+                brand={product.brand?.name || "BRAND"}
                 name={product.name}
                 price={`₦${product.originalValue.toLocaleString()}`}
               />
-            ))}
+            ))
           </div>
         )}
       </div>

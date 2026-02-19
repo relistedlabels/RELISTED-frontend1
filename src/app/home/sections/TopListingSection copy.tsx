@@ -94,9 +94,9 @@ export default function TopListingSection() {
             animate={controls}
           >
             {duplicatedProducts.map((item, index) => (
-              <div className="min-w-[260px] max-w-[260px]">
+              <div className="min-w-[260px] max-w-[260px] sm:w-[300px]" key={index}>
                 <ProductCard
-                  key={index}
+                  id={item.id}
                   image={item.image}
                   brand={item.brand}
                   name={item.name}

@@ -124,6 +124,7 @@ export default function Favorites() {
             filteredItems.map((item) => (
               <div key={item.id} className="relative">
                 <ProductCard
+                  id={item.id}
                   image={item.image}
                   brand={item.listerName}
                   name={item.itemName}

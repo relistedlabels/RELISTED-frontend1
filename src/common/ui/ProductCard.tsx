@@ -5,6 +5,7 @@ import { Paragraph1 } from "./Text";
 import { Heart } from "lucide-react";
 
 interface ProductCardProps {
+  id: string;
   image: string;
   brand: string;
   name: string;
@@ -12,13 +13,14 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({
+  id,
   image,
   brand,
   name,
   price,
 }: ProductCardProps) {
   return (
-    <Link href="/shop/product-details" className="overflow-hidden ">
+    <Link href={`/shop/product-details/${id}`} className="overflow-hidden ">
       {/* Image wrapper */}
       <div className="relative w-full h-[230px] sm:h-[270px]">
         {/* Background image */}

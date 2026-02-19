@@ -34,6 +34,12 @@ export type UserProduct = {
   warning: string;
   color: string;
   brandId: string | null;
+  brand: {
+    id: string;
+    name: string;
+    userId?: string;
+    createdAt?: string;
+  } | null;
   categoryId: string | null;
   tagId: string | null;
   curatorId: string;

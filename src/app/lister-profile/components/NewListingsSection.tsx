@@ -92,6 +92,7 @@ export default function NewListingsSection({
               {products.map((product) => (
                 <ProductCard
                   key={product.id}
+                  id={product.id}
                   image={product.image}
                   brand={
                     typeof product.brand === "string"

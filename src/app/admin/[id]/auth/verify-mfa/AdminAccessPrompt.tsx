@@ -36,9 +36,11 @@ export default function AdminAccessPrompt({
   // Redirect after successful verification
   useEffect(() => {
     if (isSuccess) {
+      // Wait a bit longer to ensure browser has processed the cookie
+      // and the useMe query has been invalidated and refetched
       const timer = setTimeout(() => {
         router.push(`/admin/${adminId}/dashboard`);
-      }, 2500);
+      }, 3000);
       return () => clearTimeout(timer);
     }
   }, [isSuccess, adminId, router]);
