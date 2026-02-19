@@ -8,6 +8,7 @@ import { useMe } from "@/lib/queries/auth/useMe";
 import LoginModal from "@/common/modals/LoginModal";
 import { RentalCheckSkeleton } from "@/common/ui/SkeletonAuth";
 import { useRentalError } from "@/common/components/RentalErrorBoundary";
+import { useSubmitRentalRequest } from "@/lib/mutations/renters/useRentalRequestMutations";
 
 // ============================================================================
 // API ENDPOINTS USED:
@@ -151,7 +152,19 @@ const Calendar = () => {
 
 // --- Main Component ---
 
-export default function RentalDurationSelector() {
+interface RentalDurationSelectorProps {
+  productId: string;
+  listerId: string;
+  dailyPrice: number;
+  securityDeposit: number;
+}
+
+const RentalDurationSelector = ({
+  productId,
+  listerId,
+  dailyPrice,
+  securityDeposit,
+}: RentalDurationSelectorProps) => {
   const [selectedDuration, setSelectedDuration] = useState<number | "custom">(
     3,
   );
@@ -167,6 +180,7 @@ export default function RentalDurationSelector() {
 
   // Check auth status
   const { isLoading: isCheckingAuth, isError: authError } = useMe();
+  const submitRentalRequest = useSubmitRentalRequest();
 
   const handleCheckAvailability = useCallback(async () => {
     try {
@@ -361,4 +375,5 @@ export default function RentalDurationSelector() {
       />
     </>
   );
-}
+};
+export default RentalDurationSelector;

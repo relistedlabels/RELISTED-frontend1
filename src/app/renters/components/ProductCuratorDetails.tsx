@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Star } from "lucide-react";
-import {  Paragraph1 } from "@/common/ui/Text";
+import { Paragraph1 } from "@/common/ui/Text";
 
 // --- Product and Curator Placeholder Data ---
 const productData = {
@@ -28,7 +28,13 @@ const formatCurrency = (amount: number): string => {
 };
 const CURRENCY = "₦";
 
-export default function ProductCuratorDetails() {
+interface ProductCuratorDetailsProps {
+  orderId?: string;
+}
+
+export default function ProductCuratorDetails({
+  orderId,
+}: ProductCuratorDetailsProps) {
   return (
     <div className=" space-y-4">
       {/* --- 1. PRODUCT DETAILS CARD --- */}

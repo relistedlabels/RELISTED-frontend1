@@ -113,27 +113,17 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
           <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
             Rental Duration
           </Paragraph1>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
-            {/* Active Button */}
-            <button className="flex-1 px-4 py-2 text-sm font-medium text-white bg-black rounded-lg transition duration-150">
-              <Paragraph1>3 Days</Paragraph1>
-            </button>
-            {/* Inactive Buttons */}
-            <button className="flex-1 px-4 py-2 text-sm font-medium text-gray-800 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition duration-150">
-              <Paragraph1>6 Days</Paragraph1>
-            </button>
-            <button className="flex-1 px-4 py-2 text-sm font-medium text-gray-800 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition duration-150">
-              <Paragraph1>9 Days</Paragraph1>
-            </button>
-            <button className="flex-1 px-4 py-2 text-sm font-medium text-gray-800 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition duration-150">
-              <Paragraph1>Custom</Paragraph1>
-            </button>
-          </div>
+          {/* RentalPeriods now receives product/lister info as props */}
+          <RentalPeriods
+            productId={product.id}
+            listerId={product.lister.id}
+            dailyPrice={product.dailyPrice}
+            securityDeposit={product.securityDeposit}
+          />
         </div>
 
         {/* Action Buttons */}
         <div className="flex space-x-2 mb-4">
-          <RentalPeriods />
           <button className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150">
             <HiOutlineHeart className="w-6 h-6 text-gray-800" />
           </button>

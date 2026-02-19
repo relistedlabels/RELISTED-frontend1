@@ -45,6 +45,11 @@ export interface ProfileAddress {
 }
 
 /** Shape of `data` returned from GET /profile/user-profile */
+export interface ProfileWallet {
+  balance: number;
+  currency: string;
+}
+
 export interface FullProfile {
   id: string;
   userId: string;
@@ -60,6 +65,7 @@ export interface FullProfile {
   businessInfo: ProfileBusinessInfo;
   address: ProfileAddress;
   user: ProfileUser;
+  wallet?: ProfileWallet;
 }
 
 /** API contract */
@@ -95,6 +101,7 @@ export interface UpdateProfilePayload {
     city: string;
     state: string;
     country: string;
+    zipCode?: string;
   };
 
   avatarUploadId?: string;

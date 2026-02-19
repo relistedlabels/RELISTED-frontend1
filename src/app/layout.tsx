@@ -9,6 +9,7 @@ import { Header } from "./Header";
 import { UploaderProvider } from "@/context/UploaderProvider";
 import { Toaster } from "sonner";
 import ApiTestComponent from "@/common/debug/ApiTestComponent";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title:
@@ -66,6 +67,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className=" ">
+        <Script
+          src="https://cdn.useproof.com/proof.js?acc=Bqcvk37d6ShMWxmTxW9BfwPxV9n1"
+          strategy="afterInteractive"
+        />
         {/* <DevGuard> */}
         <QueryProvider>
           <UploaderProvider>

@@ -1,21 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  SlidersVertical,
-  X,
-  Search,
-  ChevronLeft,
-  ArrowLeft,
-} from "lucide-react";
+import { X, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
-import Button from "@/common/ui/Button";
-import AddressInputForm from "./AddressInputForm";
+import { Paragraph1 } from "@/common/ui/Text";
 import WalletTopUpForm from "./WalletTopUpForm";
 
 // --------------------
-// Slide-in Filter Panel
+// Slide-in Wallet Modal
 // --------------------
 interface FundWalletPanelProps {
   isOpen: boolean;
@@ -26,19 +18,9 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
   isOpen,
   onClose,
 }) => {
-  const minPrice = 50000;
-  const maxPrice = 200000;
-
   const variants = {
     hidden: { x: "100%" },
     visible: { x: 0 },
-  };
-
-  const ExampleData = {
-    rentalDays: 3,
-    rentalFeePerPeriod: 165000,
-    securityDeposit: 15000,
-    cleaningFee: 10000,
   };
 
   return (
@@ -52,10 +34,10 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="fixed top-0 right-0 h-screen hide-scrollbar overflow-y-auto bg-white shadow-2xl px-4  flex flex-col w-full sm:w-114"
+            className="fixed top-0 right-0 h-screen hide-scrollbar overflow-y-auto bg-white shadow-2xl px-4 flex flex-col w-full sm:w-114"
             role="dialog"
             aria-modal="true"
-            aria-label="Product FundWallet"
+            aria-label="Fund wallet"
             initial="hidden"
             animate="visible"
             exit="hidden"
@@ -64,41 +46,30 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex justify-between sticky top-0 items-center pb-4 border-b border-gray-100 pt-6 z-10  bg-white">
+            <div className="flex justify-between sticky top-0 items-center pb-4 border-b border-gray-100 pt-6 z-10 bg-white">
               <button
                 onClick={onClose}
                 className="text-gray-500 xl:hidden hover:text-black p-1 rounded-full transition"
-                aria-label="Close FundWallet"
+                aria-label="Close wallet modal"
               >
                 <ArrowLeft size={20} />
               </button>
 
-              <Paragraph1 className=" font-bold tracking-widest text-gray-800">
-                Fund your wallet
+              <Paragraph1 className="font-bold tracking-widest text-gray-800">
+                Fund Your Wallet
               </Paragraph1>
               <button
                 onClick={onClose}
-                className="text-gray-500  hover:text-black p-1 rounded-full transition"
-                aria-label="Close FundWallet"
+                className="text-gray-500 hover:text-black p-1 rounded-full transition"
+                aria-label="Close wallet modal"
               >
-                <X className=" hidden xl:flex" size={20} />
+                <X className="hidden xl:flex" size={20} />
               </button>
             </div>
 
             {/* Content */}
-            <div className="grow pt-4 pb-20 space-y-8">
-              <WalletTopUpForm />{" "}
-            </div>
-
-            {/* Footer */}
-            <div className="mt-auto py-2 bg-white flex justify-between gap-4 sticky bottom-0">
-              <button className="flex-1  px-4 py-3  font-semibold border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-                <Paragraph1>Cancel </Paragraph1>
-              </button>
-
-              <button className="flex-1  px-4 py-3  font-semibold border bg-black text-white rounded-lg hover:bg-gray-900 transition">
-                <Paragraph1>Proceed </Paragraph1>
-              </button>
+            <div className="grow pt-4 pb-20">
+              <WalletTopUpForm onClose={onClose} />
             </div>
           </motion.div>
         </motion.div>
@@ -118,12 +89,12 @@ const FundWallet: React.FC = () => {
       {/* Toggle Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="border px-4 items-center rounded-lg bg-black text-white justify-center  w-fit py-2 flex gap-1 cursor-pointer font-semibold hover:text-black  border-black  hover:bg-gray-100 transition "
+        className="border px-4 items-center rounded-lg bg-black text-white justify-center w-fit py-2 flex gap-1 cursor-pointer font-semibold hover:bg-gray-900 text-sm transition"
       >
         <Paragraph1>Fund Wallet</Paragraph1>
       </button>
 
-      {/* Filter Panel */}
+      {/* Wallet Modal */}
       <FundWalletPanel isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
   );

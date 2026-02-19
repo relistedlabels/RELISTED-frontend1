@@ -1,17 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { SlidersVertical, X, Search, ChevronLeft, ArrowLeft } from "lucide-react";
+import { X, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
-import Button from "@/common/ui/Button";
+import { Paragraph1 } from "@/common/ui/Text";
 import RentalCartSummary from "./RentalCartSummary";
 import Link from "next/link";
 
-
-
 // --------------------
-// Slide-in Filter Panel
+// Slide-in Cart Panel
 // --------------------
 interface RentalCartViewPanelProps {
   isOpen: boolean;
@@ -22,14 +19,10 @@ const RentalCartViewPanel: React.FC<RentalCartViewPanelProps> = ({
   isOpen,
   onClose,
 }) => {
-  const minPrice = 50000;
-  const maxPrice = 200000;
-
   const variants = {
     hidden: { x: "100%" },
     visible: { x: 0 },
   };
-
 
   return (
     <AnimatePresence>
@@ -45,7 +38,7 @@ const RentalCartViewPanel: React.FC<RentalCartViewPanelProps> = ({
             className="fixed top-0 right-0 h-screen hide-scrollbar overflow-y-auto bg-white shadow-2xl px-4  flex flex-col w-full sm:w-114"
             role="dialog"
             aria-modal="true"
-            aria-label="Product RentalCartView"
+            aria-label="Shopping Cart"
             initial="hidden"
             animate="visible"
             exit="hidden"
@@ -58,18 +51,18 @@ const RentalCartViewPanel: React.FC<RentalCartViewPanelProps> = ({
               <button
                 onClick={onClose}
                 className="text-gray-500 xl:hidden hover:text-black p-1 rounded-full transition"
-                aria-label="Close RentalCartView"
+                aria-label="Close cart"
               >
                 <ArrowLeft size={20} />
               </button>
 
               <Paragraph1 className=" font-bold uppercase tracking-widest text-gray-800">
-                Size Guide
+                Your Cart
               </Paragraph1>
               <button
                 onClick={onClose}
                 className="text-gray-500  hover:text-black p-1 rounded-full transition"
-                aria-label="Close RentalCartView"
+                aria-label="Close cart"
               >
                 <X className=" hidden xl:flex" size={20} />
               </button>
@@ -86,7 +79,7 @@ const RentalCartViewPanel: React.FC<RentalCartViewPanelProps> = ({
                 href="/shop/cart"
                 className="flex-1 flex justify-center px-4 py-3 text-sm font-semibold border border-gray-300 rounded-lg hover:bg-gray-50 transition"
               >
-                <Paragraph1>View Cart </Paragraph1>
+                <Paragraph1>View Full Cart </Paragraph1>
               </Link>
 
               <button

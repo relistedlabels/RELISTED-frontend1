@@ -3,24 +3,32 @@ import { Paragraph1, Paragraph3 } from "@/common/ui/Text"; // Assuming your cust
 import { HiOutlineArrowUpRight } from "react-icons/hi2";
 
 interface TransactionDetailViewProps {
+  /** Modal Control */
+  isOpen?: boolean;
+  onClose?: () => void;
+  transaction?: any;
+
   /** Summary Info */
-  type: "Debit" | "Credit";
-  summaryDate: string;
-  summaryAmount: string;
-  summaryStatus: "Completed" | "Successful";
+  type?: "Debit" | "Credit";
+  summaryDate?: string;
+  summaryAmount?: string;
+  summaryStatus?: "Completed" | "Successful";
 
   /** Breakdown Details */
-  transactionID: string;
-  description: string;
-  amount: string;
-  paymentMethod: string;
+  transactionID?: string;
+  description?: string;
+  amount?: string;
+  paymentMethod?: string;
 
   /** Item Details */
-  item: string;
-  orderID: string;
+  item?: string;
+  orderID?: string;
 }
 
 const TransactionDetailView: React.FC<TransactionDetailViewProps> = ({
+  isOpen,
+  onClose,
+  transaction,
   type,
   summaryDate,
   summaryAmount,
@@ -32,11 +40,18 @@ const TransactionDetailView: React.FC<TransactionDetailViewProps> = ({
   item,
   orderID,
 }) => {
+  // Use transaction prop if available, otherwise use individual props
+  const txType = transaction?.type || type || "Debit";
+  const txDate =
+    transaction?.date || transaction?.timestamp || summaryDate || "";
+  const txAmount = transaction?.amount || summaryAmount || "";
+  const txStatus = transaction?.status || summaryStatus || "Completed";
+
   // Determine Type Icon and Color
-  const isDebit = type === "Debit";
+  const isDebit = txType === "Debit";
   const typeColorClass = isDebit ? "text-red-500" : "text-green-600";
   const statusBadgeClass =
-    summaryStatus === "Completed"
+    txStatus === "Completed" || txStatus === "completed"
       ? "bg-green-100 text-green-800"
       : "bg-blue-100 text-blue-800";
 
@@ -144,7 +159,6 @@ const TransactionDetailView: React.FC<TransactionDetailViewProps> = ({
 };
 
 export default TransactionDetailView;
-
 
 // --- Example Usage matching the provided image content ---
 

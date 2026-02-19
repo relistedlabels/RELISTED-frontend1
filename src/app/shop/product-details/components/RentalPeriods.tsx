@@ -1,7 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { SlidersVertical, X, Search, ChevronLeft, ArrowLeft } from "lucide-react";
+import {
+  SlidersVertical,
+  X,
+  Search,
+  ChevronLeft,
+  ArrowLeft,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
@@ -23,11 +29,19 @@ type FilterItemProps = {
 interface RentalPeriodsPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  productId: string;
+  listerId: string;
+  dailyPrice: number;
+  securityDeposit: number;
 }
 
 const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
   isOpen,
   onClose,
+  productId,
+  listerId,
+  dailyPrice,
+  securityDeposit,
 }) => {
   const minPrice = 50000;
   const maxPrice = 200000;
@@ -90,7 +104,12 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
 
             {/* Content */}
             <div className="grow pt-4 pb-20 space-y-8">
-              <RentalDurationSelector />
+              <RentalDurationSelector
+                productId={productId}
+                listerId={listerId}
+                dailyPrice={dailyPrice}
+                securityDeposit={securityDeposit}
+              />
               <RentalSummaryCard {...ExampleData} />
             </div>
 
@@ -112,7 +131,20 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
 // --------------------
 // Main Component
 // --------------------
-const RentalPeriods: React.FC = () => {
+
+interface RentalPeriodsProps {
+  productId: string;
+  listerId: string;
+  dailyPrice: number;
+  securityDeposit: number;
+}
+
+const RentalPeriods: React.FC<RentalPeriodsProps> = ({
+  productId,
+  listerId,
+  dailyPrice,
+  securityDeposit,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -126,7 +158,14 @@ const RentalPeriods: React.FC = () => {
       </button>
 
       {/* Filter Panel */}
-      <RentalPeriodsPanel isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <RentalPeriodsPanel
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        productId={productId}
+        listerId={listerId}
+        dailyPrice={dailyPrice}
+        securityDeposit={securityDeposit}
+      />
     </>
   );
 };

@@ -17,17 +17,16 @@ import ProductCuratorDetails from "./ProductCuratorDetails";
 import OrderProgressTimeline from "./OrderProgressTimeline";
 import OrderStatusDetails from "./OrderStatusDetails";
 
-// --------------------
-// Slide-in Filter Panel
-// --------------------
 interface OrderDetailsPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  orderId?: string;
 }
 
 const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
   isOpen,
   onClose,
+  orderId,
 }) => {
   const minPrice = 50000;
   const maxPrice = 200000;
@@ -90,9 +89,9 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
 
             {/* Content */}
             <div className="grow pt-4 pb-20 space-y-8">
-              <ProductCuratorDetails />
-              <OrderProgressTimeline />
-              <OrderStatusDetails />
+              <ProductCuratorDetails orderId={orderId} />
+              <OrderProgressTimeline orderId={orderId || ""} />
+              <OrderStatusDetails orderId={orderId} />
             </div>
 
             {/* Footer */}
@@ -118,19 +117,15 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
 // --------------------
 // Main Component
 // --------------------
-const OrderDetails: React.FC = () => {
+interface OrderDetailsProps {
+  orderId?: string;
+}
+
+const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      {/* Toggle Button */}
-      {/* <button
-        onClick={() => setIsOpen(true)}
-        className="border px-4 items-center rounded-lg bg-black text-white justify-center  w-fit py-2 flex gap-1 cursor-pointer font-semibold hover:text-black text-sm border-black  hover:bg-gray-100 transition "
-      >
-        <Paragraph1>Update</Paragraph1>
-      </button> */}
-
       {/* Right Side: Action Button */}
       <button
         onClick={() => setIsOpen(true)}
@@ -140,7 +135,11 @@ const OrderDetails: React.FC = () => {
       </button>
 
       {/* Filter Panel */}
-      <OrderDetailsPanel isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <OrderDetailsPanel
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        orderId={orderId}
+      />
     </>
   );
 };

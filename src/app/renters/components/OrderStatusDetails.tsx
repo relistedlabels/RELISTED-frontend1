@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Lock, ShoppingBag } from "lucide-react";
-import {  Paragraph1 } from "@/common/ui/Text";
+import { Paragraph1 } from "@/common/ui/Text";
 
 // --- Placeholder Data ---
 const escrowAmount = 200000;
@@ -14,7 +14,13 @@ const formatCurrency = (amount: number): string => {
   return amount.toLocaleString("en-NG");
 };
 
-export default function OrderStatusDetails() {
+interface OrderStatusDetailsProps {
+  orderId?: string;
+}
+
+export default function OrderStatusDetails({
+  orderId,
+}: OrderStatusDetailsProps) {
   return (
     <div className=" space-y-6">
       {/* --- 1. ESCROW LOCK NOTICE --- */}
