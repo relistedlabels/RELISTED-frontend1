@@ -31,7 +31,7 @@ const ProductAccordion: React.FC<ProductAccordionProps> = ({ productId }) => {
         <ProductCareDetails />
       </AccordionItem>
 
-      <AccordionItem title="REVIEWS" count={product.reviews}>
+      <AccordionItem title="REVIEWS" count={0}>
         <ExampleReviewsBlock productId={productId} />
       </AccordionItem>
 

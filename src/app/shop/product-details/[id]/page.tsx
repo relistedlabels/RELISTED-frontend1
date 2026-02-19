@@ -7,14 +7,17 @@ import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import TopListingSection from "../components/TopListingSection";
 
 interface ProductDetailsPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function ProductDetailsPage({
+export default async function ProductDetailsPage({
   params,
 }: ProductDetailsPageProps) {
+  const { id } = await params;
+  console.log("📄 ProductDetailsPage: ID from params:", id);
+
   const path = [
     { label: "Home", href: "/" },
     { label: "Shop", href: "/shop" },
@@ -28,12 +31,12 @@ export default function ProductDetailsPage({
           <div className=" mb-4">
             <Breadcrumbs items={path} />{" "}
           </div>
-          <ProductMediaGallery productId={params.id} />
+          <ProductMediaGallery productId={id} />
         </div>
         <div className=" sm:py-[100px] bg-white sm:px-[100px] p-4 flex flex-col gap-4 ">
-          <TitleProductCard productId={params.id} />
-          <RentalDetailsCard productId={params.id} />
-          <ProductAccordion productId={params.id} />
+          <TitleProductCard productId={id} />
+          <RentalDetailsCard productId={id} />
+          <ProductAccordion productId={id} />
         </div>
       </div>
       <TopListingSection />

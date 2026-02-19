@@ -55,6 +55,11 @@ export async function apiFetch<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
+  console.log("🌐 [apiFetch] REQUEST START:", {
+    path,
+    method: options.method || "GET",
+  });
+
   const token = getAuthToken();
   const isFormData = options.body instanceof FormData;
 
@@ -75,6 +80,12 @@ export async function apiFetch<T>(
       errorMessage = error?.message ?? errorMessage;
     } catch {}
 
+    console.error("🌐 [apiFetch] ERROR:", {
+      path,
+      status: res.status,
+      message: errorMessage,
+    });
+
     // if (res.status === 401) {
     //   useUserStore.getState().clearUser();
     // }
@@ -82,5 +93,7 @@ export async function apiFetch<T>(
     throw new Error(errorMessage);
   }
 
-  return res.json();
+  const data = await res.json();
+  console.log("🌐 [apiFetch] RESPONSE SUCCESS:", { path, data });
+  return data;
 }

@@ -17,10 +17,15 @@ const ProductMediaGallery: React.FC<ProductMediaGalleryProps> = ({
   const [activeIndex, setActiveIndex] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
 
+  // Extract images from product attachments
+  const productImages =
+    product?.attachments?.uploads?.map((upload: any) => upload.url) || [];
+
   // Use product images or fallback to empty array
-  const media = product?.images
-    ? product.images.map((src) => ({ type: "image" as const, src }))
-    : [];
+  const media =
+    productImages.length > 0
+      ? productImages.map((src: string) => ({ type: "image" as const, src }))
+      : [];
 
   if (isLoading) {
     return <CardGridSkeleton count={1} />;
@@ -109,7 +114,7 @@ const ProductMediaGallery: React.FC<ProductMediaGalleryProps> = ({
 
       {/* Thumbnail Strip */}
       <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
-        {media.map((item, idx) => (
+        {media.map((item: any, idx: number) => (
           <motion.button
             key={idx}
             onClick={() => setActiveIndex(idx)}

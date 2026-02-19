@@ -110,7 +110,7 @@ export default function NewListingsSection() {
                 name={product.name}
                 price={`₦${product.originalValue.toLocaleString()}`}
               />
-            ))
+            ))}
           </div>
         )}
       </div>

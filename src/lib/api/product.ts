@@ -158,9 +158,12 @@ export const productApi = {
 
   // Public API - Get single product details
   getPublicById: (id: string) =>
-    apiFetch<UserProduct>(`/api/public/products/${id}`, {
-      method: "GET",
-    }),
+    apiFetch<{ success: boolean; data: UserProduct }>(
+      `/api/public/products/${id}`,
+      {
+        method: "GET",
+      },
+    ),
 
   // Authenticated API - Get user's own product
   getById: (id: string) =>

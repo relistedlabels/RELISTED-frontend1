@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { useVerifyAdminMfa } from "@/lib/mutations";
 import { useUserStore } from "@/store/useUserStore";
+import { useMe } from "@/lib/queries/auth/useMe";
 
 const OTP_LENGTH = 6;
 
@@ -18,11 +19,13 @@ export default function AdminAccessPrompt({
   const router = useRouter();
   const adminId = useAdminIdStore((state) => state.adminId);
   const verifyMfa = useVerifyAdminMfa();
-  const { sessionToken, requiresMfa, name } = useUserStore();
+  const { sessionToken, requiresMfa, name, role } = useUserStore();
+  const { data: user, isLoading: isMeLoading } = useMe();
 
   const [open, setOpen] = useState(false);
   const [otp, setOtp] = useState("");
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [isMfaVerified, setIsMfaVerified] = useState(false);
+  const [isRoleConfirmed, setIsRoleConfirmed] = useState(false);
 
   // Auto-show when admin logs in with MFA pending
   useEffect(() => {
@@ -33,21 +36,29 @@ export default function AdminAccessPrompt({
     setOpen(true);
   }, [autoShow, sessionToken, requiresMfa]);
 
-  // Redirect after successful verification
+  // Check if role has been confirmed after MFA verification
   useEffect(() => {
-    if (isSuccess) {
-      // Wait a bit longer to ensure browser has processed the cookie
-      // and the useMe query has been invalidated and refetched
-      const timer = setTimeout(() => {
-        router.push(`/admin/${adminId}/dashboard`);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [isSuccess, adminId, router]);
+    if (!isMfaVerified) return;
 
-  if (!sessionToken && !isSuccess) return null;
-  if (!requiresMfa && !isSuccess) return null;
-  if (!open && !isSuccess) return null;
+    // If useMe query has loaded and user role is ADMIN, role is confirmed
+    if (!isMeLoading && user && user.role === "ADMIN") {
+      setIsRoleConfirmed(true);
+    }
+  }, [isMfaVerified, isMeLoading, user]);
+
+  // Redirect after role is confirmed
+  useEffect(() => {
+    if (!isRoleConfirmed) return;
+
+    const timer = setTimeout(() => {
+      router.push(`/admin/${adminId}/dashboard`);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [isRoleConfirmed, adminId, router]);
+
+  if (!sessionToken && !isMfaVerified) return null;
+  if (!requiresMfa && !isMfaVerified) return null;
+  if (!open && !isMfaVerified) return null;
 
   const handleVerifyOtp = async () => {
     if (!otp.trim() || !sessionToken) return;
@@ -56,7 +67,9 @@ export default function AdminAccessPrompt({
       { code: otp, sessionToken },
       {
         onSuccess: async () => {
-          setIsSuccess(true);
+          // Mark MFA as verified, but don't route yet
+          // Wait for useMe() to confirm admin role
+          setIsMfaVerified(true);
         },
       },
     );
@@ -72,19 +85,21 @@ export default function AdminAccessPrompt({
             Welcome, {name || "Admin"}
           </Paragraph3>
           <Paragraph1 className="text-sm text-gray-600 max-w-[350px]">
-            {isSuccess
-              ? "Verifying access..."
+            {isMfaVerified
+              ? "Confirming admin access..."
               : "Enter your verification code to continue"}
           </Paragraph1>
         </div>
 
-        {isSuccess ? (
-          /* Loading State */
+        {isMfaVerified ? (
+          /* Loading State - Waiting for role confirmation */
           <div className="flex flex-col items-center justify-center w-full py-16">
             <div className="w-12 h-12 border-4 border-gray-200 border-t-black rounded-full animate-spin mb-6"></div>
             <div className="text-center w-full">
               <Paragraph3 className="text-lg font-semibold text-black mb-2">
-                Getting your dashboard ready
+                {isRoleConfirmed
+                  ? "Access confirmed, loading dashboard..."
+                  : "Verifying admin credentials..."}
               </Paragraph3>
               <div className="flex justify-center gap-1">
                 <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>

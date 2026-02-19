@@ -5,7 +5,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Search, Clock, X, ArrowRight } from "lucide-react";
 import ProductCard from "@/common/ui/ProductCard";
 import { products } from "@/data/productsData";
-import { Header1Plus, Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import {
+  Header1Plus,
+  Paragraph1,
+  Paragraph2,
+  Paragraph3,
+} from "@/common/ui/Text";
 
 const recentSearches = ["Sneakers", "Wrist Watch", "Backpack"];
 
@@ -19,7 +24,7 @@ export default function SearchModal() {
     return products.filter(
       (p) =>
         p.name.toLowerCase().includes(query.toLowerCase()) ||
-        p.brand.toLowerCase().includes(query.toLowerCase())
+        p.brand.toLowerCase().includes(query.toLowerCase()),
     );
   }, [query]);
 
@@ -117,6 +122,7 @@ export default function SearchModal() {
                             className="min-w-[200px] max-w-[200px] shrink-0"
                           >
                             <ProductCard
+                              id={item.id}
                               image={item.image}
                               brand={item.brand}
                               name={item.name}
