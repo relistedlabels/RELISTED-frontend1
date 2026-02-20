@@ -150,7 +150,7 @@ export const ItemImageUploader: React.FC = () => {
             Item Image
           </Paragraph3>
           <Paragraph1 className="text-xs text-gray-500">
-            Upload at least 5 high quality images and videos of your item
+            Upload 2 to 3 high quality images and videos of your item
           </Paragraph1>
         </div>
         <ToolInfo content="Upload clear, high-quality photos of your item from different angles. This helps potential buyers understand what they're getting." />

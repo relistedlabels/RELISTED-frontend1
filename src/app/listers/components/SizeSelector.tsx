@@ -76,7 +76,7 @@ export const SizeSelector: React.FC = () => {
       {open && (
         <div className="absolute z-40 mt-2 w-full rounded-lg border border-gray-300 bg-white shadow-lg">
           {/* Unit selector */}
-          <div className="flex border-b border-gray-200 bg-gray-50">
+          <div className="grid grid-cols-2 gap-1 border-b border-gray-200 bg-gray-50 p-1 sm:flex">
             {UNITS.map((u) => (
               <button
                 key={u}
@@ -88,7 +88,7 @@ export const SizeSelector: React.FC = () => {
                     setField("measurement", "");
                   }
                 }}
-                className={`flex-1 px-3 py-3 text-xs font-semibold transition-all duration-200 ${
+                className={`whitespace-nowrap rounded px-2 py-2 text-xs font-semibold transition-all duration-200 sm:flex-1 sm:rounded-none ${
                   parsed.unit === u
                     ? "border-b-2 border-blue-500 bg-white text-blue-600"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
@@ -100,12 +100,12 @@ export const SizeSelector: React.FC = () => {
           </div>
 
           {/* Size grid */}
-          <div className="grid grid-cols-5 gap-2 p-3">
+          <div className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-3">
             {sizes.map((s) => (
               <button
                 key={s}
                 onClick={() => commit(s, parsed.unit)}
-                className={`rounded-md border-2 px-2.5 py-2 text-sm font-semibold transition-all duration-200 ${
+                className={`rounded-md border-2 px-2 py-2.5 text-xs font-semibold transition-all duration-200 sm:px-2.5 sm:text-sm ${
                   parsed.size === s
                     ? "border-blue-500 bg-blue-50 text-blue-600 shadow-sm"
                     : "border-gray-200 text-gray-700 hover:border-blue-300 hover:bg-blue-50"

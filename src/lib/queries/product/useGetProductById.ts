@@ -13,6 +13,7 @@ export type Product = {
   description: string;
   condition: string;
   composition: string;
+  material: string;
   measurement: string;
   originalValue: number;
   dailyPrice: number;
@@ -24,7 +25,7 @@ export type Product = {
   stylingTip: string;
   attachments: ProductAttachmentDetail | null;
   categoryId: string;
-  tagId: string;
+  tagIds: string[]; // ✅ Changed from tagId (singular) to tagIds (array)
   brandId: string;
   rating?: number;
   reviewCount?: number;
@@ -36,7 +37,7 @@ export const useGetProductById = (productId: string) => {
   return useQuery({
     queryKey: ["product", productId],
     queryFn: async () => {
-      const res = await apiFetch<ProductByIdResponse>(`/product/${productId}`);
+      const res = await apiFetch<ProductByIdResponse>(`/api/listers/inventory/${productId}`);
       return res.data;
     },
     enabled: !!productId,

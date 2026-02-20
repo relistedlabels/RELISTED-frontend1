@@ -1,7 +1,7 @@
 # Listers API Endpoints - ListersAPIs
 
 **Status:** Awaiting Backend Implementation
-**Last Updated:** 2026-02-08
+**Last Updated:** 2026-02-20
 
 ## Overview
 
@@ -316,9 +316,833 @@ GET /api/listers/rentals/recent?page=1&limit=10&status=all
 
 ---
 
+## Lister Inventory Management
+
+### 5. GET /api/listers/inventory
+
+**Location:** `src/app/listers/inventory/page.tsx` & `src/app/listers/components/InventoryList.tsx`
+
+**UX Explanation:**
+Listers need a paginated list of all items in their inventory with status filtering and search. Each item shows:
+
+- **Item Image**: Thumbnail of the product
+- **Item Name**: Product name with size and color
+- **Status Indicator**: Colored dot (AVAILABLE=Green, RENTED=Blue, MAINTENANCE=Yellow, RESERVED=Purple)
+- **Price/Day**: Daily rental rate (₦ format)
+- **Item Value**: Original/retail value
+- **Listed Date**: When item was added to inventory
+- **Status Badge**: Display status label
+- **Manage Button**: Link to detailed product view
+
+Supports filtering by status tabs (All, AVAILABLE, RENTED, MAINTENANCE, RESERVED) and displays isActive flag for disabled items.
+
+**Request Format:**
+
+```json
+GET /api/listers/inventory?page=1&limit=20&status=all&search=&sortBy=-createdAt
+```
+
+**Query Parameters:**
+
+- `page`: Pagination page number (default: 1)
+- `limit`: Items per page (default: 20)
+- `status`: "all" | "AVAILABLE" | "RENTED" | "MAINTENANCE" | "RESERVED"
+- `search`: Search by product name, size, or color
+- `sortBy`: Sort field (createdAt, name, pricePerDay) with - for descending
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "prod_001",
+        "name": "FENDI ARCO BOOTS",
+        "measurement": "38",
+        "color": "Black",
+        "dailyPrice": 35000,
+        "originalValue": 850000,
+        "status": "AVAILABLE",
+        "isActive": true,
+        "createdAt": "2026-01-15T10:30:00Z",
+        "attachments": {
+          "uploads": [
+            {
+              "id": "upload_001",
+              "url": "https://cloudinary.com/image.jpg"
+            }
+          ]
+        },
+        "curator": {
+          "id": "curator_001",
+          "name": "Chioma Fashion"
+        }
+      }
+    ],
+    "pagination": {
+      "total": 45,
+      "page": 1,
+      "limit": 20,
+      "pages": 3
+    }
+  }
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Inventory retrieved successfully
+- `401 Unauthorized` - User not authenticated
+
+---
+
+### 6. GET /api/listers/inventory/:productId
+
+**Location:** `src/app/listers/inventory/product-details/[id]/page.tsx` & `src/app/listers/components/ProductMediaGallery.tsx`, `src/app/listers/components/InventoryItemDetailsHeader.tsx`, `src/app/listers/components/ProductInfoTabs.tsx`
+
+**UX Explanation:**
+Get complete product details for a single inventory item. Shows:
+
+- **Media Gallery**: Multiple product images for browsing
+- **Item Details Header**: Name, status, pricing, availability
+- **Product Info Tabs**:
+  - Overview (Basic info, description, brand, category)
+  - Specifications (Size, color, condition, material)
+  - Rental Terms (Daily price, minimum rental period, cancellation policy)
+  - Rental History (List of past rentals with dates and amounts)
+
+**Request Format:**
+
+```json
+GET /api/listers/inventory/:productId
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "prod_001",
+    "name": "FENDI ARCO BOOTS",
+    "description": "Authentic FENDI Arco boots in excellent condition...",
+    "measurement": "38",
+    "color": "Black",
+    "dailyPrice": 35000,
+    "originalValue": 850000,
+    "minimumRentalDays": 2,
+    "cancellationDays": 7,
+    "status": "AVAILABLE",
+    "isActive": true,
+    "brand": {
+      "id": "brand_001",
+      "name": "FENDI"
+    },
+    "category": {
+      "id": "cat_001",
+      "name": "Footwear"
+    },
+    "condition": "Like New",
+    "composition": "Leather",
+    "material": "Leather",
+    "tagIds": ["tag_001", "tag_002", "tag_003"],
+    "createdAt": "2026-01-15T10:30:00Z",
+    "attachments": {
+      "uploads": [
+        {
+          "id": "upload_001",
+          "url": "https://cloudinary.com/image1.jpg"
+        },
+        {
+          "id": "upload_002",
+          "url": "https://cloudinary.com/image2.jpg"
+        }
+      ]
+    },
+    "rentalsCount": 12,
+    "totalEarnings": 420000,
+    "lastRentalDate": "2026-02-10T15:00:00Z"
+  }
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Product details retrieved successfully
+- `404 Not Found` - Product not found
+- `401 Unauthorized` - User not authenticated or not authorized to view this product
+
+---
+
+### 7. POST /api/listers/inventory
+
+**Location:** `src/app/listers/inventory/product-upload/page.tsx` & `src/app/listers/components/ItemImageUploader.tsx`, `src/app/listers/components/BasicInformationForm.tsx`, `src/app/listers/components/TagSelector.tsx`, `src/app/listers/components/ItemDescription.tsx`
+
+**UX Explanation:**
+Create a new inventory item. The upload form includes:
+
+1. **Item Images**: Upload multiple product photos (up to 5 images)
+2. **Basic Information**:
+   - Item name
+   - Size/Measurement
+   - Color
+   - Brand (dropdown from brands list)
+   - Category (dropdown from categories list)
+   - Condition (Like New, Excellent, Good, Fair)
+3. **Tags**: Add relevant tags (designer, casual, formal, seasonal)
+4. **Description**: Detailed item description
+5. **Rental Terms**:
+   - Daily rental price (₦)
+   - Original/retail value (₦)
+   - Minimum rental period (days)
+6. **Additional Details**: Material, care instructions
+
+**Request Format:**
+
+```json
+POST /api/listers/inventory
+Content-Type: application/json
+
+{
+  "name": "FENDI ARCO BOOTS",
+  "subText": "Luxury designer boots for special occasions",
+  "description": "Authentic FENDI Arco boots in excellent condition...",
+  "condition": "Like New",
+  "composition": "Leather",
+  "material": "Leather",
+  "measurement": "38",
+  "color": "Black",
+  "quantity": 1,
+  "originalValue": 850000,
+  "dailyPrice": 35000,
+  "warning": "Handle with care - premium item",
+  "careInstruction": "Professional dry cleaning recommended",
+  "careSteps": "Air dry naturally, store in dust bag",
+  "stylingTip": "Perfect for evening wear and special occasions",
+  "brandId": "brand_001",
+  "categoryId": "cat_001",
+  "tagIds": ["tag_001", "tag_002", "tag_003"],
+  "attachments": ["upload_id_1", "upload_id_2", "upload_id_3"]
+}
+```
+
+**Additional Notes:**
+- Images must be uploaded separately via Cloudinary upload first
+- Pass the returned upload IDs in the `attachments` array
+- `tagIds` must be valid tag IDs from `GET /api/public/tags`
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "prod_001",
+    "name": "FENDI ARCO BOOTS",
+    "measurement": "38",
+    "color": "Black",
+    "dailyPrice": 35000,
+    "originalValue": 850000,
+    "status": "AVAILABLE",
+    "isActive": true,
+    "createdAt": "2026-02-20T14:30:00Z",
+    "attachments": {
+      "uploads": [
+        {
+          "id": "upload_001",
+          "url": "https://cloudinary.com/image1.jpg"
+        }
+      ]
+    }
+  }
+}
+```
+
+**Status Codes:**
+
+- `201 Created` - Product created successfully
+- `400 Bad Request` - Missing required fields or invalid data
+- `401 Unauthorized` - User not authenticated
+- `413 Payload Too Large` - Images too large
+
+---
+
+### 8. PUT /api/listers/inventory/:productId
+
+**Location:** `src/app/listers/inventory/product-edit/[id]/page.tsx` & `src/app/listers/components/EditProductHeader.tsx`, `src/app/listers/components/BasicInformationForm.tsx`, `src/app/listers/components/ItemDescription.tsx`
+
+**UX Explanation:**
+Update an existing inventory item. Allows editing of:
+
+- Product name, size, color
+- Brand and category
+- Description and tags
+- Pricing (daily rental price, original value)
+- Rental terms (minimum days, cancellation policy)
+- Product images (add, remove, reorder)
+- Material and condition
+
+Form pre-populates with current product data for editing.
+
+**Request Format:**
+
+```json
+PUT /api/listers/inventory/:productId
+Content-Type: application/json
+
+{
+  "name": "FENDI ARCO BOOTS - Updated",
+  "subText": "Luxury designer boots - updated",
+  "description": "Updated description...",
+  "condition": "Like New",
+  "composition": "Leather",
+  "material": "Leather",
+  "measurement": "38",
+  "color": "Black",
+  "quantity": 1,
+  "originalValue": 850000,
+  "dailyPrice": 40000,
+  "warning": "Handle with care - premium item",
+  "careInstruction": "Professional dry cleaning recommended",
+  "careSteps": "Air dry naturally, store in dust bag",
+  "stylingTip": "Perfect for evening wear",
+  "brandId": "brand_001",
+  "categoryId": "cat_001",
+  "tagIds": ["tag_001", "tag_002", "tag_003"],
+  "attachments": ["upload_id_1", "upload_id_2"],
+  "attachmentsToRemove": ["upload_id_old"]
+}
+```
+
+**Additional Notes:**
+- All fields are optional except `name`
+- To add new images, upload them first via Cloudinary and pass their IDs in `attachments`
+- To remove existing images, pass their IDs in `attachmentsToRemove`
+- `tagIds` must be valid tag IDs from `GET /api/public/tags`
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "prod_001",
+    "name": "FENDI ARCO BOOTS - Updated",
+    "measurement": "38",
+    "color": "Black",
+    "dailyPrice": 40000,
+    "originalValue": 850000,
+    "status": "AVAILABLE",
+    "isActive": true,
+    "updatedAt": "2026-02-20T15:45:00Z",
+    "attachments": {
+      "uploads": [
+        {
+          "id": "upload_001",
+          "url": "https://cloudinary.com/image1.jpg"
+        }
+      ]
+    }
+  }
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Product updated successfully
+- `400 Bad Request` - Invalid input data
+- `404 Not Found` - Product not found
+- `401 Unauthorized` - User not authenticated or not authorized to edit this product
+
+---
+
+### 9. DELETE /api/listers/inventory/:productId
+
+**Location:** `src/app/listers/components/InventoryItemDetailsHeader.tsx` (Delete button - requires confirmation)
+
+**UX Explanation:**
+Delete an inventory item. This:
+
+- Removes item from lister's inventory
+- Cancels any pending rental requests for this item
+- Notifies any interested renters of unavailability
+- Requires confirmation before deletion
+- Only possible if item is AVAILABLE (not currently rented)
+
+**Request Format:**
+
+```json
+DELETE /api/listers/inventory/:productId
+
+{
+  "reason": "No longer available" | "Item damaged" | "Selling item" | "Other" (optional)
+}
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "message": "Product deleted successfully"
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Product deleted successfully
+- `400 Bad Request` - Cannot delete (item is currently rented)
+- `404 Not Found` - Product not found
+- `401 Unauthorized` - User not authenticated or not authorized
+
+---
+
+### 10. PUT /api/listers/inventory/:productId/status
+
+**Location:** `src/app/listers/components/ManageItemHeader.tsx` (Status controller/dropdown)
+
+**UX Explanation:**
+Update the status of an inventory item. Allows changing status between:
+
+- **AVAILABLE**: Item is ready to rent
+- **MAINTENANCE**: Item is temporarily unavailable (under maintenance/repair)
+- **RENTED**: Item is currently rented out (usually auto-set by system)
+- **RESERVED**: Item is reserved for upcoming rental
+
+Listers can manually set to AVAILABLE or MAINTENANCE. Other statuses are system-managed.
+
+**Request Format:**
+
+```json
+PUT /api/listers/inventory/:productId/status
+
+{
+  "status": "AVAILABLE" | "MAINTENANCE" | "RENTED" | "RESERVED",
+  "reason": "Maintenance completed" | "Back from rental" (optional),
+  "expectedReturnDate": "2026-02-25T10:00:00Z" (optional, for MAINTENANCE)
+}
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "prod_001",
+    "status": "MAINTENANCE",
+    "previousStatus": "AVAILABLE",
+    "updatedAt": "2026-02-20T15:50:00Z"
+  }
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Status updated successfully
+- `400 Bad Request` - Invalid status or status change not allowed
+- `404 Not Found` - Product not found
+- `401 Unauthorized` - User not authorized to change this status
+
+---
+
+### 11. PUT /api/listers/inventory/:productId/availability
+
+**Location:** `src/app/listers/components/InventoryItemDetailsHeader.tsx` (Enable/Disable toggle)
+
+**UX Explanation:**
+Toggle availability of an item by enabling/disabling it. When disabled:
+
+- Item is hidden from shop/marketplace
+- Cannot be rented by dressers
+- Still appears in lister's inventory but marked as "Disabled"
+- Can be re-enabled anytime
+
+This is different from status - allows quick enable/disable without changing status.
+
+**Request Format:**
+
+```json
+PUT /api/listers/inventory/:productId/availability
+
+{
+  "isActive": true | false,
+  "reason": "Temporarily unavailable" (optional)
+}
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "prod_001",
+    "isActive": false,
+    "status": "AVAILABLE",
+    "updatedAt": "2026-02-20T15:55:00Z"
+  }
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Availability updated successfully
+- `404 Not Found` - Product not found
+- `401 Unauthorized` - User not authenticated
+
+---
+
+### 12. GET /api/listers/inventory/stats
+
+**Location:** `src/app/listers/components/InventoryStatsPanelCard.tsx` (if created for dashboard overview)
+
+**UX Explanation:**
+Get inventory statistics at a glance:
+
+- **Total Items**: Count of all items in inventory
+- **Available Items**: Count of AVAILABLE items
+- **Currently Rented**: Count of items in RENTED status
+- **In Maintenance**: Count of items in MAINTENANCE status
+- **Reserved**: Count of RESERVED items
+- **Total Value**: Total retail value of entire inventory
+- **Active Revenue Potential**: Monthly potential earnings from all available items
+
+Helps lister understand inventory health and value.
+
+**Request Format:**
+
+```json
+GET /api/listers/inventory/stats
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "totalItems": 45,
+    "availableItems": 30,
+    "currentlyRented": 10,
+    "inMaintenance": 4,
+    "reserved": 1,
+    "disabledItems": 0,
+    "totalInventoryValue": 18500000,
+    "monthlyRevenueRevenue": 486000,
+    "mostRentedItem": {
+      "id": "prod_001",
+      "name": "FENDI ARCO BOOTS",
+      "rentals": 24
+    },
+    "averagePricePerDay": 42000,
+    "topBrands": [
+      {
+        "name": "FENDI",
+        "itemCount": 8
+      },
+      {
+        "name": "GUCCI",
+        "itemCount": 6
+      }
+    ]
+  }
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Stats retrieved successfully
+- `401 Unauthorized` - User not authenticated
+
+---
+
+## Lister Catalog Management (Brands, Categories, Tags)
+
+### 13. GET /api/public/brands
+
+**Location:** `src/app/listers/components/BrandSelector.tsx` (Brand dropdown selector)
+
+**UX Explanation:**
+Retrieve all available brands that listers can select from when uploading/editing inventory items. When users search for a brand that doesn't exist in the list, they can create a new one. This endpoint provides the base list of existing brands.
+
+Used in the Brand/Designer dropdown field during product creation and editing.
+
+**Request Format:**
+
+```json
+GET /api/public/brands
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "brand_001",
+      "name": "FENDI",
+      "logo": "https://cloudinary.com/fendi-logo.png",
+      "createdAt": "2026-01-01T10:00:00Z"
+    },
+    {
+      "id": "brand_002",
+      "name": "GUCCI",
+      "logo": "https://cloudinary.com/gucci-logo.png",
+      "createdAt": "2026-01-01T10:00:00Z"
+    }
+  ]
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Brands retrieved successfully
+
+---
+
+### 14. POST /api/listers/brands
+
+**Location:** `src/app/listers/components/BrandSelector.tsx` (Add "{query}" as brand button)
+
+**UX Explanation:**
+Allow listers to create a new brand if the one they're looking for doesn't exist in the brands list. When a lister searches for a brand and it returns no results, they can click "Add [brand name] as brand" button to create it.
+
+After creation, the new brand is:
+
+- Added to their product
+- Available in the global brands list for other listers to use
+- Immediately selected in the brand field
+
+**Request Format:**
+
+```json
+POST /api/listers/brands
+
+{
+  "name": "Hermès"
+}
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "brand_new_001",
+    "name": "Hermès",
+    "userId": "user_001",
+    "createdAt": "2026-02-20T15:30:00Z"
+  }
+}
+```
+
+**Status Codes:**
+
+- `201 Created` - Brand created successfully
+- `400 Bad Request` - Missing or invalid brand name
+- `401 Unauthorized` - User not authenticated
+- `409 Conflict` - Brand name already exists
+
+---
+
+### 15. GET /api/public/categories
+
+**Location:** `src/app/listers/components/CategorySelector.tsx` (Category dropdown selector)
+
+**UX Explanation:**
+Retrieve all available product categories that listers can select from when uploading/editing inventory items. When users search for a category that doesn't exist, they can create a new one. This endpoint provides the base list of existing categories.
+
+Used in the Category dropdown field during product creation and editing.
+
+**Request Format:**
+
+```json
+GET /api/public/categories
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "cat_001",
+      "name": "Dresses"
+    },
+    {
+      "id": "cat_002",
+      "name": "Footwear"
+    },
+    {
+      "id": "cat_003",
+      "name": "Accessories"
+    },
+    {
+      "id": "cat_004",
+      "name": "Outerwear"
+    }
+  ]
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Categories retrieved successfully
+
+---
+
+### 16. POST /api/listers/categories
+
+**Location:** `src/app/listers/components/CategorySelector.tsx` (Add "{query}" as category button)
+
+**UX Explanation:**
+Allow listers to create a new category if the one they're looking for doesn't exist in the categories list. When a lister searches for a category and it returns no results, they can click "Add [category name] as category" button to create it.
+
+After creation, the new category is:
+
+- Added to their product
+- Available in the global categories list for other listers to use
+- Immediately selected in the category field
+
+**Request Format:**
+
+```json
+POST /api/listers/categories
+
+{
+  "name": "Lingerie"
+}
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "cat_new_001",
+    "name": "Lingerie",
+    "userId": "user_001",
+    "createdAt": "2026-02-20T15:35:00Z"
+  }
+}
+```
+
+**Status Codes:**
+
+- `201 Created` - Category created successfully
+- `400 Bad Request` - Missing or invalid category name
+- `401 Unauthorized` - User not authenticated
+- `409 Conflict` - Category name already exists
+
+---
+
+### 17. GET /api/public/tags
+
+**Location:** `src/app/listers/components/TagSelector.tsx` (Tags search and selection)
+
+**UX Explanation:**
+Retrieve all available tags that listers can select from when uploading/editing inventory items. Tags help categorize items by style, occasion, or season (e.g., "Date night", "Wedding guest", "Luxury", "New season").
+
+When users search for a tag that doesn't exist, they can create a new one. This endpoint provides the base list of existing tags, with preferred tags shown first.
+
+**Request Format:**
+
+```json
+GET /api/public/tags
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "tag_001",
+      "name": "New season"
+    },
+    {
+      "id": "tag_002",
+      "name": "Date night"
+    },
+    {
+      "id": "tag_003",
+      "name": "Wedding guest"
+    },
+    {
+      "id": "tag_004",
+      "name": "Luxury"
+    },
+    {
+      "id": "tag_005",
+      "name": "Party"
+    }
+  ]
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Tags retrieved successfully
+
+---
+
+### 18. POST /api/listers/tags
+
+**Location:** `src/app/listers/components/TagSelector.tsx` (Add new tag on search)
+
+**UX Explanation:**
+Allow listers to create a new tag if the one they're looking for doesn't exist in the tags list. When a lister searches for a tag and it returns no results, they can press Enter or click "Add [tag name] as tag" to create it.
+
+After creation, the new tag is:
+
+- Added to their product's tag list
+- Available in the global tags list for other listers to use
+- Immediately selected in their product
+
+**Request Format:**
+
+```json
+POST /api/listers/tags
+
+{
+  "name": "Weekend getaway"
+}
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "tag_new_001",
+    "name": "Weekend getaway",
+    "userId": "user_001",
+    "createdAt": "2026-02-20T15:40:00Z"
+  }
+}
+```
+
+**Status Codes:**
+
+- `201 Created` - Tag created successfully
+- `400 Bad Request` - Missing or invalid tag name
+- `401 Unauthorized` - User not authenticated
+- `409 Conflict` - Tag name already exists
+
+---
+
 ## Lister Order Management
 
-### 5. GET /api/listers/orders
+### 19. GET /api/listers/orders
 
 **Location:** `src/app/listers/orders/page.tsx` & `src/app/listers/components/OrdersManagement.tsx`
 
@@ -447,7 +1271,7 @@ GET /api/listers/orders?status=pending&page=1&limit=20&sort=-createdAt
 
 ---
 
-### 6. GET /api/listers/orders/:orderId
+### 20. GET /api/listers/orders/:orderId
 
 **Location:** `src/app/listers/orders/id/page.tsx` & `src/app/listers/components/OrderDetailsCard.tsx`
 
@@ -540,7 +1364,7 @@ GET /api/listers/orders/:orderId
 
 ---
 
-### 7. GET /api/listers/orders/:orderId/items
+### 21. GET /api/listers/orders/:orderId/items
 
 **Location:** `src/app/listers/components/OrderItemList.tsx`
 
@@ -593,7 +1417,7 @@ GET /api/listers/orders/:orderId/items
 
 ---
 
-### 8. GET /api/listers/orders/:orderId/progress
+### 22. GET /api/listers/orders/:orderId/progress
 
 **Location:** `src/app/listers/components/OrderProgress.tsx`
 
@@ -686,7 +1510,7 @@ GET /api/listers/orders/:orderId/progress
 
 ---
 
-### 9. POST /api/listers/orders/:orderId/approve
+### 23. POST /api/listers/orders/:orderId/approve
 
 **Location:** `src/app/listers/components/OrderDetailsCard.tsx` (Approve button)
 
@@ -747,7 +1571,7 @@ POST /api/listers/orders/:orderId/approve
 
 ---
 
-### 10. POST /api/listers/orders/:orderId/reject
+### 24. POST /api/listers/orders/:orderId/reject
 
 **Location:** `src/app/listers/components/OrderDetailsCard.tsx` (Reject button)
 
@@ -815,7 +1639,7 @@ POST /api/listers/orders/:orderId/reject
 
 ---
 
-### 11. PUT /api/listers/orders/:orderId/status
+### 25. PUT /api/listers/orders/:orderId/status
 
 **Location:** `src/app/listers/orders/id/page.tsx` (Status updates during order lifecycle)
 
@@ -871,7 +1695,7 @@ PUT /api/listers/orders/:orderId/status
 
 ## Lister Wallet Management
 
-### 12. GET /api/listers/wallet/stats
+### 26. GET /api/listers/wallet/stats
 
 **Location:** `src/app/listers/wallet/page.tsx` & `src/app/listers/components/WalletBalanceCard.tsx`
 
@@ -957,7 +1781,7 @@ GET /api/listers/wallet/stats
 
 ---
 
-### 13. GET /api/listers/wallet/transactions
+### 27. GET /api/listers/wallet/transactions
 
 **Location:** `src/app/listers/wallet/page.tsx` & `src/app/listers/components/TransactionList.tsx`
 
@@ -1044,7 +1868,7 @@ GET /api/listers/wallet/transactions?page=1&limit=10&type=all&sortBy=-date
 
 ---
 
-### 14. GET /api/listers/wallet/bank-accounts
+### 28. GET /api/listers/wallet/bank-accounts
 
 **Location:** `src/app/listers/components/BankAccountsDropdownContent.tsx`
 
@@ -1111,7 +1935,7 @@ GET /api/listers/wallet/bank-accounts?verified=true
 
 ---
 
-### 15. POST /api/listers/wallet/bank-accounts
+### 29. POST /api/listers/wallet/bank-accounts
 
 **Location:** `src/app/listers/components/AddNewBankAccountForm.tsx`
 
@@ -1173,7 +1997,7 @@ POST /api/listers/wallet/bank-accounts
 
 ---
 
-### 16. GET /api/banks
+### 30. GET /api/banks
 
 **Location:** `src/app/listers/components/AddNewBankAccountForm.tsx` (Bank dropdown)
 
@@ -1246,7 +2070,7 @@ GET /api/banks?country=NG
 
 ---
 
-### 17. POST /api/listers/wallet/withdraw
+### 31. POST /api/listers/wallet/withdraw
 
 **Location:** `src/app/listers/components/UserWalletWithdraw.tsx` & `src/app/listers/components/Withdraw.tsx`
 
@@ -1325,7 +2149,7 @@ POST /api/listers/wallet/withdraw
 
 ---
 
-### 18. GET /api/listers/wallet/withdraw/:withdrawalId
+### 32. GET /api/listers/wallet/withdraw/:withdrawalId
 
 **Location:** `src/app/listers/components/Withdraw.tsx` (Status tracking)
 
@@ -1385,7 +2209,7 @@ GET /api/listers/wallet/withdraw/:withdrawalId
 
 ---
 
-### 19. GET /api/listers/wallet/locked-balances
+### 33. GET /api/listers/wallet/locked-balances
 
 **Location:** `src/app/listers/components/LockedBalanceCard.tsx` & `src/app/listers/wallet/page.tsx`
 
@@ -1509,7 +2333,7 @@ GET /api/listers/wallet/locked-balances
 
 ## Lister Dispute Management
 
-### 19. GET /api/listers/disputes/stats
+### 34. GET /api/listers/disputes/stats
 
 **Location:** `src/app/listers/dispute/page.tsx` & `src/app/renters/components/DisputesDashboard.tsx`
 
@@ -1551,7 +2375,7 @@ GET /api/listers/disputes/stats?timeframe=month
 
 ---
 
-### 20. GET /api/listers/disputes
+### 35. GET /api/listers/disputes
 
 **Location:** `src/app/listers/dispute/page.tsx` & `src/app/renters/components/DisputesListTable.tsx` & `src/app/renters/components/DisputeSearchBar.tsx`
 
@@ -1633,7 +2457,7 @@ GET /api/listers/disputes?page=1&limit=10&status=all&search=&sortBy=-dateSubmitt
 
 ---
 
-### 21. POST /api/listers/disputes
+### 36. POST /api/listers/disputes
 
 **Location:** `src/app/renters/components/RaiseDispute.tsx` & `src/app/renters/components/RaiseDisputeForm.tsx`
 
@@ -1695,7 +2519,7 @@ POST /api/listers/disputes
 
 ---
 
-### 22. GET /api/listers/disputes/:disputeId
+### 37. GET /api/listers/disputes/:disputeId
 
 **Location:** `src/app/renters/components/DisputeDetails.tsx` & `src/app/renters/components/DisputeDetailTabs.tsx`
 
@@ -1787,7 +2611,7 @@ GET /api/listers/disputes/:disputeId
 
 ---
 
-### 23. GET /api/listers/disputes/:disputeId/overview
+### 38. GET /api/listers/disputes/:disputeId/overview
 
 **Location:** `src/app/renters/components/DisputeOverviewContent.tsx`
 
@@ -1830,7 +2654,7 @@ GET /api/listers/disputes/:disputeId/overview
 
 ---
 
-### 24. GET /api/listers/disputes/:disputeId/evidence
+### 39. GET /api/listers/disputes/:disputeId/evidence
 
 **Location:** `src/app/renters/components/DisputeEvidenceContent.tsx`
 
@@ -1893,7 +2717,7 @@ GET /api/listers/disputes/:disputeId/evidence
 
 ---
 
-### 25. GET /api/listers/disputes/:disputeId/timeline
+### 40. GET /api/listers/disputes/:disputeId/timeline
 
 **Location:** `src/app/renters/components/DisputeTimelineContent.tsx`
 
@@ -1946,7 +2770,7 @@ GET /api/listers/disputes/:disputeId/timeline
 
 ---
 
-### 26. GET /api/listers/disputes/:disputeId/resolution
+### 41. GET /api/listers/disputes/:disputeId/resolution
 
 **Location:** `src/app/renters/components/DisputeResolutionContent.tsx`
 
@@ -2012,7 +2836,7 @@ GET /api/listers/disputes/:disputeId/resolution
 
 ---
 
-### 27. GET /api/listers/disputes/:disputeId/messages
+### 42. GET /api/listers/disputes/:disputeId/messages
 
 **Location:** `src/app/renters/components/DisputeConversationLog.tsx`
 
@@ -2081,7 +2905,7 @@ GET /api/listers/disputes/:disputeId/messages?page=1&limit=50
 
 ---
 
-### 28. POST /api/listers/disputes/:disputeId/messages
+### 43. POST /api/listers/disputes/:disputeId/messages
 
 **Location:** `src/app/renters/components/DisputeConversationLog.tsx` (Message input & send button)
 
@@ -2132,7 +2956,7 @@ POST /api/listers/disputes/:disputeId/messages
 
 ---
 
-### 29. POST /api/listers/disputes/:disputeId/withdraw
+### 44. POST /api/listers/disputes/:disputeId/withdraw
 
 **Location:** `src/app/renters/components/DisputeDetails.tsx` (Withdraw Dispute button in footer)
 
@@ -2189,7 +3013,7 @@ POST /api/listers/disputes/:disputeId/withdraw
 
 ---
 
-### 30. GET /api/issue-categories
+### 45. GET /api/issue-categories
 
 **Location:** `src/app/renters/components/RaiseDisputeForm.tsx` (Issue Category dropdown)
 
@@ -2257,7 +3081,7 @@ GET /api/issue-categories
 
 ## Lister Settings Management
 
-### 31. GET /api/listers/profile
+### 46. GET /api/listers/profile
 
 **Location:** `src/app/listers/settings/page.tsx` & `src/app/listers/components/AccountProfileDetails.tsx`
 
@@ -2319,7 +3143,7 @@ GET /api/listers/profile
 
 ---
 
-### 32. PUT /api/listers/profile
+### 47. PUT /api/listers/profile
 
 **Location:** `src/app/listers/components/AccountProfileDetails.tsx` - Update Profile button
 
@@ -2366,7 +3190,7 @@ Content-Type: application/json
 
 ---
 
-### 33. GET /api/listers/profile/addresses
+### 48. GET /api/listers/profile/addresses
 
 **Location:** `src/app/listers/components/AccountProfileDetails.tsx` - Address list section
 
@@ -2421,7 +3245,7 @@ GET /api/listers/profile/addresses
 
 ---
 
-### 34. POST /api/listers/profile/addresses
+### 49. POST /api/listers/profile/addresses
 
 **Location:** `src/app/listers/components/AccountProfileDetails.tsx` - Add New Address button
 
@@ -2475,7 +3299,7 @@ Content-Type: application/json
 
 ---
 
-### 35. POST /api/listers/profile/avatar
+### 50. POST /api/listers/profile/avatar
 
 **Location:** `src/app/listers/components/AccountProfileDetails.tsx` - Profile image upload
 
@@ -2515,7 +3339,7 @@ Content-Type: multipart/form-data
 
 ---
 
-### 36. GET /api/listers/profile/business
+### 51. GET /api/listers/profile/business
 
 **Location:** `src/app/listers/components/BusinessDetailsForm.tsx` - Business Details tab
 

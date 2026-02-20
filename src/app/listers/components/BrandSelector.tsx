@@ -2,11 +2,10 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { ChevronDown, Check } from "lucide-react";
+import { ChevronDown, Check, Plus } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
-import { useBrands } from "@/lib/queries/brand/useBrands";
-import { useCreateBrand } from "@/lib/mutations";
 import { useProductDraftStore } from "@/store/useProductDraftStore";
+import { useBrands, useCreateBrand } from "@/lib/queries/brand/useBrands";
 
 interface Brand {
   id: string;
@@ -15,12 +14,13 @@ interface Brand {
   userId?: string;
 }
 
-
 export const BrandSelector: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
 
   const { data: brands = [] } = useBrands();
+  const createMutation = useCreateBrand();
   const { data, setField } = useProductDraftStore();
 
   // Filter brands based on search query
@@ -34,6 +34,19 @@ export const BrandSelector: React.FC = () => {
 
   // Selected brand from store
   const selectedBrand = (brands as Brand[]).find((b) => b.id === data.brandId);
+
+  const handleAddBrand = async () => {
+    if (!query.trim()) return;
+    setIsCreating(true);
+    try {
+      const result = await createMutation.mutateAsync({ name: query.trim() });
+      setField("brandId", result.id);
+      setOpen(false);
+      setQuery("");
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   return (
     <div className="relative w-full">
@@ -63,7 +76,19 @@ export const BrandSelector: React.FC = () => {
           />
 
           <div className="max-h-48 overflow-y-auto">
-            {filtered.length === 0 && (
+            {filtered.length === 0 && query && (
+              <button
+                type="button"
+                onClick={handleAddBrand}
+                disabled={isCreating}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 disabled:opacity-50"
+              >
+                <Plus className="h-4 w-4" />
+                Add "{query}" as brand
+              </button>
+            )}
+
+            {filtered.length === 0 && !query && (
               <p className="px-3 py-2 text-sm text-gray-400">No brands found</p>
             )}
 
@@ -72,7 +97,7 @@ export const BrandSelector: React.FC = () => {
                 key={brand.id}
                 type="button"
                 onClick={() => {
-                  setField("brandId", brand.id); // store selected brand in product draft
+                  setField("brandId", brand.id);
                   setOpen(false);
                   setQuery("");
                 }}

@@ -12,16 +12,16 @@ import { CategoryCardSkeleton } from "@/common/ui/SkeletonLoaders";
 interface CategoryBoxProps {
   id: string;
   name: string;
-  description: string;
-  image: string;
+  description?: string;
+  image?: string;
   itemCount?: number;
 }
 
 const CategoryBox: React.FC<CategoryBoxProps> = ({
   id,
   name,
-  description,
-  image,
+  description = "Explore this collection",
+  image = "/images/placeholder.jpg",
 }) => {
   // Build URL with category filter
   const shopUrl = `/shop?category=${encodeURIComponent(name)}&title=${encodeURIComponent(name)}&description=${encodeURIComponent(description)}`;

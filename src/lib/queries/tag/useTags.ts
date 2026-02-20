@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-import { getTags, Tag } from "@/lib/api/tags";
+// lib/queries/tag/useTags.ts
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getTags, createTag, Tag } from "@/lib/api/tags";
 
 export const useTags = () =>
   useQuery<Tag[]>({
@@ -7,3 +8,14 @@ export const useTags = () =>
     queryFn: getTags,
     retry: false,
   });
+
+export const useCreateTag = () => {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { name: string }) => createTag(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tags"] });
+    },
+  });
+};

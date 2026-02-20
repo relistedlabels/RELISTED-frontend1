@@ -22,6 +22,7 @@ export const useUpdateProduct = (productId: string) => {
         description: draft.description.trim(),
         condition: draft.condition,
         composition: draft.composition || "Cotton", // ✅ String default
+        material: draft.material || "Cotton", // ✅ Material field
         measurement: draft.measurement,
         originalValue: draft.originalValue,
         dailyPrice: draft.dailyRentalPrice, // ✅ Correct field name
@@ -33,16 +34,19 @@ export const useUpdateProduct = (productId: string) => {
         stylingTip: draft.stylingTip.trim(),
         attachments: attachmentIds, // ✅ Array of ID strings
         categoryId: draft.categoryId,
-        tagId: draft.tagId, // ✅ Separate from categoryId
+        tagIds: draft.tagIds, // ✅ Array of tag IDs
         brandId: draft.brandId,
       };
 
       console.log("📤 Final payload being sent:", payload);
 
-      return apiFetch<{ message: string }>(`/product/${productId}`, {
-        method: "PATCH",
-        body: JSON.stringify(payload),
-      });
+      return apiFetch<{ message: string }>(
+        `/api/listers/inventory/${productId}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        },
+      );
     },
     onSuccess: (response) => {
       console.log("✅ Product updated:", response.message);

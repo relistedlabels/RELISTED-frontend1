@@ -29,6 +29,7 @@ export const useCreateProduct = () => {
         description: draft.description.trim(),
         condition: draft.condition,
         composition: draft.composition || "Cotton",
+        material: draft.material || "Cotton",
         measurement: draft.measurement,
         originalValue: draft.originalValue,
         dailyPrice: draft.dailyRentalPrice,
@@ -40,7 +41,7 @@ export const useCreateProduct = () => {
         stylingTip: draft.stylingTip.trim(),
         attachments: attachmentIds,
         categoryId: draft.categoryId,
-        tagId: draft.tagId,
+        tagIds: draft.tagIds,
         brandId: draft.brandId,
       };
 
@@ -54,18 +55,23 @@ export const useCreateProduct = () => {
         originalValue: payload.originalValue,
         attachmentCount: payload.attachments.length,
         categoryId: payload.categoryId,
-        tagId: payload.tagId,
+        tagIds: payload.tagIds,
         brandId: payload.brandId,
         condition: payload.condition,
+        composition: payload.composition,
+        material: payload.material,
         measurement: payload.measurement,
       });
       console.groupEnd();
 
       try {
-        const response = await apiFetch<{ message: string }>("/product", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
+        const response = await apiFetch<{ message: string }>(
+          "/api/listers/inventory",
+          {
+            method: "POST",
+            body: JSON.stringify(payload),
+          },
+        );
 
         console.log("✅ Success response:", response);
         return response;
