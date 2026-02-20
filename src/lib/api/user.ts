@@ -35,23 +35,39 @@ export type UsersListResponse = {
 };
 
 export const userApi = {
+  deleteUser: (userId: string) =>
+    apiFetch<{ success: boolean; message: string }>(`/admin/users/${userId}`, {
+      method: "DELETE",
+    }),
+
+  resetUserPassword: (userId: string, newPassword: string) =>
+    apiFetch<{ success: boolean; message: string }>(
+      `/admin/users/${userId}/reset-password`,
+      {
+        method: "POST",
+        body: JSON.stringify({ newPassword }),
+      },
+    ),
   getUserById: (userId: string) =>
-    apiFetch<UserResponse>(`/user/${userId}`, {
+    apiFetch<UserResponse>(`/admin/users/${userId}`, {
       method: "GET",
     }),
 
   getAllUsers: (page: number = 1, count: number = 10) =>
-    apiFetch<UsersListResponse>(`/user/all?page=${page}&count=${count}`, {
-      method: "GET",
-    }),
+    apiFetch<UsersListResponse>(
+      `/admin/users/all?page=${page}&count=${count}`,
+      {
+        method: "GET",
+      },
+    ),
 
   suspendUser: (userId: string) =>
-    apiFetch<UserResponse>(`/user/${userId}/suspend`, {
+    apiFetch<UserResponse>(`/admin/users/${userId}/suspend`, {
       method: "PATCH",
     }),
 
   unsuspendUser: (userId: string) =>
-    apiFetch<UserResponse>(`/user/${userId}/unsuspend`, {
+    apiFetch<UserResponse>(`/admin/users/${userId}/unsuspend`, {
       method: "PATCH",
     }),
 };

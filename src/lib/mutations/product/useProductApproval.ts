@@ -10,9 +10,8 @@ export const useApproveProduct = () => {
   return useMutation({
     mutationFn: (productId: string) => productApi.approveProduct(productId),
     onSuccess: () => {
-      // Invalidate pending products and product list queries
-      queryClient.invalidateQueries({ queryKey: ["products", "pending"] });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      // Invalidate admin statistics query
+      queryClient.invalidateQueries({ queryKey: ["product", "statistics"] });
     },
   });
 };
@@ -32,9 +31,8 @@ export const useRejectProduct = () => {
       rejectionComment: string;
     }) => productApi.rejectProduct(productId, rejectionComment),
     onSuccess: () => {
-      // Invalidate pending products and product list queries
-      queryClient.invalidateQueries({ queryKey: ["products", "pending"] });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      // Invalidate admin statistics query
+      queryClient.invalidateQueries({ queryKey: ["product", "statistics"] });
     },
   });
 };

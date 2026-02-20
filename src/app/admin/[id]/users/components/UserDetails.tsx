@@ -9,6 +9,8 @@ import SuspendUserButton from "./SuspendUserButton";
 import DresserDetailsCard from "./DresserDetailsCard";
 import ListerDetailsCard from "./ListerDetailsCard";
 import AdminDetailsCard from "./AdminDetailsCard";
+import DeleteUserButton from "./DeleteUserButton";
+import ResetUserPasswordButton from "./ResetUserPasswordButton";
 
 interface UserDetailsPanelProps {
   isOpen: boolean;
@@ -111,6 +113,12 @@ const UserDetailsPanel: React.FC<UserDetailsPanelProps> = ({
               {user && (
                 <SuspendUserButton userId={userId} userName={user.name} />
               )}
+
+              {/* Delete User Button */}
+              <DeleteUserButton userId={userId} userName={user?.name} />
+
+              {/* Reset Password Button */}
+              <ResetUserPasswordButton userId={userId} userName={user?.name} />
 
               <button
                 onClick={onClose}

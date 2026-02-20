@@ -17,6 +17,8 @@ import AvailabilityTab from "./AvailabilityTab";
 import RentalHistoryTab from "./RentalHistoryTab";
 import ActivityTab from "./ActivityTab";
 
+import DeleteProductButton from "./DeleteProductButton";
+
 interface Product {
   id: string;
   image: string;
@@ -152,6 +154,10 @@ export default function ListingDetailModal({
                   <Edit size={18} />
                   Edit
                 </button>
+                <DeleteProductButton
+                  productId={product.id}
+                  productName={product.itemName}
+                />
               </div>
             </div>
 

@@ -109,6 +109,10 @@ export type ProductStatisticsResponse = {
 };
 
 export const productApi = {
+  deleteProduct: (id: string) =>
+    apiFetch<{ success: boolean; message: string }>(`/admin/products/${id}`, {
+      method: "DELETE",
+    }),
   create: (data: ProductPayload) =>
     apiFetch<ProductResponse>("/product", {
       method: "POST",
@@ -188,19 +192,22 @@ export const productApi = {
     }),
 
   getStatistics: () =>
-    apiFetch<ProductStatisticsResponse>("/product/statistics", {
+    apiFetch<ProductStatisticsResponse>("/admin/products/statistics", {
       method: "GET",
     }),
 
   // Admin product management
   getPendingProducts: (page: number = 1, count: number = 10) =>
-    apiFetch<ProductsResponse>(`/product/pending?page=${page}&count=${count}`, {
-      method: "GET",
-    }),
+    apiFetch<ProductsResponse>(
+      `/admin/products/pending?page=${page}&count=${count}`,
+      {
+        method: "GET",
+      },
+    ),
 
   getApprovedProducts: (page: number = 1, count: number = 10) =>
     apiFetch<ProductsResponse>(
-      `/product/approved?page=${page}&count=${count}`,
+      `/admin/products/approved?page=${page}&count=${count}`,
       {
         method: "GET",
       },
@@ -208,25 +215,25 @@ export const productApi = {
 
   getRejectedProducts: (page: number = 1, count: number = 10) =>
     apiFetch<ProductsResponse>(
-      `/product/rejected?page=${page}&count=${count}`,
+      `/admin/products/rejected?page=${page}&count=${count}`,
       {
         method: "GET",
       },
     ),
 
   approveProduct: (id: string) =>
-    apiFetch<ProductResponse>(`/product/${id}/approve`, {
+    apiFetch<ProductResponse>(`/admin/products/${id}/approve`, {
       method: "PATCH",
     }),
 
   rejectProduct: (id: string, rejectionComment: string) =>
-    apiFetch<ProductResponse>(`/product/${id}/reject`, {
+    apiFetch<ProductResponse>(`/admin/products/${id}/reject`, {
       method: "PATCH",
       body: JSON.stringify({ rejectionComment }),
     }),
 
   toggleAvailability: (id: string, isAvailable: boolean) =>
-    apiFetch<ProductResponse>(`/product/${id}/availability`, {
+    apiFetch<ProductResponse>(`/admin/products/${id}/availability`, {
       method: "PATCH",
       body: JSON.stringify({ isAvailable }),
     }),

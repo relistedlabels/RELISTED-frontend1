@@ -1,7 +1,365 @@
+---
+## Admin Product Management
+
+All product management endpoints are now under `/api/admin/products`. These endpoints allow admins to view, search, filter, approve, reject, delete, and manage product listings.
+---
+
+### 1. GET /api/admin/products/statistics
+
+**Purpose:** Fetch statistics for all product listings (total, pending, approved, rejected, active).
+
+**Request Example:**
+
+```
+GET /api/admin/products/statistics
+```
+
+**Response:**
+
+```
+{
+  "success": true,
+  "data": {
+    "getTotalProducts": { "count": 1200 },
+    "getPendingProducts": { "count": 100, "products": [...] },
+    "getApprovedProducts": { "count": 900, "products": [...] },
+    "getRejectedProducts": { "count": 50, "products": [...] },
+    "getActiveProducts": { "count": 150, "products": [...] }
+  }
+}
+```
+
+---
+
+### 2. GET /api/admin/products/pending
+
+**Purpose:** Fetch all pending product listings.
+
+**Request Example:**
+
+```
+GET /api/admin/products/pending?page=1&count=20
+```
+
+**Response:**
+
+```
+{
+  "success": true,
+  "data": { "products": [...] }
+}
+```
+
+---
+
+### 3. GET /api/admin/products/approved
+
+**Purpose:** Fetch all approved product listings.
+
+**Request Example:**
+
+```
+GET /api/admin/products/approved?page=1&count=20
+```
+
+**Response:**
+
+```
+{
+  "success": true,
+  "data": { "products": [...] }
+}
+```
+
+---
+
+### 4. GET /api/admin/products/rejected
+
+**Purpose:** Fetch all rejected product listings.
+
+**Request Example:**
+
+```
+GET /api/admin/products/rejected?page=1&count=20
+```
+
+**Response:**
+
+```
+{
+  "success": true,
+  "data": { "products": [...] }
+}
+```
+
+---
+
+### 5. PATCH /api/admin/products/:productId/approve
+
+**Purpose:** Approve a product listing.
+
+**Request Example:**
+
+```
+PATCH /api/admin/products/12345/approve
+```
+
+**Response:**
+
+```
+{
+  "success": true,
+  "data": { ...updated product... }
+}
+```
+
+---
+
+### 6. PATCH /api/admin/products/:productId/reject
+
+**Purpose:** Reject a product listing with a comment.
+
+**Request Example:**
+
+```
+PATCH /api/admin/products/12345/reject
+{
+  "rejectionComment": "Item is not authentic."
+}
+```
+
+**Response:**
+
+```
+{
+  "success": true,
+  "data": { ...updated product... }
+}
+```
+
+---
+
+### 7. PATCH /api/admin/products/:productId/availability
+
+**Purpose:** Toggle product availability (active/inactive).
+
+**Request Example:**
+
+```
+PATCH /api/admin/products/12345/availability
+{
+  "isAvailable": false
+}
+```
+
+**Response:**
+
+```
+{
+  "success": true,
+  "data": { ...updated product... }
+}
+```
+
+---
+
+### 8. DELETE /api/admin/products/:productId
+
+**Purpose:** Delete a product listing.
+
+**Request Example:**
+
+```
+DELETE /api/admin/products/12345
+```
+
+**Response:**
+
+```
+{
+  "success": true,
+  "message": "Product deleted"
+}
+```
+
+---
+
+## UI Actions & Integration Notes
+
+- **Approve/Reject/Delete Listing:** Buttons in ListingDetailModal call PATCH/DELETE endpoints above.
+- **Search, Filter, Tabs:** Use query params on GET endpoints.
+- **Availability Toggle:** Calls PATCH endpoint for availability.
+- **All hooks, queries, and mutations use /admin/products route.**
+- Add new endpoints to docs as new UI actions are implemented.
+
+---
+
 # Missing API Endpoints - NXAPI
 
 **Status:** Awaiting Backend Implementation
 **Last Updated:** 2026-02-08
+
+---
+
+## Admin User Management
+
+All user management endpoints are now under `/api/admin/users`. These endpoints allow admins to view, search, filter, suspend, and unsuspend users, as well as access detailed user information.
+
+---
+
+### 1. GET /api/admin/users/all
+
+**Purpose:** Fetch all users with optional pagination, search, and status filters.
+
+**Request Example:**
+
+```
+GET /api/admin/users/all?page=1&count=100&search=Grace&status=Active&role=LISTER
+```
+
+**Response:**
+
+```
+{
+  "success": true,
+  "data": {
+    "users": [ ... ],
+    "total": 120,
+    "page": 1,
+    "count": 100
+  }
+}
+```
+
+---
+
+### 2. GET /api/admin/users/:userId
+
+**Purpose:** Fetch detailed information for a specific user.
+
+**Request Example:**
+
+```
+GET /api/admin/users/12345
+```
+
+**Response:**
+
+```
+{
+  "success": true,
+  "data": { ...user details... }
+}
+```
+
+---
+
+### 3. PATCH /api/admin/users/:userId/suspend
+
+**Purpose:** Suspend a user account.
+
+**Request Example:**
+
+```
+PATCH /api/admin/users/12345/suspend
+```
+
+**Response:**
+
+```
+{
+  "success": true,
+  "data": { ...updated user... }
+}
+```
+
+---
+
+### 4. PATCH /api/admin/users/:userId/unsuspend
+
+**Purpose:** Unsuspend a user account.
+
+**Request Example:**
+
+```
+PATCH /api/admin/users/12345/unsuspend
+```
+
+**Response:**
+
+```
+{
+  "success": true,
+  "data": { ...updated user... }
+}
+```
+
+---
+
+## UI Actions & Missing Endpoints
+
+- **Suspend/Unsuspend Button:** Calls PATCH endpoints above.
+- **Search, Filter, Tabs:** Use query params on GET /all.
+- **User Details Modal:** Uses GET /:userId.
+
+If any new UI actions are added (e.g., delete user, reset password), add corresponding endpoints:
+
+### 5. DELETE /api/admin/users/:userId
+
+**Purpose:** Delete a user account.
+
+**Request Example:**
+
+```
+DELETE /api/admin/users/12345
+```
+
+**Response:**
+
+```
+{
+  "success": true,
+  "message": "User deleted"
+}
+```
+
+### 6. POST /api/admin/users/:userId/reset-password
+
+**Purpose:** Reset a user's password (admin action).
+
+**Request Example:**
+
+```
+POST /api/admin/users/12345/reset-password
+{
+  "newPassword": "secure123!"
+}
+```
+
+**Response:**
+
+```
+{
+  "success": true,
+  "message": "Password reset"
+}
+```
+
+---
+
+**Note:** All endpoints require admin authentication.
+
+---
+
+## Integration Notes
+
+- All hooks, queries, and mutations should use the new `/admin/users` route.
+- UI actions (buttons, modals) must call the correct endpoint.
+- Add new endpoints to docs as new UI actions are implemented.
+
+---
+
+**Backend devs:** See this file for endpoint specs and update implementation accordingly.
 
 ---
 
