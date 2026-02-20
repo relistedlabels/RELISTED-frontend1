@@ -1,4 +1,8 @@
----
+# Missing API Endpoints - NXAPI
+
+**Status:** Awaiting Backend Implementation
+**Last Updated:** 2026-02-08
+
 ## Admin Product Management
 
 All product management endpoints are now under `/api/admin/products`. These endpoints allow admins to view, search, filter, approve, reject, delete, and manage product listings.
@@ -194,10 +198,7 @@ DELETE /api/admin/products/12345
 
 ---
 
-# Missing API Endpoints - NXAPI
 
-**Status:** Awaiting Backend Implementation
-**Last Updated:** 2026-02-08
 
 ---
 
