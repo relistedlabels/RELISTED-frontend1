@@ -117,6 +117,7 @@ export default function TopListingSection() {
                   brand={item.brand?.name || "BRAND"}
                   name={item.name}
                   price={`₦${item.originalValue.toLocaleString()}`}
+                  dailyPrice={item.dailyPrice}
                 />
               </div>
             ))}

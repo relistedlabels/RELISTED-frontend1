@@ -115,7 +115,8 @@ const TopListingSection = () => {
                     }
                     brand={product.brand?.name || "BRAND"}
                     name={product.name}
-                    price={`₦${product.originalValue.toLocaleString()}`}
+                    price={`₦${(product.originalValue || 0).toLocaleString()}`}
+                    dailyPrice={product.dailyPrice}
                   />
                 </div>
               ))}

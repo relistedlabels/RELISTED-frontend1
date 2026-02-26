@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   HiOutlineBuildingStorefront,
   HiOutlineTag,
@@ -8,6 +8,13 @@ import {
 } from "react-icons/hi2";
 import { TiTick } from "react-icons/ti";
 import { Paragraph1 } from "@/common/ui/Text"; // Assuming custom text components based on previous context
+import { Heart } from "lucide-react";
+import {
+  useAddFavorite,
+  useRemoveFavorite,
+  useFavorites,
+} from "@/lib/queries/renters/useFavorites";
+import { useMe } from "@/lib/queries/auth/useMe";
 import RentalPeriods from "./RentalPeriods";
 import { usePublicProductById } from "@/lib/queries/product/usePublicProductById";
 import { DetailPanelSkeleton } from "@/common/ui/SkeletonLoaders";
@@ -68,12 +75,48 @@ interface RentalDetailsCardProps {
 const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
   const { data: product, isLoading } = usePublicProductById(productId);
 
+  // Favorite logic (copied from ProductCard)
+  const { data: user } = useMe();
+  const { data: favoritesData } = useFavorites(1, 100);
+  const addFavorite = useAddFavorite();
+  const removeFavorite = useRemoveFavorite();
+  const [isFavorited, setIsFavorited] = useState(false);
+
+  useEffect(() => {
+    if (favoritesData?.favorites && product) {
+      const isFav = favoritesData.favorites.some(
+        (fav) => fav.itemId === product.id,
+      );
+      setIsFavorited(isFav);
+    }
+  }, [favoritesData, product]);
+
+  const handleFavoriteClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      window.location.href = "/auth/sign-in";
+      return;
+    }
+
+    if (!product) return;
+
+    if (isFavorited) {
+      removeFavorite.mutate(product.id);
+      setIsFavorited(false);
+    } else {
+      addFavorite.mutate(product.id);
+      setIsFavorited(true);
+    }
+  };
+
   if (isLoading || !product) {
     return <DetailPanelSkeleton />;
   }
 
   // Calculate security deposit as percentage of original value if not provided
-  const securityDeposit = Math.round(product.originalValue * 0.2); // 20% of original value
+  const securityDeposit = Math.round(product.originalValue ); // 20% of original value
 
   // Mock lister data - in a real app, you'd fetch this separately
   const listerData = {
@@ -121,21 +164,33 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
           <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
             Rental Duration
           </Paragraph1>
-          {/* RentalPeriods now receives product/lister info as props */}
-          <RentalPeriods
-            productId={product.id}
-            listerId={listerData.id}
-            dailyPrice={product.dailyPrice}
-            securityDeposit={securityDeposit}
-          />
+          <div className="flex space-x-2 mb-4">
+            {/* RentalPeriods now receives product/lister info as props */}
+
+            <RentalPeriods
+              productId={product.id}
+              listerId={listerData.id}
+              dailyPrice={product.dailyPrice}
+              securityDeposit={securityDeposit}
+            />
+            <button
+              onClick={handleFavoriteClick}
+              disabled={addFavorite.isPending || removeFavorite.isPending}
+              className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 disabled:opacity-50 bg-white"
+              aria-label={
+                isFavorited ? "Remove from favorites" : "Add to favorites"
+              }
+            >
+              <Heart
+                className="w-6 h-6"
+                fill={isFavorited ? "red" : "none"}
+                color={isFavorited ? "red" : "#222"}
+              />
+            </button>
+          </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex space-x-2 mb-4">
-          <button className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150">
-            <HiOutlineHeart className="w-6 h-6 text-gray-800" />
-          </button>
-        </div>
 
         {/* Security / Deposit Info */}
         <div className="p-3 bg-white border border-gray-200 rounded-lg flex items-start space-x-2 mb-4">

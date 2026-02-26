@@ -13,11 +13,13 @@ import SearchModal from "./SearchModal";
 import ShopDropdownMobile from "./ShopDropdownMobile";
 import { shouldShowNavBar } from "@/lib/navbarRoutes";
 import { MobileAuthActions } from "./MobileAuthActions";
+import { useFavoriteCountStore } from "@/store/useFavoriteCountStore";
 
 export default function MobileNavbar() {
   const [open, setOpen] = useState(false);
   const [isShopMenuOpen, setIsShopMenuOpen] = useState(false);
   const pathname = usePathname();
+  const favoriteCount = useFavoriteCountStore((state) => state.favoriteCount);
 
   if (!shouldShowNavBar(pathname)) return null;
 
@@ -45,10 +47,6 @@ export default function MobileNavbar() {
 
         {/* RIGHT ICONS */}
         <div className="flex gap-4 items-center ml-auto z-20">
-          {/* <Link href="/dressers/favourites">
-            <Heart className="w-6 h-6" />{" "}
-          </Link> */}
-
           <SearchModal />
 
           <div className="relative">
@@ -130,7 +128,10 @@ export default function MobileNavbar() {
                 <Paragraph1>Contact</Paragraph1>
               </Link>
               <Link href="/renters/favorites" onClick={() => setOpen(false)}>
-                <Paragraph1>Favourites</Paragraph1>
+                <div className="flex items-center space-x-2">
+                  <Paragraph1>Favourites</Paragraph1>
+                  <span className="text-sm">({favoriteCount})</span>
+                </div>
               </Link>
               <div className="mt- flex flex-col gap-3">
                 <MobileAuthActions onClose={() => setOpen(false)} />

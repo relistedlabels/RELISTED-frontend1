@@ -1,17 +1,16 @@
 // ENDPOINTS: GET /api/renters/notifications/preferences, PUT /api/renters/notifications/preferences
 
-import React, { useState } from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 
 interface NotificationSettingProps {
-  /** The main title of the setting (e.g., "Email Alerts") */
   title: string;
-  /** The descriptive text for the setting */
   description: string;
-  /** The initial state of the toggle switch */
   initialEnabled: boolean;
-  /** Unique key for the setting */
   settingKey: string;
+  onToggle?: (key: string, enabled: boolean) => void;
 }
 
 // Sub-component for a single toggleable notification setting
@@ -20,13 +19,21 @@ const NotificationSetting: React.FC<NotificationSettingProps> = ({
   description,
   initialEnabled,
   settingKey,
+  onToggle,
 }) => {
   const [isEnabled, setIsEnabled] = useState(initialEnabled);
+
+  const handleToggle = () => {
+    const newValue = !isEnabled;
+    setIsEnabled(newValue);
+    onToggle?.(settingKey, newValue);
+  };
 
   // Simple toggle switch component structure
   const ToggleSwitch: React.FC = () => (
     <button
-      onClick={() => setIsEnabled(!isEnabled)}
+      type="button"
+      onClick={handleToggle}
       aria-checked={isEnabled}
       role="switch"
       className={`relative inline-flex shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black ${
@@ -56,7 +63,70 @@ const NotificationSetting: React.FC<NotificationSettingProps> = ({
   );
 };
 
+const NOTIFICATION_PREFERENCES = [
+  {
+    key: "email_alerts",
+    title: "Email Alerts",
+    description:
+      "Receive email notifications about your orders, returns, and account activity",
+    default: true,
+  },
+  {
+    key: "sms_updates",
+    title: "SMS Updates",
+    description:
+      "Get SMS notifications for important order updates and reminders",
+    default: false,
+  },
+  {
+    key: "order_updates",
+    title: "Order Updates",
+    description: "Notifications when order status changes",
+    default: true,
+  },
+  {
+    key: "rental_reminders",
+    title: "Rental Reminders",
+    description: "Reminders for upcoming return dates",
+    default: true,
+  },
+  {
+    key: "promotional_offers",
+    title: "Promotional Offers",
+    description: "Receive news on special promotions and discounts",
+    default: false,
+  },
+];
+
 const AccountNotifications: React.FC = () => {
+  const [preferences, setPreferences] = useState<Record<string, boolean>>({});
+  const [isLoading] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  // Initialize preferences from defaults
+  useEffect(() => {
+    const initialPrefs: Record<string, boolean> = {};
+    NOTIFICATION_PREFERENCES.forEach((pref) => {
+      initialPrefs[pref.key] = pref.default;
+    });
+    setPreferences(initialPrefs);
+    // TODO: Fetch actual preferences from API when endpoint is ready
+    // const { data } = useNotificationPreferences();
+  }, []);
+
+  const handleTogglePref = (key: string, enabled: boolean) => {
+    setPreferences((prev) => ({ ...prev, [key]: enabled }));
+    setHasChanges(true);
+
+    // TODO: Call mutation to update preferences
+    // updateNotificationMutation.mutate({ [key]: enabled })
+  };
+
+  const handleSavePreferences = async () => {
+    setHasChanges(false);
+    // TODO: Call mutation to save all preferences
+    alert("Notification preferences updated!");
+  };
   return (
     <div className="font-sans ">
       <Paragraph1 className="text-xl uppercase font-bold text-gray-900 mb-2">
@@ -67,35 +137,27 @@ const AccountNotifications: React.FC = () => {
       </Paragraph1>
 
       <div className="space-y-2">
-        {/* Email Alerts */}
-        <NotificationSetting
-          title="Email Alerts"
-          description="Receive email notifications about your orders, returns, and account activity"
-          initialEnabled={true}
-          settingKey="email_alerts"
-        />
-
-        {/* SMS Updates */}
-        <NotificationSetting
-          title="SMS Updates"
-          description="Get text message updates for shipping, delivery, and important account changes"
-          initialEnabled={false}
-          settingKey="sms_updates"
-        />
-
-        {/* Product Recommendations */}
-        <NotificationSetting
-          title="Product Recommendations"
-          description="Receive personalized product suggestions and exclusive offers based on your preferences"
-          initialEnabled={true}
-          settingKey="product_recs"
-        />
+        {NOTIFICATION_PREFERENCES.map((pref) => (
+          <NotificationSetting
+            key={pref.key}
+            title={pref.title}
+            description={pref.description}
+            initialEnabled={preferences[pref.key] ?? pref.default}
+            settingKey={pref.key}
+            onToggle={handleTogglePref}
+          />
+        ))}
       </div>
 
-      {/* Save Button (Implicit in the form, often used if there are other form elements) */}
+      {/* Save Button */}
       <div className="flex justify-end pt-6">
-        <button className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition duration-150">
-          Save Preferences
+        <button
+          type="button"
+          onClick={handleSavePreferences}
+          disabled={!hasChanges || isLoading}
+          className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 disabled:opacity-50 transition duration-150"
+        >
+          {isLoading ? "Saving..." : "Save Preferences"}
         </button>
       </div>
     </div>

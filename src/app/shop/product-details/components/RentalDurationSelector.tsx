@@ -27,11 +27,7 @@ import { useSubmitRentalRequest } from "@/lib/mutations/renters/useRentalRequest
 // ============================================================================
 
 // --- Data for predefined durations ---
-const rentalOptions = [
-  { days: 3, price: "₦150,000" },
-  { days: 6, price: "₦170,000" },
-  { days: 9, price: "₦200,000" },
-];
+const rentalDayOptions = [3, 6, 9];
 
 // --- Helper Functions for Date Logic ---
 
@@ -52,10 +48,24 @@ const getMonthName = (monthIndex: number) => {
 };
 
 // --- Calendar Component ---
+const Calendar = ({
+  selectedDuration,
+  customDays,
+  startDate,
+  setStartDate,
+  unavailableDays = [],
+}: {
+  selectedDuration: number;
+  customDays: number;
+  startDate: Date;
+  setStartDate: (date: Date) => void;
+  unavailableDays?: number[];
+}) => {
+  const [currentDate, setCurrentDate] = useState(startDate);
 
-const Calendar = () => {
-  const today = new Date();
-  const [currentDate, setCurrentDate] = useState(today);
+  useEffect(() => {
+    setCurrentDate(startDate);
+  }, [startDate]);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -74,16 +84,27 @@ const Calendar = () => {
     setCurrentDate(new Date(year, month + 1, 1));
   };
 
-  // Function to determine if a day is "unavailable" (Placeholder logic)
-  const isUnavailable = (day: number) => {
-    // Example: Make days 24, 25, 26 unavailable in the current view
-    return [24, 25, 26].includes(day);
+  // Function to determine if a day is "unavailable"
+  const isUnavailable = (day: number) =>
+    typeof day === "number" && unavailableDays.includes(day);
+
+  // Function to determine if a day is part of the selected range
+  const isSelectedRange = (day: number) => {
+    if (typeof day !== "number") return false;
+    const start =
+      currentDate.getFullYear() === startDate.getFullYear() &&
+      currentDate.getMonth() === startDate.getMonth()
+        ? startDate.getDate()
+        : 1;
+    const duration = customDays || selectedDuration;
+    return day >= start && day < start + duration && !isUnavailable(day);
   };
 
-  // Function to determine if a day is part of the "selected range" (Placeholder logic)
-  const isSelectedRange = (day: number) => {
-    // Example: Days 13, 14, 15 are the selected range
-    return [13, 14, 15].includes(day);
+  // Handle selecting a new start date
+  const handleDayClick = (day: number) => {
+    if (typeof day === "number" && !isUnavailable(day)) {
+      setStartDate(new Date(year, month, day));
+    }
   };
 
   return (
@@ -122,25 +143,25 @@ const Calendar = () => {
           if (day === null) {
             return <div key={index} className="h-10"></div>; // Placeholder padding
           }
-
           const isUnavailableDay = isUnavailable(day);
           const isSelectedDay = isSelectedRange(day);
-
           let dayClasses =
             "flex items-center justify-center h-10 w-full rounded-md text-gray-900 font-medium";
-
           if (isUnavailableDay) {
-            dayClasses += " text-gray-400 bg-gray-100 cursor-not-allowed"; // Unavailable style
+            dayClasses += " text-gray-400 bg-gray-100 cursor-not-allowed";
           } else if (isSelectedDay) {
-            dayClasses += " bg-yellow-400 text-white shadow-md"; // Selected range style
+            dayClasses += " bg-yellow-400 text-white shadow-md";
           } else {
-            dayClasses += " hover:bg-gray-50 cursor-pointer"; // Default style
+            dayClasses += " hover:bg-gray-50 cursor-pointer";
           }
-
           return (
             <div key={index} className="flex justify-center items-center">
-              <button className={dayClasses} disabled={isUnavailableDay}>
-                <Paragraph1> {day}</Paragraph1>
+              <button
+                className={dayClasses}
+                disabled={isUnavailableDay}
+                onClick={() => handleDayClick(day as number)}
+              >
+                <Paragraph1> {typeof day === "number" ? day : ""}</Paragraph1>
               </button>
             </div>
           );
@@ -168,15 +189,16 @@ const RentalDurationSelector = ({
   const [selectedDuration, setSelectedDuration] = useState<number | "custom">(
     3,
   );
+  const [customDays, setCustomDays] = useState<number>(3);
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [startDate, setStartDate] = useState<Date>(new Date());
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<boolean>(false);
   const { error, triggerError, clearError } = useRentalError();
 
   // Get user from store
-  const user = useUserStore((state) => ({
-    token: state.token,
-    userId: state.userId,
-  }));
+  const token = useUserStore((state) => state.token);
+  const userId = useUserStore((state) => state.userId);
 
   // Check auth status
   const { isLoading: isCheckingAuth, isError: authError } = useMe();
@@ -187,7 +209,7 @@ const RentalDurationSelector = ({
       clearError();
 
       // If user is not authenticated, show login modal
-      if (!user.token) {
+      if (!token) {
         console.log("User not authenticated, showing login modal");
         setIsLoginModalOpen(true);
         return;
@@ -222,7 +244,7 @@ const RentalDurationSelector = ({
     } finally {
       setPendingAction(false);
     }
-  }, [user.token, selectedDuration, clearError, triggerError]);
+  }, [token, selectedDuration, clearError, triggerError]);
 
   const handleLoginSuccess = useCallback(() => {
     console.log("Login successful, proceeding with availability check");
@@ -283,47 +305,81 @@ const RentalDurationSelector = ({
 
         {/* Duration Buttons */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 mb-8">
-          {rentalOptions.map((option) => (
+          {rentalDayOptions.map((days) => (
             <button
-              key={option.days}
-              onClick={() => setSelectedDuration(option.days)}
+              key={days}
+              onClick={() => {
+                setSelectedDuration(days);
+                setShowCustomInput(false);
+                setCustomDays(days);
+              }}
               className={`
                 p-3 px-5 rounded-lg border text-sm font-semibold transition-colors
                 ${
-                  selectedDuration === option.days
-                    ? "bg-black text-white border-black" // Selected style
-                    : "bg-white text-gray-800 border-gray-300 hover:border-gray-500" // Default style
+                  selectedDuration === days && !showCustomInput
+                    ? "bg-black text-white border-black"
+                    : "bg-white text-gray-800 border-gray-300 hover:border-gray-500"
                 }
               `}
             >
               <Paragraph1>
-                {" "}
-                {option.days} Days <br /> {option.price}
+                {days} Days <br /> ₦{(days * dailyPrice).toLocaleString()}
               </Paragraph1>
             </button>
           ))}
-
           {/* Custom Button */}
           <button
-            onClick={() => setSelectedDuration("custom")}
+            onClick={() => {
+              setSelectedDuration("custom");
+              setShowCustomInput(true);
+            }}
             className={`
               p-3 px-5 rounded-lg border text-sm font-semibold transition-colors
               ${
-                selectedDuration === "custom"
-                  ? "bg-black text-white border-black" // Selected style (Matches image)
-                  : "bg-white text-gray-800 border-gray-300 hover:border-gray-500" // Default style
+                selectedDuration === "custom" || showCustomInput
+                  ? "bg-black text-white border-black"
+                  : "bg-white text-gray-800 border-gray-300 hover:border-gray-500"
               }
             `}
           >
             <Paragraph1>
-              {" "}
-              Custom <br /> NO
+              Custom <br />
+              {customDays
+                ? `₦${(customDays * dailyPrice).toLocaleString()}`
+                : "Set days"}
             </Paragraph1>
           </button>
         </div>
+        {/* Custom Days Dropdown */}
+        {showCustomInput && (
+          <div className="mb-4 flex items-center gap-2">
+            <Paragraph1>Enter days:</Paragraph1>
+            <input
+              type="number"
+              min={1}
+              max={30}
+              value={customDays}
+              onChange={(e) => {
+                const val = Math.max(1, Math.min(30, Number(e.target.value)));
+                setCustomDays(val);
+              }}
+              className="border rounded px-2 py-1 w-20 text-center"
+            />
+          </div>
+        )}
 
         {/* Calendar Section */}
-        <Calendar />
+        <Calendar
+          selectedDuration={
+            selectedDuration === "custom"
+              ? customDays
+              : (selectedDuration as number)
+          }
+          customDays={selectedDuration === "custom" ? customDays : 0}
+          startDate={startDate}
+          setStartDate={setStartDate}
+          unavailableDays={[]}
+        />
 
         {/* Legends */}
         <div className="flex justify-center gap-6 mt-6 text-sm text-gray-600">

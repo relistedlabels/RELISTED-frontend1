@@ -10,6 +10,7 @@ import { UploaderProvider } from "@/context/UploaderProvider";
 import { Toaster } from "sonner";
 import ApiTestComponent from "@/common/debug/ApiTestComponent";
 import Script from "next/script";
+import { FavoritesInitializer } from "@/common/layer/FavoritesInitializer";
 
 export const metadata: Metadata = {
   title:
@@ -73,6 +74,7 @@ export default function RootLayout({
         />
         {/* <DevGuard> */}
         <QueryProvider>
+          <FavoritesInitializer />
           <UploaderProvider>
             <DesktopNavbar />
             <MobileNavbar />

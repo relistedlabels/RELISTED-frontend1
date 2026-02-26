@@ -1,5 +1,6 @@
 import React from "react";
-import { Paragraph1 } from "@/common/ui/Text"; // Using your custom text component
+import { Paragraph1 } from "@/common/ui/Text";
+import { usePublicReviews } from "@/lib/queries/review/usePublicReviews";
 
 interface Review {
   /** The name of the reviewer (e.g., "Emma K.") */
@@ -65,35 +66,27 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({ reviews }) => {
 
 // --- Example Usage matching the provided image content ---
 
-interface ExampleReviewsBlockProps {
-  productId?: string;
-}
 
-const ExampleReviewsBlock: React.FC<ExampleReviewsBlockProps> = ({
-  productId,
-}) => {
-  const sampleReviews: Review[] = [
-    {
-      name: "Emma K.",
-      rating: 5,
-      comment:
-        "Absolutely stunning dress! Perfect fit and the quality is amazing. Got so many compliments.",
-    },
-    {
-      name: "Amanda B.",
-      rating: 4,
-      comment:
-        "Perfect for my gala event. The lender was very responsive and the dress arrived in pristine condition.",
-    },
-    {
-      name: "Sarah M.",
-      rating: 5,
-      comment:
-        "Absolutely stunning dress! Perfect fit and the quality is amazing. Got so many compliments.",
-    },
-  ];
 
-  return <ProductReviews reviews={sampleReviews} />;
+const ExampleReviewsBlock: React.FC<any> = ({ productId }) => {
+  // Fetch reviews from backend
+  const { data: reviews, isLoading, error } = usePublicReviews({ minRating: 1, limit: 10, sort: "newest", type: "product" });
+
+  if (isLoading) {
+    return <Paragraph1 className="text-gray-600 p-4">Loading reviews...</Paragraph1>;
+  }
+  if (error) {
+    return <Paragraph1 className="text-red-600 p-4">Failed to load reviews.</Paragraph1>;
+  }
+  // Map backend reviews to local Review type
+  const mappedReviews = Array.isArray(reviews)
+    ? reviews.map((r: any) => ({
+        name: r.renterName || r.name || "Anonymous",
+        rating: r.rating,
+        comment: r.text || r.comment || "",
+      }))
+    : [];
+  return <ProductReviews reviews={mappedReviews} />;
 };
 
 export default ExampleReviewsBlock;

@@ -8,7 +8,6 @@ interface EmergencyContacts {
   phoneNumber: string;
   city: string;
   state: string;
-  
 }
 
 interface BusinessInfo {
@@ -57,7 +56,7 @@ const initialState = {
     name: "",
     relationship: "",
     phoneNumber: "",
-  
+
     city: "",
     state: "",
   },
@@ -104,6 +103,19 @@ export const useProfileStore = create<ProfileState>()(
     {
       name: "profile-store", // localStorage key
       version: 1,
+      migrate: (persistedState: unknown, version: number) => {
+        // Handle migration from previous versions
+        if (version === 0) {
+          // Migrate from v0 to v1
+          const state = persistedState as any;
+          return {
+            ...initialState,
+            ...state,
+          };
+        }
+        // If version is already 1 or higher, return as is
+        return (persistedState as ProfileState) || initialState;
+      },
     },
   ),
 );

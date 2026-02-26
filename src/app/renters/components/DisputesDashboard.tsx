@@ -1,9 +1,12 @@
 // ENDPOINTS: GET /api/renters/disputes/stats
 
+"use client";
+
 import React from "react";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text"; // Assuming your custom text component
 import { FaPlus } from "react-icons/fa";
 import RaiseDispute from "./RaiseDispute";
+import { useDisputeStats } from "@/lib/queries/renters/useDisputes";
 
 interface DisputeSummaryCardProps {
   /** The status label (e.g., "Pending") */
@@ -29,18 +32,46 @@ const DisputeSummaryCard: React.FC<DisputeSummaryCardProps> = ({
 );
 
 interface DisputesDashboardProps {
-  totalDisputes: number;
-  pendingDisputes: number;
-  inReviewDisputes: number;
-  resolvedDisputes: number;
+  totalDisputes?: number;
+  pendingDisputes?: number;
+  inReviewDisputes?: number;
+  resolvedDisputes?: number;
 }
 
 const DisputesDashboard: React.FC<DisputesDashboardProps> = ({
-  totalDisputes,
-  pendingDisputes,
-  inReviewDisputes,
-  resolvedDisputes,
+  totalDisputes: propTotal,
+  pendingDisputes: propPending,
+  inReviewDisputes: propInReview,
+  resolvedDisputes: propResolved,
 }) => {
+  const { data, isLoading, error } = useDisputeStats();
+
+  const totalDisputes = propTotal ?? data?.totalDisputes ?? 0;
+  const pendingDisputes = propPending ?? data?.pendingDisputes ?? 0;
+  const inReviewDisputes = propInReview ?? data?.inReviewDisputes ?? 0;
+  const resolvedDisputes = propResolved ?? data?.resolvedDisputes ?? 0;
+
+  if (isLoading) {
+    return (
+      <div className="font-sans animate-pulse">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-24 bg-gray-200 rounded-lg"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="font-sans bg-red-50 border border-red-200 rounded-lg p-4">
+        <Paragraph1 className="text-red-600">
+          Failed to load dispute statistics. Please try again.
+        </Paragraph1>
+      </div>
+    );
+  }
   return (
     <div className="font-sans  ">
       {/* Header and Action Button */}
@@ -88,14 +119,7 @@ const DisputesDashboard: React.FC<DisputesDashboardProps> = ({
 // --- Example Usage matching the provided image content ---
 
 const ExampleDisputesDashboard: React.FC = () => {
-  return (
-    <DisputesDashboard
-      totalDisputes={4}
-      pendingDisputes={1}
-      inReviewDisputes={1}
-      resolvedDisputes={1}
-    />
-  );
+  return <DisputesDashboard />;
 };
 
 export default ExampleDisputesDashboard;

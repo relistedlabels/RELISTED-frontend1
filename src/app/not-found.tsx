@@ -5,11 +5,14 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <div className="relative w-full min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black overflow-hidden">
+    <div
+      style={{ backgroundImage: "url('/images/authbg.jpg')" }}
+      className="relative w-full min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black overflow-hidden"
+    >
       {/* Animated background elements */}
-      <div className="absolute top-20 left-10 w-72 h-72 bg-gray-600 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob"></div>
+      {/* <div className="absolute top-20 left-10 w-72 h-72 bg-gray-600 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob"></div>
       <div className="absolute top-40 right-10 w-72 h-72 bg-gray-700 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000"></div>
-      <div className="absolute -bottom-8 left-20 w-72 h-72 bg-gray-800 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-4000"></div>
+      <div className="absolute -bottom-8 left-20 w-72 h-72 bg-gray-800 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-4000"></div> */}
 
       {/* Glass container */}
       <div className="relative z-10 px-6 py-12 sm:px-8 sm:py-16 backdrop-blur-md bg-white/5 border border-white/15 rounded-3xl shadow-2xl max-w-md sm:max-w-lg text-center">

@@ -73,7 +73,7 @@ export function UserProfileBadge2() {
                 <span>View the Market</span>
               </Link>
               <Link
-                href="/dressers/orders"
+                href="/renters/orders"
                 className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
                 onClick={() => setIsOpen(false)}
               >

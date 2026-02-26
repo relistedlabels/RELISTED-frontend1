@@ -55,8 +55,6 @@ export default function MainCategorySection() {
             <div className=" hidden- sm: block">
               <Button
                 text="Shop Now"
-                isLink={true}
-                href="/shop?gender=Woman&title=Women%27s+Collections&description=Discover+our+curated+collection+of+women%27s+fashion"
                 backgroundColor="bg-transparent"
                 border="border border-white"
                 color="text-white"
@@ -92,8 +90,6 @@ export default function MainCategorySection() {
             <div className=" hidden- sm: block">
               <Button
                 text="Shop Now"
-                isLink={true}
-                href="/shop?gender=Men&title=Men%27s+Collections&description=Discover+our+curated+collection+of+men%27s+fashion"
                 backgroundColor="bg-transparent"
                 border="border border-white"
                 color="text-white"

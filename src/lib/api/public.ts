@@ -36,6 +36,7 @@ export type PublicProduct = {
   lister: PublicProductLister;
   isInStock: boolean;
   availableCount: number;
+  originalValue?: number; // Optional for compatibility with UI usage
 };
 
 export type PublicProductDetail = PublicProduct & {

@@ -72,7 +72,7 @@ const UserWalletDashboard: React.FC = () => {
               Your Total balance:
             </Paragraph1>
             <Paragraph3 className="text-4xl font-extrabold mt-1">
-              ₦{wallet.totalBalance.toLocaleString()}
+              ₦{(wallet.totalBalance ?? 0).toLocaleString()}
             </Paragraph3>
           </div>
 
@@ -85,7 +85,7 @@ const UserWalletDashboard: React.FC = () => {
         <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <BalanceCard
             title="Available Balance"
-            amount={`₦${wallet.availableBalance.toLocaleString()}`}
+            amount={`₦${(wallet.availableBalance ?? 0).toLocaleString()}`}
             icon={<img src="/icons/lock2.png" className="h-[70px] w-auto" />}
             note="Available to spend on rentals"
             isDark={false}
@@ -93,7 +93,7 @@ const UserWalletDashboard: React.FC = () => {
 
           <BalanceCard
             title="Locked Balance"
-            amount={`₦${wallet.lockedBalance.toLocaleString()}`}
+            amount={`₦${(wallet.lockedBalance ?? 0).toLocaleString()}`}
             icon={<img src="/icons/lock1.png" className="h-[70px] w-auto" />}
             note="Locked in active rentals"
             isDark={true}

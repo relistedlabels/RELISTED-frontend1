@@ -21,9 +21,11 @@ import { usePathname } from "next/navigation";
 import SearchModal from "./SearchModal";
 import { AuthActions } from "./AuthActions";
 import { shouldShowNavBar } from "@/lib/navbarRoutes";
+import { useFavoriteCountStore } from "@/store/useFavoriteCountStore";
 
 export default function DesktopNavbar() {
   const pathname = usePathname();
+  const favoriteCount = useFavoriteCountStore((state) => state.favoriteCount);
 
   if (!shouldShowNavBar(pathname)) return null;
 
@@ -56,7 +58,7 @@ export default function DesktopNavbar() {
             className="flex items-center space-x-1"
           >
             <Heart className="w-5 h-5" />
-            <span>0</span>
+            <span>{favoriteCount}</span>
           </Link>
 
           <RentalCartView />

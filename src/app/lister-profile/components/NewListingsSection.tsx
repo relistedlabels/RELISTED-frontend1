@@ -91,16 +91,12 @@ export default function NewListingsSection({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {products.map((product) => (
                 <ProductCard
-                  key={product.id}
                   id={product.id}
                   image={product.image}
-                  brand={
-                    typeof product.brand === "string"
-                      ? product.brand
-                      : product.brand.name
-                  }
+                  brand={product.brand?.name || "BRAND"}
                   name={product.name}
-                  price={`₦${product.dailyPrice?.toLocaleString() || "0"}`}
+                  price={`₦${(product.originalValue || 0).toLocaleString()}`}
+                  dailyPrice={product.dailyPrice}
                 />
               ))}
             </div>

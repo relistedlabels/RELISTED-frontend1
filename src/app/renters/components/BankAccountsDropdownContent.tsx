@@ -8,6 +8,7 @@ import { HiOutlineChevronRight, HiOutlineChevronDown } from "react-icons/hi2";
 import { FaPlus } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import AddNewBankAccount from "./AddNewBankAccount";
+import { useBankAccounts } from "@/lib/queries/renters/useBankAccounts";
 
 interface BankAccount {
   bankName: string;
@@ -55,21 +56,11 @@ const BankAccountsDropdownContent: React.FC<
 
 const ExampleBankAccountsDropdown: React.FC = () => {
   const [open, setOpen] = useState(false);
+  const { data, isLoading } = useBankAccounts();
 
-  const sampleAccounts: BankAccount[] = [
-    {
-      bankName: "Access Bank",
-      accountNumber: "02345676555",
-      accountName: "John Bassey",
-    },
-    {
-      bankName: "GTBank",
-      accountNumber: "02345676555",
-      accountName: "John Bassey",
-    },
-  ];
+  const accounts = data?.bankAccounts || [];
 
-  const handleSelect = (account: BankAccount) => {
+  const handleSelect = (account: any) => {
     alert(`Selected: ${account.bankName}`);
     setOpen(false);
   };
@@ -89,9 +80,12 @@ const ExampleBankAccountsDropdown: React.FC = () => {
         {/* Select button */}
         <button
           onClick={() => setOpen(!open)}
-          className="w-full p-3 bg-white border border-gray-300 rounded-lg flex justify-between items-center hover:bg-gray-50 transition"
+          disabled={isLoading}
+          className="w-full p-3 bg-white border border-gray-300 rounded-lg flex justify-between items-center hover:bg-gray-50 transition disabled:opacity-50"
         >
-          <span className="text-sm text-gray-700">Select Bank Account</span>
+          <span className="text-sm text-gray-700">
+            {isLoading ? "Loading accounts..." : "Select Bank Account"}
+          </span>
           <HiOutlineChevronDown
             className={`w-5 h-5 text-gray-600 transition-transform ${
               open ? "rotate-180" : "rotate-0"
@@ -101,7 +95,7 @@ const ExampleBankAccountsDropdown: React.FC = () => {
 
         {/* Dropdown Animation */}
         <AnimatePresence>
-          {open && (
+          {open && !isLoading && (
             <motion.div
               initial={{ opacity: 0, height: 0, y: -5 }}
               animate={{ opacity: 1, height: "auto", y: 0 }}
@@ -110,7 +104,11 @@ const ExampleBankAccountsDropdown: React.FC = () => {
               className="absolute left-0 right-0 mt-2 z-20"
             >
               <BankAccountsDropdownContent
-                accounts={sampleAccounts}
+                accounts={accounts.map((acc) => ({
+                  bankName: acc.bankName,
+                  accountNumber: acc.accountNumber,
+                  accountName: acc.accountName,
+                }))}
                 onSelectAccount={handleSelect}
                 onAddNewAccount={handleAdd}
               />

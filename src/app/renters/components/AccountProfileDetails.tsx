@@ -15,13 +15,19 @@ import {
 } from "react-icons/hi2";
 import { HiOutlineMail } from "react-icons/hi";
 import { useProfileStore } from "@/store/profileStore";
+import { useProfile } from "@/lib/queries/renters/useProfile";
+import { useUpdateProfile } from "@/lib/mutations/renters/useProfileMutations";
 import { FullProfile } from "@/types/profile";
 
 const AccountProfileDetails: React.FC = () => {
   const profile = useProfileStore((s) => s.profile);
   const setProfile = useProfileStore((s) => s.setProfile);
 
-  // ✅ Local form state synced from store
+  // ✅ Fetch profile from API
+  const { data: apiProfile, isLoading } = useProfile();
+  const updateProfileMutation = useUpdateProfile();
+
+  // ✅ Local form state synced from store/API
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -30,38 +36,62 @@ const AccountProfileDetails: React.FC = () => {
     defaultAddress: "",
   });
 
-  // ✅ Sync store data to form on mount/store change
+  // ✅ Sync API data to form on load
   useEffect(() => {
-    if (profile) {
+    if (apiProfile) {
+      setFormData({
+        fullName: apiProfile.fullName || "",
+        email: apiProfile.email || "",
+        phone: apiProfile.phone || "",
+        role: profile?.role || "Renter",
+        defaultAddress: profile?.address?.street || "",
+      });
+    }
+  }, [apiProfile]);
+
+  // ✅ Sync store data to form as fallback
+  if (!apiProfile && profile) {
+    useEffect(() => {
       setFormData({
         fullName: profile.firstName + " " + profile.lastName || "",
         email: profile.email || "",
         phone: profile.phoneNumber || "",
-        role: profile.role || "Dresser",
+        role: profile.role || "Renter",
         defaultAddress: profile.address?.street || "",
       });
-    }
-  }, [profile]);
+    }, [profile]);
+  }
 
   // ✅ Handle form input changes
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
-    // ✅ Update store in real-time
+  // ✅ Handle update profile
+  const handleUpdateProfile = () => {
     const [firstName, lastName] = formData.fullName.split(" ");
 
-    setProfile({
-      ...profile,
-      ...(field === "fullName" && {
-        firstName: firstName || "",
-        lastName: lastName || "",
-      }),
-      ...(field === "email" && { email: value }),
-      ...(field === "phone" && { phoneNumber: value }),
-      ...(field === "defaultAddress" && {
-        address: { ...profile?.address, street: value },
-      }),
-    } as FullProfile);
+    updateProfileMutation.mutate(
+      {
+        fullName: formData.fullName,
+        phone: formData.phone,
+      },
+      {
+        onSuccess: () => {
+          // Update store as fallback
+          setProfile({
+            ...profile,
+            firstName: firstName || "",
+            lastName: lastName || "",
+            phoneNumber: formData.phone,
+          } as FullProfile);
+          alert("Profile updated successfully!");
+        },
+        onError: (error: any) => {
+          alert(error?.message || "Failed to update profile");
+        },
+      },
+    );
   };
 
   return (
@@ -205,11 +235,21 @@ const AccountProfileDetails: React.FC = () => {
         </button>
         <button
           type="button"
-          className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition duration-150"
+          onClick={handleUpdateProfile}
+          disabled={updateProfileMutation.isPending || isLoading}
+          className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 disabled:opacity-50 transition duration-150"
         >
-          Update Profile
+          {updateProfileMutation.isPending ? "Updating..." : "Update Profile"}
         </button>
       </div>
+
+      {updateProfileMutation.isError && (
+        <Paragraph1 className="text-red-600 text-sm mt-2">
+          Error:{" "}
+          {(updateProfileMutation.error as any)?.message ||
+            "Failed to update profile"}
+        </Paragraph1>
+      )}
     </div>
   );
 };

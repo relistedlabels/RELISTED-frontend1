@@ -75,15 +75,27 @@ export async function apiFetch<T>(
 
   if (!res.ok) {
     let errorMessage = "Request failed";
+    let errorData: unknown = null;
+
     try {
       const error = await res.json();
       errorMessage = error?.message ?? errorMessage;
-    } catch {}
+      errorData = error;
+    } catch (parseError) {
+      // If response body is not JSON, try to get text
+      try {
+        const text = await res.text();
+        if (text) errorMessage = text;
+      } catch {
+        errorMessage = `${res.status} ${res.statusText || "Request failed"}`;
+      }
+    }
 
     console.error("🌐 [apiFetch] ERROR:", {
       path,
       status: res.status,
       message: errorMessage,
+      data: errorData,
     });
 
     // if (res.status === 401) {

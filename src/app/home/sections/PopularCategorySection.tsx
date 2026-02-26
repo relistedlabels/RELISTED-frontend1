@@ -1,42 +1,32 @@
-// ENDPOINTS: GET /api/public/categories
-
 "use client";
 
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Header1Plus, Header2, Paragraph1 } from "@/common/ui/Text";
-import { useCategories } from "@/lib/queries/category/useCategories";
-import { CategoryCardSkeleton } from "@/common/ui/SkeletonLoaders";
+import { categories, Category } from "@/data/categoryData"; // import data
 
-interface CategoryBoxProps {
-  id: string;
-  name: string;
-  description?: string;
-  image?: string;
-  itemCount?: number;
-}
+interface CategoryBoxProps extends Category {}
 
 const CategoryBox: React.FC<CategoryBoxProps> = ({
-  id,
-  name,
-  description = "Explore this collection",
-  image = "/images/placeholder.jpg",
+  image,
+  title,
+  description,
+  link,
+  height,
 }) => {
-  // Build URL with category filter
-  const shopUrl = `/shop?category=${encodeURIComponent(name)}&title=${encodeURIComponent(name)}&description=${encodeURIComponent(description)}`;
-
   return (
     <Link
-      href={shopUrl}
+      href={link}
       className={`relative w-full group overflow-hidden cursor-pointer h-[200px] sm:h-auto`}
+      style={{ height: undefined, ...(height && { ["--h"]: height }) }}
     >
-      <div className="hidden sm:block" style={{ height: "280px" }}></div>
+      <div className="hidden sm:block" style={{ height }}></div>
 
       {/* Background Image */}
       <Image
         src={image}
-        alt={name}
+        alt={title}
         fill
         className="object-cover transition-transform duration-2000 ease-in-out group-hover:scale-110"
         priority
@@ -47,11 +37,11 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({
 
       {/* Text content */}
       <div className="absolute sm:bottom-[35px] bottom-4 left-4 sm:left-[34px] text-white z-10">
-        <Header2 className="text-lg font-bold">{name}</Header2>
+        <Header2 className="text-lg font-bold">{title}</Header2>
         <Paragraph1 className="text-sm hidden sm:flex">
           {description}
         </Paragraph1>
-        <Link className=" hidden sm:block" href={shopUrl}>
+        <Link className=" hidden sm:block" href={link}>
           <button className="mt-2 py-1 text-white border-b font-semibold">
             <Paragraph1>Shop Now</Paragraph1>
           </button>
@@ -61,42 +51,13 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({
   );
 };
 
+
 const PopularCategorySection = () => {
-  const { data: categories, isLoading, error } = useCategories();
-
-  if (isLoading) {
-    return (
-      <section className="container px-4 sm:px-0 mx-auto py-6 sm:py-12">
-        <div className="text-center mb-6">
-          <Header1Plus className="tracking-wide uppercase">
-            Popular Categories
-          </Header1Plus>
-        </div>
-        <CategoryCardSkeleton count={6} />
-      </section>
-    );
-  }
-
-  if (error) {
-    return (
-      <section className="container px-4 sm:px-0 mx-auto py-6 sm:py-12">
-        <div className="text-center mb-6">
-          <Header1Plus className="tracking-wide uppercase">
-            Popular Categories
-          </Header1Plus>
-        </div>
-        <CategoryCardSkeleton count={6} />
-      </section>
-    );
-  }
-
-  // Limit to 6 categories and split into 3 columns of 2 boxes each
-  const displayCategories =
-    (Array.isArray(categories) ? categories : [])?.slice(0, 6) || [];
+  // Split into 3 columns of 2 boxes each
   const columns = [
-    displayCategories.slice(0, 2),
-    displayCategories.slice(2, 4),
-    displayCategories.slice(4, 6),
+    categories.slice(0, 2),
+    categories.slice(2, 4),
+    categories.slice(4, 6),
   ];
 
   return (
@@ -106,20 +67,14 @@ const PopularCategorySection = () => {
           Popular Categories
         </Header1Plus>
         <Paragraph1 className="text-gray-600 ">
-          Explore categories curated for every season, mood, and moment.{" "}
-          <Link href="/style-spotlight" className="underline hover:opacity-80">
-            view more
-          </Link>
+          Explore categories curated for every season, mood, and moment.
         </Paragraph1>
       </div>
       <div className="grid grid-cols-1  xl:grid-cols-3 gap-2 sm:gap-[23px]">
         {columns.map((col, colIndex) => (
-          <div
-            key={colIndex}
-            className="flex flex-row xl:flex-col gap-2 sm:gap-[23px]"
-          >
-            {col.map((box) => (
-              <CategoryBox key={box.id} {...box} />
+          <div key={colIndex} className="flex flex-row xl:flex-col gap-2 sm:gap-[23px]">
+            {col.map((box, idx) => (
+              <CategoryBox key={idx} {...box} />
             ))}
           </div>
         ))}
