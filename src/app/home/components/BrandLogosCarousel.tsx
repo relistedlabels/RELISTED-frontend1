@@ -17,7 +17,7 @@ export default function BrandLogosCarousel() {
     <div className="w-full container px-4 sm:px-0 mx-auto py-4 sm:py-[17px] bg-whit ">
       <div className="flex sm:justify-center overflow-hidden overflow-x-auto hide-scrollbar scrollbar-hide gap-1 sm:gap-14 px-">
         {brands &&
-          brands.map((brand) => (
+          brands.slice(0, 10).map((brand) => (
             <Link
               key={brand.id}
               href={`/shop?brand=${encodeURIComponent(brand.name)}&title=${encodeURIComponent(brand.name)}&description=${encodeURIComponent(`Shop ${brand.name} fashion`)}`}

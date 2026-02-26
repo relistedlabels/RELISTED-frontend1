@@ -11,8 +11,18 @@ import Link from "next/link";
 
 const TopListingSection = () => {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
-  const { data: products, isLoading, error } = useProducts();
-
+  // const { data: products, isLoading, error } = useProducts();
+  const {
+    data: products,
+    isLoading,
+    error,
+  } = useProducts({
+    sort: "newest",
+    categories: ["Dresses"],
+    brands: ["Gucci"],
+    priceMin: 5000,
+    priceMax: 50000,
+  });
   // Convert vertical wheel to horizontal scroll for mouse users
   const onWheel = (e: React.WheelEvent) => {
     const el = scrollerRef.current;

@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { useBrowseStore } from "@/store/useBrowseStore";
 import { Paragraph1 } from "./Text";
 import { Heart } from "lucide-react";
 import {
@@ -28,13 +29,15 @@ export default function ProductCard({
   price,
   dailyPrice,
 }: ProductCardProps) {
+  const router = useRouter();
+  const addViewed = useBrowseStore((state) => state.addViewed);
+
   const { data: user } = useMe();
   const { data: favoritesData } = useFavorites(1, 100);
   const addFavorite = useAddFavorite();
   const removeFavorite = useRemoveFavorite();
   const [isFavorited, setIsFavorited] = useState(false);
 
-  // Check if this item is in favorites
   useEffect(() => {
     if (favoritesData?.favorites) {
       const isFav = favoritesData.favorites.some((fav) => fav.itemId === id);
@@ -47,8 +50,7 @@ export default function ProductCard({
     e.stopPropagation();
 
     if (!user) {
-      // Redirect to sign in if not logged in
-      window.location.href = "/auth/sign-in";
+      router.push("/auth/sign-in");
       return;
     }
 
@@ -61,17 +63,22 @@ export default function ProductCard({
     }
   };
 
+  const handleProductClick = () => {
+    addViewed({ id, image, brand, name, price });
+    router.push(`/shop/product-details/${id}`);
+  };
+
   return (
-    <Link href={`/shop/product-details/${id}`} className="overflow-hidden">
-      {/* Image wrapper */}
+    <div
+      className="overflow-hidden cursor-pointer"
+      onClick={handleProductClick}
+    >
       <div className="relative w-full h-[230px] sm:h-[270px]">
-        {/* Background image */}
         <div
           className="w-full h-full bg-cover bg-center"
           style={{ backgroundImage: `url(${image})` }}
-        ></div>
+        />
 
-        {/* Love icon */}
         <button
           onClick={handleFavoriteClick}
           disabled={addFavorite.isPending || removeFavorite.isPending}
@@ -90,16 +97,16 @@ export default function ProductCard({
           {brand}
         </Paragraph1>
         <Paragraph1 className="text-gray-700 mt-1">{name}</Paragraph1>
-        <Paragraph1 className=" text-gray-700- mt-2">
+        <Paragraph1 className="text-gray-700 mt-2">
           Rent from{" "}
-          <span className=" text-black font-semibold">
-            ₦{dailyPrice?.toLocaleString() || "0"}{" "}
+          <span className="text-black font-semibold">
+            ₦{dailyPrice?.toLocaleString() || "0"}
           </span>
         </Paragraph1>
         <Paragraph1 className="text-gray-400 mt-2 line-through">
           RRP: {price}
         </Paragraph1>
       </div>
-    </Link>
+    </div>
   );
 }
