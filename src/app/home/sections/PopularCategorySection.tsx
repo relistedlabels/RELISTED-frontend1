@@ -41,11 +41,11 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({
         <Paragraph1 className="text-sm hidden sm:flex">
           {description}
         </Paragraph1>
-        <Link className=" hidden sm:block" href={link}>
+        <div className=" hidden sm:block">
           <button className="mt-2 py-1 text-white border-b font-semibold">
             <Paragraph1>Shop Now</Paragraph1>
           </button>
-        </Link>
+        </div>
       </div>
     </Link>
   );
