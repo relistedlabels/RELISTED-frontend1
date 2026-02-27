@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -26,6 +27,7 @@ export default function UserProfileDropdown({
   userAvatar,
   userRole,
 }: UserProfileDropdownProps) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -96,7 +98,11 @@ export default function UserProfileDropdown({
   const handleLogoutConfirm = () => {
     setShowLogoutConfirm(false);
     setIsOpen(false);
-    logout.mutate();
+    logout.mutate(undefined, {
+      onSuccess: () => {
+        router.replace("/auth/sign-in");
+      },
+    });
   };
 
   return (

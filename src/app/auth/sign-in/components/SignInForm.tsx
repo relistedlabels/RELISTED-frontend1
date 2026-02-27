@@ -60,10 +60,19 @@ const SignInForm: React.FC = () => {
                 await new Promise((resolve) => setTimeout(resolve, 500));
 
                 const state = useUserStore.getState();
+
                 if (state.requiresMfa) {
                   router.push("/auth/verify-mfa");
                 } else {
-                  router.push("/listers/inventory");
+                  const params = new URLSearchParams(window.location.search);
+                  const redirectUrl = params.get("redirect");
+                  if (redirectUrl) {
+                    window.location.href = redirectUrl;
+                  } else if (state.role === "LISTER") {
+                    window.location.href = "/listers/dashboard";
+                  } else {
+                    window.location.href = "/";
+                  }
                 }
               },
             });

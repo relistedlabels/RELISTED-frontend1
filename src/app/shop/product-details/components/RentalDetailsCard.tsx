@@ -96,7 +96,9 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
     e.stopPropagation();
 
     if (!user) {
-      window.location.href = "/auth/sign-in";
+      // Capture current page URL
+      const currentUrl = encodeURIComponent(window.location.href);
+      window.location.href = `/auth/sign-in?redirect=${currentUrl}`;
       return;
     }
 
@@ -116,7 +118,7 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
   }
 
   // Calculate security deposit as percentage of original value if not provided
-  const securityDeposit = Math.round(product.originalValue ); // 20% of original value
+  const securityDeposit = Math.round(product.originalValue); // 20% of original value
 
   // Mock lister data - in a real app, you'd fetch this separately
   const listerData = {

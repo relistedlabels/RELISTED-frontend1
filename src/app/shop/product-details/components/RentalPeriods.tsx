@@ -14,6 +14,7 @@ import Button from "@/common/ui/Button";
 import RentalDurationSelector from "./RentalDurationSelector";
 import RentalSummaryCard from "./RentalSummaryCard";
 import RentalCartView from "../../cart/components/RentalCartView";
+import { useMe } from "@/lib/queries/auth/useMe";
 
 // --------------------
 // Types
@@ -45,6 +46,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
 }) => {
   const minPrice = 50000;
   const maxPrice = 200000;
+  const { data: user } = useMe();
 
   const variants = {
     hidden: { x: "100%" },
@@ -146,13 +148,22 @@ const RentalPeriods: React.FC<RentalPeriodsProps> = ({
   securityDeposit,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const { data: user } = useMe();
 
   return (
     <>
       {/* Toggle Button */}
       <button
-        onClick={() => setIsOpen(true)}
-        className="border px-4 items-center rounded-lg bg-black text-white justify-center  w-full py-2 flex gap-1 cursor-pointer font-semibold hover:text-black text-sm border-black  hover:bg-gray-100 transition "
+        onClick={() => {
+          if (!user) {
+            // Capture current page URL
+            const currentUrl = encodeURIComponent(window.location.href);
+            window.location.href = `/auth/sign-in?redirect=${currentUrl}`;
+            return;
+          }
+          setIsOpen(true);
+        }}
+        className="border px-4 items-center rounded-lg bg-black text-white justify-center w-full py-2 flex gap-1 cursor-pointer font-semibold hover:text-black text-sm border-black hover:bg-gray-100 transition"
       >
         <Paragraph1>Rent now</Paragraph1>
       </button>
