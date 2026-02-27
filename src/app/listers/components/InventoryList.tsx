@@ -76,6 +76,21 @@ const InventoryItemCard: React.FC<InventoryItem> = ({
       text: "text-purple-600",
       badge: "text-purple-800 bg-purple-100",
     },
+    PENDING: {
+      dot: "bg-orange-500",
+      text: "text-orange-600",
+      badge: "text-orange-800 bg-orange-100",
+    },
+    REJECTED: {
+      dot: "bg-red-500",
+      text: "text-red-600",
+      badge: "text-red-800 bg-red-100",
+    },
+    INACTIVE: {
+      dot: "bg-gray-400",
+      text: "text-gray-500",
+      badge: "text-gray-700 bg-gray-200",
+    },
   };
 
   const colors = statusColors[status] || statusColors.AVAILABLE;

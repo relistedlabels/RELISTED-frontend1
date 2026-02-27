@@ -94,9 +94,7 @@ const OrdersManagement: React.FC = () => {
                     />
                   )}
                   <Paragraph1 className="capitalize">
-                    {activeTab === "pending_approval"
-                      ? "Pending"
-                      : displayStatusMap[activeTab]}
+                    {displayStatusMap[tab]}
                   </Paragraph1>
                 </button>
               );
