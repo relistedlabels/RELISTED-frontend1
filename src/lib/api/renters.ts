@@ -18,7 +18,7 @@ export type RentersDashboardSummary = {
 
 export type FavoriteItem = {
   id: string;
-  itemId: string;
+  productId: string;
   itemName: string;
   brand: string;
   listerName: string;

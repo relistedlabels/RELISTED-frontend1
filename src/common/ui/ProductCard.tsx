@@ -40,7 +40,8 @@ export default function ProductCard({
 
   useEffect(() => {
     if (favoritesData?.favorites) {
-      const isFav = favoritesData.favorites.some((fav) => fav.itemId === id);
+      // API returns favorite.productId, not itemId
+      const isFav = favoritesData.favorites.some((fav) => fav.productId === id);
       setIsFavorited(isFav);
     }
   }, [favoritesData, id]);
@@ -55,8 +56,12 @@ export default function ProductCard({
     }
 
     if (isFavorited) {
-      removeFavorite.mutate(id);
-      setIsFavorited(false);
+      // Find the favoriteId for this product
+      const fav = favoritesData?.favorites.find((fav) => fav.productId === id);
+      if (fav) {
+        removeFavorite.mutate(fav.productId); // API expects productId for removal
+        setIsFavorited(false);
+      }
     } else {
       addFavorite.mutate(id);
       setIsFavorited(true);

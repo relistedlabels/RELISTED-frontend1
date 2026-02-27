@@ -6,9 +6,26 @@ import { useState, useMemo } from "react";
 import { useFavorites } from "@/lib/queries/renters/useFavorites";
 import { useRemoveFavorite } from "@/lib/mutations/renters/useFavoriteMutations";
 import ProductCard from "@/common/ui/ProductCard";
+import { useGetProductById } from "@/lib/queries/product/useGetProductById";
+import { useQueries } from "@tanstack/react-query";
+import { fetchProductById } from "@/lib/queries/product/useGetProductById";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import { SlidersVertical, Heart } from "lucide-react";
 import Button from "@/common/ui/Button";
+
+// Custom hook to batch fetch favorite products by IDs
+function useFavoriteProducts(productIds: string[]) {
+  const queries = useQueries({
+    queries: productIds.map((id) => ({
+      queryKey: ["product", id],
+      queryFn: () => fetchProductById(id),
+      enabled: !!id,
+      staleTime: 5 * 60 * 1000,
+    })),
+  });
+
+  return queries.map((q) => q.data).filter(Boolean);
+}
 
 // Skeleton Loader
 const FavoriteCardSkeleton = () => (
@@ -33,15 +50,25 @@ export default function Favorites() {
   const { data, isLoading, error } = useFavorites(page, 20, sort);
   const removeFavorite = useRemoveFavorite();
 
-  // Filter by search
-  const filteredItems = useMemo(() => {
+  // Get all favorite product IDs
+  const favoriteProductIds = useMemo(() => {
     if (!data?.favorites) return [];
-    return data.favorites.filter(
-      (item) =>
-        item.itemName.toLowerCase().includes(search.toLowerCase()) ||
-        item.listerName.toLowerCase().includes(search.toLowerCase()),
+    return data.favorites.map((item) => item.productId);
+  }, [data?.favorites]);
+
+  // Use custom hook to batch fetch products
+  const favoriteProducts = useFavoriteProducts(favoriteProductIds);
+
+  // Filter by search (on product name or brand)
+  // NOTE: Since 'Product' only has 'brandId', you need to fetch brand names separately.
+  // For now, filter only by product name. If you want to filter by brand, fetch brand info for each product.
+  const filteredProducts = useMemo(() => {
+    if (!favoriteProducts.length) return [];
+    return favoriteProducts.filter(
+      (product) =>
+        product && product.name?.toLowerCase().includes(search.toLowerCase()),
     );
-  }, [data?.favorites, search]);
+  }, [favoriteProducts, search]);
 
   const handleRemoveFavorite = (itemId: string) => {
     removeFavorite.mutate(itemId);
@@ -75,7 +102,7 @@ export default function Favorites() {
     );
   }
 
-  if (!data?.favorites || data.favorites.length === 0) {
+  if (!favoriteProducts.length) {
     return (
       <section className="w-full">
         <div className="container mx-auto">
@@ -120,28 +147,31 @@ export default function Favorites() {
 
         {/* Product Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {filteredItems.length > 0 ? (
-            filteredItems.map((item) => (
-              <div key={item.id} className="relative">
-                <ProductCard
-                  id={item.id}
-                  image={item.image}
-                  brand={item.listerName}
-                  name={item.itemName}
-                  price={`₦${item.rentalPrice.toLocaleString()}`}
-                />
-                {/* Remove from Favorites Button */}
-                <button
-                  onClick={() => handleRemoveFavorite(item.itemId)}
-                  disabled={removeFavorite.isPending}
-                  className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-lg hover:bg-red-50 transition disabled:opacity-50"
-                  aria-label="Remove from favorites"
-                  title="Remove from favorites"
-                >
-                  <Heart className="w-5 h-5 text-red-500 fill-red-500" />
-                </button>
-              </div>
-            ))
+          {filteredProducts.length > 0 ? (
+            filteredProducts.map((product) =>
+              product ? (
+                <div key={product.id} className="relative">
+                  <ProductCard
+                    id={product.id}
+                    image={product.attachments?.uploads?.[0]?.url || ""}
+                    brand={product.brand?.name || ""}
+                    name={product.name}
+                    price={`₦${product?.originalValue?.toLocaleString() || "0"}`}
+                    dailyPrice={product.dailyPrice}
+                  />
+                  {/* Remove from Favorites Button */}
+                  <button
+                    onClick={() => handleRemoveFavorite(product.id)}
+                    disabled={removeFavorite.isPending}
+                    className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-lg hover:bg-red-50 transition disabled:opacity-50"
+                    aria-label="Remove from favorites"
+                    title="Remove from favorites"
+                  >
+                    <Heart className="w-5 h-5 text-red-500 fill-red-500" />
+                  </button>
+                </div>
+              ) : null,
+            )
           ) : (
             <div className="col-span-full text-center py-12">
               <Paragraph1 className="text-gray-600">
@@ -155,7 +185,8 @@ export default function Favorites() {
         {data && (
           <div className="mt-6 text-center">
             <Paragraph1 className="text-gray-600">
-              Showing {filteredItems.length} of {data.totalFavorites} favorites
+              Showing {filteredProducts.length} of {data.totalFavorites}{" "}
+              favorites
             </Paragraph1>
           </div>
         )}

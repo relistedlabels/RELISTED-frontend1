@@ -85,7 +85,7 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
   useEffect(() => {
     if (favoritesData?.favorites && product) {
       const isFav = favoritesData.favorites.some(
-        (fav) => fav.itemId === product.id,
+        (fav) => fav.productId === product.id,
       );
       setIsFavorited(isFav);
     }

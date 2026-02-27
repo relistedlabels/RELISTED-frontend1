@@ -13,7 +13,7 @@ export type Product = {
   description: string;
   condition: string;
   composition: string;
-  material: string;
+  material?: string;
   measurement: string;
   originalValue: number;
   dailyPrice: number;
@@ -25,22 +25,32 @@ export type Product = {
   stylingTip: string;
   attachments: ProductAttachmentDetail | null;
   categoryId: string;
-  tagIds: string[]; // ✅ Changed from tagId (singular) to tagIds (array)
-  brandId: string;
+  tagIds?: string[];
+  brandId: string | null;
+  brand?: { id: string; name: string } | null;
   rating?: number;
   reviewCount?: number;
 };
 
-type ProductByIdResponse = { success: boolean; message: string; data: Product };
+type ProductByIdResponse = {
+  success: boolean;
+  message: string;
+  data: Product;
+};
+
+// ✅ shared fetcher
+export const fetchProductById = async (productId: string): Promise<Product> => {
+  const res = await apiFetch<ProductByIdResponse>(
+    `/api/public/products/${productId}`,
+  );
+  return res.data;
+};
 
 export const useGetProductById = (productId: string) => {
   return useQuery({
     queryKey: ["product", productId],
-    queryFn: async () => {
-      const res = await apiFetch<ProductByIdResponse>(`/api/listers/inventory/${productId}`);
-      return res.data;
-    },
+    queryFn: () => fetchProductById(productId),
     enabled: !!productId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 };
