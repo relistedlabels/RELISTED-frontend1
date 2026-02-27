@@ -109,7 +109,7 @@ const RentalCartView: React.FC = () => {
         onClick={() => setIsOpen(true)}
         className="border flex-1 rounded-lg bg-black text-white px-4 items-center   justify-center  w-full py- flex gap-1 cursor-pointer  transition "
       >
-        <Paragraph1> Add to cart</Paragraph1>
+        <Paragraph1> View cart</Paragraph1>
       </button>
 
       {/* Filter Panel */}

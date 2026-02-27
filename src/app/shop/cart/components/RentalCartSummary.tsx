@@ -4,8 +4,8 @@ import React, { useMemo } from "react";
 import Image from "next/image";
 import { Trash2 } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
-import { useCart } from "@/lib/queries/renters/useCart";
-import { useRemoveFromCart } from "@/lib/mutations/renters/useCartMutations";
+import { useRentalRequests } from "@/lib/queries/renters/useRentalRequests";
+import { useRemoveRentalRequest } from "@/lib/mutations/renters/useRemoveRentalRequest";
 
 // --- Formatting Helper (for thousands separator) ---
 const formatCurrency = (amount: number): string => {
@@ -70,11 +70,13 @@ const RentalTimer: React.FC<{ expiresAt: string }> = ({ expiresAt }) => {
 };
 
 export default function RentalCartSummary() {
-  const { data: cartData, isLoading, error } = useCart();
-  const removeFromCart = useRemoveFromCart();
-
+  const { data, isLoading, error } = useRentalRequests("pending");
+  const removeRentalRequest = useRemoveRentalRequest();
   const currency = "₦";
-  const items = cartData?.cartItems || [];
+  const items =
+    data?.rentalRequests?.filter(
+      (item) => item.status === "pending_lister_approval",
+    ) || [];
 
   if (isLoading) return <CartSummarySkeleton />;
 
@@ -101,8 +103,8 @@ export default function RentalCartSummary() {
     return items.reduce((acc, item) => acc + item.totalPrice, 0);
   }, [items]);
 
-  const handleRemove = (cartItemId: string) => {
-    removeFromCart.mutate(cartItemId);
+  const handleRemove = (requestId: string) => {
+    removeRentalRequest.mutate(requestId);
   };
 
   return (
@@ -111,7 +113,7 @@ export default function RentalCartSummary() {
       <div className="space-y-6">
         {items.map((item) => (
           <div
-            key={item.cartItemId}
+            key={item.id}
             className="flex items-start gap-4 pb-4 border-b border-gray-200 last:border-b-0"
           >
             {/* Product Image */}
@@ -131,9 +133,7 @@ export default function RentalCartSummary() {
               <Paragraph1 className="text-sm font-semibold text-gray-800 uppercase leading-snug">
                 {item.productName}
               </Paragraph1>
-              <Paragraph1 className="text-xs text-gray-600 leading-snug mt-1">
-                Lister: <strong>{item.listerName}</strong>
-              </Paragraph1>
+              {/* Lister name not available in RentalRequest type */}
               <Paragraph1 className="text-sm font-medium text-gray-800 mt-1">
                 {item.rentalDays} DAYS - {currency}
                 {formatCurrency(item.totalPrice)}
@@ -144,8 +144,8 @@ export default function RentalCartSummary() {
             {/* Remove Button (Trash Icon) */}
             <button
               aria-label={`Remove ${item.productName}`}
-              onClick={() => handleRemove(item.cartItemId)}
-              disabled={removeFromCart.isPending}
+              onClick={() => handleRemove(item.id)}
+              disabled={removeRentalRequest.isPending}
               className="shrink-0 p-1 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Trash2 size={20} />

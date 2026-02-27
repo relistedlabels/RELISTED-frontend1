@@ -300,9 +300,40 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           <div className="hidden md:block">{/* <BrandHeader /> */}</div>
 
           <div className="flex items-center gap-4">
-            <Mail className="w-5 h-5 text-white cursor-pointer" />
-            <Bell className="w-5 h-5 text-white cursor-pointer" />
-
+            {/* Mock data for indicators */}
+            {/* In production, fetch these from API or context */}
+            {(() => {
+              const mockInbox = [
+                { id: "msg_1", read: false },
+                { id: "msg_2", read: true },
+              ];
+              const mockNotifications = [
+                { id: "notif_1", read: false },
+                { id: "notif_2", read: true },
+              ];
+              const hasUnreadInbox = mockInbox.some((msg) => !msg.read);
+              const hasUnreadNotifications = mockNotifications.some(
+                (notif) => !notif.read,
+              );
+              return (
+                <>
+                  <Link href="/listers/inbox" className="relative">
+                    <Mail className="w-5 h-5 text-white cursor-pointer" />
+                    {/* Red dot indicator for unread inbox */}
+                    {hasUnreadInbox && (
+                      <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                    )}
+                  </Link>
+                  <Link href="/listers/notifications" className="relative">
+                    <Bell className="w-5 h-5 text-white cursor-pointer" />
+                    {/* Red dot indicator for unread notifications */}
+                    {hasUnreadNotifications && (
+                      <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                    )}
+                  </Link>
+                </>
+              );
+            })()}
             <UserProfileBadge2 />
           </div>
         </header>
