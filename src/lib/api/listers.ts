@@ -199,7 +199,7 @@ export async function getOrders(
   page: number = 1,
   limit: number = 20,
   sort: string = "-createdAt",
-): Promise<OrdersListResponse> {
+): Promise<any> {
   const params = new URLSearchParams({
     page: page.toString(),
     limit: limit.toString(),

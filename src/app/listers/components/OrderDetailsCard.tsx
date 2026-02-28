@@ -61,10 +61,14 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
     }
   }, [orderId]);
 
-  const { data, isLoading, error } = useOrderDetails(orderId);
+  const { data, isLoading, error } = useOrderDetails(orderId) as {
+    data?: { data?: any };
+    isLoading: boolean;
+    error?: any;
+  };
 
-  // FIX 1: Access the correct path based on your JSON (data.data is OrderDetails)
-  const order = data?.data;
+  // FIX: Access the correct path based on your JSON (data.data.order is OrderDetails)
+  const order = data?.data?.order;
 
   // State for the timer
   const [secondsRemaining, setSecondsRemaining] = useState(0);

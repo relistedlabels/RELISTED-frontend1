@@ -35,28 +35,28 @@ const OrdersManagement: React.FC = () => {
     "approved",
     "completed",
     "cancelled",
-    "all",
   ];
 
   // Use correct query for each tab
-  const { data: ordersData, isLoading } =
-    activeTab === "all"
-      ? useAllOrders(1, 20)
-      : useOrders(
-          activeTab === "pending_approval"
-            ? "pending_approval"
-            : activeTab === "approved"
-              ? "ongoing"
-              : activeTab,
-          1,
-          20,
-        );
+  const { data: ordersData, isLoading } = useOrders(
+    activeTab === "pending_approval"
+      ? "pending_approval"
+      : activeTab === "approved"
+        ? "ongoing"
+        : activeTab,
+    1,
+    20,
+  ) as {
+    data?: any;
+    isLoading: boolean;
+  };
 
   const orders = useMemo(() => {
     if (!ordersData) return [];
-    // Support both { data: Order[] } and { data: { orders: Order[] } }
-    const rawOrders = Array.isArray(ordersData.data) ? ordersData.data : [];
-    return rawOrders.map((order) => ({
+    const rawOrders: any[] = Array.isArray(ordersData.data)
+      ? ordersData.data
+      : (ordersData.data?.orders ?? []);
+    return rawOrders.map((order: any) => ({
       ...order,
       statusLabel:
         displayStatusMap[statusLabelMap[order.status] || order.status],

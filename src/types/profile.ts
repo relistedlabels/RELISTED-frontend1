@@ -1,3 +1,63 @@
+// ...existing code...
+
+// --- Order Types ---
+export interface OrderItem {
+  id: string;
+  name: string;
+  image: string;
+  size: string;
+  color: string;
+  rentalFee: number;
+  itemValue: number;
+  returnDue: string;
+  status: string;
+  statusLabel: string;
+}
+
+export interface OrderTimeline {
+  dateOrdered: string;
+  itemsCount: number;
+  itemsDelivered: number;
+  currentStep: string;
+}
+
+export interface OrderEscrow {
+  rentalFeeTotal: number;
+  itemValueHeld: number;
+  totalHeld: number;
+  currency: string;
+  releaseCondition: string;
+}
+
+export interface OrderDetails {
+  id: string;
+  orderNumber: string;
+  createdAt: string;
+  expiresAt: string;
+  timeRemainingSeconds: number;
+  status: string;
+  statusLabel: string;
+  statusColor: string;
+  statusTextColor: string;
+  itemCount: number;
+  totalAmount: number;
+  currency: string;
+  dresser: {
+    id: string;
+    name: string;
+    avatar: string;
+    rating: number;
+    reviews: number;
+    memberSince: string;
+  };
+  items: OrderItem[];
+  canApprove: boolean;
+  canReject: boolean;
+  approvalRequired: boolean;
+  approvalExpiredAt: string;
+  timeline: OrderTimeline;
+  escrow: OrderEscrow;
+}
 export interface ProfileUser {
   id: string;
   email: string;
