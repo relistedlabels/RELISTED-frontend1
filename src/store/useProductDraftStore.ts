@@ -98,7 +98,20 @@ export const useProductDraftStore = create<ProductDraftStore>()(
           data: { ...state.data, ...partial },
         })),
 
-      populateFromProduct: (product: Product) =>
+      populateFromProduct: (product: Product) => {
+        // Map uploads to slots
+        const uploads = product.attachments?.uploads || [];
+        const slotMap = ["main", "photo1", "photo2", "photo3", "video"];
+        const mappedAttachments = uploads.map(
+          (upload: { id: string; url: string }, idx: number) => ({
+            id: upload.id,
+            url: upload.url,
+            name: `Image ${idx + 1}`,
+            progress: 100,
+            type: "image",
+            slotId: slotMap[idx] || undefined,
+          }),
+        );
         set({
           data: {
             name: product.name,
@@ -118,20 +131,12 @@ export const useProductDraftStore = create<ProductDraftStore>()(
             careSteps: product.careSteps || "",
             stylingTip: product.stylingTip,
             tagIds: product.tagIds || [],
-            attachments:
-              product.attachments?.uploads?.map(
-                (upload: { id: string; url: string }, idx: number) => ({
-                  id: upload.id,
-                  url: upload.url,
-                  name: `Image ${idx + 1}`,
-                  progress: 100,
-                  type: "image",
-                }),
-              ) || [],
+            attachments: mappedAttachments,
             categoryId: product.categoryId,
             brandId: product.brandId ?? "",
           },
-        }),
+        });
+      },
 
       reset: () => set({ data: initialState }),
     }),
