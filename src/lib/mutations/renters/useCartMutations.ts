@@ -13,7 +13,7 @@ export const useAddToCart = () => {
       rentalStartDate: string;
       rentalEndDate: string;
       autoPay: boolean;
-    }) => rentersApi.addToCart(data),
+    }) => rentersApi.submitRentalRequest(data),
     onSuccess: () => {
       // Invalidate cart queries so they refetch
       queryClient.invalidateQueries({ queryKey: ["renters", "cart"] });
@@ -34,7 +34,7 @@ export const useRemoveFromCart = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (cartItemId: string) => rentersApi.removeFromCart(cartItemId),
+    mutationFn: (cartItemId: string) => rentersApi.removeRentalRequest(cartItemId),
     onSuccess: () => {
       // Invalidate cart queries
       queryClient.invalidateQueries({ queryKey: ["renters", "cart"] });
@@ -51,20 +51,3 @@ export const useRemoveFromCart = () => {
 /**
  * Clear entire cart
  */
-export const useClearCart = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: () => rentersApi.clearCart(),
-    onSuccess: () => {
-      // Invalidate cart queries
-      queryClient.invalidateQueries({ queryKey: ["renters", "cart"] });
-      queryClient.invalidateQueries({
-        queryKey: ["renters", "cart", "summary"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["renters", "rental-requests"],
-      });
-    },
-  });
-};

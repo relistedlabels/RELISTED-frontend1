@@ -1,5 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import { getOrders } from "@/lib/api/listers";
+import { getOrders, getAllOrders } from "@/lib/api/listers";
+
+export function useAllOrders(
+  page: number = 1,
+  limit: number = 20,
+  sort: string = "-createdAt",
+) {
+  return useQuery({
+    queryKey: ["listers", "orders", "all", page, limit, sort],
+    queryFn: () => getAllOrders(page, limit, sort),
+    staleTime: 5 * 60 * 1000,
+  });
+}
 
 export function useOrders(
   status?: string,

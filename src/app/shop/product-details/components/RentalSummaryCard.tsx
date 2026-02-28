@@ -9,6 +9,7 @@ interface RentalSummaryProps {
   rentalFeePerPeriod: number;
   securityDeposit: number;
   cleaningFee: number;
+  shippingFee?: number;
 }
 
 export default function RentalSummaryCard({
@@ -16,9 +17,11 @@ export default function RentalSummaryCard({
   rentalFeePerPeriod,
   securityDeposit,
   cleaningFee,
+  shippingFee = 0,
 }: RentalSummaryProps) {
   // --- Calculation ---
-  const total = rentalFeePerPeriod + securityDeposit + cleaningFee;
+  const total =
+    rentalFeePerPeriod + securityDeposit + cleaningFee + shippingFee;
   const currency = "₦"; // Nigerian Naira symbol, matching the image
 
   // --- Formatting Helper (for thousands separator) ---
@@ -65,6 +68,17 @@ export default function RentalSummaryCard({
               {formatCurrency(cleaningFee)}
             </Paragraph1>
           </div>
+
+          {/* 4. Shipping Fee */}
+          <div className="flex justify-between items-center">
+            <Paragraph1 className="text-gray-700">
+              Shipping Fee (Delivery & Return)
+            </Paragraph1>
+            <Paragraph1 className="font-bold text-gray-900">
+              {currency}
+              {formatCurrency(shippingFee)}
+            </Paragraph1>
+          </div>
         </div>
 
         {/* Separator Line */}
@@ -84,7 +98,7 @@ export default function RentalSummaryCard({
 
       {/* Footer Note */}
       <p className="text-xs text-gray-500 text-center mt-4">
-        Delivery fees calculated at checkout.
+        Shipping fee includes delivery & return.
       </p>
     </div>
   );

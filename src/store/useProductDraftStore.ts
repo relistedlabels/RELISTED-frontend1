@@ -129,7 +129,7 @@ export const useProductDraftStore = create<ProductDraftStore>()(
                 }),
               ) || [],
             categoryId: product.categoryId,
-            brandId: product.brandId,
+            brandId: product.brandId ?? "",
           },
         }),
 

@@ -234,14 +234,11 @@ export const ProductCardSkeleton = ({ count = 6 }: { count?: number }) => (
 // Category Card Skeleton
 export const CategoryCardSkeleton = ({ count = 6 }: { count?: number }) => (
   <div className="grid grid-cols-1 xl:grid-cols-3 gap-2 sm:gap-[23px]">
-    {[...Array(3)].map((colIdx) => (
-      <div
-        key={colIdx}
-        className="flex flex-row xl:flex-col gap-2 sm:gap-[23px]"
-      >
+    {[...Array(3)].map((_, idx) => (
+      <div key={idx} className="flex flex-row xl:flex-col gap-2 sm:gap-[23px]">
         {[...Array(2)].map((_, rowIdx) => (
           <div
-            key={`${colIdx}-${rowIdx}`}
+            key={`${idx}-${rowIdx}`}
             className="relative w-full group overflow-hidden cursor-pointer bg-gray-200 h-[200px] sm:h-[280px] rounded-lg animate-pulse"
           ></div>
         ))}

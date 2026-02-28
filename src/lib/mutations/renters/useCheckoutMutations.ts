@@ -9,8 +9,10 @@ export const useCheckout = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data?: { applyCoupon?: string; notes?: string }) =>
-      rentersApi.checkout(data),
+    mutationFn: (data: { requestId: string; confirmPayment?: boolean }) =>
+      rentersApi.confirmRentalRequest(data.requestId, {
+        confirmPayment: data.confirmPayment,
+      }),
     onSuccess: () => {
       // Invalidate related queries after successful checkout
       queryClient.invalidateQueries({ queryKey: ["renters", "cart"] });
@@ -33,32 +35,8 @@ export const useCheckout = () => {
  * Process checkout payment
  * Handles wallet deduction, card payments, or installment plans
  */
-export const useProcessCheckoutPayment = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: {
-      method: "wallet" | "card" | "bank_transfer";
-      amount: number;
-      installments?: number;
-    }) => rentersApi.processCheckoutPayment(data),
-    onSuccess: () => {
-      // Invalidate wallet and orders data
-      queryClient.invalidateQueries({ queryKey: ["renters", "wallet"] });
-      queryClient.invalidateQueries({ queryKey: ["renters", "orders"] });
-      queryClient.invalidateQueries({ queryKey: ["renters", "cart"] });
-      queryClient.invalidateQueries({
-        queryKey: ["renters", "transactions"],
-      });
-    },
-  });
-};
 
 /**
  * Validate checkout before processing
  * Returns whether checkout is allowed and any errors
  */
-export const useValidateCheckoutMutation = () =>
-  useMutation({
-    mutationFn: () => rentersApi.validateCheckout(),
-  });

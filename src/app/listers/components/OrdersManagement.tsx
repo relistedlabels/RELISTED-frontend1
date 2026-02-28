@@ -8,7 +8,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Calendar, Clock, Package } from "lucide-react";
 
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
-import { useOrders } from "@/lib/queries/listers/useOrders";
+import { useOrders, useAllOrders } from "@/lib/queries/listers/useOrders";
 
 // --- Types ---
 type OrderLabel = "pending_approval" | "approved" | "completed" | "cancelled";
@@ -20,35 +20,43 @@ const statusLabelMap: Record<string, OrderLabel> = {
   cancelled: "cancelled",
 };
 
-const displayStatusMap: Record<OrderLabel, string> = {
+const displayStatusMap: Record<string, string> = {
   pending_approval: "Pending Approval",
   approved: "Approved",
   completed: "Completed",
   cancelled: "Cancelled",
+  all: "All",
 };
 
 const OrdersManagement: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<OrderLabel>("pending_approval");
-  const tabs: OrderLabel[] = [
+  const [activeTab, setActiveTab] = useState<string>("pending_approval");
+  const tabs: string[] = [
     "pending_approval",
     "approved",
     "completed",
     "cancelled",
+    "all",
   ];
 
-  const { data: ordersData, isLoading } = useOrders(
-    activeTab === "pending_approval"
-      ? "pending_approval"
-      : activeTab === "approved"
-        ? "ongoing"
-        : activeTab,
-    1,
-    20,
-  );
+  // Use correct query for each tab
+  const { data: ordersData, isLoading } =
+    activeTab === "all"
+      ? useAllOrders(1, 20)
+      : useOrders(
+          activeTab === "pending_approval"
+            ? "pending_approval"
+            : activeTab === "approved"
+              ? "ongoing"
+              : activeTab,
+          1,
+          20,
+        );
 
   const orders = useMemo(() => {
-    if (!Array.isArray(ordersData?.data)) return [];
-    return ordersData.data.map((order) => ({
+    if (!ordersData) return [];
+    // Support both { data: Order[] } and { data: { orders: Order[] } }
+    const rawOrders = Array.isArray(ordersData.data) ? ordersData.data : [];
+    return rawOrders.map((order) => ({
       ...order,
       statusLabel:
         displayStatusMap[statusLabelMap[order.status] || order.status],

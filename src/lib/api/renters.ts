@@ -416,97 +416,16 @@ export const rentersApi = {
       `/api/renters/rental-requests/${requestId}/confirm`,
       { method: "POST", body: JSON.stringify(data || {}) },
     ),
-
-  // ========== SHOPPING CART ==========
-
-  // Get cart with all pending items and summary
-  getCart: () =>
-    apiFetch<{ success: boolean; data: CartSummary }>("/api/renters/cart", {
-      method: "GET",
-    }),
-
-  // Add item to cart (alias for submitRentalRequest)
-  addToCart: (data: {
-    productId: string;
-    rentalStartDate: string;
-    rentalEndDate: string;
-    autoPay: boolean;
-  }) =>
-    apiFetch<{ success: boolean; data: CartItem }>("/api/renters/cart/add", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
-
-  // Get cart total with all calculations
-  getCartSummary: () =>
-    apiFetch<{ success: boolean; data: CartSummary }>(
-      "/api/renters/cart/summary",
+  // Checkout validation
+  validateCheckout: () =>
+    apiFetch<{ success: boolean; data: object }>(
+      "/api/renters/checkout/validate",
       { method: "GET" },
     ),
-
-  // Remove specific item from cart
-  removeFromCart: (cartItemId: string) =>
-    apiFetch<{ success: boolean }>(`/api/renters/cart/${cartItemId}`, {
-      method: "DELETE",
-    }),
-
-  // Clear entire cart
-  clearCart: () =>
-    apiFetch<{ success: boolean }>("/api/renters/cart/clear", {
-      method: "POST",
-    }),
-
-  // ========== CHECKOUT ==========
-
-  // Proceed to checkout (validate cart and prepare order)
-  validateCheckout: () =>
-    apiFetch<{
-      success: boolean;
-      data: {
-        isValid: boolean;
-        cartTotal: number;
-        walletBalance: number;
-        canCheckout: boolean;
-        insufficientBalanceError?: string;
-        expiredItemsRemoved?: string[];
-      };
-    }>("/api/renters/checkout/validate", { method: "GET" }),
-
-  // Complete checkout and create orders from cart items
-  checkout: (data?: { applyCoupon?: string; notes?: string }) =>
-    apiFetch<{ success: boolean; data: CheckoutResponse }>(
-      "/api/renters/checkout",
-      { method: "POST", body: JSON.stringify(data || {}) },
-    ),
-
-  // Get checkout summary before finalizing
+  // Checkout summary
   getCheckoutSummary: () =>
-    apiFetch<{
-      success: boolean;
-      data: {
-        cartItems: CartItem[];
-        cartTotal: number;
-        walletBalance: number;
-        availableAfterCheckout: number;
-        paymentMethod: string;
-      };
-    }>("/api/renters/checkout/summary", { method: "GET" }),
-
-  // Process payment (if using installment/one-time payment)
-  processCheckoutPayment: (data: {
-    method: "wallet" | "card" | "bank_transfer";
-    amount: number;
-    installments?: number;
-  }) =>
-    apiFetch<{
-      success: boolean;
-      data: {
-        transactionId: string;
-        ordersCreated: string[];
-        status: "completed" | "pending" | "failed";
-      };
-    }>("/api/renters/checkout/payment", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
+    apiFetch<{ success: boolean; data: object }>(
+      "/api/renters/checkout/summary",
+      { method: "GET" },
+    ),
 };

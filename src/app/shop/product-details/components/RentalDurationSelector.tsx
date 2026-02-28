@@ -180,6 +180,7 @@ interface RentalDurationSelectorProps {
   listerId: string;
   dailyPrice: number;
   securityDeposit: number;
+  onChangeRentalDays?: (days: number, startDate?: Date) => void;
 }
 
 const RentalDurationSelector = ({
@@ -187,11 +188,20 @@ const RentalDurationSelector = ({
   listerId,
   dailyPrice,
   securityDeposit,
+  onChangeRentalDays,
 }: RentalDurationSelectorProps) => {
   const [selectedDuration, setSelectedDuration] = useState<number | "custom">(
     3,
   );
   const [customDays, setCustomDays] = useState<number>(3);
+  // Notify parent of rental days change
+  useEffect(() => {
+    const rentalDays =
+      selectedDuration === "custom" ? customDays : selectedDuration;
+    if (onChangeRentalDays) {
+      onChangeRentalDays(rentalDays as number);
+    }
+  }, [selectedDuration, customDays, onChangeRentalDays]);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -206,132 +216,7 @@ const RentalDurationSelector = ({
   const { isLoading: isCheckingAuth, isError: authError } = useMe();
   const submitRentalRequest = useSubmitRentalRequest();
 
-  // Countdown state for 15 min timer
-  const [countdown, setCountdown] = useState<number | null>(null);
-  const [countdownActive, setCountdownActive] = useState(false);
 
-  // Fetch pending rental requests on mount
-  const {
-    data: pendingRequestsData,
-    isLoading: isLoadingPendingRequests,
-    refetch: refetchPendingRequests,
-  } = useRentalRequests("pending");
-
-  // Restore countdown from pending request if exists for this product
-  useEffect(() => {
-    if (
-      pendingRequestsData &&
-      Array.isArray(pendingRequestsData.rentalRequests)
-    ) {
-      const req = pendingRequestsData.rentalRequests.find(
-        (r: any) =>
-          r.productId === productId && r.status === "pending_lister_approval",
-      );
-      if (req) {
-        // Calculate seconds remaining from expiresAt
-        const expiresAt = new Date(req.expiresAt).getTime();
-        const now = Date.now();
-        const secondsLeft = Math.floor((expiresAt - now) / 1000);
-        if (secondsLeft > 0) {
-          setCountdown(secondsLeft);
-          setCountdownActive(true);
-        } else {
-          setCountdown(null);
-          setCountdownActive(false);
-        }
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingRequestsData, productId]);
-
-  // Countdown timer effect
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (countdownActive && countdown !== null && countdown > 0) {
-      timer = setInterval(() => {
-        setCountdown((prev) => (prev !== null ? prev - 1 : null));
-      }, 1000);
-    } else if (countdown === 0) {
-      setCountdownActive(false);
-    }
-    return () => clearInterval(timer);
-  }, [countdownActive, countdown]);
-
-  const handleCheckAvailability = useCallback(async () => {
-    try {
-      clearError();
-
-      // If user is not authenticated, show login modal
-      if (!token) {
-        setIsLoginModalOpen(true);
-        return;
-      }
-
-      setPendingAction(true);
-
-      // Calculate rental days
-      const rentalDays =
-        selectedDuration === "custom" ? customDays : selectedDuration;
-      // Calculate end date
-      const rentalStartDate = startDate.toISOString();
-      const rentalEndDate = new Date(
-        startDate.getTime() + (rentalDays - 1) * 24 * 60 * 60 * 1000,
-      ).toISOString();
-
-      // Call mutation
-      const res = await submitRentalRequest.mutateAsync({
-        productId,
-        rentalStartDate,
-        rentalEndDate,
-        autoPay: true,
-      });
-
-      // Show success toast
-      toast.success("Rental request sent! Waiting for lister to confirm.");
-
-      // Refetch pending requests to update state
-      refetchPendingRequests();
-
-      // Start 15 min countdown (900 seconds)
-      setCountdown(900);
-      setCountdownActive(true);
-    } catch (error: any) {
-      // Handle insufficient funds error
-      if (
-        error?.error === "INSUFFICIENT_FUNDS" ||
-        error?.message?.includes("wallet balance")
-      ) {
-        triggerError(
-          "Insufficient wallet balance. Please fund your wallet and try again.",
-        );
-      } else {
-        const errorMessage = error?.message || "Failed to check availability";
-        triggerError(errorMessage);
-        toast.error(errorMessage);
-      }
-      console.error("Error checking availability:", error);
-    } finally {
-      setPendingAction(false);
-    }
-  }, [
-    token,
-    selectedDuration,
-    customDays,
-    startDate,
-    submitRentalRequest,
-    clearError,
-    triggerError,
-    productId,
-    refetchPendingRequests,
-  ]);
-
-  const handleLoginSuccess = useCallback(() => {
-    console.log("Login successful, proceeding with availability check");
-    // After successful login, automatically proceed with availability check
-    setTimeout(() => {
-      handleCheckAvailability();
-    }, 500);
-  }, [handleCheckAvailability]);
 
   // Show loading state while checking auth
   if (isCheckingAuth) {
@@ -478,57 +363,8 @@ const RentalDurationSelector = ({
             <Paragraph1>Unavailable</Paragraph1>
           </div>
         </div>
-
-        {/* Check Availability Button */}
-        <button
-          onClick={handleCheckAvailability}
-          disabled={
-            pendingAction || isCheckingAuth || authError || countdownActive
-          }
-          className={`
-            w-full mt-6 py-3 px-4 rounded-lg font-semibold transition-all
-            flex items-center justify-center gap-2
-            ${
-              pendingAction || isCheckingAuth || authError || countdownActive
-                ? "bg-gray-400 text-white cursor-not-allowed opacity-70"
-                : "bg-black text-white hover:bg-gray-900 active:scale-95"
-            }
-          `}
-        >
-          {pendingAction ? (
-            <>
-              <Loader2 size={18} className="animate-spin" />
-              <span>Checking Availability...</span>
-            </>
-          ) : isCheckingAuth ? (
-            <>
-              <Loader2 size={18} className="animate-spin" />
-              <span>Verifying...</span>
-            </>
-          ) : countdownActive && countdown !== null ? (
-            <span>
-              {Math.floor(countdown / 60)
-                .toString()
-                .padStart(2, "0")}
-              :{(countdown % 60).toString().padStart(2, "0")} min left
-            </span>
-          ) : (
-            "Check Availability"
-          )}
-        </button>
-        {countdownActive && countdown !== null && (
-          <div className="text-center mt-2 text-yellow-700 font-medium">
-            Waiting for Lister to confirm request...
-          </div>
-        )}
       </div>
 
-      {/* Login Modal */}
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-        onLoginSuccess={handleLoginSuccess}
-      />
     </>
   );
 };

@@ -4,7 +4,7 @@ import React, { useMemo } from "react";
 import Image from "next/image";
 import { Trash2 } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
-import { useRentalRequests } from "@/lib/queries/renters/useRentalRequests";
+import { useCart } from "@/lib/queries/renters/useCart";
 import { useRemoveRentalRequest } from "@/lib/mutations/renters/useRemoveRentalRequest";
 
 // --- Formatting Helper (for thousands separator) ---
@@ -70,13 +70,15 @@ const RentalTimer: React.FC<{ expiresAt: string }> = ({ expiresAt }) => {
 };
 
 export default function RentalCartSummary() {
-  const { data, isLoading, error } = useRentalRequests("pending");
+  const { data, isLoading, error } = useCart();
   const removeRentalRequest = useRemoveRentalRequest();
   const currency = "₦";
-  const items =
-    data?.rentalRequests?.filter(
-      (item) => item.status === "pending_lister_approval",
-    ) || [];
+  const items = data?.cartItems || [];
+
+  // Calculate Subtotal: Sum of all item totals
+  const subtotal = useMemo(() => {
+    return items.reduce((acc, item) => acc + item.totalPrice, 0);
+  }, [items]);
 
   if (isLoading) return <CartSummarySkeleton />;
 
@@ -98,11 +100,6 @@ export default function RentalCartSummary() {
     );
   }
 
-  // Calculate Subtotal: Sum of all item totals
-  const subtotal = useMemo(() => {
-    return items.reduce((acc, item) => acc + item.totalPrice, 0);
-  }, [items]);
-
   const handleRemove = (requestId: string) => {
     removeRentalRequest.mutate(requestId);
   };
@@ -111,9 +108,9 @@ export default function RentalCartSummary() {
     <div>
       {/* List of Cart Items */}
       <div className="space-y-6">
-        {items.map((item) => (
+        {items.map((item, idx) => (
           <div
-            key={item.id}
+            key={item.id || idx}
             className="flex items-start gap-4 pb-4 border-b border-gray-200 last:border-b-0"
           >
             {/* Product Image */}

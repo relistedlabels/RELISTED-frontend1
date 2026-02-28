@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { toast } from "sonner";
 import {
   SlidersVertical,
   X,
@@ -13,8 +14,10 @@ import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
 import RentalDurationSelector from "./RentalDurationSelector";
 import RentalSummaryCard from "./RentalSummaryCard";
+import { useSubmitRentalRequest } from "@/lib/mutations/renters/useRentalRequestMutations";
 import RentalCartView from "../../cart/components/RentalCartView";
 import { useMe } from "@/lib/queries/auth/useMe";
+import { useAddresses } from "@/lib/queries/renters/useAddresses";
 
 // --------------------
 // Types
@@ -47,18 +50,101 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
   const minPrice = 50000;
   const maxPrice = 200000;
   const { data: user } = useMe();
+  const { data: addresses, isLoading: isAddressesLoading } = useAddresses();
 
   const variants = {
     hidden: { x: "100%" },
     visible: { x: 0 },
   };
 
-  const ExampleData = {
-    rentalDays: 3,
-    rentalFeePerPeriod: 165000,
-    securityDeposit: 15000,
-    cleaningFee: 10000,
+  // const [rentalDays, setRentalDays] = useState(1);
+
+  // State for rental days
+  const [rentalDays, setRentalDays] = useState(3);
+  const [startDate, setStartDate] = useState<Date>(new Date());
+  const [autoPay, setAutoPay] = useState(false); // Default OFF
+  const [summaryData, setSummaryData] = useState<any>(null);
+  const [isChecking, setIsChecking] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [countdownActive, setCountdownActive] = useState(false);
+  const shippingFee = 5000; // Fixed amount, can be adjusted
+  const submitRentalRequest = useSubmitRentalRequest();
+
+  // Handler to update rental days and start date from child
+  const handleRentalDaysChange = (days: number, start?: Date) => {
+    setRentalDays(days);
+    if (start) setStartDate(start);
   };
+
+  // Handler for Check Availability
+  const handleCheckAvailability = async () => {
+    setIsChecking(true);
+    setSummaryData(null);
+    try {
+      // Get default addressId from addresses
+      let deliveryAddressId = "";
+      if (addresses && Array.isArray(addresses)) {
+        // API returns addresses as [{ id, ... }], not addressId
+        const defaultAddr = addresses.find((a) => a.isDefault);
+        deliveryAddressId = defaultAddr?.id || addresses[0]?.id || "";
+      }
+      if (!deliveryAddressId) {
+        toast.error(
+          "Please add a delivery address to your profile before renting.",
+        );
+        setIsChecking(false);
+        return;
+      }
+      const rentalStartDate = startDate.toISOString();
+      const rentalEndDate = new Date(
+        startDate.getTime() + (rentalDays - 1) * 24 * 60 * 60 * 1000,
+      ).toISOString();
+      const estimatedRentalPrice = dailyPrice * rentalDays;
+      const currency = "NGN";
+      const res = await submitRentalRequest.mutateAsync({
+        productId,
+        listerId,
+        rentalStartDate,
+        rentalEndDate,
+        rentalDays,
+        estimatedRentalPrice,
+        deliveryAddressId,
+        autoPay,
+        currency,
+      });
+      if (res?.success && res?.data) {
+        setSummaryData(res.data);
+        toast.success("Request sent! Awaiting lister approval.");
+        // Setup countdown from expiresAt
+        if (res.data.expiresAt) {
+          const expires = new Date(res.data.expiresAt).getTime();
+          const now = Date.now();
+          const secondsLeft = Math.floor((expires - now) / 1000);
+          if (secondsLeft > 0) {
+            setCountdown(secondsLeft);
+            setCountdownActive(true);
+          }
+        }
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Could not submit request. Please try again.");
+    } finally {
+      setIsChecking(false);
+    }
+  };
+
+  // Countdown timer effect
+  React.useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (countdownActive && countdown !== null && countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => (prev !== null ? prev - 1 : null));
+      }, 1000);
+    } else if (countdown === 0) {
+      setCountdownActive(false);
+    }
+    return () => clearInterval(timer);
+  }, [countdownActive, countdown]);
 
   return (
     <AnimatePresence>
@@ -111,8 +197,69 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                 listerId={listerId}
                 dailyPrice={dailyPrice}
                 securityDeposit={securityDeposit}
+                onChangeRentalDays={(days, start) =>
+                  handleRentalDaysChange(days, start)
+                }
               />
-              <RentalSummaryCard {...ExampleData} />
+              <div className="flex items-center gap-2 mt-4">
+                <button
+                  type="button"
+                  aria-pressed={autoPay}
+                  onClick={() => setAutoPay((v) => !v)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full border transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black ${
+                    autoPay
+                      ? "bg-black border-black"
+                      : "bg-gray-200 border-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${
+                      autoPay ? "translate-x-5" : "translate-x-1"
+                    }`}
+                  />
+                  <span className="sr-only">Toggle Auto Pay</span>
+                </button>
+                <Paragraph1>Auto Pay (pay immediately if approved)</Paragraph1>
+              </div>
+              <button
+                type="button"
+                className={`mt-4 w-full py-3 px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
+                  isChecking || countdownActive
+                    ? "bg-gray-400 text-white cursor-not-allowed opacity-70"
+                    : "bg-black text-white hover:bg-gray-900 active:scale-95"
+                }`}
+                onClick={handleCheckAvailability}
+                disabled={isChecking || countdownActive}
+              >
+                {isChecking ? (
+                  <>
+                    <span className="animate-spin mr-2">⏳</span>Checking...
+                  </>
+                ) : countdownActive && countdown !== null ? (
+                  <>
+                    {Math.floor(countdown / 60)
+                      .toString()
+                      .padStart(2, "0")}
+                    :{(countdown % 60).toString().padStart(2, "0")} min left
+                  </>
+                ) : (
+                  "Check Availability"
+                )}
+              </button>
+              {countdownActive && countdown !== null && (
+                <div className="text-center mt-2 text-yellow-700 font-medium">
+                  Waiting for Lister to confirm request...
+                </div>
+              )}
+              {summaryData && (
+                <RentalSummaryCard
+                  rentalDays={summaryData.rentalDays}
+                  rentalFeePerPeriod={summaryData.estimatedPrice.rentalFee}
+                  securityDeposit={summaryData.estimatedPrice.securityDeposit}
+                  cleaningFee={0}
+                  shippingFee={summaryData.estimatedPrice.deliveryFee}
+                />
+              )}
             </div>
 
             {/* Footer */}

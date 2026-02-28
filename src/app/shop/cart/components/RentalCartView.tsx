@@ -5,6 +5,7 @@ import { X, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1 } from "@/common/ui/Text";
 import RentalCartSummary from "./RentalCartSummary";
+import { useCart } from "@/lib/queries/renters/useCart";
 import Link from "next/link";
 
 // --------------------
@@ -70,6 +71,7 @@ const RentalCartViewPanel: React.FC<RentalCartViewPanelProps> = ({
 
             {/* Content */}
             <div className="grow pt-4 pb-20 space-y-8">
+              {/* Optionally pass cartItems to RentalCartSummary if needed */}
               <RentalCartSummary />
             </div>
 

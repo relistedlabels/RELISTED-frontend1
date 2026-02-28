@@ -71,7 +71,8 @@ const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
     return `₦${amount}`;
   };
 
-  const formatNumber = (num: number) => {
+  const formatNumber = (num: number | undefined | null) => {
+    if (typeof num !== "number" || isNaN(num)) return "-";
     return num.toLocaleString();
   };
 

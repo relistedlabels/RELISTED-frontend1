@@ -104,6 +104,21 @@ export async function getRecentRentals(
 
 // ============================================================================
 // ORDERS MANAGEMENT ENDPOINTS
+// Get all orders (no status param)
+export async function getAllOrders(
+  page: number = 1,
+  limit: number = 20,
+  sort: string = "-createdAt",
+): Promise<OrdersListResponse> {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+    sort,
+  });
+  return apiFetch(`/api/listers/orders?${params}`, {
+    method: "GET",
+  });
+}
 // ============================================================================
 
 export interface Order {

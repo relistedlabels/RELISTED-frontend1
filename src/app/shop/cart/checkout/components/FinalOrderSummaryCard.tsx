@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { Check, CheckCircle } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
-import { useCheckoutSummary } from "@/lib/queries/renters/useCheckout";
 import { useCheckout } from "@/lib/mutations/renters/useCheckoutMutations";
 import { useRouter } from "next/navigation";
 
@@ -31,15 +30,26 @@ const CheckoutSummarySkeleton = () => (
   </div>
 );
 
-export default function FinalOrderSummaryCard() {
+interface FinalOrderSummaryCardProps {
+  cartItems?: any[];
+  isLoading?: boolean;
+  error?: Error | null;
+}
+
+export default function FinalOrderSummaryCard({
+  cartItems,
+  isLoading,
+  error,
+}: FinalOrderSummaryCardProps) {
   const router = useRouter();
-  const { data: checkoutSummary, isLoading, error } = useCheckoutSummary();
   const checkoutMutation = useCheckout();
   const [isAgree, setIsAgree] = useState(false);
 
+  const items = cartItems || [];
+
   if (isLoading) return <CheckoutSummarySkeleton />;
 
-  if (error || !checkoutSummary) {
+  if (error) {
     return (
       <div className="p-4 border border-yellow-200 rounded-xl bg-yellow-50">
         <Paragraph1 className="text-sm text-yellow-800">
@@ -49,15 +59,17 @@ export default function FinalOrderSummaryCard() {
     );
   }
 
-  const items = checkoutSummary.cartItems || [];
-
   if (items.length === 0) {
     return (
       <div className="p-4 border border-gray-200 rounded-xl bg-gray-50 text-center">
-        <Paragraph1 className="text-gray-600">Cart is empty</Paragraph1>
+        <Paragraph1 className="text-gray-600">
+          Your cart is empty. Add items to get started!
+        </Paragraph1>
       </div>
     );
   }
+
+  const subtotal = items.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
 
   const handleCheckout = async () => {
     if (!isAgree) {
@@ -65,13 +77,17 @@ export default function FinalOrderSummaryCard() {
       return;
     }
 
+    if (items.length === 0) return;
     checkoutMutation.mutate(
-      {},
+      { requestId: items[0].requestId },
       {
         onSuccess: (response) => {
-          // Redirect to success page with order ID
+          const res = response as {
+            success: boolean;
+            data: { orderId: string };
+          };
           router.push(
-            `/shop/cart/checkout/success?orderId=${response.data.orderId}`,
+            `/shop/cart/checkout/success?orderId=${res.data.orderId}`,
           );
         },
       },
@@ -85,43 +101,46 @@ export default function FinalOrderSummaryCard() {
       </Paragraph1>
 
       {/* Item List */}
-      <div className="space-y-6 pb-6 border-b border-gray-200">
-        {items.map((item) => (
-          <div key={item.cartItemId} className="flex items-start gap-4">
-            {/* Product Image */}
-            <div className="shrink-0 w-16 h-20 bg-gray-200 rounded-md overflow-hidden border border-gray-100 relative">
-              {item.productImage && (
-                <Image
-                  src={item.productImage}
-                  alt={item.productName}
-                  fill
-                  className="object-cover"
-                />
-              )}
-            </div>
+      <div className="space-y-4 pb-6 border-b border-gray-200">
+        {items.map((item) => {
+          const product = item.productDetail || {};
+          const productImageUrl =
+            product.attachments?.uploads?.[0]?.url || item.productImage || "";
 
-            {/* Product Details */}
-            <div className="grow">
-              <Paragraph1 className="text-sm font-semibold text-gray-800 uppercase leading-snug">
-                {item.productName}
-              </Paragraph1>
-              <Paragraph1 className="text-xs text-gray-600 leading-snug mt-1">
-                Lister: <strong>{item.listerName}</strong>
-              </Paragraph1>
-              <Paragraph1 className="text-xs text-gray-600 leading-snug">
-                Duration: <strong>{item.rentalDays} Days</strong>
-              </Paragraph1>
-            </div>
+          return (
+            <div key={item.requestId} className="flex items-start gap-4">
+              <div className="shrink-0 w-16 h-20 bg-gray-200 rounded-md overflow-hidden border border-gray-100 relative">
+                {productImageUrl && (
+                  <Image
+                    src={productImageUrl}
+                    alt={product.name || item.productName}
+                    fill
+                    className="object-cover"
+                  />
+                )}
+              </div>
 
-            {/* Price */}
-            <div className="shrink-0 text-sm font-bold text-gray-900 mt-1">
-              <Paragraph1>
-                {CURRENCY}
-                {formatCurrency(item.totalPrice)}
-              </Paragraph1>
+              <div className="grow">
+                <Paragraph1 className="text-sm font-semibold text-gray-800 uppercase leading-snug">
+                  {product.name || item.productName}
+                </Paragraph1>
+                <Paragraph1 className="text-xs text-gray-600 leading-snug mt-1">
+                  Lister: <strong>{item.listerName}</strong>
+                </Paragraph1>
+                <Paragraph1 className="text-xs text-gray-600 leading-snug">
+                  Duration: <strong>{item.rentalDays} Days</strong>
+                </Paragraph1>
+              </div>
+
+              <div className="shrink-0 text-sm font-bold text-gray-900 mt-1">
+                <Paragraph1>
+                  {CURRENCY}
+                  {formatCurrency(item.totalPrice || 0)}
+                </Paragraph1>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Cost Breakdown */}
@@ -130,7 +149,7 @@ export default function FinalOrderSummaryCard() {
           <Paragraph1>Rental Subtotal</Paragraph1>
           <Paragraph1>
             {CURRENCY}
-            {formatCurrency(checkoutSummary.cartTotal)}
+            {formatCurrency(subtotal)}
           </Paragraph1>
         </div>
         <div className="flex justify-between text-sm font-medium text-gray-700">
@@ -163,11 +182,10 @@ export default function FinalOrderSummaryCard() {
         </Paragraph1>
         <Paragraph1 className="text-xl font-extrabold text-gray-900">
           {CURRENCY}
-          {formatCurrency(checkoutSummary.cartTotal)}
+          {formatCurrency(subtotal)}
         </Paragraph1>
       </div>
 
-      {/* Error Message */}
       {checkoutMutation.isError && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-lg mb-4">
           <Paragraph1 className="text-xs text-red-700">
@@ -176,10 +194,9 @@ export default function FinalOrderSummaryCard() {
         </div>
       )}
 
-      {/* Checkout Button */}
       <button
         onClick={handleCheckout}
-        disabled={!isAgree || checkoutMutation.isPending || items.length === 0}
+        disabled={!isAgree || checkoutMutation.isPending}
         className="w-full flex justify-center bg-black text-white font-semibold py-3 rounded-lg hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         <Paragraph1>
@@ -187,7 +204,6 @@ export default function FinalOrderSummaryCard() {
         </Paragraph1>
       </button>
 
-      {/* Security Note */}
       <div className="flex items-start gap-2 p-3 mt-4 text-xs bg-green-50 text-green-700 rounded-md border border-green-200">
         <CheckCircle size={16} className="mt-0.5 shrink-0" />
         <Paragraph1 className="text-green-700">
@@ -196,7 +212,6 @@ export default function FinalOrderSummaryCard() {
         </Paragraph1>
       </div>
 
-      {/* Terms Agreement Checkbox */}
       <label className="flex items-start space-x-2 cursor-pointer text-gray-700 mt-4">
         <input
           type="checkbox"

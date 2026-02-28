@@ -1,34 +1,80 @@
-import { useQuery } from "@tanstack/react-query";
-import { rentersApi } from "@/lib/api/renters";
+import { useRentalRequests } from "@/lib/queries/renters/useRentalRequests";
 
 /**
- * Fetch shopping cart with all pending items and summary
- * Includes cart total, delivery fees, cleaning fees, and expired items
+ * Fetches all pending rental requests (used as cart items)
  */
-export const useCart = () =>
-  useQuery({
-    queryKey: ["renters", "cart"],
-    queryFn: async () => {
-      const response = await rentersApi.getCart();
-      return response.data;
+export const useCart = () => {
+  // Only pending requests are considered cart items
+  const { data, isLoading, error, refetch } = useRentalRequests("pending");
+  const cartItems = data?.rentalRequests || [];
+  console.log("Rental Requests List:", cartItems);
+  // Fetch product details for each productId and log them
+  const fetchProductDetails = async () => {
+    for (const item of cartItems) {
+      try {
+        const response = await import("@/lib/api/product").then(
+          ({ productApi }) => productApi.getPublicById(item.productId),
+        );
+        console.log(
+          `Product details for productId ${item.productId}:`,
+          response.data,
+        );
+      } catch (err) {
+        console.error(`Error fetching productId ${item.productId}:`, err);
+      }
+    }
+  };
+  if (cartItems.length > 0) {
+    fetchProductDetails();
+  }
+  // Normalize to match previous cart shape
+  return {
+    data: {
+      cartItems,
     },
-    staleTime: 30 * 1000, // 30 seconds - cart items expire in 15 min, so frequent updates
-    retry: 1,
-    refetchInterval: 5000, // Poll every 5 seconds to update timers
-  });
+    isLoading,
+    error,
+    refetch,
+  };
+};
 
 /**
- * Get cart summary with calculated totals
- * Used for cart display and payment processing
+ * Returns a summary of pending rental requests (cart)
+ * Calculates subtotal, delivery, deposit, and total
  */
-export const useCartSummary = () =>
-  useQuery({
-    queryKey: ["renters", "cart", "summary"],
-    queryFn: async () => {
-      const response = await rentersApi.getCartSummary();
-      return response.data;
+export const useCartSummary = () => {
+  const { data, isLoading, error, refetch } = useRentalRequests("pending");
+  const cartItems = data?.rentalRequests || [];
+  // Calculate summary fields
+  const subtotal = cartItems.reduce(
+    (sum, item) => sum + (item.rentalFee || 0),
+    0,
+  );
+  const totalDeliveryFees = cartItems.reduce(
+    (sum, item) => sum + (item.deliveryFee || 0),
+    0,
+  );
+  const totalSecurityDeposit = cartItems.reduce(
+    (sum, item) => sum + (item.securityDeposit || 0),
+    0,
+  );
+  const cartTotal = subtotal + totalDeliveryFees + totalSecurityDeposit;
+  const itemCount = cartItems.length;
+  const expiredItems = cartItems
+    .filter((item) => item.status === "expired")
+    .map((item) => item.id);
+  return {
+    data: {
+      cartItems,
+      subtotal,
+      totalDeliveryFees,
+      totalSecurityDeposit,
+      cartTotal,
+      itemCount,
+      expiredItems,
     },
-    staleTime: 30 * 1000, // 30 seconds
-    retry: 1,
-    refetchInterval: 5000, // Poll for timer updates
-  });
+    isLoading,
+    error,
+    refetch,
+  };
+};

@@ -5,7 +5,9 @@ import Image from "next/image";
 import { CheckCircle } from "lucide-react";
 import { Header1, Paragraph1 } from "@/common/ui/Text";
 import Link from "next/link";
-import { useCartSummary } from "@/lib/queries/renters/useCart";
+// import { useCartSummary } from "@/lib/queries/renters/useCart";
+import { useQuery } from "@tanstack/react-query";
+import { publicApi } from "@/lib/api/public";
 
 const CURRENCY = "₦";
 
@@ -27,12 +29,16 @@ const SummarySkeleton = () => (
   </div>
 );
 
-export default function FinalOrderSummaryCard() {
-  const { data: cartSummary, isLoading, error } = useCartSummary();
+interface FinalOrderSummaryCardProps {
+  cartItems?: any[];
+  isLoading?: boolean;
+  error?: Error | null;
+}
 
+export function FinalOrderSummaryCard({ cartItems = [], isLoading, error }: FinalOrderSummaryCardProps) {
   if (isLoading) return <SummarySkeleton />;
 
-  if (error || !cartSummary) {
+  if (error || !cartItems) {
     return (
       <div className="p-4 border border-yellow-200 rounded-xl bg-yellow-50">
         <Paragraph1 className="text-sm text-yellow-800">
@@ -42,7 +48,21 @@ export default function FinalOrderSummaryCard() {
     );
   }
 
-  const items = cartSummary.cartItems || [];
+  const items = cartItems;
+  // Calculate summary fields
+  const subtotal = items.reduce(
+    (sum, item) => sum + (item.rentalPrice || 0),
+    0,
+  );
+  const totalDeliveryFees = items.reduce(
+    (sum, item) => sum + (item.deliveryFee || 0),
+    0,
+  );
+  const totalSecurityDeposit = items.reduce(
+    (sum, item) => sum + (item.securityDeposit || 0),
+    0,
+  );
+  const cartTotal = subtotal + totalDeliveryFees + totalSecurityDeposit;
 
   return (
     <div className="p-4 border border-gray-200 rounded-xl">
@@ -52,42 +72,47 @@ export default function FinalOrderSummaryCard() {
 
       {/* Item List */}
       <div className="space-y-4 pb-6 border-b border-gray-200">
-        {items.map((item) => (
-          <div key={item.cartItemId} className="flex items-start gap-4">
-            {/* Product Image */}
-            <div className="shrink-0 w-16 h-20 bg-gray-200 rounded-md overflow-hidden border border-gray-100 relative">
-              {item.productImage && (
-                <Image
-                  src={item.productImage}
-                  alt={item.productName}
-                  fill
-                  className="object-cover"
-                />
-              )}
-            </div>
+        {items.map((item) => {
+          const product = item.productDetail || {};
+          // Try productDetail image, fallback to rental request image
+          const productImageUrl = product.attachments?.uploads?.[0]?.url || item.productImage || "";
+          return (
+            <div key={item.requestId} className="flex items-start gap-4">
+              {/* Product Image */}
+              <div className="shrink-0 w-16 h-20 bg-gray-200 rounded-md overflow-hidden border border-gray-100 relative">
+                {productImageUrl ? (
+                  <Image
+                    src={productImageUrl}
+                    alt={product.name || item.productName}
+                    fill
+                    className="object-cover"
+                  />
+                ) : null}
+              </div>
 
-            {/* Product Details */}
-            <div className="grow">
-              <Paragraph1 className="text-sm font-semibold text-gray-800 uppercase leading-snug">
-                {item.productName}
-              </Paragraph1>
-              <Paragraph1 className="text-xs text-gray-600 leading-snug mt-1">
-                Lister: <strong>{item.listerName}</strong>
-              </Paragraph1>
-              <Paragraph1 className="text-xs text-gray-600 leading-snug">
-                Duration: <strong>{item.rentalDays} Days</strong>
-              </Paragraph1>
-            </div>
+              {/* Product Details */}
+              <div className="grow">
+                <Paragraph1 className="text-sm font-semibold text-gray-800 uppercase leading-snug">
+                  {product.name || item.productName}
+                </Paragraph1>
+                <Paragraph1 className="text-xs text-gray-600 leading-snug mt-1">
+                  Lister: <strong>{item.listerName}</strong>
+                </Paragraph1>
+                <Paragraph1 className="text-xs text-gray-600 leading-snug">
+                  Duration: <strong>{item.rentalDays} Days</strong>
+                </Paragraph1>
+              </div>
 
-            {/* Price */}
-            <div className="shrink-0 text-sm font-bold text-gray-900 mt-1">
-              <Paragraph1>
-                {CURRENCY}
-                {formatCurrency(item.totalPrice)}
-              </Paragraph1>
+              {/* Price */}
+              <div className="shrink-0 text-sm font-bold text-gray-900 mt-1">
+                <Paragraph1>
+                  {CURRENCY}
+                  {formatCurrency(item.totalPrice)}
+                </Paragraph1>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Breakdown */}
@@ -96,28 +121,28 @@ export default function FinalOrderSummaryCard() {
           <Paragraph1>Rental Subtotal</Paragraph1>
           <Paragraph1>
             {CURRENCY}
-            {formatCurrency(cartSummary.subtotal)}
+            {formatCurrency(subtotal)}
           </Paragraph1>
         </div>
         <div className="flex justify-between text-sm font-medium text-gray-700">
           <Paragraph1>Delivery Fees:</Paragraph1>
           <Paragraph1>
             {CURRENCY}
-            {formatCurrency(cartSummary.totalDeliveryFees)}
+            {formatCurrency(totalDeliveryFees)}
           </Paragraph1>
         </div>
         <div className="flex justify-between text-sm font-medium text-gray-700">
           <Paragraph1>Cleaning Fees:</Paragraph1>
           <Paragraph1>
             {CURRENCY}
-            {formatCurrency(cartSummary.totalCleaningFees)}
+            {/* {formatCurrency(cartSummary.totalCleaningFees)} */}0
           </Paragraph1>
         </div>
         <div className="flex justify-between text-sm font-medium text-gray-700">
           <Paragraph1>Security Deposit:</Paragraph1>
           <Paragraph1>
             {CURRENCY}
-            {formatCurrency(cartSummary.totalSecurityDeposit)}
+            {formatCurrency(totalSecurityDeposit)}
           </Paragraph1>
         </div>
       </div>
@@ -129,7 +154,7 @@ export default function FinalOrderSummaryCard() {
         </Paragraph1>
         <Paragraph1 className="text-xl font-extrabold text-gray-900">
           {CURRENCY}
-          {formatCurrency(cartSummary.cartTotal)}
+          {formatCurrency(cartTotal)}
         </Paragraph1>
       </div>
 
