@@ -60,8 +60,8 @@ const AccountVerificationsForm: React.FC = () => {
   }
 
   // Example data shape: { idStatus: "pending" | "verified" | "rejected", emailStatus: "verified" | "unverified" }
-  const idStatus = data?.idStatus || "pending";
-  const emailStatus = data?.emailStatus || "unverified";
+  const idStatus = data?.data?.verifications?.idStatus || "pending";
+  const emailStatus = data?.data?.verifications?.emailStatus || "unverified";
 
   return (
     <div className="space-y-6">
