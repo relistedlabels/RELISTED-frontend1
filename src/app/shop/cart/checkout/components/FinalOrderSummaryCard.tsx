@@ -45,7 +45,10 @@ export default function FinalOrderSummaryCard({
   const checkoutMutation = useCheckout();
   const [isAgree, setIsAgree] = useState(false);
 
-  const items = cartItems || [];
+  // Only show products/requests with status 'approved'
+  const items = (cartItems || []).filter(
+    (item) => item.status === "approved" || item.productStatus === "approved",
+  );
 
   if (isLoading) return <CheckoutSummarySkeleton />;
 

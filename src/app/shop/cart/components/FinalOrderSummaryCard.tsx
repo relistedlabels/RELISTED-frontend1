@@ -35,7 +35,11 @@ interface FinalOrderSummaryCardProps {
   error?: Error | null;
 }
 
-export function FinalOrderSummaryCard({ cartItems = [], isLoading, error }: FinalOrderSummaryCardProps) {
+export function FinalOrderSummaryCard({
+  cartItems = [],
+  isLoading,
+  error,
+}: FinalOrderSummaryCardProps) {
   if (isLoading) return <SummarySkeleton />;
 
   if (error || !cartItems) {
@@ -48,7 +52,10 @@ export function FinalOrderSummaryCard({ cartItems = [], isLoading, error }: Fina
     );
   }
 
-  const items = cartItems;
+  // Only show products/requests with status 'approved'
+  const items = cartItems.filter(
+    (item) => item.status === "approved" || item.productStatus === "approved",
+  );
   // Calculate summary fields
   const subtotal = items.reduce(
     (sum, item) => sum + (item.rentalPrice || 0),
@@ -75,7 +82,8 @@ export function FinalOrderSummaryCard({ cartItems = [], isLoading, error }: Fina
         {items.map((item) => {
           const product = item.productDetail || {};
           // Try productDetail image, fallback to rental request image
-          const productImageUrl = product.attachments?.uploads?.[0]?.url || item.productImage || "";
+          const productImageUrl =
+            product.attachments?.uploads?.[0]?.url || item.productImage || "";
           return (
             <div key={item.requestId} className="flex items-start gap-4">
               {/* Product Image */}
