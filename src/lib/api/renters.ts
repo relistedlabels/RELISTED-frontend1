@@ -160,6 +160,95 @@ export type CheckoutResponse = {
 };
 
 export const rentersApi = {
+  // --- Profile Endpoints ---
+  // GET /api/renters/profile (already present as getProfile)
+
+  // PUT /api/renters/profile
+  updateProfile: (data: {
+    fullName?: string;
+    phone?: string;
+    addresses?: any[];
+  }) =>
+    apiFetch<{ success: boolean; message: string; data: { profile: any } }>(
+      "/api/renters/profile",
+      { method: "PUT", body: JSON.stringify(data) },
+    ),
+
+  // GET /api/renters/profile/addresses
+  getProfileAddresses: () =>
+    apiFetch<{ success: boolean; data: { addresses: any[]; total: number } }>(
+      "/api/renters/profile/addresses",
+      { method: "GET" },
+    ),
+
+  // POST /api/renters/profile/addresses
+  addProfileAddress: (data: any) =>
+    apiFetch<{ success: boolean; message: string; data: { address: any } }>(
+      "/api/renters/profile/addresses",
+      { method: "POST", body: JSON.stringify(data) },
+    ),
+
+  // POST /api/renters/profile/avatar
+  uploadProfileAvatar: (formData: FormData) =>
+    apiFetch<{
+      success: boolean;
+      message: string;
+      data: { profileImage: string; uploadedAt: string };
+    }>("/api/renters/profile/avatar", { method: "POST", body: formData }),
+
+  // --- Verification Endpoints ---
+  // GET /api/renters/verifications/status
+  getVerificationsStatus: () =>
+    apiFetch<{ success: boolean; data: { verifications: any } }>(
+      "/api/renters/verifications/status",
+      { method: "GET" },
+    ),
+
+  // POST /api/renters/verifications/id-document
+  uploadIdDocument: (formData: FormData) =>
+    apiFetch<{ success: boolean; message: string; data: any }>(
+      "/api/renters/verifications/id-document",
+      { method: "POST", body: formData },
+    ),
+
+  // --- Security Endpoints ---
+  // POST /api/renters/security/password
+  changePassword: (data: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) =>
+    apiFetch<{
+      success: boolean;
+      message: string;
+      data: { passwordChanged: boolean; changedAt: string };
+    }>("/api/renters/security/password", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  // --- Notification Endpoints ---
+  // GET /api/renters/notifications/preferences
+  getNotificationPreferences: () =>
+    apiFetch<{ success: boolean; data: { preferences: any } }>(
+      "/api/renters/notifications/preferences",
+      { method: "GET" },
+    ),
+
+  // PUT /api/renters/notifications/preferences
+  updateNotificationPreferences: (data: {
+    emailAlerts?: boolean;
+    smsUpdates?: boolean;
+    marketingEmails?: boolean;
+  }) =>
+    apiFetch<{
+      success: boolean;
+      message: string;
+      data: { preferences: any; savedAt: string };
+    }>("/api/renters/notifications/preferences", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
   // Dashboard
   getDashboardSummary: (params?: { timeframe?: "week" | "month" | "year" }) =>
     apiFetch<{ success: boolean; data: RentersDashboardSummary }>(
@@ -321,21 +410,8 @@ export const rentersApi = {
   getProfile: () =>
     apiFetch<{
       success: boolean;
-      data: {
-        id: string;
-        fullName: string;
-        email: string;
-        phone: string;
-        avatar?: string;
-        createdAt: string;
-      };
+      data: any;
     }>("/api/renters/profile", { method: "GET" }),
-
-  updateProfile: (data: { fullName?: string; phone?: string }) =>
-    apiFetch<{ success: boolean; data: object }>("/api/renters/profile", {
-      method: "PUT",
-      body: JSON.stringify(data),
-    }),
 
   // Disputes
   getDisputeStats: () =>

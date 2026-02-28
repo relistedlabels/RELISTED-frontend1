@@ -3,6 +3,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import {
+  useNotificationPreferences,
+  useUpdateNotificationPreferences,
+} from "@/lib/queries/renters/useNotifications";
 import { Paragraph1 } from "@/common/ui/Text";
 
 interface NotificationSettingProps {
@@ -99,34 +103,53 @@ const NOTIFICATION_PREFERENCES = [
 ];
 
 const AccountNotifications: React.FC = () => {
+  const { data, isPending, isError, error } = useNotificationPreferences();
+  const updateMutation = useUpdateNotificationPreferences();
   const [preferences, setPreferences] = useState<Record<string, boolean>>({});
-  const [isLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Initialize preferences from defaults
+  // Sync preferences from API
   useEffect(() => {
-    const initialPrefs: Record<string, boolean> = {};
-    NOTIFICATION_PREFERENCES.forEach((pref) => {
-      initialPrefs[pref.key] = pref.default;
-    });
-    setPreferences(initialPrefs);
-    // TODO: Fetch actual preferences from API when endpoint is ready
-    // const { data } = useNotificationPreferences();
-  }, []);
+    if (data?.data?.preferences) {
+      setPreferences(data.data.preferences);
+    } else {
+      // fallback to defaults if API fails
+      const initialPrefs: Record<string, boolean> = {};
+      NOTIFICATION_PREFERENCES.forEach((pref) => {
+        initialPrefs[pref.key] = pref.default;
+      });
+      setPreferences(initialPrefs);
+    }
+  }, [data]);
 
   const handleTogglePref = (key: string, enabled: boolean) => {
     setPreferences((prev) => ({ ...prev, [key]: enabled }));
     setHasChanges(true);
-
-    // TODO: Call mutation to update preferences
-    // updateNotificationMutation.mutate({ [key]: enabled })
   };
 
   const handleSavePreferences = async () => {
-    setHasChanges(false);
-    // TODO: Call mutation to save all preferences
-    alert("Notification preferences updated!");
+    updateMutation.mutate(preferences, {
+      onSuccess: () => {
+        setHasChanges(false);
+      },
+    });
   };
+
+  if (isPending) {
+    return (
+      <div className="flex items-center min-h-[120px]">
+        Loading preferences...
+      </div>
+    );
+  }
+  if (isError) {
+    return (
+      <div className="text-red-500">
+        Error: {error?.message || "Failed to load notification preferences."}
+      </div>
+    );
+  }
+
   return (
     <div className="font-sans ">
       <Paragraph1 className="text-xl uppercase font-bold text-gray-900 mb-2">
@@ -154,10 +177,10 @@ const AccountNotifications: React.FC = () => {
         <button
           type="button"
           onClick={handleSavePreferences}
-          disabled={!hasChanges || isLoading}
+          disabled={!hasChanges || updateMutation.isPending}
           className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 disabled:opacity-50 transition duration-150"
         >
-          {isLoading ? "Saving..." : "Save Preferences"}
+          {updateMutation.isPending ? "Saving..." : "Save Preferences"}
         </button>
       </div>
     </div>

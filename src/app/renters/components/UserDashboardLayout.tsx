@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Wallet,
   Heart,
@@ -10,8 +10,10 @@ import {
   LogOut,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Paragraph2, Paragraph3, ParagraphLink1 } from "@/common/ui/Text";
+import { AnimatePresence, motion } from "framer-motion";
+import { useUserStore } from "@/store/useUserStore";
 
 interface NavItem {
   name: string;
@@ -33,10 +35,19 @@ export default function UserDashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const clearUser = useUserStore((s) => s.clearUser);
 
   // Get the active page title
   const activeItem = navItems.find((item) => pathname.startsWith(item.href));
   const title = activeItem?.name || "";
+
+  const handleLogout = async () => {
+    await clearUser();
+    setShowLogoutModal(false);
+    router.replace("/auth/sign-in");
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -78,9 +89,9 @@ export default function UserDashboardLayout({
 
             <button
               className={`
-                      flex text-red-500 hover:bg-red-100 w-full  items-center px-2 sm:px-4 py-5 transition-colors
-                      
-                    `}
+                flex text-red-500 hover:bg-red-100 w-full items-center px-2 sm:px-4 py-5 transition-colors
+              `}
+              onClick={() => setShowLogoutModal(true)}
             >
               <LogOut size={22} className={`mx-auto sm:mr-3 sm:mx-0`} />
 
@@ -101,6 +112,46 @@ export default function UserDashboardLayout({
         <Paragraph2 className="text-2xl font-bold mb-6">{title}</Paragraph2>
         {children}
       </main>
+
+      {/* Logout Confirmation Modal */}
+      <AnimatePresence>
+        {showLogoutModal && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm"
+            >
+              <h2 className="text-lg font-bold mb-2">Confirm Logout</h2>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to log out?
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold"
+                  onClick={() => setShowLogoutModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold"
+                  onClick={handleLogout}
+                >
+                  Log out
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

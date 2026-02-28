@@ -15,8 +15,13 @@ import {
 } from "react-icons/hi2";
 import { HiOutlineMail } from "react-icons/hi";
 import { useProfileStore } from "@/store/profileStore";
-import { useProfile } from "@/lib/queries/renters/useProfile";
-import { useUpdateProfile } from "@/lib/mutations/renters/useProfileMutations";
+import {
+  useProfileDetails,
+  useUpdateProfile,
+  useProfileAddresses,
+  useAddProfileAddress,
+  useUploadProfileAvatar,
+} from "@/lib/queries/renters/useProfileDetails";
 import { FullProfile } from "@/types/profile";
 
 const AccountProfileDetails: React.FC = () => {
@@ -24,8 +29,12 @@ const AccountProfileDetails: React.FC = () => {
   const setProfile = useProfileStore((s) => s.setProfile);
 
   // ✅ Fetch profile from API
-  const { data: apiProfile, isLoading } = useProfile();
+  const { data, isLoading } = useProfileDetails();
   const updateProfileMutation = useUpdateProfile();
+  const { data: addressesData, isLoading: isAddressesLoading } =
+    useProfileAddresses();
+  const addAddressMutation = useAddProfileAddress();
+  const uploadAvatarMutation = useUploadProfileAvatar();
 
   // ✅ Local form state synced from store/API
   const [formData, setFormData] = useState({
@@ -38,19 +47,21 @@ const AccountProfileDetails: React.FC = () => {
 
   // ✅ Sync API data to form on load
   useEffect(() => {
-    if (apiProfile) {
+    if (data?.data?.profile) {
+      const p = data.data.profile;
       setFormData({
-        fullName: apiProfile.fullName || "",
-        email: apiProfile.email || "",
-        phone: apiProfile.phone || "",
-        role: profile?.role || "Renter",
-        defaultAddress: profile?.address?.street || "",
+        fullName: p.fullName || "",
+        email: p.email || "",
+        phone: p.phone || "",
+        role: p.role || "Renter",
+        defaultAddress:
+          p.addresses?.find((a: any) => a.isDefault)?.street || "",
       });
     }
-  }, [apiProfile]);
+  }, [data]);
 
   // ✅ Sync store data to form as fallback
-  if (!apiProfile && profile) {
+  if (!data?.data?.profile && profile) {
     useEffect(() => {
       setFormData({
         fullName: profile.firstName + " " + profile.lastName || "",
@@ -78,7 +89,6 @@ const AccountProfileDetails: React.FC = () => {
       },
       {
         onSuccess: () => {
-          // Update store as fallback
           setProfile({
             ...profile,
             firstName: firstName || "",
@@ -98,25 +108,36 @@ const AccountProfileDetails: React.FC = () => {
     <div className="font-sans">
       {/* Profile Header and Image Upload */}
       <div className="flex flex-col bg-[#3A3A32] p-6 items-center mb-6 rounded-lg">
-        <div className="relative w-28 h-28 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+        <div className="relative w-28 h-28   flex items-center justify-center overflow-hidden">
           {/* Profile Picture or Placeholder */}
-          {profile?.profileImage ? (
+          {data?.data?.profile?.profileImage ? (
             <img
-              src={profile.profileImage}
+              src={data.data.profile.profileImage}
               alt="Profile"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover rounded-full"
             />
           ) : (
             <HiOutlineUser className="w-16 h-16 text-gray-500" />
           )}
 
           {/* Upload Button Overlay */}
-          <button
-            type="button"
-            className="absolute bottom-0 right-0 w-8 h-8 bg-black rounded-full flex items-center justify-center cursor-pointer border-2 border-white hover:bg-gray-800 transition"
-          >
-            <HiOutlineCamera className="w-4 h-4 text-white" />
-          </button>
+          <form>
+            <label className="absolute  bottom-0 right-0 w-8 h-8 bg-black rounded-full flex items-center justify-center cursor-pointer border-2 border-white hover:bg-gray-800 transition">
+              <HiOutlineCamera className="w-4 h-4 text-white" />
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
+                  if (e.target.files && e.target.files[0]) {
+                    const formData = new FormData();
+                    formData.append("avatar", e.target.files[0]);
+                    uploadAvatarMutation.mutate(formData);
+                  }
+                }}
+              />
+            </label>
+          </form>
         </div>
         <Paragraph1 className="text-sm text-center mt-4 text-white">
           Upload a profile photo <br /> (Max 2MB)
@@ -197,38 +218,52 @@ const AccountProfileDetails: React.FC = () => {
 
       {/* --- Address Section --- */}
       <Paragraph1 className="text-lg font-bold text-gray-900 mb-4">
-        Address
+        Addresses
       </Paragraph1>
-      <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
-        Default Address
-      </Paragraph1>
-
-      <div className="flex items-start justify-between p-3 border border-gray-300 rounded-lg bg-white mb-6 gap-2">
-        <div className="flex items-start space-x-2 flex-1">
-          <HiOutlineHome className="w-5 h-5 text-gray-500 shrink-0 mt-0.5" />
-          <input
-            type="text"
-            value={formData.defaultAddress}
-            onChange={(e) =>
-              handleInputChange("defaultAddress", e.target.value)
-            }
-            placeholder="Enter your address"
-            className="w-full text-sm text-gray-700 bg-transparent outline-none"
-          />
+      {isAddressesLoading ? (
+        <Paragraph1>Loading addresses...</Paragraph1>
+      ) : (
+        <div className="space-y-2 mb-6">
+          {(addressesData?.data?.addresses || []).map((address: any) => (
+            <div
+              key={address.addressId}
+              className="flex items-center justify-between p-3 border border-gray-300 rounded-lg bg-white"
+            >
+              <div className="flex items-start space-x-2 flex-1">
+                <HiOutlineHome className="w-5 h-5 text-gray-500 shrink-0 mt-0.5" />
+                <span className="text-sm text-gray-700">
+                  {address.street}, {address.city}, {address.state}
+                </span>
+                {address.isDefault && (
+                  <span className="ml-2 px-2 py-1 text-xs bg-black text-white rounded">
+                    Default
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
-        <button
-          type="button"
-          className="text-gray-500 hover:text-black transition duration-150 p-1 shrink-0"
-        >
-          <HiOutlinePencil className="w-4 h-4" />
-        </button>
-      </div>
+      )}
 
       {/* Action Buttons */}
       <div className="flex flex-col w-full gap-3 sm:flex-row justify-end pt-4">
         <button
           type="button"
           className="flex items-center justify-center space-x-1 px-4 py-2 text-sm font-semibold text-black border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150"
+          onClick={() => {
+            const street = prompt("Enter new address street:");
+            if (street) {
+              addAddressMutation.mutate({
+                type: "residential",
+                street,
+                city: "Lagos",
+                state: "Lagos",
+                postalCode: "100001",
+                country: "Nigeria",
+                isDefault: false,
+              });
+            }
+          }}
         >
           <HiOutlinePlus className="w-4 h-4" />
           <span>Add New Address</span>

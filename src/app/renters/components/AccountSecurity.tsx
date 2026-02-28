@@ -83,6 +83,9 @@ const AccountSecurity: React.FC = () => {
     setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
+  const { mutateAsync, isPending } =
+    require("@/lib/queries/renters/useSecurity").useChangePassword();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -114,23 +117,19 @@ const AccountSecurity: React.FC = () => {
       return;
     }
 
-    // TODO: Connect to useChangePassword mutation when API endpoint is available
     setIsSubmitting(true);
     try {
-      // Placeholder for mutation call
-      // const changePasswordMutation = useChangePassword();
-      // await changePasswordMutation.mutateAsync({
-      //   currentPassword: formData.currentPassword,
-      //   newPassword: formData.newPassword,
-      // });
-
+      await mutateAsync({
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword,
+        confirmPassword: formData.confirmPassword,
+      });
       setSuccess(true);
       setFormData({
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
       });
-      alert("Password changed successfully!");
     } catch (err: any) {
       setError(err?.message || "Failed to change password");
     } finally {
@@ -198,10 +197,10 @@ const AccountSecurity: React.FC = () => {
         <div className="flex justify-end pt-6">
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isPending}
             className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 disabled:opacity-50 transition duration-150"
           >
-            {isSubmitting ? "Updating..." : "Update Password"}
+            {isSubmitting || isPending ? "Updating..." : "Update Password"}
           </button>
         </div>
       </form>
