@@ -588,39 +588,6 @@ GET /api/admin/listings/export?status=Pending
 
 ---
 
-## Listings Page Data Flow
-
-1. **Page Load:**
-   - GET /api/admin/listings/statistics → Stats cards display counts
-   - GET /api/admin/listings/categories → Populate dropdown
-
-2. **Tab Click:**
-   - GET /api/admin/listings?status=Pending|Approved|Rejected → Load appropriate table
-
-3. **Search:**
-   - GET /api/admin/listings?status=<active>&search=<query> → Filter table results
-
-4. **Category Filter:**
-   - GET /api/admin/listings?status=<active>&category=<id> → Filter table results
-
-5. **View Product:**
-   - GET /api/admin/listings/:productId → Open ListingDetailModal
-
-6. **Approve Product:**
-   - PATCH /api/admin/listings/:productId/approve → Success → GET /api/admin/listings/statistics → Update page
-
-7. **Reject Product:**
-   - Open modal → User enters reason → PATCH /api/admin/listings/:productId/reject → Success → GET /api/admin/listings/statistics → Update page
-
-8. **Export:**
-   - GET /api/admin/listings/export?<filters> → Download CSV file
-
----
-
-## Admin Dashboard Analytics
-
----
-
 ## Category, Tag, and Brand Management
 
 ### 16. GET /api/admin/categories
@@ -832,6 +799,39 @@ DELETE /api/admin/brands/brand_001
 
 **Note:** When deleting a category, tag, or brand, all products referencing the deleted entity must be automatically reassigned to a random existing one to maintain data integrity.
 
+
+## Listings Page Data Flow
+
+1. **Page Load:**
+   - GET /api/admin/listings/statistics → Stats cards display counts
+   - GET /api/admin/listings/categories → Populate dropdown
+
+2. **Tab Click:**
+   - GET /api/admin/listings?status=Pending|Approved|Rejected → Load appropriate table
+
+3. **Search:**
+   - GET /api/admin/listings?status=<active>&search=<query> → Filter table results
+
+4. **Category Filter:**
+   - GET /api/admin/listings?status=<active>&category=<id> → Filter table results
+
+5. **View Product:**
+   - GET /api/admin/listings/:productId → Open ListingDetailModal
+
+6. **Approve Product:**
+   - PATCH /api/admin/listings/:productId/approve → Success → GET /api/admin/listings/statistics → Update page
+
+7. **Reject Product:**
+   - Open modal → User enters reason → PATCH /api/admin/listings/:productId/reject → Success → GET /api/admin/listings/statistics → Update page
+
+8. **Export:**
+   - GET /api/admin/listings/export?<filters> → Download CSV file
+
+---
+
+## Admin Dashboard Analytics
+
+---
 ### 1. GET /api/admin/analytics/stats
 
 **Location:** `src/app/admin/[id]/dashboard/`
