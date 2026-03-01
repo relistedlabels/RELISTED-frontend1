@@ -121,11 +121,11 @@ export default function ManagementPanel() {
         : brands?.data || [];
 
   return (
-    <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
+    <div className="my-8 bg-white rounded-lg border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
-        <Paragraph2 className="text-lg font-bold text-gray-900">
+        <Paragraph1 className="text-lg font-bold text-gray-900">
           Manage {activeTab}
-        </Paragraph2>
+        </Paragraph1>
       </div>
 
       {/* Tabs */}

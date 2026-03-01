@@ -1,14 +1,14 @@
 import React from "react";
 import { Eye } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
-import { UserProduct } from "@/lib/api/product";
+import { Product } from "@/lib/api/admin/listings";
 
 interface RejectedListingsTableProps {
-  products: UserProduct[];
+  products: Product[];
   isLoading: boolean;
   error: unknown;
   searchQuery: string;
-  onView: (product: UserProduct) => void;
+  onView: (product: Product) => void;
 }
 
 export default function RejectedListingsTable({
@@ -18,17 +18,17 @@ export default function RejectedListingsTable({
   searchQuery,
   onView,
 }: RejectedListingsTableProps) {
-  const getImageUrl = (listing: UserProduct): string => {
-    if (listing.attachments?.uploads?.[0]?.url) {
-      return listing.attachments.uploads[0].url;
+  const getImageUrl = (listing: Product): string => {
+    if (listing.image) {
+      return listing.image;
     }
     return "https://via.placeholder.com/100?text=No+Image";
   };
 
-  const filteredProducts = products.filter((product: UserProduct) => {
+  const filteredProducts = products.filter((product: Product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.curator?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+      product.listerName?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
 
@@ -85,7 +85,7 @@ export default function RejectedListingsTable({
           </tr>
         </thead>
         <tbody>
-          {filteredProducts.map((product: UserProduct) => (
+          {filteredProducts.map((product: Product) => (
             <tr
               key={product.id}
               className="border-b border-gray-200 hover:bg-gray-50 transition"
@@ -102,12 +102,12 @@ export default function RejectedListingsTable({
                   {product.name}
                 </Paragraph1>
                 <Paragraph1 className="text-xs text-gray-500">
-                  {product.subText}
+                  {product.subText || "—"}
                 </Paragraph1>
               </td>
               <td className="py-4 px-6">
                 <Paragraph1 className="text-sm text-gray-900">
-                  {product.curator?.name || "N/A"}
+                  {product.listerName || "N/A"}
                 </Paragraph1>
               </td>
               <td className="py-4 px-6">

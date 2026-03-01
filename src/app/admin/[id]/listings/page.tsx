@@ -21,8 +21,9 @@ import {
   useListingsStatistics,
   useApproveListing,
   useRejectListing,
+  useListings,
 } from "@/lib/queries/admin/useListings";
-import { ProductDetail } from "@/lib/api/admin/listings";
+import { Product, ProductDetail } from "@/lib/api/admin/listings";
 
 type TabType = "Pending" | "Approved" | "Rejected";
 
@@ -30,9 +31,7 @@ export default function ListingsPage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabType>("Pending");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedListing, setSelectedListing] = useState<ProductDetail | null>(
-    null,
-  );
+  const [selectedListing, setSelectedListing] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [rejectingProductId, setRejectingProductId] = useState<string | null>(
     null,
@@ -42,12 +41,15 @@ export default function ListingsPage() {
     null,
   );
 
-  // Fetch all statistics from API - includes products for each status
+  // Fetch all statistics from API
   const {
-    data: stats,
+    data: statsResponse,
     isLoading: statsLoading,
     error: statsError,
   } = useListingsStatistics();
+
+  // Get stats data from the response
+  const stats = statsResponse?.data;
 
   if (statsError) {
     console.error("Failed to load product statistics:", statsError);
@@ -55,19 +57,20 @@ export default function ListingsPage() {
 
   const TABS: TabType[] = ["Pending", "Approved", "Rejected"];
 
-  // Extract products from statistics for each tab
-  const pendingProducts = useMemo(
-    () => stats?.data?.getPendingProducts?.products || [],
-    [stats],
-  );
-  const approvedProducts = useMemo(
-    () => stats?.data?.getApprovedProducts?.products || [],
-    [stats],
-  );
-  const rejectedProducts = useMemo(
-    () => stats?.data?.getRejectedProducts?.products || [],
-    [stats],
-  );
+  // Fetch products for each tab
+  const { data: pendingResponse, isLoading: pendingLoading } = useListings({
+    status: activeTab === "Pending" ? "Pending" : undefined,
+  });
+  const { data: approvedResponse, isLoading: approvedLoading } = useListings({
+    status: activeTab === "Approved" ? "Approved" : undefined,
+  });
+  const { data: rejectedResponse, isLoading: rejectedLoading } = useListings({
+    status: activeTab === "Rejected" ? "Rejected" : undefined,
+  });
+
+  const pendingProducts = pendingResponse?.data?.products || [];
+  const approvedProducts = approvedResponse?.data?.products || [];
+  const rejectedProducts = rejectedResponse?.data?.products || [];
 
   // Mutations
   const approveMutation = useApproveListing();
@@ -117,25 +120,7 @@ export default function ListingsPage() {
         <ListingDetailModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          product={{
-            id: selectedListing.id,
-            image:
-              selectedListing.attachments?.uploads?.[0]?.url ||
-              "https://via.placeholder.com/100?text=No+Image",
-            itemName: selectedListing.name,
-            brand: selectedListing.subText,
-            category: "Uncategorized",
-            condition: selectedListing.condition || "Not Specified",
-            itemValue: `₦${selectedListing.originalValue?.toLocaleString() || 0}`,
-            pricePerDay: `₦${selectedListing.dailyPrice?.toLocaleString() || 0}`,
-            quantity: selectedListing.quantity,
-            description: selectedListing.description || "",
-            images: selectedListing.attachments?.uploads?.map((u) => u.url) || [
-              selectedListing.attachments?.uploads?.[0]?.url ||
-                "https://via.placeholder.com/100?text=No+Image",
-            ],
-            status: selectedListing.productVerified ? "Active" : "Pending",
-          }}
+          product={selectedListing}
         />
       )}
 
@@ -179,8 +164,6 @@ export default function ListingsPage() {
         </Paragraph1>
       </div>
 
-      {/* Management Panel - Categories, Tags, Brands */}
-      <ManagementPanel />
       <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         {/* Search */}
         <div className="relative w-full sm:w-64">
@@ -232,7 +215,7 @@ export default function ListingsPage() {
                 Total Listings
               </Paragraph1>
               <Paragraph3 className="text-3xl font-bold text-gray-900">
-                {stats?.data?.getTotalProducts?.count || 0}
+                {stats?.getTotalProducts?.count || 0}
               </Paragraph3>
             </div>
 
@@ -247,7 +230,7 @@ export default function ListingsPage() {
                 Pending Review
               </Paragraph1>
               <Paragraph3 className="text-3xl font-bold text-gray-900">
-                {stats?.data?.getPendingProducts?.count || 0}
+                {stats?.getPendingProducts?.count || 0}
               </Paragraph3>
             </div>
 
@@ -262,7 +245,7 @@ export default function ListingsPage() {
                 Approved
               </Paragraph1>
               <Paragraph3 className="text-3xl font-bold text-gray-900">
-                {stats?.data?.getApprovedProducts?.count || 0}
+                {stats?.getApprovedProducts?.count || 0}
               </Paragraph3>
             </div>
 
@@ -277,7 +260,7 @@ export default function ListingsPage() {
                 Rejected
               </Paragraph1>
               <Paragraph3 className="text-3xl font-bold text-gray-900">
-                {stats?.data?.getRejectedProducts?.count || 0}
+                {stats?.getRejectedProducts?.count || 0}
               </Paragraph3>
             </div>
 
@@ -292,7 +275,7 @@ export default function ListingsPage() {
                 Active
               </Paragraph1>
               <Paragraph3 className="text-3xl font-bold text-gray-900">
-                {stats?.data?.getActiveProducts?.count || 0}
+                {stats?.getActiveProducts?.count || 0}
               </Paragraph3>
             </div>
           </>
@@ -329,7 +312,7 @@ export default function ListingsPage() {
             {activeTab === "Pending" && (
               <PendingListingsTable
                 products={pendingProducts}
-                isLoading={false}
+                isLoading={pendingLoading}
                 error={null}
                 searchQuery={searchQuery}
                 onApprove={handleApprove}
@@ -344,7 +327,7 @@ export default function ListingsPage() {
             {activeTab === "Approved" && (
               <ApprovedListingsTable
                 products={approvedProducts}
-                isLoading={false}
+                isLoading={approvedLoading}
                 error={null}
                 searchQuery={searchQuery}
                 onView={(product) => {
@@ -356,7 +339,7 @@ export default function ListingsPage() {
             {activeTab === "Rejected" && (
               <RejectedListingsTable
                 products={rejectedProducts}
-                isLoading={false}
+                isLoading={rejectedLoading}
                 error={null}
                 searchQuery={searchQuery}
                 onView={(product) => {
@@ -385,6 +368,9 @@ export default function ListingsPage() {
             </Paragraph1>
           </div>
         )}
+
+      {/* Management Panel - Categories, Tags, Brands */}
+      <ManagementPanel />
     </div>
   );
 }

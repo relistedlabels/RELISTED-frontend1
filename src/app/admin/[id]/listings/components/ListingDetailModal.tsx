@@ -13,53 +13,34 @@ import {
   Package,
 } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { Product, ProductDetail } from "@/lib/api/admin/listings";
 import AvailabilityTab from "./AvailabilityTab";
 import RentalHistoryTab from "./RentalHistoryTab";
 import ActivityTab from "./ActivityTab";
 
 import DeleteProductButton from "./DeleteProductButton";
 
-interface Product {
-  id: string;
-  image: string;
-  itemName: string;
-  brand: string;
-  category: string;
-  condition: string;
-  itemValue: string;
-  pricePerDay: string;
-  quantity: number;
-  description: string;
-  images: string[];
-  status: "Pending" | "Active" | "Rejected";
-}
-
 interface ListingDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  product?: Product;
+  product?: Product | ProductDetail;
 }
 
 const DEFAULT_PRODUCT: Product = {
   id: "1",
+  name: "Hermès Birkin 30",
+  subText: "Iconic luxury handbag",
   image:
     "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=300&h=300&fit=crop",
-  itemName: "Hermès Birkin 30",
-  brand: "Hermès",
   category: "Bags",
   condition: "New",
-  itemValue: "₦12,500,000",
-  pricePerDay: "₦85,000",
+  originalValue: 12500000,
+  dailyPrice: 85000,
   quantity: 1,
-  description:
-    "Brand new Hermès Birkin 30 in classic black. Never worn. Comes with original box, dust bag, and authentication card. Investment-grade luxury piece.",
-  images: [
-    "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=300&h=300&fit=crop",
-    "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=300&h=300&fit=crop",
-    "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=300&h=300&fit=crop",
-    "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=300&h=300&fit=crop",
-  ],
-  status: "Pending",
+  status: "pending",
+  dateAdded: new Date().toISOString(),
+  listerName: "John Doe",
+  productVerified: true,
 };
 
 export default function ListingDetailModal({
@@ -72,17 +53,37 @@ export default function ListingDetailModal({
   >("details");
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Pending":
+    switch (status?.toLowerCase()) {
+      case "pending":
         return "bg-yellow-50 text-yellow-700";
-      case "Active":
+      case "active":
+      case "approved":
         return "bg-green-50 text-green-700";
-      case "Rejected":
+      case "rejected":
         return "bg-red-50 text-red-700";
       default:
         return "bg-gray-50 text-gray-700";
     }
   };
+
+  const getDisplayStatus = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case "pending":
+        return "Pending";
+      case "active":
+      case "approved":
+        return "Active";
+      case "rejected":
+        return "Rejected";
+      default:
+        return status || "Unknown";
+    }
+  };
+
+  // Get images from ProductDetail attachments or fallback to single image
+  const imagesToDisplay: string[] = (product as any).attachments?.uploads?.map(
+    (u: any) => u.url,
+  ) || [product.image];
 
   return (
     <AnimatePresence>
@@ -111,15 +112,15 @@ export default function ListingDetailModal({
                 <div className="flex items-start gap-4 flex-1">
                   <img
                     src={product.image}
-                    alt={product.itemName}
+                    alt={product.name}
                     className="w-16 h-16 rounded object-cover"
                   />
                   <div className="flex-1">
                     <Paragraph1 className="text-xs text-gray-500 mb-1">
-                      {product.brand}
+                      {product.category}
                     </Paragraph1>
                     <Paragraph3 className="text-lg font-bold text-gray-900">
-                      {product.itemName}
+                      {product.name}
                     </Paragraph3>
                   </div>
                 </div>
@@ -129,7 +130,7 @@ export default function ListingDetailModal({
                       product.status,
                     )}`}
                   >
-                    {product.status}
+                    {getDisplayStatus(product.status)}
                   </span>
                   <button
                     onClick={onClose}
@@ -156,7 +157,7 @@ export default function ListingDetailModal({
                 </button>
                 <DeleteProductButton
                   productId={product.id}
-                  productName={product.itemName}
+                  productName={product.name}
                 />
               </div>
             </div>
@@ -203,26 +204,28 @@ export default function ListingDetailModal({
                     <div className="grid grid-cols-2 gap-4 mb-6">
                       <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                         <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                          Brand
-                        </Paragraph1>
-                        <Paragraph1 className="text-sm text-gray-900 font-medium">
-                          {product.brand}
-                        </Paragraph1>
-                      </div>
-                      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                           Category
                         </Paragraph1>
                         <Paragraph1 className="text-sm text-gray-900 font-medium">
                           {product.category}
                         </Paragraph1>
                       </div>
+                      {(product as any).color && (
+                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                          <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                            Color
+                          </Paragraph1>
+                          <Paragraph1 className="text-sm text-gray-900 font-medium">
+                            {(product as any).color}
+                          </Paragraph1>
+                        </div>
+                      )}
                       <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                         <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                           Item Value
                         </Paragraph1>
                         <Paragraph1 className="text-sm text-gray-900 font-medium">
-                          {product.itemValue}
+                          ₦{product.originalValue?.toLocaleString() || 0}
                         </Paragraph1>
                       </div>
                       <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -230,7 +233,7 @@ export default function ListingDetailModal({
                           Price/Day
                         </Paragraph1>
                         <Paragraph1 className="text-sm text-gray-900 font-medium">
-                          {product.pricePerDay}
+                          ₦{product.dailyPrice?.toLocaleString() || 0}
                         </Paragraph1>
                       </div>
                       <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -253,14 +256,16 @@ export default function ListingDetailModal({
                   </div>
 
                   {/* Description */}
-                  <div>
-                    <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                      Description
-                    </Paragraph1>
-                    <Paragraph1 className="text-sm text-gray-700 leading-relaxed">
-                      {product.description}
-                    </Paragraph1>
-                  </div>
+                  {((product as any).description || product.subText) && (
+                    <div>
+                      <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        Description
+                      </Paragraph1>
+                      <Paragraph1 className="text-sm text-gray-700 leading-relaxed">
+                        {(product as any).description || product.subText}
+                      </Paragraph1>
+                    </div>
+                  )}
 
                   {/* Product Images */}
                   <div>
@@ -269,7 +274,7 @@ export default function ListingDetailModal({
                     </Paragraph3>
 
                     <div className="grid grid-cols-4 gap-3 mb-4">
-                      {product.images.map((image, index) => (
+                      {imagesToDisplay.map((image, index) => (
                         <img
                           key={index}
                           src={image}
