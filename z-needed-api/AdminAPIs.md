@@ -592,7 +592,7 @@ GET /api/admin/listings/export?status=Pending
 
 ### 16. GET /api/admin/categories
 
-**Purpose:** Fetch all product categories (with IDs).
+**Purpose:** Fetch all product categories (with IDs and images).
 
 **Request Example:**
 
@@ -606,8 +606,8 @@ GET /api/admin/categories
 {
   "success": true,
   "data": [
-    { "id": "cat_001", "name": "Bags" },
-    { "id": "cat_002", "name": "Shoes" }
+    { "id": "cat_001", "name": "Bags", "imageUrl": "https://..." },
+    { "id": "cat_002", "name": "Shoes", "imageUrl": "https://..." }
   ]
 }
 ```
@@ -616,15 +616,15 @@ GET /api/admin/categories
 
 ### 17. PATCH /api/admin/categories/:categoryId
 
-**Purpose:** Edit a category name.
+**Purpose:** Edit a category name and/or upload a new category image.
 
 **Request Example:**
 
 ```
 PATCH /api/admin/categories/cat_001
-{
-  "name": "Handbags"
-}
+FormData:
+  - name: "Handbags"
+  - image: <File object> (optional, multipart/form-data)
 ```
 
 **Response:**
@@ -632,9 +632,19 @@ PATCH /api/admin/categories/cat_001
 ```json
 {
   "success": true,
-  "data": { "id": "cat_001", "name": "Handbags" }
+  "data": {
+    "id": "cat_001",
+    "name": "Handbags",
+    "imageUrl": "https://cloudinary.com/..."
+  }
 }
 ```
+
+**Notes:**
+
+- Upload image as multipart/form-data with field name `image`
+- Image is optional; if not provided, existing image is kept
+- Backend uploads image to Cloudinary and returns imageUrl in response
 
 ---
 
@@ -799,7 +809,6 @@ DELETE /api/admin/brands/brand_001
 
 **Note:** When deleting a category, tag, or brand, all products referencing the deleted entity must be automatically reassigned to a random existing one to maintain data integrity.
 
-
 ## Listings Page Data Flow
 
 1. **Page Load:**
@@ -832,6 +841,7 @@ DELETE /api/admin/brands/brand_001
 ## Admin Dashboard Analytics
 
 ---
+
 ### 1. GET /api/admin/analytics/stats
 
 **Location:** `src/app/admin/[id]/dashboard/`

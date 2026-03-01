@@ -10,18 +10,19 @@ import {
   XCircle,
 } from "lucide-react";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
-import { useProductStatistics } from "@/lib/queries/product/useProductStatistics";
-import {
-  useApproveProduct,
-  useRejectProduct,
-} from "@/lib/mutations/product/useProductApproval";
-import { UserProduct } from "@/lib/api/product";
 import { useQueryClient } from "@tanstack/react-query";
 import { TableSkeleton, StatCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import ListingDetailModal from "./components/ListingDetailModal";
 import PendingListingsTable from "./components/PendingListingsTable";
 import ApprovedListingsTable from "./components/ApprovedListingsTable";
 import RejectedListingsTable from "./components/RejectedListingsTable";
+import ManagementPanel from "./components/ManagementPanel";
+import {
+  useListingsStatistics,
+  useApproveListing,
+  useRejectListing,
+} from "@/lib/queries/admin/useListings";
+import { ProductDetail } from "@/lib/api/admin/listings";
 
 type TabType = "Pending" | "Approved" | "Rejected";
 
@@ -29,7 +30,7 @@ export default function ListingsPage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabType>("Pending");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedListing, setSelectedListing] = useState<UserProduct | null>(
+  const [selectedListing, setSelectedListing] = useState<ProductDetail | null>(
     null,
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,7 +47,7 @@ export default function ListingsPage() {
     data: stats,
     isLoading: statsLoading,
     error: statsError,
-  } = useProductStatistics();
+  } = useListingsStatistics();
 
   if (statsError) {
     console.error("Failed to load product statistics:", statsError);
@@ -56,31 +57,30 @@ export default function ListingsPage() {
 
   // Extract products from statistics for each tab
   const pendingProducts = useMemo(
-    () => stats?.getPendingProducts?.products || [],
+    () => stats?.data?.getPendingProducts?.products || [],
     [stats],
   );
   const approvedProducts = useMemo(
-    () => stats?.getApprovedProducts?.products || [],
+    () => stats?.data?.getApprovedProducts?.products || [],
     [stats],
   );
   const rejectedProducts = useMemo(
-    () => stats?.getRejectedProducts?.products || [],
+    () => stats?.data?.getRejectedProducts?.products || [],
     [stats],
   );
 
   // Mutations
-  const approveMutation = useApproveProduct();
-  const rejectMutation = useRejectProduct();
+  const approveMutation = useApproveListing();
+  const rejectMutation = useRejectListing();
 
   const handleApprove = (productId: string) => {
     setApprovingProductId(productId);
     approveMutation.mutate(productId, {
       onSuccess: () => {
         setApprovingProductId(null);
-        // Refetch statistics
-        queryClient.invalidateQueries({
-          queryKey: ["product", "statistics"],
-        });
+      },
+      onError: () => {
+        setApprovingProductId(null);
       },
     });
   };
@@ -101,10 +101,9 @@ export default function ListingsPage() {
           onSuccess: () => {
             setRejectingProductId(null);
             setRejectionComment("");
-            // Refetch statistics
-            queryClient.invalidateQueries({
-              queryKey: ["product", "statistics"],
-            });
+          },
+          onError: () => {
+            setRejectingProductId(null);
           },
         },
       );
@@ -180,7 +179,8 @@ export default function ListingsPage() {
         </Paragraph1>
       </div>
 
-      {/* Top Bar - Search, Filter, Export */}
+      {/* Management Panel - Categories, Tags, Brands */}
+      <ManagementPanel />
       <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         {/* Search */}
         <div className="relative w-full sm:w-64">
@@ -232,7 +232,7 @@ export default function ListingsPage() {
                 Total Listings
               </Paragraph1>
               <Paragraph3 className="text-3xl font-bold text-gray-900">
-                {stats?.getTotalProducts?.count || 0}
+                {stats?.data?.getTotalProducts?.count || 0}
               </Paragraph3>
             </div>
 
@@ -247,7 +247,7 @@ export default function ListingsPage() {
                 Pending Review
               </Paragraph1>
               <Paragraph3 className="text-3xl font-bold text-gray-900">
-                {stats?.getPendingProducts?.count || 0}
+                {stats?.data?.getPendingProducts?.count || 0}
               </Paragraph3>
             </div>
 
@@ -262,7 +262,7 @@ export default function ListingsPage() {
                 Approved
               </Paragraph1>
               <Paragraph3 className="text-3xl font-bold text-gray-900">
-                {stats?.getApprovedProducts?.count || 0}
+                {stats?.data?.getApprovedProducts?.count || 0}
               </Paragraph3>
             </div>
 
@@ -277,7 +277,7 @@ export default function ListingsPage() {
                 Rejected
               </Paragraph1>
               <Paragraph3 className="text-3xl font-bold text-gray-900">
-                {stats?.getRejectedProducts?.count || 0}
+                {stats?.data?.getRejectedProducts?.count || 0}
               </Paragraph3>
             </div>
 
@@ -292,7 +292,7 @@ export default function ListingsPage() {
                 Active
               </Paragraph1>
               <Paragraph3 className="text-3xl font-bold text-gray-900">
-                {stats?.getActiveProducts?.count || 0}
+                {stats?.data?.getActiveProducts?.count || 0}
               </Paragraph3>
             </div>
           </>
