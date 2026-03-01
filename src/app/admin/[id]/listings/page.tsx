@@ -21,11 +21,14 @@ import {
   useListingsStatistics,
   useApproveListing,
   useRejectListing,
-  useListings,
+  usePendingProducts,
+  useApprovedProducts,
+  useActiveProducts,
+  useRejectedProducts,
 } from "@/lib/queries/admin/useListings";
 import { Product, ProductDetail } from "@/lib/api/admin/listings";
 
-type TabType = "Pending" | "Approved" | "Rejected";
+type TabType = "Pending" | "Approved" | "Active" | "Rejected";
 
 export default function ListingsPage() {
   const queryClient = useQueryClient();
@@ -55,21 +58,32 @@ export default function ListingsPage() {
     console.error("Failed to load product statistics:", statsError);
   }
 
-  const TABS: TabType[] = ["Pending", "Approved", "Rejected"];
+  const TABS: TabType[] = ["Pending", "Approved", "Active", "Rejected"];
 
   // Fetch products for each tab
-  const { data: pendingResponse, isLoading: pendingLoading } = useListings({
-    status: activeTab === "Pending" ? "Pending" : undefined,
+  const { data: pendingResponse, isLoading: pendingLoading } =
+    usePendingProducts({
+      page: 1,
+      count: 20,
+    });
+  const { data: approvedResponse, isLoading: approvedLoading } =
+    useApprovedProducts({
+      page: 1,
+      count: 20,
+    });
+  const { data: activeResponse, isLoading: activeLoading } = useActiveProducts({
+    page: 1,
+    count: 20,
   });
-  const { data: approvedResponse, isLoading: approvedLoading } = useListings({
-    status: activeTab === "Approved" ? "Approved" : undefined,
-  });
-  const { data: rejectedResponse, isLoading: rejectedLoading } = useListings({
-    status: activeTab === "Rejected" ? "Rejected" : undefined,
-  });
+  const { data: rejectedResponse, isLoading: rejectedLoading } =
+    useRejectedProducts({
+      page: 1,
+      count: 20,
+    });
 
   const pendingProducts = pendingResponse?.data?.products || [];
   const approvedProducts = approvedResponse?.data?.products || [];
+  const activeProducts = activeResponse?.data?.products || [];
   const rejectedProducts = rejectedResponse?.data?.products || [];
 
   // Mutations
@@ -234,6 +248,21 @@ export default function ListingsPage() {
               </Paragraph3>
             </div>
 
+            {/* Active */}
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <CheckCircle size={24} className="text-blue-600" />
+                </div>
+              </div>
+              <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Active
+              </Paragraph1>
+              <Paragraph3 className="text-3xl font-bold text-gray-900">
+                {stats?.getActiveProducts?.count || 0}
+              </Paragraph3>
+            </div>
+
             {/* Approved */}
             <div className="bg-white p-6 rounded-lg border border-gray-200">
               <div className="flex items-center gap-3 mb-3">
@@ -261,21 +290,6 @@ export default function ListingsPage() {
               </Paragraph1>
               <Paragraph3 className="text-3xl font-bold text-gray-900">
                 {stats?.getRejectedProducts?.count || 0}
-              </Paragraph3>
-            </div>
-
-            {/* Active Products */}
-            <div className="bg-white p-6 rounded-lg border border-gray-200">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="bg-blue-50 p-3 rounded-lg">
-                  <CheckCircle size={24} className="text-blue-600" />
-                </div>
-              </div>
-              <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                Active
-              </Paragraph1>
-              <Paragraph3 className="text-3xl font-bold text-gray-900">
-                {stats?.getActiveProducts?.count || 0}
               </Paragraph3>
             </div>
           </>
@@ -336,6 +350,18 @@ export default function ListingsPage() {
                 }}
               />
             )}
+            {activeTab === "Active" && (
+              <ApprovedListingsTable
+                products={activeProducts}
+                isLoading={activeLoading}
+                error={null}
+                searchQuery={searchQuery}
+                onView={(product) => {
+                  setSelectedListing(product);
+                  setIsModalOpen(true);
+                }}
+              />
+            )}
             {activeTab === "Rejected" && (
               <RejectedListingsTable
                 products={rejectedProducts}
@@ -356,6 +382,7 @@ export default function ListingsPage() {
       {!statsLoading &&
         ((activeTab === "Pending" && pendingProducts.length > 0) ||
           (activeTab === "Approved" && approvedProducts.length > 0) ||
+          (activeTab === "Active" && activeProducts.length > 0) ||
           (activeTab === "Rejected" && rejectedProducts.length > 0)) && (
           <div className="mt-6">
             <Paragraph1 className="text-sm text-gray-600">
@@ -363,6 +390,8 @@ export default function ListingsPage() {
                 `${pendingProducts.length} pending products`}
               {activeTab === "Approved" &&
                 `${approvedProducts.length} approved products`}
+              {activeTab === "Active" &&
+                `${activeProducts.length} active products`}
               {activeTab === "Rejected" &&
                 `${rejectedProducts.length} rejected products`}
             </Paragraph1>

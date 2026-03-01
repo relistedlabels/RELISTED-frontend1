@@ -1,11 +1,11 @@
 import { apiFetch } from "../http";
 
-export interface ListingStats {
+export interface ProductStats {
   getTotalProducts: { count: number };
-  getPendingProducts: { count: number };
-  getApprovedProducts: { count: number };
-  getRejectedProducts: { count: number };
-  getActiveProducts: { count: number };
+  getPendingProducts: { count: number; products?: any[] };
+  getApprovedProducts: { count: number; products?: any[] };
+  getRejectedProducts: { count: number; products?: any[] };
+  getActiveProducts: { count: number; products?: any[] };
 }
 
 export interface ListingCategory {
@@ -71,48 +71,42 @@ function buildListParams(params: ListParams): string {
   return searchParams.toString();
 }
 
-export const listingsApi = {
-  // 9. GET /api/admin/listings/statistics
+export const productsApi = {
+  // 1. GET /api/admin/products/statistics
   getStatistics: () =>
-    apiFetch<{ success: true; data: ListingStats }>(
-      "/api/admin/listings/statistics",
+    apiFetch<{ success: true; data: ProductStats }>(
+      "/api/admin/products/statistics",
     ),
 
-  // 10. GET /api/admin/listings/categories
-  getCategories: () =>
-    apiFetch<{ success: true; data: ListingCategory[] }>(
-      "/api/admin/listings/categories",
+  // 2. GET /api/admin/products/pending
+  getPending: (params: { page?: number; count?: number }) =>
+    apiFetch<{ success: true; data: { products: Product[] } }>(
+      `/api/admin/products/pending?page=${params.page ?? 1}&count=${params.count ?? 20}`,
     ),
 
-  // 11. GET /api/admin/listings?status=...&search=...&category=...&page=...&limit=...
-  getListings: (params: ListParams) =>
-    apiFetch<{
-      success: true;
-      data: {
-        products: Product[];
-        total: number;
-        page: number;
-        limit: number;
-      };
-    }>(`/api/admin/listings?${buildListParams(params)}`),
-
-  // 12. GET /api/admin/listings/:productId
-  getProductById: (productId: string) =>
-    apiFetch<{ success: true; data: ProductDetail }>(
-      `/api/admin/listings/${productId}`,
+  // 3. GET /api/admin/products/active
+  getActive: (params: { page?: number; count?: number }) =>
+    apiFetch<{ success: true; data: { products: Product[] } }>(
+      `/api/admin/products/active?page=${params.page ?? 1}&count=${params.count ?? 20}`,
     ),
 
-  // 13. PATCH /api/admin/listings/:productId/approve
+  // 4. GET /api/admin/products/rejected
+  getRejected: (params: { page?: number; count?: number }) =>
+    apiFetch<{ success: true; data: { products: Product[] } }>(
+      `/api/admin/products/rejected?page=${params.page ?? 1}&count=${params.count ?? 20}`,
+    ),
+
+  // 5. PATCH /api/admin/products/:productId/approve
   approveProduct: (productId: string) =>
     apiFetch<{ success: true; data: any }>(
-      `/api/admin/listings/${productId}/approve`,
+      `/api/admin/products/${productId}/approve`,
       { method: "PATCH" },
     ),
 
-  // 14. PATCH /api/admin/listings/:productId/reject
+  // 6. PATCH /api/admin/products/:productId/reject
   rejectProduct: (productId: string, rejectionComment: string) =>
     apiFetch<{ success: true; data: any }>(
-      `/api/admin/listings/${productId}/reject`,
+      `/api/admin/products/${productId}/reject`,
       {
         method: "PATCH",
         body: JSON.stringify({ rejectionComment }),
@@ -120,9 +114,31 @@ export const listingsApi = {
       },
     ),
 
-  // 15. GET /api/admin/listings/export?status=...&search=...&category=...
-  exportListings: (params: ListParams) =>
-    apiFetch<Blob>(`/api/admin/listings/export?${buildListParams(params)}`),
+  // 7. PATCH /api/admin/products/:productId/availability
+  setAvailability: (productId: string, isAvailable: boolean) =>
+    apiFetch<{ success: true; data: any }>(
+      `/api/admin/products/${productId}/availability`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ isAvailable }),
+        headers: { "Content-Type": "application/json" },
+      },
+    ),
+
+  // 8. DELETE /api/admin/products/:productId
+  deleteProduct: (productId: string) =>
+    apiFetch<{ success: true; message: string }>(
+      `/api/admin/products/${productId}`,
+      { method: "DELETE" },
+    ),
+
+  // GET /api/admin/products/:productId
+  getProductById: (productId: string) =>
+    apiFetch<{ success: true; data: ProductDetail }>(
+      `/api/admin/products/${productId}`,
+    ),
+
+  // ...existing code...
 
   // 16. GET /api/admin/categories
   getAllCategories: () =>

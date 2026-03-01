@@ -2,12 +2,18 @@ import { useQuery } from "@tanstack/react-query";
 import { rentersApi } from "@/lib/api/renters";
 
 export const useRentalRequests = (
-  status?: "pending" | "approved" | "rejected",
+  status?: "pending" | "approved" | "rejected" | "expired" | "all",
+  page?: number,
+  limit?: number,
 ) =>
   useQuery({
-    queryKey: ["renters", "rental-requests", status],
+    queryKey: ["renters", "rental-requests", status, page, limit],
     queryFn: async () => {
-      const response = await rentersApi.getRentalRequests({ status });
+      const response = await rentersApi.getRentalRequests({
+        status: status || "pending",
+        page: page || 1,
+        limit: limit || 20,
+      });
       return response.data;
     },
     staleTime: 30 * 1000, // 30 seconds - short cache since items are expiring

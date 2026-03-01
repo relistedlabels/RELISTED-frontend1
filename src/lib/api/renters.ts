@@ -29,21 +29,12 @@ export type FavoriteItem = {
 };
 
 export type RentalOrder = {
-  id: string;
-  itemId: string;
-  itemName: string;
-  listerName: string;
-  listerImage: string;
-  rentalStartDate: string;
-  rentalEndDate: string;
-  deliveryDate: string;
-  returnDate: string;
-  status: "active" | "completed" | "returned" | "cancelled";
-  rentalPrice: number;
-  deliveryFee: number;
-  securityDeposit: number;
-  totalPrice: number;
-  itemImage: string;
+  orderId: string;
+  items: string[];
+  totalAmount: number;
+  status: string;
+  date: string;
+  image: string | null;
 };
 
 export type WalletInfo = {
@@ -76,22 +67,27 @@ export type BankAccount = {
 };
 
 export type RentalRequest = {
-  id: string;
+  requestId: string;
+  cartItemId: string;
   productId: string;
   productName: string;
   productImage: string;
+  listerId: string;
+  listerName: string;
   rentalStartDate: string;
   rentalEndDate: string;
   rentalDays: number;
-  dailyRate: number;
-  rentalFee: number;
+  rentalPrice: number;
   deliveryFee: number;
-  securityDeposit: number;
+  cleaningFee: number;
   totalPrice: number;
-  status: "pending_lister_approval" | "approved" | "rejected" | "expired";
+  currency: string;
   autoPay: boolean;
+  status: "pending_lister_approval" | "approved" | "rejected" | "expired";
+  requestCreatedAt: string;
   expiresAt: string;
-  createdAt: string;
+  timeRemainingSeconds: number;
+  timeRemainingMinutes: number;
 };
 
 export type Dispute = {
@@ -451,15 +447,37 @@ export const rentersApi = {
 
   // Rental Requests (Shopping Cart)
   getRentalRequests: (params?: {
-    status?: "pending" | "approved" | "rejected";
-  }) =>
-    apiFetch<{
+    status?: "pending" | "approved" | "rejected" | "expired" | "all";
+    page?: number;
+    limit?: number;
+  }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+
+    const queryString = queryParams.toString();
+    const url = `/api/renters/rental-requests${queryString ? `?${queryString}` : ""}`;
+
+    return apiFetch<{
       success: boolean;
-      data: { rentalRequests: RentalRequest[] };
-    }>("/api/renters/rental-requests", {
+      data: {
+        rentalRequests: RentalRequest[];
+        cartSummary?: {
+          totalItems: number;
+          subtotal: number;
+          totalDeliveryFee: number;
+          totalCleaningFee: number;
+          cartTotal: number;
+          currency: string;
+        };
+        page?: number;
+        totalPages?: number;
+      };
+    }>(url, {
       method: "GET",
-      ...(params && { params }),
-    }),
+    });
+  },
 
   submitRentalRequest: (data: {
     productId: string;

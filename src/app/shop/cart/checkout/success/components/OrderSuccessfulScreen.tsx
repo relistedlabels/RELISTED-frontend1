@@ -88,38 +88,38 @@ export default function OrderSuccessfulScreen() {
           </div>
 
           {/* Order Date */}
-          <div>
+          {/* <div>
             <Paragraph1 className="text-xs text-gray-600 mb-1">
               ORDER DATE
             </Paragraph1>
             <Paragraph1 className="text-base text-gray-900">
               {formattedDate}
             </Paragraph1>
-          </div>
+          </div> */}
 
           {/* Order Status */}
-          <div>
+          {/* <div>
             <Paragraph1 className="text-xs text-gray-600 mb-1">
               STATUS
             </Paragraph1>
             <Paragraph1 className="text-base font-semibold text-green-700">
               {order?.status || "Processing"}
             </Paragraph1>
-          </div>
+          </div> */}
 
           {/* Total Amount */}
-          {order && (
+          {/* {order && (
             <div className="border-t border-gray-300 pt-4">
               <div className="flex justify-between items-center">
                 <Paragraph1 className="text-gray-700 font-medium">
                   Total Amount:
                 </Paragraph1>
                 <Paragraph1 className="text-lg font-bold text-gray-900">
-                  ₦{(order.totalPrice || 0).toLocaleString("en-NG")}
+                  ₦{(order.totalAmount || 0).toLocaleString("en-NG")}
                 </Paragraph1>
               </div>
             </div>
-          )}
+          )} */}
         </div>
       </div>
 

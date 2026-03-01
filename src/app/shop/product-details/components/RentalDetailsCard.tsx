@@ -17,6 +17,7 @@ import {
 import { useMe } from "@/lib/queries/auth/useMe";
 import RentalPeriods from "./RentalPeriods";
 import { usePublicProductById } from "@/lib/queries/product/usePublicProductById";
+import { usePublicUserById } from "@/lib/queries/user/usePublicUserById";
 import { DetailPanelSkeleton } from "@/common/ui/SkeletonLoaders";
 
 // ============================================================================
@@ -33,9 +34,15 @@ interface UserProfileProps {
   name: string;
   rating: number;
   avatar?: string;
+  userId: string;
 }
 
-const UserProfile: React.FC<UserProfileProps> = ({ name, rating, avatar }) => (
+const UserProfile: React.FC<UserProfileProps> = ({
+  name,
+  rating,
+  avatar,
+  userId,
+}) => (
   <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200  mt-4">
     <div className="flex items-center space-x-3">
       {/* Placeholder for User Image */}
@@ -60,7 +67,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ name, rating, avatar }) => (
       </div>
     </div>
     <a
-      href="/curator-profile"
+      href={`/lister-profile/${userId}`}
       className=" font-semibold text-gray-900 hover:text-gray-700"
     >
       VIEW PROFILE
@@ -74,6 +81,9 @@ interface RentalDetailsCardProps {
 
 const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
   const { data: product, isLoading } = usePublicProductById(productId);
+
+  // Fetch lister/curator details
+  const { data: lister } = usePublicUserById(product?.curatorId || "");
 
   // Favorite logic (copied from ProductCard)
   const { data: user } = useMe();
@@ -120,14 +130,6 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
   // Calculate security deposit as percentage of original value if not provided
   const securityDeposit = Math.round(product.originalValue); // 20% of original value
 
-  // Mock lister data - in a real app, you'd fetch this separately
-  const listerData = {
-    id: product.curatorId,
-    name: "Verified Lister",
-    rating: 4.8,
-    avatar: "/placeholder-avatar.jpg",
-  };
-
   return (
     <div className="font-sans">
       <div className=" p-4 py-6 border border-gray-200 bg-[#FBFBFB] rounded-xl ">
@@ -171,7 +173,7 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
 
             <RentalPeriods
               productId={product.id}
-              listerId={listerData.id}
+              listerId={product.curatorId}
               dailyPrice={product.dailyPrice}
               securityDeposit={securityDeposit}
             />
@@ -211,11 +213,14 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
       </div>
 
       {/* User Profile Card */}
-      <UserProfile
-        name={listerData.name}
-        rating={listerData.rating}
-        avatar={listerData.avatar}
-      />
+      {lister && (
+        <UserProfile
+          name={lister.name || "Verified Lister"}
+          rating={lister.rating || 4.5}
+          avatar={lister.avatar}
+          userId={product.curatorId}
+        />
+      )}
     </div>
   );
 };

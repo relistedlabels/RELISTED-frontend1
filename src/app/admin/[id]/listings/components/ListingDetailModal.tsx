@@ -11,12 +11,14 @@ import {
   Calendar,
   Activity,
   Package,
+  Loader,
 } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { Product, ProductDetail } from "@/lib/api/admin/listings";
 import AvailabilityTab from "./AvailabilityTab";
 import RentalHistoryTab from "./RentalHistoryTab";
 import ActivityTab from "./ActivityTab";
+import { useListingDetail } from "@/lib/queries/admin/useListings";
 
 import DeleteProductButton from "./DeleteProductButton";
 
@@ -52,6 +54,14 @@ export default function ListingDetailModal({
     "details" | "rental-history" | "availability" | "activity"
   >("details");
 
+  // Fetch full product detail when modal is open and we have a product ID
+  const { data: productDetail, isLoading } = useListingDetail(
+    isOpen && product?.id ? product.id : "",
+  );
+
+  // Use full product detail if available, fall back to basic product prop
+  const displayProduct = productDetail?.data || product;
+
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case "pending":
@@ -81,9 +91,9 @@ export default function ListingDetailModal({
   };
 
   // Get images from ProductDetail attachments or fallback to single image
-  const imagesToDisplay: string[] = (product as any).attachments?.uploads?.map(
-    (u: any) => u.url,
-  ) || [product.image];
+  const imagesToDisplay: string[] = (
+    displayProduct as any
+  ).attachments?.uploads?.map((u: any) => u.url) || [displayProduct.image];
 
   return (
     <AnimatePresence>
@@ -110,27 +120,36 @@ export default function ListingDetailModal({
             <div className="sticky top-0 bg-white border-b border-gray-200 p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-start gap-4 flex-1">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-16 h-16 rounded object-cover"
-                  />
+                  {isLoading ? (
+                    <div className="w-16 h-16 rounded bg-gray-200 flex items-center justify-center">
+                      <Loader
+                        size={24}
+                        className="text-gray-400 animate-spin"
+                      />
+                    </div>
+                  ) : (
+                    <img
+                      src={displayProduct.image}
+                      alt={displayProduct.name}
+                      className="w-16 h-16 rounded object-cover"
+                    />
+                  )}
                   <div className="flex-1">
                     <Paragraph1 className="text-xs text-gray-500 mb-1">
-                      {product.category}
+                      {displayProduct.category}
                     </Paragraph1>
                     <Paragraph3 className="text-lg font-bold text-gray-900">
-                      {product.name}
+                      {displayProduct.name}
                     </Paragraph3>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                      product.status,
+                      displayProduct.status,
                     )}`}
                   >
-                    {getDisplayStatus(product.status)}
+                    {getDisplayStatus(displayProduct.status)}
                   </span>
                   <button
                     onClick={onClose}
@@ -143,21 +162,30 @@ export default function ListingDetailModal({
 
               {/* Action Buttons */}
               <div className="flex gap-2">
-                <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition font-medium text-sm">
+                <button
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isLoading}
+                >
                   <Check size={18} />
                   Approve
                 </button>
-                <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition font-medium text-sm">
+                <button
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isLoading}
+                >
                   <AlertCircle size={18} />
                   Reject
                 </button>
-                <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition font-medium text-sm">
+                <button
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isLoading}
+                >
                   <Edit size={18} />
                   Edit
                 </button>
                 <DeleteProductButton
-                  productId={product.id}
-                  productName={product.name}
+                  productId={displayProduct.id}
+                  productName={displayProduct.name}
                 />
               </div>
             </div>
@@ -207,16 +235,16 @@ export default function ListingDetailModal({
                           Category
                         </Paragraph1>
                         <Paragraph1 className="text-sm text-gray-900 font-medium">
-                          {product.category}
+                          {displayProduct.category}
                         </Paragraph1>
                       </div>
-                      {(product as any).color && (
+                      {(displayProduct as any).color && (
                         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                           <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                             Color
                           </Paragraph1>
                           <Paragraph1 className="text-sm text-gray-900 font-medium">
-                            {(product as any).color}
+                            {(displayProduct as any).color}
                           </Paragraph1>
                         </div>
                       )}
@@ -225,7 +253,7 @@ export default function ListingDetailModal({
                           Item Value
                         </Paragraph1>
                         <Paragraph1 className="text-sm text-gray-900 font-medium">
-                          ₦{product.originalValue?.toLocaleString() || 0}
+                          ₦{displayProduct.originalValue?.toLocaleString() || 0}
                         </Paragraph1>
                       </div>
                       <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -233,7 +261,7 @@ export default function ListingDetailModal({
                           Price/Day
                         </Paragraph1>
                         <Paragraph1 className="text-sm text-gray-900 font-medium">
-                          ₦{product.dailyPrice?.toLocaleString() || 0}
+                          ₦{displayProduct.dailyPrice?.toLocaleString() || 0}
                         </Paragraph1>
                       </div>
                       <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -241,7 +269,7 @@ export default function ListingDetailModal({
                           Condition
                         </Paragraph1>
                         <Paragraph1 className="text-sm text-gray-900 font-medium">
-                          {product.condition}
+                          {displayProduct.condition}
                         </Paragraph1>
                       </div>
                       <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -249,20 +277,22 @@ export default function ListingDetailModal({
                           Quantity
                         </Paragraph1>
                         <Paragraph1 className="text-sm text-gray-900 font-medium">
-                          {product.quantity}
+                          {displayProduct.quantity}
                         </Paragraph1>
                       </div>
                     </div>
                   </div>
 
                   {/* Description */}
-                  {((product as any).description || product.subText) && (
+                  {((displayProduct as any).description ||
+                    displayProduct.subText) && (
                     <div>
                       <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                         Description
                       </Paragraph1>
                       <Paragraph1 className="text-sm text-gray-700 leading-relaxed">
-                        {(product as any).description || product.subText}
+                        {(displayProduct as any).description ||
+                          displayProduct.subText}
                       </Paragraph1>
                     </div>
                   )}

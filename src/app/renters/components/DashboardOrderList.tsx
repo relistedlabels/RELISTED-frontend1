@@ -19,26 +19,40 @@ export default function DashboardOrderList() {
   );
 
   const orders = data?.orders || [];
+
+  // Filter orders based on view - remove PROCESSING/ACTIVE from completed view
+  const filteredOrders = orders.filter((order) => {
+    if (orderView === "completed") {
+      return (
+        order.status?.toUpperCase() !== "PROCESSING" &&
+        order.status?.toUpperCase() !== "ACTIVE" &&
+        order.status?.toUpperCase() !== "PENDING"
+      );
+    }
+    return true;
+  });
   const currency = "₦";
 
-  const formatCurrency = (amount: number): string => {
+  const formatCurrency = (amount: number | undefined): string => {
+    if (amount === undefined || amount === null) return "0";
     return amount.toLocaleString("en-NG");
   };
 
   const getStatusBadge = (status: string) => {
     let classes = "px-4 py-1 font-bold rounded-sm";
 
-    switch (status?.toLowerCase()) {
-      case "active":
+    switch (status?.toUpperCase()) {
+      case "PROCESSING":
+      case "ACTIVE":
         classes += " bg-yellow-100 text-yellow-800";
         break;
-      case "completed":
+      case "COMPLETED":
         classes += " bg-green-100 text-green-800";
         break;
-      case "returned":
+      case "RETURNED":
         classes += " bg-blue-100 text-blue-800";
         break;
-      case "cancelled":
+      case "CANCELLED":
         classes += " bg-red-100 text-red-800";
         break;
       default:
@@ -101,27 +115,32 @@ export default function DashboardOrderList() {
       </div>
 
       <div className="space-y-4">
-        {orders.map((order) => (
+        {filteredOrders.map((order) => (
           <div
-            key={order.id}
+            key={order.orderId}
             className="bg-white p-4 rounded-sm border border-gray-300 "
           >
             <div>
-              <div className="flex items-center justify-between space-x-3 mb-1">
+              <div className="flex items-center justify-between space-x-3 mb-3">
                 <Paragraph1 className="font-bold text-gray-900 tracking-wider">
-                  {order.itemName}
+                  {order.orderId}
                 </Paragraph1>
                 <Paragraph1> {getStatusBadge(order.status)}</Paragraph1>
               </div>
 
-              <div className="flex items-center text-xs text-gray-500 mb-3 space-x-3">
-                <span className="flex items-center">
-                  <Calendar size={14} className="mr-1" />{" "}
-                  {new Date(order.rentalStartDate).toLocaleDateString()}
-                </span>
-                <span className="flex items-center">
-                  <Package size={14} className="mr-1" /> {order.listerName}
-                </span>
+              <div className="flex items-center text-xs text-gray-500 mb-3 space-x-2 flex-wrap">
+                <Package size={14} className="shrink-0" />
+                {order.items?.map((item, index) => (
+                  <span key={index}>
+                    {item}
+                    {index < order.items.length - 1 && (
+                      <span className="mx-1">||</span>
+                    )}
+                  </span>
+                ))}
+                <Package size={14} className="shrink-0" />
+                <Calendar size={14} className="shrink-0" />
+                <span>{new Date(order.date).toLocaleDateString()}</span>
               </div>
               <hr className="text-gray-300" />
               <div className="flex pt-3 flex-col sm:flex-row justify-between gap-3 sm:items-center">
@@ -130,17 +149,17 @@ export default function DashboardOrderList() {
                   <Paragraph1>
                     {" "}
                     {currency}
-                    {formatCurrency(order.totalPrice)}
+                    {formatCurrency(order.totalAmount)}
                   </Paragraph1>{" "}
                 </div>
-                <OrderDetails orderId={order.id} />
+                <OrderDetails orderId={order.orderId} />
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {orders.length === 0 && (
+      {filteredOrders.length === 0 && (
         <div className="text-center py-12 text-gray-500 bg-white rounded-xl shadow-sm">
           No {orderView} orders found.
         </div>

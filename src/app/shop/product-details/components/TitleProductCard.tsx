@@ -4,6 +4,8 @@ import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import React from "react";
 import SizeGuide from "./SizeGuide";
 import { usePublicProductById } from "@/lib/queries/product/usePublicProductById";
+import { useBrandById } from "@/lib/queries/brand/useBrands";
+import { usePublicUserById } from "@/lib/queries/user/usePublicUserById";
 import { ProductDetailSkeleton } from "@/common/ui/SkeletonLoaders";
 
 interface TitleProductCardProps {
@@ -13,6 +15,13 @@ interface TitleProductCardProps {
 const TitleProductCard: React.FC<TitleProductCardProps> = ({ productId }) => {
   console.log("🎯 TitleProductCard: Mounted with productId:", productId);
   const { data: product, isLoading, error } = usePublicProductById(productId);
+
+  // Fetch brand by brandId if available
+  const { data: brand } = useBrandById(product?.brandId || "");
+
+  // Fetch curator (lister) by curatorId if available
+  const { data: curator } = usePublicUserById(product?.curatorId || "");
+
   console.log(
     "🎯 TitleProductCard: Query state - isLoading:",
     isLoading,
@@ -40,7 +49,7 @@ const TitleProductCard: React.FC<TitleProductCardProps> = ({ productId }) => {
     <div className="font-sans">
       {/* Brand Name */}
       <Paragraph1 className="  text-gray-700 tracking-wider mb-1">
-        {product.brand?.name || "Brand"}
+        {brand?.name || product.brand?.name || "Brand"}
       </Paragraph1>
 
       {/* Product Name */}

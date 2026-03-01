@@ -110,7 +110,7 @@ export default function RentalCartSummary() {
       <div className="space-y-6">
         {items.map((item, idx) => (
           <div
-            key={item.id || idx}
+            key={item.requestId || idx}
             className="flex items-start gap-4 pb-4 border-b border-gray-200 last:border-b-0"
           >
             {/* Product Image */}
@@ -141,7 +141,7 @@ export default function RentalCartSummary() {
             {/* Remove Button (Trash Icon) */}
             <button
               aria-label={`Remove ${item.productName}`}
-              onClick={() => handleRemove(item.id)}
+              onClick={() => handleRemove(item.requestId)}
               disabled={removeRentalRequest.isPending}
               className="shrink-0 p-1 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >

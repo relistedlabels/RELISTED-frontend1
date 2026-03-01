@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  listingsApi,
+  productsApi,
   ListingCategory,
   ListingTag,
   ListingBrand,
@@ -19,26 +19,57 @@ interface ListParams {
 export const useListingsStatistics = () =>
   useQuery({
     queryKey: ["admin", "listings", "statistics"],
-    queryFn: () => listingsApi.getStatistics(),
+    queryFn: () => productsApi.getStatistics(),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
-
-// --- Listings Listing ---
 
 export const useListingCategories = () =>
   useQuery({
     queryKey: ["admin", "listings", "categories"],
-    queryFn: () => listingsApi.getCategories(),
+    queryFn: () => productsApi.getAllCategories(),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
-export const useListings = (params: ListParams) =>
+// Note: getListings removed - use usePendingProducts(), useApprovedProducts(), or useRejectedProducts() instead
+// These replace the old generic listing query with status-specific endpoints matching the new API
+
+export const usePendingProducts = (params: { page?: number; count?: number }) =>
   useQuery({
-    queryKey: ["admin", "listings", "list", params],
-    queryFn: () => listingsApi.getListings(params),
-    placeholderData: (previousData) => previousData,
+    queryKey: ["admin", "products", "pending", params],
+    queryFn: () => productsApi.getPending(params),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+export const useActiveProducts = (params: { page?: number; count?: number }) =>
+  useQuery({
+    queryKey: ["admin", "products", "active", params],
+    queryFn: () => productsApi.getActive(params),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+// Approved products use the same endpoint as active for now
+export const useApprovedProducts = (params: {
+  page?: number;
+  count?: number;
+}) =>
+  useQuery({
+    queryKey: ["admin", "products", "approved", params],
+    queryFn: () => productsApi.getActive(params),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+export const useRejectedProducts = (params: {
+  page?: number;
+  count?: number;
+}) =>
+  useQuery({
+    queryKey: ["admin", "products", "rejected", params],
+    queryFn: () => productsApi.getRejected(params),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
@@ -46,15 +77,10 @@ export const useListings = (params: ListParams) =>
 export const useListingDetail = (productId: string) =>
   useQuery({
     queryKey: ["admin", "listings", "detail", productId],
-    queryFn: () => listingsApi.getProductById(productId),
+    queryFn: () => productsApi.getProductById(productId),
     enabled: !!productId,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
-  });
-
-export const useExportListings = () =>
-  useMutation({
-    mutationFn: (params: ListParams) => listingsApi.exportListings(params),
   });
 
 // --- Listings Mutations ---
@@ -62,7 +88,7 @@ export const useExportListings = () =>
 export const useApproveListing = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (productId: string) => listingsApi.approveProduct(productId),
+    mutationFn: (productId: string) => productsApi.approveProduct(productId),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "listings"] });
       queryClient.invalidateQueries({
@@ -87,7 +113,7 @@ export const useRejectListing = () => {
     }: {
       productId: string;
       rejectionComment: string;
-    }) => listingsApi.rejectProduct(productId, rejectionComment),
+    }) => productsApi.rejectProduct(productId, rejectionComment),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "listings"] });
       queryClient.invalidateQueries({
@@ -108,7 +134,7 @@ export const useRejectListing = () => {
 export const useAllCategories = () =>
   useQuery({
     queryKey: ["admin", "categories", "all"],
-    queryFn: () => listingsApi.getAllCategories(),
+    queryFn: () => productsApi.getAllCategories(),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
@@ -124,7 +150,7 @@ export const useEditCategory = () => {
       categoryId: string;
       name: string;
       imageFile?: File;
-    }) => listingsApi.editCategory(categoryId, name, imageFile),
+    }) => productsApi.editCategory(categoryId, name, imageFile),
     onSuccess: (data) => {
       queryClient.invalidateQueries({
         queryKey: ["admin", "categories", "all"],
@@ -142,7 +168,7 @@ export const useEditCategory = () => {
 export const useDeleteCategory = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (categoryId: string) => listingsApi.deleteCategory(categoryId),
+    mutationFn: (categoryId: string) => productsApi.deleteCategory(categoryId),
     onSuccess: (data) => {
       queryClient.invalidateQueries({
         queryKey: ["admin", "categories", "all"],
@@ -163,7 +189,7 @@ export const useDeleteCategory = () => {
 export const useAllTags = () =>
   useQuery({
     queryKey: ["admin", "tags", "all"],
-    queryFn: () => listingsApi.getAllTags(),
+    queryFn: () => productsApi.getAllTags(),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
@@ -172,7 +198,7 @@ export const useEditTag = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ tagId, name }: { tagId: string; name: string }) =>
-      listingsApi.editTag(tagId, name),
+      productsApi.editTag(tagId, name),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "tags", "all"] });
     },
@@ -185,7 +211,7 @@ export const useEditTag = () => {
 export const useDeleteTag = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (tagId: string) => listingsApi.deleteTag(tagId),
+    mutationFn: (tagId: string) => productsApi.deleteTag(tagId),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "tags", "all"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "listings"] });
@@ -201,7 +227,7 @@ export const useDeleteTag = () => {
 export const useAllBrands = () =>
   useQuery({
     queryKey: ["admin", "brands", "all"],
-    queryFn: () => listingsApi.getAllBrands(),
+    queryFn: () => productsApi.getAllBrands(),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
@@ -210,7 +236,7 @@ export const useEditBrand = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ brandId, name }: { brandId: string; name: string }) =>
-      listingsApi.editBrand(brandId, name),
+      productsApi.editBrand(brandId, name),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "brands", "all"] });
     },
@@ -223,7 +249,7 @@ export const useEditBrand = () => {
 export const useDeleteBrand = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (brandId: string) => listingsApi.deleteBrand(brandId),
+    mutationFn: (brandId: string) => productsApi.deleteBrand(brandId),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "brands", "all"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "listings"] });

@@ -134,6 +134,13 @@ export type PublicBrandsResponse = {
   };
 };
 
+export type PublicBrandDetailResponse = {
+  success: boolean;
+  data: {
+    brand: PublicBrand;
+  };
+};
+
 // ============================================================================
 // CATEGORY TYPES
 // ============================================================================
@@ -352,6 +359,11 @@ export const publicApi = {
   // Brands
   getBrands: () =>
     apiFetch<PublicBrandsResponse>("/api/public/brands", { method: "GET" }),
+
+  getBrandById: (id: string) =>
+    apiFetch<PublicBrandDetailResponse>(`/api/public/brands/${id}`, {
+      method: "GET",
+    }),
 
   // Categories
   getCategories: () =>

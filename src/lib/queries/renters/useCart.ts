@@ -47,7 +47,7 @@ export const useCartSummary = () => {
   const cartItems = data?.rentalRequests || [];
   // Calculate summary fields
   const subtotal = cartItems.reduce(
-    (sum, item) => sum + (item.rentalFee || 0),
+    (sum, item) => sum + (item.rentalPrice || 0),
     0,
   );
   const totalDeliveryFees = cartItems.reduce(
@@ -55,14 +55,14 @@ export const useCartSummary = () => {
     0,
   );
   const totalSecurityDeposit = cartItems.reduce(
-    (sum, item) => sum + (item.securityDeposit || 0),
+    (sum, item) => sum + (item.cleaningFee || 0),
     0,
   );
   const cartTotal = subtotal + totalDeliveryFees + totalSecurityDeposit;
   const itemCount = cartItems.length;
   const expiredItems = cartItems
     .filter((item) => item.status === "expired")
-    .map((item) => item.id);
+    .map((item) => item.requestId);
   return {
     data: {
       cartItems,

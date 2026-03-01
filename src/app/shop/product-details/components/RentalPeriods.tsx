@@ -18,6 +18,7 @@ import { useSubmitRentalRequest } from "@/lib/mutations/renters/useRentalRequest
 import RentalCartView from "../../cart/components/RentalCartView";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useAddresses } from "@/lib/queries/renters/useAddresses";
+import Link from "next/link";
 
 // --------------------
 // Types
@@ -268,7 +269,14 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                 <Paragraph1>Cancel </Paragraph1>
               </button>
 
-              <RentalCartView />
+              <Link
+                href="/shop/cart"
+                className="border flex-1 rounded-lg bg-black text-white px-4 items-center   justify-center  w-full py- flex gap-1 cursor-pointer  transition "
+              >
+                <Paragraph1> View cart</Paragraph1>
+              </Link>
+
+              {/* <RentalCartView /> */}
             </div>
           </motion.div>
         </motion.div>

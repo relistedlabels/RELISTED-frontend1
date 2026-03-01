@@ -16,11 +16,10 @@ export default function CheckoutPage() {
     { label: "Checkout", href: null },
   ];
 
-  const { data, isLoading, error } = useRentalRequests("pending");
+  const { data, isLoading, error } = useRentalRequests("approved", 1, 100);
   const [cartItemsWithProduct, setCartItemsWithProduct] = useState<Array<any>>(
     [],
   );
-
 
   useEffect(() => {
     async function fetchProductDetails() {
@@ -48,6 +47,27 @@ export default function CheckoutPage() {
     fetchProductDetails();
   }, [data]);
 
+  // Group cart items by listerID
+  const groupedByLister = cartItemsWithProduct.reduce(
+    (acc: Map<string, any[]>, item: any) => {
+      const listerId = item.listerId;
+      if (!acc.has(listerId)) {
+        acc.set(listerId, []);
+      }
+      acc.get(listerId)!.push(item);
+      return acc;
+    },
+    new Map(),
+  );
+
+  // Convert map to array of grouped items
+  const listerGroups = [...groupedByLister.entries()].map(
+    ([listerId, items]) => ({
+      listerId,
+      items,
+    }),
+  );
+
   return (
     <div className="container mx-auto px-4 py-[70px] sm:py-[100px] sm:px-0">
       <div className="mb-4">
@@ -60,7 +80,7 @@ export default function CheckoutPage() {
         </div>
         <div className="flex flex-col gap-4">
           <FinalOrderSummaryCard
-            cartItems={cartItemsWithProduct}
+            listerGroups={listerGroups}
             isLoading={isLoading}
             error={error}
           />
