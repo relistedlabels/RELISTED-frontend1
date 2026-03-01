@@ -16,7 +16,17 @@ export default function TopCurators({ limit = 5 }: TopCuratorsProps) {
     console.log("TopCurators error:", error);
   }
 
-  const curators = data?.data?.topCurators || [];
+  // Map API response to expected format
+  const curators = Array.isArray(data?.data)
+    ? data.data.map((item) => ({
+        id: item.id,
+        name: item.name,
+        avatar: item.avatar,
+        totalRentals: item.totalRentals,
+        totalProducts: item.totalProducts,
+        revenue: item.revenue,
+      }))
+    : [];
 
   if (isPending || error) {
     return <ListItemSkeleton count={limit} />;
@@ -25,7 +35,9 @@ export default function TopCurators({ limit = 5 }: TopCuratorsProps) {
   return (
     <div className="bg-white rounded-lg p-6 border border-gray-200">
       <div className="mb-6">
-        <Paragraph3 className="text-gray-900">Top Listers</Paragraph3>
+        <Paragraph3 className="text-xl font-semibold mb-4 text-gray-900">
+          Top Listers
+        </Paragraph3>
       </div>
 
       <div className="overflow-x-auto">
@@ -37,14 +49,19 @@ export default function TopCurators({ limit = 5 }: TopCuratorsProps) {
                   CURATOR
                 </Paragraph1>
               </th>
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-center">
                 <Paragraph1 className="text-gray-600 font-semibold">
                   RENTALS
                 </Paragraph1>
               </th>
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-center">
                 <Paragraph1 className="text-gray-600 font-semibold">
                   REVENUE
+                </Paragraph1>
+              </th>
+              <th className="px-4 py-3 text-center">
+                <Paragraph1 className="text-gray-600 font-semibold">
+                  PRODUCTS
                 </Paragraph1>
               </th>
             </tr>
@@ -55,19 +72,24 @@ export default function TopCurators({ limit = 5 }: TopCuratorsProps) {
                 key={curator.id}
                 className="border-b border-gray-100 hover:bg-gray-50 transition-colors last:border-b-0"
               >
-                <td className="px-4 py-4">
+                <td className="px-4 py-4 t">
                   <Paragraph1 className="text-gray-900 font-medium">
                     {curator.name}
                   </Paragraph1>
                 </td>
-                <td className="px-4 py-4">
+                <td className="px-4 py-4 text-center">
                   <Paragraph1 className="text-gray-700">
-                    {curator.rentals.toLocaleString()}
+                    {curator.totalRentals.toLocaleString()}
                   </Paragraph1>
                 </td>
-                <td className="px-4 py-4">
+                <td className="px-4 py-4 text-center">
                   <Paragraph1 className="text-gray-900 font-semibold">
-                    ₦{curator.revenue.toLocaleString()}
+                    ₦{(curator.revenue ?? 0).toLocaleString()}
+                  </Paragraph1>
+                </td>
+                <td className="px-4 py-4 text-center">
+                  <Paragraph1 className="text-gray-900 font-semibold">
+                    {curator.totalProducts ?? 0}
                   </Paragraph1>
                 </td>
               </tr>

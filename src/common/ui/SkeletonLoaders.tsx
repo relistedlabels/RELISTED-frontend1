@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 // Stats Card Skeleton
 export const StatCardSkeleton = () => (
@@ -39,20 +39,30 @@ export const AnalyticsHeaderSkeleton = () => (
 );
 
 // Chart Skeleton
-export const ChartSkeleton = () => (
-  <div className="bg-white border border-gray-200 rounded-lg p-6 animate-pulse">
-    <div className="w-48 h-6 bg-gray-200 rounded mb-4"></div>
-    <div className="flex items-end justify-between h-64 gap-4">
-      {[...Array(12)].map((_, i) => (
-        <div
-          key={i}
-          className="flex-1 bg-gray-200 rounded-t"
-          style={{ height: `${Math.random() * 100 + 20}%` }}
-        ></div>
-      ))}
+export const ChartSkeleton = () => {
+  const [heights, setHeights] = useState<number[]>(Array(12).fill(60));
+  useEffect(() => {
+    setHeights(
+      Array(12)
+        .fill(0)
+        .map(() => Math.random() * 100 + 20),
+    );
+  }, []);
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg p-6 animate-pulse">
+      <div className="w-48 h-6 bg-gray-200 rounded mb-4"></div>
+      <div className="flex items-end justify-between h-64 gap-4">
+        {heights.map((height, i) => (
+          <div
+            key={i}
+            className="flex-1 bg-gray-200 rounded-t"
+            style={{ height: `${height}%` }}
+          />
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Table Skeleton
 export const TableSkeleton = ({

@@ -31,15 +31,32 @@ const CategoryBreakdown = ({
     month,
   });
 
-  if (error) {
-    console.log("CategoryBreakdown error:", error);
+  if (error || !data?.data) {
+    return (
+      <div className="bg-white border border-gray-200 p-6 rounded-xl h-full">
+        <ChartSkeleton />
+      </div>
+    );
   }
 
-  const chartData =
-    data?.data?.breakdown?.map((item) => ({
-      name: item.category,
-      value: item.quantity,
-    })) || [];
+  // Map API response to expected format and show only top 10 by value
+  const chartData = Array.isArray(data.data)
+    ? data.data
+        .map((item) => ({
+          category: item.category,
+          value: item.value,
+          percentage: item.percentage,
+        }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 5)
+    : (data.data.breakdown || [])
+        .map((item: any) => ({
+          category: item.category,
+          value: item.value,
+          percentage: item.percentage,
+        }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 10);
 
   if (isPending || error) {
     return <ChartSkeleton />;
@@ -62,7 +79,7 @@ const CategoryBreakdown = ({
         >
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis
-            dataKey="name"
+            dataKey="category"
             stroke="#6B7280"
             tickLine={false}
             angle={-20}

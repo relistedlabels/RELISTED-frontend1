@@ -49,7 +49,7 @@ const RentalsRevenueTrend = ({
     );
   }
 
-  if (error || !data?.data?.trend) {
+  if (error || !data?.data) {
     return (
       <div className="bg-white border border-gray-200 p-6 rounded-xl h-full">
         <ChartSkeleton />
@@ -57,7 +57,14 @@ const RentalsRevenueTrend = ({
     );
   }
 
-  const chartData = data.data.trend;
+  // Map API response to expected format
+  const chartData = Array.isArray(data.data)
+    ? data.data.map((item) => ({
+        month: item.month,
+        rentals: item.rentals,
+        revenue: item.revenue,
+      }))
+    : data.data.trend || [];
 
   return (
     <div className="bg-[#111827] p-6 rounded-xl h-full text-white">

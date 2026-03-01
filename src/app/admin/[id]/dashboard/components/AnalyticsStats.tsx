@@ -104,7 +104,7 @@ const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
 
       <StatCard
         icon={<HiOutlineScale className="w-5 h-5" />}
-        value={stats.activeDisputes.toString()}
+        value={(stats.activeDisputes ?? 0).toString()}
         label="Active Disputes"
         change="-8.1%"
         positive={false}
@@ -121,7 +121,7 @@ const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
 
       <StatCard
         icon={<HiOutlineClock className="w-5 h-5" />}
-        value={`${stats.avgDeliveryTime.toFixed(1)} days`}
+        value={`${(stats.avgDeliveryTime ?? 0).toFixed(1)} days`}
         label="Avg Delivery Time"
         change="-0.5 days"
         positive={false}

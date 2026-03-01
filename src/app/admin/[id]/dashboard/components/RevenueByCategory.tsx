@@ -54,12 +54,15 @@ const RevenueByCategory = ({ timeframe, year, month }: RevenueByCategory) => {
     console.log("RevenueByCategory error:", error);
   }
 
-  const chartData =
-    data?.data?.revenue?.map((item) => ({
-      name: item.category,
-      value: item.percentage,
-      amount: item.amount,
-    })) || [];
+  // Map API response to expected format
+  const chartData = Array.isArray(data?.data)
+    ? data.data.map((item) => ({
+        category: item.category,
+        revenue: item.revenue,
+        name: item.category, // Add name for label
+      }))
+    : // @ts-ignore
+      data?.data?.breakdown || [];
 
   if (isPending || error) {
     return <ChartSkeleton />;
@@ -80,24 +83,32 @@ const RevenueByCategory = ({ timeframe, year, month }: RevenueByCategory) => {
             label={renderCustomizedLabel}
             outerRadius={100}
             fill="#8884d8"
-            dataKey="value"
+            dataKey="revenue"
+            nameKey="category"
           >
-            {chartData.map((entry, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={COLORS[index % COLORS.length]}
-                stroke="none"
-              />
-            ))}
+            {chartData.map(
+              (
+                entry: { category: string; revenue: number; name: string },
+                index: number,
+              ) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={COLORS[index % COLORS.length]}
+                  stroke="none"
+                />
+              ),
+            )}
           </Pie>
           <Tooltip
             formatter={(value: any, name, props) => {
-              if (name === "value") {
-                return `${Math.round((value as number) * 100)}%`;
+              if (name === "revenue") {
+                return [`₦${value}`, props.payload.category];
               }
               return value;
             }}
-            labelFormatter={(label) => label}
+            labelFormatter={(label, payload) =>
+              payload && payload[0] ? payload[0].payload.category : label
+            }
           />
         </PieChart>
       </ResponsiveContainer>
