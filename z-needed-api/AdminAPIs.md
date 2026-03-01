@@ -5,8 +5,7 @@
 
 ## Admin Product Management
 
-All product management endpoints are now under `/api/admin/products`. These endpoints allow admins to view, search, filter, approve, reject, delete, and manage product listings.
----
+## All product management endpoints are now under `/api/admin/products`. These endpoints allow admins to view, search, filter, approve, reject, delete, and manage product listings.
 
 ### 1. GET /api/admin/products/statistics
 
@@ -198,103 +197,6 @@ DELETE /api/admin/products/12345
 
 ---
 
-
-
----
-
-## Admin User Management
-
-All user management endpoints are now under `/api/admin/users`. These endpoints allow admins to view, search, filter, suspend, and unsuspend users, as well as access detailed user information.
-
----
-
-### 1. GET /api/admin/users/all
-
-**Purpose:** Fetch all users with optional pagination, search, and status filters.
-
-**Request Example:**
-
-```
-GET /api/admin/users/all?page=1&count=100&search=Grace&status=Active&role=LISTER
-```
-
-**Response:**
-
-```
-{
-  "success": true,
-  "data": {
-    "users": [ ... ],
-    "total": 120,
-    "page": 1,
-    "count": 100
-  }
-}
-```
-
----
-
-### 2. GET /api/admin/users/:userId
-
-**Purpose:** Fetch detailed information for a specific user.
-
-**Request Example:**
-
-```
-GET /api/admin/users/12345
-```
-
-**Response:**
-
-```
-{
-  "success": true,
-  "data": { ...user details... }
-}
-```
-
----
-
-### 3. PATCH /api/admin/users/:userId/suspend
-
-**Purpose:** Suspend a user account.
-
-**Request Example:**
-
-```
-PATCH /api/admin/users/12345/suspend
-```
-
-**Response:**
-
-```
-{
-  "success": true,
-  "data": { ...updated user... }
-}
-```
-
----
-
-### 4. PATCH /api/admin/users/:userId/unsuspend
-
-**Purpose:** Unsuspend a user account.
-
-**Request Example:**
-
-```
-PATCH /api/admin/users/12345/unsuspend
-```
-
-**Response:**
-
-```
-{
-  "success": true,
-  "data": { ...updated user... }
-}
-```
-
 ---
 
 ## UI Actions & Missing Endpoints
@@ -364,7 +266,571 @@ POST /api/admin/users/12345/reset-password
 
 ---
 
+## Admin Listings Page - Product Management Components
+
+**Location:** `src/app/admin/[id]/listings/page.tsx`
+
+This section documents the UI components and their API interactions for managing all product listings on the platform. The Listings page allows admins to review, approve, and reject products submitted by listers.
+
+---
+
+### 9. GET /api/admin/listings/statistics
+
+**Component:** Stats Cards (5 cards at top of page)
+
+**Purpose:** Fetch platform-wide statistics for product listings broken down by status.
+
+**Request Format:**
+
+```
+GET /api/admin/listings/statistics
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "getTotalProducts": { "count": 1200 },
+    "getPendingProducts": { "count": 45 },
+    "getApprovedProducts": { "count": 1100 },
+    "getRejectedProducts": { "count": 55 },
+    "getActiveProducts": { "count": 900 }
+  }
+}
+```
+
+**Card Information Displayed:**
+
+- **Total Listings:** Total products across all statuses (Globe icon, gray background)
+- **Pending Review:** Products awaiting admin approval (Alert icon, yellow background)
+- **Approved:** Products approved and live (Check Circle icon, green background)
+- **Rejected:** Products rejected by admins (X Circle icon, red background)
+- **Active:** Products currently available for rental (Check Circle icon, blue background)
+
+---
+
+### 10. GET /api/admin/listings/categories
+
+**Component:** Category Dropdown Filter
+
+**Purpose:** Fetch all available product categories for filtering listings.
+
+**Request Format:**
+
+```
+GET /api/admin/listings/categories
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": [
+    "Bags",
+    "Shoes",
+    "Dresses",
+    "Tops",
+    "Bottoms",
+    "Accessories",
+    "Outerwear",
+    "Footwear",
+    "Formal Wear",
+    "Activewear"
+  ]
+}
+```
+
+**Usage:** Populate dropdown menu with available categories. Used to filter listings by category along with other filters.
+
+---
+
+### 11. GET /api/admin/listings?status=Pending|Approved|Rejected&search=...&category=...&page=1&limit=20
+
+**Component:** PendingListingsTable, ApprovedListingsTable, RejectedListingsTable
+
+**Purpose:** Fetch paginated and filtered listings based on status, search query, and category.
+
+**Request Example:**
+
+```
+GET /api/admin/listings?status=Pending&search=Gucci&category=Bags&page=1&limit=20
+GET /api/admin/listings?status=Approved&search=&category=&page=1&limit=20
+GET /api/admin/listings?status=Rejected&search=Dresses&category=Dresses&page=1&limit=20
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "products": [
+      {
+        "id": "prod_001",
+        "name": "Gucci Blazer",
+        "subText": "Gucci",
+        "category": "Tops",
+        "image": "https://...",
+        "condition": "Like New",
+        "originalValue": 500000,
+        "dailyPrice": 25000,
+        "quantity": 2,
+        "status": "Pending",
+        "dateAdded": "2026-02-28",
+        "listerName": "John Doe",
+        "productVerified": false
+      }
+      // ... more products
+    ],
+    "total": 45,
+    "page": 1,
+    "limit": 20
+  }
+}
+```
+
+**Usage:**
+
+- **Pending Tab:** Displays products awaiting approval with Approve/Reject/View buttons
+- **Approved Tab:** Displays approved products with View button only
+- **Rejected Tab:** Displays rejected products with rejection reason and View button
+
+---
+
+### 12. GET /api/admin/listings/:productId
+
+**Component:** ListingDetailModal
+
+**Purpose:** Fetch complete product details for viewing in a modal.
+
+**Request Format:**
+
+```
+GET /api/admin/listings/prod_001
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "prod_001",
+    "name": "Gucci Blazer",
+    "subText": "Gucci",
+    "category": "Tops",
+    "description": "Authentic Gucci blazer in excellent condition...",
+    "condition": "Like New",
+    "composition": "100% Wool",
+    "originalValue": 500000,
+    "dailyPrice": 25000,
+    "quantity": 2,
+    "color": "Navy Blue",
+    "careInstruction": "Dry clean only",
+    "stylingTip": "Perfect for formal events",
+    "attachments": {
+      "uploads": [
+        { "id": "img_001", "url": "https://..." },
+        { "id": "img_002", "url": "https://..." }
+      ]
+    },
+    "listerName": "John Doe",
+    "listerEmail": "john@example.com",
+    "listerPhone": "+234 812 345 6789",
+    "productVerified": false,
+    "dateAdded": "2026-02-28"
+  }
+}
+```
+
+**Modal Displays:**
+
+- Product images gallery
+- Item name, brand, category
+- Condition and material composition
+- Original retail value
+- Daily rental price
+- Quantity available
+- Full description
+- Care instructions and styling tips
+- Lister information
+- Product status
+
+---
+
+### 13. PATCH /api/admin/listings/:productId/approve
+
+**Component:** PendingListingsTable (Approve button)
+
+**Purpose:** Approve a pending product listing, making it live on the platform.
+
+**Request Format:**
+
+```
+PATCH /api/admin/listings/prod_001/approve
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "prod_001",
+    "status": "Approved",
+    "productVerified": true,
+    "approvedDate": "2026-02-28T14:30:00Z"
+  }
+}
+```
+
+**Behavior:**
+
+- Button shows loading state during request
+- After success, refetch statistics and update page
+- Product moves from Pending to Approved tab
+- Stats card counts update automatically
+
+---
+
+### 14. PATCH /api/admin/listings/:productId/reject
+
+**Component:** PendingListingsTable (Reject button) + Rejection Modal
+
+**Purpose:** Reject a pending product listing with a detailed reason.
+
+**Request Format:**
+
+```
+PATCH /api/admin/listings/prod_001/reject
+{
+  "rejectionComment": "Product images are unclear. Please resubmit with better quality photos."
+}
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "prod_001",
+    "status": "Rejected",
+    "rejectionComment": "Product images are unclear. Please resubmit with better quality photos.",
+    "rejectedDate": "2026-02-28T14:35:00Z"
+  }
+}
+```
+
+**Behavior:**
+
+- When "Reject" button clicked, modal opens with textarea for rejection reason
+- Comment is required; submit button disabled if empty
+- Loading state shown during request
+- After success, refetch statistics
+- Product moves from Pending to Rejected tab
+- Stats card counts update automatically
+
+---
+
+### 15. GET /api/admin/listings/export?status=...&search=...&category=...
+
+**Component:** Export Button (top right of page)
+
+**Purpose:** Export listings data in CSV/Excel format with applied filters.
+
+**Request Format:**
+
+```
+GET /api/admin/listings/export?status=Approved&search=Gucci&category=Bags
+GET /api/admin/listings/export?status=Pending
+```
+
+**Response:** Binary CSV/Excel file download
+
+**CSV Columns:**
+
+- Product ID
+- Product Name
+- Brand
+- Category
+- Lister Name
+- Status
+- Listed Date
+- Daily Price
+- Quantity
+- Condition
+- Original Value
+
+**Usage:** Admins can export listings for reporting, audits, or data analysis.
+
+---
+
+## Component-to-API Integration Summary
+
+| Component                        | Endpoint                               | Method | Purpose                            |
+| -------------------------------- | -------------------------------------- | ------ | ---------------------------------- |
+| Stats Cards                      | /api/admin/listings/statistics         | GET    | Display listing counts by status   |
+| Category Dropdown                | /api/admin/listings/categories         | GET    | Populate category filter options   |
+| Search Bar                       | /api/admin/listings                    | GET    | Filter listings by search query    |
+| Tabs (Pending/Approved/Rejected) | /api/admin/listings?status=...         | GET    | Fetch products by status           |
+| PendingListingsTable             | /api/admin/listings?status=Pending     | GET    | Display pending products           |
+| ApprovedListingsTable            | /api/admin/listings?status=Approved    | GET    | Display approved products          |
+| RejectedListingsTable            | /api/admin/listings?status=Rejected    | GET    | Display rejected products          |
+| ViewButton (all tables)          | /api/admin/listings/:productId         | GET    | Fetch product details for modal    |
+| ListingDetailModal               | /api/admin/listings/:productId         | GET    | Display full product information   |
+| Approve Button                   | /api/admin/listings/:productId/approve | PATCH  | Approve pending product            |
+| Reject Button + Modal            | /api/admin/listings/:productId/reject  | PATCH  | Reject pending product with reason |
+| Export Button                    | /api/admin/listings/export             | GET    | Export filtered listings to CSV    |
+
+---
+
+## Listings Page Data Flow
+
+1. **Page Load:**
+   - GET /api/admin/listings/statistics → Stats cards display counts
+   - GET /api/admin/listings/categories → Populate dropdown
+
+2. **Tab Click:**
+   - GET /api/admin/listings?status=Pending|Approved|Rejected → Load appropriate table
+
+3. **Search:**
+   - GET /api/admin/listings?status=<active>&search=<query> → Filter table results
+
+4. **Category Filter:**
+   - GET /api/admin/listings?status=<active>&category=<id> → Filter table results
+
+5. **View Product:**
+   - GET /api/admin/listings/:productId → Open ListingDetailModal
+
+6. **Approve Product:**
+   - PATCH /api/admin/listings/:productId/approve → Success → GET /api/admin/listings/statistics → Update page
+
+7. **Reject Product:**
+   - Open modal → User enters reason → PATCH /api/admin/listings/:productId/reject → Success → GET /api/admin/listings/statistics → Update page
+
+8. **Export:**
+   - GET /api/admin/listings/export?<filters> → Download CSV file
+
+---
+
 ## Admin Dashboard Analytics
+
+---
+
+## Category, Tag, and Brand Management
+
+### 16. GET /api/admin/categories
+
+**Purpose:** Fetch all product categories (with IDs).
+
+**Request Example:**
+
+```
+GET /api/admin/categories
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": [
+    { "id": "cat_001", "name": "Bags" },
+    { "id": "cat_002", "name": "Shoes" }
+  ]
+}
+```
+
+---
+
+### 17. PATCH /api/admin/categories/:categoryId
+
+**Purpose:** Edit a category name.
+
+**Request Example:**
+
+```
+PATCH /api/admin/categories/cat_001
+{
+  "name": "Handbags"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": { "id": "cat_001", "name": "Handbags" }
+}
+```
+
+---
+
+### 18. DELETE /api/admin/categories/:categoryId
+
+**Purpose:** Delete a category. All products linked to this category will be reassigned to a random existing category.
+
+**Request Example:**
+
+```
+DELETE /api/admin/categories/cat_001
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Category deleted. Linked products reassigned."
+}
+```
+
+---
+
+### 19. GET /api/admin/tags
+
+**Purpose:** Fetch all product tags (with IDs).
+
+**Request Example:**
+
+```
+GET /api/admin/tags
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": [
+    { "id": "tag_001", "name": "Designer" },
+    { "id": "tag_002", "name": "Formal" }
+  ]
+}
+```
+
+---
+
+### 20. PATCH /api/admin/tags/:tagId
+
+**Purpose:** Edit a tag name.
+
+**Request Example:**
+
+```
+PATCH /api/admin/tags/tag_001
+{
+  "name": "Luxury Designer"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": { "id": "tag_001", "name": "Luxury Designer" }
+}
+```
+
+---
+
+### 21. DELETE /api/admin/tags/:tagId
+
+**Purpose:** Delete a tag. All products linked to this tag will be reassigned to a random existing tag.
+
+**Request Example:**
+
+```
+DELETE /api/admin/tags/tag_001
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Tag deleted. Linked products reassigned."
+}
+```
+
+---
+
+### 22. GET /api/admin/brands
+
+**Purpose:** Fetch all brands (with IDs).
+
+**Request Example:**
+
+```
+GET /api/admin/brands
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": [
+    { "id": "brand_001", "name": "Gucci" },
+    { "id": "brand_002", "name": "Prada" }
+  ]
+}
+```
+
+---
+
+### 23. PATCH /api/admin/brands/:brandId
+
+**Purpose:** Edit a brand name.
+
+**Request Example:**
+
+```
+PATCH /api/admin/brands/brand_001
+{
+  "name": "Gucci Milano"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": { "id": "brand_001", "name": "Gucci Milano" }
+}
+```
+
+---
+
+### 24. DELETE /api/admin/brands/:brandId
+
+**Purpose:** Delete a brand. All products linked to this brand will be reassigned to a random existing brand.
+
+**Request Example:**
+
+```
+DELETE /api/admin/brands/brand_001
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Brand deleted. Linked products reassigned."
+}
+```
+
+---
+
+**Note:** When deleting a category, tag, or brand, all products referencing the deleted entity must be automatically reassigned to a random existing one to maintain data integrity.
 
 ### 1. GET /api/admin/analytics/stats
 
@@ -782,7 +1248,100 @@ GET /api/admin/analytics/top-items?limit=5
 
 ---
 
-## Admin User Detail & Analysis
+## Admin User Management, Detail & Analysis
+
+All user management endpoints are now under `/api/admin/users`. These endpoints allow admins to view, search, filter, suspend, and unsuspend users, as well as access detailed user information.
+
+---
+
+### 1. GET /api/admin/users/all
+
+**Purpose:** Fetch all users with optional pagination, search, and status filters.
+
+**Request Example:**
+
+```
+GET /api/admin/users/all?page=1&count=100&search=Grace&status=Active&role=LISTER
+```
+
+**Response:**
+
+```
+{
+  "success": true,
+  "data": {
+    "users": [ ... ],
+    "total": 120,
+    "page": 1,
+    "count": 100
+  }
+}
+```
+
+---
+
+### 2. GET /api/admin/users/:userId
+
+**Purpose:** Fetch detailed information for a specific user.
+
+**Request Example:**
+
+```
+GET /api/admin/users/12345
+```
+
+**Response:**
+
+```
+{
+  "success": true,
+  "data": { ...user details... }
+}
+```
+
+---
+
+### 3. PATCH /api/admin/users/:userId/suspend
+
+**Purpose:** Suspend a user account.
+
+**Request Example:**
+
+```
+PATCH /api/admin/users/12345/suspend
+```
+
+**Response:**
+
+```
+{
+  "success": true,
+  "data": { ...updated user... }
+}
+```
+
+---
+
+### 4. PATCH /api/admin/users/:userId/unsuspend
+
+**Purpose:** Unsuspend a user account.
+
+**Request Example:**
+
+```
+PATCH /api/admin/users/12345/unsuspend
+```
+
+**Response:**
+
+```
+{
+  "success": true,
+  "data": { ...updated user... }
+}
+```
+
+---
 
 ### 7. GET /api/admin/users/:userId
 

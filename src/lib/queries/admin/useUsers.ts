@@ -6,6 +6,14 @@ interface ListParams {
   limit?: number;
 }
 
+interface AdminAllUsersParams {
+  page?: number;
+  count?: number;
+  search?: string;
+  status?: string;
+  role?: string;
+}
+
 export const useUserById = (userId: string) =>
   useQuery({
     queryKey: ["admin", "users", userId],
@@ -81,4 +89,33 @@ export const useUserFavorites = (userId: string, params: ListParams = {}) =>
     staleTime: 5 * 60 * 1000,
     retry: 1,
     enabled: !!userId,
+  });
+
+export const useAdminAllUsers = (params: AdminAllUsersParams = {}) =>
+  useQuery({
+    queryKey: [
+      "admin",
+      "users",
+      "all",
+      params.page,
+      params.count,
+      params.search,
+      params.status,
+      params.role,
+    ],
+    queryFn: () => usersApi.getAllUsers(params),
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+
+import { useMutation } from "@tanstack/react-query";
+
+export const useSuspendUser = () =>
+  useMutation({
+    mutationFn: (userId: string) => usersApi.suspendUser(userId),
+  });
+
+export const useUnsuspendUser = () =>
+  useMutation({
+    mutationFn: (userId: string) => usersApi.unsuspendUser(userId),
   });

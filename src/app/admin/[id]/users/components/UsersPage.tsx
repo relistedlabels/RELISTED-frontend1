@@ -6,7 +6,8 @@ import { Search, ChevronDown } from "lucide-react";
 import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
 import DresserTable from "./DresserTable";
 import CuratorTable from "./CuratorTable";
-import { useGetAllUsers } from "@/lib/queries/user/useGetAllUsers";
+import AdminTable from "./AdminTable";
+import { useAdminAllUsers } from "@/lib/queries/admin/useUsers";
 
 type UserRole = "LISTER" | "DRESSER" | "ADMIN";
 
@@ -15,9 +16,19 @@ export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Status");
 
-  // Fetch all users from API
-  const { data: usersData, isLoading, error } = useGetAllUsers();
-  const users = usersData?.users || [];
+  // Fetch all users from API with filters
+  const {
+    data: usersData,
+    isLoading,
+    error,
+  } = useAdminAllUsers({
+    page: 1,
+    count: 100,
+    search: searchQuery,
+    status: statusFilter === "All Status" ? undefined : statusFilter,
+    role: activeTab,
+  });
+  const users = usersData?.data?.users || [];
 
   // Log error to console
   if (error) {
@@ -202,8 +213,12 @@ export default function UsersPage() {
               No users found matching your criteria.
             </Paragraph1>
           </div>
+        ) : activeTab === "DRESSER" ? (
+          <DresserTable data={filteredData} />
+        ) : activeTab === "LISTER" ? (
+          <CuratorTable data={filteredData} />
         ) : (
-          <DresserTable data={filteredData} role={activeTab} />
+          <AdminTable data={filteredData} />
         )}
       </div>
     </div>

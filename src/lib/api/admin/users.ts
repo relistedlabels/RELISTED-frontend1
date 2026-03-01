@@ -106,9 +106,49 @@ function buildListParams(params: ListParams): string {
 }
 
 export const usersApi = {
+  // 1. GET /api/admin/users/all
+  getAllUsers: (params: {
+    page?: number;
+    count?: number;
+    search?: string;
+    status?: string;
+    role?: string;
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (params.page) searchParams.append("page", params.page.toString());
+    if (params.count) searchParams.append("count", params.count.toString());
+    if (params.search) searchParams.append("search", params.search);
+    if (params.status) searchParams.append("status", params.status);
+    if (params.role) searchParams.append("role", params.role);
+    return apiFetch<{
+      success: true;
+      data: {
+        users: any[];
+        total: number;
+        page: number;
+        count: number;
+      };
+    }>(`/api/admin/users/all?${searchParams.toString()}`);
+  },
+
+  // 2. GET /api/admin/users/:userId
   getUserById: (userId: string) =>
     apiFetch<{ success: true; data: UserProfile }>(
       `/api/admin/users/${userId}`,
+    ),
+
+  // 3. PATCH /api/admin/users/:userId/suspend
+  suspendUser: (userId: string) =>
+    apiFetch<{ success: true; data: any }>(
+      `/api/admin/users/${userId}/suspend`,
+      { method: "PATCH" },
+    ),
+
+  // 4. PATCH /api/admin/users/:userId/unsuspend
+  unsuspendUser: (userId: string) =>
+    apiFetch<{ success: true; data: any }>(
+      `/api/admin/users/${userId}/unsuspend`,
+      { method: "PATCH" },
     ),
 
   getUserRentals: (userId: string, params: ListParams) =>
