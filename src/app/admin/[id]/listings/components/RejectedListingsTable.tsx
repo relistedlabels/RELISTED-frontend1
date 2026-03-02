@@ -28,7 +28,7 @@ export default function RejectedListingsTable({
   const filteredProducts = products.filter((product: Product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.listerName?.toLowerCase().includes(searchQuery.toLowerCase());
+      product.curator?.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
 
@@ -67,7 +67,7 @@ export default function RejectedListingsTable({
             <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
               Item Name
             </th>
-            <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+            <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide w-32">
               Curator
             </th>
             <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
@@ -105,9 +105,9 @@ export default function RejectedListingsTable({
                   {product.subText || "—"}
                 </Paragraph1>
               </td>
-              <td className="py-4 px-6">
-                <Paragraph1 className="text-sm text-gray-900">
-                  {product.listerName || "N/A"}
+              <td className="py-4 px-6 max-w-xs">
+                <Paragraph1 className="text-sm text-gray-900 truncate">
+                  {product.curator?.name || "N/A"}
                 </Paragraph1>
               </td>
               <td className="py-4 px-6">

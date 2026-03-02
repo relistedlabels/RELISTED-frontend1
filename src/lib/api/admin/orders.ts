@@ -3,15 +3,15 @@ import { apiFetch } from "../http";
 export interface Order {
   id: string;
   date: string;
-  curator: {
+  curator?: {
     id: string;
     name: string;
-    avatar: string;
+    avatar?: string;
   };
-  dresser: {
+  dresser?: {
     id: string;
     name: string;
-    avatar: string;
+    avatar?: string;
   };
   items: number;
   total: number;

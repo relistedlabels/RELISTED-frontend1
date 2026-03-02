@@ -18,7 +18,7 @@ export const getBrands = () =>
 
 /** Create brand */
 export const createBrand = (data: { name: string }) =>
-  apiFetch<Brand>("/api/listers/brands", {
+  apiFetch<Brand>("/brands", {
     method: "POST",
     body: JSON.stringify(data),
   });

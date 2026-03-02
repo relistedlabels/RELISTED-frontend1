@@ -34,16 +34,16 @@ export const useUpdateProduct = (productId: string) => {
         stylingTip: draft.stylingTip.trim(),
         attachments: attachmentIds, // ✅ Array of ID strings
         categoryId: draft.categoryId,
-        tagIds: draft.tagIds, // ✅ Array of tag IDs
+        tagids: draft.tagIds, // ✅ Array of tag IDs
         brandId: draft.brandId,
       };
 
       console.log("📤 Final payload being sent:", payload);
 
       return apiFetch<{ message: string }>(
-        `/api/listers/inventory/${productId}`,
+        `/product/${productId}`,
         {
-          method: "PUT",
+          method: "PATCH",
           body: JSON.stringify(payload),
         },
       );

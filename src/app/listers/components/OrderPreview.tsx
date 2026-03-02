@@ -26,11 +26,15 @@ import OrderSummaryEscrow from "./OrderSummaryEscrow";
 interface OrderPreviewPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  orderData?: any;
+  clickedItem?: any;
 }
 
 const OrderPreviewPanel: React.FC<OrderPreviewPanelProps> = ({
   isOpen,
   onClose,
+  orderData,
+  clickedItem,
 }) => {
   const minPrice = 50000;
   const maxPrice = 200000;
@@ -93,21 +97,52 @@ const OrderPreviewPanel: React.FC<OrderPreviewPanelProps> = ({
 
             {/* Content */}
             <div className="grow pt-4 pb-20 space-y-4">
-              <OrderSummaryCards />
-              <OrderProgress />
+              <OrderSummaryCards
+                clickedItem={clickedItem}
+                orderData={orderData}
+              />
+              <OrderProgress orderData={orderData} />
 
-              <OrderSummaryEscrow />
+              <OrderSummaryEscrow orderData={orderData} />
             </div>
 
             {/* Footer */}
-            <div className="mt-auto py-2 text-black bg-white flex justify-between gap-4 sticky bottom-0">
-              <button className="flex-1  px-4 py-3 text-red-500  font-semibold border border-red-300 rounded-lg hover:bg-gray-50 transition">
-                <Paragraph1>Decline Order </Paragraph1>
-              </button>
+            <div className="mt-auto py-2 text-black bg-white flex flex-col gap-4 sticky bottom-0 border-t border-gray-200">
+              {/* Approval Status Message */}
+              {orderData?.approvalRequired &&
+                !orderData?.canApprove &&
+                !orderData?.canReject && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <Paragraph1 className="text-xs text-amber-700">
+                      ⚠️ Approval window expired on{" "}
+                      {orderData?.approvalExpiredAt || "N/A"}
+                    </Paragraph1>
+                  </div>
+                )}
 
-              <button className="flex-1  px-4 py-3 justify-center  font-semibold border bg-black/80 text-white rounded-lg hover:bg-gray-900 transition">
-                <Paragraph1>Approve Order </Paragraph1>
-              </button>
+              <div className="flex- hidden justify-between gap-4">
+                <button
+                  disabled={!orderData?.canReject}
+                  className={`flex-1 px-4 py-3 font-semibold border rounded-lg transition ${
+                    orderData?.canReject
+                      ? "text-red-500 border-red-300 hover:bg-red-50"
+                      : "text-gray-300 border-gray-200 cursor-not-allowed bg-gray-50"
+                  }`}
+                >
+                  <Paragraph1>Decline Order</Paragraph1>
+                </button>
+
+                <button
+                  disabled={!orderData?.canApprove}
+                  className={`flex-1 px-4 py-3 justify-center font-semibold border rounded-lg transition ${
+                    orderData?.canApprove
+                      ? "bg-black/80 text-white hover:bg-gray-900"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  <Paragraph1>Approve Order</Paragraph1>
+                </button>
+              </div>
             </div>
           </motion.div>
         </motion.div>
@@ -119,7 +154,15 @@ const OrderPreviewPanel: React.FC<OrderPreviewPanelProps> = ({
 // --------------------
 // Main Component
 // --------------------
-const OrderPreview: React.FC = () => {
+interface OrderPreviewProps {
+  orderData?: any;
+  clickedItem?: any;
+}
+
+const OrderPreview: React.FC<OrderPreviewProps> = ({
+  orderData,
+  clickedItem,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -133,7 +176,12 @@ const OrderPreview: React.FC = () => {
         <Paragraph1> View Details</Paragraph1>
       </button>
       {/* Filter Panel */}
-      <OrderPreviewPanel isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <OrderPreviewPanel
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        orderData={orderData}
+        clickedItem={clickedItem}
+      />
     </>
   );
 };

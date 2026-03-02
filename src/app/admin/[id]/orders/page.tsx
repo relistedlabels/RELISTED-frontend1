@@ -20,6 +20,11 @@ const formatCurrency = (value: number): string => {
   }).format(value);
 };
 
+const getDefaultAvatar = (name?: string): string => {
+  // Create a simple avatar using UI Avatars service
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || "user")}`;
+};
+
 const getStatusColor = (status: string) => {
   switch (status) {
     case "Preparing":
@@ -322,28 +327,46 @@ export default function OrdersPage() {
                         </Paragraph1>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <img
-                            src={order.curator.avatar}
-                            alt={order.curator.name}
-                            className="w-8 h-8 rounded-full object-cover"
-                          />
-                          <Paragraph1 className="text-sm text-gray-900">
-                            {order.curator.name}
+                        {order.curator ? (
+                          <div className="flex items-center gap-2">
+                            <img
+                              src={
+                                order.curator.avatar ||
+                                getDefaultAvatar(order.curator.name)
+                              }
+                              alt={order.curator.name}
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                            <Paragraph1 className="text-sm text-gray-900">
+                              {order.curator.name}
+                            </Paragraph1>
+                          </div>
+                        ) : (
+                          <Paragraph1 className="text-sm text-gray-500">
+                            N/A
                           </Paragraph1>
-                        </div>
+                        )}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <img
-                            src={order.dresser.avatar}
-                            alt={order.dresser.name}
-                            className="w-8 h-8 rounded-full object-cover"
-                          />
-                          <Paragraph1 className="text-sm text-gray-900">
-                            {order.dresser.name}
+                        {order.dresser ? (
+                          <div className="flex items-center gap-2">
+                            <img
+                              src={
+                                order.dresser.avatar ||
+                                getDefaultAvatar(order.dresser.name)
+                              }
+                              alt={order.dresser.name}
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                            <Paragraph1 className="text-sm text-gray-900">
+                              {order.dresser.name}
+                            </Paragraph1>
+                          </div>
+                        ) : (
+                          <Paragraph1 className="text-sm text-gray-500">
+                            N/A
                           </Paragraph1>
-                        </div>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <Paragraph1 className="text-sm text-gray-700">

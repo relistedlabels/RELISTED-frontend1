@@ -41,7 +41,7 @@ export const useCreateProduct = () => {
         stylingTip: draft.stylingTip.trim(),
         attachments: attachmentIds,
         categoryId: draft.categoryId,
-        tagIds: draft.tagIds,
+        tagids: draft.tagIds,
         brandId: draft.brandId,
       };
 
@@ -55,7 +55,7 @@ export const useCreateProduct = () => {
         originalValue: payload.originalValue,
         attachmentCount: payload.attachments.length,
         categoryId: payload.categoryId,
-        tagIds: payload.tagIds,
+        tagids: payload.tagids,
         brandId: payload.brandId,
         condition: payload.condition,
         composition: payload.composition,
@@ -65,13 +65,10 @@ export const useCreateProduct = () => {
       console.groupEnd();
 
       try {
-        const response = await apiFetch<{ message: string }>(
-          "/api/listers/inventory",
-          {
-            method: "POST",
-            body: JSON.stringify(payload),
-          },
-        );
+        const response = await apiFetch<{ message: string }>("/product", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
 
         console.log("✅ Success response:", response);
         return response;

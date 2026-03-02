@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Heart, ShoppingBag } from "lucide-react";
+import { Menu, X, Heart, ShoppingBag, ShoppingBagIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Paragraph1 } from "../ui/Text";
@@ -14,14 +14,15 @@ import ShopDropdownMobile from "./ShopDropdownMobile";
 import { shouldShowNavBar } from "@/lib/navbarRoutes";
 import { MobileAuthActions } from "./MobileAuthActions";
 import { useFavoriteCountStore } from "@/store/useFavoriteCountStore";
+import { useRentalRequests } from "@/lib/queries/renters/useRentalRequests";
 
-export default function MobileNavbar() {
+function MobileNavbarContent() {
   const [open, setOpen] = useState(false);
   const [isShopMenuOpen, setIsShopMenuOpen] = useState(false);
-  const pathname = usePathname();
   const favoriteCount = useFavoriteCountStore((state) => state.favoriteCount);
+  const { data } = useRentalRequests("pending", 1, 50);
 
-  if (!shouldShowNavBar(pathname)) return null;
+  const totalItems = data?.cartSummary?.totalItems ?? 0;
 
   return (
     <div className="fixed top-0 left-0 w-full bg-black text-white  px-4 py-5 z-50 xl:hidden">
@@ -49,9 +50,10 @@ export default function MobileNavbar() {
         <div className="flex gap-4 items-center ml-auto z-20">
           <SearchModal />
 
-          <div className="relative">
-            <RentalCartView />
-          </div>
+          <Link href="/shop/cart" className="flex items-center space-x-1">
+            <ShoppingBagIcon className="w-6 h-6" />
+            <Paragraph1>{totalItems}</Paragraph1>
+          </Link>
         </div>
       </div>
 
@@ -142,4 +144,11 @@ export default function MobileNavbar() {
       </AnimatePresence>
     </div>
   );
+}
+
+export default function MobileNavbar() {
+  const pathname = usePathname();
+  if (!shouldShowNavBar(pathname)) return null;
+
+  return <MobileNavbarContent />;
 }

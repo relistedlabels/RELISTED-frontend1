@@ -24,6 +24,11 @@ export interface ListingBrand {
   name: string;
 }
 
+export interface Curator {
+  name: string;
+  email: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -37,6 +42,7 @@ export interface Product {
   status: string;
   dateAdded: string;
   listerName: string;
+  curator?: Curator;
   productVerified: boolean;
 }
 
@@ -51,6 +57,13 @@ export interface ProductDetail extends Product {
   };
   listerEmail: string;
   listerPhone: string;
+}
+
+export interface PaginatedProductsResponse {
+  products: Product[];
+  total: number;
+  page: number;
+  totalPages: number;
 }
 
 interface ListParams {
@@ -80,19 +93,19 @@ export const productsApi = {
 
   // 2. GET /api/admin/products/pending
   getPending: (params: { page?: number; count?: number }) =>
-    apiFetch<{ success: true; data: { products: Product[] } }>(
+    apiFetch<{ success: true; data: PaginatedProductsResponse }>(
       `/api/admin/products/pending?page=${params.page ?? 1}&count=${params.count ?? 20}`,
     ),
 
   // 3. GET /api/admin/products/active
   getActive: (params: { page?: number; count?: number }) =>
-    apiFetch<{ success: true; data: { products: Product[] } }>(
+    apiFetch<{ success: true; data: PaginatedProductsResponse }>(
       `/api/admin/products/active?page=${params.page ?? 1}&count=${params.count ?? 20}`,
     ),
 
   // 4. GET /api/admin/products/rejected
   getRejected: (params: { page?: number; count?: number }) =>
-    apiFetch<{ success: true; data: { products: Product[] } }>(
+    apiFetch<{ success: true; data: PaginatedProductsResponse }>(
       `/api/admin/products/rejected?page=${params.page ?? 1}&count=${params.count ?? 20}`,
     ),
 

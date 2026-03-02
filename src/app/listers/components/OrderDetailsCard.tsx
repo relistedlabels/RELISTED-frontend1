@@ -310,7 +310,11 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
       </div>
 
       <div>
-        <OrderItemList orderId={orderId} items={order?.items ?? []} />
+        <OrderItemList
+          orderId={orderId}
+          items={order?.items ?? []}
+          orderData={order}
+        />
       </div>
     </div>
   );

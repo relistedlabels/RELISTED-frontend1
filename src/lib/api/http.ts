@@ -1,4 +1,5 @@
 import { useUserStore } from "@/store/useUserStore";
+import { useSessionStore } from "@/store/useSessionStore";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const USER_STORE_KEY = "user-store";
@@ -98,9 +99,11 @@ export async function apiFetch<T>(
       data: errorData,
     });
 
-    // if (res.status === 401) {
-    //   useUserStore.getState().clearUser();
-    // }
+    // Handle 401 Unauthorized - Session Expired
+    if (res.status === 401) {
+      useUserStore.getState().clearUser();
+      useSessionStore.getState().setSessionExpired(true);
+    }
 
     throw new Error(errorMessage);
   }

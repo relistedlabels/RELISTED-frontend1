@@ -4,6 +4,7 @@ import React, { ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import AdminSidebar from "./AdminSidebar";
 import AdminTopNavbar from "./AdminTopNavbar";
+import SessionExpiredModal from "./SessionExpiredModal";
 import { useLogout } from "@/lib/mutations";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
 import MobileDesktopRecommendation from "@/common/ui/MobileDesktopRecommendation";
@@ -42,6 +43,7 @@ export default function AdminLayoutWrapper({
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
+      <SessionExpiredModal />
       <MobileDesktopRecommendation />
       <AdminTopNavbar onLogout={handleLogout} />
       <AdminSidebar onLogout={handleLogout} />

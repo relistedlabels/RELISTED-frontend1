@@ -14,17 +14,36 @@ import {
 import { Paragraph1 } from "@/common/ui/Text";
 
 const steps = [
+  { label: "Pending", icon: CheckCircle2 },
   { label: "Approved", icon: CheckCircle2 },
-  { label: "Dispatched", icon: Package },
   { label: "In Transit", icon: Truck },
   { label: "Delivered", icon: Home },
   { label: "Return Due", icon: RotateCcw },
+  { label: "In Transit", icon: Truck },
   { label: "Completed", icon: Check },
 ];
 
-const OrderProgress: React.FC<{ currentStep?: number }> = ({
-  currentStep = 0,
+interface OrderProgressProps {
+  currentStep?: number;
+  orderData?: any;
+}
+
+const OrderProgress: React.FC<OrderProgressProps> = ({
+  currentStep: propCurrentStep = 0,
+  orderData,
 }) => {
+  // If orderData is provided, extract the current step
+  let currentStep = propCurrentStep;
+  if (orderData?.timeline?.currentStep) {
+    // Map the step name to index
+    const stepIndex = steps.findIndex(
+      (s) =>
+        s.label.toLowerCase() === orderData.timeline.currentStep.toLowerCase(),
+    );
+    if (stepIndex !== -1) {
+      currentStep = stepIndex;
+    }
+  }
   return (
     <div className="w-full bg-white border border-gray-300 rounded-2xl p-4 ">
       <Paragraph1 className="text-xl font-bold uppercase text-black mb-4">

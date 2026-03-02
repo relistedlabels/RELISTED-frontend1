@@ -9,13 +9,13 @@ export type Tag = {
 
 /** Get all tags */
 export const getTags = () =>
-  apiFetch<Tag[]>("/api/public/tags", {
+  apiFetch<Tag[]>("/tags", {
     method: "GET",
   });
 
 /** Create tag */
 export const createTag = (data: { name: string }) =>
-  apiFetch<Tag>("/api/listers/tags", {
+  apiFetch<Tag>("/tags", {
     method: "POST",
     body: JSON.stringify(data),
   });

@@ -4,17 +4,8 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-import {
-  Search,
-  Heart,
-  ShoppingCart,
-  ChevronDown,
-  ShoppingBag,
-  ShoppingBagIcon,
-} from "lucide-react";
-import { ParagraphLink1 } from "../ui/Text";
-import Button from "../ui/Button";
-import BrandsDropdown from "./BrandsDropdown";
+import { Heart, ShoppingBagIcon } from "lucide-react";
+import { Paragraph1, ParagraphLink1 } from "../ui/Text";
 import ShopDropdown from "./ShopDropdown";
 import RentalCartView from "./RentalCartView";
 import { usePathname } from "next/navigation";
@@ -22,20 +13,19 @@ import SearchModal from "./SearchModal";
 import { AuthActions } from "./AuthActions";
 import { shouldShowNavBar } from "@/lib/navbarRoutes";
 import { useFavoriteCountStore } from "@/store/useFavoriteCountStore";
+import { useRentalRequests } from "@/lib/queries/renters/useRentalRequests";
 
-export default function DesktopNavbar() {
-  const pathname = usePathname();
+function DesktopNavbarContent() {
   const favoriteCount = useFavoriteCountStore((state) => state.favoriteCount);
+  const { data } = useRentalRequests("pending", 1, 50);
 
-  if (!shouldShowNavBar(pathname)) return null;
-
+  const totalItems = data?.cartSummary?.totalItems ?? 0;
   return (
-    <nav className="bg-black/95  backdrop-blur-md hidden xl:block text-white fixed w-full z-50">
-      <div className="relative flex items-center justify-between container mx-auto w-full py-4 [20px]">
+    <nav className="bg-black/95 backdrop-blur-md hidden xl:block text-white fixed w-full z-50">
+      <div className="relative flex items-center justify-between container mx-auto w-full py-4 px-[20px]">
         {/* Left Section */}
-        <div className="flex items-center space-x-8  ">
+        <div className="flex items-center space-x-8">
           <ShopDropdown />
-          {/* <BrandsDropdown /> */}
           <Link href="/style-spotlight">
             <ParagraphLink1>Style Spotlight</ParagraphLink1>
           </Link>
@@ -44,7 +34,7 @@ export default function DesktopNavbar() {
           </Link>
         </div>
 
-        {/* Center Logo — Always perfectly centered */}
+        {/* Center Logo */}
         <Link href="/" className="absolute left-1/2 -translate-x-1/2">
           <Image src="/images/logo.svg" alt="Logo" width={45} height={45} />
         </Link>
@@ -61,29 +51,22 @@ export default function DesktopNavbar() {
             <span>{favoriteCount}</span>
           </Link>
 
-          <RentalCartView />
-          <AuthActions />
+          <Link href="/shop/cart" className="flex items-center space-x-1">
+            <ShoppingBagIcon className="w-6 h-6" />
+            <Paragraph1>{totalItems}</Paragraph1>
+          </Link>
 
-          {/* <div className="flex gap-[9px] items-center">
-            <Button
-              text="Sign In"
-              isLink={true}
-              href="/auth/sign-in"
-              backgroundColor="bg-transparent"
-              border="border border-white"
-              color="text-white"
-            />
-            <Button
-              text="Sign Up"
-              isLink={true}
-              href="/auth/create-account"
-              backgroundColor="bg-white"
-              color="text-black hover:text-white"
-              border="border border-white"
-            />
-          </div> */}
+          {/* <RentalCartView /> */}
+          <AuthActions />
         </div>
       </div>
     </nav>
   );
+}
+
+export default function DesktopNavbar() {
+  const pathname = usePathname();
+  if (!shouldShowNavBar(pathname)) return null;
+
+  return <DesktopNavbarContent />;
 }

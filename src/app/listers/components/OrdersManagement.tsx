@@ -11,11 +11,17 @@ import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { useOrders, useAllOrders } from "@/lib/queries/listers/useOrders";
 
 // --- Types ---
-type OrderLabel = "pending_approval" | "approved" | "completed" | "cancelled";
+type OrderLabel =
+  | "pending_approval"
+  | "approved"
+  | "in_progress"
+  | "completed"
+  | "cancelled";
 
 const statusLabelMap: Record<string, OrderLabel> = {
   pending_approval: "pending_approval",
   ongoing: "approved",
+  in_progress: "in_progress",
   completed: "completed",
   cancelled: "cancelled",
 };
@@ -23,6 +29,7 @@ const statusLabelMap: Record<string, OrderLabel> = {
 const displayStatusMap: Record<string, string> = {
   pending_approval: "Pending Approval",
   approved: "Approved",
+  in_progress: "In Progress",
   completed: "Completed",
   cancelled: "Cancelled",
   all: "All",
@@ -33,6 +40,7 @@ const OrdersManagement: React.FC = () => {
   const tabs: string[] = [
     "pending_approval",
     "approved",
+    "in_progress",
     "completed",
     "cancelled",
   ];
@@ -43,7 +51,9 @@ const OrdersManagement: React.FC = () => {
       ? "pending_approval"
       : activeTab === "approved"
         ? "ongoing"
-        : activeTab,
+        : activeTab === "in_progress"
+          ? "in_progress"
+          : activeTab,
     1,
     20,
   ) as {

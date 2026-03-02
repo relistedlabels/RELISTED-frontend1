@@ -23,9 +23,14 @@ interface OrderedItem {
 interface OrderItemListProps {
   orderId: string;
   items?: any[];
+  orderData?: any;
 }
 
-const OrderItemList: React.FC<OrderItemListProps> = ({ orderId, items }) => {
+const OrderItemList: React.FC<OrderItemListProps> = ({
+  orderId,
+  items,
+  orderData,
+}) => {
   // If items are passed as props, use them; otherwise, fetch
   let displayItems: any[] = [];
   let isLoading = false;
@@ -105,7 +110,7 @@ const OrderItemList: React.FC<OrderItemListProps> = ({ orderId, items }) => {
                 >
                   {item.statusLabel || item.status}
                 </Paragraph1>
-                <OrderPreview />
+                <OrderPreview orderData={orderData} clickedItem={item} />
               </div>
             </motion.div>
           ))

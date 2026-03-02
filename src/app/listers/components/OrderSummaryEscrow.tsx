@@ -8,12 +8,29 @@ import { Paragraph1 } from "@/common/ui/Text";
 interface OrderSummaryEscrowProps {
   rentalFeeTotal?: string;
   escrowValueHeld?: string;
+  orderData?: any;
 }
 
 const OrderSummaryEscrow: React.FC<OrderSummaryEscrowProps> = ({
-  rentalFeeTotal = "₦50,000",
-  escrowValueHeld = "₦200,000",
+  rentalFeeTotal: propRentalFeeTotal = "₦50,000",
+  escrowValueHeld: propEscrowValueHeld = "₦200,000",
+  orderData,
 }) => {
+  // Extract from orderData if available
+  const rentalFeeTotal =
+    orderData?.escrow?.rentalFeeTotal || propRentalFeeTotal;
+  const escrowValueHeld = orderData?.escrow?.totalHeld || propEscrowValueHeld;
+  const releaseCondition =
+    orderData?.escrow?.releaseCondition || "return confirmation";
+
+  // Format currency for display
+  const formatCurrency = (value: any) => {
+    if (typeof value === "string") return value;
+    if (typeof value === "number") {
+      return `₦${value.toLocaleString()}`;
+    }
+    return propRentalFeeTotal;
+  };
   return (
     <div className="w-full  bg-white border border-gray-300 rounded-2xl p-4 ">
       <Paragraph1 className="text-xl font-bold uppercase text-black mb-4">
@@ -27,7 +44,7 @@ const OrderSummaryEscrow: React.FC<OrderSummaryEscrowProps> = ({
             Rental Fee Total:
           </Paragraph1>
           <Paragraph1 className="text-2xl font-bold text-black">
-            {rentalFeeTotal}
+            {formatCurrency(rentalFeeTotal)}
           </Paragraph1>
         </div>
 
@@ -36,7 +53,7 @@ const OrderSummaryEscrow: React.FC<OrderSummaryEscrowProps> = ({
             Escrow Value Held:
           </Paragraph1>
           <Paragraph1 className="text-2xl font-bold text-black">
-            {escrowValueHeld}
+            {formatCurrency(escrowValueHeld)}
           </Paragraph1>
         </div>
       </div>
@@ -52,14 +69,15 @@ const OrderSummaryEscrow: React.FC<OrderSummaryEscrowProps> = ({
         <div className="flex flex-col space-y-1">
           <div className="flex items-center space-x-2">
             <span className="text-base font-bold text-black">
-              {escrowValueHeld}
+              {formatCurrency(escrowValueHeld)}
             </span>
             <span className="text-base font-medium text-black">
               locked in escrow
             </span>
           </div>
           <Paragraph1 className="text-sm text-gray-700 leading-relaxed">
-            Funds will be released to your wallet after return confirmation
+            Funds will be released to the renters wallet after{" "}
+            {releaseCondition}
           </Paragraph1>
         </div>
       </div>

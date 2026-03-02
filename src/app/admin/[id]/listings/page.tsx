@@ -8,6 +8,8 @@ import {
   CheckCircle,
   AlertCircle,
   XCircle,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import { useQueryClient } from "@tanstack/react-query";
@@ -44,6 +46,12 @@ export default function ListingsPage() {
     null,
   );
 
+  // Pagination state for each tab
+  const [pendingPage, setPendingPage] = useState(1);
+  const [approvedPage, setApprovedPage] = useState(1);
+  const [activePage, setActivePage] = useState(1);
+  const [rejectedPage, setRejectedPage] = useState(1);
+
   // Fetch all statistics from API
   const {
     data: statsResponse,
@@ -63,21 +71,21 @@ export default function ListingsPage() {
   // Fetch products for each tab
   const { data: pendingResponse, isLoading: pendingLoading } =
     usePendingProducts({
-      page: 1,
+      page: pendingPage,
       count: 20,
     });
   const { data: approvedResponse, isLoading: approvedLoading } =
     useApprovedProducts({
-      page: 1,
+      page: approvedPage,
       count: 20,
     });
   const { data: activeResponse, isLoading: activeLoading } = useActiveProducts({
-    page: 1,
+    page: activePage,
     count: 20,
   });
   const { data: rejectedResponse, isLoading: rejectedLoading } =
     useRejectedProducts({
-      page: 1,
+      page: rejectedPage,
       count: 20,
     });
 
@@ -85,6 +93,16 @@ export default function ListingsPage() {
   const approvedProducts = approvedResponse?.data?.products || [];
   const activeProducts = activeResponse?.data?.products || [];
   const rejectedProducts = rejectedResponse?.data?.products || [];
+
+  // Pagination data
+  const pendingTotal = pendingResponse?.data?.total || 0;
+  const pendingTotalPages = pendingResponse?.data?.totalPages || 1;
+  const approvedTotal = approvedResponse?.data?.total || 0;
+  const approvedTotalPages = approvedResponse?.data?.totalPages || 1;
+  const activeTotal = activeResponse?.data?.total || 0;
+  const activeTotalPages = activeResponse?.data?.totalPages || 1;
+  const rejectedTotal = rejectedResponse?.data?.total || 0;
+  const rejectedTotalPages = rejectedResponse?.data?.totalPages || 1;
 
   // Mutations
   const approveMutation = useApproveListing();
@@ -378,23 +396,82 @@ export default function ListingsPage() {
         )}
       </div>
 
-      {/* Pagination Info */}
+      {/* Pagination Controls */}
       {!statsLoading &&
         ((activeTab === "Pending" && pendingProducts.length > 0) ||
           (activeTab === "Approved" && approvedProducts.length > 0) ||
           (activeTab === "Active" && activeProducts.length > 0) ||
           (activeTab === "Rejected" && rejectedProducts.length > 0)) && (
-          <div className="mt-6">
+          <div className="mt-6 flex items-center justify-between">
             <Paragraph1 className="text-sm text-gray-600">
               {activeTab === "Pending" &&
-                `${pendingProducts.length} pending products`}
+                `Page ${pendingPage} of ${pendingTotalPages} • ${pendingTotal} pending products`}
               {activeTab === "Approved" &&
-                `${approvedProducts.length} approved products`}
+                `Page ${approvedPage} of ${approvedTotalPages} • ${approvedTotal} approved products`}
               {activeTab === "Active" &&
-                `${activeProducts.length} active products`}
+                `Page ${activePage} of ${activeTotalPages} • ${activeTotal} active products`}
               {activeTab === "Rejected" &&
-                `${rejectedProducts.length} rejected products`}
+                `Page ${rejectedPage} of ${rejectedTotalPages} • ${rejectedTotal} rejected products`}
             </Paragraph1>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  if (activeTab === "Pending" && pendingPage > 1)
+                    setPendingPage(pendingPage - 1);
+                  if (activeTab === "Approved" && approvedPage > 1)
+                    setApprovedPage(approvedPage - 1);
+                  if (activeTab === "Active" && activePage > 1)
+                    setActivePage(activePage - 1);
+                  if (activeTab === "Rejected" && rejectedPage > 1)
+                    setRejectedPage(rejectedPage - 1);
+                }}
+                disabled={
+                  (activeTab === "Pending" && pendingPage <= 1) ||
+                  (activeTab === "Approved" && approvedPage <= 1) ||
+                  (activeTab === "Active" && activePage <= 1) ||
+                  (activeTab === "Rejected" && rejectedPage <= 1)
+                }
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium text-sm text-gray-700 bg-white"
+              >
+                <ChevronLeft size={18} />
+                Previous
+              </button>
+              <button
+                onClick={() => {
+                  if (
+                    activeTab === "Pending" &&
+                    pendingPage < pendingTotalPages
+                  )
+                    setPendingPage(pendingPage + 1);
+                  if (
+                    activeTab === "Approved" &&
+                    approvedPage < approvedTotalPages
+                  )
+                    setApprovedPage(approvedPage + 1);
+                  if (activeTab === "Active" && activePage < activeTotalPages)
+                    setActivePage(activePage + 1);
+                  if (
+                    activeTab === "Rejected" &&
+                    rejectedPage < rejectedTotalPages
+                  )
+                    setRejectedPage(rejectedPage + 1);
+                }}
+                disabled={
+                  (activeTab === "Pending" &&
+                    pendingPage >= pendingTotalPages) ||
+                  (activeTab === "Approved" &&
+                    approvedPage >= approvedTotalPages) ||
+                  (activeTab === "Active" && activePage >= activeTotalPages) ||
+                  (activeTab === "Rejected" &&
+                    rejectedPage >= rejectedTotalPages)
+                }
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium text-sm text-gray-700 bg-white"
+              >
+                Next
+                <ChevronRight size={18} />
+              </button>
+            </div>
           </div>
         )}
 
