@@ -200,7 +200,7 @@ export default function HowItWorks() {
       </div>
 
       {/* INTERACTIVE STEPS CONTAINER */}
-      <div className="w-full mt-16 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
+      <div className="w-full mt-16 hidden lg:grid lg:grid-cols-2 gap-8 lg:gap-16">
         {/* LEFT SIDE - STEPS LIST */}
         <div className="flex flex-col gap-3">
           {steps.map((step, index) => (
@@ -341,19 +341,145 @@ export default function HowItWorks() {
         </motion.div>
       </div>
 
-      {/* MOBILE PROGRESS DOTS */}
-      <div className="flex lg:hidden gap-3 mt-12 justify-center">
-        {steps.map((_, index) => (
-          <motion.button
-            key={index}
-            onClick={() => setActiveStep(index)}
-            className={`rounded-full transition-all ${
-              activeStep === index
-                ? "bg-gradient-to-r from-gray-800 to-gray-900 w-10 h-3 shadow-lg"
-                : "bg-gray-300 w-3 h-3"
-            }`}
-            whileHover={{ scale: 1.2 }}
-          />
+      {/* MOBILE LAYOUT - STEPS WITH EXPLAINER CARD BELOW ACTIVE STEP */}
+      <div className="w-full mt-16 lg:hidden flex flex-col gap-3">
+        {steps.map((step, index) => (
+          <div key={step.id}>
+            {/* STEP BUTTON */}
+            <motion.button
+              onClick={() => setActiveStep(index)}
+              className={`w-full p-5 sm:p-6 rounded-2xl text-left transition-all duration-300 ${
+                activeStep === index
+                  ? "bg-gradient-to-r from-gray-800 to-black text-white shadow-2xl rounded-b-none"
+                  : "bg-white text-gray-900 hover:bg-gray-50 border border-gray-200 hover:border-gray-400"
+              }`}
+              whileHover={{ scale: activeStep === index ? 1 : 1.01 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <div className="flex items-start gap-4">
+                <motion.div
+                  className={`flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center font-bold text-lg transition-all ${
+                    activeStep === index
+                      ? "bg-white/20 text-white"
+                      : "bg-gradient-to-br from-gray-100 to-gray-200 text-gray-700"
+                  }`}
+                  animate={{
+                    scale: activeStep === index ? 1.1 : 1,
+                  }}
+                >
+                  {step.id}
+                </motion.div>
+                <div className="flex-1">
+                  <Paragraph2 className="font-bold text-base sm:text-lg">
+                    {step.title}
+                  </Paragraph2>
+                  <Paragraph1
+                    className={`text-sm mt-1 ${
+                      activeStep === index ? "opacity-90" : "opacity-60"
+                    }`}
+                  >
+                    {step.description}
+                  </Paragraph1>
+                </div>
+              </div>
+            </motion.button>
+
+            {/* EXPLAINER CARD - ONLY SHOW FOR ACTIVE STEP */}
+            {activeStep === index && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.4 }}
+                className="w-full bg-gradient-to-br from-gray-50 via-white to-slate-50 rounded-b-2xl border-2 border-gray-200 border-t-0 shadow-2xl overflow-hidden"
+              >
+                <div className="flex flex-col items-center justify-center p-6 sm:p-8 relative overflow-hidden">
+                  {/* DECORATIVE BACKGROUND ELEMENTS */}
+                  <motion.div
+                    className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-gray-300 to-gray-200 rounded-full opacity-20 blur-3xl"
+                    animate={{
+                      x: [0, 20, -20, 0],
+                      y: [0, -20, 20, 0],
+                    }}
+                    transition={{
+                      duration: 8,
+                      repeat: Infinity,
+                    }}
+                  />
+
+                  {/* ANIMATED ICON */}
+                  <motion.div
+                    className="flex items-center justify-center w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full shadow-lg mb-6 text-gray-700 relative z-10"
+                    animate={{
+                      scale: [1, 1.08, 1],
+                    }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                  >
+                    {currentStep.icon}
+                  </motion.div>
+
+                  {/* CONTENT */}
+                  <Header2 className="text-center mb-3 text-gray-900 relative z-10 text-lg">
+                    {currentStep.title}
+                  </Header2>
+                  <Paragraph1 className="text-center text-gray-600 mb-6 relative z-10 text-sm">
+                    {currentStep.description}
+                  </Paragraph1>
+
+                  {/* DETAILS LIST */}
+                  <div className="w-full space-y-3 relative z-10">
+                    {currentStep.details.map((detail, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: -30 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.1 }}
+                        className="flex items-start gap-3 group"
+                      >
+                        <motion.div
+                          className="flex-shrink-0 w-2 h-2 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full mt-2"
+                          animate={{
+                            scale: [1, 1.3, 1],
+                          }}
+                          transition={{
+                            duration: 1.5,
+                            delay: i * 0.12,
+                            repeat: Infinity,
+                          }}
+                        />
+                        <Paragraph3 className="text-gray-700 text-xs sm:text-sm">
+                          {detail}
+                        </Paragraph3>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {/* PROGRESS INDICATOR */}
+                  <div className="w-full mt-6 space-y-2 relative z-10">
+                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full bg-gradient-to-r from-gray-800 to-gray-900 rounded-full"
+                        initial={{ width: "0%" }}
+                        animate={{
+                          width: `${((activeStep + 1) / steps.length) * 100}%`,
+                        }}
+                        transition={{ duration: 0.5 }}
+                      />
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <Paragraph3 className="text-gray-800 font-semibold text-xs">
+                        Step {activeStep + 1} of {steps.length}
+                      </Paragraph3>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </div>
         ))}
       </div>
     </section>
