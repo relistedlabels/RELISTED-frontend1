@@ -9,13 +9,22 @@ import {
   ShoppingBag,
   Wallet,
   AlertCircle,
-  CreditCard,
   Package,
   Heart,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
+import {
+  useUserById,
+  useUserRentals,
+  useUserListings,
+  useUserWallet,
+  useUserTransactions,
+  useUserDisputes,
+  useUserFavorites,
+} from "@/lib/queries/admin/useUsers";
 import UserProfileOverview from "./components/UserProfileOverview";
 import UserRecords from "./components/UserRecords";
 import UserListings from "./components/UserListings";
@@ -24,38 +33,10 @@ import UserDisputes from "./components/UserDisputes";
 import SavedItems from "./components/SavedItems";
 
 interface UserDetailPageProps {
-  params: {
+  params: Promise<{
     userId: string;
-  };
+  }>;
 }
-
-// Demo user data
-const DEMO_USER = {
-  id: "user_001",
-  name: "Chioma Adeyemi",
-  status: "Active",
-  avatar: "https://i.pravatar.cc/150?img=5",
-  walletBalance: "₦125,000",
-  totalRentals: 47,
-  activeDisputes: 1,
-  joinDate: "Oct 2024",
-  email: "chioma.adeyemi@example.com",
-  phone: "+234 812 345 6789",
-  kyc: {
-    status: "Verified",
-    fullName: "Aba Victor Mazi, Ladi Phone",
-    nin: "22345678901",
-    dateOfBirth: "August 2023",
-    id: "22345678901",
-    bvn: "2275-5012-7282",
-  },
-  emergencyContact: {
-    fullName: "Gumil Nkqapert",
-    relationship: "Brother",
-    phone: "+234 812 345 6789",
-    address: "9 Banana Street Road, Hvy. Lagos",
-  },
-};
 
 const TABS = [
   { id: "summary", label: "Summary", icon: BarChart3 },
@@ -63,7 +44,7 @@ const TABS = [
   { id: "listings", label: "Listings", icon: Package },
   { id: "wallet", label: "Wallet", icon: Wallet },
   { id: "disputes", label: "Disputes", icon: AlertCircle },
-  { id: "transactions", label: "Favorites", icon: Heart },
+  { id: "favorites", label: "Saved Items", icon: Heart },
 ];
 
 export default function UserDetailPage({ params }: UserDetailPageProps) {
@@ -71,6 +52,51 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
   const adminId = useAdminIdStore((state) => state.adminId);
   const [activeTab, setActiveTab] = useState("summary");
   const [direction, setDirection] = useState(0);
+
+  // Unwrap the params Promise
+  const { userId } = React.use(params);
+
+  // Fetch all user data from hooks
+  const userProfile = useUserById(userId);
+  const userRentals = useUserRentals(userId, { page: 1, limit: 10 });
+  const userListings = useUserListings(userId, { page: 1, limit: 10 });
+  const userWallet = useUserWallet(userId);
+  const userTransactions = useUserTransactions(userId, {
+    page: 1,
+    limit: 10,
+  });
+  const userDisputes = useUserDisputes(userId, { page: 1, limit: 10 });
+  const userFavorites = useUserFavorites(userId, { page: 1, limit: 10 });
+
+  // Show loading state while fetching main user profile
+  if (userProfile.isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <TableSkeleton />
+      </div>
+    );
+  }
+
+  // Show error state if profile fetch fails
+  if (userProfile.isError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Paragraph1 className="text-red-600 font-semibold">
+            Error loading user profile
+          </Paragraph1>
+          <button
+            onClick={() => router.back()}
+            className="mt-4 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const user = userProfile.data?.data;
 
   const handleTabChange = (tabId: string) => {
     const currentIndex = TABS.findIndex((t) => t.id === activeTab);
@@ -90,19 +116,62 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
   const renderTabContent = () => {
     switch (activeTab) {
       case "summary":
-        return <UserProfileOverview user={DEMO_USER} />;
+        return user ? <UserProfileOverview user={user} /> : <TableSkeleton />;
       case "rentals":
-        return <UserRecords user={DEMO_USER} />;
+        return userRentals.isLoading ? (
+          <TableSkeleton />
+        ) : userRentals.error ? (
+          <Paragraph1 className="text-red-600">
+            Error loading rentals
+          </Paragraph1>
+        ) : (
+          <UserRecords rentals={userRentals.data?.data?.rentals || []} />
+        );
       case "listings":
-        return <UserListings user={DEMO_USER} />;
+        return userListings.isLoading ? (
+          <TableSkeleton />
+        ) : userListings.error ? (
+          <Paragraph1 className="text-red-600">
+            Error loading listings
+          </Paragraph1>
+        ) : (
+          <UserListings listings={userListings.data?.data?.listings || []} />
+        );
       case "wallet":
-        return <UserWallet user={DEMO_USER} />;
+        return userWallet.isLoading ? (
+          <TableSkeleton />
+        ) : userWallet.error ? (
+          <Paragraph1 className="text-red-600">Error loading wallet</Paragraph1>
+        ) : (
+          <UserWallet
+            wallet={userWallet.data?.data}
+            transactions={userTransactions.data?.data?.transactions || []}
+            transactionsLoading={userTransactions.isLoading}
+            transactionsError={userTransactions.error}
+          />
+        );
       case "disputes":
-        return <UserDisputes user={DEMO_USER} />;
-      case "transactions":
-        return <SavedItems user={DEMO_USER} />;
+        return userDisputes.isLoading ? (
+          <TableSkeleton />
+        ) : userDisputes.error ? (
+          <Paragraph1 className="text-red-600">
+            Error loading disputes
+          </Paragraph1>
+        ) : (
+          <UserDisputes disputes={userDisputes.data?.data?.disputes || []} />
+        );
+      case "favorites":
+        return userFavorites.isLoading ? (
+          <TableSkeleton />
+        ) : userFavorites.error ? (
+          <Paragraph1 className="text-red-600">
+            Error loading saved items
+          </Paragraph1>
+        ) : (
+          <SavedItems favorites={userFavorites.data?.data?.favorites || []} />
+        );
       default:
-        return <UserProfileOverview user={DEMO_USER} />;
+        return user ? <UserProfileOverview user={user} /> : <TableSkeleton />;
     }
   };
 
@@ -113,22 +182,22 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
         <div className="flex items-center justify-between gap-4 mb-6 border-b border-gray-200 pb-6">
           <div className="flex items-center gap-4 flex-1">
             <img
-              src={DEMO_USER.avatar}
-              alt={DEMO_USER.name}
+              src={user?.avatar || "https://i.pravatar.cc/150?img=0"}
+              alt={user?.name || "User"}
               className="w-12 h-12 rounded-full object-cover"
             />
             <div>
               <Paragraph2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-                {DEMO_USER.name}
+                {user?.name || "Loading..."}
               </Paragraph2>
               <Paragraph1 className="text-xs text-gray-500">
-                Joined {DEMO_USER.joinDate}
+                Joined {user?.joinDate || "—"}
               </Paragraph1>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <span className="px-3 py-1 bg-red-50 text-red-600 rounded-full text-xs font-medium">
-              {DEMO_USER.status}
+              {user?.status || "—"}
             </span>
             <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium text-sm">
               Suspend

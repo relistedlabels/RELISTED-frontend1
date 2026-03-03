@@ -56,7 +56,7 @@ export const BasicInformationForm: React.FC = () => {
 
         <PricingFields />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <SizeSelector />
           <ColorSelector />
         </div>

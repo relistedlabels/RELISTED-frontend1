@@ -4,78 +4,55 @@
 import React from "react";
 import { Download } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
-
-interface Transaction {
-  id: string;
-  date: string;
-  description: string;
-  type: "Debit" | "Credit";
-  amount: string;
-  status: "Successful" | "Failed";
-}
-
-interface User {
-  walletBalance: string;
-}
+import {
+  UserWallet as UserWalletType,
+  Transaction,
+} from "@/lib/api/admin/users";
+import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
 
 interface UserWalletProps {
-  user: User;
+  wallet?: UserWalletType;
+  transactions?: Transaction[];
+  transactionsLoading?: boolean;
+  transactionsError?: Error | null;
 }
 
-const TRANSACTIONS: Transaction[] = [
-  {
-    id: "1",
-    date: "Nov 5, 2024",
-    description: "Rental Payment - Gucci Blazer",
-    type: "Debit",
-    amount: "+₦25,000",
-    status: "Successful",
-  },
-  {
-    id: "2",
-    date: "Nov 3, 2024",
-    description: "Wallet Top-up",
-    type: "Credit",
-    amount: "+₦50,000",
-    status: "Successful",
-  },
-  {
-    id: "3",
-    date: "Nov 1, 2024",
-    description: "Security Deposit Refund - Hermes Scarf",
-    type: "Credit",
-    amount: "+₦45,000",
-    status: "Successful",
-  },
-  {
-    id: "4",
-    date: "Oct 28, 2024",
-    description: "Rental Payment - Prada Handbag",
-    type: "Debit",
-    amount: "+₦35,000",
-    status: "Successful",
-  },
-  {
-    id: "5",
-    date: "Oct 25, 2024",
-    description: "Late Return Fee",
-    type: "Debit",
-    amount: "-₦6,000",
-    status: "Failed",
-  },
-];
-
 const getTypeColor = (type: "Debit" | "Credit") => {
-  return type === "Debit" ? "text-red-600" : "text-green-600";
+  return type === "Credit"
+    ? "text-green-600 font-semibold"
+    : "text-red-600 font-semibold";
 };
 
-const getStatusColor = (status: "Successful" | "Failed") => {
-  return status === "Successful"
-    ? "bg-green-50 text-green-700"
-    : "bg-red-50 text-red-700";
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "Completed":
+    case "Successful":
+      return "bg-green-50 text-green-700";
+    case "Pending":
+      return "bg-yellow-50 text-yellow-700";
+    case "Failed":
+      return "bg-red-50 text-red-700";
+    default:
+      return "bg-gray-50 text-gray-700";
+  }
 };
 
-export default function UserWallet({ user }: UserWalletProps) {
+export default function UserWallet({
+  wallet,
+  transactions,
+  transactionsLoading,
+  transactionsError,
+}: UserWalletProps) {
+  if (!wallet) {
+    return (
+      <div className="text-center py-12">
+        <Paragraph1 className="text-gray-500">
+          No wallet data available
+        </Paragraph1>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Wallet Balance Header */}
@@ -86,8 +63,11 @@ export default function UserWallet({ user }: UserWalletProps) {
               Wallet Balance
             </Paragraph1>
             <Paragraph3 className="text-3xl font-bold text-gray-900">
-              {user.walletBalance}
+              {wallet.currency} {wallet.walletBalance.toLocaleString()}
             </Paragraph3>
+            <Paragraph1 className="text-xs text-gray-500 mt-2">
+              Last updated: {new Date(wallet.lastUpdated).toLocaleDateString()}
+            </Paragraph1>
           </div>
           <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium text-sm text-gray-700">
             <Download size={18} />
@@ -96,73 +76,95 @@ export default function UserWallet({ user }: UserWalletProps) {
         </div>
       </div>
 
-      {/* Transactions Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 bg-white">
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Date
-                </th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Description
-                </th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Type
-                </th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Amount
-                </th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {TRANSACTIONS.map((transaction) => (
-                <tr
-                  key={transaction.id}
-                  className="border-b border-gray-200 hover:bg-gray-50 transition"
-                >
-                  <td className="py-4 px-6">
-                    <Paragraph1 className="text-sm text-gray-700">
-                      {transaction.date}
-                    </Paragraph1>
-                  </td>
-                  <td className="py-4 px-6">
-                    <Paragraph1 className="text-sm text-gray-700">
-                      {transaction.description}
-                    </Paragraph1>
-                  </td>
-                  <td className="py-4 px-6">
-                    <Paragraph1
-                      className={`text-sm font-semibold ${getTypeColor(
-                        transaction.type,
-                      )}`}
-                    >
-                      {transaction.type}
-                    </Paragraph1>
-                  </td>
-                  <td className="py-4 px-6">
-                    <Paragraph1 className="text-sm font-semibold text-gray-900">
-                      {transaction.amount}
-                    </Paragraph1>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span
-                      className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                        transaction.status,
-                      )}`}
-                    >
-                      {transaction.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {/* Transaction History */}
+      <div>
+        <Paragraph3 className="text-base font-bold mb-6 text-gray-900">
+          Transaction History
+        </Paragraph3>
+
+        {transactionsLoading ? (
+          <TableSkeleton />
+        ) : transactionsError ? (
+          <Paragraph1 className="text-red-600">
+            Error loading transactions
+          </Paragraph1>
+        ) : (
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-white">
+                    <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Date
+                    </th>
+                    <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Description
+                    </th>
+                    <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Type
+                    </th>
+                    <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Amount
+                    </th>
+                    <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transactions && transactions.length > 0 ? (
+                    transactions.map((transaction) => (
+                      <tr
+                        key={transaction.id}
+                        className="border-b border-gray-200 hover:bg-gray-50 transition"
+                      >
+                        <td className="py-4 px-6">
+                          <Paragraph1 className="text-sm text-gray-700">
+                            {new Date(transaction.date).toLocaleDateString()}
+                          </Paragraph1>
+                        </td>
+                        <td className="py-4 px-6">
+                          <Paragraph1 className="text-sm text-gray-700">
+                            {transaction.description}
+                          </Paragraph1>
+                        </td>
+                        <td className="py-4 px-6">
+                          <Paragraph1
+                            className={getTypeColor(transaction.type)}
+                          >
+                            {transaction.type}
+                          </Paragraph1>
+                        </td>
+                        <td className="py-4 px-6">
+                          <Paragraph1 className="text-sm font-semibold text-gray-900">
+                            ₦{transaction.amount.toLocaleString()}
+                          </Paragraph1>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span
+                            className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
+                              transaction.status,
+                            )}`}
+                          >
+                            {transaction.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="py-8 px-6 text-center">
+                        <Paragraph1 className="text-gray-500">
+                          No transactions found
+                        </Paragraph1>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

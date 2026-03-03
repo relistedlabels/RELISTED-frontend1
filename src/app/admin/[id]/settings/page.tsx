@@ -16,6 +16,7 @@ type TabType =
   | "platform-controls"
   | "roles-permissions"
   | "admin-management"
+  
   | "audit-logs";
 
 export default function SettingsPage() {

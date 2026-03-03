@@ -128,7 +128,7 @@ export const usersApi = {
         page: number;
         count: number;
       };
-    }>(`/api/admin/users/all?${searchParams.toString()}`);
+    }>(`/api/admin/users/?${searchParams.toString()}`);
   },
 
   // 2. GET /api/admin/users/:userId

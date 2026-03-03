@@ -12,40 +12,28 @@ import {
   Mail,
 } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { UserProfile } from "@/lib/api/admin/users";
 import DocumentModal from "./DocumentModal";
 
-interface User {
-  name: string;
-  walletBalance: string;
-  totalRentals: number;
-  activeDisputes: number;
-  joinDate: string;
-  kyc: {
-    fullName: string;
-    nin: string;
-    dateOfBirth?: string;
-    id: string;
-    bvn: string;
-    status?: string;
-  };
-  emergencyContact: {
-    fullName: string;
-    relationship: string;
-    phone: string;
-    address: string;
-  };
-  email: string;
-  phone: string;
-}
-
 interface UserProfileOverviewProps {
-  user: User;
+  user: UserProfile;
 }
 
 export default function UserProfileOverview({
   user,
 }: UserProfileOverviewProps) {
   const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
+
+  if (!user || !user.kyc) {
+    return (
+      <div className="text-center py-12">
+        <Paragraph1 className="text-gray-500">
+          Unable to load user profile. Missing required data.
+        </Paragraph1>
+      </div>
+    );
+  }
+
   return (
     <div className=" flex flex-col gap-4">
       <DocumentModal
@@ -54,8 +42,8 @@ export default function UserProfileOverview({
         documentData={{
           title: "Identity Document",
           documentType: "National ID Card",
-          idNumber: user.kyc.id,
-          expiryDate: "August 2029",
+          idNumber: user.kyc.idNumber || user.kyc.nin,
+          expiryDate: user.kyc.dateOfBirth,
           image:
             "https://images.unsplash.com/photo-1570303008347-89a1e76eb0f4?w=400&h=500&fit=crop",
         }}
@@ -68,7 +56,7 @@ export default function UserProfileOverview({
             Wallet Balance
           </Paragraph1>
           <Paragraph3 className="text-2xl font-bold text-gray-900">
-            {user.walletBalance}
+            ₦{user.walletBalance.toLocaleString()}
           </Paragraph3>
         </div>
         <div className="bg-white p-6 rounded-lg border border-gray-200">
@@ -103,10 +91,10 @@ export default function UserProfileOverview({
           Account Overview
         </Paragraph3>
         <Paragraph1 className="text-sm text-gray-600 leading-relaxed">
-          {user.name} is an active dresser on the Relisted platform. They have
-          completed {user.totalRentals} rentals with a current wallet balance of{" "}
-          {user.walletBalance}. Account created on {user.joinDate}. Currently
-          has {user.activeDisputes} open disputes.
+          {user.name} is an active member on the Relisted platform. They have
+          completed {user.totalRentals} rentals with a current wallet balance of
+          ₦{user.walletBalance.toLocaleString()}. Account created on{" "}
+          {user.joinDate}. Currently has {user.activeDisputes} open disputes.
         </Paragraph1>
       </div>
 
@@ -119,7 +107,7 @@ export default function UserProfileOverview({
           </Paragraph3>
           <span className="ml-auto flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-semibold">
             <CheckCircle size={14} />
-            Verified
+            {user.kyc.status || "Verified"}
           </span>
         </div>
 
@@ -127,29 +115,10 @@ export default function UserProfileOverview({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                Full Address
+                Full Name
               </Paragraph1>
               <Paragraph1 className="text-sm text-gray-700">
-                454 Victoria Street, Lekki Phase 1, Lagos
-              </Paragraph1>
-            </div>
-            <div>
-              <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                ID
-              </Paragraph1>
-              <Paragraph1 className="text-sm text-gray-700">
-                {user.kyc.id}
-              </Paragraph1>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                Means of Identification
-              </Paragraph1>
-              <Paragraph1 className="text-sm text-gray-700">
-                National ID Card
+                {user.kyc.fullName}
               </Paragraph1>
             </div>
             <div>
@@ -157,7 +126,7 @@ export default function UserProfileOverview({
                 ID Number
               </Paragraph1>
               <Paragraph1 className="text-sm text-gray-700">
-                {user.kyc.nin}
+                {user.kyc.idNumber}
               </Paragraph1>
             </div>
           </div>
@@ -165,10 +134,29 @@ export default function UserProfileOverview({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                ID Expiry Date
+                NIN
               </Paragraph1>
               <Paragraph1 className="text-sm text-gray-700">
-                August 2025
+                {user.kyc.nin}
+              </Paragraph1>
+            </div>
+            <div>
+              <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                BVN
+              </Paragraph1>
+              <Paragraph1 className="text-sm text-gray-700">
+                {user.kyc.bvn}
+              </Paragraph1>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Date of Birth
+              </Paragraph1>
+              <Paragraph1 className="text-sm text-gray-700">
+                {user.kyc.dateOfBirth}
               </Paragraph1>
             </div>
             <div>
@@ -177,7 +165,7 @@ export default function UserProfileOverview({
               </Paragraph1>
               <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-semibold">
                 <CheckCircle size={14} />
-                Verified
+                {user.kyc.status || "Verified"}
               </span>
             </div>
           </div>
@@ -290,6 +278,9 @@ export default function UserProfileOverview({
             <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-2">
               <Phone size={14} />
               Phone Number
+            </Paragraph1>
+            <Paragraph1 className="text-sm text-gray-700">
+              {user.phone}
             </Paragraph1>
           </div>
         </div>

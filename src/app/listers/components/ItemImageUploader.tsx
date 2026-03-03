@@ -71,17 +71,40 @@ export const ItemImageUploader: React.FC = () => {
     });
   }, [uploader.uploads, attachments, setField]);
 
+  // ✅ Clear temp previews when store is reset (attachments become empty)
+  useEffect(() => {
+    if (
+      attachments.length === 0 &&
+      (Object.keys(tempPreviews).length > 0 ||
+        Object.keys(uploadStatus).length > 0)
+    ) {
+      console.log("🧹 Clearing temp previews and upload status");
+
+      // Revoke all blob URLs
+      Object.values(tempPreviews).forEach((url) => {
+        if (url?.startsWith("blob:")) {
+          URL.revokeObjectURL(url);
+        }
+      });
+
+      setTempPreviews({});
+      setUploadStatus({});
+    }
+  }, [attachments.length]);
+
   const handleUpload = useCallback(
     (file: File, slotId: string) => {
       console.log(`🚀 Starting upload for slot: ${slotId}, file: ${file.name}`);
 
-      // Validate file size (7MB max)
-      const maxFileSize = 7 * 1024 * 1024; // 7MB in bytes
+      // Validate file size (30MB for videos, 7MB for images)
+      const maxFileSize =
+        slotId === "video" ? 30 * 1024 * 1024 : 7 * 1024 * 1024;
+      const maxMB = slotId === "video" ? 30 : 7;
       if (file.size > maxFileSize) {
-        console.error("❌ File size exceeds 7MB limit");
+        console.error(`❌ File size exceeds ${maxMB}MB limit`);
         setUploadStatus((prev) => ({
           ...prev,
-          [slotId]: "error: file too large (max 7MB)",
+          [slotId]: `error: file too large (max ${maxMB}MB)`,
         }));
         return;
       }
@@ -156,7 +179,7 @@ export const ItemImageUploader: React.FC = () => {
         <ToolInfo content="Upload clear, high-quality photos of your item from different angles. This helps potential buyers understand what they're getting." />
       </div>
 
-      <div className="grid grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {SLOTS.map((slot) => {
           const attachment = attachments.find((att) => att.slotId === slot.id);
           const previewSrc = attachment?.url ?? tempPreviews[slot.id] ?? null;
@@ -170,7 +193,11 @@ export const ItemImageUploader: React.FC = () => {
           return (
             <label
               key={slot.id}
-              className="group relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 p-2 text-center transition hover:border-gray-400"
+              className={`group relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 p-2 text-center transition hover:border-gray-400 ${
+                slot.id === "video"
+                  ? "col-span-2 md:col-span-1 md:h-auto h-40"
+                  : ""
+              }`}
             >
               {previewSrc ? (
                 <>
@@ -178,7 +205,13 @@ export const ItemImageUploader: React.FC = () => {
                   previewSrc?.includes(".mp4") ||
                   previewSrc?.includes(".mov") ||
                   previewSrc?.includes(".avi") ? (
-                    <div className="relative flex h-16 w-24 items-center justify-center rounded bg-gray-100">
+                    <div
+                      className={`relative flex items-center justify-center rounded bg-gray-100 ${
+                        slot.id === "video"
+                          ? "h-32 w-full md:h-16 md:w-24"
+                          : "h-16 w-24"
+                      }`}
+                    >
                       <video
                         src={previewSrc}
                         className="h-full w-full rounded object-cover"

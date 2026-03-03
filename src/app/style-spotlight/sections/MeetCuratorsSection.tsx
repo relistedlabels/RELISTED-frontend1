@@ -108,30 +108,32 @@ export default function MeetCuratorsSection() {
           style={{ scrollBehavior: "smooth" }}
         >
           <div className="flex gap-6 sm:gap-8 pb-4 px-4 sm:px-0">
-            {users?.map((user) => (
-              <Link key={user.id} href={`/lister-profile/${user.id}`}>
-                <div className="flex-shrink-0 flex flex-col items-center group cursor-pointer">
-                  {/* Circular Image */}
-                  <div className="relative w-22 h-22 sm:w-32 sm:h-32 mb-4 rounded-full overflow-hidden border-4 border-red-400 hover:border-red-500 transition-all duration-300">
-                    <Image
-                      src={user.avatar || "/images/default-avatar.png"}
-                      alt={user.name}
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-300"
-                      sizes="(max-width: 640px) 100px, 100px"
-                    />
-                  </div>
+            {users
+              ?.filter((user) => user.avatar)
+              .map((user) => (
+                <Link key={user.id} href={`/lister-profile/${user.id}`}>
+                  <div className="flex-shrink-0 flex flex-col items-center group cursor-pointer">
+                    {/* Circular Image */}
+                    <div className="relative w-22 h-22 sm:w-32 sm:h-32 mb-4 rounded-full overflow-hidden border-4 border-red-400 hover:border-red-500 transition-all duration-300">
+                      <Image
+                        src={user.avatar}
+                        alt={user.name}
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-300"
+                        sizes="(max-width: 640px) 100px, 100px"
+                      />
+                    </div>
 
-                  {/* Curator Info */}
-                  <Paragraph3 className="text-center text-sm sm:text-base font-semibold text-gray-900 mb-1">
-                    {user.name}
-                  </Paragraph3>
-                  <Paragraph1 className="text-center text-xs sm:text-sm text-gray-600">
-                    {user.itemCount} Listings
-                  </Paragraph1>
-                </div>
-              </Link>
-            ))}
+                    {/* Curator Info */}
+                    <Paragraph3 className="text-center text-sm sm:text-base font-semibold text-gray-900 mb-1">
+                      {user.name}
+                    </Paragraph3>
+                    <Paragraph1 className="text-center text-xs sm:text-sm text-gray-600">
+                      {user.itemCount} Listings
+                    </Paragraph1>
+                  </div>
+                </Link>
+              ))}
           </div>
         </div>
 

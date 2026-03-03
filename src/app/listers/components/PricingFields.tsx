@@ -24,7 +24,7 @@ export const PricingFields: React.FC = () => {
   }, [suggestedDailyRentalPrice, setField]);
 
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1  sm:grid-cols-2 gap-4">
       <div>
         <div className="flex items-center gap-2 mb-1">
           <Paragraph1 className="text-xs font-medium text-gray-700">
@@ -35,7 +35,7 @@ export const PricingFields: React.FC = () => {
         <input
           type="text"
           inputMode="numeric"
-          placeholder="500,000"
+          placeholder="e.g., 500,000 or 1,200,000"
           className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black"
           value={formatNumber(data.originalValue)}
           onChange={(e) =>
@@ -53,7 +53,8 @@ export const PricingFields: React.FC = () => {
         </div>
         <input
           type="text"
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+          placeholder="e.g., 50,000 or 100,000"
+          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black"
           value={formatNumber(data.dailyRentalPrice)}
           onChange={(e) =>
             setField("dailyRentalPrice", parseNumber(e.target.value))

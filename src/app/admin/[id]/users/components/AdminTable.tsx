@@ -1,6 +1,8 @@
 "use client";
 import React from "react";
+import Link from "next/link";
 import { Paragraph1 } from "@/common/ui/Text";
+import { useAdminIdStore } from "@/store/useAdminIdStore";
 import UserDetails from "./UserDetails";
 
 const StatusPill = ({ isSuspended }: { isSuspended: boolean }) => {
@@ -25,6 +27,8 @@ const getInitials = (name: string) => {
 };
 
 export default function AdminTable({ data }: { data: any[] }) {
+  const adminId = useAdminIdStore((state) => state.adminId);
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left">
@@ -97,11 +101,11 @@ export default function AdminTable({ data }: { data: any[] }) {
                 </Paragraph1>
               </td>
               <td className="px-6 py-4">
-                <UserDetails
-                  userId={user.id}
-                  userRole="ADMIN"
-                  isSuspended={user.isSuspended}
-                />
+                <div className="text-white bg-black rounded-md whitespace-nowrap px-2 py-1">
+                  <Link href={`/admin/${adminId}/users/${user.id}`}>
+                    <Paragraph1> View Details</Paragraph1>
+                  </Link>
+                </div>
               </td>
             </tr>
           ))}

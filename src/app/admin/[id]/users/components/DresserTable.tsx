@@ -1,8 +1,8 @@
 "use client";
 import React, { useState } from "react";
+import Link from "next/link";
 import { Paragraph1 } from "@/common/ui/Text";
-import UserDetails from "./UserDetails";
-import Image from "next/image";
+import { useAdminIdStore } from "@/store/useAdminIdStore";
 
 const StatusPill = ({ isSuspended }: { isSuspended: boolean }) => {
   const isActive = !isSuspended;
@@ -34,6 +34,7 @@ export default function DresserTable({
   data,
   role = "DRESSER",
 }: DresserTableProps) {
+  const adminId = useAdminIdStore((state) => state.adminId);
   const isLister = role === "LISTER";
   const isAdmin = role === "ADMIN";
 
@@ -125,11 +126,11 @@ export default function DresserTable({
                 </Paragraph1>
               </td>
               <td className="px-6 py-4">
-                <UserDetails
-                  userId={user.id}
-                  userRole={role}
-                  isSuspended={user.isSuspended}
-                />
+                <div className="text-white bg-black rounded-md whitespace-nowrap px-2 py-1">
+                  <Link href={`/admin/${adminId}/users/${user.id}`}>
+                    <Paragraph1> View Details</Paragraph1>
+                  </Link>
+                </div>
               </td>
             </tr>
           ))}

@@ -9,7 +9,7 @@ import CuratorTable from "./CuratorTable";
 import AdminTable from "./AdminTable";
 import { useAdminAllUsers } from "@/lib/queries/admin/useUsers";
 
-type UserRole = "LISTER" | "DRESSER" | "ADMIN";
+type UserRole = "LISTER" | "RENTER" | "ADMIN";
 
 export default function UsersPage() {
   const [activeTab, setActiveTab] = useState<UserRole>("LISTER");
@@ -23,7 +23,7 @@ export default function UsersPage() {
     error,
   } = useAdminAllUsers({
     page: 1,
-    count: 100,
+    count: 10,
     search: searchQuery,
     status: statusFilter === "All Status" ? undefined : statusFilter,
     role: activeTab,
@@ -135,7 +135,7 @@ export default function UsersPage() {
 
         {/* Tabs */}
         <div className="flex border-b border-gray-200">
-          {["LISTER", "DRESSER", "ADMIN"].map((tab) => (
+          {["LISTER", "RENTER", "ADMIN"].map((tab) => (
             <button
               key={tab}
               disabled
@@ -154,7 +154,7 @@ export default function UsersPage() {
     );
   }
 
-  const TABS: UserRole[] = ["LISTER", "DRESSER", "ADMIN"];
+  const TABS: UserRole[] = ["LISTER", "RENTER"]; // TODO: Uncomment "ADMIN" when ready
 
   return (
     <div className="flex flex-col space-y-6">
@@ -213,13 +213,12 @@ export default function UsersPage() {
               No users found matching your criteria.
             </Paragraph1>
           </div>
-        ) : activeTab === "DRESSER" ? (
+        ) : activeTab === "RENTER" ? (
           <DresserTable data={filteredData} />
-        ) : activeTab === "LISTER" ? (
-          <CuratorTable data={filteredData} />
         ) : (
-          <AdminTable data={filteredData} />
+          <CuratorTable data={filteredData} />
         )}
+        {/* TODO: Uncomment AdminTable when ADMIN tab is ready */}
       </div>
     </div>
   );

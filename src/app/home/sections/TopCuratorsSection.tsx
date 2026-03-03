@@ -105,11 +105,13 @@ export default function TopCuratorsSection() {
   }
 
   const curators: Curator[] = users
-    ? users.map((user) => ({
-        name: user.name || "Unknown Curator",
-        image: user.avatar || "/images/default-avatar.jpg",
-        shopLink: `/lister-profile/${user.id}`,
-      }))
+    ? users
+        .filter((user) => user.avatar)
+        .map((user) => ({
+          name: user.name || "Unknown Curator",
+          image: user.avatar,
+          shopLink: `/lister-profile/${user.id}`,
+        }))
     : [];
 
   const duplicatedCurators =
