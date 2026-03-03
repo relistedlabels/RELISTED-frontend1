@@ -1,6 +1,12 @@
 "use client";
 
-import { Header1Plus, Header2, Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import {
+  Header1Plus,
+  Header2,
+  Paragraph1,
+  Paragraph2,
+  Paragraph3,
+} from "@/common/ui/Text";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
