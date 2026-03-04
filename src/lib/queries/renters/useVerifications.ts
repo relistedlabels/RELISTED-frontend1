@@ -11,3 +11,7 @@ export const useUploadIdDocument = () =>
   useMutation({
     mutationFn: rentersApi.uploadIdDocument,
   });
+export const useSubmitBvn = () =>
+  useMutation({
+    mutationFn: rentersApi.submitBvn,
+  });

@@ -1,5 +1,13 @@
 "use client";
-
+// ENDPOINTS:
+// - GET /api/listers/orders/:orderId (fetch single order details)
+// - POST /api/listers/orders/:orderId/approve (approve pending order)
+// - POST /api/listers/orders/:orderId/reject (reject pending order)
+//
+// INTEGRATION NOTES:
+// - Approve/Reject only work for pending_approval orders (AvailabilityRequest status)
+// - Backend expected statuses: "pending_approval", "processing", "accepted", "confirmed", "in_transit", "delivered", "active", "return_due", "completed", "rejected"
+// - timeRemainingSeconds field provided by backend for countdown timer display
 import { useMutation } from "@tanstack/react-query";
 import { approveOrder } from "@/lib/api/listers";
 import { rejectOrder } from "@/lib/api/listers";

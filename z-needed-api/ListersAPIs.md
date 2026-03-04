@@ -529,6 +529,7 @@ Content-Type: application/json
 ```
 
 **Additional Notes:**
+
 - Images must be uploaded separately via Cloudinary upload first
 - Pass the returned upload IDs in the `attachments` array
 - `tagIds` must be valid tag IDs from `GET /api/public/tags`
@@ -617,6 +618,7 @@ Content-Type: application/json
 ```
 
 **Additional Notes:**
+
 - All fields are optional except `name`
 - To add new images, upload them first via Cloudinary and pass their IDs in `attachments`
 - To remove existing images, pass their IDs in `attachmentsToRemove`
@@ -2836,7 +2838,7 @@ GET /api/listers/disputes/:disputeId/resolution
 
 ---
 
-### 42. GET /api/listers/disputes/:disputeId/messages
+### 43. GET /api/listers/disputes/:disputeId/messages
 
 **Location:** `src/app/renters/components/DisputeConversationLog.tsx`
 
@@ -2905,7 +2907,7 @@ GET /api/listers/disputes/:disputeId/messages?page=1&limit=50
 
 ---
 
-### 43. POST /api/listers/disputes/:disputeId/messages
+### 44. POST /api/listers/disputes/:disputeId/messages
 
 **Location:** `src/app/renters/components/DisputeConversationLog.tsx` (Message input & send button)
 
@@ -2956,7 +2958,7 @@ POST /api/listers/disputes/:disputeId/messages
 
 ---
 
-### 44. POST /api/listers/disputes/:disputeId/withdraw
+### 45. POST /api/listers/disputes/:disputeId/withdraw
 
 **Location:** `src/app/renters/components/DisputeDetails.tsx` (Withdraw Dispute button in footer)
 
@@ -3013,7 +3015,7 @@ POST /api/listers/disputes/:disputeId/withdraw
 
 ---
 
-### 45. GET /api/issue-categories
+### 46. GET /api/issue-categories
 
 **Location:** `src/app/renters/components/RaiseDisputeForm.tsx` (Issue Category dropdown)
 
@@ -3081,7 +3083,7 @@ GET /api/issue-categories
 
 ## Lister Settings Management
 
-### 46. GET /api/listers/profile
+### 47. GET /api/listers/profile
 
 **Location:** `src/app/listers/settings/page.tsx` & `src/app/listers/components/AccountProfileDetails.tsx`
 
@@ -3143,7 +3145,7 @@ GET /api/listers/profile
 
 ---
 
-### 47. PUT /api/listers/profile
+### 48. PUT /api/listers/profile
 
 **Location:** `src/app/listers/components/AccountProfileDetails.tsx` - Update Profile button
 
@@ -3190,7 +3192,7 @@ Content-Type: application/json
 
 ---
 
-### 48. GET /api/listers/profile/addresses
+### 49. GET /api/listers/profile/addresses
 
 **Location:** `src/app/listers/components/AccountProfileDetails.tsx` - Address list section
 
@@ -3245,7 +3247,7 @@ GET /api/listers/profile/addresses
 
 ---
 
-### 49. POST /api/listers/profile/addresses
+### 50. POST /api/listers/profile/addresses
 
 **Location:** `src/app/listers/components/AccountProfileDetails.tsx` - Add New Address button
 
@@ -3299,7 +3301,7 @@ Content-Type: application/json
 
 ---
 
-### 50. POST /api/listers/profile/avatar
+### 51. POST /api/listers/profile/avatar
 
 **Location:** `src/app/listers/components/AccountProfileDetails.tsx` - Profile image upload
 
@@ -3339,7 +3341,7 @@ Content-Type: multipart/form-data
 
 ---
 
-### 51. GET /api/listers/profile/business
+### 52. GET /api/listers/profile/business
 
 **Location:** `src/app/listers/components/BusinessDetailsForm.tsx` - Business Details tab
 
@@ -3646,7 +3648,56 @@ GET /api/listers/verifications/bvn
 
 ---
 
-### 42. PUT /api/listers/verifications/emergency-contact
+### 42. POST /api/listers/verifications/bvn
+
+**Location:** `src/lib/queries/listers/useVerifications.ts` (submitBvn hook) & `src/app/listers/components/AccountVerificationsForm.tsx`
+
+**UX Explanation:**
+Submit Bank Verification Number (BVN) for lister verification. Listers submit their 11-digit BVN which is verified against Nigeria's Central Bank database. This is a required verification step for:
+
+- Account eligibility verification
+- Lister credential establishment
+- Payout authorization
+- Business legitimacy verification
+
+**Request Format:**
+
+```json
+POST /api/listers/verifications/bvn
+Content-Type: application/json
+
+{
+  "bvnNumber": "22755012728"
+}
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "message": "BVN submitted successfully",
+  "data": {
+    "bvnId": "bvn_001",
+    "maskedValue": "XXXXX1234",
+    "status": "verified",
+    "bankName": "First Bank Nigeria",
+    "accountName": "Chioma O. Okafor",
+    "verifiedDate": "2026-02-08T14:30:00Z"
+  }
+}
+```
+
+**Status Codes:**
+
+- `200 OK` / `201 Created` - BVN verified successfully
+- `400 Bad Request` - Invalid BVN format or verification failed
+- `401 Unauthorized` - User not authenticated
+- `409 Conflict` - BVN already registered
+
+---
+
+### 43. PUT /api/listers/verifications/emergency-contact
 
 **Location:** `src/app/listers/components/AccountVerificationsForm.tsx` - Emergency Contact form
 
@@ -3701,7 +3752,7 @@ Content-Type: application/json
 
 ---
 
-### 43. POST /api/listers/security/password
+### 44. POST /api/listers/security/password
 
 **Location:** `src/app/listers/components/AccountSecurity.tsx` - Update Password button
 
@@ -3772,7 +3823,7 @@ Content-Type: application/json
 
 ---
 
-### 44. GET /api/listers/notifications/preferences
+### 45. GET /api/listers/notifications/preferences
 
 **Location:** `src/app/listers/components/AccountNotifications.tsx` - Load preferences on mount
 
@@ -3823,7 +3874,7 @@ GET /api/listers/notifications/preferences
 
 ---
 
-### 45. PUT /api/listers/notifications/preferences
+### 46. PUT /api/listers/notifications/preferences
 
 **Location:** `src/app/listers/components/AccountNotifications.tsx` - Save Preferences button
 

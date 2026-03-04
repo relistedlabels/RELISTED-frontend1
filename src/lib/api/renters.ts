@@ -196,7 +196,7 @@ export const rentersApi = {
   // GET /api/renters/verifications/status
   getVerificationsStatus: () =>
     apiFetch<{ success: boolean; data: { verifications: any } }>(
-      "/api/renters/verifications/status",
+      "/api/renters/profile/verifications/status",
       { method: "GET" },
     ),
 
@@ -205,6 +205,13 @@ export const rentersApi = {
     apiFetch<{ success: boolean; message: string; data: any }>(
       "/api/renters/verifications/id-document",
       { method: "POST", body: formData },
+    ),
+
+  // POST /api/renters/verifications/bvn
+  submitBvn: (data: { bvnNumber: string }) =>
+    apiFetch<{ success: boolean; message: string; data: any }>(
+      "/api/renters/verifications/bvn",
+      { method: "POST", body: JSON.stringify(data) },
     ),
 
   // --- Security Endpoints ---

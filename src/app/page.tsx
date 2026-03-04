@@ -21,7 +21,8 @@ export default function Home() {
       <BecomeCurator />
       <TopCuratorsSection />
       <HowItWorks />
-      <ReviewCarousel />
+      <br /><br />
+      {/* <ReviewCarousel /> */}
     </div>
   );
 }

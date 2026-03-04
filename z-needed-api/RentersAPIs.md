@@ -1611,7 +1611,56 @@ Content-Type: multipart/form-data
 
 ---
 
-### 24. POST /api/renters/security/password
+### 24. POST /api/renters/verifications/bvn
+
+**Location:** `src/lib/queries/renters/useVerifications.ts` (useSubmitBvn hook)
+
+**UX Explanation:**
+Submit Bank Verification Number (BVN) for identity verification. Renters submit their 11-digit BVN which is verified against Nigeria's Central Bank database. This is a required verification step for:
+
+- Account activation
+- Rental eligibility
+- Fund withdrawals
+- Dispute participation
+
+**Request Format:**
+
+```json
+POST /api/renters/verifications/bvn
+Content-Type: application/json
+
+{
+  "bvnNumber": "22755012728"
+}
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "message": "BVN submitted successfully",
+  "data": {
+    "bvnId": "bvn_001",
+    "maskedValue": "XXXXX1234",
+    "status": "verified",
+    "bankName": "First Bank Nigeria",
+    "accountName": "John Doe",
+    "verifiedDate": "2026-02-08T14:30:00Z"
+  }
+}
+```
+
+**Status Codes:**
+
+- `200 OK` / `201 Created` - BVN verified successfully
+- `400 Bad Request` - Invalid BVN format or verification failed
+- `401 Unauthorized` - User not authenticated
+- `409 Conflict` - BVN already registered
+
+---
+
+### 25. POST /api/renters/security/password
 
 **Location:** `src/app/renters/components/AccountSecurity.tsx` (Password change form)
 
@@ -1658,7 +1707,7 @@ Content-Type: application/json
 
 ---
 
-### 25. GET /api/renters/notifications/preferences
+### 26. GET /api/renters/notifications/preferences
 
 **Location:** `src/app/renters/components/AccountNotifications.tsx` (Load preferences)
 
@@ -1705,7 +1754,7 @@ GET /api/renters/notifications/preferences
 
 ---
 
-### 26. PUT /api/renters/notifications/preferences
+### 27. PUT /api/renters/notifications/preferences
 
 **Location:** `src/app/renters/components/AccountNotifications.tsx` (Save preferences)
 
@@ -1751,7 +1800,7 @@ Content-Type: application/json
 
 ## Renter Dispute Management
 
-### 27. GET /api/renters/disputes/stats
+### 28. GET /api/renters/disputes/stats
 
 **Location:** `src/app/renters/components/DisputesDashboard.tsx` (Dispute stats cards)
 
@@ -1795,7 +1844,7 @@ GET /api/renters/disputes/stats
 
 ---
 
-### 28. GET /api/renters/disputes
+### 29. GET /api/renters/disputes
 
 **Location:** `src/app/renters/components/DisputesListTable.tsx` & `src/app/renters/dispute/page.tsx`
 
@@ -1854,7 +1903,7 @@ GET /api/renters/disputes?status=all&page=1&limit=10&sort=newest
 
 ---
 
-### 29. POST /api/renters/disputes
+### 30. POST /api/renters/disputes
 
 **Location:** `src/app/renters/components/RaiseDisputeForm.tsx` (Raise dispute form)
 
@@ -1909,7 +1958,7 @@ Content-Type: multipart/form-data
 
 ---
 
-### 30. GET /api/renters/disputes/:disputeId
+### 31. GET /api/renters/disputes/:disputeId
 
 **Location:** `src/app/renters/components/DisputeDetails.tsx` (Dispute details page)
 
@@ -1974,7 +2023,7 @@ GET /api/renters/disputes/:disputeId
 
 ---
 
-### 31. GET /api/renters/disputes/:disputeId/overview
+### 32. GET /api/renters/disputes/:disputeId/overview
 
 **Location:** `src/app/renters/components/DisputeOverviewContent.tsx` (Overview tab in dispute details)
 
@@ -2018,7 +2067,7 @@ GET /api/renters/disputes/:disputeId/overview
 
 ---
 
-### 32. GET /api/renters/disputes/:disputeId/evidence
+### 33. GET /api/renters/disputes/:disputeId/evidence
 
 **Location:** `src/app/renters/components/DisputeEvidenceContent.tsx` (Evidence tab in dispute details)
 
@@ -2079,7 +2128,7 @@ GET /api/renters/disputes/:disputeId/evidence
 
 ---
 
-### 33. GET /api/renters/disputes/:disputeId/timeline
+### 34. GET /api/renters/disputes/:disputeId/timeline
 
 **Location:** `src/app/renters/components/DisputeTimelineContent.tsx` (Timeline tab in dispute details)
 
@@ -2135,7 +2184,7 @@ GET /api/renters/disputes/:disputeId/timeline
 
 ---
 
-### 34. GET /api/renters/disputes/:disputeId/resolution
+### 35. GET /api/renters/disputes/:disputeId/resolution
 
 **Location:** `src/app/renters/components/DisputeResolutionContent.tsx` (Resolution tab in dispute details)
 
@@ -2195,7 +2244,7 @@ GET /api/renters/disputes/:disputeId/resolution
 
 ---
 
-### 35. GET /api/renters/disputes/:disputeId/messages
+### 36. GET /api/renters/disputes/:disputeId/messages
 
 **Location:** `src/app/renters/components/DisputeConversationLog.tsx` (Conversation log in dispute overview)
 
@@ -2264,7 +2313,7 @@ GET /api/renters/disputes/:disputeId/messages
 
 ---
 
-### 36. POST /api/renters/disputes/:disputeId/messages
+### 37. POST /api/renters/disputes/:disputeId/messages
 
 **Location:** `src/app/renters/components/DisputeConversationLog.tsx` (Send message button in conversation)
 
@@ -2324,7 +2373,7 @@ POST /api/renters/disputes/:disputeId/messages
 
 ---
 
-### 37. GET /api/issue-categories
+### 38. GET /api/issue-categories
 
 **Location:** `src/app/renters/components/RaiseDisputeForm.tsx` (Dispute category dropdown)
 
@@ -2387,7 +2436,7 @@ GET /api/issue-categories
 
 ## Renter Shopping & Rental Request Workflow
 
-### 38. POST /api/renters/rental-requests
+### 39. POST /api/renters/rental-requests
 
 **Location:** `src/app/shop/product-details/components/RentalDurationSelector.tsx` (Check Availability button)
 
@@ -2513,7 +2562,7 @@ When a renter's **available balance** is less than the required total (rental fe
 
 ---
 
-### 39. GET /api/renters/rental-requests
+### 40. GET /api/renters/rental-requests
 
 **Location:** `src/app/shop/product-details/components/RentalCartSummary.tsx` (Cart display with pending items)
 
