@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { ParagraphLink1 } from "../ui/Text";
 import { motion, AnimatePresence } from "framer-motion";
+import { useBrands } from "@/lib/queries/brand/useBrands";
 
 // Type for navigation items
 type NavItem = {
@@ -33,7 +34,7 @@ const buildShopUrl = (
 const NAV_LINKS: NavItem[] = [
   {
     name: "Brands",
-    subMenu: ["Nike", "Adidas", "Puma", "Vans", "New Balance"],
+    subMenu: null, // Will be populated dynamically
   },
   {
     name: "Men",
@@ -65,11 +66,51 @@ const NAV_LINKS: NavItem[] = [
 ];
 
 const ShopDropdown: React.FC = () => {
+  const { data: brandsData, isLoading: brandsLoading } = useBrands();
   const [isShopModalOpen, setIsShopModalOpen] = useState(false);
   const [expandedBrand, setExpandedBrand] = useState(false);
+  const [navLinks, setNavLinks] = useState<NavItem[]>(NAV_LINKS);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const shopDropdownTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const brandsSubmenuTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
+  // Update NAV_LINKS when brands data is fetched
+  useEffect(() => {
+    if (brandsData && brandsData.length > 0) {
+      const brandNames = brandsData
+        .slice(0, 32)
+        .map((brand: any) => brand.name || brand);
+
+      console.log("Brands loaded:", brandNames);
+
+      setNavLinks([
+        {
+          name: "Brands",
+          subMenu: brandNames,
+        },
+        {
+          name: "Men",
+          subMenu: null,
+          filter: { key: "gender", value: "Men" },
+          title: "Men",
+          description: "Shop men's collections",
+        },
+        {
+          name: "Women",
+          subMenu: null,
+          filter: { key: "gender", value: "Woman" },
+          title: "Women",
+          description: "Shop women's collections",
+        },
+        {
+          name: "Sale",
+          subMenu: null,
+          title: "Sale",
+          description: "Browse our sale items",
+        },
+      ]);
+    }
+  }, [brandsData]);
 
   // Close dropdown if clicked outside
   useEffect(() => {
@@ -113,6 +154,11 @@ const ShopDropdown: React.FC = () => {
     }, 120);
   };
 
+  const handleBrandClick = () => {
+    setIsShopModalOpen(false);
+    setExpandedBrand(false);
+  };
+
   return (
     <div
       ref={dropdownRef}
@@ -137,10 +183,10 @@ const ShopDropdown: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-full left-0 mt-1 w-48 bg-black/90 backdrop-blur-xl z-20 rounded-md overflow-hidden"
+            className="absolute top-full left-0 mt-1 w-48 bg-black/90 backdrop-blur-xl z-40 rounded-md overflow-visible"
           >
             <ul className="py-1">
-              {NAV_LINKS.map((item) => {
+              {navLinks.map((item) => {
                 const href =
                   item.title && item.description
                     ? buildShopUrl(item.title, item.description, item.filter)
@@ -174,43 +220,53 @@ const ShopDropdown: React.FC = () => {
 
                     {/* BRANDS SUBMENU */}
                     <AnimatePresence>
-                      {isBrands && expandedBrand && item.subMenu && (
-                        <motion.div
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -10 }}
-                          transition={{ duration: 0.15 }}
-                          className="absolute top-0 left-full ml-2 w-44 bg-black z-30 rounded-md overflow-hidden shadow-lg"
-                        >
-                          <ul className="py-1">
-                            {item.subMenu.map((brand, index) => {
-                              const brandUrl = buildShopUrl(
-                                brand,
-                                `Shop ${brand} collection`,
-                                {
-                                  key: "brands",
-                                  value: brand,
-                                },
-                              );
-                              return (
-                                <motion.li
-                                  key={brand}
-                                  initial={{ opacity: 0, x: -5 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  transition={{ delay: index * 0.03 }}
-                                >
-                                  <Link
-                                    href={brandUrl}
-                                    className="block w-full px-4 py-2 text-sm bg-black hover:bg-gray-900 transition-colors"
+                      {isBrands &&
+                        expandedBrand &&
+                        navLinks[0]?.subMenu &&
+                        navLinks[0].subMenu.length > 0 && (
+                          <motion.div
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -10 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute top-0 left-full ml-2 bg-black/90 z-50 rounded-md overflow-visible shadow-2xl 0"
+                          >
+                            {/* 4-Column Grid Layout */}
+                            <div
+                              className="grid grid-cols-8 gap-1 py-3 px-3"
+                              style={{ width: "auto", minWidth: "800px" }}
+                            >
+                              {navLinks[0].subMenu.map((brand, index) => {
+                                const brandUrl = buildShopUrl(
+                                  brand,
+                                  `Shop ${brand} collection`,
+                                  {
+                                    key: "brands",
+                                    value: brand,
+                                  },
+                                );
+                                return (
+                                  <motion.div
+                                    key={`${brand}-${index}`}
+                                    initial={{ opacity: 0, y: -5 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: (index % 8) * 0.03 }}
                                   >
-                                    <ParagraphLink1>{brand}</ParagraphLink1>
-                                  </Link>
-                                </motion.li>
-                              );
-                            })}
-                          </ul>
-                        </motion.div>
-                      )}
+                                    <Link
+                                      href={brandUrl}
+                                      onClick={handleBrandClick}
+                                      className="block w-full px-2 py-2 text-xs text-center hover:bg-gray-700 transition-colors rounded whitespace-nowrap overflow-hidden text-ellipsis"
+                                    >
+                                      <ParagraphLink1 className="text-xs">
+                                        {brand}
+                                      </ParagraphLink1>
+                                    </Link>
+                                  </motion.div>
+                                );
+                              })}
+                            </div>
+                          </motion.div>
+                        )}
                     </AnimatePresence>
                   </li>
                 );

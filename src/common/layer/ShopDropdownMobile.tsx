@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ChevronRight, X } from "lucide-react";
 import { ParagraphLink1, Paragraph1 } from "../ui/Text";
 import { motion, AnimatePresence } from "framer-motion";
+import { useBrands } from "@/lib/queries/brand/useBrands";
 
 // Type for navigation items
 type NavItem = {
@@ -33,7 +34,7 @@ const buildShopUrl = (
 const NAV_LINKS: NavItem[] = [
   {
     name: "Brands",
-    subMenu: ["Nike", "Adidas", "Puma", "Vans", "New Balance"],
+    subMenu: null, // Will be populated dynamically
   },
   {
     name: "Men",
@@ -49,19 +50,6 @@ const NAV_LINKS: NavItem[] = [
     title: "Women",
     description: "Shop women's collections",
   },
-  // {
-  //   name: "Kids",
-  //   subMenu: null,
-  //   filter: { key: "gender", value: "Kids" },
-  //   title: "Kids",
-  //   description: "Shop kids' collections",
-  // },
-  // {
-  //   name: "Sale",
-  //   subMenu: null,
-  //   title: "Sale",
-  //   description: "Browse our sale items",
-  // },
 ];
 
 interface ShopDropdownMobileProps {
@@ -73,7 +61,39 @@ const ShopDropdownMobile: React.FC<ShopDropdownMobileProps> = ({
   isOpen,
   onClose,
 }) => {
+  const { data: brandsData } = useBrands();
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [navLinks, setNavLinks] = useState<NavItem[]>(NAV_LINKS);
+
+  // Update NAV_LINKS when brands data is fetched
+  useEffect(() => {
+    if (brandsData && brandsData.length > 0) {
+      const brandNames = brandsData
+        .slice(0, 32)
+        .map((brand: any) => brand.name || brand);
+
+      setNavLinks([
+        {
+          name: "Brands",
+          subMenu: brandNames,
+        },
+        {
+          name: "Men",
+          subMenu: null,
+          filter: { key: "gender", value: "Men" },
+          title: "Men",
+          description: "Shop men's collections",
+        },
+        {
+          name: "Women",
+          subMenu: null,
+          filter: { key: "gender", value: "Woman" },
+          title: "Women",
+          description: "Shop women's collections",
+        },
+      ]);
+    }
+  }, [brandsData]);
 
   const handleCategoryClick = (categoryName: string, hasSubMenu: boolean) => {
     if (hasSubMenu) {
@@ -127,7 +147,7 @@ const ShopDropdownMobile: React.FC<ShopDropdownMobileProps> = ({
               </Link>
 
               {/* Category Links */}
-              {NAV_LINKS.map((item) => {
+              {navLinks.map((item) => {
                 const isExpanded = expandedCategory === item.name;
                 const hasSubMenu = item.subMenu && item.subMenu.length > 0;
 
@@ -169,26 +189,39 @@ const ShopDropdownMobile: React.FC<ShopDropdownMobileProps> = ({
                           transition={{ duration: 0.2 }}
                           className="overflow-hidden bg-black"
                         >
-                          {item.subMenu!.map((subItem) => {
-                            const subUrl = buildShopUrl(
-                              subItem,
-                              `Shop ${subItem} collection`,
-                              {
-                                key: "brands",
-                                value: subItem,
-                              },
-                            );
-                            return (
-                              <Link
-                                key={subItem}
-                                href={subUrl}
-                                onClick={onClose}
-                                className="flex items-center px-8 py-3 hover:bg-gray-900 text-sm"
-                              >
-                                <ParagraphLink1>{subItem}</ParagraphLink1>
-                              </Link>
-                            );
-                          })}
+                          {/* 2-Column Grid with Scrollable Container */}
+                          <div className="max-h-58 overflow-y-auto px-4 py-3">
+                            <div className="grid grid-cols-2 gap-2">
+                              {item.subMenu!.map((subItem, index) => {
+                                const subUrl = buildShopUrl(
+                                  subItem,
+                                  `Shop ${subItem} collection`,
+                                  {
+                                    key: "brands",
+                                    value: subItem,
+                                  },
+                                );
+                                return (
+                                  <motion.div
+                                    key={`${subItem}-${index}`}
+                                    initial={{ opacity: 0, y: -3 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: (index % 4) * 0.02 }}
+                                  >
+                                    <Link
+                                      href={subUrl}
+                                      onClick={onClose}
+                                      className="block w-full px-2 py-2 text-xs text-center bg-gray-900 hover:bg-gray-700 transition-colors rounded whitespace-nowrap overflow-hidden text-ellipsis"
+                                    >
+                                      <ParagraphLink1 className="text-xs">
+                                        {subItem}
+                                      </ParagraphLink1>
+                                    </Link>
+                                  </motion.div>
+                                );
+                              })}
+                            </div>
+                          </div>
                         </motion.div>
                       )}
                     </AnimatePresence>

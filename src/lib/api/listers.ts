@@ -942,6 +942,8 @@ export async function updateBusinessProfile(
 export interface UpdateListerProfilePayload {
   fullName?: string;
   phone?: string;
+  bvn?: string;
+  nin?: string;
 }
 
 export async function updateListerProfile(
@@ -982,7 +984,7 @@ export interface VerificationStatusResponse {
 }
 
 export async function getVerificationStatus(): Promise<VerificationStatusResponse> {
-  return apiFetch("/api/listers/verifications/status", {
+  return apiFetch("/api/listers/profile/verification/status", {
     method: "GET",
   });
 }
@@ -1021,7 +1023,7 @@ export interface NinUploadResponse {
 export async function uploadNinDocument(
   formData: FormData,
 ): Promise<NinUploadResponse> {
-  return apiFetch("/api/listers/verifications/nin", {
+  return apiFetch("/api/listers/profile/verifications/id-document", {
     method: "POST",
     body: formData,
   });
