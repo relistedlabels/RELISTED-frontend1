@@ -153,13 +153,10 @@ export const productsApi = {
 
   // ...existing code...
 
-  // 16. GET /api/admin/categories
-  getAllCategories: () =>
-    apiFetch<{ success: true; data: ListingCategory[] }>(
-      "/api/admin/categories",
-    ),
+  // 16. GET /categories
+  getAllCategories: () => apiFetch<ListingCategory[]>("/categories"),
 
-  // 17. PATCH /api/admin/categories/:categoryId
+  // 17. PATCH /categories/:categoryId
   editCategory: (categoryId: string, name: string, imageFile?: File) => {
     const formData = new FormData();
     formData.append("name", name);
@@ -167,7 +164,7 @@ export const productsApi = {
       formData.append("image", imageFile);
     }
     return apiFetch<{ success: true; data: ListingCategory }>(
-      `/api/admin/categories/${categoryId}`,
+      `/categories/${categoryId}`,
       {
         method: "PATCH",
         body: formData,
@@ -175,50 +172,43 @@ export const productsApi = {
     );
   },
 
-  // 18. DELETE /api/admin/categories/:categoryId
+  // 18. DELETE /categories/:categoryId
   deleteCategory: (categoryId: string) =>
-    apiFetch<{ success: true; message: string }>(
-      `/api/admin/categories/${categoryId}`,
-      { method: "DELETE" },
-    ),
+    apiFetch<{ success: true; message: string }>(`/categories/${categoryId}`, {
+      method: "DELETE",
+    }),
 
-  // 19. GET /api/admin/tags
-  getAllTags: () =>
-    apiFetch<{ success: true; data: ListingTag[] }>("/api/admin/tags"),
+  // 19. GET /tags
+  getAllTags: () => apiFetch<ListingTag[]>("/tags"),
 
-  // 20. PATCH /api/admin/tags/:tagId
+  // 20. PATCH /tags/:tagId
   editTag: (tagId: string, name: string) =>
-    apiFetch<{ success: true; data: ListingTag }>(`/api/admin/tags/${tagId}`, {
+    apiFetch<{ success: true; data: ListingTag }>(`/tags/${tagId}`, {
       method: "PATCH",
       body: JSON.stringify({ name }),
       headers: { "Content-Type": "application/json" },
     }),
 
-  // 21. DELETE /api/admin/tags/:tagId
+  // 21. DELETE /tags/:tagId
   deleteTag: (tagId: string) =>
-    apiFetch<{ success: true; message: string }>(`/api/admin/tags/${tagId}`, {
+    apiFetch<{ success: true; message: string }>(`/tags/${tagId}`, {
       method: "DELETE",
     }),
 
-  // 22. GET /api/admin/brands
-  getAllBrands: () =>
-    apiFetch<{ success: true; data: ListingBrand[] }>("/api/admin/brands"),
+  // 22. GET /brands
+  getAllBrands: () => apiFetch<ListingBrand[]>("/brands"),
 
-  // 23. PATCH /api/admin/brands/:brandId
+  // 23. PATCH /brands/:brandId
   editBrand: (brandId: string, name: string) =>
-    apiFetch<{ success: true; data: ListingBrand }>(
-      `/api/admin/brands/${brandId}`,
-      {
-        method: "PATCH",
-        body: JSON.stringify({ name }),
-        headers: { "Content-Type": "application/json" },
-      },
-    ),
+    apiFetch<{ success: true; data: ListingBrand }>(`/brands/${brandId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ name }),
+      headers: { "Content-Type": "application/json" },
+    }),
 
-  // 24. DELETE /api/admin/brands/:brandId
+  // 24. DELETE /brands/:brandId
   deleteBrand: (brandId: string) =>
-    apiFetch<{ success: true; message: string }>(
-      `/api/admin/brands/${brandId}`,
-      { method: "DELETE" },
-    ),
+    apiFetch<{ success: true; message: string }>(`/brands/${brandId}`, {
+      method: "DELETE",
+    }),
 };

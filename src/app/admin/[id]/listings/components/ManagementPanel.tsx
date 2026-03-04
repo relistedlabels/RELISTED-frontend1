@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { Trash2, Edit2, Plus } from "lucide-react";
+import React, { useState, useCallback } from "react";
+import { Trash2, Edit2, Plus, Check, Image as ImageIcon } from "lucide-react";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import {
   useAllCategories,
@@ -23,6 +23,8 @@ export default function ManagementPanel() {
   const [editName, setEditName] = useState("");
   const [editImageFile, setEditImageFile] = useState<File | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Categories
   const { data: categories, isLoading: categoriesLoading } = useAllCategories();
@@ -108,6 +110,53 @@ export default function ManagementPanel() {
     }
   };
 
+  const toggleSelectItem = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === items.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(items.map((item: any) => item.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const idsToDelete = Array.from(selectedIds);
+    if (idsToDelete.length === 0) return;
+
+    setIsDeleting(true);
+    for (const id of idsToDelete) {
+      await new Promise<void>((resolve) => {
+        if (activeTab === "Categories") {
+          deleteCategory.mutate(id, {
+            onSuccess: () => resolve(),
+            onError: () => resolve(),
+          });
+        } else if (activeTab === "Tags") {
+          deleteTag.mutate(id, {
+            onSuccess: () => resolve(),
+            onError: () => resolve(),
+          });
+        } else if (activeTab === "Brands") {
+          deleteBrand.mutate(id, {
+            onSuccess: () => resolve(),
+            onError: () => resolve(),
+          });
+        }
+      });
+    }
+    setSelectedIds(new Set());
+    setIsDeleting(false);
+  };
+
   const isLoading =
     (activeTab === "Categories" && categoriesLoading) ||
     (activeTab === "Tags" && tagsLoading) ||
@@ -115,10 +164,10 @@ export default function ManagementPanel() {
 
   const items =
     activeTab === "Categories"
-      ? categories?.data || []
+      ? categories || []
       : activeTab === "Tags"
-        ? tags?.data || []
-        : brands?.data || [];
+        ? tags || []
+        : brands || [];
 
   return (
     <div className="my-8 bg-white rounded-lg border border-gray-200 p-6">
@@ -126,6 +175,16 @@ export default function ManagementPanel() {
         <Paragraph1 className="text-lg font-bold text-gray-900">
           Manage {activeTab}
         </Paragraph1>
+        {selectedIds.size > 0 && (
+          <button
+            onClick={handleBulkDelete}
+            disabled={isDeleting}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium disabled:opacity-50 flex items-center gap-2"
+          >
+            <Trash2 size={16} />
+            Delete Selected ({selectedIds.size})
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
@@ -159,19 +218,36 @@ export default function ManagementPanel() {
         </div>
       ) : (
         <div className="space-y-3">
+          {/* Select All Header */}
+          <div className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+            <input
+              type="checkbox"
+              checked={selectedIds.size === items.length && items.length > 0}
+              onChange={toggleSelectAll}
+              className="w-5 h-5 cursor-pointer"
+            />
+            <Paragraph1 className="text-sm text-gray-600 font-medium">
+              {selectedIds.size === items.length && items.length > 0
+                ? "Deselect All"
+                : "Select All"}
+            </Paragraph1>
+          </div>
+
           {items.map((item: any) => (
             <div
               key={item.id}
-              className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+              className={`flex items-center gap-4 p-4 border rounded-lg transition ${
+                selectedIds.has(item.id)
+                  ? "bg-blue-50 border-blue-300"
+                  : "border-gray-200 hover:bg-gray-50"
+              }`}
             >
-              {/* Image for Categories */}
-              {activeTab === "Categories" && item.imageUrl && (
-                <img
-                  src={item.imageUrl}
-                  alt={item.name}
-                  className="w-10 h-10 rounded-lg object-cover"
-                />
-              )}
+              <input
+                type="checkbox"
+                checked={selectedIds.has(item.id)}
+                onChange={() => toggleSelectItem(item.id)}
+                className="w-5 h-5 cursor-pointer flex-shrink-0"
+              />
 
               {/* Name and Edit */}
               {editingId === item.id ? (
@@ -184,25 +260,55 @@ export default function ManagementPanel() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black"
                   />
                   {activeTab === "Categories" && (
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) =>
-                          setEditImageFile(e.target.files?.[0] || null)
-                        }
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black"
-                      />
-                      {editImageFile && (
-                        <span className="text-xs text-green-600 font-medium whitespace-nowrap">
-                          {editImageFile.name}
-                        </span>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) =>
+                            setEditImageFile(e.target.files?.[0] || null)
+                          }
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                        />
+                        {editImageFile && (
+                          <span className="text-xs text-green-600 font-medium whitespace-nowrap">
+                            {editImageFile.name}
+                          </span>
+                        )}
+                      </div>
+                      {/* Image Preview */}
+                      {(editImageFile || item.imageUrl) && (
+                        <div className="p-2 border border-gray-250 rounded-lg bg-gray-50">
+                          <img
+                            src={
+                              editImageFile
+                                ? URL.createObjectURL(editImageFile)
+                                : item.imageUrl
+                            }
+                            alt="Preview"
+                            className="w-full h-40 rounded-lg object-cover"
+                          />
+                        </div>
                       )}
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="flex-1">
+                <div className="flex-1 flex items-center gap-4">
+                  {/* Image for Categories - displayed beside name */}
+                  {activeTab === "Categories" && (
+                    <div className="w-16 h-16 rounded-lg flex-shrink-0 bg-gray-100 border border-gray-300 flex items-center justify-center">
+                      {item.imageUrl ? (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.name}
+                          className="w-full h-full rounded-lg object-cover"
+                        />
+                      ) : (
+                        <ImageIcon size={24} className="text-gray-400" />
+                      )}
+                    </div>
+                  )}
                   <Paragraph1 className="font-medium text-gray-900">
                     {item.name}
                   </Paragraph1>
@@ -291,6 +397,29 @@ export default function ManagementPanel() {
                   ? "Deleting..."
                   : "Delete"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Progress Modal */}
+      {isDeleting && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <div className="flex items-center justify-center mb-4">
+              <div className="animate-spin">
+                <Check size={24} className="text-blue-600" />
+              </div>
+            </div>
+            <h3 className="text-lg font-bold mb-2 text-center">
+              Deleting Items
+            </h3>
+            <p className="text-gray-600 text-center mb-4">
+              Please wait while we delete {selectedIds.size} item
+              {selectedIds.size !== 1 ? "s" : ""}...
+            </p>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="bg-blue-600 h-2 rounded-full animate-pulse" />
             </div>
           </div>
         </div>

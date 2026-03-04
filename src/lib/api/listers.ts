@@ -1023,7 +1023,7 @@ export interface NinUploadResponse {
 export async function uploadNinDocument(
   formData: FormData,
 ): Promise<NinUploadResponse> {
-  return apiFetch("/api/listers/profile/verifications/id-document", {
+  return apiFetch("/api/listers/verifications/nin", {
     method: "POST",
     body: formData,
   });

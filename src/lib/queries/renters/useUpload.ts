@@ -2,10 +2,15 @@ import { useMutation } from "@tanstack/react-query";
 import { uploadFile } from "@/lib/api/upload";
 
 interface UploadResponse {
-  success: boolean;
-  data: {
-    id: string;
-    url: string;
+  id: string;
+  name?: string;
+  type?: string;
+  url?: string;
+  uploadId?: string;
+  data?: {
+    id?: string;
+    url?: string;
+    uploadId?: string;
     name?: string;
     type?: string;
   };

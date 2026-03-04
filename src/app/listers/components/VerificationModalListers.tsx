@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, CheckCircle, Loader, Upload, FileText } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { useUpdateListerProfileMutation } from "@/lib/queries/listers/useUpdateListerProfileMutation";
+import { useUpload } from "@/lib/queries/renters/useUpload";
 import { useUploadNinDocument } from "@/lib/queries/listers/useUploadNinDocument";
 
 interface VerificationModalListersProps {
@@ -27,20 +28,26 @@ export default function VerificationModalListers({
   const [nin, setNin] = useState("");
   const [ninDocument, setNinDocument] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string>("");
+  const [uploadId, setUploadId] = useState<string | null>(null);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const [fileUploadError, setFileUploadError] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const updateListerProfileMutation = useUpdateListerProfileMutation();
+  const uploadMutation = useUpload();
   const uploadNinMutation = useUploadNinDocument();
 
   const handleProceed = () => {
     setStep("input");
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setNinDocument(file);
+      setFileUploadError("");
+      setUploadId(null);
 
       // Create preview
       const reader = new FileReader();
@@ -48,12 +55,33 @@ export default function VerificationModalListers({
         setFilePreview(event.target?.result as string);
       };
       reader.readAsDataURL(file);
+
+      // Start uploading the file
+      setIsUploadingFile(true);
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        const response = await uploadMutation.mutateAsync(formData);
+        const id = response.id || response.data?.uploadId || response.data?.id;
+        if (id) {
+          setUploadId(id);
+        } else {
+          throw new Error("No upload ID received from server");
+        }
+      } catch (err) {
+        console.error("File upload error:", err);
+        setFileUploadError("Failed to upload file. Please try again.");
+        setNinDocument(null);
+        setFilePreview("");
+      } finally {
+        setIsUploadingFile(false);
+      }
     }
   };
 
   const handleVerify = async () => {
-    if (!bvn.trim() || !nin.trim() || !ninDocument) {
-      setError("Please fill in all fields: BVN, NIN, and NIN document");
+    if (!bvn.trim() || !nin.trim() || !ninDocument || !uploadId) {
+      setError("Please fill in all fields and upload NIN document");
       return;
     }
 
@@ -73,10 +101,13 @@ export default function VerificationModalListers({
         }),
       );
 
-      // 2. Upload NIN document via POST /api/listers/profile/verifications/id-document
-      const ninFormData = new FormData();
-      ninFormData.append("idDocument", ninDocument);
-      promises.push(uploadNinMutation.mutateAsync(ninFormData));
+      // 2. Submit NIN verification with uploadId and ninNumber
+      promises.push(
+        uploadNinMutation.mutateAsync({
+          uploadId,
+          ninNumber: nin,
+        }),
+      );
 
       // Wait for both to complete
       await Promise.all(promises);
@@ -233,25 +264,74 @@ export default function VerificationModalListers({
                       type="file"
                       accept="image/*,.pdf"
                       onChange={handleFileChange}
+                      disabled={isUploadingFile}
                       className="hidden"
                     />
-                    <div className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-black transition-colors flex items-center justify-center gap-2 bg-gray-50">
-                      <Upload size={20} className="text-gray-600" />
-                      <Paragraph1 className="text-sm text-gray-600">
-                        Click to upload or drag and drop
-                      </Paragraph1>
+                    <div
+                      className={`w-full px-4 py-3 border-2 border-dashed rounded-lg flex items-center justify-center gap-2 transition-colors ${
+                        isUploadingFile
+                          ? "border-gray-300 bg-gray-50 cursor-not-allowed"
+                          : "border-gray-300 hover:border-black bg-gray-50 cursor-pointer"
+                      }`}
+                    >
+                      {isUploadingFile ? (
+                        <>
+                          <Loader
+                            size={20}
+                            className="text-gray-600 animate-spin"
+                          />
+                          <Paragraph1 className="text-sm text-gray-600">
+                            Uploading...
+                          </Paragraph1>
+                        </>
+                      ) : (
+                        <>
+                          <Upload size={20} className="text-gray-600" />
+                          <Paragraph1 className="text-sm text-gray-600">
+                            Click to upload or drag and drop
+                          </Paragraph1>
+                        </>
+                      )}
                     </div>
                   </label>
 
-                  {/* File Preview */}
+                  {/* File Upload Error */}
+                  {fileUploadError && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="mt-3 p-3 bg-red-50 rounded-lg border border-red-200"
+                    >
+                      <Paragraph1 className="text-xs text-red-700">
+                        {fileUploadError}
+                      </Paragraph1>
+                    </motion.div>
+                  )}
+
+                  {/* File Preview with Upload Progress */}
                   {ninDocument && filePreview && (
                     <motion.div
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200 flex items-center gap-3"
+                      className={`mt-3 p-3 rounded-lg border flex items-center gap-3 ${
+                        isUploadingFile
+                          ? "bg-yellow-50 border-yellow-200"
+                          : uploadId
+                            ? "bg-green-50 border-green-200"
+                            : "bg-blue-50 border-blue-200"
+                      }`}
                     >
                       {ninDocument.type.startsWith("image/") ? (
-                        <div className="w-12 h-12 rounded border border-blue-300 overflow-hidden flex-shrink-0">
+                        <div
+                          className="w-12 h-12 rounded border overflow-hidden flex-shrink-0"
+                          style={{
+                            borderColor: isUploadingFile
+                              ? "#fbbf24"
+                              : uploadId
+                                ? "#86efac"
+                                : "#93c5fd",
+                          }}
+                        >
                           <img
                             src={filePreview}
                             alt="NIN Preview"
@@ -259,17 +339,70 @@ export default function VerificationModalListers({
                           />
                         </div>
                       ) : (
-                        <div className="w-12 h-12 rounded bg-blue-100 flex items-center justify-center flex-shrink-0">
-                          <FileText size={24} className="text-blue-600" />
+                        <div
+                          className="w-12 h-12 rounded flex items-center justify-center flex-shrink-0"
+                          style={{
+                            backgroundColor: isUploadingFile
+                              ? "#fef3c7"
+                              : uploadId
+                                ? "#dcfce7"
+                                : "#dbeafe",
+                          }}
+                        >
+                          <FileText
+                            size={24}
+                            style={{
+                              color: isUploadingFile
+                                ? "#d97706"
+                                : uploadId
+                                  ? "#22c55e"
+                                  : "#2563eb",
+                            }}
+                          />
                         </div>
                       )}
                       <div className="flex-grow min-w-0">
-                        <Paragraph1 className="text-xs font-semibold text-blue-900 truncate">
-                          ✓ {ninDocument.name}
-                        </Paragraph1>
-                        <Paragraph1 className="text-xs text-blue-600">
-                          {(ninDocument.size / 1024).toFixed(2)} KB
-                        </Paragraph1>
+                        <div
+                          style={{
+                            color: isUploadingFile
+                              ? "#92400e"
+                              : uploadId
+                                ? "#166534"
+                                : "#1e3a8a",
+                          }}
+                        >
+                          <Paragraph1 className="text-xs font-semibold truncate">
+                            {isUploadingFile
+                              ? "Uploading..."
+                              : uploadId
+                                ? "✓ "
+                                : ""}
+                            {ninDocument.name}
+                          </Paragraph1>
+                        </div>
+                        <div
+                          style={{
+                            color: isUploadingFile
+                              ? "#b45309"
+                              : uploadId
+                                ? "#16a34a"
+                                : "#1d4ed8",
+                          }}
+                        >
+                          <Paragraph1 className="text-xs">
+                            {(ninDocument.size / 1024).toFixed(2)} KB
+                          </Paragraph1>
+                        </div>
+                        {isUploadingFile && (
+                          <div className="mt-2 w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: "100%" }}
+                              transition={{ duration: 2, ease: "easeInOut" }}
+                              className="h-full bg-yellow-500"
+                            />
+                          </div>
+                        )}
                       </div>
                     </motion.div>
                   )}
@@ -286,7 +419,12 @@ export default function VerificationModalListers({
                   <button
                     onClick={handleVerify}
                     disabled={
-                      !bvn.trim() || !nin.trim() || !ninDocument || isSubmitting
+                      !bvn.trim() ||
+                      !nin.trim() ||
+                      !ninDocument ||
+                      !uploadId ||
+                      isUploadingFile ||
+                      isSubmitting
                     }
                     className="flex-1 px-4 py-3 bg-black text-white rounded-lg font-bold hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                   >
