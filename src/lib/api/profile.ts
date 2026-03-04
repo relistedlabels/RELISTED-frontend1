@@ -30,7 +30,7 @@ export const createProfile = async (
 export const updateProfile = async (
   data: UpdateProfilePayload,
 ): Promise<FullProfile> => {
-  const res = await apiFetch<ProfileResponse>("/profile", {
+  const res = await apiFetch<ProfileResponse>("/api/renters/profile", {
     method: "PUT",
     body: JSON.stringify(data),
   });

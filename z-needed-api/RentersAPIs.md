@@ -1334,7 +1334,10 @@ Content-Type: application/json
 
 {
   "fullName": "Chioma Okafor Updated",
-  "phone": "+234 (0) 907 987 6543"
+  "phone": "+234 (0) 907 987 6543",
+    "bvn": "123456789",
+  "nin": "12345678",
+
 }
 ```
 
@@ -1509,7 +1512,7 @@ Content-Type: multipart/form-data
 
 ---
 
-### 22. GET /api/renters/verifications/status
+### 22. GET /api/renters/profile/verification/status
 
 **Location:** `src/app/renters/components/AccountVerificationsForm.tsx` (Verification badges)
 
@@ -1528,7 +1531,7 @@ Shows verification status for:
 **Request Format:**
 
 ```json
-GET /api/renters/verifications/status
+GET /api/renters/profile/verification/status
 ```
 
 **Response Format:**
@@ -1562,7 +1565,7 @@ GET /api/renters/verifications/status
 
 ---
 
-### 23. POST /api/renters/verifications/id-document
+### 23. POST /api/renters/profile/verifications/id-document
 
 **Location:** `src/app/renters/components/AccountVerificationsForm.tsx` (ID upload)
 
@@ -1578,7 +1581,7 @@ Document is verified by admin team within 24-48 hours.
 **Request Format:**
 
 ```json
-POST /api/renters/verifications/id-document
+POST /api/renters/profile/verifications/id-document
 Content-Type: multipart/form-data
 
 {
@@ -2857,8 +2860,8 @@ GET /api/renters/rental-requests/:requestId
 - [x] GET /api/renters/profile/addresses
 - [x] POST /api/renters/profile/addresses
 - [x] POST /api/renters/profile/avatar
-- [x] GET /api/renters/verifications/status
-- [x] POST /api/renters/verifications/id-document
+- [x] GET /api/renters/profile/verification/status
+- [x] POST /api/renters/profile/verifications/id-document
 - [x] POST /api/renters/security/password
 - [x] GET /api/renters/notifications/preferences
 - [x] PUT /api/renters/notifications/preferences

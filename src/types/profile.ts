@@ -132,6 +132,7 @@ export interface FullProfile {
 export interface UpdateProfilePayload {
   phoneNumber?: string;
   bvn?: string;
+  nin?: string;
 
   emergencyContacts?: {
     name: string;

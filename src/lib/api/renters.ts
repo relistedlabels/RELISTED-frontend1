@@ -193,17 +193,17 @@ export const rentersApi = {
     }>("/api/renters/profile/avatar", { method: "POST", body: formData }),
 
   // --- Verification Endpoints ---
-  // GET /api/renters/verifications/status
+  // GET /api/renters/profile/verification/status
   getVerificationsStatus: () =>
     apiFetch<{ success: boolean; data: { verifications: any } }>(
-      "/api/renters/profile/verifications/status",
+      "/api/renters/profile/verification/status",
       { method: "GET" },
     ),
 
-  // POST /api/renters/verifications/id-document
+  // POST /api/renters/profile/verifications/id-document
   uploadIdDocument: (formData: FormData) =>
     apiFetch<{ success: boolean; message: string; data: any }>(
-      "/api/renters/verifications/id-document",
+      "/api/renters/profile/verifications/id-document",
       { method: "POST", body: formData },
     ),
 
