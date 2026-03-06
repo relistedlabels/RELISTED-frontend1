@@ -1,16 +1,21 @@
 import { useMutation } from "@tanstack/react-query";
 import { verifyAdminMfa } from "@/lib/api/auth";
 import { useUserStore } from "@/store/useUserStore";
+import { useSessionStore } from "@/store/useSessionStore";
 import { useQueryClient } from "@tanstack/react-query";
 
 export function useVerifyAdminMfa() {
   const queryClient = useQueryClient();
   const setAuth = useUserStore((s) => s.setAuth);
   const clearUser = useUserStore((s) => s.clearUser);
+  const setSessionExpired = useSessionStore((s) => s.setSessionExpired);
 
   return useMutation({
     mutationFn: verifyAdminMfa,
     onSuccess: async (data) => {
+      // Clear any session expired flag since we just authenticated
+      setSessionExpired(false);
+
       // Store in Zustand + localStorage
       setAuth({
         token: data.token,

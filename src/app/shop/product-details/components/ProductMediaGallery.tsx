@@ -56,7 +56,7 @@ const ProductMediaGallery: React.FC<ProductMediaGalleryProps> = ({
         layout
         whileHover={{ scale: 1.01 }}
         transition={{ type: "spring", stiffness: 200, damping: 20 }}
-        className="w-full h-[250px] sm:h-[420px] bg-black/5 rounded-xl overflow-hidden cursor-zoom-in"
+        className="w-full h-[400px] sm:h-[420px] bg-black /5 rounded-xl overflow-hidden cursor-zoom-in"
         onClick={() => setIsOpen(true)}
       >
         <AnimatePresence mode="wait">
@@ -69,7 +69,7 @@ const ProductMediaGallery: React.FC<ProductMediaGalleryProps> = ({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
               transition={{ duration: 0.3 }}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           ) : (
             <motion.div

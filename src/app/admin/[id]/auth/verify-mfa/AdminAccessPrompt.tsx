@@ -19,7 +19,8 @@ export default function AdminAccessPrompt({
   const router = useRouter();
   const adminId = useAdminIdStore((state) => state.adminId);
   const verifyMfa = useVerifyAdminMfa();
-  const { sessionToken, requiresMfa, name, role } = useUserStore();
+  const { sessionToken, requiresMfa, name, role, token } = useUserStore();
+  // Only fetch user data after MFA is verified and we have a real token
   const { data: user, isLoading: isMeLoading } = useMe();
 
   const [open, setOpen] = useState(false);
@@ -39,12 +40,13 @@ export default function AdminAccessPrompt({
   // Check if role has been confirmed after MFA verification
   useEffect(() => {
     if (!isMfaVerified) return;
+    if (!token) return; // Wait for token to be set first
 
     // If useMe query has loaded and user role is ADMIN, role is confirmed
     if (!isMeLoading && user && user.role === "ADMIN") {
       setIsRoleConfirmed(true);
     }
-  }, [isMfaVerified, isMeLoading, user]);
+  }, [isMfaVerified, token, isMeLoading, user]);
 
   // Redirect after role is confirmed
   useEffect(() => {

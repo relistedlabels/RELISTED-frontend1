@@ -41,6 +41,11 @@ export function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Restrict admins to /admin routes only
+  if (userRole === "ADMIN" && !pathname.startsWith("/admin")) {
+    return NextResponse.redirect(new URL("/admin/k340eol21/orders", req.url));
+  }
+
   // Listers and Dressers: require authentication
   // if (pathname.startsWith("/listers") || pathname.startsWith("/renters")) {
   //   if (!token && !devAuth) {
@@ -53,5 +58,17 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/listers/:path*", "/renters/:path*"],
+  matcher: [
+    "/",
+    "/admin/:path*",
+    "/auth/:path*",
+    "/listers/:path*",
+    "/renters/:path*",
+    "/shop/:path*",
+    "/home/:path*",
+    "/dressers/:path*",
+    "/about/:path*",
+    "/how-it-works/:path*",
+    "/contact-us/:path*",
+  ],
 };

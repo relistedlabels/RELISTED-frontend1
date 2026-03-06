@@ -1,14 +1,19 @@
 import { useMutation } from "@tanstack/react-query";
 import { login } from "@/lib/api/auth";
 import { useUserStore } from "@/store/useUserStore";
+import { useSessionStore } from "@/store/useSessionStore";
 
 export function useLogin() {
   const setAuth = useUserStore((s) => s.setAuth);
   const setMfaSession = useUserStore((s) => s.setMfaSession);
+  const setSessionExpired = useSessionStore((s) => s.setSessionExpired);
 
   return useMutation({
     mutationFn: login,
     onSuccess: async (data) => {
+      // Clear any session expired flag since we just authenticated
+      setSessionExpired(false);
+
       // If MFA is required (admin user)
       if (data.requiresMfa && data.sessionToken) {
         setMfaSession({
