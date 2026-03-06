@@ -17,10 +17,12 @@ export const useAddresses = () => {
   return useQuery({
     queryKey: ["renters", "addresses"],
     queryFn: async () => {
+      console.log("Fetching addresses...");
       const res = await apiFetch<{
         success: boolean;
         data: { addresses: Address[] };
       }>("/api/renters/profile/addresses", { method: "GET" });
+      console.log("Addresses response:", res);
       return res.data.addresses;
     },
     staleTime: 5 * 60 * 1000,

@@ -488,9 +488,14 @@ export const rentersApi = {
 
   submitRentalRequest: (data: {
     productId: string;
+    listerId: string;
     rentalStartDate: string;
     rentalEndDate: string;
+    rentalDays: number;
+    estimatedRentalPrice: number;
+    deliveryAddressId: string;
     autoPay: boolean;
+    currency: string;
   }) =>
     apiFetch<{ success: boolean; data: RentalRequest }>(
       "/api/renters/rental-requests",
