@@ -78,7 +78,7 @@ export default function ProductCard({
       className="overflow-hidden cursor-pointer"
       onClick={handleProductClick}
     >
-      <div className="relative w-full h-[300px] sm:h-[350px]">
+      <div className="relative w-full h-[230px] sm:h-[300px]">
         <div
           className="w-full h-full bg-cover bg-center"
           style={{ backgroundImage: `url(${image})` }}
