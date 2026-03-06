@@ -45,6 +45,18 @@ const AccountProfileDetails: React.FC = () => {
     defaultAddress: "",
   });
 
+  // ✅ Address modal state
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [addressFormData, setAddressFormData] = useState({
+    street: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    country: "Nigeria",
+    type: "residential",
+    isDefault: false,
+  });
+
   // ✅ Sync API data to form on load
   useEffect(() => {
     if (data?.data?.profile) {
@@ -99,6 +111,44 @@ const AccountProfileDetails: React.FC = () => {
         },
         onError: (error: any) => {
           alert(error?.message || "Failed to update profile");
+        },
+      },
+    );
+  };
+
+  // ✅ Handle add address
+  const handleAddAddress = () => {
+    if (!addressFormData.street.trim() || !addressFormData.city.trim()) {
+      alert("Please fill in street and city fields");
+      return;
+    }
+
+    addAddressMutation.mutate(
+      {
+        type: addressFormData.type,
+        street: addressFormData.street,
+        city: addressFormData.city,
+        state: addressFormData.state,
+        postalCode: addressFormData.postalCode,
+        country: addressFormData.country,
+        isDefault: addressFormData.isDefault,
+      },
+      {
+        onSuccess: () => {
+          alert("Address added successfully!");
+          setIsAddressModalOpen(false);
+          setAddressFormData({
+            street: "",
+            city: "",
+            state: "",
+            postalCode: "",
+            country: "Nigeria",
+            type: "residential",
+            isDefault: false,
+          });
+        },
+        onError: (error: any) => {
+          alert(error?.message || "Failed to add address");
         },
       },
     );
@@ -250,20 +300,7 @@ const AccountProfileDetails: React.FC = () => {
         <button
           type="button"
           className="flex items-center justify-center space-x-1 px-4 py-2 text-sm font-semibold text-black border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150"
-          onClick={() => {
-            const street = prompt("Enter new address street:");
-            if (street) {
-              addAddressMutation.mutate({
-                type: "residential",
-                street,
-                city: "Lagos",
-                state: "Lagos",
-                postalCode: "100001",
-                country: "Nigeria",
-                isDefault: false,
-              });
-            }
-          }}
+          onClick={() => setIsAddressModalOpen(true)}
         >
           <HiOutlinePlus className="w-4 h-4" />
           <span>Add New Address</span>
@@ -284,6 +321,165 @@ const AccountProfileDetails: React.FC = () => {
           {(updateProfileMutation.error as any)?.message ||
             "Failed to update profile"}
         </Paragraph1>
+      )}
+
+      {/* --- Address Modal --- */}
+      {isAddressModalOpen && (
+        <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-lg">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">
+              Add New Address
+            </h2>
+
+            <div className="space-y-4">
+              {/* Street */}
+              <div>
+                <label className="text-sm font-medium text-gray-900 mb-1 block">
+                  Street Address *
+                </label>
+                <input
+                  type="text"
+                  value={addressFormData.street}
+                  onChange={(e) =>
+                    setAddressFormData({
+                      ...addressFormData,
+                      street: e.target.value,
+                    })
+                  }
+                  placeholder="e.g., 123 Main Street"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition"
+                />
+              </div>
+
+              {/* City */}
+              <div>
+                <label className="text-sm font-medium text-gray-900 mb-1 block">
+                  City *
+                </label>
+                <input
+                  type="text"
+                  value={addressFormData.city}
+                  onChange={(e) =>
+                    setAddressFormData({
+                      ...addressFormData,
+                      city: e.target.value,
+                    })
+                  }
+                  placeholder="e.g., Lagos"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition"
+                />
+              </div>
+
+              {/* State */}
+              <div>
+                <label className="text-sm font-medium text-gray-900 mb-1 block">
+                  State
+                </label>
+                <input
+                  type="text"
+                  value={addressFormData.state}
+                  onChange={(e) =>
+                    setAddressFormData({
+                      ...addressFormData,
+                      state: e.target.value,
+                    })
+                  }
+                  placeholder="e.g., Lagos State"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition"
+                />
+              </div>
+
+              {/* Postal Code */}
+              <div>
+                <label className="text-sm font-medium text-gray-900 mb-1 block">
+                  Postal Code
+                </label>
+                <input
+                  type="text"
+                  value={addressFormData.postalCode}
+                  onChange={(e) =>
+                    setAddressFormData({
+                      ...addressFormData,
+                      postalCode: e.target.value,
+                    })
+                  }
+                  placeholder="e.g., 100001"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition"
+                />
+              </div>
+
+              {/* Address Type */}
+              <div>
+                <label className="text-sm font-medium text-gray-900 mb-1 block">
+                  Address Type
+                </label>
+                <select
+                  value={addressFormData.type}
+                  onChange={(e) =>
+                    setAddressFormData({
+                      ...addressFormData,
+                      type: e.target.value,
+                    })
+                  }
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition"
+                >
+                  <option value="residential">Residential</option>
+                  <option value="commercial">Commercial</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              {/* Default Address Checkbox */}
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="isDefault"
+                  checked={addressFormData.isDefault}
+                  onChange={(e) =>
+                    setAddressFormData({
+                      ...addressFormData,
+                      isDefault: e.target.checked,
+                    })
+                  }
+                  className="w-4 h-4 rounded border-gray-300 focus:ring-2 focus:ring-black cursor-pointer"
+                />
+                <label
+                  htmlFor="isDefault"
+                  className="ml-2 text-sm font-medium text-gray-900 cursor-pointer"
+                >
+                  Set as default address
+                </label>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setIsAddressModalOpen(false)}
+                className="flex-1 px-4 py-2 text-sm font-semibold text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleAddAddress}
+                disabled={addAddressMutation.isPending}
+                className="flex-1 px-4 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 disabled:opacity-50 transition"
+              >
+                {addAddressMutation.isPending ? "Adding..." : "Add Address"}
+              </button>
+            </div>
+
+            {addAddressMutation.isError && (
+              <Paragraph1 className="text-red-600 text-sm mt-3">
+                Error:{" "}
+                {(addAddressMutation.error as any)?.message ||
+                  "Failed to add address"}
+              </Paragraph1>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
