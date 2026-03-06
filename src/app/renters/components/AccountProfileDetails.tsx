@@ -22,7 +22,8 @@ import {
   useAddProfileAddress,
   useUploadProfileAvatar,
 } from "@/lib/queries/renters/useProfileDetails";
-import { FullProfile } from "@/types/profile";
+import { StateSelect } from "@/app/auth/profile-setup/components/StateSelect";
+import { CityLGASelect } from "@/app/auth/profile-setup/components/CityLGASelect";
 
 const AccountProfileDetails: React.FC = () => {
   const profile = useProfileStore((s) => s.profile);
@@ -106,7 +107,7 @@ const AccountProfileDetails: React.FC = () => {
             firstName: firstName || "",
             lastName: lastName || "",
             phoneNumber: formData.phone,
-          } as FullProfile);
+          } as any);
           alert("Profile updated successfully!");
         },
         onError: (error: any) => {
@@ -118,8 +119,12 @@ const AccountProfileDetails: React.FC = () => {
 
   // ✅ Handle add address
   const handleAddAddress = () => {
-    if (!addressFormData.street.trim() || !addressFormData.city.trim()) {
-      alert("Please fill in street and city fields");
+    if (
+      !addressFormData.street.trim() ||
+      !addressFormData.city.trim() ||
+      !addressFormData.state.trim()
+    ) {
+      alert("Please fill in street, city, and state fields");
       return;
     }
 
@@ -356,36 +361,30 @@ const AccountProfileDetails: React.FC = () => {
                 <label className="text-sm font-medium text-gray-900 mb-1 block">
                   City *
                 </label>
-                <input
-                  type="text"
+                <CityLGASelect
                   value={addressFormData.city}
-                  onChange={(e) =>
+                  onChange={(value) =>
                     setAddressFormData({
                       ...addressFormData,
-                      city: e.target.value,
+                      city: value,
                     })
                   }
-                  placeholder="e.g., Lagos"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition"
                 />
               </div>
 
               {/* State */}
               <div>
                 <label className="text-sm font-medium text-gray-900 mb-1 block">
-                  State
+                  State *
                 </label>
-                <input
-                  type="text"
+                <StateSelect
                   value={addressFormData.state}
-                  onChange={(e) =>
+                  onChange={(value) =>
                     setAddressFormData({
                       ...addressFormData,
-                      state: e.target.value,
+                      state: value,
                     })
                   }
-                  placeholder="e.g., Lagos State"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition"
                 />
               </div>
 
