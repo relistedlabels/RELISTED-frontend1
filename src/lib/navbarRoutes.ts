@@ -30,9 +30,9 @@ export const HIDDEN_NAVBAR_ROUTES = [
  * Check if navbar/footer should be visible on current route
  */
 export const shouldShowNavBar = (pathname: string): boolean => {
-  // Hide if it's an explicitly hidden route
+  // Hide if it's an explicitly hidden route (must be exact match or start with route + "/")
   for (const hiddenRoute of HIDDEN_NAVBAR_ROUTES) {
-    if (pathname.includes(hiddenRoute)) {
+    if (pathname === hiddenRoute || pathname.startsWith(hiddenRoute + "/")) {
       return false;
     }
   }

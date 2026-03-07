@@ -3,7 +3,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Header1Plus, Header2, Paragraph1 } from "@/common/ui/Text";
+import { Header1Plus, Header2, Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { useUsers } from "@/lib/queries/user/useUsers";
 import { UserCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import Link from "next/link";
@@ -48,7 +48,7 @@ export default function AllListersPage() {
   if (error) {
     return (
       <div className="w-full bg-white">
-        <section className="w-full bg-black text-white py-12 sm:py-20 px-4 sm:px-0">
+        <section className="w-full bg-black text-white py-12 pt-[150px] sm:py-20 px-4 sm:px-0">
           <div className="container mx-auto">
             <Header1Plus className="text-3xl sm:text-4xl tracking-wide uppercase mb-4">
               All Listers
@@ -72,7 +72,7 @@ export default function AllListersPage() {
   return (
     <div className="w-full bg-white">
       {/* Hero Section */}
-      <section className="w-full bg-black text-white py-12 sm:py-20 px-4 sm:px-0">
+      <section className="w-full bg-black text-white py-12 pt-[100px] sm:py-20 px-4 sm:px-0">
         <div className="container mx-auto">
           <Header1Plus className="text-3xl sm:text-4xl tracking-wide uppercase mb-4">
             All Listers
@@ -119,7 +119,7 @@ export default function AllListersPage() {
                 <Link key={user.id} href={`/shop/${user.id}`}>
                   <div className="group cursor-pointer">
                     {/* Profile Image */}
-                    <div className="relative w-full h-[100px] sm:h-[150px] overflow-hidden rounded-full [40px] mb-4 bg-gray-200">
+                    <div className="relative w-full h-[150px] sm:h-[150px] overflow-hidden rounded-full [40px] mb-4 bg-gray-200">
                       <Image
                         src={user.avatar || "/images/default-avatar.jpg"}
                         alt={user.name || "Lister"}
@@ -136,9 +136,9 @@ export default function AllListersPage() {
 
                     {/* Lister Info */}
                     <div>
-                      <Header2 className="text-lg font-bold truncate">
+                      <Paragraph3 className="text-lg text-center font-bold truncate">
                         {user.name || "Unknown Lister"}
-                      </Header2>
+                      </Paragraph3>
                       <Paragraph1 className="text-gray-600 hidden text-sm mt-1">
                         Lister on RELISTED
                       </Paragraph1>
