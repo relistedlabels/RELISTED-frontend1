@@ -13,9 +13,12 @@ export default function AllListersPage() {
   const { data: users, isLoading, error } = useUsers();
   const [searchTerm, setSearchTerm] = useState("");
 
+  // ✅ Filter to show only listers with profile pictures + search filter
   const filteredUsers =
-    users?.filter((user) =>
-      user.name?.toLowerCase().includes(searchTerm.toLowerCase()),
+    users?.filter(
+      (user) =>
+        user.avatar &&
+        user.name?.toLowerCase().includes(searchTerm.toLowerCase()),
     ) || [];
 
   if (isLoading) {
@@ -111,12 +114,12 @@ export default function AllListersPage() {
               </Paragraph1>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-3 lg:grid-cols-7 gap-4 sm:gap-6">
               {filteredUsers.map((user) => (
                 <Link key={user.id} href={`/shop/${user.id}`}>
                   <div className="group cursor-pointer">
                     {/* Profile Image */}
-                    <div className="relative w-full h-[250px] sm:h-[280px] overflow-hidden rounded-lg mb-4 bg-gray-200">
+                    <div className="relative w-full h-[100px] sm:h-[150px] overflow-hidden rounded-full [40px] mb-4 bg-gray-200">
                       <Image
                         src={user.avatar || "/images/default-avatar.jpg"}
                         alt={user.name || "Lister"}
@@ -136,12 +139,12 @@ export default function AllListersPage() {
                       <Header2 className="text-lg font-bold truncate">
                         {user.name || "Unknown Lister"}
                       </Header2>
-                      <Paragraph1 className="text-gray-600 text-sm mt-1">
+                      <Paragraph1 className="text-gray-600 hidden text-sm mt-1">
                         Lister on RELISTED
                       </Paragraph1>
 
                       {/* Stats or brief info can go here */}
-                      <div className="mt-3 text-xs text-gray-500">
+                      <div className="mt-3 text-xs hidden  text-gray-500">
                         <p>Explore their curated collection</p>
                       </div>
                     </div>

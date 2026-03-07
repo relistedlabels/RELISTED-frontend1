@@ -10,7 +10,7 @@ export default function StyleSpotlightPage() {
   return (
     <div>
       <StyleSpotlightHero />
-      <MeetCuratorsSection />
+      {/* <MeetCuratorsSection /> */}
       <StyleCategoriesSection />
       <BecomeCuratorSection />
     </div>
