@@ -13,6 +13,7 @@ export * from "./product/useProductApproval";
 export * from "./product/useToggleAvailability";
 export * from "./user/useCreateProfile";
 export * from "./user/useUpdateProfile";
+export * from "./user/useSubmitRenterAddress";
 export * from "./brand.mutations";
 export * from "./tag.mutations";
 export * from "./upload.mutations";

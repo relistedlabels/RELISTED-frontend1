@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useUserStore } from "@/store/useUserStore";
 
 import CompleteProfileFlow from "./CompleteProfileFlow";
@@ -10,6 +10,8 @@ import CompleteBusinessProfileFlow from "./CompleteBusinessProfileFlow";
 
 function ProfileSetUp() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get("returnUrl");
   const role = useUserStore((s) => s.role);
 
   // useEffect(() => {
@@ -38,9 +40,13 @@ function ProfileSetUp() {
             },
           }}
         >
-          {role === "RENTER" && <CompleteProfileFlow />}
-          {role === "LISTER" && <CompleteBusinessProfileFlow />}
-          {role === "ADMIN" && <CompleteBusinessProfileFlow />}
+          {role === "RENTER" && <CompleteProfileFlow returnUrl={returnUrl} />}
+          {role === "LISTER" && (
+            <CompleteBusinessProfileFlow returnUrl={returnUrl} />
+          )}
+          {role === "ADMIN" && (
+            <CompleteBusinessProfileFlow returnUrl={returnUrl} />
+          )}
         </motion.div>
       </motion.div>
     </div>

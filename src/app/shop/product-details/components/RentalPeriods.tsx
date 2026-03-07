@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRouter, usePathname } from "next/navigation";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
 import RentalDurationSelector from "./RentalDurationSelector";
@@ -19,10 +20,12 @@ import { useSubmitRentalRequest } from "@/lib/mutations/renters/useRentalRequest
 import RentalCartView from "../../cart/components/RentalCartView";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useAddresses } from "@/lib/queries/renters/useAddresses";
-import { useAddProfileAddress } from "@/lib/queries/renters/useProfileDetails";
-import { StateSelect } from "@/app/auth/profile-setup/components/StateSelect";
-import { CityLGASelect } from "@/app/auth/profile-setup/components/CityLGASelect";
+import { useProfileDetails } from "@/lib/queries/renters/useProfileDetails";
+import { useUserStore } from "@/store/useUserStore";
 import Link from "next/link";
+
+// Hook to get renter profile (uses GET /api/renters/profile)
+// Hook to get renter addresses (uses GET /api/renters/profile/addresses)
 
 // --------------------
 // Types
@@ -55,21 +58,24 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
   const minPrice = 50000;
   const maxPrice = 200000;
   const { data: user } = useMe();
-  const { data: addresses, isLoading: isAddressesLoading } = useAddresses();
-  const addAddressMutation = useAddProfileAddress();
-  const queryClient = useQueryClient();
 
-  // Address modal state
-  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
-  const [addressFormData, setAddressFormData] = useState({
-    street: "",
-    city: "",
-    state: "",
-    postalCode: "",
-    country: "Nigeria",
-    type: "residential",
-    isDefault: true, // Default to true since they need an address
-  });
+  // GET /api/renters/profile - Check if user has a profile
+  const {
+    data: profileData,
+    isLoading: isProfileLoading,
+    isError: isProfileError,
+  } = useProfileDetails();
+
+  // GET /api/renters/profile/addresses - Get user addresses
+  const { data: addresses, isLoading: isAddressesLoading } = useAddresses();
+
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const pathname = usePathname();
+  const setUser = useUserStore((s) => s.setUser);
+
+  // Profile setup modal state
+  const [isProfileSetupModalOpen, setIsProfileSetupModalOpen] = useState(false);
 
   const variants = {
     hidden: { x: "100%" },
@@ -100,19 +106,59 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
     setIsChecking(true);
     setSummaryData(null);
     try {
-      // Get default addressId from addresses
-      let deliveryAddressId = "";
-      if (addresses && Array.isArray(addresses)) {
-        // API returns addresses as [{ id, ... }], not addressId
-        const defaultAddr = addresses.find((a) => a.isDefault);
-        deliveryAddressId = defaultAddr?.id || addresses[0]?.id || "";
-      }
-      if (!deliveryAddressId) {
-        // Open address modal instead of error
-        setIsAddressModalOpen(true);
+      // Wait for both profile and addresses to load
+      if (isProfileLoading || isAddressesLoading) {
+        toast.info("Loading your profile and addresses...");
         setIsChecking(false);
         return;
       }
+
+      // Detailed logging for debugging
+      console.group("🔍 Profile Check Debug");
+      console.log("Profile data present:", !!profileData);
+      console.log("Profile data:", profileData);
+      console.log("Profile error:", isProfileError);
+      console.log("Addresses present:", !!addresses);
+      console.log("Addresses data:", addresses);
+      console.log("Addresses count:", addresses?.length || 0);
+      console.groupEnd();
+
+      // Check if profile exists
+      if (!profileData) {
+        toast.error("Profile not found. Please complete your profile setup.");
+        setIsChecking(false);
+        setIsProfileSetupModalOpen(true);
+        return;
+      }
+
+      // Check if there's a profile error
+      if (isProfileError) {
+        toast.error("Error loading profile. Please try again.");
+        setIsChecking(false);
+        setIsProfileSetupModalOpen(true);
+        return;
+      }
+
+      // Check if addresses exist
+      if (!addresses || addresses.length === 0) {
+        toast.info("Please add a delivery address to continue.");
+        setIsChecking(false);
+        setIsProfileSetupModalOpen(true);
+        return;
+      }
+
+      // Get default address from addresses (using GET /api/renters/profile/addresses)
+      const defaultAddr = addresses.find((a) => a.isDefault);
+      const deliveryAddressId = defaultAddr?.id || addresses[0]?.id || "";
+
+      if (!deliveryAddressId) {
+        toast.error("Unable to select a delivery address. Please try again.");
+        setIsChecking(false);
+        return;
+      }
+
+      console.log("✅ All checks passed. Proceeding with rental request...");
+
       const rentalStartDate = startDate.toISOString();
       const rentalEndDate = new Date(
         startDate.getTime() + (rentalDays - 1) * 24 * 60 * 60 * 1000,
@@ -145,6 +191,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
         }
       }
     } catch (e: any) {
+      console.error("❌ Error in handleCheckAvailability:", e);
       toast.error(e?.message || "Could not submit request. Please try again.");
     } finally {
       setIsChecking(false);
@@ -164,50 +211,13 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
     return () => clearInterval(timer);
   }, [countdownActive, countdown]);
 
-  // Handle add address
-  const handleAddAddress = () => {
-    if (
-      !addressFormData.street.trim() ||
-      !addressFormData.city.trim() ||
-      !addressFormData.state.trim()
-    ) {
-      toast.error("Please fill in street, city, and state fields");
-      return;
-    }
-
-    addAddressMutation.mutate(
-      {
-        type: addressFormData.type,
-        street: addressFormData.street,
-        city: addressFormData.city,
-        state: addressFormData.state,
-        postalCode: addressFormData.postalCode,
-        country: addressFormData.country,
-        isDefault: addressFormData.isDefault,
-      },
-      {
-        onSuccess: () => {
-          toast.success("Address added successfully!");
-          setIsAddressModalOpen(false);
-          setAddressFormData({
-            street: "",
-            city: "",
-            state: "",
-            postalCode: "",
-            country: "Nigeria",
-            type: "residential",
-            isDefault: true,
-          });
-          // Invalidate addresses query to refetch
-          queryClient.invalidateQueries({ queryKey: ["renters", "addresses"] });
-          // After adding address, retry the check availability
-          handleCheckAvailability();
-        },
-        onError: (error: any) => {
-          toast.error(error?.message || "Failed to add address");
-        },
-      },
-    );
+  // Handle profile setup modal proceed
+  const handleProfileSetupProceed = () => {
+    // Set user role to RENTER
+    setUser({ role: "RENTER" });
+    // Encode current pathname as return URL
+    const returnUrl = encodeURIComponent(pathname);
+    router.push(`/auth/profile-setup?returnUrl=${returnUrl}`);
   };
 
   return (
@@ -349,167 +359,69 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Address Modal */}
+      {/* Profile Setup Required Modal */}
       <AnimatePresence>
-        {isAddressModalOpen && (
+        {isProfileSetupModalOpen && (
           <motion.div
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4"
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[101] p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="bg-white rounded-lg max-w-md w-full p-6 shadow-lg"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="bg-white rounded-2xl max-w-md w-full p-8 shadow-xl"
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 20, stiffness: 300 }}
             >
-              <Paragraph3 className="text-lg font-bold text-gray-900 mb-4">
-                Add Delivery Address
-              </Paragraph3>
-
-              <div className="space-y-4">
-                {/* Street */}
-                <div>
-                  <label className="text-sm font-medium text-gray-900 mb-1 block">
-                    Street Address *
-                  </label>
-                  <input
-                    type="text"
-                    value={addressFormData.street}
-                    onChange={(e) =>
-                      setAddressFormData({
-                        ...addressFormData,
-                        street: e.target.value,
-                      })
-                    }
-                    placeholder="e.g., 123 Main Street"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition"
-                  />
-                </div>
-
-                {/* City */}
-                <div>
-                  <label className="text-sm font-medium text-gray-900 mb-1 block">
-                    City *
-                  </label>
-                  <CityLGASelect
-                    value={addressFormData.city}
-                    onChange={(value) =>
-                      setAddressFormData({
-                        ...addressFormData,
-                        city: value,
-                      })
-                    }
-                  />
-                </div>
-
-                {/* State */}
-                <div>
-                  <label className="text-sm font-medium text-gray-900 mb-1 block">
-                    State *
-                  </label>
-                  <StateSelect
-                    value={addressFormData.state}
-                    onChange={(value) =>
-                      setAddressFormData({
-                        ...addressFormData,
-                        state: value,
-                      })
-                    }
-                  />
-                </div>
-
-                {/* Postal Code */}
-                <div>
-                  <label className="text-sm font-medium text-gray-900 mb-1 block">
-                    Postal Code
-                  </label>
-                  <input
-                    type="text"
-                    value={addressFormData.postalCode}
-                    onChange={(e) =>
-                      setAddressFormData({
-                        ...addressFormData,
-                        postalCode: e.target.value,
-                      })
-                    }
-                    placeholder="e.g., 100001"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition"
-                  />
-                </div>
-
-                {/* Address Type */}
-                <div>
-                  <label className="text-sm font-medium text-gray-900 mb-1 block">
-                    Address Type
-                  </label>
-                  <select
-                    value={addressFormData.type}
-                    onChange={(e) =>
-                      setAddressFormData({
-                        ...addressFormData,
-                        type: e.target.value,
-                      })
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition"
+              {/* Icon */}
+              <div className="flex justify-center mb-4">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                  <svg
+                    className="w-8 h-8 text-blue-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
                   >
-                    <option value="residential">Residential</option>
-                    <option value="commercial">Commercial</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-
-                {/* Default Address Checkbox */}
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="isDefault"
-                    checked={addressFormData.isDefault}
-                    onChange={(e) =>
-                      setAddressFormData({
-                        ...addressFormData,
-                        isDefault: e.target.checked,
-                      })
-                    }
-                    className="w-4 h-4 rounded border-gray-300 focus:ring-2 focus:ring-black cursor-pointer"
-                  />
-                  <label
-                    htmlFor="isDefault"
-                    className="ml-2 text-sm font-medium text-gray-900 cursor-pointer"
-                  >
-                    Set as default address
-                  </label>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
                 </div>
               </div>
 
+              {/* Title */}
+              <Paragraph2 className="text-2xl font-bold text-center text-gray-900 mb-2">
+                Complete Your Profile
+              </Paragraph2>
+
+              {/* Description */}
+              <Paragraph1 className="text-center text-gray-600 mb-6 leading-relaxed">
+                To complete this action and start renting, you need to set up
+                your profile first. This will only take a few minutes!
+              </Paragraph1>
+
               {/* Modal Actions */}
-              <div className="flex gap-3 mt-6">
+              <div className="flex flex-col gap-3">
                 <button
                   type="button"
-                  onClick={() => setIsAddressModalOpen(false)}
-                  className="flex-1 px-4 py-2 text-sm font-semibold text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                  onClick={handleProfileSetupProceed}
+                  className="w-full px-4 py-3 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition-colors"
+                >
+                  Proceed to Setup
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsProfileSetupModalOpen(false)}
+                  className="w-full px-4 py-3 text-sm font-semibold text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
-                <button
-                  type="button"
-                  onClick={handleAddAddress}
-                  disabled={addAddressMutation.isPending}
-                  className="flex-1 px-4 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 disabled:opacity-50 transition"
-                >
-                  {addAddressMutation.isPending ? "Adding..." : "Add Address"}
-                </button>
               </div>
-
-              {addAddressMutation.isError && (
-                <Paragraph1 className="text-red-600 text-sm mt-3">
-                  Error:{" "}
-                  {(addAddressMutation.error as any)?.message ||
-                    "Failed to add address"}
-                </Paragraph1>
-              )}
             </motion.div>
           </motion.div>
         )}

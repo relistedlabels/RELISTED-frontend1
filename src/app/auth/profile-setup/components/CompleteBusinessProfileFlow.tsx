@@ -11,7 +11,9 @@ import StepFourPayment from "./StepFourPayment";
 
 const MAX_STEPS = 2;
 
-const CompleteBusinessProfileFlow: React.FC = () => {
+const CompleteBusinessProfileFlow: React.FC<{ returnUrl?: string | null }> = ({
+  returnUrl,
+}) => {
   const [currentStep, setCurrentStep] = useState(1);
 
   const handleNextStep = () => {
@@ -31,19 +33,22 @@ const CompleteBusinessProfileFlow: React.FC = () => {
   const renderStepComponent = () => {
     switch (currentStep) {
       case 1:
-        return <StepOneBusiness onNext={handleNextStep} />;
+        return (
+          <StepOneBusiness onNext={handleNextStep} returnUrl={returnUrl} />
+        );
       case 2:
         return (
           <StepTwoBusinessDetails
             onNext={handleNextStep}
             onBack={handlePrevStep}
+            returnUrl={returnUrl}
           />
         );
       // case 3:
       //   return (
       //     <StepThreeContact onNext={handleNextStep} onBack={handlePrevStep} />
       //   );
-      
+
       // case 4:
       //   return (
       //     <StepFourPayment

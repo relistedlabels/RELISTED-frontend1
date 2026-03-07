@@ -10,18 +10,22 @@ import { CityLGASelect } from "./CityLGASelect";
 import { ToolInfo } from "@/common/ui/ToolInfo";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useCreateProfile } from "@/lib/mutations";
+import { useSubmitRenterAddress } from "@/lib/mutations";
 
 interface StepOnePersonalProps {
   onNext: () => void;
+  returnUrl?: string | null;
 }
 
-const StepOnePersonal: React.FC<StepOnePersonalProps> = ({ onNext }) => {
+const StepOnePersonal: React.FC<StepOnePersonalProps> = ({
+  onNext,
+  returnUrl,
+}) => {
   const profile = useProfileStore((s) => s);
   const setProfile = useProfileStore((s) => s.setProfile);
   const router = useRouter();
-  const createProfile = useCreateProfile();
-  const isLoading = createProfile.isPending;
+  const submitAddress = useSubmitRenterAddress();
+  const isLoading = submitAddress.isPending;
 
   const [phoneNumber, setPhoneNumber] = useState(profile.phoneNumber);
   const [address, setAddress] = useState(profile.address.street);
@@ -54,7 +58,7 @@ const StepOnePersonal: React.FC<StepOnePersonalProps> = ({ onNext }) => {
 
     setError(null);
 
-    setProfile({
+    const profileData = {
       phoneNumber,
       bvn,
       address: {
@@ -63,31 +67,49 @@ const StepOnePersonal: React.FC<StepOnePersonalProps> = ({ onNext }) => {
         state,
         country: "Nigeria",
       },
-    });
-    createProfile.mutate(undefined, {
-      onSuccess: () => {
-        toast.success(`Profile created! 🎉`, {
-          description:
-            "You're all set to discover rentals and great finds — happy shopping!",
-          duration: 4000,
-        });
+    };
 
-        setTimeout(() => {
-          router.replace("/listers/inventory");
-        }, 1500);
+    setProfile(profileData);
+    submitAddress.mutate(
+      {
+        phoneNumber,
+        bvn,
+        address: {
+          street: address,
+          city: cityLGA,
+          state,
+          country: "Nigeria",
+        },
       },
-      onError: (error: any) => {
-        const errorMessage =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Failed to create profile. Please try again.";
+      {
+        onSuccess: () => {
+          toast.success(`Profile created! 🎉`, {
+            description:
+              "You're all set to discover rentals and great finds — happy shopping!",
+            duration: 4000,
+          });
 
-        toast.error("Oops! Something went wrong", {
-          description: errorMessage,
-          duration: 4000,
-        });
+          setTimeout(() => {
+            // If returnUrl is provided, decode and navigate to it; otherwise go to default
+            const redirectUrl = returnUrl
+              ? decodeURIComponent(returnUrl)
+              : "/listers/inventory";
+            router.replace(redirectUrl);
+          }, 1500);
+        },
+        onError: (error: any) => {
+          const errorMessage =
+            error?.response?.data?.message ||
+            error?.message ||
+            "Failed to create profile. Please try again.";
+
+          toast.error("Oops! Something went wrong", {
+            description: errorMessage,
+            duration: 4000,
+          });
+        },
       },
-    });
+    );
   };
 
   return (

@@ -14,11 +14,13 @@ import { toast } from "sonner";
 interface StepTwoBusinessDetailsProps {
   onNext: () => void;
   onBack: () => void;
+  returnUrl?: string | null;
 }
 
 const StepTwoBusinessDetails: React.FC<StepTwoBusinessDetailsProps> = ({
   onNext,
   onBack,
+  returnUrl,
 }) => {
   const businessInfo = useProfileStore((s) => s.businessInfo);
   const setProfile = useProfileStore((s) => s.setProfile);
@@ -79,7 +81,11 @@ const StepTwoBusinessDetails: React.FC<StepTwoBusinessDetailsProps> = ({
 
         // ✅ Route to inventory after brief delay for toast visibility
         setTimeout(() => {
-          router.replace("/listers/inventory");
+          // If returnUrl is provided, decode and navigate to it; otherwise go to default
+          const redirectUrl = returnUrl
+            ? decodeURIComponent(returnUrl)
+            : "/listers/inventory";
+          router.replace(redirectUrl);
         }, 1500);
       },
       onError: (error: any) => {

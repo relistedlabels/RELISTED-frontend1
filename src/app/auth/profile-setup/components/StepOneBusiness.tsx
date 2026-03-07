@@ -11,9 +11,13 @@ import { ToolInfo } from "@/common/ui/ToolInfo";
 
 interface StepOnePersonalProps {
   onNext: () => void;
+  returnUrl?: string | null;
 }
 
-const StepOnePersonal: React.FC<StepOnePersonalProps> = ({ onNext }) => {
+const StepOnePersonal: React.FC<StepOnePersonalProps> = ({
+  onNext,
+  returnUrl,
+}) => {
   const profile = useProfileStore((s) => s);
   const setProfile = useProfileStore((s) => s.setProfile);
 

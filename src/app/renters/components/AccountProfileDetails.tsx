@@ -3,6 +3,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
   HiOutlineUser,
@@ -21,30 +22,51 @@ import {
   useProfileAddresses,
   useAddProfileAddress,
   useUploadProfileAvatar,
+  useProfileAvatar,
 } from "@/lib/queries/renters/useProfileDetails";
 import { StateSelect } from "@/app/auth/profile-setup/components/StateSelect";
 import { CityLGASelect } from "@/app/auth/profile-setup/components/CityLGASelect";
+import { toast } from "sonner";
 
 const AccountProfileDetails: React.FC = () => {
-  const profile = useProfileStore((s) => s.profile);
-  const setProfile = useProfileStore((s) => s.setProfile);
+  const queryClient = useQueryClient();
 
-  // ✅ Fetch profile from API
-  const { data, isLoading } = useProfileDetails();
-  const updateProfileMutation = useUpdateProfile();
-  const { data: addressesData, isLoading: isAddressesLoading } =
+  // ✅ API Queries
+  const {
+    data: profileResponse,
+    isLoading: isProfileLoading,
+    error: profileError,
+  } = useProfileDetails();
+  const { data: addressesResponse, isLoading: isAddressesLoading } =
     useProfileAddresses();
+  const { data: avatarResponse, isLoading: isAvatarLoading } =
+    useProfileAvatar();
+  const updateProfileMutation = useUpdateProfile();
   const addAddressMutation = useAddProfileAddress();
   const uploadAvatarMutation = useUploadProfileAvatar();
 
-  // ✅ Local form state synced from store/API
+  // ✅ Extract profile data from GET /api/renters/profile (nested in data.profile)
+  console.log("🔍 Full profileResponse:", profileResponse);
+  console.log("🔍 profileResponse?.profile:", profileResponse?.profile);
+  const profileData = profileResponse?.profile; // Hook returns response.data which has {profile: {...}}
+  console.log("📌 Extracted profileData:", profileData);
+  console.log("⚠️ Profile Error:", profileError);
+
+  // ✅ Extract addresses from GET /api/renters/profile/addresses
+  const addresses = addressesResponse?.data?.addresses || [];
+
+  // ✅ Extract avatar from GET /api/renters/profile/avatar
+  const avatarUrl = avatarResponse?.data?.avatarUrl;
+
+  // ✅ Local form state
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     phone: "",
     role: "",
-    defaultAddress: "",
   });
+
+  const [avatarPreview, setAvatarPreview] = useState<string>("");
 
   // ✅ Address modal state
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
@@ -58,42 +80,46 @@ const AccountProfileDetails: React.FC = () => {
     isDefault: false,
   });
 
-  // ✅ Sync API data to form on load
+  // ✅ Sync profile data to form on load
   useEffect(() => {
-    if (data?.data?.profile) {
-      const p = data.data.profile;
-      setFormData({
-        fullName: p.fullName || "",
-        email: p.email || "",
-        phone: p.phone || "",
-        role: p.role || "Renter",
-        defaultAddress:
-          p.addresses?.find((a: any) => a.isDefault)?.street || "",
+    console.log("🔄 useEffect triggered, profileData:", profileData);
+    if (profileData) {
+      console.log("✅ Setting formData with:", {
+        fullName: profileData.fullName,
+        email: profileData.email,
+        phone: profileData.phone,
+        role: profileData.role,
       });
+      setFormData({
+        fullName: profileData.fullName || "",
+        email: profileData.email || "",
+        phone: profileData.phone || "",
+        role: profileData.role || "Renter",
+      });
+    } else {
+      console.warn("⚠️ No profileData available");
     }
-  }, [data]);
+  }, [profileData]);
 
-  // ✅ Sync store data to form as fallback
-  if (!data?.data?.profile && profile) {
-    useEffect(() => {
-      setFormData({
-        fullName: profile.firstName + " " + profile.lastName || "",
-        email: profile.email || "",
-        phone: profile.phoneNumber || "",
-        role: profile.role || "Renter",
-        defaultAddress: profile.address?.street || "",
-      });
-    }, [profile]);
-  }
+  // ✅ Load avatar from GET /api/renters/profile/avatar endpoint
+  useEffect(() => {
+    if (avatarUrl) {
+      console.log("🖼️ Avatar URL loaded:", avatarUrl);
+      setAvatarPreview(avatarUrl);
+    }
+  }, [avatarUrl]);
 
   // ✅ Handle form input changes
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // ✅ Handle update profile
+  // ✅ Handle update profile - uses PUT /api/renters/profile
   const handleUpdateProfile = () => {
-    const [firstName, lastName] = formData.fullName.split(" ");
+    if (!formData.fullName.trim() || !formData.phone.trim()) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
 
     updateProfileMutation.mutate(
       {
@@ -102,29 +128,27 @@ const AccountProfileDetails: React.FC = () => {
       },
       {
         onSuccess: () => {
-          setProfile({
-            ...profile,
-            firstName: firstName || "",
-            lastName: lastName || "",
-            phoneNumber: formData.phone,
-          } as any);
-          alert("Profile updated successfully!");
+          toast.success("Profile updated successfully!");
+          // Invalidate profile query to refetch automatically
+          queryClient.invalidateQueries({
+            queryKey: ["renter-profile-details"],
+          });
         },
         onError: (error: any) => {
-          alert(error?.message || "Failed to update profile");
+          toast.error(error?.message || "Failed to update profile");
         },
       },
     );
   };
 
-  // ✅ Handle add address
+  // ✅ Handle add address - uses POST /api/renters/profile/addresses
   const handleAddAddress = () => {
     if (
       !addressFormData.street.trim() ||
       !addressFormData.city.trim() ||
       !addressFormData.state.trim()
     ) {
-      alert("Please fill in street, city, and state fields");
+      toast.error("Please fill in street, city, and state fields");
       return;
     }
 
@@ -140,7 +164,11 @@ const AccountProfileDetails: React.FC = () => {
       },
       {
         onSuccess: () => {
-          alert("Address added successfully!");
+          toast.success("Address added successfully!");
+          // Invalidate addresses query to refetch automatically
+          queryClient.invalidateQueries({
+            queryKey: ["renter-profile-addresses"],
+          });
           setIsAddressModalOpen(false);
           setAddressFormData({
             street: "",
@@ -153,50 +181,84 @@ const AccountProfileDetails: React.FC = () => {
           });
         },
         onError: (error: any) => {
-          alert(error?.message || "Failed to add address");
+          toast.error(error?.message || "Failed to add address");
         },
       },
     );
+  };
+
+  // ✅ Handle avatar upload - uses POST /api/renters/profile/avatar
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      // Upload to server
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      uploadAvatarMutation.mutate(formData, {
+        onSuccess: (response) => {
+          console.log("✅ Avatar uploaded:", response.data);
+          toast.success("Profile photo updated successfully!");
+          // Invalidate avatar query to refetch automatically
+          queryClient.invalidateQueries({
+            queryKey: ["renter-profile-avatar"],
+          });
+        },
+        onError: (error: any) => {
+          toast.error(error?.message || "Failed to upload avatar");
+        },
+      });
+    }
   };
 
   return (
     <div className="font-sans">
       {/* Profile Header and Image Upload */}
       <div className="flex flex-col bg-[#3A3A32] p-6 items-center mb-6 rounded-lg">
-        <div className="relative w-28 h-28   flex items-center justify-center overflow-hidden">
-          {/* Profile Picture or Placeholder */}
-          {data?.data?.profile?.profileImage ? (
+        <div className="relative w-28 h-28 flex items-center justify-center overflow-hidden rounded-full bg-gray-200">
+          {/* Avatar from GET /api/renters/profile/avatar via POST /api/renters/profile/avatar */}
+          {avatarPreview ? (
             <img
-              src={data.data.profile.profileImage}
+              src={avatarPreview}
               alt="Profile"
               className="w-full h-full object-cover rounded-full"
             />
+          ) : isAvatarLoading ? (
+            <div className="w-full h-full flex items-center justify-center bg-gray-300">
+              <div className="text-xs text-gray-600">Loading...</div>
+            </div>
           ) : (
             <HiOutlineUser className="w-16 h-16 text-gray-500" />
           )}
 
-          {/* Upload Button Overlay */}
-          <form>
-            <label className="absolute  bottom-0 right-0 w-8 h-8 bg-black rounded-full flex items-center justify-center cursor-pointer border-2 border-white hover:bg-gray-800 transition">
-              <HiOutlineCamera className="w-4 h-4 text-white" />
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
-                  if (e.target.files && e.target.files[0]) {
-                    const formData = new FormData();
-                    formData.append("avatar", e.target.files[0]);
-                    uploadAvatarMutation.mutate(formData);
-                  }
-                }}
-              />
-            </label>
-          </form>
+          {/* Upload Button Overlay - uses POST /api/renters/profile/avatar */}
+          <label className="absolute bottom-0 right-0 w-8 h-8 bg-black rounded-full flex items-center justify-center cursor-pointer border-2 border-white hover:bg-gray-800 transition">
+            <HiOutlineCamera className="w-4 h-4 text-white" />
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarUpload}
+              disabled={uploadAvatarMutation.isPending}
+            />
+          </label>
         </div>
         <Paragraph1 className="text-sm text-center mt-4 text-white">
           Upload a profile photo <br /> (Max 2MB)
         </Paragraph1>
+        {uploadAvatarMutation.isPending && (
+          <Paragraph1 className="text-xs text-gray-300 mt-2">
+            Uploading...
+          </Paragraph1>
+        )}
       </div>
 
       {/* --- Profile Details Section --- */}
@@ -204,100 +266,130 @@ const AccountProfileDetails: React.FC = () => {
         Profile Details
       </Paragraph1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        {/* Full Name */}
-        <div>
-          <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
-            Full Name
-          </Paragraph1>
-          <div className="relative">
-            <HiOutlineUser className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              value={formData.fullName}
-              onChange={(e) => handleInputChange("fullName", e.target.value)}
-              placeholder="First Name Last Name"
-              className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition duration-150"
-            />
-          </div>
-        </div>
+      {/* DEBUG: Show form state */}
+      {/* <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 rounded text-xs text-yellow-900">
+        <p>📊 Form State: {JSON.stringify(formData)}</p>
+        <p>📊 ProfileData: {JSON.stringify(profileData)}</p>
+      </div> */}
 
-        {/* Email Address */}
-        <div>
-          <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
-            Email Address
-          </Paragraph1>
-          <div className="relative">
-            <HiOutlineMail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleInputChange("email", e.target.value)}
-              className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition duration-150"
-            />
-          </div>
-        </div>
+      {isProfileLoading ? (
+        <Paragraph1 className="text-gray-600">Loading profile...</Paragraph1>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            {/* Full Name */}
+            <div>
+              <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
+                Full Name
+              </Paragraph1>
+              <div className="relative">
+                <HiOutlineUser className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={formData.fullName}
+                  onChange={(e) =>
+                    handleInputChange("fullName", e.target.value)
+                  }
+                  placeholder="First Name Last Name"
+                  className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition duration-150"
+                />
+              </div>
+            </div>
 
-        {/* Phone Number */}
-        <div>
-          <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
-            Phone Number
-          </Paragraph1>
-          <div className="relative">
-            <HiOutlinePhone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => handleInputChange("phone", e.target.value)}
-              className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition duration-150"
-            />
-          </div>
-        </div>
+            {/* Email Address */}
+            <div>
+              <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
+                Email Address
+              </Paragraph1>
+              <div className="relative">
+                <HiOutlineMail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="email"
+                  value={formData.email}
+                  disabled
+                  className="w-full p-3 pl-10 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                />
+              </div>
+            </div>
 
-        {/* Role */}
-        <div>
-          <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
-            Role
-          </Paragraph1>
-          <div className="relative">
-            <HiOutlineCube className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              value={formData.role}
-              readOnly
-              className="w-full p-3 pl-10 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
-            />
+            {/* Phone Number */}
+            <div>
+              <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
+                Phone Number
+              </Paragraph1>
+              <div className="relative">
+                <HiOutlinePhone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange("phone", e.target.value)}
+                  className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition duration-150"
+                />
+              </div>
+            </div>
+
+            {/* Role */}
+            <div>
+              <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
+                Role
+              </Paragraph1>
+              <div className="relative">
+                <HiOutlineCube className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={formData.role}
+                  readOnly
+                  className="w-full p-3 pl-10 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
 
       {/* --- Address Section --- */}
       <Paragraph1 className="text-lg font-bold text-gray-900 mb-4">
         Addresses
       </Paragraph1>
       {isAddressesLoading ? (
-        <Paragraph1>Loading addresses...</Paragraph1>
+        <Paragraph1 className="text-gray-600">Loading addresses...</Paragraph1>
       ) : (
-        <div className="space-y-2 mb-6">
-          {(addressesData?.data?.addresses || []).map((address: any) => (
-            <div
-              key={address.addressId}
-              className="flex items-center justify-between p-3 border border-gray-300 rounded-lg bg-white"
-            >
-              <div className="flex items-start space-x-2 flex-1">
-                <HiOutlineHome className="w-5 h-5 text-gray-500 shrink-0 mt-0.5" />
-                <span className="text-sm text-gray-700">
-                  {address.street}, {address.city}, {address.state}
-                </span>
-                {address.isDefault && (
-                  <span className="ml-2 px-2 py-1 text-xs bg-black text-white rounded">
-                    Default
-                  </span>
-                )}
+        <>
+          <div className="space-y-2 mb-6">
+            {addresses.length > 0 ? (
+              addresses.map((address: any) => (
+                <div
+                  key={address.id}
+                  className="flex items-center justify-between p-3 border border-gray-300 rounded-lg bg-white"
+                >
+                  <div className="flex items-start space-x-2 flex-1">
+                    <HiOutlineHome className="w-5 h-5 text-gray-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">
+                      {address.street}, {address.city}, {address.state}
+                    </span>
+                    {address.isDefault && (
+                      <span className="ml-2 px-2 py-1 text-xs bg-black text-white rounded">
+                        Default
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="flex items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                <div className="text-center">
+                  <HiOutlineHome className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                  <Paragraph1 className="text-gray-500 text-sm font-medium">
+                    No addresses added yet
+                  </Paragraph1>
+                  <Paragraph1 className="text-gray-400 text-xs mt-1">
+                    Click "Add New Address" to get started
+                  </Paragraph1>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            )}
+          </div>
+        </>
       )}
 
       {/* Action Buttons */}
@@ -313,7 +405,7 @@ const AccountProfileDetails: React.FC = () => {
         <button
           type="button"
           onClick={handleUpdateProfile}
-          disabled={updateProfileMutation.isPending || isLoading}
+          disabled={updateProfileMutation.isPending || isProfileLoading}
           className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 disabled:opacity-50 transition duration-150"
         >
           {updateProfileMutation.isPending ? "Updating..." : "Update Profile"}
@@ -356,36 +448,37 @@ const AccountProfileDetails: React.FC = () => {
                 />
               </div>
 
-              {/* City */}
-              <div>
-                <label className="text-sm font-medium text-gray-900 mb-1 block">
-                  City *
-                </label>
-                <CityLGASelect
-                  value={addressFormData.city}
-                  onChange={(value) =>
-                    setAddressFormData({
-                      ...addressFormData,
-                      city: value,
-                    })
-                  }
-                />
-              </div>
-
-              {/* State */}
-              <div>
-                <label className="text-sm font-medium text-gray-900 mb-1 block">
-                  State *
-                </label>
-                <StateSelect
-                  value={addressFormData.state}
-                  onChange={(value) =>
-                    setAddressFormData({
-                      ...addressFormData,
-                      state: value,
-                    })
-                  }
-                />
+              <div className=" grid grid-cols-2 gap-4">
+                {/* City */}
+                <div>
+                  <label className="text-sm font-medium text-gray-900 mb-1 block">
+                    City *
+                  </label>
+                  <CityLGASelect
+                    value={addressFormData.city}
+                    onChange={(value) =>
+                      setAddressFormData({
+                        ...addressFormData,
+                        city: value,
+                      })
+                    }
+                  />
+                </div>
+                {/* State */}
+                <div>
+                  <label className="text-sm font-medium text-gray-900 mb-1 block">
+                    State *
+                  </label>
+                  <StateSelect
+                    value={addressFormData.state}
+                    onChange={(value) =>
+                      setAddressFormData({
+                        ...addressFormData,
+                        state: value,
+                      })
+                    }
+                  />
+                </div>{" "}
               </div>
 
               {/* Postal Code */}

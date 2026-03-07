@@ -192,6 +192,13 @@ export const rentersApi = {
       data: { profileImage: string; uploadedAt: string };
     }>("/api/renters/profile/avatar", { method: "POST", body: formData }),
 
+  // GET /api/renters/profile/avatar
+  getProfileAvatar: () =>
+    apiFetch<{
+      success: boolean;
+      data: { avatarUrl: string };
+    }>("/api/renters/profile/avatar", { method: "GET" }),
+
   // --- Verification Endpoints ---
   // GET /api/renters/profile/verification/status
   getVerificationsStatus: () =>

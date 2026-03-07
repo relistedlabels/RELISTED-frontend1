@@ -20,7 +20,9 @@ const stepTitles = [
 
 const MAX_STEPS = stepTitles.length;
 
-const CompleteProfileFlow: React.FC = () => {
+const CompleteProfileFlow: React.FC<{ returnUrl?: string | null }> = ({
+  returnUrl,
+}) => {
   const [currentStep, setCurrentStep] = useState(1);
 
   // Function to move to the next step
@@ -45,7 +47,9 @@ const CompleteProfileFlow: React.FC = () => {
     switch (currentStep) {
       case 1:
         // Pass the function to move to the next step
-        return <StepOnePersonal onNext={handleNextStep} />;
+        return (
+          <StepOnePersonal onNext={handleNextStep} returnUrl={returnUrl} />
+        );
       // case 2:
       //   // Pass the function to handle final submission (or a back button)
       //   return <StepTwoContact onBack={handlePrevStep} />;
