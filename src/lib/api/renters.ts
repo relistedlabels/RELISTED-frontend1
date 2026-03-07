@@ -246,11 +246,7 @@ export const rentersApi = {
     ),
 
   // PUT /api/renters/notifications/preferences
-  updateNotificationPreferences: (data: {
-    emailAlerts?: boolean;
-    smsUpdates?: boolean;
-    marketingEmails?: boolean;
-  }) =>
+  updateNotificationPreferences: (data: Record<string, boolean>) =>
     apiFetch<{
       success: boolean;
       message: string;

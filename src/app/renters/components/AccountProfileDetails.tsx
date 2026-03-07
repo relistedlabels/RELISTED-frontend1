@@ -22,7 +22,6 @@ import {
   useProfileAddresses,
   useAddProfileAddress,
   useUploadProfileAvatar,
-  useProfileAvatar,
 } from "@/lib/queries/renters/useProfileDetails";
 import { StateSelect } from "@/app/auth/profile-setup/components/StateSelect";
 import { CityLGASelect } from "@/app/auth/profile-setup/components/CityLGASelect";
@@ -39,8 +38,6 @@ const AccountProfileDetails: React.FC = () => {
   } = useProfileDetails();
   const { data: addressesResponse, isLoading: isAddressesLoading } =
     useProfileAddresses();
-  const { data: avatarResponse, isLoading: isAvatarLoading } =
-    useProfileAvatar();
   const updateProfileMutation = useUpdateProfile();
   const addAddressMutation = useAddProfileAddress();
   const uploadAvatarMutation = useUploadProfileAvatar();
@@ -55,8 +52,8 @@ const AccountProfileDetails: React.FC = () => {
   // ✅ Extract addresses from GET /api/renters/profile/addresses
   const addresses = addressesResponse?.data?.addresses || [];
 
-  // ✅ Extract avatar from GET /api/renters/profile/avatar
-  const avatarUrl = avatarResponse?.data?.avatarUrl;
+  // ✅ Extract avatar from GET /api/renters/profile (profileImage in profile data)
+  const profileImageUrl = profileData?.profileImage;
 
   // ✅ Local form state
   const [formData, setFormData] = useState({
@@ -101,13 +98,13 @@ const AccountProfileDetails: React.FC = () => {
     }
   }, [profileData]);
 
-  // ✅ Load avatar from GET /api/renters/profile/avatar endpoint
+  // ✅ Load avatar from profile data
   useEffect(() => {
-    if (avatarUrl) {
-      console.log("🖼️ Avatar URL loaded:", avatarUrl);
-      setAvatarPreview(avatarUrl);
+    if (profileImageUrl) {
+      console.log("🖼️ Avatar URL loaded from profile:", profileImageUrl);
+      setAvatarPreview(profileImageUrl);
     }
-  }, [avatarUrl]);
+  }, [profileImageUrl]);
 
   // ✅ Handle form input changes
   const handleInputChange = (field: keyof typeof formData, value: string) => {
@@ -207,9 +204,9 @@ const AccountProfileDetails: React.FC = () => {
         onSuccess: (response) => {
           console.log("✅ Avatar uploaded:", response.data);
           toast.success("Profile photo updated successfully!");
-          // Invalidate avatar query to refetch automatically
+          // Refetch profile query since profileImage is in the profile response
           queryClient.invalidateQueries({
-            queryKey: ["renter-profile-avatar"],
+            queryKey: ["renter-profile-details"],
           });
         },
         onError: (error: any) => {
@@ -223,18 +220,14 @@ const AccountProfileDetails: React.FC = () => {
     <div className="font-sans">
       {/* Profile Header and Image Upload */}
       <div className="flex flex-col bg-[#3A3A32] p-6 items-center mb-6 rounded-lg">
-        <div className="relative w-28 h-28 flex items-center justify-center overflow-hidden rounded-full bg-gray-200">
-          {/* Avatar from GET /api/renters/profile/avatar via POST /api/renters/profile/avatar */}
+        <div className="relative w-28 h-28 flex items-center justify-center overflow-hidden ">
+          {/* Avatar from profileImage in GET /api/renters/profile, uploaded to POST /api/renters/profile/avatar */}
           {avatarPreview ? (
             <img
               src={avatarPreview}
               alt="Profile"
               className="w-full h-full object-cover rounded-full"
             />
-          ) : isAvatarLoading ? (
-            <div className="w-full h-full flex items-center justify-center bg-gray-300">
-              <div className="text-xs text-gray-600">Loading...</div>
-            </div>
           ) : (
             <HiOutlineUser className="w-16 h-16 text-gray-500" />
           )}

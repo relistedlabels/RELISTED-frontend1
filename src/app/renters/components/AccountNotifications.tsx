@@ -3,11 +3,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useNotificationPreferences,
   useUpdateNotificationPreferences,
 } from "@/lib/queries/renters/useNotifications";
 import { Paragraph1 } from "@/common/ui/Text";
+import { toast } from "sonner";
 
 interface NotificationSettingProps {
   title: string;
@@ -15,6 +17,14 @@ interface NotificationSettingProps {
   initialEnabled: boolean;
   settingKey: string;
   onToggle?: (key: string, enabled: boolean) => void;
+}
+
+interface NotificationPreference {
+  key: string;
+  alternateKeys: string[];
+  title: string;
+  description: string;
+  default: boolean;
 }
 
 // Sub-component for a single toggleable notification setting
@@ -67,35 +77,40 @@ const NotificationSetting: React.FC<NotificationSettingProps> = ({
   );
 };
 
-const NOTIFICATION_PREFERENCES = [
+const NOTIFICATION_PREFERENCES: NotificationPreference[] = [
   {
-    key: "email_alerts",
+    key: "emailAlerts",
+    alternateKeys: ["email_alerts"],
     title: "Email Alerts",
     description:
       "Receive email notifications about your orders, returns, and account activity",
     default: true,
   },
   {
-    key: "sms_updates",
+    key: "smsUpdates",
+    alternateKeys: ["sms_updates"],
     title: "SMS Updates",
     description:
       "Get SMS notifications for important order updates and reminders",
     default: false,
   },
   {
-    key: "order_updates",
+    key: "orderUpdates",
+    alternateKeys: ["order_updates"],
     title: "Order Updates",
     description: "Notifications when order status changes",
     default: true,
   },
   {
-    key: "rental_reminders",
+    key: "rentalReminders",
+    alternateKeys: ["rental_reminders"],
     title: "Rental Reminders",
     description: "Reminders for upcoming return dates",
     default: true,
   },
   {
-    key: "promotional_offers",
+    key: "marketingEmails",
+    alternateKeys: ["promotional_offers"],
     title: "Promotional Offers",
     description: "Receive news on special promotions and discounts",
     default: false,
@@ -103,6 +118,7 @@ const NOTIFICATION_PREFERENCES = [
 ];
 
 const AccountNotifications: React.FC = () => {
+  const queryClient = useQueryClient();
   const { data, isPending, isError, error } = useNotificationPreferences();
   const updateMutation = useUpdateNotificationPreferences();
   const [preferences, setPreferences] = useState<Record<string, boolean>>({});
@@ -110,8 +126,45 @@ const AccountNotifications: React.FC = () => {
 
   // Sync preferences from API
   useEffect(() => {
+    console.log("📬 Raw API response:", data?.data?.preferences);
     if (data?.data?.preferences) {
-      setPreferences(data.data.preferences);
+      // Extract boolean values from nested API response
+      // API returns: {emailAlerts: {enabled: true, categories: [...]}, sms_updates: true, ...}
+      // We need to flatten and normalize to component's expected format
+      const apiResponse = data.data.preferences;
+      const flattenedPrefs: Record<string, boolean> = {};
+
+      NOTIFICATION_PREFERENCES.forEach((pref) => {
+        // Try primary key first, then alternate keys
+        const keysToTry = [pref.key, ...pref.alternateKeys];
+        let foundValue = false;
+
+        for (const tryKey of keysToTry) {
+          const value = apiResponse[tryKey];
+          if (value !== undefined) {
+            // Handle both flat (true/false) and nested ({enabled: true}) formats
+            if (typeof value === "boolean") {
+              flattenedPrefs[pref.key] = value;
+            } else if (
+              typeof value === "object" &&
+              value !== null &&
+              "enabled" in value
+            ) {
+              flattenedPrefs[pref.key] = value.enabled;
+            }
+            foundValue = true;
+            break;
+          }
+        }
+
+        // Fallback to default if not found in API response
+        if (!foundValue) {
+          flattenedPrefs[pref.key] = pref.default;
+        }
+      });
+
+      console.log("✅ Flattened preferences:", flattenedPrefs);
+      setPreferences(flattenedPrefs);
     } else {
       // fallback to defaults if API fails
       const initialPrefs: Record<string, boolean> = {};
@@ -123,14 +176,43 @@ const AccountNotifications: React.FC = () => {
   }, [data]);
 
   const handleTogglePref = (key: string, enabled: boolean) => {
+    console.log(`🔔 Toggling ${key} to ${enabled}`);
     setPreferences((prev) => ({ ...prev, [key]: enabled }));
     setHasChanges(true);
   };
 
   const handleSavePreferences = async () => {
-    updateMutation.mutate(preferences, {
+    console.log("💾 Local preferences (flat):", preferences);
+
+    // Transform component keys to backend expected format
+    // emailAlerts -> emailAlertsEnabled, smsUpdates -> smsUpdatesEnabled
+    // marketingEmails -> marketingEmailsEnabled, orderUpdates -> orderUpdatesEnabled
+    // rentalReminders -> rentalRemindersEnabled
+    const payloadForBackend: Record<string, boolean> = {};
+    Object.entries(preferences).forEach(([key, value]) => {
+      // Transform key to backend format by adding "Enabled" suffix
+      // emailAlerts -> emailAlertsEnabled (keep first letter lowercase)
+      const backendKey = key + "Enabled";
+      payloadForBackend[backendKey] = value;
+    });
+
+    console.log(
+      "📤 Payload being sent to API:",
+      JSON.stringify(payloadForBackend, null, 2),
+    );
+
+    updateMutation.mutate(payloadForBackend as any, {
       onSuccess: () => {
         setHasChanges(false);
+        toast.success("Notification preferences saved!");
+        // Refetch preferences automatically after save
+        queryClient.invalidateQueries({
+          queryKey: ["renter-notification-preferences"],
+        });
+      },
+      onError: (error: any) => {
+        console.error("❌ Save error:", error);
+        toast.error(error?.message || "Failed to save preferences");
       },
     });
   };
