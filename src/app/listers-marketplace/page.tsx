@@ -116,7 +116,7 @@ export default function AllListersPage() {
           ) : (
             <div className="grid grid-cols-3 lg:grid-cols-7 gap-4 sm:gap-6">
               {filteredUsers.map((user) => (
-                <Link key={user.id} href={`/shop/${user.id}`}>
+                <Link key={user.id} href={`/lister-profile/${user.id}`}>
                   <div className="group cursor-pointer">
                     {/* Profile Image */}
                     <div className="relative w-full h-[150px] sm:h-[150px] overflow-hidden rounded-full [40px] mb-4 bg-gray-200">
