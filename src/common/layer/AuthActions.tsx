@@ -20,9 +20,9 @@ export function AuthActions() {
     let userAvatar: string | null = null;
 
     if (user.role?.toLowerCase() === "lister") {
-      userAvatar = listerProfileData?.data.profile?.profileImage || null;
+      userAvatar = listerProfileData?.data?.profile?.profileImage || null;
     } else {
-      userAvatar = renterProfileData?.avatar || null;
+      userAvatar = renterProfileData?.profile?.profileImage || null;
     }
 
     return (

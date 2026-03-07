@@ -1,6 +1,8 @@
 "use client";
 
 import { useMe } from "@/lib/queries/auth/useMe";
+import { useListerProfile } from "@/lib/queries/listers/useListerProfile";
+import { useProfile as useRenterProfile } from "@/lib/queries/renters/useProfile";
 import { useState } from "react";
 import {
   ChevronDown,
@@ -22,6 +24,8 @@ interface MobileAuthActionsProps {
 
 export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
   const { data: user, isLoading } = useMe();
+  const { data: listerProfileData } = useListerProfile();
+  const { data: renterProfileData } = useRenterProfile();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { clearUser } = useUserStore();
 
@@ -87,6 +91,15 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
 
   // ✅ Logged in → show User Name and Dropdown
   if (user) {
+    // ✅ Determine avatar based on user role
+    let userAvatar: string | null = null;
+
+    if (user.role?.toLowerCase() === "lister") {
+      userAvatar = listerProfileData?.data?.profile?.profileImage || null;
+    } else {
+      userAvatar = renterProfileData?.profile?.profileImage || null;
+    }
+
     return (
       <div className="flex flex-col gap-4">
         <button
@@ -94,8 +107,16 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
           className="flex items-center justify-between gap-3  "
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center">
-              <User size={20} className="text-white" />
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center overflow-hidden">
+              {userAvatar ? (
+                <img
+                  src={userAvatar}
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User size={20} className="text-white" />
+              )}
             </div>
             <div className="text-left">
               <Paragraph1 className="font-semibold text-white text-sm">
