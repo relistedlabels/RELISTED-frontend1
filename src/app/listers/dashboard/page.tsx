@@ -12,6 +12,9 @@ import ProfileImageUploadModal from "../components/ProfileImageUploadModal";
 import FirstListingModal from "../components/FirstListingModal";
 import { useProfile } from "@/lib/queries/user/useProfile";
 import { useRouter } from "next/navigation";
+import { useTopItems } from "@/lib/queries/listers";
+import { useRecentRentals } from "@/lib/queries/listers";
+import { useDashboardSummary } from "@/lib/queries/renters/useDashboardSummary";
 
 /* ---------- Motion Variants ---------- */
 
@@ -50,6 +53,11 @@ export default function Page() {
   const [showProfileImageModal, setShowProfileImageModal] = useState(false);
   const [showFirstListingModal, setShowFirstListingModal] = useState(false);
 
+  // Test API calls
+  const topItemsQuery = useTopItems(5);
+  const recentRentalsQuery = useRecentRentals(1, 10, "all");
+  const dashboardSummaryQuery = useDashboardSummary();
+
   // Check if user has profile image on load
   useEffect(() => {
     if (!isLoading && profile) {
@@ -59,6 +67,14 @@ export default function Page() {
       }
     }
   }, [profile, isLoading]);
+
+  // Log API responses to console
+  useEffect(() => {
+    console.log("=== API TEST RESPONSES ===");
+    console.log("Top Items:", topItemsQuery.data);
+    console.log("Recent Rentals:", recentRentalsQuery.data);
+    console.log("Dashboard Summary:", dashboardSummaryQuery.data);
+  }, [topItemsQuery.data, recentRentalsQuery.data, dashboardSummaryQuery.data]);
 
   const handleProfileImageNext = () => {
     setShowProfileImageModal(false);
@@ -112,6 +128,40 @@ export default function Page() {
         onClose={() => setShowFirstListingModal(false)}
         onGetStarted={handleFirstListingGetStarted}
       />
+
+      {/* test field */}
+      {/* <div className="mt-8 p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50">
+        <h3 className="font-semibold mb-4">
+          API Test Responses (Check Console & Network Tab)
+        </h3>
+
+        <div className="space-y-4 text-sm font-mono">
+          <div>
+            <h4 className="font-bold mb-2">
+              GET /api/listers/inventory/top-items
+            </h4>
+            <pre className="bg-white p-2 rounded overflow-auto max-h-40 text-xs">
+              {JSON.stringify(topItemsQuery.data, null, 2)}
+            </pre>
+          </div>
+
+          <div>
+            <h4 className="font-bold mb-2">GET /api/listers/rentals/recent</h4>
+            <pre className="bg-white p-2 rounded overflow-auto max-h-40 text-xs">
+              {JSON.stringify(recentRentalsQuery.data, null, 2)}
+            </pre>
+          </div>
+
+          <div>
+            <h4 className="font-bold mb-2">
+              GET /api/renters/dashboard/summary
+            </h4>
+            <pre className="bg-white p-2 rounded overflow-auto max-h-40 text-xs">
+              {JSON.stringify(dashboardSummaryQuery.data, null, 2)}
+            </pre>
+          </div>
+        </div>
+      </div> */}
     </>
   );
 }

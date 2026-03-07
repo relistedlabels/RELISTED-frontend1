@@ -8,17 +8,21 @@ import { useRecentRentals } from "@/lib/queries/listers/useRecentRentals";
 
 // --- Status Badge Component ---
 const StatusBadge: React.FC<{
-  status: "Delivered" | "Return Due" | "Completed";
+  status: string;
 }> = ({ status }) => {
   let classes = "";
-  switch (status) {
-    case "Delivered":
+  const statusLabel =
+    status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, " ");
+
+  switch (status.toLowerCase()) {
+    case "delivered":
       classes = "bg-blue-100 text-blue-800";
       break;
-    case "Return Due":
+    case "return_due":
       classes = "bg-yellow-100 text-yellow-800";
       break;
-    case "Completed":
+    case "completed":
+    case "returned":
       classes = "bg-green-100 text-green-800";
       break;
     default:
@@ -27,7 +31,7 @@ const StatusBadge: React.FC<{
 
   return (
     <span className={`px-4 py-1 text-sm font-medium rounded-lg ${classes}`}>
-      {status}
+      {statusLabel}
     </span>
   );
 };
@@ -35,42 +39,40 @@ const StatusBadge: React.FC<{
 // --- Individual Rental Row Component ---
 const RentalRow: React.FC<{
   id: string;
-  itemName: string;
-  size: string;
-  color: string;
+  orderId: string;
+  item: {
+    id: string;
+    name: string;
+    size: string;
+    color: string;
+    image: string;
+  };
+  dresser: {
+    id: string;
+    name: string;
+    avatar: string;
+  };
+  rentalPrice: number;
   returnDueDate: string;
-  rentalAmount: number;
-  status: "Delivered" | "Return Due" | "Completed";
-  renterName: string;
-  renterImage: string;
-}> = ({
-  id,
-  itemName,
-  size,
-  color,
-  returnDueDate,
-  rentalAmount,
-  status,
-  renterName,
-  renterImage,
-}) => {
+  status: string;
+}> = ({ id, orderId, item, dresser, rentalPrice, returnDueDate, status }) => {
   return (
     <div className="flex bg-white items-center border border-gray-300 justify-between py-4 mb-4 rounded-lg p-4">
       {/* Item Details (Image, Name, Size/Color) */}
       <div className="flex items-center space-x-4 w-1/4 min-w-[200px] shrink-0">
         <div className="w-12 h-12 bg-gray-200 rounded-lg overflow-hidden shrink-0">
           <img
-            src={renterImage}
-            alt={itemName}
+            src={item.image}
+            alt={item.name}
             className="w-full h-full object-cover"
           />
         </div>
         <div>
           <Paragraph1 className="font-semibold text-gray-800 truncate">
-            {itemName}
+            {item.name}
           </Paragraph1>
           <Paragraph1 className="text-sm text-gray-500">
-            Size: {size} | Color: {color}
+            Size: {item.size} | Color: {item.color}
           </Paragraph1>
         </div>
       </div>
@@ -91,7 +93,7 @@ const RentalRow: React.FC<{
       <div className="w-1/6 text-left hidden md:block">
         <Paragraph1 className="text-sm text-gray-500">Amount</Paragraph1>
         <Paragraph1 className="font-semibold text-black">
-          ₦{rentalAmount.toLocaleString()}
+          ₦{rentalPrice.toLocaleString()}
         </Paragraph1>
       </div>
 
@@ -103,7 +105,7 @@ const RentalRow: React.FC<{
       {/* View Order Button */}
       <div className="w-1/6 text-right flex justify-end">
         <Link
-          href={`/listers/orders/${id}`}
+          href={`/listers/orders/${orderId}`}
           className="text-sm font-semibold text-gray-600 hover:text-black transition duration-150 underline"
         >
           View Order
@@ -141,8 +143,11 @@ const RecentRentalsList: React.FC = () => {
               </div>
             </div>
           ))
-        ) : rentalsData?.data && rentalsData.data.length > 0 ? (
-          rentalsData.data.map((item) => <RentalRow key={item.id} {...item} />)
+        ) : rentalsData?.data?.recentRentals &&
+          rentalsData.data.recentRentals.length > 0 ? (
+          rentalsData.data.recentRentals.map((item) => (
+            <RentalRow key={item.id} {...item} />
+          ))
         ) : (
           <div className="text-center py-8">
             <Paragraph1 className="text-gray-500">No recent rentals</Paragraph1>

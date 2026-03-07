@@ -9,16 +9,16 @@ import Link from "next/link";
 
 const RentalListItem: React.FC<{
   name: string;
-  rentalCount: number;
-  rentalPrice: number;
-  availability: "Available" | "Unavailable";
+  rentalsCount: number;
+  price: number;
+  availability: "available" | "unavailable";
   image: string;
-}> = ({ name, rentalCount, rentalPrice, availability, image }) => {
-  const statusText = availability === "Available" ? "Available" : "Unavailable";
+}> = ({ name, rentalsCount, price, availability, image }) => {
+  const statusText = availability === "available" ? "Available" : "Unavailable";
   const statusColor =
-    availability === "Available" ? "text-green-600" : "text-orange-500";
+    availability === "available" ? "text-green-600" : "text-orange-500";
   const dotClass =
-    availability === "Available" ? "bg-green-600" : "bg-orange-500";
+    availability === "available" ? "bg-green-600" : "bg-orange-500";
 
   return (
     <div className="flex items-center space-x-3 p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition duration-150">
@@ -31,7 +31,7 @@ const RentalListItem: React.FC<{
           {name}
         </Paragraph1>
         <Paragraph1 className="text-sm text-gray-500">
-          {rentalCount} Rentals
+          {rentalsCount} Rentals
         </Paragraph1>
       </div>
 
@@ -43,7 +43,7 @@ const RentalListItem: React.FC<{
           </Paragraph1>
         </div>
         <Paragraph1 className="text-base font-semibold text-black">
-          ₦{rentalPrice.toLocaleString()}
+          ₦{price.toLocaleString()}
         </Paragraph1>
       </div>
     </div>
@@ -85,13 +85,14 @@ const TopRentalsList: React.FC = () => {
               </div>
             </div>
           ))
-        ) : topItemsData?.data && topItemsData.data.length > 0 ? (
-          topItemsData.data.map((item, index) => (
+        ) : topItemsData?.data?.topItems &&
+          topItemsData.data.topItems.length > 0 ? (
+          topItemsData.data.topItems.map((item, index) => (
             <RentalListItem
               key={index}
               name={item.name}
-              rentalCount={item.rentalCount}
-              rentalPrice={item.rentalPrice}
+              rentalsCount={item.rentalsCount}
+              price={item.price}
               availability={item.availability}
               image={item.image}
             />

@@ -68,10 +68,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className=" ">
-        <Script
-          src="https://cdn.useproof.com/proof.js?acc=Bqcvk37d6ShMWxmTxW9BfwPxV9n1"
-          strategy="afterInteractive"
-        />
+        
         {/* <DevGuard> */}
         <QueryProvider>
           <FavoritesInitializer />

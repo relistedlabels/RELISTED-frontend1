@@ -30,32 +30,61 @@ export interface RentalOvertime {
 export interface TopItem {
   id: string;
   name: string;
-  rentalCount: number;
-  availability: "Available" | "Unavailable";
-  rentalPrice: number;
+  rentalsCount: number;
+  availability: "available" | "unavailable";
+  price: number;
+  currency: string;
   image: string;
+  category: string;
+  condition: string;
+  rating: number;
+  reviews: number;
 }
 
 export interface TopItemsResponse {
   success: boolean;
-  data: TopItem[];
+  data: {
+    topItems: TopItem[];
+    generatedAt: string;
+  };
 }
 
 export interface RecentRental {
   id: string;
-  itemName: string;
-  size: string;
-  color: string;
+  orderId: string;
+  item: {
+    id: string;
+    name: string;
+    size: string;
+    color: string;
+    image: string;
+  };
+  dresser: {
+    id: string;
+    name: string;
+    avatar: string;
+  };
+  rentalPrice: number;
+  currency: string;
+  returnDue: string;
   returnDueDate: string;
-  rentalAmount: number;
-  status: "Delivered" | "Return Due" | "Completed";
-  renterName: string;
-  renterImage: string;
+  status: string;
+  statusType: string;
+  rentalStartDate: string;
+  rentalEndDate: string;
 }
 
 export interface RecentRentalsResponse {
   success: boolean;
-  data: RecentRental[];
+  data: {
+    recentRentals: RecentRental[];
+    pagination?: {
+      total: number;
+      page: number;
+      limit: number;
+      pages: number;
+    };
+  };
 }
 
 export async function getDashboardStats(
