@@ -164,6 +164,17 @@ export const rentersApi = {
     fullName?: string;
     phone?: string;
     addresses?: any[];
+    bvn?: string;
+    nin?: string;
+    emergencyContact?: {
+      name?: string;
+      phone?: string;
+      email?: string;
+      relationship?: string;
+      address?: string;
+      city?: string;
+      state?: string;
+    };
   }) =>
     apiFetch<{ success: boolean; message: string; data: { profile: any } }>(
       "/api/renters/profile",
@@ -200,10 +211,10 @@ export const rentersApi = {
     }>("/api/renters/profile/avatar", { method: "GET" }),
 
   // --- Verification Endpoints ---
-  // GET /api/renters/profile/verification/status
+  // GET /api/renters/profile/verifications/status
   getVerificationsStatus: () =>
     apiFetch<{ success: boolean; data: { verifications: any } }>(
-      "/api/renters/profile/verification/status",
+      "/api/renters/profile/verifications/status",
       { method: "GET" },
     ),
 

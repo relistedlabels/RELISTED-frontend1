@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   HiOutlineDocumentText,
   HiOutlineUser,
@@ -11,9 +12,13 @@ import { useProfile } from "@/lib/queries/renters/useProfile";
 import {
   useVerificationsStatus,
   useSubmitBvn,
+  useUpdateVerificationDetails,
+  useUploadIdDocument,
 } from "@/lib/queries/renters/useVerifications";
-import { useUpdateProfile } from "@/lib/queries/renters/useProfileDetails";
+import { StateSelect } from "@/app/auth/profile-setup/components/StateSelect";
+import { CityLGASelect } from "@/app/auth/profile-setup/components/CityLGASelect";
 import { Paragraph1 } from "@/common/ui/Text";
+import { toast } from "sonner";
 
 // Sub-component for displaying a verification status on a document or field
 const VerificationBadge: React.FC<{
@@ -39,19 +44,41 @@ const VerificationBadge: React.FC<{
 };
 
 const AccountVerificationsForm: React.FC = () => {
+  const queryClient = useQueryClient();
   const { data: profile, isLoading } = useProfile();
   const { data: statusData } = useVerificationsStatus();
   const submitBvnMutation = useSubmitBvn();
-  const updateProfileMutation = useUpdateProfile();
+  const updateVerificationMutation = useUpdateVerificationDetails();
+  const uploadIdDocumentMutation = useUploadIdDocument();
 
   const emergencyContact = profile?.emergencyContact;
 
   const [emergencyForm, setEmergencyForm] = useState({
-    fullName: emergencyContact?.name || "",
+    fullName: "",
     email: "",
-    phone: emergencyContact?.phoneNumber || "",
-    relationship: emergencyContact?.relationship || "",
+    phone: "",
+    relationship: "",
+    city: "",
+    state: "",
   });
+
+  // ✅ Sync emergency contact from profile on load
+  useEffect(() => {
+    if (emergencyContact) {
+      console.log(
+        "🔄 Loading emergency contact from profile:",
+        emergencyContact,
+      );
+      setEmergencyForm({
+        fullName: emergencyContact.name || "",
+        email: emergencyContact.email || "",
+        phone: emergencyContact.phoneNumber || emergencyContact.phone || "",
+        relationship: emergencyContact.relationship || "",
+        city: emergencyContact.city || "",
+        state: emergencyContact.state || "",
+      });
+    }
+  }, [emergencyContact]);
 
   const handleEmergencyChange = (
     field: keyof typeof emergencyForm,
@@ -59,14 +86,6 @@ const AccountVerificationsForm: React.FC = () => {
   ) => {
     setEmergencyForm((prev) => ({ ...prev, [field]: value }));
   };
-
-  const emergencyAddress = useMemo(() => {
-    if (!emergencyContact) return "";
-    const parts = [emergencyContact.city, emergencyContact.state].filter(
-      Boolean,
-    );
-    return parts.join(", ");
-  }, [emergencyContact]);
 
   const ninStatusRaw =
     statusData?.data?.verifications?.nin?.status ?? "pending";
@@ -107,23 +126,40 @@ const AccountVerificationsForm: React.FC = () => {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("ninDocument", ninFile);
-    if (ninNumber.trim()) {
-      formData.append("ninNumber", ninNumber.trim());
+    if (!ninNumber.trim()) {
+      setNinError("Please enter your NIN number.");
+      return;
+    }
+
+    if (ninNumber.trim().length !== 11 || !/^\d+$/.test(ninNumber.trim())) {
+      setNinError("NIN must be 11 digits.");
+      return;
     }
 
     setNinError(null);
-    // TODO: Implement upload mutation with correct API endpoint
-    // uploadNinMutation.mutate(formData, {
-    //   onSuccess: () => {
-    //     setNinNumber("");
-    //     setNinFile(null);
-    //   },
-    //   onError: () => {
-    //     setNinError("Failed to upload NIN document. Please try again.");
-    //   },
-    // });
+    console.log(
+      "📤 Uploading NIN document to POST /api/renters/profile/verifications/id-document",
+    );
+
+    const formData = new FormData();
+    formData.append("document", ninFile);
+    formData.append("ninNumber", ninNumber.trim());
+
+    uploadIdDocumentMutation.mutate(formData, {
+      onSuccess: () => {
+        toast.success("NIN document uploaded successfully!");
+        setNinNumber("");
+        setNinFile(null);
+      },
+      onError: (error: any) => {
+        toast.error(
+          error?.message || "Failed to upload NIN document. Please try again.",
+        );
+        setNinError(
+          error?.message || "Failed to upload NIN document. Please try again.",
+        );
+      },
+    });
   };
 
   const handleSubmitBvn = () => {
@@ -138,13 +174,18 @@ const AccountVerificationsForm: React.FC = () => {
     }
 
     setBvnError(null);
-    submitBvnMutation.mutate(
-      { bvnNumber: bvnNumber.trim() },
+    console.log("📤 Submitting BVN to PUT /api/renters/profile:", bvnNumber);
+    updateVerificationMutation.mutate(
+      { bvn: bvnNumber.trim() },
       {
         onSuccess: () => {
+          toast.success("BVN submitted successfully!");
           setBvnNumber("");
         },
         onError: (error: any) => {
+          toast.error(
+            error?.message || "Failed to submit BVN. Please try again.",
+          );
           setBvnError(
             error?.message || "Failed to submit BVN. Please try again.",
           );
@@ -203,19 +244,20 @@ const AccountVerificationsForm: React.FC = () => {
           Upload NIN Document
         </Paragraph1>
         <Paragraph1 className="mb-3 text-xs text-gray-600">
-          Accepted formats: JPEG, PNG, PDF. Maximum size 5MB.
+          Upload your NIN document for verification. Accepted formats: JPEG,
+          PNG, PDF. Maximum size 5MB.
         </Paragraph1>
         <div className="mb-3 grid grid-cols-1 gap-3 md:grid-cols-2">
           <div>
             <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
-              NIN Number (optional)
+              NIN Number (required)
             </Paragraph1>
             <input
               type="text"
               value={ninNumber}
               onChange={(e) => setNinNumber(e.target.value)}
               className="w-full rounded-md border border-gray-300 p-2 text-sm"
-              placeholder="Enter NIN number"
+              placeholder="Enter 11-digit NIN"
             />
           </div>
           <div>
@@ -238,10 +280,10 @@ const AccountVerificationsForm: React.FC = () => {
         <button
           type="button"
           onClick={handleUploadNin}
-          disabled={updateProfileMutation.isPending}
+          disabled={uploadIdDocumentMutation.isPending}
           className="mt-1 inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {updateProfileMutation.isPending ? "Uploading..." : "Upload NIN"}
+          {uploadIdDocumentMutation.isPending ? "Uploading..." : "Upload NIN"}
         </button>
       </div>
 
@@ -273,10 +315,12 @@ const AccountVerificationsForm: React.FC = () => {
           <button
             type="button"
             onClick={handleSubmitBvn}
-            disabled={submitBvnMutation.isPending}
+            disabled={updateVerificationMutation.isPending}
             className="px-4 py-2 bg-black text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {submitBvnMutation.isPending ? "Submitting..." : "Submit BVN"}
+            {updateVerificationMutation.isPending
+              ? "Submitting..."
+              : "Submit BVN"}
           </button>
         </div>
         <Paragraph1 className="text-xs text-gray-500 mt-2">
@@ -367,19 +411,27 @@ const AccountVerificationsForm: React.FC = () => {
         </div>
       </div>
 
-      {/* Address */}
-      <div className="mb-6">
-        <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
-          Address (City, State)
-        </Paragraph1>
-        <div className="relative">
-          <HiOutlineHome className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            value={emergencyAddress}
-            placeholder="Not provided yet"
-            readOnly
-            className="w-full p-3 pl-10 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
+      {/* Address - City and State Selects */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {/* City/LGA */}
+        <div>
+          <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
+            City/LGA
+          </Paragraph1>
+          <CityLGASelect
+            value={emergencyForm.city}
+            onChange={(city) => handleEmergencyChange("city", city)}
+          />
+        </div>
+
+        {/* State */}
+        <div>
+          <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
+            State
+          </Paragraph1>
+          <StateSelect
+            value={emergencyForm.state}
+            onChange={(state) => handleEmergencyChange("state", state)}
           />
         </div>
       </div>
@@ -389,17 +441,40 @@ const AccountVerificationsForm: React.FC = () => {
         <button
           className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
           type="button"
-          disabled={updateProfileMutation.isPending}
+          disabled={updateVerificationMutation.isPending}
           onClick={() => {
-            // TODO: Check the updateProfile API signature and update accordingly
-            // updateProfileMutation.mutate({
-            //   fullName: emergencyForm.fullName,
-            //   phone: emergencyForm.phone,
-            //   relationship: emergencyForm.relationship,
-            // });
+            if (!emergencyForm.fullName.trim() || !emergencyForm.phone.trim()) {
+              toast.error("Please fill in name and phone number");
+              return;
+            }
+
+            console.log(
+              "📤 Saving emergency contact to PUT /api/renters/profile:",
+              emergencyForm,
+            );
+            updateVerificationMutation.mutate(
+              {
+                emergencyContact: {
+                  name: emergencyForm.fullName,
+                  phone: emergencyForm.phone,
+                  email: emergencyForm.email,
+                  relationship: emergencyForm.relationship,
+                },
+              },
+              {
+                onSuccess: () => {
+                  toast.success("Emergency contact saved successfully!");
+                },
+                onError: (error: any) => {
+                  toast.error(
+                    error?.message || "Failed to save emergency contact",
+                  );
+                },
+              },
+            );
           }}
         >
-          {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
+          {updateVerificationMutation.isPending ? "Saving..." : "Save Changes"}
         </button>
       </div>
     </div>
