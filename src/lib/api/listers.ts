@@ -7,24 +7,51 @@ import { apiFetch } from "./http";
 export interface DashboardStats {
   success: boolean;
   data: {
-    totalEarnings: number;
-    totalOrders: number;
-    activeRentals: number;
-    pendingPayouts: number;
-    earningsChange: number;
-    ordersChange: number;
-    rentalsChange: number;
-    payoutsChange: number;
+    totalEarnings: {
+      amount: number;
+      currency: string;
+      changePercent: number;
+      changeDirection: "up" | "down";
+    };
+    totalOrders: {
+      count: number;
+      changePercent: number;
+      changeDirection: "up" | "down";
+    };
+    activeRentals: {
+      count: number;
+      changePercent: number;
+      changeDirection: "up" | "down";
+    };
+    pendingPayouts: {
+      amount: number;
+      currency: string;
+      changePercent: number;
+      changeDirection: "up" | "down";
+    };
+    timeframe: string;
+    generatedAt: string;
   };
 }
 
 export interface RentalOvertime {
   success: boolean;
   data: {
-    month: string;
-    revenue: number;
-    orders: number;
-  }[];
+    rentalsOvertime: {
+      month: string;
+      revenue: number;
+      orders: number;
+      timestamp: string;
+    }[];
+    timeframe: "month" | "quarter" | "year";
+    year: number;
+    summary: {
+      totalRevenue: number;
+      totalOrders: number;
+      avgMonthlyRevenue: number;
+      avgMonthlyOrders: number;
+    };
+  };
 }
 
 export interface TopItem {

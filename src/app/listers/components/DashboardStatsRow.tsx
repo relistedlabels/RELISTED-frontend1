@@ -21,9 +21,9 @@ interface StatCardData {
 const getStatCardConfig = (
   title: string,
   value: number | string,
-  change: number,
+  change: number = 0,
 ): StatCardData => {
-  const changePercent = `${change >= 0 ? "+" : ""}${change.toFixed(2)}%`;
+  const changePercent = `${change >= 0 ? "+" : ""}${(change || 0).toFixed(2)}%`;
   const isPositive = change >= 0;
 
   switch (title) {
@@ -139,23 +139,23 @@ const DashboardStatsRow: React.FC = () => {
     ? [
         getStatCardConfig(
           "Total Earnings",
-          statsData.data.totalEarnings,
-          statsData.data.earningsChange,
+          statsData.data.totalEarnings.amount,
+          statsData.data.totalEarnings.changePercent,
         ),
         getStatCardConfig(
           "Total Orders",
-          statsData.data.totalOrders,
-          statsData.data.ordersChange,
+          statsData.data.totalOrders.count,
+          statsData.data.totalOrders.changePercent,
         ),
         getStatCardConfig(
           "Active Rentals",
-          statsData.data.activeRentals,
-          statsData.data.rentalsChange,
+          statsData.data.activeRentals.count,
+          statsData.data.activeRentals.changePercent,
         ),
         getStatCardConfig(
           "Pending Payouts",
-          statsData.data.pendingPayouts,
-          statsData.data.payoutsChange,
+          statsData.data.pendingPayouts.amount,
+          statsData.data.pendingPayouts.changePercent,
         ),
       ]
     : [];

@@ -35,18 +35,21 @@ const RentalsOvertimeChart: React.FC = () => {
   const yAxisLabels = ["₦ 5M", "₦ 1M", "₦ 500k", "₦ 50k", "₦ 0"];
 
   const averageData = useMemo(() => {
-    if (!chartData?.data || chartData.data.length === 0) {
+    if (
+      !chartData?.data?.rentalsOvertime ||
+      chartData.data.rentalsOvertime.length === 0
+    ) {
       return [
         { label: "Avg Revenue", value: "₦0", dotClass: "bg-blue-600" },
         { label: "Avg Orders", value: "0", dotClass: "bg-purple-600" },
       ];
     }
     const avgRevenue =
-      chartData.data.reduce((sum, d) => sum + d.revenue, 0) /
-      chartData.data.length;
+      chartData.data.rentalsOvertime.reduce((sum, d) => sum + d.revenue, 0) /
+      chartData.data.rentalsOvertime.length;
     const avgOrders =
-      chartData.data.reduce((sum, d) => sum + d.orders, 0) /
-      chartData.data.length;
+      chartData.data.rentalsOvertime.reduce((sum, d) => sum + d.orders, 0) /
+      chartData.data.rentalsOvertime.length;
 
     return [
       {
@@ -115,7 +118,8 @@ const RentalsOvertimeChart: React.FC = () => {
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="h-32 bg-gray-200 rounded w-full animate-pulse" />
             </div>
-          ) : chartData?.data && chartData.data.length > 0 ? (
+          ) : chartData?.data?.rentalsOvertime &&
+            chartData.data.rentalsOvertime.length > 0 ? (
             <div className="absolute inset-0 flex items-center justify-center text-gray-400">
               [Chart visualization - Backend data loaded]
             </div>
