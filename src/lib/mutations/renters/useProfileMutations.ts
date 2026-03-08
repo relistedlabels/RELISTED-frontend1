@@ -7,9 +7,14 @@ export const useSubmitRentalRequest = () => {
   return useMutation({
     mutationFn: (data: {
       productId: string;
+      listerId: string;
       rentalStartDate: string;
       rentalEndDate: string;
+      rentalDays: number;
+      estimatedRentalPrice: number;
+      deliveryAddressId: string;
       autoPay: boolean;
+      currency: string;
     }) => rentersApi.submitRentalRequest(data),
     onSuccess: () => {
       queryClient.invalidateQueries({

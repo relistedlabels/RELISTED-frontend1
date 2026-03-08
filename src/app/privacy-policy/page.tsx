@@ -25,16 +25,20 @@ export default function PrivacyPolicy() {
           <div>
             <Header2 className="text-2xl font-bold mb-4">Introduction</Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed">
-              RELISTED ("we", "us", "our", or "Company") operates the RELISTED
-              website and mobile application (collectively, the "Service").
+              RELISTED Labels ("we", "us", "our", or "Company") operates the
+              RELISTED Labels website and mobile application (collectively, the
+              "Service"). RELISTED Labels is a peer-to-peer fashion rental
+              platform designed to make fashion rental secure, transparent, and
+              reliable for both vendors and renters.
               <br />
               <br />
-              This page informs you of our policies regarding the collection,
-              use, and disclosure of personal data when you use our Service and
-              the choices you have associated with that data. We use your data
-              to provide and improve the Service. By using the Service, you
-              agree to the collection and use of information in accordance with
-              this policy.
+              This Privacy Policy informs you of our policies regarding the
+              collection, use, and disclosure of personal data when you use our
+              Service and the choices you have associated with that data. We use
+              your data to provide, maintain, and improve the Service, process
+              rentals and payments, and coordinate logistics with our trusted
+              partners. By using the Service, you agree to the collection and
+              use of information in accordance with this policy.
             </Paragraph1>
           </div>
 
@@ -60,22 +64,23 @@ export default function PrivacyPolicy() {
                       may include, but is not limited to:
                     </Paragraph1>
                     <ul className="list-disc list-inside mt-2 space-y-1 text-gray-700 ml-2">
-                      <li>Email address</li>
-                      <li>First name and last name</li>
+                      <li>Name and email address</li>
                       <li>Phone number</li>
-                      <li>Address, State, Province, ZIP/Postal code, City</li>
-                      <li>Cookies and Usage Data</li>
+                      <li>Delivery address and location data</li>
+                      <li>Transaction history and rental records</li>
+                      <li>Payment information (processed via Wema Bank)</li>
+                      <li>Bank account details for vendor payouts</li>
+                      <li>Identity documents (for verification purposes)</li>
                       <li>
-                        Payment information (processed securely via third-party
-                        providers)
+                        Profile information (style preferences, rental history,
+                        vendor ratings)
                       </li>
                       <li>
-                        Profile information (size preferences, style interests,
-                        rental history)
+                        Uploaded photos and media (for product listings,
+                        profiles, and item conditions)
                       </li>
                       <li>
-                        Uploaded photos (for product listings or profile
-                        pictures)
+                        Emergency contact information (for vendors and renters)
                       </li>
                     </ul>
                   </div>
@@ -127,33 +132,44 @@ export default function PrivacyPolicy() {
               2. Use of Data
             </Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
-              RELISTED uses the collected data for various purposes:
+              RELISTED Labels uses the collected data for various purposes:
             </Paragraph1>
             <ul className="list-disc list-inside space-y-3 text-gray-700 ml-2">
-              <li>To provide and maintain the Service</li>
-              <li>To notify you about changes to our Service</li>
+              <li>To process rentals, payments, and collateral management</li>
               <li>
-                To allow you to participate in interactive features of our
-                Service when you choose to do so
+                To coordinate deliveries and returns with Topship logistics
               </li>
-              <li>To provide customer care and support</li>
+              <li>To verify identity and prevent fraud and abuse</li>
               <li>
-                To gather analysis or valuable information so that we can
-                improve the Service
-              </li>
-              <li>To monitor the usage of the Service</li>
-              <li>
-                To detect, prevent and address technical issues and fraudulent
-                activity
+                To maintain vendor inventory control and renter access to
+                accurate product information
               </li>
               <li>
-                To send promotional communications (with your consent),
-                including updates about new products, special offers, and other
-                information
+                To process secure payments through Wema Bank and manage vendor
+                payouts
               </li>
-              <li>To process rental transactions and payments</li>
-              <li>To verify identity and prevent fraud</li>
-              <li>To comply with legal and regulatory requirements</li>
+              <li>
+                To inspect item conditions and manage damage claims and
+                collateral disputes
+              </li>
+              <li>
+                To provide customer support and resolve disputes between vendors
+                and renters
+              </li>
+              <li>
+                To improve platform performance and user experience through
+                analytics
+              </li>
+              <li>
+                To send service notifications about rentals, orders, and account
+                updates
+              </li>
+              <li>
+                To comply with legal and regulatory requirements in Nigeria
+              </li>
+              <li>
+                To facilitate partnership and press inquiries (when relevant)
+              </li>
             </ul>
           </div>
 
@@ -199,10 +215,10 @@ export default function PrivacyPolicy() {
                   Business Transfers
                 </h3>
                 <Paragraph1>
-                  If RELISTED is involved in a merger, acquisition or asset
-                  sale, your Personal Data may be transferred as part of that
-                  transaction. We will provide notice before your Personal Data
-                  becomes subject to a different Privacy Policy.
+                  If RELISTED Labels is involved in a merger, acquisition or
+                  asset sale, your Personal Data may be transferred as part of
+                  that transaction. We will provide notice before your Personal
+                  Data becomes subject to a different Privacy Policy.
                 </Paragraph1>
               </div>
 
@@ -211,10 +227,10 @@ export default function PrivacyPolicy() {
                   By Law Requirement
                 </h3>
                 <Paragraph1>
-                  Under certain circumstances, RELISTED may be required to
-                  disclose your Personal Data if required to do so by law or in
-                  response to valid requests by public authorities (e.g. court
-                  order or government agency).
+                  Under certain circumstances, RELISTED Labels may be required
+                  to disclose your Personal Data if required to do so by law or
+                  in response to valid requests by public authorities (e.g.
+                  court order or government agency).
                 </Paragraph1>
               </div>
 
@@ -223,16 +239,27 @@ export default function PrivacyPolicy() {
                   Service Providers
                 </h3>
                 <Paragraph1>
-                  We may employ third party companies and individuals to
-                  facilitate our Service ("Service Providers"), to provide the
-                  Service on our behalf, to perform Service-related services or
-                  to assist us in analyzing how our Service is used. These third
-                  parties have access to your Personal Data only to perform
-                  these tasks on our behalf and are obligated not to disclose or
-                  use it for any other purpose. Service providers include
-                  payment processors, hosting providers, analytics services, and
-                  shipping/logistics partners.
+                  We may share your Personal Data with trusted third-party
+                  service providers ("Service Providers") who facilitate our
+                  Service. These third parties have access to your Personal Data
+                  only to perform services on our behalf and are obligated not
+                  to disclose or use it for any other purpose. Our key service
+                  providers include:
                 </Paragraph1>
+                <ul className="list-disc list-inside mt-2 space-y-1 text-gray-700 ml-2">
+                  <li>
+                    <strong>Wema Bank:</strong> Processes secure payments,
+                    manages wallet infrastructure, and handles vendor payouts
+                  </li>
+                  <li>
+                    <strong>Topship:</strong> Manages item delivery and returns
+                    logistics
+                  </li>
+                  <li>
+                    <strong>Hosting and Analytics:</strong> Cloud infrastructure
+                    and platform performance analysis
+                  </li>
+                </ul>
               </div>
 
               <div>
@@ -438,19 +465,15 @@ export default function PrivacyPolicy() {
               11. Contact Us
             </Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed">
-              If you have any questions about this Privacy Policy, please
-              contact us at:
+              If you have any questions about this Privacy Policy or to exercise
+              your data rights, please contact us:
             </Paragraph1>
             <div className="mt-4 space-y-2 text-gray-700">
               <p>
-                <strong>Email:</strong> privacy@relisted.com
+                <strong>Email:</strong> relistedlabels.contact@gmail.com
               </p>
               <p>
-                <strong>Address:</strong> RELISTED, [Your Address], [City],
-                [Country]
-              </p>
-              <p>
-                <strong>Phone:</strong> +1 (XXX) XXX-XXXX
+                <strong>Location:</strong> Lagos, Nigeria
               </p>
               <p className="text-sm text-gray-600 mt-4">
                 We will respond to your request within 30 days of receiving it.

@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Search, Clock, X, ArrowRight } from "lucide-react";
 import ProductCard from "@/common/ui/ProductCard";
 import { useBrowseStore } from "@/store/useBrowseStore";
 import { Paragraph1 } from "@/common/ui/Text";
-import { useProducts } from "@/lib/queries/product/useProducts";
+import { usePublicSearch } from "@/lib/queries/search/usePublicSearch";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function SearchModal() {
   const [open, setOpen] = useState(false);
@@ -22,18 +24,27 @@ export default function SearchModal() {
   const router = useRouter();
 
   const {
-    data: products,
+    data: results,
     isLoading,
     error,
-  } = useProducts(query ? { search: query, limit: 5 } : undefined);
+  } = usePublicSearch(query, { type: "all", limit: 50 });
 
-  // Persist current query as search term before navigating to product
-  const handleProductClick = (product: any) => {
-    if (query.trim()) addSearch(query.trim()); // Persist search term
-    setOpen(false); // Close modal
-    router.push(`/shop/product-details/${product.id}`); // Navigate
-  };
+  // Separate and limit results
+  const { products, listers } = useMemo(() => {
+    if (!results) return { products: [], listers: [] };
 
+    const products = results
+      .filter((item: any) => item.type === "product")
+      .slice(0, 7);
+
+    const listers = results
+      .filter((item: any) => item.type === "lister")
+      .slice(0, 3);
+
+    return { products, listers };
+  }, [results]);
+
+  // Persist current query as search term before navigating to recent searches
   const handleRecentSearchClick = (term: string) => {
     setQuery(term); // Reset input to clicked term
     // Query automatically runs
@@ -141,7 +152,7 @@ export default function SearchModal() {
 
                 {/* Query Results */}
                 {query && (
-                  <div className="space-y-3">
+                  <div className="space-y-6">
                     {isLoading && (
                       <Paragraph1 className="text-gray-500">
                         Searching...
@@ -152,30 +163,92 @@ export default function SearchModal() {
                         Failed to fetch results
                       </Paragraph1>
                     )}
-                    {!isLoading && !error && products?.length === 0 && (
-                      <Paragraph1 className="text-gray-500">
-                        No results found
-                      </Paragraph1>
+
+                    {/* Products Section */}
+                    {!isLoading && !error && products.length > 0 && (
+                      <div>
+                        <Paragraph1 className="text-gray-600 font-semibold mb-3">
+                          Similar Products ({products.length})
+                        </Paragraph1>
+                        <div className="space-y-2">
+                          {products.map((item: any) => (
+                            <div
+                              key={item.id}
+                              onClick={() => {
+                                if (query.trim()) addSearch(query.trim());
+                                setOpen(false);
+                                router.push(`/shop/product-details/${item.id}`);
+                              }}
+                              className="p-3 flex justify-between items-start rounded-lg hover:bg-gray-100 cursor-pointer"
+                            >
+                              <div>
+                                <Paragraph1 className="font-medium">
+                                  {item.name}
+                                </Paragraph1>
+                                <Paragraph1 className="text-sm text-gray-500">
+                                  {item.lister || "BRAND"} • ₦
+                                  {item.price?.toLocaleString()}
+                                </Paragraph1>
+                              </div>
+                              <ArrowRight className="rotate-225" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     )}
+
+                    {/* Listers Section */}
+                    {!isLoading && !error && listers.length > 0 && (
+                      <div>
+                        <Paragraph1 className="text-gray-600 font-semibold mb-3">
+                          Similar Listers ({listers.length})
+                        </Paragraph1>
+                        <div className="space-y-3">
+                          {listers.map((lister: any) => (
+                            <Link
+                              key={lister.id}
+                              href={`/lister-profile/${lister.id}`}
+                              onClick={() => {
+                                if (query.trim()) addSearch(query.trim());
+                                setOpen(false);
+                              }}
+                              className="p-3 flex items-center gap-3 rounded-lg hover:bg-gray-100 cursor-pointer transition"
+                            >
+                              <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden shrink-0">
+                                <Image
+                                  src={
+                                    lister.avatar ||
+                                    "/images/default-avatar.jpg"
+                                  }
+                                  alt={lister.name}
+                                  width={48}
+                                  height={48}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <Paragraph1 className="font-medium truncate">
+                                  {lister.name}
+                                </Paragraph1>
+                                <Paragraph1 className="text-sm text-gray-500">
+                                  Lister on RELISTED
+                                </Paragraph1>
+                              </div>
+                              <ArrowRight className="rotate-225 shrink-0" />
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {!isLoading &&
                       !error &&
-                      products?.map((item) => (
-                        <div
-                          key={item.id}
-                          onClick={() => handleProductClick(item)}
-                          className="p-3 flex justify-between items-start rounded-lg hover:bg-gray-100 cursor-pointer"
-                        >
-                          <div>
-                            <Paragraph1 className="font-medium">
-                              {item.name}
-                            </Paragraph1>
-                            <Paragraph1 className="text-sm text-gray-500">
-                              {item.brand?.name || "BRAND"}
-                            </Paragraph1>
-                          </div>
-                          <ArrowRight className="rotate-225" />
-                        </div>
-                      ))}
+                      products.length === 0 &&
+                      listers.length === 0 && (
+                        <Paragraph1 className="text-gray-500">
+                          No results found for "{query}"
+                        </Paragraph1>
+                      )}
                   </div>
                 )}
               </div>

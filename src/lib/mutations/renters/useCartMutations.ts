@@ -10,9 +10,14 @@ export const useAddToCart = () => {
   return useMutation({
     mutationFn: (data: {
       productId: string;
+      listerId: string;
       rentalStartDate: string;
       rentalEndDate: string;
+      rentalDays: number;
+      estimatedRentalPrice: number;
+      deliveryAddressId: string;
       autoPay: boolean;
+      currency: string;
     }) => rentersApi.submitRentalRequest(data),
     onSuccess: () => {
       // Invalidate cart queries so they refetch
@@ -34,7 +39,8 @@ export const useRemoveFromCart = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (cartItemId: string) => rentersApi.removeRentalRequest(cartItemId),
+    mutationFn: (cartItemId: string) =>
+      rentersApi.removeRentalRequest(cartItemId),
     onSuccess: () => {
       // Invalidate cart queries
       queryClient.invalidateQueries({ queryKey: ["renters", "cart"] });

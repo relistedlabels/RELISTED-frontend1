@@ -1194,3 +1194,52 @@ export async function updateNotificationPreferences(
     body: JSON.stringify(data),
   });
 }
+
+// ============================================================================
+// INVENTORY MANAGEMENT: PRODUCT STATUS & DELETION
+// ============================================================================
+
+export interface UpdateProductStatusPayload {
+  status: "AVAILABLE" | "MAINTENANCE" | "RENTED" | "RESERVED";
+  reason?: string;
+  expectedReturnDate?: string;
+}
+
+export interface UpdateProductStatusResponse {
+  success: boolean;
+  data: {
+    id: string;
+    status: string;
+    previousStatus: string;
+    updatedAt: string;
+  };
+}
+
+export async function updateProductStatus(
+  productId: string,
+  data: UpdateProductStatusPayload,
+): Promise<UpdateProductStatusResponse> {
+  return apiFetch(`/api/listers/inventory/${productId}/status`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export interface DeleteProductPayload {
+  reason?: string;
+}
+
+export interface DeleteProductResponse {
+  success: boolean;
+  message: string;
+}
+
+export async function deleteProduct(
+  productId: string,
+  data?: DeleteProductPayload,
+): Promise<DeleteProductResponse> {
+  return apiFetch(`/api/listers/inventory/${productId}`, {
+    method: "DELETE",
+    body: JSON.stringify(data || { reason: "Deleted by lister" }),
+  });
+}

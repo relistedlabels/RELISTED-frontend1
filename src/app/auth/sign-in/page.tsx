@@ -7,7 +7,7 @@ import SignInForm from "./components/SignInForm";
 function Page() {
   return (
     <div
-      className="relative w-full h-full bg-black bg-cover bg-center"
+      className="relative w-full h-screen bg-black bg-cover bg-center"
       style={{ backgroundImage: "url('/images/authbg.jpg')" }}
     >
       {/* Dark Overlay */}

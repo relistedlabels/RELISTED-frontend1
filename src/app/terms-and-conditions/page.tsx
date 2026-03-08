@@ -24,24 +24,31 @@ export default function TermsAndConditions() {
           {/* Introduction */}
           <div>
             <Header2 className="text-2xl font-bold mb-4">
-              1. Agreement to Terms
+              1. Agreement to Terms & RELISTED Labels Protection Framework
             </Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed">
               These Terms and Conditions ("Terms", "Agreement") are an agreement
-              between RELISTED ("Company", "we", "us", "our") and you ("User",
-              "you", "your"). By accessing and using the RELISTED website,
-              mobile application, and all related services (collectively, the
-              "Service"), you acknowledge that you have read, understood, and
-              agree to be bound by all of the terms and conditions contained
-              herein. If you do not agree to abide by the above, please do not
-              use this Service.
+              between RELISTED Labels ("Company", "we", "us", "our") and you
+              ("User", "you", "your"). By accessing and using the RELISTED
+              Labels Labels website, mobile application, and all related
+              services (collectively, the "Service"), you acknowledge that you
+              have read, understood, and agree to be bound by all of the terms
+              and conditions contained herein.
               <br />
               <br />
-              We reserve the right to make changes to these Terms at any time.
-              If any of these conditions shall be deemed invalid, void, or for
-              any reason unenforceable, that condition shall be deemed severable
-              and shall not affect the validity and enforceability of any
-              remaining condition.
+              RELISTED Labels is a peer-to-peer fashion rental platform
+              supported by secure payment infrastructure powered by Wema Bank,
+              logistics services provided by Topship, and comprehensive
+              collateral protection to safeguard item value. Our protection
+              framework ensures vendors maintain full ownership and control of
+              their items, renters receive items that match their descriptions,
+              and all transactions are secure and transparent.
+              <br />
+              <br />
+              We reserve the right to make changes to these Terms at any time,
+              with notice provided to users. If any provision is deemed invalid,
+              that provision shall be severable and shall not affect the
+              remaining terms.
             </Paragraph1>
           </div>
 
@@ -52,8 +59,8 @@ export default function TermsAndConditions() {
             </Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
               Permission is granted to temporarily download one copy of the
-              materials (information or software) on RELISTED's Service for
-              personal, non-commercial transitory viewing only. This is the
+              materials (information or software) on RELISTED Labels's Service
+              for personal, non-commercial transitory viewing only. This is the
               grant of a license, not a transfer of title, and under this
               license you may not:
             </Paragraph1>
@@ -89,7 +96,7 @@ export default function TermsAndConditions() {
                   Account Creation and Responsibility
                 </h3>
                 <Paragraph1>
-                  When you create an account on RELISTED, you agree to:
+                  When you create an account on RELISTED Labels, you agree to:
                 </Paragraph1>
                 <ul className="list-disc list-inside space-y-2 mt-2 ml-2">
                   <li>
@@ -133,113 +140,255 @@ export default function TermsAndConditions() {
           {/* Rental Terms */}
           <div>
             <Header2 className="text-2xl font-bold mb-4">
-              4. Rental Terms
+              4. Rental Terms & Collateral Protection
             </Header2>
-            <div className="space-y-4 text-gray-700">
+            <div className="space-y-6 text-gray-700">
               <div>
                 <h3 className="font-semibold text-black mb-2">
                   Rental Agreement
                 </h3>
                 <Paragraph1>
                   By renting an item (as a "Renter"), you enter into a rental
-                  agreement with the lister ("Lister"). RELISTED facilitates
-                  this transaction but is not a party to the rental agreement
-                  itself. The rental terms, including duration, price, and
-                  return conditions, are specified in the listing and checkout
-                  process.
+                  agreement with the vendor (\"Lister\"). RELISTED Labels
+                  facilitates this transaction but is not a party to the rental
+                  agreement itself. The rental terms, including duration, price,
+                  and return conditions, are specified in the listing and
+                  checkout process.
                 </Paragraph1>
               </div>
 
               <div>
-                <h3 className="font-semibold text-black mb-2">Payment Terms</h3>
-                <ul className="list-disc list-inside space-y-2 ml-2">
-                  <li>Payment must be completed before rental period begins</li>
-                  <li>
-                    We accept major credit cards, digital wallets, and other
-                    payment methods specified at checkout
-                  </li>
-                  <li>
-                    All prices are displayed in the currency specified at
-                    checkout, inclusive of applicable taxes
-                  </li>
-                  <li>
-                    RELISTED charges a service fee on all rental transactions
-                  </li>
-                  <li>
-                    Refund requests must be made within 7 days of cancellation
-                  </li>
-                  <li>
-                    Payment processing is handled by secure third-party payment
-                    processors
-                  </li>
-                </ul>
-              </div>
-
-              <div>
                 <h3 className="font-semibold text-black mb-2">
-                  Rental Duration and Return
-                </h3>
-                <ul className="list-disc list-inside space-y-2 ml-2">
-                  <li>Items must be returned by the specified end date</li>
-                  <li>
-                    Late returns will incur additional charges as specified in
-                    the rental agreement
-                  </li>
-                  <li>
-                    Items must be returned in the same condition as received,
-                    normal wear and tear expected
-                  </li>
-                  <li>
-                    Return shipping labels are provided by the Lister or
-                    RELISTED
-                  </li>
-                  <li>
-                    Items are considered returned when received by the Lister
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="font-semibold text-black mb-2">
-                  Damage and Loss
+                  Transparent Pricing
                 </h3>
                 <Paragraph1>
-                  The Renter is responsible for any damage beyond normal wear
-                  and tear. This includes, but is not limited to:
+                  The full rental cost displayed at checkout includes:
                 </Paragraph1>
                 <ul className="list-disc list-inside space-y-2 mt-2 ml-2">
-                  <li>Stains, tears, burns, or other physical damage</li>
-                  <li>Missing buttons, zippers, or other components</li>
-                  <li>Loss or theft of the item</li>
-                  <li>Damage caused by improper care or storage</li>
+                  <li>
+                    Vendor rental price (8-10% of item's original retail value)
+                  </li>
+                  <li>Platform service fee</li>
+                  <li>Delivery fees via Topship</li>
+                  <li>Professional dry cleaning cost</li>
+                  <li>Applicable taxes</li>
                 </ul>
                 <Paragraph1 className="mt-3">
-                  The Lister may request compensation for damages. RELISTED may
-                  facilitate dispute resolution, but the final determination
-                  rests with the Lister and Renter or, if unresolved, RELISTED's
-                  dispute resolution team.
+                  No additional hidden fees will be charged beyond those shown
+                  during checkout.
                 </Paragraph1>
               </div>
 
               <div>
                 <h3 className="font-semibold text-black mb-2">
-                  Cancellation Policy
+                  Collateral Deposit & Protection
                 </h3>
                 <Paragraph1>
-                  Cancellation policies vary by lister and are specified in the
-                  listing. Generally:
+                  To protect vendors from potential loss or damage, every rental
+                  includes a collateral deposit:
                 </Paragraph1>
                 <ul className="list-disc list-inside space-y-2 mt-2 ml-2">
                   <li>
-                    Cancellations up to 7 days before rental start: Full refund
+                    Collateral typically ranges from 60–80% of the item's
+                    original retail value
                   </li>
                   <li>
-                    Cancellations 3-7 days before rental start: 50% refund
+                    Temporarily held during the rental period via secure Wema
+                    Bank wallet
                   </li>
                   <li>
-                    Cancellations less than 3 days before rental start: No
-                    refund
+                    Released automatically after item return and inspection (if
+                    no damage)
                   </li>
+                  <li>
+                    Deducted to cover repair or replacement costs if item is
+                    damaged
+                  </li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-black mb-2\">
+                  Item Condition Standards
+                </h3>
+                <Paragraph1>
+                  RELISTED Labels follows standard condition guidelines used
+                  across fashion rental platforms:
+                </Paragraph1>
+
+                <h4 className="font-semibold text-black mt-4 mb-2\">
+                  Acceptable Rental Wear:
+                </h4>
+                <Paragraph1>
+                  Normal wear from responsible use is expected and does NOT
+                  qualify as damage:
+                </Paragraph1>
+                <ul className="list-disc list-inside space-y-2 mt-2 ml-2">
+                  <li>Light wrinkles</li>
+                  <li>Minor fabric softening</li>
+                  <li>Minimal signs of wear consistent with short-term use</li>
+                </ul>
+
+                <h4 className="font-semibold text-black mt-4 mb-2\">
+                  Damage (Renter Liability):
+                </h4>
+                <Paragraph1>
+                  Damage refers to any condition that affects the garment's
+                  appearance, structure, or usability:
+                </Paragraph1>
+                <ul className="list-disc list-inside space-y-2 mt-2 ml-2">
+                  <li>Permanent stains</li>
+                  <li>Tears or rips</li>
+                  <li>Broken zippers or closures</li>
+                  <li>Missing embellishments or components</li>
+                  <li>Burn marks</li>
+                  <li>Stretching or deformation of the garment</li>
+                </ul>
+                <Paragraph1 className="mt-3">
+                  If damage occurs, repair costs will be deducted from the
+                  renter's collateral.
+                </Paragraph1>
+
+                <h4 className="font-semibold text-black mt-4 mb-2\">
+                  Severe Damage or Loss (Total Collateral Forfeiture):
+                </h4>
+                <Paragraph1>
+                  If an item is lost, not returned, or returned in unusable
+                  condition, RELISTED Labels may deduct up to the full
+                  collateral amount to compensate the vendor.
+                </Paragraph1>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-black mb-2\">
+                  Late Return Policy
+                </h3>
+                <Paragraph1>
+                  Items must be returned on the agreed rental end date through
+                  the designated Topship logistics provider.
+                </Paragraph1>
+                <ul className="list-disc list-inside space-y-2 mt-2 ml-2">
+                  <li>
+                    10% of the collateral value will be deducted for each day
+                    the item is overdue
+                  </li>
+                  <li>
+                    This daily deduction continues until the item is returned OR
+                    the collateral value is fully exhausted
+                  </li>
+                </ul>
+                <Paragraph1 className="mt-3">
+                  This policy protects vendors from lost rental opportunities
+                  and delayed inventory availability.
+                </Paragraph1>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-black mb-2\">
+                  Cancellation & Refund Policy
+                </h3>
+                <Paragraph1>
+                  <strong>
+                    Once a rental request is confirmed by the vendor and payment
+                    is completed, the booking is considered final.
+                  </strong>
+                </Paragraph1>
+
+                <h4 className="font-semibold text-black mt-3 mb-2\">
+                  Cancellations:
+                </h4>
+                <Paragraph1>
+                  RELISTED Labels does not allow cancellations after
+                  confirmation and payment. This policy ensures vendors can
+                  reliably plan inventory availability.
+                </Paragraph1>
+
+                <h4 className="font-semibold text-black mt-3 mb-2\">
+                  Refund Eligibility:
+                </h4>
+                <Paragraph1>
+                  Refunds may only be issued in these situations:
+                </Paragraph1>
+                <ul className="list-disc list-inside space-y-2 mt-2 ml-2">
+                  <li>The item was never delivered</li>
+                  <li>
+                    The item arrives with significant damage that prevents it
+                    from being worn
+                  </li>
+                  <li>
+                    The item delivered is materially different from the listing
+                  </li>
+                </ul>
+                <Paragraph1 className="mt-3">
+                  <strong>
+                    Refund requests must be submitted within 24 hours of
+                    delivery.
+                  </strong>
+                  RELISTED Labels reserves the right to review all refund claims
+                  before approval.
+                </Paragraph1>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-black mb-2\">
+                  Shipping & Returns via Topship
+                </h3>
+
+                <h4 className="font-semibold text-black mt-3 mb-2\">
+                  Delivery Process:
+                </h4>
+                <ol className="list-decimal list-inside space-y-2 mt-2 ml-2">
+                  <li>Renter submits a rental request</li>
+                  <li>Vendor confirms availability</li>
+                  <li>Topship collects the item from the vendor</li>
+                  <li>Item is delivered to the renter</li>
+                </ol>
+
+                <h4 className="font-semibold text-black mt-4 mb-2\">
+                  Return Process:
+                </h4>
+                <ol className="list-decimal list-inside space-y-2 mt-2 ml-2">
+                  <li>
+                    At the end of rental period, renter returns item through
+                    Topship
+                  </li>
+                  <li>Vendor confirms the item's condition upon return</li>
+                  <li>
+                    Renter's collateral is released if no issues are identified
+                  </li>
+                </ol>
+                <Paragraph1 className="mt-3">
+                  RELISTED Labels is not responsible for delays caused by
+                  third-party logistics providers (Topship).
+                </Paragraph1>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-black mb-2\">
+                  Cleaning & Garment Care
+                </h3>
+                <Paragraph1>
+                  Professional dry cleaning is included within the rental cost
+                  paid by the renter.
+                </Paragraph1>
+                <h4 className="font-semibold text-black mt-3 mb-2\">
+                  Vendor Responsibilities:
+                </h4>
+                <ul className="list-disc list-inside space-y-2 mt-2 ml-2">
+                  <li>Must arrange professional cleaning after each rental</li>
+                  <li>
+                    RELISTED Labels may recommend trusted cleaning partners, but
+                    vendors may use preferred services
+                  </li>
+                </ul>
+
+                <h4 className="font-semibold text-black mt-3 mb-2\">
+                  Renter Responsibilities:
+                </h4>
+                <ul className="list-disc list-inside space-y-2 mt-2 ml-2">
+                  <li>Handle garments with care during rental period</li>
+                  <li>Avoid attempting to clean delicate items themselves</li>
+                  <li>Return items in the condition received</li>
                 </ul>
               </div>
             </div>
@@ -273,7 +422,7 @@ export default function TermsAndConditions() {
                 acceptable condition
               </li>
               <li>
-                Not solicit or conduct transactions outside the RELISTED
+                Not solicit or conduct transactions outside the RELISTED Labels
                 platform to avoid fees
               </li>
               <li>
@@ -285,8 +434,8 @@ export default function TermsAndConditions() {
                 practices
               </li>
               <li>
-                Indemnify RELISTED for damage claims exceeding rental price by
-                the Renter
+                Indemnify RELISTED Labels for damage claims exceeding rental
+                price by the Renter
               </li>
             </ul>
           </div>
@@ -303,8 +452,8 @@ export default function TermsAndConditions() {
                 </h3>
                 <Paragraph1>
                   You retain all rights to content you create and upload to
-                  RELISTED (including product photos, descriptions, and
-                  reviews). By uploading content, you grant RELISTED a
+                  RELISTED Labels (including product photos, descriptions, and
+                  reviews). By uploading content, you grant RELISTED Labels a
                   worldwide, non-exclusive, royalty-free license to use,
                   reproduce, modify, and distribute your content for the
                   purposes of operating and promoting the Service.
@@ -356,9 +505,9 @@ export default function TermsAndConditions() {
             </Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
               The Service and its original content, features, and functionality
-              are owned by RELISTED, its licensors, or other providers of such
-              material and are protected by international copyright, trademark,
-              and other intellectual property laws.
+              are owned by RELISTED Labels, its licensors, or other providers of
+              such material and are protected by international copyright,
+              trademark, and other intellectual property laws.
             </Paragraph1>
             <div className="space-y-4 text-gray-700">
               <ul className="list-disc list-inside space-y-2 ml-2">
@@ -367,8 +516,8 @@ export default function TermsAndConditions() {
                   from the Service without our express written permission
                 </li>
                 <li>
-                  The RELISTED name, logo, and all related marks are trademarks
-                  of RELISTED
+                  The RELISTED Labels name, logo, and all related marks are
+                  trademarks of RELISTED Labels
                 </li>
                 <li>
                   You may not use our trademarks in connection with your
@@ -384,9 +533,9 @@ export default function TermsAndConditions() {
               8. Limitation of Liability
             </Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
-              IN NO EVENT SHALL RELISTED, ITS DIRECTORS, EMPLOYEES, OR AGENTS BE
-              LIABLE TO YOU FOR ANY DAMAGES, INCLUDING LOST PROFITS, LOST
-              REVENUE, LOST DATA, OR OTHER CONSEQUENTIAL, DIRECT, INDIRECT,
+              IN NO EVENT SHALL RELISTED LABELS, ITS DIRECTORS, EMPLOYEES, OR
+              AGENTS BE LIABLE TO YOU FOR ANY DAMAGES, INCLUDING LOST PROFITS,
+              LOST REVENUE, LOST DATA, OR OTHER CONSEQUENTIAL, DIRECT, INDIRECT,
               SPECIAL, PUNITIVE, OR INCIDENTAL DAMAGES RESULTING FROM:
             </Paragraph1>
             <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2 mb-4">
@@ -419,10 +568,11 @@ export default function TermsAndConditions() {
                 </h3>
                 <Paragraph1>
                   The Service is provided on an "AS IS" and "AS AVAILABLE"
-                  basis. RELISTED makes no representations or warranties of any
-                  kind, express or implied, regarding the Service, including but
-                  not limited to: accuracy, reliability, completeness, fitness
-                  for a particular purpose, or non-infringement.
+                  basis. RELISTED Labels makes no representations or warranties
+                  of any kind, express or implied, regarding the Service,
+                  including but not limited to: accuracy, reliability,
+                  completeness, fitness for a particular purpose, or
+                  non-infringement.
                 </Paragraph1>
               </div>
 
@@ -443,10 +593,10 @@ export default function TermsAndConditions() {
                   Third-Party Content
                 </h3>
                 <Paragraph1>
-                  RELISTED does not control or endorse any content provided by
-                  third parties, including Listers and other Users. We are not
-                  responsible for the accuracy, quality, or legality of such
-                  content.
+                  RELISTED Labels does not control or endorse any content
+                  provided by third parties, including Listers and other Users.
+                  We are not responsible for the accuracy, quality, or legality
+                  of such content.
                 </Paragraph1>
               </div>
             </div>
@@ -464,10 +614,10 @@ export default function TermsAndConditions() {
                 </h3>
                 <Paragraph1>
                   In the event of a dispute between you and another User
-                  (Renter/Lister), or between you and RELISTED, we encourage you
-                  to first attempt to resolve the matter directly with the other
-                  party. If direct resolution is unsuccessful, you may submit a
-                  formal dispute to RELISTED.
+                  (Renter/Lister), or between you and RELISTED Labels, we
+                  encourage you to first attempt to resolve the matter directly
+                  with the other party. If direct resolution is unsuccessful,
+                  you may submit a formal dispute to RELISTED Labels.
                 </Paragraph1>
               </div>
 
@@ -478,8 +628,8 @@ export default function TermsAndConditions() {
                 <Paragraph1>
                   Before pursuing formal legal action, you agree to attempt to
                   resolve the dispute through informal resolution by contacting
-                  our support team at disputes@relisted.com. We will attempt to
-                  facilitate a resolution within 14 days.
+                  our support team at relistedlabels.contact@gmail.com. We will
+                  attempt to facilitate a resolution within 14 days.
                 </Paragraph1>
               </div>
 
@@ -492,8 +642,8 @@ export default function TermsAndConditions() {
                   agree to submit to binding arbitration in accordance with the
                   rules of the American Arbitration Association (AAA). The
                   arbitration will take place in the jurisdiction where RELISTED
-                  is headquartered. Each party will bear its own attorney's fees
-                  and costs, except as provided by law.
+                  Labels is headquartered. Each party will bear its own
+                  attorney's fees and costs, except as provided by law.
                 </Paragraph1>
               </div>
 
@@ -506,7 +656,7 @@ export default function TermsAndConditions() {
                   conducted on an individual basis and not as a class action,
                   class arbitration, or any other representative action. You
                   waive the right to participate in any class-wide lawsuit or
-                  class arbitration against RELISTED.
+                  class arbitration against RELISTED Labels.
                 </Paragraph1>
               </div>
             </div>
@@ -518,10 +668,10 @@ export default function TermsAndConditions() {
               11. Indemnification
             </Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed">
-              You agree to indemnify, defend, and hold harmless RELISTED and its
-              officers, directors, employees, and agents from any and all
-              claims, damages, losses, costs, and expenses (including reasonable
-              attorney's fees) arising from or related to:
+              You agree to indemnify, defend, and hold harmless RELISTED Labels
+              and its officers, directors, employees, and agents from any and
+              all claims, damages, losses, costs, and expenses (including
+              reasonable attorney's fees) arising from or related to:
             </Paragraph1>
             <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2 mt-4">
               <li>Your use of the Service</li>
@@ -561,8 +711,8 @@ export default function TermsAndConditions() {
             <Paragraph1 className="text-gray-700 leading-relaxed">
               These Terms and Conditions, together with our Privacy Policy and
               any other policies or guidelines we publish, constitute the entire
-              agreement between you and RELISTED regarding your use of the
-              Service. If any provision is found to be unenforceable, the
+              agreement between you and RELISTED Labels regarding your use of
+              the Service. If any provision is found to be unenforceable, the
               remaining provisions shall continue in full force and effect.
             </Paragraph1>
           </div>
@@ -598,22 +748,24 @@ export default function TermsAndConditions() {
               16. Contact Us
             </Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed">
-              If you have any questions about these Terms and Conditions, please
-              contact us at:
+              If you have any questions about these Terms and Conditions or need
+              support, please reach out to us:
             </Paragraph1>
-            <div className="mt-4 space-y-2 text-gray-700">
-              <p>
-                <strong>Email:</strong> legal@relisted.com
-              </p>
-              <p>
-                <strong>Mailing Address:</strong> RELISTED, [Your Address],
-                [City], [Country]
-              </p>
-              <p>
-                <strong>Phone:</strong> +1 (XXX) XXX-XXXX
-              </p>
+            <div className="mt-4 space-y-4 text-gray-700">
+              <div>
+                <p className="font-semibold text-black mb-2">
+                  Support & General Inquiries:
+                </p>
+                <p>
+                  <strong>Email:</strong> relistedlabels.contact@gmail.com
+                </p>
+              </div>
+              <div>
+                <p className="font-semibold text-black mb-2">Location:</p>
+                <p>Lagos, Nigeria</p>
+              </div>
               <p className="text-sm text-gray-600 mt-4">
-                We will respond to your inquiry within 7-10 business days.
+                We aim to respond to all inquiries within 24–48 hours.
               </p>
             </div>
           </div>

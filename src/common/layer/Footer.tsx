@@ -14,7 +14,7 @@ export default function Footer() {
     <footer className="w-full bg-black text-white py-14 px-4 sm:px-0  font-light tracking-wide">
       <div className="mx-auto  container">
         {" "}
-        <div className="w-full  grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="w-full  grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-6 gap-8">
           {/* NAVIGATION */}
           <div className="space-y-3.5">
             <ParagraphLink2 className=" text-[#8F8F8F]">
@@ -71,6 +71,13 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/listers-marketplace">
+                  <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
+                    All Listers
+                  </ParagraphLink2>
+                </Link>
+              </li>
+              <li>
                 <Link href="/shop?gender=Men&title=Men%27s+Collections&description=Shop+men%27s+fashion">
                   <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
                     Mens
@@ -94,25 +101,69 @@ export default function Footer() {
             </ul>
           </div>
 
+          {/* SUPPORT & CONTACT */}
+          <div className="space-y-3.5">
+            <ParagraphLink2 className=" text-[#8F8F8F]">
+              SUPPORT & CONTACT
+            </ParagraphLink2>
+            <ul className="flex flex-col space-y-3.5 text-sm opacity-70">
+              <li>
+                <a href="mailto:relistedlabels.contact@gmail.com?subject=Support%20Request">
+                  <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
+                    Support
+                  </ParagraphLink2>
+                </a>
+              </li>
+              <li>
+                <a href="mailto:relistedlabels.contact@gmail.com?subject=Partnership%20Inquiry">
+                  <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
+                    Partnerships
+                  </ParagraphLink2>
+                </a>
+              </li>
+              <li>
+                <a href="mailto:relistedlabels.contact@gmail.com?subject=Press%20Inquiry">
+                  <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
+                    Press
+                  </ParagraphLink2>
+                </a>
+              </li>
+              <li>
+                <a href="mailto:relistedlabels.contact@gmail.com?subject=Career%20Inquiry">
+                  <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
+                    Careers
+                  </ParagraphLink2>
+                </a>
+              </li>
+            </ul>
+          </div>
+
           {/* SOCIAL */}
           <div className="space-y-3.5">
             <ParagraphLink2 className=" text-[#8F8F8F]">SOCIAL</ParagraphLink2>
             <ul className="flex flex-col space-y-3.5 text-sm opacity-70">
-              <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
-                Instagram
-              </ParagraphLink2>
-              <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
-                TikTok
-              </ParagraphLink2>
-              {/* <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
-                YouTube
-              </ParagraphLink2>
-              <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
-                X (Twitter)
-              </ParagraphLink2>
-              <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
-                Facebook
-              </ParagraphLink2> */}
+              <li>
+                <Link
+                  href="https://www.instagram.com/relistedlabels?igsh=ZDZybGdwaGY5YWs5"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
+                    Instagram
+                  </ParagraphLink2>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="https://www.tiktok.com/@relistedlabels?_r=1&_t=ZS-94Ux8kvQOwf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
+                    TikTok
+                  </ParagraphLink2>
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -139,7 +190,7 @@ export default function Footer() {
         </div>
         <hr className=" mt-14 text-gray-500" />
         <ParagraphLink2 className="mt-8  text-center sm:text-start">
-          Copyright © 2026, RELISTED
+          Copyright © 2026, RELISTED Labels
         </ParagraphLink2>
         {/* COPYRIGHT TEXT */}
         <div className=" text-center sm:hidden flex justify-center py-8">
