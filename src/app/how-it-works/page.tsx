@@ -3,6 +3,7 @@ import HowItWorks from "./sections/HowItWorks";
 import DressersSection from "./sections/DressersSection";
 import HowItWorksVideo from "./sections/HowItWorksVideo";
 import CuratorsSection from "./sections/CuratorsSection";
+import DeliverySection from "./sections/DeliverySection";
 import FAQSection from "./sections/FAQSection";
 
 export default function page() {
@@ -12,6 +13,7 @@ export default function page() {
       <DressersSection />
       {/* <HowItWorksVideo /> */}
       <CuratorsSection />
+      <DeliverySection />
       <FAQSection />
     </div>
   );

@@ -33,6 +33,8 @@ export default function DressersSection() {
 
         <Button
           text="Start Shopping"
+          isLink={true}
+          href="/shop"
           backgroundColor="bg-white"
           border="border border-white"
           color="text-black hover:text-white"
@@ -59,8 +61,9 @@ export default function DressersSection() {
             }}
             className="flex flex-col items-start"
           >
+            {/* Image - Hidden on mobile */}
             <motion.div
-              className="w-full h-72 relative mb-6 overflow-hidden"
+              className="hidden md:block w-full h-72 relative mb-6 overflow-hidden"
               initial={{ scale: 1.1, opacity: 0 }}
               whileInView={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.9, ease: "easeOut" }}
@@ -80,13 +83,31 @@ export default function DressersSection() {
               />
             </motion.div>
 
-            <Header5 className="text-lg font-semibold mb-2">
-              {step.title}
-            </Header5>
+            {/* Mobile Card Layout */}
+            <div className="md:hidden flex items-start gap-4 w-full border border-white/40 bg-white/10 rounded p-6 mb-6">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-white/30 border border-white/20 flex items-center justify-center font-semibold text-white flex-none">
+                {index + 1}
+              </div>
+              <div className="flex flex-col">
+                <Header5 className="text-lg font-semibold mb-2">
+                  {step.title}
+                </Header5>
+                <Paragraph1 className="text-gray-300 text-sm">
+                  {step.description}
+                </Paragraph1>
+              </div>
+            </div>
 
-            <Paragraph1 className="text-gray-300 text-sm">
-              {step.description}
-            </Paragraph1>
+            {/* Desktop Text */}
+            <div className="hidden md:block w-full">
+              <Header5 className="text-lg font-semibold mb-2">
+                {step.title}
+              </Header5>
+
+              <Paragraph1 className="text-gray-300 text-sm">
+                {step.description}
+              </Paragraph1>
+            </div>
           </motion.div>
         ))}
       </motion.div>

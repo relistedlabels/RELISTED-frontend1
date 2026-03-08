@@ -1,9 +1,12 @@
 "use client";
 
 import Button from "@/common/ui/Button";
-import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
+import { Header1, Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { useUserStore } from "@/store/useUserStore";
+import { useMe } from "@/lib/queries/auth/useMe";
+import { useListerProfile } from "@/lib/queries/listers/useListerProfile";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -19,6 +22,33 @@ const fadeUp = {
 };
 
 export default function HowItWorks() {
+  const token = useUserStore((s) => s.token);
+  const role = useUserStore((s) => s.role);
+  const setUser = useUserStore((s) => s.setUser);
+  const { data: user } = useMe();
+  const { data: listerProfile } = useListerProfile();
+  // Handle List Items click - set role to LISTER if needed
+  const handleListItemsClick = () => {
+    if (!token || !user) {
+      // Not logged in, navigate to create account
+      window.location.href = "/auth/create-account";
+      return;
+    }
+
+    // If user is a lister with completed profile, go to dashboard
+    if (role === "LISTER" && listerProfile) {
+      window.location.href = "/listers/dashboard";
+      return;
+    }
+
+    // If user is not already a LISTER, set them as LISTER for profile setup
+    if (role !== "LISTER") {
+      setUser({ role: "LISTER" });
+    }
+
+    // Navigate to profile setup (will show lister flow since role is now LISTER)
+    window.location.href = "/auth/profile-setup";
+  };
   return (
     <motion.section
       initial="hidden"
@@ -29,7 +59,7 @@ export default function HowItWorks() {
     >
       <div className="container mx-auto grid grid-cols-1 md:grid-cols-2 items-center">
         {/* Floating Image */}
-        <div className="order-2 md:order-1 w-full">
+        <div className="order-2 hidden md:flex md:order-1 w-full">
           <motion.div
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 6, repeat: Infinity }}
@@ -49,22 +79,28 @@ export default function HowItWorks() {
           variants={containerVariants}
           className="order-1 md:order-2 w-full pb-8 sm:pb-0 md:pl-12"
         >
-          <motion.div variants={fadeUp} transition={{ duration: 0.8 }}>
+          <motion.div
+            className=" border-b border-gray-200 mb-2 "
+            variants={fadeUp}
+            transition={{ duration: 0.8 }}
+          >
             <Paragraph1 className="text-sm text-gray-500 mb-2">
               HOW IT WORKS
             </Paragraph1>
           </motion.div>
 
           <motion.div variants={fadeUp} transition={{ duration: 0.8 }}>
-            <Header1Plus className="text-3xl md:text-4xl font-semibold mb-6">
+            <Header1 className="text-3xl md:text-4xl font-semibold mb-6">
               ACCESS. EARN. ELEVATE.
-            </Header1Plus>
+            </Header1>
           </motion.div>
 
           <motion.div variants={fadeUp} transition={{ duration: 0.8 }}>
             <Paragraph1 className="mb-6">
               Relisted makes fashion circular connecting those who want to wear
-              standout pieces with those who own them.
+              standout pieces with those who own them. Whether you are here to
+              rent for a moment or earn from your wardrobe, we have made it
+              seamless.
             </Paragraph1>
           </motion.div>
 
@@ -72,11 +108,13 @@ export default function HowItWorks() {
           <motion.div
             variants={fadeUp}
             transition={{ duration: 0.8 }}
-            className="flex gap-4 justify-center md:justify-start"
+            className="flex gap-4 sm:justify-center- md:justify-start"
           >
             <motion.div>
               <Button
-                text="Start Shopping"
+                text="Explore"
+                isLink={true}
+                href="/shop"
                 backgroundColor="bg-black"
                 color="text-white"
                 border="border border-black"
@@ -86,6 +124,7 @@ export default function HowItWorks() {
             <motion.div>
               <Button
                 text="List Items"
+                onClick={handleListItemsClick}
                 backgroundColor="bg-transparent"
                 border="border border-black"
                 color="text-black hover:text-white"

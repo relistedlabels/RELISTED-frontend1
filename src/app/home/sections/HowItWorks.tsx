@@ -1,7 +1,13 @@
 import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { Header1, Header1Plus, Header2, Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import {
+  Header1,
+  Header1Plus,
+  Header2,
+  Paragraph2,
+  Paragraph3,
+} from "@/common/ui/Text";
 
 function HowItWorks() {
   return (
@@ -29,12 +35,10 @@ function HowItWorks() {
               <Paragraph3 className=" text-gray-300">
                 Same day delivery for items near you, or from anywhere in Lagos
               </Paragraph3>
-
-             
             </div>
 
             <Link
-              href="/how-it-works"
+              href="/how-it-works#delivery"
               className="inline-flex justify-center items-center gap-2 text-white gray-400 hover:text-white font-semibold text-lg transition-colors group mx-auto"
             >
               <Paragraph2 className="text-xl md:text-2xl font-semibold ">
