@@ -57,7 +57,7 @@ export default function BecomeCurator() {
           </motion.div>
 
           {/* Sub Text */}
-          <motion.p
+          <motion.div
             className=" mb-8"
             variants={{
               hidden: { opacity: 0, y: 20 },
@@ -69,7 +69,7 @@ export default function BecomeCurator() {
               Turn your wardrobe into a new source of opportunity & earn
               effortlessly{" "}
             </Paragraph1>
-          </motion.p>
+          </motion.div>
 
           {/* Buttons */}
           <motion.div

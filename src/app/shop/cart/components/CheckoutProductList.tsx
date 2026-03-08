@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { Trash2 } from "lucide-react";
+import { Trash2, ShoppingCart } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 // import { useCart } from "@/lib/queries/renters/useCart";
 import { useRemoveRentalRequest } from "@/lib/mutations/renters/useRemoveRentalRequest";
@@ -89,10 +89,8 @@ export default function CheckoutProductList({
 
   if (cartItems.length === 0) {
     return (
-      <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <Paragraph1 className="text-sm text-gray-600">
-          Your cart is empty. Add items to get started!
-        </Paragraph1>
+      <div className="flex items-center justify-center py-16">
+        <ShoppingCart size={80} className="text-gray-300" />
       </div>
     );
   }
@@ -204,7 +202,9 @@ export default function CheckoutProductList({
             >
               <Paragraph1>Remove Selected</Paragraph1>
             </button>
-            <Paragraph1 className="text-xs text-gray-500 ml-2">{selectedItems.length} selected</Paragraph1>
+            <Paragraph1 className="text-xs text-gray-500 ml-2">
+              {selectedItems.length} selected
+            </Paragraph1>
           </motion.div>
         )}
       </AnimatePresence>
@@ -239,14 +239,14 @@ export default function CheckoutProductList({
               {/* === Product Info (Mobile/Desktop) === */}
               <div className="col-span-5 flex items-start gap-3 w-full">
                 {/* Checkbox */}
-                  <div className="shrink-0 pt-1">
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => toggleItemSelection(item.requestId)}
-                      className="form-checkbox h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
-                    />
-                  </div>
+                <div className="shrink-0 pt-1">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleItemSelection(item.requestId)}
+                    className="form-checkbox h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
+                  />
+                </div>
                 {/* Image */}
                 <div className="shrink-0 w-16 h-20 bg-gray-200 rounded-sm overflow-hidden border border-gray-100 relative">
                   {product.attachments?.uploads?.[0]?.url && (

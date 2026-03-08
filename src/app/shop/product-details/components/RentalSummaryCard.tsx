@@ -31,7 +31,7 @@ export default function RentalSummaryCard({
   };
 
   return (
-    <div className="  ">
+    <div className=" hidden  ">
       {/* Header */}
       <Paragraph1 className="text-sm font-semibold text-gray-700 tracking-wider mb-4">
         RENTAL SUMMARY

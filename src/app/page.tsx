@@ -7,7 +7,8 @@ import MainCategorySection from "./home/sections/MainCategorySection";
 import PopularCategorySection from "./home/sections/PopularCategorySection";
 import ReviewCarousel from "./home/sections/ReviewCarousel";
 import TopCuratorsSection from "./home/sections/TopCuratorsSection";
-import TopListingSection from "./home/sections/TopListingSection";
+import TopListingSection1 from "./home/sections/TopListingSection1";
+import TopListingSection2 from "./home/sections/TopListingSection2";
 
 export default function Home() {
  
@@ -15,13 +16,18 @@ export default function Home() {
     <div>
       <EndlessStyleHero />
       <BrandLogosCarousel />
-      <MainCategorySection />
-      <TopListingSection />
       <PopularCategorySection />
-      <BecomeCurator />
-      <TopCuratorsSection />
+
+      {/* <MainCategorySection /> */}
       <HowItWorks />
-      <br /><br />
+
+      <TopListingSection2 />
+      <TopListingSection1 />
+
+      <BecomeCurator />
+      {/* <TopCuratorsSection /> */}
+      <br />
+      <br />
       {/* <ReviewCarousel /> */}
     </div>
   );

@@ -46,7 +46,7 @@ const TopListingSection = () => {
         <div className="container mx-auto">
           <div className="text-center mb-2 sm:mb-6">
             <Header1Plus className="tracking-wide uppercase">
-              TOP LISTINGS
+              VACATION OUTFITS
             </Header1Plus>
           </div>
           <ProductCardSkeleton count={6} />
@@ -61,7 +61,7 @@ const TopListingSection = () => {
         <div className="container mx-auto">
           <div className="text-center mb-2 sm:mb-6">
             <Header1Plus className="tracking-wide uppercase">
-              TOP LISTINGS
+              VACATION OUTFITS
             </Header1Plus>
           </div>
           <ProductCardSkeleton count={6} />
@@ -79,13 +79,11 @@ const TopListingSection = () => {
         {/* Header */}
         <div className="text-center mb-2 sm:mb-6">
           <Header1Plus className="tracking-wide uppercase">
-            TOP LISTINGS
+            VACATION OUTFITS
           </Header1Plus>
           <Paragraph1 className="text-gray-600">
-            Discover popular looks this week.{" "}
-            <Link href="/shop?title=Top+Listings&description=Discover+popular+looks+this+week">
-              <span className="underline cursor-pointer">SHOP NOW</span>
-            </Link>
+            Explore amazing outfits that elevate your looks for your vacation
+            and short trips
           </Paragraph1>
         </div>
 
@@ -133,6 +131,18 @@ const TopListingSection = () => {
             </div>
           </div>
         )}
+        <div className=" flex items-center w-full justify-center">
+          <Link
+            href="/shop?title=VACATION+OUTFITS&category=585273612"
+            className="inline-flex items-center justify-center w-full max-w-md px-8 py-3 
+                         bg-black text-white text-sm font-medium tracking-wider uppercase 
+                         transition-colors duration-200 hover:bg-neutral-800 focus:outline-none 
+                         focus:ring-2 focus:ring-offset-2 focus:ring-black"
+            aria-label="Browse all items"
+          >
+            <Paragraph1 className="text-white">Browse All</Paragraph1>
+          </Link>
+        </div>
       </div>
     </section>
   );
