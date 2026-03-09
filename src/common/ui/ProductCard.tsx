@@ -99,9 +99,9 @@ export default function ProductCard({
 
       <div className="py-4">
         <Paragraph1 className="text-xs font-semibold tracking-wide">
-          {brand}
+          {brand}{" "} {name}
         </Paragraph1>
-        <Paragraph1 className="text-gray-700 mt-1">{name}</Paragraph1>
+        {/* <Paragraph1 className="text-gray-700 mt-1">{name}</Paragraph1> */}
         <Paragraph1 className="text-gray-700 mt-2">
           Rent from{" "}
           <span className="text-black font-semibold">
