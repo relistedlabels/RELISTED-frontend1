@@ -14,7 +14,7 @@ const DeliveryAndReturnDetails: React.FC = () => {
           DELIVERY:
         </Paragraph1>
         <ul className="space-y-1 text-sm text-gray-700 list-disc list-inside">
-          <li>Free delivery within Lagos (1-2 days)</li>
+          {/* <li>Free delivery within Lagos (1-2 days)</li> */}
           <li>Express delivery available (same day)</li>
           <li>Nationwide shipping (2-3 days)</li>
         </ul>
@@ -26,7 +26,7 @@ const DeliveryAndReturnDetails: React.FC = () => {
           RETURNS:
         </Paragraph1>
         <ul className="space-y-1 text-sm text-gray-700 list-disc list-inside">
-          <li>Free return pickup included</li>
+          {/* <li>Free return pickup included</li> */}
           <li>Return within 24 hours of rental end</li>
           <li>Professional cleaning handled by us</li>
         </ul>

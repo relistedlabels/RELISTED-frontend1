@@ -1,5 +1,6 @@
 import React from "react";
-import { Paragraph1 } from "@/common/ui/Text"; // Using your custom text component
+import { Paragraph1 } from "@/common/ui/Text";
+import { useBrandById } from "@/lib/queries/brand/useBrands";
 
 interface Specification {
   /** The title of the specification (e.g., "DESIGNER:") */
@@ -58,33 +59,47 @@ const ProductSpecifications: React.FC<ProductSpecificationsProps> = ({
 // --- Example Usage matching the provided image content ---
 
 interface ProductDetailsBlockProps {
-  product?: {
+  product: {
     description?: string;
+    brandId?: string | null;
+    brand?: { name?: string } | null;
+    material?: string | null;
+    composition?: string | null;
+    measurement?: string | null;
+    color?: string | null;
   };
 }
 
 const ProductDetailsBlock: React.FC<ProductDetailsBlockProps> = ({
   product,
 }) => {
-  const exampleDescription =
-    product?.description ||
-    "Tubular boots with tapered toe and high heel featuring the iconic Arco line, customised with metal detail and engraved logo. Made of black shiny hagfish leather. Covered heel and leather sole.";
+  // Fetch brand name using brandId if available
+  const { data: brand } = useBrandById(product.brandId || "");
+  const brandName = brand?.name || product.brand?.name || "Brand";
 
-  const exampleSpecs: Specification[] = [
-    { label: "Designer", value: "FENDI" },
-    {
-      label: "Composition",
-      value: "100% hagfish, inside: 100% calfleather",
-    },
-    { label: "Measurements", value: "Heel height : 95 mm" },
-    { label: "Color", value: "Black" },
+  // Compose composition string
+  let compositionValue = "";
+  if (product.material && product.composition) {
+    compositionValue = `${product.material}, ${product.composition}`;
+  } else if (product.material) {
+    compositionValue = product.material;
+  } else if (product.composition) {
+    compositionValue = product.composition;
+  } else {
+    compositionValue = "-";
+  }
+
+  const specifications: Specification[] = [
+    { label: "Designer", value: brandName },
+    { label: "Composition", value: compositionValue },
+    { label: "Measurements", value: product.measurement || "-" },
+    { label: "Color", value: product.color || "-" },
   ];
 
   return (
     <ProductSpecifications
-      description={exampleDescription}
-      specifications={exampleSpecs}
-      madeIn="Made in Italy"
+      description={product.description || "-"}
+      specifications={specifications}
     />
   );
 };
