@@ -5,8 +5,39 @@ import { Header1Plus, Header5, Paragraph1 } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
 import { curatorSteps } from "@/data/curatorSteps";
 import { motion } from "framer-motion";
+import { useUserStore } from "@/store/useUserStore";
+import { useMe } from "@/lib/queries/auth/useMe";
+import { useListerProfile } from "@/lib/queries/listers/useListerProfile";
 
 export default function CuratorsSection() {
+   const token = useUserStore((s) => s.token);
+    const role = useUserStore((s) => s.role);
+    const setUser = useUserStore((s) => s.setUser);
+    const { data: user } = useMe();
+    const { data: listerProfile } = useListerProfile();
+  
+    // Handle List Items click - set role to LISTER if needed
+    const handleListItemsClick = () => {
+      if (!token || !user) {
+        // Not logged in, navigate to create account
+        window.location.href = "/auth/create-account";
+        return;
+      }
+  
+      // If user is a lister with completed profile, go to dashboard
+      if (role === "LISTER" && listerProfile) {
+        window.location.href = "/listers/dashboard";
+        return;
+      }
+  
+      // If user is not already a LISTER, set them as LISTER for profile setup
+      if (role !== "LISTER") {
+        setUser({ role: "LISTER" });
+      }
+  
+      // Navigate to profile setup (will show lister flow since role is now LISTER)
+      window.location.href = "/auth/profile-setup";
+    };
   return (
     <section className="w-full bg-[#3A3A32] text-white py-20">
       {/* Top Content */}
@@ -32,7 +63,8 @@ export default function CuratorsSection() {
         </Paragraph1>
 
         <Button
-          text="Become a Curator"
+          text="Become a Lister"
+          onClick={handleListItemsClick}
           backgroundColor="bg-white"
           border="border border-white"
           color="text-black hover:text-white"
