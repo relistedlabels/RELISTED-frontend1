@@ -50,7 +50,7 @@ export default function StyleCategoriesSection() {
       </div>
 
       {/* Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
         {(Array.isArray(categories) ? categories : []).map((category, idx) => {
           const categoryDescription =
             category.description || "Explore this collection";
