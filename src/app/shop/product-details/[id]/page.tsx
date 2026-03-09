@@ -1,4 +1,7 @@
 import React from "react";
+
+// Always fetch fresh data on each request
+export const revalidate = 0;
 import TitleProductCard from "../components/TitleProductCard";
 import RentalDetailsCard from "../components/RentalDetailsCard";
 import ProductAccordion from "../components/ProductAccordion";

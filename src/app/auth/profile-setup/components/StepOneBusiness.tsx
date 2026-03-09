@@ -4,6 +4,10 @@ import React, { useState, useEffect } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { MapPin } from "lucide-react";
 import { useProfileStore } from "@/store/useProfileStore";
+import { useUpdateListerProfile } from "@/lib/mutations/listers/useUpdateListerProfile";
+import { useAddListerAddress } from "@/lib/mutations/listers/useAddListerAddress";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { PhoneInput } from "./PhoneInput";
 import { StateSelect } from "./StateSelect";
 import { CityLGASelect } from "./CityLGASelect";
@@ -20,6 +24,9 @@ const StepOnePersonal: React.FC<StepOnePersonalProps> = ({
 }) => {
   const profile = useProfileStore((s) => s);
   const setProfile = useProfileStore((s) => s.setProfile);
+  const updateProfile = useUpdateListerProfile();
+  const router = useRouter();
+  const addAddress = useAddListerAddress();
 
   const [phoneNumber, setPhoneNumber] = useState(profile.phoneNumber);
   const [address, setAddress] = useState(profile.address.street);
@@ -62,7 +69,54 @@ const StepOnePersonal: React.FC<StepOnePersonalProps> = ({
         country: "Nigeria",
       },
     });
-    onNext();
+
+    updateProfile.mutate(
+      {
+        phone: phoneNumber,
+        bvn,
+      },
+      {
+        onSuccess: () => {
+          addAddress.mutate(
+            {
+              type: "residential",
+              street: address,
+              city: cityLGA,
+              state,
+              country: "Nigeria",
+              postalCode: "", // You may want to collect this from user
+              isDefault: true,
+            },
+            {
+              onSuccess: () => {
+                toast.success("Profile and address updated!");
+                onNext();
+              },
+              onError: (error: any) => {
+                const errorMessage =
+                  error?.response?.data?.message ||
+                  error?.message ||
+                  "Failed to add address. Please try again.";
+                toast.error("Address error", {
+                  description: errorMessage,
+                  duration: 4000,
+                });
+              },
+            },
+          );
+        },
+        onError: (error: any) => {
+          const errorMessage =
+            error?.response?.data?.message ||
+            error?.message ||
+            "Failed to update profile. Please try again.";
+          toast.error("Oops! Something went wrong", {
+            description: errorMessage,
+            duration: 4000,
+          });
+        },
+      },
+    );
   };
 
   return (
@@ -133,8 +187,13 @@ const StepOnePersonal: React.FC<StepOnePersonalProps> = ({
       <button
         type="submit"
         className="w-full py-3 bg-black text-white rounded-lg"
+        disabled={updateProfile.isPending || addAddress.isPending}
       >
-        <Paragraph1>Next</Paragraph1>
+        <Paragraph1>
+          {updateProfile.isPending || addAddress.isPending
+            ? "Saving..."
+            : "Next"}
+        </Paragraph1>
       </button>
     </form>
   );

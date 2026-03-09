@@ -7,7 +7,7 @@ import { useProfileStore } from "@/store/useProfileStore";
 import { CityLGASelect } from "./CityLGASelect";
 import { StateSelect } from "./StateSelect";
 import { useRouter } from "next/navigation";
-import { useCreateProfile } from "@/lib/mutations";
+import { useUpdateBusinessProfile } from "@/lib/mutations/listers/useUpdateBusinessProfile";
 import { ToolInfo } from "@/common/ui/ToolInfo";
 import { toast } from "sonner";
 
@@ -37,8 +37,8 @@ const StepTwoBusinessDetails: React.FC<StepTwoBusinessDetailsProps> = ({
   const [state, setState] = useState(businessInfo.businessState);
 
   const router = useRouter();
-  const createProfile = useCreateProfile();
-  const isLoading = createProfile.isPending;
+  const updateBusinessProfile = useUpdateBusinessProfile();
+  const isLoading = updateBusinessProfile.isPending;
 
   useEffect(() => {
     setBusinessName(businessInfo.businessName || "");
@@ -70,37 +70,42 @@ const StepTwoBusinessDetails: React.FC<StepTwoBusinessDetailsProps> = ({
       },
     });
 
-    createProfile.mutate(undefined, {
-      onSuccess: () => {
-        // ✅ Show friendly success toast
-        toast.success(`Welcome, ${businessName}! 🎉`, {
-          description:
-            "You're all set to browse rentals and snag great finds — happy shopping!",
-          duration: 4000,
-        });
-
-        // ✅ Route to inventory after brief delay for toast visibility
-        setTimeout(() => {
-          // If returnUrl is provided, decode and navigate to it; otherwise go to default
-          const redirectUrl = returnUrl
-            ? decodeURIComponent(returnUrl)
-            : "/listers/inventory";
-          router.replace(redirectUrl);
-        }, 1500);
+    updateBusinessProfile.mutate(
+      {
+        businessName,
+        businessEmail,
+        businessAddress: address,
+        businessCategory: undefined, // Add if you have a category field
+        businessDescription: undefined, // Add if you have a description field
+        businessPhone: undefined, // Add if you have a phone field
+        website: undefined, // Add if you have a website field
       },
-      onError: (error: any) => {
-        // ✅ Show error toast
-        const errorMessage =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Failed to create profile. Please try again.";
-
-        toast.error("Oops! Something went wrong", {
-          description: errorMessage,
-          duration: 4000,
-        });
+      {
+        onSuccess: () => {
+          toast.success(`Welcome, ${businessName}! 🎉`, {
+            description:
+              "You're all set to browse rentals and snag great finds — happy shopping!",
+            duration: 4000,
+          });
+          setTimeout(() => {
+            const redirectUrl = returnUrl
+              ? decodeURIComponent(returnUrl)
+              : "/listers/dashboard";
+            router.replace(redirectUrl);
+          }, 1500);
+        },
+        onError: (error: any) => {
+          const errorMessage =
+            error?.response?.data?.message ||
+            error?.message ||
+            "Failed to update business profile. Please try again.";
+          toast.error("Oops! Something went wrong", {
+            description: errorMessage,
+            duration: 4000,
+          });
+        },
       },
-    });
+    );
   };
 
   return (
@@ -140,7 +145,7 @@ const StepTwoBusinessDetails: React.FC<StepTwoBusinessDetailsProps> = ({
           <input
             value={businessEmail}
             onChange={(e) => setBusinessEmail(e.target.value)}
-            placeholder="Fill in to get account verified"
+            placeholder="e.g. info@yourbrand.com"
             className="w-full p-4 pl-12 border rounded-lg text-gray-700 placeholder-gray-400"
           />
         </div>
@@ -161,7 +166,7 @@ const StepTwoBusinessDetails: React.FC<StepTwoBusinessDetailsProps> = ({
           <input
             value={registrationNumber}
             onChange={(e) => setRegistrationNumber(e.target.value)}
-            placeholder="Fill in to get account verified"
+            placeholder="e.g. CAC-2024-001234"
             className="w-full p-4 pl-12 border rounded-lg text-gray-700 placeholder-gray-400"
           />
         </div>
@@ -182,7 +187,7 @@ const StepTwoBusinessDetails: React.FC<StepTwoBusinessDetailsProps> = ({
           <input
             value={address}
             onChange={(e) => setAddress(e.target.value)}
-            placeholder="Fill in to get account verified"
+            placeholder="e.g. 123 Fashion St, Lagos"
             className="w-full p-4 pl-12 border rounded-lg text-gray-700 placeholder-gray-400"
           />
         </div>
