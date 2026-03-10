@@ -6,22 +6,20 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1 } from "@/common/ui/Text";
 import PriceRangeSlider from "./PriceRangeSlider";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useBrands } from "@/lib/queries/brand/useBrands";
+import { useCategories } from "@/lib/queries/category/useCategories";
 
 // --------------------
-// Mock Data
+// Static Data
 // --------------------
-const filterData = {
-  gender: ["Woman", "Men", "Kids"],
-  categories: [
-    "Dresses",
-    "Tops",
-    "Lingerie & Lounge Wear",
-    "Blouse",
-    "Vintage",
-  ],
-  brands: ["H&M", "Mark & Spencer", "Victoria Secret", "Dior", "Gucci"],
-  sizes: ["Medium", "Large", "Plus Size", "Sexy Plus Size"],
-};
+const genderOptions = ["Woman", "Men", "Kids"];
+const sizeOptions = [
+  "Small (e.g. 2-5, S-SL, 5-10, 30-35)",
+  "Medium (e.g. 6-10, M-ML, 11-15, 36-40)",
+  "Large (e.g. 11-15, L-XL, 16-20, 41-45)",
+  "Plus Size (e.g. 16-20, XL-2XL, 21-25, 46-50)",
+  "Sexy Plus Size (e.g. 21-25, 2XL-3XL, 26-30, 51-55)",
+];
 
 // --------------------
 // Animation Variants
@@ -30,12 +28,28 @@ const variants = {
   hidden: { x: "100%" },
   visible: { x: 0 },
 };
+
 interface FilterPanelProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
 const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
+  const {
+    data: brands,
+    isPending: brandsLoading,
+    isError: brandsError,
+  } = useBrands();
+  const {
+    data: categories,
+    isPending: categoriesLoading,
+    isError: categoriesError,
+  } = useCategories();
+
+  // Search state for brands and categories
+  const [brandSearch, setBrandSearch] = useState("");
+  const [categorySearch, setCategorySearch] = useState("");
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const [localFilters, setLocalFilters] = useState({
@@ -148,12 +162,13 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
                   />
                 </div>
               </div>
+
               {/* Gender */}
               <section>
                 <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
                   Gender
                 </Paragraph1>
-                {filterData.gender.map((item) => (
+                {genderOptions.map((item) => (
                   <label
                     key={item}
                     className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
@@ -175,56 +190,109 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
                   </label>
                 ))}
               </section>
+
               {/* Categories */}
               <section>
                 <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
                   Categories
                 </Paragraph1>
-                {filterData.categories.map((item) => (
-                  <label
-                    key={item}
-                    className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={localFilters.categories.includes(item)}
-                      onChange={(e) =>
-                        handleCategoryChange(item, e.target.checked)
-                      }
-                      className="h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
-                    />
-                    <Paragraph1>{item}</Paragraph1>
-                  </label>
-                ))}
+                {/* Category Search Bar */}
+                <div className="mb-2">
+                  <input
+                    type="text"
+                    placeholder="Search categories..."
+                    value={categorySearch}
+                    onChange={(e) => setCategorySearch(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded mb-1 text-sm"
+                  />
+                </div>
+                {categoriesLoading ? (
+                  <Paragraph1>Loading...</Paragraph1>
+                ) : categoriesError ? (
+                  <Paragraph1 className="text-red-500">
+                    Failed to load categories
+                  </Paragraph1>
+                ) : (
+                  categories
+                    ?.filter((cat) =>
+                      cat.name
+                        .toLowerCase()
+                        .includes(categorySearch.toLowerCase()),
+                    )
+                    .slice(0, 10)
+                    .map((cat) => (
+                      <label
+                        key={cat.id}
+                        className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={localFilters.categories.includes(cat.name)}
+                          onChange={(e) =>
+                            handleCategoryChange(cat.name, e.target.checked)
+                          }
+                          className="h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
+                        />
+                        <Paragraph1>{cat.name}</Paragraph1>
+                      </label>
+                    ))
+                )}
               </section>
+
               {/* Brands */}
               <section>
                 <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
                   Brands
                 </Paragraph1>
-                {filterData.brands.map((item) => (
-                  <label
-                    key={item}
-                    className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={localFilters.brands.includes(item)}
-                      onChange={(e) =>
-                        handleBrandChange(item, e.target.checked)
-                      }
-                      className="h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
-                    />
-                    <Paragraph1>{item}</Paragraph1>
-                  </label>
-                ))}
+                {/* Brand Search Bar */}
+                <div className="mb-2">
+                  <input
+                    type="text"
+                    placeholder="Search brands..."
+                    value={brandSearch}
+                    onChange={(e) => setBrandSearch(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded mb-1 text-sm"
+                  />
+                </div>
+                {brandsLoading ? (
+                  <Paragraph1>Loading...</Paragraph1>
+                ) : brandsError ? (
+                  <Paragraph1 className="text-red-500">
+                    Failed to load brands
+                  </Paragraph1>
+                ) : (
+                  brands
+                    ?.filter((brand) =>
+                      brand.name
+                        .toLowerCase()
+                        .includes(brandSearch.toLowerCase()),
+                    )
+                    .slice(0, 10)
+                    .map((brand) => (
+                      <label
+                        key={brand.id}
+                        className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={localFilters.brands.includes(brand.name)}
+                          onChange={(e) =>
+                            handleBrandChange(brand.name, e.target.checked)
+                          }
+                          className="h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
+                        />
+                        <Paragraph1>{brand.name}</Paragraph1>
+                      </label>
+                    ))
+                )}
               </section>
+
               {/* Sizes */}
               <section>
                 <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
                   Size
                 </Paragraph1>
-                {filterData.sizes.map((item) => (
+                {sizeOptions.map((item) => (
                   <label
                     key={item}
                     className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
@@ -246,6 +314,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
                   </label>
                 ))}
               </section>
+
               {/* Price Slider */}
               <PriceRangeSlider
                 min={50000}
@@ -298,7 +367,6 @@ const Filters: React.FC = () => {
         <SlidersVertical size={18} />
       </button>
 
-      {/* Filter Panel */}
       <FilterPanel isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
   );
