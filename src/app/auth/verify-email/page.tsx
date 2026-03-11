@@ -32,8 +32,13 @@ export default function VerifyEmailPage() {
 
   useEffect(() => {
     if (!verified) return;
-    const redirectQuery = redirect ? `?redirect=${encodeURIComponent(redirect)}` : "";
-    const t = setTimeout(() => router.replace(`/auth/sign-in${redirectQuery}`), 3000);
+    const redirectQuery = redirect
+      ? `?redirect=${encodeURIComponent(redirect)}`
+      : "";
+    const t = setTimeout(
+      () => router.replace(`/auth/sign-in${redirectQuery}`),
+      3000,
+    );
     return () => clearTimeout(t);
   }, [verified, router, redirect]);
 
@@ -99,7 +104,11 @@ export default function VerifyEmailPage() {
           {verifyOtp.isError && (
             <div className="mt-6 text-center">
               <Link
-                href={redirect ? `/auth/sign-in?redirect=${encodeURIComponent(redirect)}` : "/auth/sign-in"}
+                href={
+                  redirect
+                    ? `/auth/sign-in?redirect=${encodeURIComponent(redirect)}`
+                    : "/auth/sign-in"
+                }
                 className="inline-block py-3 px-6 font-semibold text-white bg-black rounded-lg hover:opacity-90"
               >
                 Go to sign in
@@ -110,7 +119,11 @@ export default function VerifyEmailPage() {
           {!token && (
             <div className="mt-6 text-center">
               <Link
-                href={redirect ? `/auth/sign-in?redirect=${encodeURIComponent(redirect)}` : "/auth/sign-in"}
+                href={
+                  redirect
+                    ? `/auth/sign-in?redirect=${encodeURIComponent(redirect)}`
+                    : "/auth/sign-in"
+                }
                 className="inline-block py-3 px-6 font-semibold text-white bg-black rounded-lg hover:opacity-90"
               >
                 Back to sign in

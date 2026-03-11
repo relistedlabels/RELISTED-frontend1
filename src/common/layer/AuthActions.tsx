@@ -51,7 +51,7 @@ export function AuthActions() {
       <Button
         text="Sign Up"
         isLink={true}
-        href={`/auth/create-account?redirect=${encodeURIComponent(redirectUrl)}`}
+        href={`/auth/create-account`}
         backgroundColor="bg-white"
         color="text-black hover:text-white"
         border="border border-white"

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useUserStore } from "@/store/useUserStore";
 
 type Role = "RENTER" | "LISTER";
@@ -55,17 +55,13 @@ const RoleOption: React.FC<RoleOptionProps> = ({
 
 const AccountRoleSelector: React.FC = () => {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const setUser = useUserStore((s) => s.setUser); // ✅ correct API
 
   const handleRoleSelection = (role: Role) => {
     // Persist role using existing store API
     setUser({ role });
 
-    // Preserve redirect parameter
-    const redirect = searchParams.get("redirect");
-    const redirectQuery = redirect ? `?redirect=${encodeURIComponent(redirect)}` : "";
-    router.push(`/auth/create-account/sign-up${redirectQuery}`);
+    router.push("/auth/create-account/sign-up");
   };
 
   return (

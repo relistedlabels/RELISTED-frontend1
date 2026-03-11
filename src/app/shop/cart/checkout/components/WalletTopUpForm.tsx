@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { RefreshCw, Check, Copy, Shield } from "lucide-react";
-import { useProfile } from "@/lib/queries/user/useProfile";
+import { useProfile } from "@/lib/queries/renters/useProfile";
 
 // Currency constant
 const CURRENCY = "₦";

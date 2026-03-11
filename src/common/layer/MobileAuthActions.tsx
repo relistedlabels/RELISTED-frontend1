@@ -194,12 +194,18 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
   const redirectUrl = `${pathname}${typeof window !== "undefined" ? window.location.search : ""}`;
   return (
     <div className="flex flex-col gap-3">
-      <Link href={`/auth/sign-in?redirect=${encodeURIComponent(redirectUrl)}`} onClick={handleLinkClick}>
+      <Link
+        href={`/auth/sign-in?redirect=${encodeURIComponent(redirectUrl)}`}
+        onClick={handleLinkClick}
+      >
         <button className="w-full px-4 py-2 border border-white text-white rounded-lg hover:bg-gray-900 transition-colors font-medium text-sm">
           Sign In
         </button>
       </Link>
-      <Link href={`/auth/create-account?redirect=${encodeURIComponent(redirectUrl)}`} onClick={handleLinkClick}>
+      <Link
+        href={`/auth/create-account`}
+        onClick={handleLinkClick}
+      >
         <button className="w-full px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors font-medium text-sm">
           Sign Up
         </button>
