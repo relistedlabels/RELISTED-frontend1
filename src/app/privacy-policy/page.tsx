@@ -13,7 +13,7 @@ export default function PrivacyPolicy() {
             Privacy Policy
           </Header1Plus>
           <Paragraph1 className="text-gray-300">
-            Last updated: February 2026
+            Last updated: March 2026
           </Paragraph1>
         </div>
       </section>
@@ -23,452 +23,103 @@ export default function PrivacyPolicy() {
         <div className="container mx-auto max-w-4xl space-y-8">
           {/* Introduction */}
           <div>
-            <Header2 className="text-2xl font-bold mb-4">Introduction</Header2>
-            <Paragraph1 className="text-gray-700 leading-relaxed">
-              RELISTED Labels ("we", "us", "our", or "Company") operates the
-              RELISTED Labels website and mobile application (collectively, the
-              "Service"). RELISTED Labels is a peer-to-peer fashion rental
-              platform designed to make fashion rental secure, transparent, and
-              reliable for both vendors and renters.
-              <br />
-              <br />
-              This Privacy Policy informs you of our policies regarding the
-              collection, use, and disclosure of personal data when you use our
-              Service and the choices you have associated with that data. We use
-              your data to provide, maintain, and improve the Service, process
-              rentals and payments, and coordinate logistics with our trusted
-              partners. By using the Service, you agree to the collection and
-              use of information in accordance with this policy.
-            </Paragraph1>
-          </div>
-
-          {/* Information Collection */}
-          <div>
             <Header2 className="text-2xl font-bold mb-4">
-              1. Information Collection and Use
-            </Header2>
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-2">
-                  Types of Data Collected
-                </h3>
-                <div className="space-y-4 text-gray-700">
-                  <div>
-                    <h4 className="font-semibold text-black mb-1">
-                      Personal Data:
-                    </h4>
-                    <Paragraph1>
-                      While using our Service, we may ask you to provide us with
-                      certain personally identifiable information that can be
-                      used to contact or identify you ("Personal Data"). This
-                      may include, but is not limited to:
-                    </Paragraph1>
-                    <ul className="list-disc list-inside mt-2 space-y-1 text-gray-700 ml-2">
-                      <li>Name and email address</li>
-                      <li>Phone number</li>
-                      <li>Delivery address and location data</li>
-                      <li>Transaction history and rental records</li>
-                      <li>Payment information (processed via Wema Bank)</li>
-                      <li>Bank account details for vendor payouts</li>
-                      <li>Identity documents (for verification purposes)</li>
-                      <li>
-                        Profile information (style preferences, rental history,
-                        vendor ratings)
-                      </li>
-                      <li>
-                        Uploaded photos and media (for product listings,
-                        profiles, and item conditions)
-                      </li>
-                      <li>
-                        Emergency contact information (for vendors and renters)
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold text-black mb-1">
-                      Usage Data:
-                    </h4>
-                    <Paragraph1>
-                      We may also collect information on how the Service is
-                      accessed and used ("Usage Data"). This may include
-                      information such as:
-                    </Paragraph1>
-                    <ul className="list-disc list-inside mt-2 space-y-1 text-gray-700 ml-2">
-                      <li>
-                        Computer's Internet Protocol address (e.g. IP address)
-                      </li>
-                      <li>Browser type and version</li>
-                      <li>
-                        Pages you visit and the time and date of your visits
-                      </li>
-                      <li>The time spent on those pages</li>
-                      <li>Device identifiers</li>
-                      <li>Operating system and platform</li>
-                      <li>Referral sources</li>
-                      <li>Links clicked and search queries</li>
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold text-black mb-1">
-                      Location Data:
-                    </h4>
-                    <Paragraph1>
-                      We may collect and process information about your precise
-                      or approximate location (with your permission) to provide
-                      location-based services such as personalized shopping
-                      recommendations and delivery options.
-                    </Paragraph1>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Use of Data */}
-          <div>
-            <Header2 className="text-2xl font-bold mb-4">
-              2. Use of Data
+              Privacy Policy
             </Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
-              RELISTED Labels uses the collected data for various purposes:
+              Relisted Labels respects and protects the privacy of its users.
             </Paragraph1>
-            <ul className="list-disc list-inside space-y-3 text-gray-700 ml-2">
-              <li>To process rentals, payments, and collateral management</li>
-              <li>
-                To coordinate deliveries and returns with Topship logistics
-              </li>
-              <li>To verify identity and prevent fraud and abuse</li>
-              <li>
-                To maintain vendor inventory control and renter access to
-                accurate product information
-              </li>
-              <li>
-                To process secure payments through Wema Bank and manage vendor
-                payouts
-              </li>
-              <li>
-                To inspect item conditions and manage damage claims and
-                collateral disputes
-              </li>
-              <li>
-                To provide customer support and resolve disputes between vendors
-                and renters
-              </li>
-              <li>
-                To improve platform performance and user experience through
-                analytics
-              </li>
-              <li>
-                To send service notifications about rentals, orders, and account
-                updates
-              </li>
-              <li>
-                To comply with legal and regulatory requirements in Nigeria
-              </li>
-              <li>
-                To facilitate partnership and press inquiries (when relevant)
-              </li>
+          </div>
+
+          {/* Information We Collect */}
+          <div>
+            <Header2 className="text-2xl font-bold mb-4">
+              Information We Collect
+            </Header2>
+            <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
+              We may collect the following information:
+            </Paragraph1>
+            <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
+              <li>Name</li>
+              <li>Email address</li>
+              <li>Phone number</li>
+              <li>Delivery address</li>
+              <li>Transaction history</li>
+              <li>Device and browser data</li>
             </ul>
           </div>
 
-          {/* Security of Data */}
+          {/* How We Use Information */}
           <div>
             <Header2 className="text-2xl font-bold mb-4">
-              3. Security of Data
+              How We Use Information
             </Header2>
-            <Paragraph1 className="text-gray-700 leading-relaxed">
-              The security of your data is important to us, but remember that no
-              method of transmission over the Internet or method of electronic
-              storage is 100% secure. While we strive to use commercially
-              acceptable means to protect your Personal Data, we cannot
-              guarantee its absolute security.
-              <br />
-              <br />
-              We implement appropriate technical and organizational measures to
-              protect your personal data, including:
+            <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
+              Collected data is used to:
             </Paragraph1>
-            <ul className="list-disc list-inside space-y-3 text-gray-700 ml-2 mt-4">
-              <li>
-                Encryption of data in transit using SSL/TLS protocols and at
-                rest
-              </li>
-              <li>Secure password storage using industry-standard hashing</li>
-              <li>Regular security audits and vulnerability assessments</li>
-              <li>Access controls and authentication mechanisms</li>
-              <li>
-                Confidentiality agreements with our employees and partners
-              </li>
-              <li>Incident response procedures for potential data breaches</li>
+            <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
+              <li>Process rentals and payments</li>
+              <li>Coordinate deliveries</li>
+              <li>Provide customer support</li>
+              <li>Improve platform performance</li>
+              <li>Prevent fraud and abuse</li>
             </ul>
           </div>
 
-          {/* Disclosure of Data */}
+          {/* Data Sharing */}
           <div>
             <Header2 className="text-2xl font-bold mb-4">
-              4. Disclosure of Data
-            </Header2>
-            <div className="space-y-4 text-gray-700">
-              <div>
-                <h3 className="font-semibold text-black mb-2">
-                  Business Transfers
-                </h3>
-                <Paragraph1>
-                  If RELISTED Labels is involved in a merger, acquisition or
-                  asset sale, your Personal Data may be transferred as part of
-                  that transaction. We will provide notice before your Personal
-                  Data becomes subject to a different Privacy Policy.
-                </Paragraph1>
-              </div>
-
-              <div>
-                <h3 className="font-semibold text-black mb-2">
-                  By Law Requirement
-                </h3>
-                <Paragraph1>
-                  Under certain circumstances, RELISTED Labels may be required
-                  to disclose your Personal Data if required to do so by law or
-                  in response to valid requests by public authorities (e.g.
-                  court order or government agency).
-                </Paragraph1>
-              </div>
-
-              <div>
-                <h3 className="font-semibold text-black mb-2">
-                  Service Providers
-                </h3>
-                <Paragraph1>
-                  We may share your Personal Data with trusted third-party
-                  service providers ("Service Providers") who facilitate our
-                  Service. These third parties have access to your Personal Data
-                  only to perform services on our behalf and are obligated not
-                  to disclose or use it for any other purpose. Our key service
-                  providers include:
-                </Paragraph1>
-                <ul className="list-disc list-inside mt-2 space-y-1 text-gray-700 ml-2">
-                  <li>
-                    <strong>Wema Bank:</strong> Processes secure payments,
-                    manages wallet infrastructure, and handles vendor payouts
-                  </li>
-                  <li>
-                    <strong>Topship:</strong> Manages item delivery and returns
-                    logistics
-                  </li>
-                  <li>
-                    <strong>Hosting and Analytics:</strong> Cloud infrastructure
-                    and platform performance analysis
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="font-semibold text-black mb-2">
-                  Other Users and Public
-                </h3>
-                <Paragraph1>
-                  When you create a listing or public profile, certain
-                  information (such as your name, profile picture, and listings)
-                  may be visible to other users and the public.
-                </Paragraph1>
-              </div>
-            </div>
-          </div>
-
-          {/* Cookies */}
-          <div>
-            <Header2 className="text-2xl font-bold mb-4">5. Cookies</Header2>
-            <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
-              We use cookies and similar tracking technologies to track activity
-              on our Service and hold certain information. Cookies are files
-              with small amount of data which may include an anonymous unique
-              identifier.
-            </Paragraph1>
-            <div className="space-y-4 text-gray-700">
-              <div>
-                <h3 className="font-semibold text-black mb-2">
-                  Types of Cookies We Use:
-                </h3>
-                <ul className="list-disc list-inside space-y-2 ml-2">
-                  <li>
-                    <strong>Essential Cookies:</strong> Required for the
-                    functioning of the Service
-                  </li>
-                  <li>
-                    <strong>Performance Cookies:</strong> Help us understand how
-                    you use the Service
-                  </li>
-                  <li>
-                    <strong>Functional Cookies:</strong> Remember your
-                    preferences
-                  </li>
-                  <li>
-                    <strong>Advertising Cookies:</strong> Display personalized
-                    advertisements
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <Paragraph1>
-                  You can instruct your browser to refuse all cookies or to
-                  indicate when a cookie is being sent. However, if you do not
-                  accept cookies, you may not be able to use some portions of
-                  our Service.
-                </Paragraph1>
-              </div>
-            </div>
-          </div>
-
-          {/* Your Rights */}
-          <div>
-            <Header2 className="text-2xl font-bold mb-4">
-              6. Your Rights
+              Data Sharing
             </Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
-              You have the right to access, correct, or delete your Personal
-              Data. You also have the right to restrict our use of your data or
-              object to processing. To exercise these rights, please contact us
-              using the information provided in the Contact Us section below.
+              We may share necessary information with trusted partners including:
             </Paragraph1>
-            <div className="space-y-3 text-gray-700">
-              <div>
-                <h3 className="font-semibold text-black mb-2">GDPR Rights</h3>
-                <Paragraph1>
-                  If you are a resident of the European Union, you have certain
-                  data protection rights under the General Data Protection
-                  Regulation (GDPR):
-                </Paragraph1>
-                <ul className="list-disc list-inside space-y-2 mt-2 ml-2">
-                  <li>Right to be informed</li>
-                  <li>Right of access to your personal data</li>
-                  <li>Right to rectification of inaccurate data</li>
-                  <li>Right to erasure ("right to be forgotten")</li>
-                  <li>Right to restrict processing</li>
-                  <li>Right to data portability</li>
-                  <li>Right to object</li>
-                  <li>Rights related to automated decision-making</li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="font-semibold text-black mb-2">
-                  CCPA Rights (California Residents)
-                </h3>
-                <Paragraph1>
-                  If you are a California resident, you have the following
-                  rights:
-                </Paragraph1>
-                <ul className="list-disc list-inside space-y-2 mt-2 ml-2">
-                  <li>Right to know what personal information is collected</li>
-                  <li>
-                    Right to know whether personal information is sold/shared
-                  </li>
-                  <li>Right to delete personal information collected</li>
-                  <li>
-                    Right to opt-out of the sale/sharing of personal information
-                  </li>
-                  <li>Right to correct inaccurate personal information</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {/* Data Retention */}
-          <div>
-            <Header2 className="text-2xl font-bold mb-4">
-              7. Data Retention
-            </Header2>
-            <Paragraph1 className="text-gray-700 leading-relaxed">
-              We will retain your Personal Data only for as long as necessary to
-              provide our Service and to comply with our legal obligations. The
-              retention period may vary depending on the type of data and the
-              purpose for which we process it.
-              <br />
-              <br />
-              For example:
-            </Paragraph1>
-            <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2 mt-4">
-              <li>
-                Account data: Retained for the duration of your membership
-              </li>
-              <li>
-                Transaction data: Retained for 7 years for tax and legal
-                compliance
-              </li>
-              <li>Marketing communications: Retained until you unsubscribe</li>
-              <li>
-                Cookies: Typically deleted when browser is closed or after
-                specified period
-              </li>
-              <li>
-                User-generated content: Retained for the duration of the
-                account, unless deleted by user
-              </li>
+            <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2 mb-4">
+              <li>Logistics providers (Topship)</li>
+              <li>Payment processing systems (Wema Bank)</li>
             </ul>
-          </div>
-
-          {/* Third-Party Links */}
-          <div>
-            <Header2 className="text-2xl font-bold mb-4">
-              8. Third-Party Links
-            </Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed">
-              Our Service may contain links to other sites that are not operated
-              by us. If you click on a third party link, you will be directed to
-              that third party's site. We strongly advise you to review the
-              Privacy Policy of every site you visit.
-              <br />
-              <br />
-              We have no control over and assume no responsibility for the
-              content, privacy policies or practices of any third party sites or
-              services.
+              Relisted Labels does not sell personal user data.
             </Paragraph1>
           </div>
 
-          {/* Children's Privacy */}
+          {/* Data Security */}
           <div>
             <Header2 className="text-2xl font-bold mb-4">
-              9. Children's Privacy
+              Data Security
             </Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed">
-              Our Service is not addressed to anyone under the age of 13
-              ("Children"). We do not knowingly collect personally identifiable
-              information from children under 13. If we become aware that a
-              child under 13 has provided us with Personal Data, we immediately
-              delete such information from our servers. If you are a parent or
-              guardian and you are aware that your child has provided us with
-              Personal Data, please contact us immediately.
+              We implement industry-standard security measures to protect user information from unauthorized access or misuse.
             </Paragraph1>
           </div>
 
-          {/* Changes to This Privacy Policy */}
+          {/* User Rights */}
           <div>
             <Header2 className="text-2xl font-bold mb-4">
-              10. Changes to This Privacy Policy
+              User Rights
             </Header2>
+            <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
+              Users may request to:
+            </Paragraph1>
+            <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2 mb-4">
+              <li>Access their personal data</li>
+              <li>Correct inaccurate information</li>
+              <li>Delete their accounts</li>
+            </ul>
             <Paragraph1 className="text-gray-700 leading-relaxed">
-              We may update our Privacy Policy from time to time. We will notify
-              you of any changes by posting the new Privacy Policy on this page
-              and updating the "effective date" at the top of this Privacy
-              Policy.
-              <br />
-              <br />
-              You are advised to review this Privacy Policy periodically for any
-              changes. Changes to this Privacy Policy are effective when they
-              are posted on this page.
+              Requests can be submitted through customer support.
             </Paragraph1>
           </div>
 
           {/* Contact Us */}
           <div className="bg-gray-100 p-6 rounded-lg">
             <Header2 className="text-2xl font-bold mb-4">
-              11. Contact Us
+              Contact Us
             </Header2>
-            <Paragraph1 className="text-gray-700 leading-relaxed">
-              If you have any questions about this Privacy Policy or to exercise
-              your data rights, please contact us:
+            <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
+              If you have any questions about this Privacy Policy or to exercise your data rights, please contact us:
             </Paragraph1>
-            <div className="mt-4 space-y-2 text-gray-700">
+            <div className="space-y-3 text-gray-700">
               <p>
                 <strong>Email:</strong> relistedlabels.contact@gmail.com
               </p>
@@ -476,9 +127,17 @@ export default function PrivacyPolicy() {
                 <strong>Location:</strong> Lagos, Nigeria
               </p>
               <p className="text-sm text-gray-600 mt-4">
-                We will respond to your request within 30 days of receiving it.
+                We aim to respond to all inquiries within 24–48 hours.
               </p>
             </div>
+          </div>
+
+          {/* Last Update */}
+          <div className="border-t border-gray-200 pt-8 text-center text-gray-600">
+            <p className="text-sm">
+              Last updated: March 2026
+              <br />© 2026 RELISTED. All rights reserved.
+            </p>
           </div>
         </div>
       </section>
