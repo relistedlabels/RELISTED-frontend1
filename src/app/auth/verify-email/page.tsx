@@ -11,6 +11,7 @@ export default function VerifyEmailPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token");
+  const redirect = searchParams.get("redirect");
   const [verified, setVerified] = useState(false);
   const [checked, setChecked] = useState(false);
 
@@ -31,9 +32,10 @@ export default function VerifyEmailPage() {
 
   useEffect(() => {
     if (!verified) return;
-    const t = setTimeout(() => router.replace("/auth/sign-in"), 3000);
+    const redirectQuery = redirect ? `?redirect=${encodeURIComponent(redirect)}` : "";
+    const t = setTimeout(() => router.replace(`/auth/sign-in${redirectQuery}`), 3000);
     return () => clearTimeout(t);
-  }, [verified, router]);
+  }, [verified, router, redirect]);
 
   return (
     <div
@@ -97,7 +99,7 @@ export default function VerifyEmailPage() {
           {verifyOtp.isError && (
             <div className="mt-6 text-center">
               <Link
-                href="/auth/sign-in"
+                href={redirect ? `/auth/sign-in?redirect=${encodeURIComponent(redirect)}` : "/auth/sign-in"}
                 className="inline-block py-3 px-6 font-semibold text-white bg-black rounded-lg hover:opacity-90"
               >
                 Go to sign in
@@ -108,7 +110,7 @@ export default function VerifyEmailPage() {
           {!token && (
             <div className="mt-6 text-center">
               <Link
-                href="/auth/sign-in"
+                href={redirect ? `/auth/sign-in?redirect=${encodeURIComponent(redirect)}` : "/auth/sign-in"}
                 className="inline-block py-3 px-6 font-semibold text-white bg-black rounded-lg hover:opacity-90"
               >
                 Back to sign in

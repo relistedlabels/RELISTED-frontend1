@@ -33,7 +33,11 @@ const CreateAccountSchema = Yup.object({
   ),
 });
 
-const CreateAccountForm: React.FC = () => {
+interface CreateAccountFormProps {
+  redirect?: string | null;
+}
+
+const CreateAccountForm: React.FC<CreateAccountFormProps> = ({ redirect }) => {
   const [showPassword, setShowPassword] = useState(false);
   const signup = useSignup();
   const router = useRouter();
@@ -81,7 +85,9 @@ const CreateAccountForm: React.FC = () => {
               },
               {
                 onSuccess: () => {
-                  router.push("/auth/verify-email");
+                  // Pass redirect parameter to verify-email
+                  const redirectQuery = redirect ? `?redirect=${encodeURIComponent(redirect)}` : "";
+                  router.push(`/auth/verify-email${redirectQuery}`);
                 },
                 onSettled: () => setSubmitting(false),
               },

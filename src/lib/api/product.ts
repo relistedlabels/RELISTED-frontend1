@@ -27,7 +27,7 @@ export type UserProduct = {
   dailyPrice: number;
   isActive: boolean;
   quantity: number;
-  status: "AVAILABLE" | "RENTED" | "MAINTENANCE" | "RESERVED";
+  status: "APPROVED" | "AVAILABLE" | "RENTED" | "MAINTENANCE" | "RESERVED";
   composition: string;
   measurement: string;
   originalValue: number;

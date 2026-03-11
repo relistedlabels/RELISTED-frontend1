@@ -1,14 +1,21 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import { Header1, Header1Plus } from "@/common/ui/Text";
 import CheckoutContactAndPayment from "./components/CheckoutContactAndPayment";
 import FinalOrderSummaryCard from "./components/FinalOrderSummaryCard";
 import { useRentalRequests } from "@/lib/queries/renters/useRentalRequests";
+import { useCreateOrder } from "@/lib/mutations/renters/useCreateOrder";
 import { productApi } from "@/lib/api/product";
 
 export default function CheckoutPage() {
+  const router = useRouter();
+  const { mutate: createOrder, isPending: isCreatingOrder } = useCreateOrder();
+  const [hasCreatedOrder, setHasCreatedOrder] = useState(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
   const path = [
     { label: "Home", href: "/" },
     { label: "Shop", href: "/shop" },
@@ -47,6 +54,31 @@ export default function CheckoutPage() {
     fetchProductDetails();
   }, [data]);
 
+  // Retry order creation function
+  const retryCreateOrder = () => {
+    setOrderError(null);
+    createOrder(undefined, {
+      onSuccess: () => {
+        toast.success("Order created successfully!");
+        setHasCreatedOrder(true);
+        setOrderError(null);
+      },
+      onError: (err: any) => {
+        const errorMessage =
+          err?.message || "Failed to create order. Please try again.";
+        setOrderError(errorMessage);
+        toast.error(errorMessage);
+      },
+    });
+  };
+
+  // Create order on component mount
+  useEffect(() => {
+    if (hasCreatedOrder) return; // Only create once
+
+    retryCreateOrder();
+  }, [hasCreatedOrder]);
+
   // Group cart items by listerID
   const groupedByLister = cartItemsWithProduct.reduce(
     (acc: Map<string, any[]>, item: any) => {
@@ -83,6 +115,9 @@ export default function CheckoutPage() {
             listerGroups={listerGroups}
             isLoading={isLoading}
             error={error}
+            orderCreationError={orderError}
+            isCreatingOrder={isCreatingOrder}
+            onRetryOrder={() => retryCreateOrder()}
           />
         </div>
       </div>

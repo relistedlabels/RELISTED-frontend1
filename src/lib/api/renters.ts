@@ -548,4 +548,11 @@ export const rentersApi = {
       "/api/renters/checkout/summary",
       { method: "GET" },
     ),
+
+  // Wallet balance from Wema
+  getWalletBalance: () =>
+    apiFetch<{
+      success: boolean;
+      data: { balance: number; currency: string };
+    }>("/wallet/wema/balance", { method: "GET" }),
 };

@@ -1,176 +1,179 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
-import { Paragraph1 } from "@/common/ui/Text";
-import { useDepositFunds } from "@/lib/mutations/renters/useWalletMutations";
+import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { RefreshCw, Check, Copy, Shield } from "lucide-react";
+import { useProfile } from "@/lib/queries/user/useProfile";
 
 // Currency constant
 const CURRENCY = "₦";
-
-// --- Payment Provider Data ---
-interface PaymentProvider {
-  id: string;
-  name: string;
-  logoUrl: string;
-}
-
-const paymentProviders: PaymentProvider[] = [
-  {
-    id: "paystack",
-    name: "Paystack",
-    logoUrl: "/icons/paystack.svg",
-  },
-  {
-    id: "stripe",
-    name: "Stripe",
-    logoUrl: "/icons/stripe.svg",
-  },
-];
 
 interface WalletTopUpFormProps {
   onClose?: () => void;
 }
 
 export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
-  const [topUpAmount, setTopUpAmount] = useState<string>("");
-  const [selectedProvider, setSelectedProvider] = useState<string>("paystack");
-  const depositFunds = useDepositFunds();
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^0-9.]/g, "");
-    setTopUpAmount(value);
+  // Fetch profile data
+  const { data: profile, isLoading: balanceLoading, refetch } = useProfile();
+
+  // Extract wallet and virtual account data
+  const walletBalance = profile?.wallet?.balance ?? 0;
+  const virtualAccount = profile?.virtualAccount;
+
+  const formatCurrency = (value: number): string => {
+    return value.toLocaleString("en-NG", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    const amount = parseFloat(topUpAmount);
-    if (isNaN(amount) || amount <= 0) {
-      return;
+  const handleRefreshBalance = async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setIsRefreshing(false);
     }
+  };
 
-    depositFunds.mutate(
-      {
-        amount,
-        paymentMethod: selectedProvider,
-      },
-      {
-        onSuccess: () => {
-          setTopUpAmount("");
-          if (onClose) onClose();
-        },
-      },
-    );
+  const handleCopyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => {
+      setCopiedField(null);
+    }, 2000);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* --- TOP-UP AMOUNT Section --- */}
-      <Paragraph1 className="text-sm font-bold text-gray-800 tracking-wider mb-4">
-        TOP-UP AMOUNT
-      </Paragraph1>
-
-      <label
-        htmlFor="amount-input"
-        className="block text-xs font-medium text-gray-500 mb-2"
-      >
-        <Paragraph1>Amount</Paragraph1>
-      </label>
-
-      <div className="relative mb-8">
-        <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-lg font-bold text-gray-900">
-          ₦
-        </span>
-        <input
-          type="text"
-          id="amount-input"
-          value={topUpAmount}
-          onChange={handleAmountChange}
-          className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-black focus:border-black transition duration-150 text-lg font-medium"
-          placeholder="0.00"
-          required
-          disabled={depositFunds.isPending}
-        />
-      </div>
-
-      {/* --- PAYMENT METHOD Section --- */}
-      <Paragraph1 className="text-sm font-bold text-gray-800 tracking-wider mb-4">
-        HOW WOULD YOU LIKE TO PAY?
-      </Paragraph1>
-
-      <div className="space-y-4">
-        {paymentProviders.map((provider) => (
-          <label
-            key={provider.id}
-            htmlFor={provider.id}
-            className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all ${
-              selectedProvider === provider.id
-                ? "border-black shadow-lg bg-gray-50"
-                : "border-gray-200 hover:border-gray-400"
-            } ${depositFunds.isPending ? "opacity-50 cursor-not-allowed" : ""}`}
+    <div className="space-y-6">
+      {/* --- WALLET BALANCE Section --- */}
+      <div className="bg-gradient-to-r from-black to-gray-800 rounded-xl p-6 text-white">
+        <div className="flex justify-between items-start mb-8">
+          <div>
+            <Paragraph1 className="text-xs font-medium text-gray-300 mb-2">
+              Current Wallet Balance
+            </Paragraph1>
+            <Paragraph3 className="text-3xl font-bold">
+              {CURRENCY}
+              {formatCurrency(walletBalance)}
+            </Paragraph3>
+          </div>
+          <button
+            type="button"
+            onClick={handleRefreshBalance}
+            disabled={isRefreshing || balanceLoading}
+            className="p-2 hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 relative">
-                <Image
-                  src={provider.logoUrl}
-                  alt={provider.name}
-                  fill
-                  className="object-contain"
-                />
-              </div>
-
-              <Paragraph1 className="text-base font-medium text-gray-900">
-                {provider.name}
-              </Paragraph1>
-            </div>
-
-            <input
-              type="radio"
-              id={provider.id}
-              name="paymentProvider"
-              value={provider.id}
-              checked={selectedProvider === provider.id}
-              onChange={() => setSelectedProvider(provider.id)}
-              className="h-4 w-4 text-black border-gray-300 focus:ring-black cursor-pointer"
-              disabled={depositFunds.isPending}
+            <RefreshCw
+              size={20}
+              className={isRefreshing ? "animate-spin" : ""}
             />
-          </label>
-        ))}
+          </button>
+        </div>
       </div>
 
-      {/* Error Message */}
-      {depositFunds.isError && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <Paragraph1 className="text-xs text-red-700">
-            {depositFunds.error?.message || "Failed to process deposit"}
-          </Paragraph1>
-        </div>
-      )}
-
-      {/* Success Message */}
-      {depositFunds.isSuccess && (
-        <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-          <Paragraph1 className="text-xs text-green-700">
-            Wallet funded successfully!
-          </Paragraph1>
-        </div>
-      )}
-
-      {/* Submit Button */}
-      <button
-        type="submit"
-        className="w-full bg-black text-white font-semibold py-3 mt-8 rounded-lg hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        disabled={!topUpAmount || !selectedProvider || depositFunds.isPending}
-      >
-        <Paragraph1>
-          {depositFunds.isPending
-            ? "Processing..."
-            : topUpAmount
-              ? `Pay ${CURRENCY}${parseFloat(topUpAmount).toLocaleString("en-NG")}`
-              : "Enter Amount"}
+      {/* --- VIRTUAL ACCOUNT Section --- */}
+      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+        <Paragraph1 className="text-sm font-bold text-gray-900 mb-3">
+          TRANSFER MONEY DIRECTLY
         </Paragraph1>
-      </button>
-    </form>
+        <div className="space-y-3 text-sm text-gray-800">
+          <div>
+            <Paragraph1 className="text-xs text-gray-600 mb-2">
+              Bank Name
+            </Paragraph1>
+            <div className="flex justify-between items-center bg-white rounded-lg p-2 border border-gray-100">
+              <Paragraph1 className="font-semibold">
+                {virtualAccount?.bankName || "Wema Bank"}
+              </Paragraph1>
+              <button
+                type="button"
+                onClick={() =>
+                  handleCopyToClipboard(
+                    virtualAccount?.bankName || "Wema Bank",
+                    "bankName",
+                  )
+                }
+                className="p-1.5 hover:bg-gray-100 rounded transition-colors"
+              >
+                {copiedField === "bankName" ? (
+                  <Check size={16} className="text-green-600" />
+                ) : (
+                  <Copy size={16} className="text-gray-600" />
+                )}
+              </button>
+            </div>
+          </div>
+          <div>
+            <Paragraph1 className="text-xs text-gray-600 mb-2">
+              Account Number
+            </Paragraph1>
+            <div className="flex justify-between items-center bg-white rounded-lg p-2 border border-gray-100">
+              <Paragraph1 className="font-semibold">
+                {virtualAccount?.accountNumber || "0000000000"}
+              </Paragraph1>
+              <button
+                type="button"
+                onClick={() =>
+                  handleCopyToClipboard(
+                    virtualAccount?.accountNumber || "0000000000",
+                    "accountNumber",
+                  )
+                }
+                className="p-1.5 hover:bg-gray-100 rounded transition-colors"
+              >
+                {copiedField === "accountNumber" ? (
+                  <Check size={16} className="text-green-600" />
+                ) : (
+                  <Copy size={16} className="text-gray-600" />
+                )}
+              </button>
+            </div>
+          </div>
+          <div>
+            <Paragraph1 className="text-xs text-gray-600 mb-2">
+              Account Name
+            </Paragraph1>
+            <div className="flex justify-between items-center bg-white rounded-lg p-2 border border-gray-100">
+              <Paragraph1 className="font-semibold">
+                {virtualAccount?.accountName || "Relisted-User"}
+              </Paragraph1>
+              <button
+                type="button"
+                onClick={() =>
+                  handleCopyToClipboard(
+                    virtualAccount?.accountName || "Relisted-User",
+                    "accountName",
+                  )
+                }
+                className="p-1.5 hover:bg-gray-100 rounded transition-colors"
+              >
+                {copiedField === "accountName" ? (
+                  <Check size={16} className="text-green-600" />
+                ) : (
+                  <Copy size={16} className="text-gray-600" />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+        <Paragraph1 className="text-xs text-gray-600 mt-3 italic">
+          Transfer funds to this account and your wallet will be updated within
+          minutes
+        </Paragraph1>
+      </div>
+
+      {/* --- WEMA SECURITY FOOTER --- */}
+      <div className="flex items-center justify-center gap-2 pt-4 border-t border-gray-200">
+        <Shield size={16} className="text-gray-600" />
+        <Paragraph1 className="text-xs text-gray-600">
+          Payment secured by
+          <span className="font-bold text-gray-800 ml-1">Wema Bank</span>
+        </Paragraph1>
+      </div>
+    </div>
   );
 }

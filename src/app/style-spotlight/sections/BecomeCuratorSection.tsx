@@ -88,7 +88,7 @@ export default function BecomeCuratorSection() {
               viewport={{ once: true }}
               className="pt-4"
             >
-              <Link href="/auth/sign-up">
+              <Link href="/auth/create-account">
                 <button className="px-8 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 transition-colors duration-300 text-sm sm:text-base">
                   Become a Curator
                 </button>

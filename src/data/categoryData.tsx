@@ -13,7 +13,7 @@ export const categories: Category[] = [
   {
     image: "/category/c1.jpg",
     title: "Date Night",
-    description:
+    description: 
       "Irresistible looks designed to turn heads, spark chemistry, and leave a lasting impression.",
     link: `/shop?category=${encodeURIComponent("Date Night")}&title=${encodeURIComponent("Date Night")}&description=${encodeURIComponent("Irresistible looks designed to turn heads, spark chemistry, and leave a lasting impression.")}`,
     height: "463px",

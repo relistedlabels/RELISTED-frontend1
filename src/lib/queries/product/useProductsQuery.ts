@@ -33,7 +33,14 @@ export const useProductsQuery = () => {
         priceMin,
         priceMax,
       });
-      return response.data.products;
+      
+      // Filter products with status "APPROVED" or "AVAILABLE"
+      const filteredProducts = response.data.products.filter(
+        (product) =>
+          product.status === "APPROVED" || product.status === "AVAILABLE"
+      );
+      
+      return filteredProducts;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,

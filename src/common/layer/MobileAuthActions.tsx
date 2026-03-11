@@ -17,6 +17,7 @@ import {
 import { useUserStore } from "@/store/useUserStore";
 import Link from "next/link";
 import { Paragraph1 } from "../ui/Text";
+import { usePathname } from "next/navigation";
 
 interface MobileAuthActionsProps {
   onClose?: () => void;
@@ -28,6 +29,7 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
   const { data: renterProfileData } = useRenterProfile();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { clearUser } = useUserStore();
+  const pathname = usePathname();
 
   // Avoid flicker while auth state is resolving
   if (isLoading) return null;
@@ -189,14 +191,15 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
   }
 
   // ❌ Not logged in → show Sign In / Sign Up stacked
+  const redirectUrl = `${pathname}${typeof window !== "undefined" ? window.location.search : ""}`;
   return (
     <div className="flex flex-col gap-3">
-      <Link href="/auth/sign-in" onClick={handleLinkClick}>
+      <Link href={`/auth/sign-in?redirect=${encodeURIComponent(redirectUrl)}`} onClick={handleLinkClick}>
         <button className="w-full px-4 py-2 border border-white text-white rounded-lg hover:bg-gray-900 transition-colors font-medium text-sm">
           Sign In
         </button>
       </Link>
-      <Link href="/auth/create-account" onClick={handleLinkClick}>
+      <Link href={`/auth/create-account?redirect=${encodeURIComponent(redirectUrl)}`} onClick={handleLinkClick}>
         <button className="w-full px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors font-medium text-sm">
           Sign Up
         </button>

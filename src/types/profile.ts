@@ -110,6 +110,12 @@ export interface ProfileWallet {
   currency: string;
 }
 
+export interface ProfileVirtualAccount {
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+}
+
 export interface FullProfile {
   id: string;
   userId: string;
@@ -126,6 +132,7 @@ export interface FullProfile {
   address: ProfileAddress;
   user: ProfileUser;
   wallet?: ProfileWallet;
+  virtualAccount?: ProfileVirtualAccount;
 }
 
 /** API contract */

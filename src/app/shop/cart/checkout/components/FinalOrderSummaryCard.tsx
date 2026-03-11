@@ -9,6 +9,7 @@ import { useProfile } from "@/lib/queries/user/useProfile";
 import { useVerificationStatus } from "@/lib/queries/renters/useVerificationStatus";
 import { useRouter } from "next/navigation";
 import VerificationModal from "./VerificationModal";
+import { getOrderSummaryApi } from "@/lib/api/cart";
 
 const CURRENCY = "₦";
 const VERIFICATION_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
@@ -48,12 +49,18 @@ interface FinalOrderSummaryCardProps {
   }>;
   isLoading?: boolean;
   error?: Error | null;
+  orderCreationError?: string | null;
+  isCreatingOrder?: boolean;
+  onRetryOrder?: () => void;
 }
 
 export default function FinalOrderSummaryCard({
   listerGroups = [],
   isLoading,
   error,
+  orderCreationError,
+  isCreatingOrder = false,
+  onRetryOrder,
 }: FinalOrderSummaryCardProps) {
   const router = useRouter();
   const checkoutMutation = useCheckout();
@@ -67,6 +74,8 @@ export default function FinalOrderSummaryCard({
   >(null);
   const [countdown, setCountdown] = useState(0);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const [orderSummary, setOrderSummary] = useState<any>(null);
+  const [orderSummaryLoading, setOrderSummaryLoading] = useState(false);
 
   // Check if user is verified on mount
   useEffect(() => {
@@ -99,6 +108,23 @@ export default function FinalOrderSummaryCard({
     setVerificationSubmittedAt(Date.now());
     setIsVerificationModalOpen(false);
   };
+
+  // Fetch order summary on mount
+  useEffect(() => {
+    const fetchOrderSummary = async () => {
+      setOrderSummaryLoading(true);
+      try {
+        const response = await getOrderSummaryApi();
+        console.log("Order Summary Response:", response);
+        setOrderSummary(response);
+      } catch (err) {
+        console.error("Failed to fetch order summary:", err);
+      } finally {
+        setOrderSummaryLoading(false);
+      }
+    };
+    fetchOrderSummary();
+  }, []);
 
   const checkVerificationStatus = async () => {
     if (countdown > 0) {
@@ -133,6 +159,12 @@ export default function FinalOrderSummaryCard({
   const approvedGroups = listerGroups.filter((group) => group.items.length > 0);
 
   const handleCheckout = async () => {
+    // If order creation failed, retry it first
+    if (orderCreationError) {
+      onRetryOrder?.();
+      return;
+    }
+
     // If verification is pending, check status first
     if (verificationSubmittedAt && countdown > 0) {
       alert(
@@ -307,148 +339,223 @@ export default function FinalOrderSummaryCard({
                         })}
                       </div>
 
-                      {/* Cost Breakdown for this Lister */}
-                      <div className="space-y-2 py-4 border-b border-gray-200">
-                        <div className="flex justify-between text-sm font-medium text-gray-700">
-                          <Paragraph1>Rental Subtotal</Paragraph1>
-                          <Paragraph1>
-                            {CURRENCY}
-                            {formatCurrency(listerSubtotal)}
-                          </Paragraph1>
-                        </div>
-                        <div className="flex justify-between text-sm font-medium text-gray-700">
-                          <Paragraph1>Delivery Fees</Paragraph1>
-                          <Paragraph1>
-                            {CURRENCY}
-                            {formatCurrency(listerDeliveryFees)}
-                          </Paragraph1>
-                        </div>
-                        <div className="flex justify-between text-sm font-medium text-gray-700">
-                          <Paragraph1>Cleaning Fees</Paragraph1>
-                          <Paragraph1>
-                            {CURRENCY}
-                            {formatCurrency(
-                              group.items.reduce(
-                                (sum, item) => sum + (item.cleaningFee || 0),
-                                0,
-                              ),
-                            )}
-                          </Paragraph1>
-                        </div>
-                        <div className="flex justify-between text-sm font-medium text-gray-700">
-                          <Paragraph1>Security Deposit</Paragraph1>
-                          <Paragraph1>
-                            {CURRENCY}
-                            {formatCurrency(listerSecurityDeposit)}
-                          </Paragraph1>
-                        </div>
-                      </div>
+                      {/* Cost Breakdown for this Lister - From Order Summary */}
+                      {orderSummary?.data?.listerBreakdowns &&
+                        (() => {
+                          const listerBreakdown =
+                            orderSummary.data.listerBreakdowns.find(
+                              (breakdown: any) =>
+                                breakdown.listerId === group.listerId,
+                            );
+                          return listerBreakdown ? (
+                            <div className="space-y-2 py-4 border-b border-gray-200">
+                              <div className="flex justify-between text-sm font-medium text-gray-700">
+                                <Paragraph1>Rental Total</Paragraph1>
+                                <Paragraph1>
+                                  {CURRENCY}
+                                  {formatCurrency(listerBreakdown.rentalTotal)}
+                                </Paragraph1>
+                              </div>
+                              <div className="flex justify-between text-sm font-medium text-gray-700">
+                                <Paragraph1>Security Deposit</Paragraph1>
+                                <Paragraph1>
+                                  {CURRENCY}
+                                  {formatCurrency(
+                                    listerBreakdown.collateralTotal,
+                                  )}
+                                </Paragraph1>
+                              </div>
+                              <div className="flex justify-between text-sm font-medium text-gray-700">
+                                <Paragraph1>Cleaning Fees</Paragraph1>
+                                <Paragraph1>
+                                  {CURRENCY}
+                                  {formatCurrency(
+                                    listerBreakdown.cleaningTotal,
+                                  )}
+                                </Paragraph1>
+                              </div>
+                              <div className="flex justify-between text-sm font-medium text-gray-700">
+                                <Paragraph1>Delivery Fee</Paragraph1>
+                                <Paragraph1>
+                                  {CURRENCY}
+                                  {formatCurrency(
+                                    listerBreakdown.pickupCost +
+                                      listerBreakdown.shippingCost,
+                                  )}
+                                </Paragraph1>
+                              </div>
+                            </div>
+                          ) : null;
+                        })()}
 
                       {/* Lister Subtotal */}
-                      <div className="flex justify-between items-center pt-4">
-                        <Paragraph1 className="text-sm font-bold text-gray-900">
-                          Subtotal:
-                        </Paragraph1>
-                        <Paragraph1 className="text-lg font-extrabold text-gray-900">
-                          {CURRENCY}
-                          {formatCurrency(listerTotal)}
-                        </Paragraph1>
-                      </div>
+                      {orderSummary?.data?.listerBreakdowns &&
+                        (() => {
+                          const listerBreakdown =
+                            orderSummary.data.listerBreakdowns.find(
+                              (breakdown: any) =>
+                                breakdown.listerId === group.listerId,
+                            );
+                          return listerBreakdown ? (
+                            <div className="flex justify-between items-center pt-4">
+                              <Paragraph1 className="text-sm font-bold text-gray-900">
+                                Subtotal:
+                              </Paragraph1>
+                              <Paragraph1 className="text-lg font-extrabold text-gray-900">
+                                {CURRENCY}
+                                {formatCurrency(
+                                  listerBreakdown.listerGrandTotal,
+                                )}
+                              </Paragraph1>
+                            </div>
+                          ) : null;
+                        })()}
                     </div>
                   );
                 })}
 
-                {/* Grand Total and Checkout */}
-                <div className="p-4 border border-gray-300 rounded-xl bg-gray-50">
-                  <div className="flex justify-between items-center mb-6">
-                    <Paragraph1 className="text-lg font-bold text-gray-900">
-                      Grand Total:
+                {/* Grand Total and Checkout - From Order Summary */}
+                {orderSummary?.data?.summary && (
+                  <div className="p-4 border border-gray-300 rounded-xl bg-gray-50">
+                    <Paragraph1 className="text-lg font-bold text-gray-900 mb-4">
+                      PAYMENT BREAKDOWN
                     </Paragraph1>
-                    <Paragraph1 className="text-2xl font-extrabold text-gray-900">
-                      {CURRENCY}
-                      {formatCurrency(grandTotal)}
-                    </Paragraph1>
-                  </div>
 
-                  {checkoutMutation.isError && (
-                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg mb-4">
-                      <Paragraph1 className="text-xs text-red-700">
-                        {checkoutMutation.error?.message ||
-                          "Failed to complete checkout"}
+                    <div className="space-y-3 py-4 border-b border-gray-200">
+                      <div className="flex justify-between text-sm font-medium text-gray-700">
+                        <Paragraph1>Rental Total</Paragraph1>
+                        <Paragraph1>
+                          {CURRENCY}
+                          {formatCurrency(
+                            orderSummary.data.summary.rentalTotal,
+                          )}
+                        </Paragraph1>
+                      </div>
+                      <div className="flex justify-between text-sm font-medium text-gray-700">
+                        <Paragraph1>Security Deposit</Paragraph1>
+                        <Paragraph1>
+                          {CURRENCY}
+                          {formatCurrency(
+                            orderSummary.data.summary.collateralTotal,
+                          )}
+                        </Paragraph1>
+                      </div>
+                      <div className="flex justify-between text-sm font-medium text-gray-700">
+                        <Paragraph1>Cleaning Fees</Paragraph1>
+                        <Paragraph1>
+                          {CURRENCY}
+                          {formatCurrency(
+                            orderSummary.data.summary.cleaningTotal,
+                          )}
+                        </Paragraph1>
+                      </div>
+                      <div className="flex justify-between text-sm font-medium text-gray-700">
+                        <Paragraph1>Delivery Fee</Paragraph1>
+                        <Paragraph1>
+                          {CURRENCY}
+                          {formatCurrency(
+                            orderSummary.data.summary.pickupTotal +
+                              orderSummary.data.summary.shippingTotal,
+                          )}
+                        </Paragraph1>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center pt-4 mb-6">
+                      <Paragraph1 className="text-lg font-bold text-gray-900">
+                        Grand Total:
+                      </Paragraph1>
+                      <Paragraph1 className="text-2xl font-extrabold text-gray-900">
+                        {CURRENCY}
+                        {formatCurrency(orderSummary.data.summary.grandTotal)}
                       </Paragraph1>
                     </div>
-                  )}
 
-                  {verificationSubmittedAt && countdown > 0 && (
-                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-4">
-                      <Paragraph1 className="text-xs text-blue-700">
-                        ⏱️ Verification in progress. Please wait{" "}
-                        <strong>{formatCountdown(countdown)}</strong> to check
-                        status.
-                      </Paragraph1>
-                    </div>
-                  )}
+                    {checkoutMutation.isError && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg mb-4">
+                        <Paragraph1 className="text-xs text-red-700">
+                          {checkoutMutation.error?.message ||
+                            "Failed to complete checkout"}
+                        </Paragraph1>
+                      </div>
+                    )}
 
-                  {verificationSubmittedAt && countdown === 0 && (
-                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg mb-4">
-                      <Paragraph1 className="text-xs text-amber-700">
-                        ✓ Verification timer complete. Click below to check
-                        status.
-                      </Paragraph1>
-                    </div>
-                  )}
+                    {verificationSubmittedAt && countdown > 0 && (
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-4">
+                        <Paragraph1 className="text-xs text-blue-700">
+                          ⏱️ Verification in progress. Please wait{" "}
+                          <strong>{formatCountdown(countdown)}</strong> to check
+                          status.
+                        </Paragraph1>
+                      </div>
+                    )}
 
-                  <button
-                    onClick={handleCheckout}
-                    disabled={
-                      (!isAgree && !verificationSubmittedAt) ||
-                      checkoutMutation.isPending ||
-                      isCheckingStatus
-                    }
-                    className="w-full flex justify-center bg-black text-white font-semibold py-3 rounded-lg hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <Paragraph1>
-                      {checkoutMutation.isPending || isCheckingStatus
-                        ? "Processing..."
-                        : verificationSubmittedAt && countdown > 0
-                          ? `Check In ${formatCountdown(countdown)}`
-                          : verificationSubmittedAt && countdown === 0
-                            ? "Check Verification Status"
-                            : "Complete Order"}
-                    </Paragraph1>
-                  </button>
+                    {verificationSubmittedAt && countdown === 0 && (
+                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg mb-4">
+                        <Paragraph1 className="text-xs text-amber-700">
+                          ✓ Verification timer complete. Click below to check
+                          status.
+                        </Paragraph1>
+                      </div>
+                    )}
 
-                  <div className="flex items-start gap-2 p-3 mt-4 text-xs bg-green-50 text-green-700 rounded-md border border-green-200">
-                    <CheckCircle size={16} className="mt-0.5 shrink-0" />
-                    <Paragraph1 className="text-green-700">
-                      Your <strong>deposit is secure</strong> and fully refunded
-                      after item return and approval.
-                    </Paragraph1>
-                  </div>
-
-                  <label className="flex items-start space-x-2 cursor-pointer text-gray-700 mt-4">
-                    <input
-                      type="checkbox"
-                      checked={isAgree}
-                      onChange={() => setIsAgree(!isAgree)}
-                      className="hidden"
-                    />
-                    <span
-                      className={`shrink-0 w-6 h-6 rounded border mt-0.5 ${
-                        isAgree
-                          ? "bg-black border-black"
-                          : "bg-white border-gray-400"
-                      } flex items-center justify-center`}
+                    <button
+                      onClick={handleCheckout}
+                      disabled={
+                        (!isAgree && !verificationSubmittedAt) ||
+                        checkoutMutation.isPending ||
+                        isCheckingStatus ||
+                        isCreatingOrder
+                      }
+                      className="w-full flex justify-center bg-black text-white font-semibold py-3 rounded-lg hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
-                      {isAgree && <Check size={18} className="text-white" />}
-                    </span>
-                    <Paragraph1 className="text-xs">
-                      By confirming this order you accept our{" "}
-                      <strong>Terms of Service Agreement</strong> and our{" "}
-                      <strong>Data Protection Policy</strong>
-                    </Paragraph1>
-                  </label>
-                </div>
+                      <Paragraph1>
+                        {isCreatingOrder
+                          ? "Processing..."
+                          : checkoutMutation.isPending || isCheckingStatus
+                            ? "Processing..."
+                            : verificationSubmittedAt && countdown > 0
+                              ? `Check In ${formatCountdown(countdown)}`
+                              : verificationSubmittedAt && countdown === 0
+                                ? "Check Verification Status"
+                                : "Complete Order"}
+                      </Paragraph1>
+                    </button>
+
+                    <div className="flex items-start gap-2 p-3 mt-4 text-xs bg-green-50 text-green-700 rounded-md border border-green-200">
+                      <CheckCircle size={16} className="mt-0.5 shrink-0" />
+                      <Paragraph1 className="text-green-700">
+                        Your <strong>deposit is secure</strong> and fully
+                        refunded after item return and approval.
+                      </Paragraph1>
+                    </div>
+
+                    <label className="flex items-start space-x-2 cursor-pointer text-gray-700 mt-4">
+                      <input
+                        type="checkbox"
+                        checked={isAgree}
+                        onChange={() => setIsAgree(!isAgree)}
+                        className="hidden"
+                      />
+                      <span
+                        className={`shrink-0 w-6 h-6 rounded border mt-0.5 ${
+                          isAgree
+                            ? "bg-black border-black"
+                            : "bg-white border-gray-400"
+                        } flex items-center justify-center`}
+                      >
+                        {isAgree && <Check size={18} className="text-white" />}
+                      </span>
+                      <Paragraph1 className="text-xs">
+                        By confirming this order you accept our{" "}
+                        <strong>Terms of Service Agreement</strong> and our{" "}
+                        <strong>Data Protection Policy</strong>
+                      </Paragraph1>
+                    </label>
+                  </div>
+                )}
+
+              
               </>
             );
           })()}

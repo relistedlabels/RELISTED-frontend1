@@ -7,6 +7,7 @@ import CheckoutProductList from "./components/CheckoutProductList";
 import { FinalOrderSummaryCard } from "./components/FinalOrderSummaryCard";
 import { useEffect, useState } from "react";
 import { useRentalRequests } from "@/lib/queries/renters/useRentalRequests";
+import { useCartItems } from "@/lib/queries/renters/useCartItems";
 import { productApi } from "@/lib/api/product";
 
 export default function CartPage() {
@@ -19,6 +20,13 @@ export default function CartPage() {
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
 
+  // Fetch cart items from GET /cart-items
+  const {
+    data: cartData,
+    isLoading: cartIsLoading,
+    error: cartError,
+  } = useCartItems();
+
   // Fetch pending rental requests for CheckoutProductList
   const { data, isLoading, error } = useRentalRequests("pending", page, limit);
   // Fetch approved rental requests for FinalOrderSummaryCard
@@ -27,6 +35,17 @@ export default function CartPage() {
     isLoading: approvedIsLoading,
     error: approvedError,
   } = useRentalRequests("approved", 1, 100);
+
+  // Debug cart data
+  useEffect(() => {
+    console.log("🛒 Cart Page - cartData:", cartData);
+    console.log("🛒 Cart Page - isLoading:", cartIsLoading);
+    console.log("🛒 Cart Page - error:", cartError);
+    if (cartData) {
+      console.log("🛒 Items count:", cartData.itemCount);
+      console.log("🛒 Items:", cartData.items);
+    }
+  }, [cartData, cartIsLoading, cartError]);
   const [cartItemsWithProduct, setCartItemsWithProduct] = useState<Array<any>>(
     [],
   );
@@ -123,7 +142,6 @@ export default function CartPage() {
             isLoading={isLoading}
             error={error}
           />
-          
         </div>
         <div className="flex flex-col gap-4">
           <FinalOrderSummaryCard
@@ -159,6 +177,8 @@ export default function CartPage() {
             </div>
           )}
         </div>
+
+        {/* display cart here */}
       </div>
     </div>
   );

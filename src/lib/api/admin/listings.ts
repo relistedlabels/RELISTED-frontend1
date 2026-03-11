@@ -156,7 +156,18 @@ export const productsApi = {
   // 16. GET /categories
   getAllCategories: () => apiFetch<ListingCategory[]>("/categories"),
 
-  // 17. PATCH /categories/:categoryId
+  // 17. POST /categories
+  createCategory: (name: string, imageFile: File) => {
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("image", imageFile);
+    return apiFetch<{ success: true; data: ListingCategory }>(`/categories`, {
+      method: "POST",
+      body: formData,
+    });
+  },
+
+  // 18. PATCH /categories/:categoryId
   editCategory: (categoryId: string, name: string, imageFile?: File) => {
     const formData = new FormData();
     formData.append("name", name);
@@ -172,16 +183,24 @@ export const productsApi = {
     );
   },
 
-  // 18. DELETE /categories/:categoryId
+  // 19. DELETE /categories/:categoryId
   deleteCategory: (categoryId: string) =>
     apiFetch<{ success: true; message: string }>(`/categories/${categoryId}`, {
       method: "DELETE",
     }),
 
-  // 19. GET /tags
+  // 20. GET /tags
   getAllTags: () => apiFetch<ListingTag[]>("/tags"),
 
-  // 20. PATCH /tags/:tagId
+  // 21. POST /tags
+  createTag: (name: string) =>
+    apiFetch<{ success: true; data: ListingTag }>(`/tags`, {
+      method: "POST",
+      body: JSON.stringify({ name }),
+      headers: { "Content-Type": "application/json" },
+    }),
+
+  // 22. PATCH /tags/:tagId
   editTag: (tagId: string, name: string) =>
     apiFetch<{ success: true; data: ListingTag }>(`/tags/${tagId}`, {
       method: "PATCH",
@@ -189,16 +208,24 @@ export const productsApi = {
       headers: { "Content-Type": "application/json" },
     }),
 
-  // 21. DELETE /tags/:tagId
+  // 23. DELETE /tags/:tagId
   deleteTag: (tagId: string) =>
     apiFetch<{ success: true; message: string }>(`/tags/${tagId}`, {
       method: "DELETE",
     }),
 
-  // 22. GET /brands
+  // 24. GET /brands
   getAllBrands: () => apiFetch<ListingBrand[]>("/brands"),
 
-  // 23. PATCH /brands/:brandId
+  // 25. POST /brands
+  createBrand: (name: string) =>
+    apiFetch<{ success: true; data: ListingBrand }>(`/brands`, {
+      method: "POST",
+      body: JSON.stringify({ name }),
+      headers: { "Content-Type": "application/json" },
+    }),
+
+  // 26. PATCH /brands/:brandId
   editBrand: (brandId: string, name: string) =>
     apiFetch<{ success: true; data: ListingBrand }>(`/brands/${brandId}`, {
       method: "PATCH",
@@ -206,7 +233,7 @@ export const productsApi = {
       headers: { "Content-Type": "application/json" },
     }),
 
-  // 24. DELETE /brands/:brandId
+  // 27. DELETE /brands/:brandId
   deleteBrand: (brandId: string) =>
     apiFetch<{ success: true; message: string }>(`/brands/${brandId}`, {
       method: "DELETE",

@@ -2,13 +2,14 @@
 
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { useUserStore } from "@/store/useUserStore";
 import CreateAccountForm from "../components/CreateAccountForm";
 
 function Page() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const role = useUserStore((s) => s.role);
 
   // Safety: no role selected → go back
@@ -17,6 +18,9 @@ function Page() {
       router.replace("/auth/sign-in");
     }
   }, [role, router]);
+
+  const redirect = searchParams.get("redirect");
+
   return (
     <div
       className="relative w-full h-full bg-black bg-cover bg-center"
@@ -49,7 +53,7 @@ function Page() {
             },
           }}
         >
-          <CreateAccountForm />
+          <CreateAccountForm redirect={redirect} />
         </motion.div>
       </motion.div>
     </div>

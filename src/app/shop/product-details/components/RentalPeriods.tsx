@@ -17,7 +17,9 @@ import Button from "@/common/ui/Button";
 import RentalDurationSelector from "./RentalDurationSelector";
 import RentalSummaryCard from "./RentalSummaryCard";
 import { useSubmitRentalRequest } from "@/lib/mutations/renters/useRentalRequestMutations";
+
 import RentalCartView from "../../cart/components/RentalCartView";
+import { useAddCartItem } from "@/lib/mutations/renters/useAddCartItem";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useAddresses } from "@/lib/queries/renters/useAddresses";
 import { useProfileDetails } from "@/lib/queries/renters/useProfileDetails";
@@ -95,6 +97,8 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
   const shippingFee = 5000; // Fixed amount, can be adjusted
   const submitRentalRequest = useSubmitRentalRequest();
 
+  const addCartItem = useAddCartItem();
+
   // Handler to update rental days and start date from child
   const handleRentalDaysChange = (days: number, start?: Date) => {
     setRentalDays(days);
@@ -155,6 +159,14 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
         toast.error("Unable to select a delivery address. Please try again.");
         setIsChecking(false);
         return;
+      }
+
+      // --- Add to cart with only productId and days using mutation hook ---
+      try {
+        await addCartItem.mutateAsync({ productId, days: rentalDays });
+      } catch (cartErr: any) {
+        console.error("❌ Error posting cart item:", cartErr);
+        toast.error(cartErr?.message || "Could not add to cart.");
       }
 
       console.log("✅ All checks passed. Proceeding with rental request...");
@@ -276,7 +288,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                     handleRentalDaysChange(days, start)
                   }
                 />
-                <div className="flex items-center gap-2 mt-4">
+                <div className="flex- hidden items-center gap-2 mt-4">
                   <button
                     type="button"
                     aria-pressed={autoPay}

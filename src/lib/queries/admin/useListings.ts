@@ -183,6 +183,27 @@ export const useDeleteCategory = () => {
     },
   });
 };
+export const useCreateCategory = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      name,
+      imageFile,
+    }: {
+      name: string;
+      imageFile: File;
+    }) => productsApi.createCategory(name, imageFile),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "categories", "all"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin", "listings"] });
+    },
+    onError: (error) => {
+      console.error("Failed to create category:", error);
+    },
+  });
+};
 
 // --- Tag Management ---
 
@@ -221,6 +242,19 @@ export const useDeleteTag = () => {
     },
   });
 };
+export const useCreateTag = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) => productsApi.createTag(name),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "tags", "all"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "listings"] });
+    },
+    onError: (error) => {
+      console.error("Failed to create tag:", error);
+    },
+  });
+};
 
 // --- Brand Management ---
 
@@ -256,6 +290,20 @@ export const useDeleteBrand = () => {
     },
     onError: (error) => {
       console.error("Failed to delete brand:", error);
+    },
+  });
+};
+
+export const useCreateBrand = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) => productsApi.createBrand(name),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "brands", "all"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "listings"] });
+    },
+    onError: (error) => {
+      console.error("Failed to create brand:", error);
     },
   });
 };
