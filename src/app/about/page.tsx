@@ -10,7 +10,7 @@ export default function page() {
     <div>
       <AboutUsSection />
       <OurMissionSection />
-      <OurTeamSection />
+      {/* <OurTeamSection /> */}
       <ExploreSection />
       <FAQSection />
     </div>

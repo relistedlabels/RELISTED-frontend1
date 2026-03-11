@@ -69,6 +69,8 @@ export default function ExploreSection() {
           >
             <Button
               text="EXPLORE PRODUCTS"
+              isLink
+              href="/shop"
               backgroundColor="bg-white"
               color="text-black hover:text-white"
               border="border border-white"
