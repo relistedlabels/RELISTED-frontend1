@@ -35,7 +35,7 @@ const SignInForm: React.FC = () => {
 
   return (
     <div className="font-sans-">
-      <div className="max- sm:w-[500px] w-full bg-white p-4 md:p-8 pb-[100px] sm:pb-0 sm:rounded-3xl text-gray-600">
+      <div className="max- sm:w-[500px] h-screen sm:h-fit w-full bg-white p-4 md:p-8 pb-[100px] sm:pb-0 sm:rounded-3xl text-gray-600">
         {/* Header */}
         <div className="mb-8 text-center flex-col items-center flex justify-center">
           <img src="/images/logo1.svg" alt="" className="h-10 w-10 mb-4" />
