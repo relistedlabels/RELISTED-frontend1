@@ -75,23 +75,23 @@ const ManageItemHeader: React.FC<ManageItemHeaderProps> = ({
       <div className="flex items-center space-x-3">
         <button
           onClick={() => setShowDeleteModal(true)}
-          className="px-6 py-2.5 w-full sm:w-fit border border-red-300 rounded-xl text-sm font-semibold text-red-600 bg-white hover:bg-red-50 transition-all active:scale-95"
+          className="px-6 py-2.5 text-[10px] sm:text-[14px] w-full sm:w-fit border border-red-300 rounded-xl text-sm font-semibold text-red-600 bg-white hover:bg-red-50 transition-all active:scale-95"
         >
-          <Paragraph1>Delete Item</Paragraph1>
+          <p>Delete Item</p>
         </button>
 
         <button
           onClick={() => setShowModal(true)}
-          className="px-6 py-2.5 w-full sm:w-fit border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 transition-all active:scale-95"
+          className="px-6 py-2.5 text-[10px] sm:text-[14px] w-full sm:w-fit border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 transition-all active:scale-95"
         >
-          <Paragraph1>Disable Item</Paragraph1>
+          <p>Disable Item</p>
         </button>
 
         <button
           onClick={handleEdit}
-          className="px-6 py-2.5 w-full sm:w-fit bg-[#33332D] text-white rounded-xl text-sm font-semibold hover:bg-black transition-all shadow-sm active:scale-95"
+          className="px-6 py-2.5 text-[10px] sm:text-[14px] w-full sm:w-fit bg-[#33332D] text-white rounded-xl text-sm font-semibold hover:bg-black transition-all shadow-sm active:scale-95"
         >
-          <Paragraph1>Edit Item</Paragraph1>
+          <p>Edit Item</p>
         </button>
       </div>
 

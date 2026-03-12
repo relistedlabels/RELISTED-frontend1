@@ -29,6 +29,7 @@ export type ProductDraft = {
 
   originalValue: number;
   dailyRentalPrice: number;
+  collateralPrice: number;
   quantity: number;
 
   color: string;
@@ -67,6 +68,7 @@ const initialState: ProductDraft = {
 
   originalValue: 100,
   dailyRentalPrice: 10,
+  collateralPrice: 80,
   quantity: 1,
 
   color: "Black",
@@ -123,6 +125,7 @@ export const useProductDraftStore = create<ProductDraftStore>()(
             measurement: product.measurement,
             originalValue: product.originalValue,
             dailyRentalPrice: product.dailyPrice,
+            collateralPrice: Math.round((product.originalValue || 0) * 0.8),
             quantity: product.quantity,
             color: product.color,
             warning: product.warning,

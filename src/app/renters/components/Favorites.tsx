@@ -158,6 +158,7 @@ export default function Favorites() {
                     name={product.name}
                     price={`₦${product?.originalValue?.toLocaleString() || "0"}`}
                     dailyPrice={product.dailyPrice}
+                    size={product.measurement}
                   />
                   {/* Remove from Favorites Button */}
                   <button

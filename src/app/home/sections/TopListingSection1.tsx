@@ -132,6 +132,7 @@ const TopListingSection = () => {
                     name={product.name}
                     price={`₦${(product.originalValue || 0).toLocaleString()}`}
                     dailyPrice={product.dailyPrice}
+                    size={product.measurement}
                   />
                 </div>
               ))}

@@ -19,14 +19,17 @@ export default function Home() {
       <PopularCategorySection />
 
       {/* <MainCategorySection /> */}
-      <HowItWorks />
+      <div className=" px-4 sm:px-0">
+        <HowItWorks />
+      </div>
 
       <TopListingSection2 />
       <TopListingSection1 />
-
-      <BecomeCurator />
+      <div className=" px-4 sm:px-0">
+        <BecomeCurator />
+      </div>
       {/* <TopCuratorsSection /> */}
-      <br />
+      {/* <br /> */}
       <br />
       {/* <ReviewCarousel /> */}
     </div>

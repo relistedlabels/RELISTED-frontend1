@@ -19,6 +19,8 @@ interface ProductCardProps {
   name: string;
   price: string;
   dailyPrice?: number;
+  size?: string;
+  measurement?: string;
 }
 
 export default function ProductCard({
@@ -28,6 +30,8 @@ export default function ProductCard({
   name,
   price,
   dailyPrice,
+  size,
+  measurement,
 }: ProductCardProps) {
   const router = useRouter();
   const addViewed = useBrowseStore((state) => state.addViewed);
@@ -69,7 +73,14 @@ export default function ProductCard({
   };
 
   const handleProductClick = () => {
-    addViewed({ id, image, brand, name, price });
+    addViewed({
+      id,
+      image,
+      brand,
+      name,
+      price,
+      measurement: size || measurement,
+    });
     router.push(`/shop/product-details/${id}`);
   };
 
@@ -78,7 +89,7 @@ export default function ProductCard({
       className="overflow-hidden cursor-pointer"
       onClick={handleProductClick}
     >
-      <div className="relative w-full h-[230px] sm:h-[300px]">
+      <div className="relative w-full h-[260px] sm:h-[300px]">
         <div
           className="w-full h-full bg-cover bg-center"
           style={{ backgroundImage: `url(${image})` }}
@@ -97,20 +108,28 @@ export default function ProductCard({
         </button>
       </div>
 
+      {/* product description */}
       <div className="py-4">
         <Paragraph1 className="text-xs font-semibold tracking-wide">
-          {brand}{" "} {name}
+          {brand ? `${brand} ${name}` : name}
         </Paragraph1>
-        {/* <Paragraph1 className="text-gray-700 mt-1">{name}</Paragraph1> */}
-        <Paragraph1 className="text-gray-700 mt-2">
-          Rent from{" "}
-          <span className="text-black font-semibold">
+        {(size || measurement) && (
+          <Paragraph1 className="text-gray-700 mt-1">
+            Size: {size || measurement}
+          </Paragraph1>
+        )}
+        <div className="flex justify-between items-start mt-2">
+          <Paragraph1 className="text-gray-700">Rent from </Paragraph1>
+          <Paragraph1 className="text-black font-semibold">
             ₦{dailyPrice?.toLocaleString() || "0"}
-          </span>
-        </Paragraph1>
-        <Paragraph1 className="text-gray-400 mt-2 line-through">
-          RRP: {price}
-        </Paragraph1>
+          </Paragraph1>
+        </div>
+        <div className="flex justify-between items-start ">
+          <Paragraph1 className="text-gray-400 line-through">RRP:</Paragraph1>
+          <Paragraph1 className="text-gray-400 line-through">
+            {price}
+          </Paragraph1>
+        </div>
       </div>
     </div>
   );

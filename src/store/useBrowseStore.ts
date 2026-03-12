@@ -8,6 +8,7 @@ type ProductCardData = {
   name: string;
   price: string;
   dailyPrice?: number;
+  measurement?: string;
 };
 
 type BrowseStore = {

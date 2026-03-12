@@ -26,6 +26,7 @@ export const useUpdateProduct = (productId: string) => {
         measurement: draft.measurement,
         originalValue: draft.originalValue,
         dailyPrice: draft.dailyRentalPrice, // ✅ Correct field name
+        // collateralPrice: draft.collateralPrice, // ✅ Collateral amount
         quantity: draft.quantity, // ✅ Include quantity
         color: draft.color, // ✅ String, not array
         warning: draft.warning.trim(),
@@ -40,13 +41,10 @@ export const useUpdateProduct = (productId: string) => {
 
       console.log("📤 Final payload being sent:", payload);
 
-      return apiFetch<{ message: string }>(
-        `/product/${productId}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify(payload),
-        },
-      );
+      return apiFetch<{ message: string }>(`/product/${productId}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      });
     },
     onSuccess: (response) => {
       console.log("✅ Product updated:", response.message);

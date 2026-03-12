@@ -38,6 +38,7 @@ export default function BecomeCurator() {
     // Navigate to profile setup (will show lister flow since role is now LISTER)
     window.location.href = "/auth/profile-setup";
   };
+
   return (
     <section className="relative w-full h-[250px] sm:h-screen overflow-hidden">
       {/* Background Image */}
@@ -84,19 +85,19 @@ export default function BecomeCurator() {
             }}
             transition={{ duration: 0.8 }}
           >
-            <Header1 className=" mb-4 sm:mb-12">Become a Lister</Header1>
+            <Header1 className=" mb-[16px] sm:mb-12">Become a Lister</Header1>
           </motion.div>
 
           {/* Sub Text */}
           <motion.div
-            className=" mb-8"
+            className=" mb-[24px] sm:mb-8"
             variants={{
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0 },
             }}
             transition={{ duration: 0.9 }}
           >
-            <Paragraph1>
+            <Paragraph1 className=" max-w-[282px] sm:max-w-full">
               Turn your wardrobe into a new source of opportunity & earn
               effortlessly{" "}
             </Paragraph1>

@@ -37,6 +37,7 @@ export type PublicProduct = {
   isInStock: boolean;
   availableCount: number;
   originalValue?: number; // Optional for compatibility with UI usage
+  measurement?: string; // Size/measurement info (e.g., "M", "L", "XL-International")
 };
 
 export type PublicProductDetail = PublicProduct & {
@@ -44,7 +45,8 @@ export type PublicProductDetail = PublicProduct & {
   color: string;
   size: string;
   composition: string;
-  measurements: string;
+  measurement?: string; // Size/measurement info (e.g., "M", "L", "XL-International")
+  measurements?: string; // For backward compatibility
   securityDeposit: number;
   reviewCount: number;
   productReviews: Array<{

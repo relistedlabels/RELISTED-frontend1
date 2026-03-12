@@ -6,6 +6,7 @@ export const products = [
     brand: "GUCCI",
     name: "Classic Easy Zipper Tote",
     price: "₦85,000",
+    measurement: "One Size",
   },
   {
     id: "prod_002",
@@ -13,6 +14,7 @@ export const products = [
     brand: "DOLCE & GABBANA",
     name: "Concertina Phone Bag",
     price: "₦105,000",
+    measurement: "One Size",
   },
   {
     id: "prod_003",
@@ -20,6 +22,7 @@ export const products = [
     brand: "LOUIS VUITTON",
     name: "Wool Cashmere Sweater Coat",
     price: "₦165,000",
+    measurement: "M",
   },
   {
     id: "prod_004",
@@ -27,6 +30,7 @@ export const products = [
     brand: "CHANNEL",
     name: "Single-Origin Cashmere Beanie",
     price: "₦165,000",
+    measurement: "One Size",
   },
   {
     id: "prod_005",
@@ -34,6 +38,7 @@ export const products = [
     brand: "FENDI",
     name: "Alpaca Wool Cardigan",
     price: "₦165,000",
+    measurement: "L",
   },
   // Duplicate or add more products as needed
 ];

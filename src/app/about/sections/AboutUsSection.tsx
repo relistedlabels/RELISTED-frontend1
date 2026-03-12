@@ -21,26 +21,46 @@ export default function AboutUsSection() {
         </div>
         {/* Text (on mobile this becomes first) */}
         <div className="order-1 md:order-2 w-full pb-8 sm:pb-0 md:pl-12">
-          <Paragraph1 className="text-sm text-gray-500 mb-2">
-            ABOUT US
-          </Paragraph1>
-
           <Header1Plus className="text-3xl md:text-4xl font-semibold mb-6">
-            FROM NIGERIA, TO THE WORLD
+            Our Story
           </Header1Plus>
 
           <Paragraph1 className="mb-4">
-            Born in Nigeria, Relisted embodies the elegance, craftsmanship, and
-            heritage of its namesake city. Inspired by the rich culture and
-            timeless style of Asia and Europe, we bring fashion that transcends
-            borders, designed to be cherished across the world.
+            Relisted Labels began with a simple observation: wardrobes are full
+            of incredible pieces that rarely get worn, while people are
+            constantly searching for the perfect outfit for their next occasion.
           </Paragraph1>
 
+          <Paragraph1 className="mb-4">
+            We saw an opportunity to rethink the way fashion is experienced,
+            creating a platform where individuals can earn from pieces in their
+            closets while others gain access to premium styles without the full
+            retail commitment.
+          </Paragraph1>
+
+          <Paragraph1 className="mb-4">
+            Fashion today moves faster than ever. Trends evolve quickly,
+            designer prices continue to rise, and many outfits are purchased for
+            moments that only happen once. Relisted Labels exists to make
+            premium fashion more accessible while giving great pieces a longer
+            life. By connecting people who want access to standout fashion with
+            those who already own it, we keep style in motion.
+          </Paragraph1>
+
+          <Paragraph1 className="mb-4">
+            Today, we're building a community that believes fashion should be
+            accessible, flexible, and circular, opening the door for more people
+            to enjoy designer fashion while turning underused wardrobes into
+            opportunity.
+          </Paragraph1>
+
+          <Header1Plus className="text-2xl md:text-3xl font-semibold mb-4 mt-6">
+            Join the Fashion Revolution
+          </Header1Plus>
+
           <Paragraph1>
-            From the historic streets of Relisted to global runways, our designs
-            reflect a legacy of artistry and sophistication. Rooted in quality
-            and refined aesthetics, we create pieces that honor tradition while
-            embracing the future because true style knows no boundaries.
+            Whether you're looking for the perfect outfit or earn money from
+            your closet, Relisted makes it easy.
           </Paragraph1>
         </div>
       </div>

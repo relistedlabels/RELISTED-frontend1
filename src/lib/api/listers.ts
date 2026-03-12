@@ -481,6 +481,21 @@ export async function addBankAccount(data: {
   });
 }
 
+export async function updateBankAccount(
+  id: string,
+  data: {
+    bankCode: string;
+    accountNumber: string;
+    accountName: string;
+    accountType?: "savings" | "current";
+  }
+): Promise<{ success: boolean; data: BankAccount; message: string }> {
+  return apiFetch(`/api/listers/wallet/bank-accounts/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
 export async function getBanks(country: string = "NG"): Promise<BanksResponse> {
   return apiFetch(`/api/banks?country=${country}`, {
     method: "GET",

@@ -137,3 +137,4 @@ const AddNewBankAccount: React.FC = () => {
 };
 
 export default AddNewBankAccount;
+export { AddNewBankAccountPanel };

@@ -99,7 +99,7 @@ export default function EndlessStyleHero() {
             transition={{ duration: 1 }}
           >
             <Button
-              text="Start Shopping"
+              text="Find Your Next Fit"
               isLink={true}
               href="/shop"
               backgroundColor="bg-white"

@@ -181,7 +181,7 @@ const InventoryItemCard: React.FC<InventoryItem> = ({
         <button
           type="button"
           onClick={handleManage}
-          className="px-4 py-2 w-full  text-sm font-semibold whitespace-nowrap text-white bg-black rounded-lg hover:bg-gray-800 transition duration-150"
+          className="px-4 py-2 w-full col-span-2 sm:col-end-1  text-sm font-semibold whitespace-nowrap text-white bg-black rounded-lg hover:bg-gray-800 transition duration-150"
         >
           Manage
         </button>

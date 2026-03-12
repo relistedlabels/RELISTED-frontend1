@@ -108,7 +108,7 @@ export default function TopListingSection() {
             animate={controls}
           >
             {duplicatedProducts.map((item, index) => (
-              <div key={index} className="min-w-[260px] max-w-[260px]">
+              <div key={index} className="min-w-[180px] sm:min-w-[260px]">
                 <ProductCard
                   id={item.id}
                   image={
@@ -118,6 +118,7 @@ export default function TopListingSection() {
                   name={item.name}
                   price={`₦${item.originalValue.toLocaleString()}`}
                   dailyPrice={item.dailyPrice}
+                  size={item.measurement}
                 />
               </div>
             ))}
