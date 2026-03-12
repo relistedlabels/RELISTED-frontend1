@@ -7,6 +7,7 @@ import ChangeAddress from "./ChangeAddress";
 import FundWallet from "./FundWallet";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useProfile } from "@/lib/queries/user/useProfile";
+import { useWallet } from "@/lib/queries/renters/useWallet";
 
 // === Skeleton Loader ===
 const ContactSkeleton = () => (
@@ -24,6 +25,7 @@ const ContactSkeleton = () => (
 export default function CheckoutContactAndPayment() {
   const { data: user } = useMe();
   const { data: profile } = useProfile();
+  const { data: walletResponse } = useWallet();
   const [isSameAsBilling, setIsSameAsBilling] = useState(true);
 
   if (!user) return <ContactSkeleton />;
@@ -32,8 +34,10 @@ export default function CheckoutContactAndPayment() {
     ? `${profile.address.street}, ${profile.address.city}, ${profile.address.state}, ${profile.address.country}`
     : "No address set";
 
-  const walletBalance = profile?.wallet?.balance || 0;
-  const isWalletFunded = walletBalance > 0;
+  const walletData = walletResponse?.wallet?.balance;
+  const totalBalance = walletData?.totalBalance || 0;
+  const availableBalance = walletData?.availableBalance || 0;
+  const isWalletFunded = availableBalance > 0;
 
   const formatCurrency = (amount: number): string => {
     return amount.toLocaleString("en-NG");
@@ -112,23 +116,33 @@ export default function CheckoutContactAndPayment() {
         <hr className="mb-3 text-gray-300" />
 
         {/* Wallet Balance Row */}
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <Wallet size={30} className="text-gray-700" />
-            <div>
-              <Paragraph1 className="font-medium text-gray-900">
-                Wallet Balance
-              </Paragraph1>
-              <Paragraph1
-                className={`text-xs font-bold ${
-                  isWalletFunded ? "text-green-700" : "text-red-700"
-                }`}
-              >
-                ₦{formatCurrency(walletBalance)}
-              </Paragraph1>
+        <div className="flex justify-between items-start gap-4">
+          <div className="flex items-start gap-3 flex-1">
+            <Wallet size={30} className="shrink-0 mt-0.5 text-gray-700" />
+            <div className="space-y-2">
+              <div>
+                <Paragraph1 className="text-xs text-gray-600">
+                  Total Balance
+                </Paragraph1>
+                <Paragraph1 className="font-bold text-green-700">
+                  ₦{formatCurrency(totalBalance)}
+                </Paragraph1>
+              </div>
+              <div>
+                <Paragraph1 className="text-xs text-gray-600">
+                  Available Balance
+                </Paragraph1>
+                <Paragraph1
+                  className={`font-bold ${
+                    isWalletFunded ? "text-green-700" : "text-red-700"
+                  }`}
+                >
+                  ₦{formatCurrency(availableBalance)}
+                </Paragraph1>
+              </div>
             </div>
           </div>
-          {!isWalletFunded && <FundWallet />}
+          <FundWallet />
         </div>
       </div>
 

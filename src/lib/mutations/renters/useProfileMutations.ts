@@ -63,6 +63,8 @@ export const useUpdateProfile = () => {
     mutationFn: (data: {
       fullName?: string;
       phone?: string;
+      nin?: string;
+      bvn?: string;
       bankAccount?: {
         bankName: string;
         accountNumber: string;

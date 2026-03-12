@@ -23,7 +23,7 @@ export default function EndlessStyleHero() {
         }}
         transition={{ duration: 0.8 }}
       >
-        <HeaderAny className=" text-[28px] sm:text-[34px]">{pageTitle}</HeaderAny>
+        <HeaderAny className=" text-[28px] sm:text-[44px]">{pageTitle}</HeaderAny>
         <ParagraphAny className="line-clamp-1 text-[12px] sm:text-[12px] sm:line-clamp-none">
           {pageDescription}
         </ParagraphAny>
