@@ -17,7 +17,7 @@ export default function Home() {
       <EndlessStyleHero />
       <BrandLogosCarousel />
       <PopularCategorySection />
-     <br />
+      <br />
       <HowItWorks />
       <TopListingSection2 />
       <TopListingSection1 />
