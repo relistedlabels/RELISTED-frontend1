@@ -139,7 +139,7 @@ const TopListingSection = () => {
             </div>
           </div>
         )}
-        <div className=" flex items-center w-full justify-center">
+        <div className="mt-2 flex items-center w-full justify-center">
           <Link
             href="/shop?title=BLACK+TIE+OUTFITS&category=7589478207"
             className="inline-flex items-center justify-center w-full max-w-md px-8 py-3 
