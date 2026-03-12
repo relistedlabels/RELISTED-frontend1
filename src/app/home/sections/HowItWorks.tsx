@@ -28,7 +28,7 @@ function HowItWorks() {
           />
 
           {/* Text Content */}
-          <div className="flex flex-col sm:space-y-2 space-y-2-  max-w-[400px] sm:max-w-4xl">
+          <div className="flex flex-col sm:space-y-2 space-y-2-  max-w-[340px] sm:max-w-4xl">
             <HeaderAny className="text-white text-[28px] sm:text-[32px]">
               Delivered as soon as... today
             </HeaderAny>

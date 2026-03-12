@@ -75,7 +75,7 @@ const TopListingSection = () => {
 
   return (
     <section className="py-6 sm:py-12 px-4 sm:px-0 bg-white">
-      <div className="container mx-auto">
+     <br /> <div className="container mx-auto">
         {/* Header */}
         <div className="text-center mb-2 sm:mb-6 flex flex-col items-center justify-center">
           <Header1Plus className="tracking-wide uppercase">

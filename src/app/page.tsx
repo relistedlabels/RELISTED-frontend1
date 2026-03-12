@@ -19,7 +19,6 @@ export default function Home() {
       <PopularCategorySection />
      
       <HowItWorks />
-      <br />
       <TopListingSection2 />
       <TopListingSection1 />
       <div className=" px-4 sm:px-0">
