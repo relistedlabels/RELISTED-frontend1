@@ -353,16 +353,47 @@ export interface WalletStatsResponse {
   data: WalletStats;
 }
 
-export interface WalletBalance {
+export interface BalanceInfo {
   availableBalance: number;
   lockedBalance: number;
   totalBalance: number;
   currency: string;
+  lastUpdated: string;
+}
+
+export interface WalletBalance {
+  walletId: string;
+  userId: string;
+  balance: BalanceInfo;
+  lockedBreakdown: {
+    activeRentals: Array<any>;
+    disputeHolds: Array<any>;
+    totalLockedAmount: number;
+  };
+  statistics: {
+    totalDeposits: number;
+    totalSpent: number;
+    totalRefunds: number;
+    lifetimeTransactions: number;
+    activeRentalOrders: number;
+    activeDisputes: number;
+  };
+  lastTransaction: {
+    type: "credit" | "debit";
+    amount: number;
+    description: string;
+    date: string;
+  };
+  linkedBankAccounts: number;
+  canWithdraw: boolean;
+  minimumFundsForTransaction: number;
 }
 
 export interface WalletBalanceResponse {
   success: boolean;
-  data: WalletBalance;
+  data: {
+    wallet: WalletBalance;
+  };
 }
 
 export interface Transaction {
@@ -1309,7 +1340,7 @@ export async function deleteProduct(
   productId: string,
   data?: DeleteProductPayload,
 ): Promise<DeleteProductResponse> {
-  return apiFetch(`/api/listers/inventory/${productId}`, {
+  return apiFetch(`/product/${productId}`, {
     method: "DELETE",
     body: JSON.stringify(data || { reason: "Deleted by lister" }),
   });

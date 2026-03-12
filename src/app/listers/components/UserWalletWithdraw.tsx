@@ -77,7 +77,8 @@ const ExampleWithdrawalForm: React.FC = () => {
   const withdrawMutation = useWithdrawFunds();
   const updateProfileMutation = useUpdateListerProfile();
 
-  const availableBalance = walletBalance?.data?.availableBalance ?? 0;
+  const availableBalance =
+    walletBalance?.data?.wallet?.balance?.availableBalance ?? 0;
   const displayBalance = `₦${availableBalance.toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -535,24 +536,18 @@ const ExampleWithdrawalForm: React.FC = () => {
       {/* Add Bank Account Modal */}
       {/* Removed: AddNewBankAccountPanel - account details now managed through profile update */}
 
-      {/* Update Profile Details Modal */}
+      {/* Update Profile Details - Inline Expandable Form */}
       <AnimatePresence>
         {isUpdateProfileOpen && (
           <motion.div
-            className="fixed inset-0 z-99 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-            onClick={() => setIsUpdateProfileOpen(false)}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mt-4 p-4 bg-white border border-gray-200 rounded-lg space-y-4"
           >
-            <motion.div
-              className="bg-white rounded-lg max-w-md w-full p-6"
-              onClick={(e) => e.stopPropagation()}
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-            >
-              <Paragraph1 className="text-lg font-bold text-gray-900 mb-4">
+            <div>
+              <Paragraph1 className="text-sm font-semibold text-gray-900 mb-3">
                 {accounts && accounts.length > 0 ? "Update" : "Add"} Bank
                 Account
               </Paragraph1>
@@ -564,144 +559,144 @@ const ExampleWithdrawalForm: React.FC = () => {
                   </Paragraph1>
                 </div>
               )}
+            </div>
 
-              <div className="space-y-4 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Bank Name
-                  </label>
-                  <div className="relative">
-                    <motion.button
-                      onClick={() => setIsBankDropdownOpen(!isBankDropdownOpen)}
-                      className="w-full p-3 border border-gray-300 rounded-lg text-left bg-white hover:border-gray-400 transition flex items-center justify-between"
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Bank Name
+                </label>
+                <div className="relative">
+                  <motion.button
+                    onClick={() => setIsBankDropdownOpen(!isBankDropdownOpen)}
+                    className="w-full p-3 border border-gray-300 rounded-lg text-left bg-white hover:border-gray-400 transition flex items-center justify-between"
+                  >
+                    <span
+                      className={
+                        profileFormData.bankName
+                          ? "text-gray-900"
+                          : "text-gray-500"
+                      }
                     >
-                      <span
-                        className={
-                          profileFormData.bankName
-                            ? "text-gray-900"
-                            : "text-gray-500"
-                        }
-                      >
-                        {profileFormData.bankName || "Select a bank"}
-                      </span>
-                      <svg
-                        className={`w-4 h-4 transition ${
-                          isBankDropdownOpen ? "rotate-180" : ""
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                        />
-                      </svg>
-                    </motion.button>
+                      {profileFormData.bankName || "Select a bank"}
+                    </span>
+                    <svg
+                      className={`w-4 h-4 transition ${
+                        isBankDropdownOpen ? "rotate-180" : ""
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                      />
+                    </svg>
+                  </motion.button>
 
-                    {/* Bank Dropdown Modal */}
-                    <AnimatePresence>
-                      {isBankDropdownOpen && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.95 }}
-                          className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg z-50"
-                        >
-                          {/* Search Input */}
-                          <div className="p-3 border-b border-gray-200">
-                            <input
-                              type="text"
-                              placeholder="Search banks..."
-                              value={bankSearch}
-                              onChange={(e) => setBankSearch(e.target.value)}
-                              className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-black focus:border-black"
-                              autoFocus
-                            />
-                          </div>
+                  {/* Bank Dropdown Menu */}
+                  <AnimatePresence>
+                    {isBankDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg z-50"
+                      >
+                        {/* Search Input */}
+                        <div className="p-3 border-b border-gray-200">
+                          <input
+                            type="text"
+                            placeholder="Search banks..."
+                            value={bankSearch}
+                            onChange={(e) => setBankSearch(e.target.value)}
+                            className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-black focus:border-black"
+                            autoFocus
+                          />
+                        </div>
 
-                          {/* Bank List */}
-                          <div className="max-h-60 overflow-y-auto">
-                            {filteredBanks.length > 0 ? (
-                              filteredBanks.map((bank) => (
-                                <motion.button
-                                  key={bank}
-                                  onClick={() => handleSelectBank(bank)}
-                                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition ${
-                                    profileFormData.bankName === bank
-                                      ? "bg-black text-white"
-                                      : "text-gray-900"
-                                  }`}
-                                  whileHover={{ x: 4 }}
-                                >
-                                  {bank}
-                                </motion.button>
-                              ))
-                            ) : (
-                              <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                                No banks found
-                              </div>
-                            )}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Account Number
-                  </label>
-                  <input
-                    type="text"
-                    value={profileFormData.accountNumber}
-                    onChange={(e) =>
-                      setProfileFormData({
-                        ...profileFormData,
-                        accountNumber: e.target.value,
-                      })
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-black focus:border-black"
-                    placeholder="Enter 10-digit account number"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Account Name
-                  </label>
-                  <input
-                    type="text"
-                    value={profileFormData.accountName}
-                    onChange={(e) =>
-                      setProfileFormData({
-                        ...profileFormData,
-                        accountName: e.target.value,
-                      })
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-black focus:border-black"
-                    placeholder="Name on account"
-                  />
+                        {/* Bank List */}
+                        <div className="max-h-60 overflow-y-auto">
+                          {filteredBanks.length > 0 ? (
+                            filteredBanks.map((bank) => (
+                              <motion.button
+                                key={bank}
+                                onClick={() => handleSelectBank(bank)}
+                                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition ${
+                                  profileFormData.bankName === bank
+                                    ? "bg-black text-white"
+                                    : "text-gray-900"
+                                }`}
+                                whileHover={{ x: 4 }}
+                              >
+                                {bank}
+                              </motion.button>
+                            ))
+                          ) : (
+                            <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                              No banks found
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
-
-              <div className="flex gap-3">
-                <motion.button
-                  onClick={() => setIsUpdateProfileOpen(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
-                >
-                  Cancel
-                </motion.button>
-                <motion.button
-                  onClick={handleUpdateProfile}
-                  disabled={updateProfileMutation.isPending}
-                  className="flex-1 px-4 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-900 disabled:bg-gray-400 transition"
-                >
-                  {updateProfileMutation.isPending ? "Saving..." : "Save"}
-                </motion.button>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Account Number
+                </label>
+                <input
+                  type="text"
+                  value={profileFormData.accountNumber}
+                  onChange={(e) =>
+                    setProfileFormData({
+                      ...profileFormData,
+                      accountNumber: e.target.value,
+                    })
+                  }
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-black focus:border-black"
+                  placeholder="Enter 10-digit account number"
+                />
               </div>
-            </motion.div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Account Name
+                </label>
+                <input
+                  type="text"
+                  value={profileFormData.accountName}
+                  onChange={(e) =>
+                    setProfileFormData({
+                      ...profileFormData,
+                      accountName: e.target.value,
+                    })
+                  }
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-black focus:border-black"
+                  placeholder="Name on account"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <motion.button
+                onClick={() => setIsUpdateProfileOpen(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
+              >
+                Cancel
+              </motion.button>
+              <motion.button
+                onClick={handleUpdateProfile}
+                disabled={updateProfileMutation.isPending}
+                className="flex-1 px-4 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-900 disabled:bg-gray-400 transition"
+              >
+                {updateProfileMutation.isPending ? "Saving..." : "Save"}
+              </motion.button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

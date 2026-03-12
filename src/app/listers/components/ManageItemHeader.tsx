@@ -80,12 +80,12 @@ const ManageItemHeader: React.FC<ManageItemHeaderProps> = ({
           <p>Delete Item</p>
         </button>
 
-        <button
+        {/* <button
           onClick={() => setShowModal(true)}
           className="px-6 py-2.5 text-[10px] sm:text-[14px] w-full sm:w-fit border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 transition-all active:scale-95"
         >
           <p>Disable Item</p>
-        </button>
+        </button> */}
 
         <button
           onClick={handleEdit}

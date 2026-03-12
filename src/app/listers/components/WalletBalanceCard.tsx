@@ -1,12 +1,12 @@
 "use client";
-// ENDPOINTS: GET /api/listers/wallet/stats (balance info)
+// ENDPOINTS: GET /api/listers/wallet (wallet balance)
 
 import type React from "react";
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import Withdraw from "./Withdraw";
-import { useWalletStats } from "@/lib/queries/listers/useWalletStats";
+import { useWalletBalance } from "@/lib/queries/listers/useWalletBalance";
 
 /* ---------- Motion ---------- */
 
@@ -70,7 +70,7 @@ function generateScatter(
 /* ---------- Component ---------- */
 
 const WalletBalanceCard: React.FC = () => {
-  const { data: walletStats, isLoading } = useWalletStats();
+  const { data: walletData, isLoading } = useWalletBalance();
 
   const boxes = useMemo(() => {
     return [
@@ -91,17 +91,25 @@ const WalletBalanceCard: React.FC = () => {
     ];
   }, []);
 
-  const availableBalance = walletStats?.data?.availableBalance ?? 0;
-  const displayBalance = `₦${availableBalance.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+  const totalBalance = walletData?.data?.wallet?.balance?.totalBalance ?? 0;
+  const availableBalance =
+    walletData?.data?.wallet?.balance?.availableBalance ?? 0;
+
+  const formatCurrency = (amount: number): string => {
+    return amount.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  const displayTotalBalance = `₦${formatCurrency(totalBalance)}`;
+  const displayAvailableBalance = `₦${formatCurrency(availableBalance)}`;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative w-full h-[200px] bg-[#1E1B1B] rounded-xl overflow-hidden p-8 flex flex-col justify-between shadow-lg"
+      className="relative w-full h-[240px] bg-[#1E1B1B] rounded-xl overflow-hidden p-8 flex flex-col justify-between shadow-lg"
     >
       {/* Decorative Background */}
       <div className="absolute inset-0 pointer-events-none">
@@ -127,20 +135,34 @@ const WalletBalanceCard: React.FC = () => {
       </div>
 
       {/* Content */}
-      <div className="relative z-40 space-y-1">
-        <Paragraph1 className="text-sm mb-2 font-medium text-gray-400">
-          Your Total balance:
-        </Paragraph1>
-        {isLoading ? (
-          <div className="h-8 bg-gray-700 rounded w-1/2 animate-pulse" />
-        ) : (
-          <Paragraph2 className="font-bold text-white">
-            {displayBalance}
-          </Paragraph2>
-        )}
-      </div>
+      <div className="relative z-40 space-y-3">
+        <div>
+          <Paragraph1 className="text-xs text-gray-400 mb-1">
+            Total Balance
+          </Paragraph1>
+          {isLoading ? (
+            <div className="h-8 bg-gray-700 rounded w-1/2 animate-pulse" />
+          ) : (
+            <Paragraph2 className="font-bold text-white text-2xl">
+              {displayTotalBalance}
+            </Paragraph2>
+          )}
+        </div>
 
-      <div className="relative z-40">
+        <div>
+          <Paragraph1 className="text-xs text-gray-400 mb-1">
+            Available Balance
+          </Paragraph1>
+          {isLoading ? (
+            <div className="h-6 bg-gray-700 rounded w-1/3 animate-pulse" />
+          ) : (
+            <Paragraph1 className="font-semibold text-gray-300">
+              {displayAvailableBalance}
+            </Paragraph1>
+          )}
+        </div>
+      </div>
+      <div className="relative z-40 pt-4">
         <Withdraw />
       </div>
     </motion.div>
