@@ -83,14 +83,14 @@ const TopListingSection = () => {
     <section className="py-6 sm:py-12 px-4 sm:px-0 bg-white">
       <div className="container mx-auto">
         {/* Header */}
-        <div className="text-center mb-2 sm:mb-6">
+        <div className="text-center flex flex-col justify-center items-center mb-2 sm:mb-6">
           <Header1Plus className="tracking-wide uppercase">
             BLACK TIE OUTFITS{" "}
           </Header1Plus>
-          <Paragraph1 className="text-gray-600">
+          <Paragraph1 className="text-gray-600 max-w-[280px]">
             {" "}
             Find the perfect look for your black tie events, no matter the style
-            or season. Discover popular looks this week.{" "}
+            or season. 
           </Paragraph1>
         </div>
 

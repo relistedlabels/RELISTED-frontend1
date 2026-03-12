@@ -77,11 +77,11 @@ const TopListingSection = () => {
     <section className="py-6 sm:py-12 px-4 sm:px-0 bg-white">
       <div className="container mx-auto">
         {/* Header */}
-        <div className="text-center mb-2 sm:mb-6">
+        <div className="text-center mb-2 sm:mb-6 flex flex-col items-center justify-center">
           <Header1Plus className="tracking-wide uppercase">
             VACATION OUTFITS
           </Header1Plus>
-          <Paragraph1 className="text-gray-600">
+          <Paragraph1 className="text-gray-600 max-w-[280px]">
             Explore amazing outfits that elevate your looks for your vacation
             and short trips 
           </Paragraph1>

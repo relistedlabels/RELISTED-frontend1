@@ -17,12 +17,9 @@ export default function Home() {
       <EndlessStyleHero />
       <BrandLogosCarousel />
       <PopularCategorySection />
-
-      {/* <MainCategorySection /> */}
-      <div className=" px-4 sm:px-0">
-        <HowItWorks />
-      </div>
-
+     
+      <HowItWorks />
+      <br />
       <TopListingSection2 />
       <TopListingSection1 />
       <div className=" px-4 sm:px-0">

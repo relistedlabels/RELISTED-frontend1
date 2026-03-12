@@ -43,7 +43,7 @@ function HowItWorks() {
               href="/how-it-works#delivery"
               className="inline-flex justify-center items-center gap-2 text-white gray-400 hover:text-white font-semibold text-lg transition-colors group mx-auto"
             >
-              <ParagraphAny className="text-[16px] md:text-xl border-b border-gray-300 font-semibold ">
+              <ParagraphAny className="text-[14px] md:text-xl border-b border-gray-300 font-semibold ">
                 Learn More About Delivery
               </ParagraphAny>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
