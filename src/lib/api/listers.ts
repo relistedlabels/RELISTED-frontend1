@@ -488,7 +488,7 @@ export async function updateBankAccount(
     accountNumber: string;
     accountName: string;
     accountType?: "savings" | "current";
-  }
+  },
 ): Promise<{ success: boolean; data: BankAccount; message: string }> {
   return apiFetch(`/api/listers/wallet/bank-accounts/${id}`, {
     method: "PUT",

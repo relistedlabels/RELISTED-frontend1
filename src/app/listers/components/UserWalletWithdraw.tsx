@@ -2,7 +2,12 @@
 // ENDPOINTS: POST /api/listers/wallet/withdraw (submit withdrawal), GET /api/listers/wallet/bank-accounts
 import React, { useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
-import { HiOutlineInformationCircle, HiOutlineCheckCircle, HiOutlinePencil, HiOutlinePlus } from "react-icons/hi2";
+import {
+  HiOutlineInformationCircle,
+  HiOutlineCheckCircle,
+  HiOutlinePencil,
+  HiOutlinePlus,
+} from "react-icons/hi2";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWalletStats } from "@/lib/queries/listers/useWalletStats";
 import { useBankAccounts } from "@/lib/queries/listers/useBankAccounts";
@@ -128,7 +133,7 @@ const ExampleWithdrawalForm: React.FC = () => {
             <span>Add Account</span>
           </motion.button>
         </div>
-        
+
         {accounts.length === 0 ? (
           <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 text-center">
             <Paragraph1 className="text-sm text-gray-500">
@@ -162,21 +167,27 @@ const ExampleWithdrawalForm: React.FC = () => {
                     {/* Checkmark indicator */}
                     {selectedBankAccount?.id === account.id && (
                       <div className="absolute top-3 left-full transform -translate-x-12 text-black">
-                        <HiOutlineCheckCircle size={20} className="fill-black" />
+                        <HiOutlineCheckCircle
+                          size={20}
+                          className="fill-black"
+                        />
                       </div>
                     )}
-                    
+
                     <Paragraph1 className="text-sm font-semibold text-gray-900 leading-tight">
                       {account.bankName}
                     </Paragraph1>
                     <Paragraph1 className="text-xs text-gray-600 mt-1">
-                      Account: {account.accountNumber.slice(-4).padStart(account.accountNumber.length, '*')}
+                      Account:{" "}
+                      {account.accountNumber
+                        .slice(-4)
+                        .padStart(account.accountNumber.length, "*")}
                     </Paragraph1>
                     <Paragraph1 className="text-xs text-gray-500 mt-2 font-medium">
                       {account.accountName}
                     </Paragraph1>
                   </motion.button>
-                  
+
                   {/* Edit button */}
                   <motion.button
                     onClick={() => handleEditAccount(account)}
@@ -275,8 +286,18 @@ const ExampleWithdrawalForm: React.FC = () => {
       <motion.button
         onClick={handleWithdraw}
         disabled={withdrawMutation.isPending || !amount || !selectedBankAccount}
-        whileHover={{ scale: !withdrawMutation.isPending && amount && selectedBankAccount ? 1.02 : 1 }}
-        whileTap={{ scale: !withdrawMutation.isPending && amount && selectedBankAccount ? 0.98 : 1 }}
+        whileHover={{
+          scale:
+            !withdrawMutation.isPending && amount && selectedBankAccount
+              ? 1.02
+              : 1,
+        }}
+        whileTap={{
+          scale:
+            !withdrawMutation.isPending && amount && selectedBankAccount
+              ? 0.98
+              : 1,
+        }}
         className="w-full px-4 py-3 font-semibold bg-black text-white rounded-lg hover:bg-gray-900 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
       >
         <Paragraph1>
