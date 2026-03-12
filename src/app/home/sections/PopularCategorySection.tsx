@@ -64,13 +64,21 @@ const PopularCategorySection = () => {
 
   return (
     <section className=" container px-4 sm:px-0 mx-auto py-6 sm:py-12">
-      <div className="text-center mb-6">
+      <div className="text-center flex flex-col items-center mb-6">
         <Header1Plus className="tracking-wide uppercase">
           Popular Categories
         </Header1Plus>
-        <Paragraph1 className="text-gray-600 ">
-          Explore categories curated for every season, mood, and moment. 
+        <Paragraph1 className="text-gray-600 max-w-[280px] ">
+          Explore categories curated for every season, mood, and moment.
         </Paragraph1>
+        <div className="flex justify-center mt-[16px]">
+          <Link
+            href="/style-spotlight"
+            className="text-center text-[14px] font-bold border-b hover:opacity-70 transition-opacity"
+          >
+            <Paragraph1>Browse All → </Paragraph1>
+          </Link>
+        </div>
       </div>
 
       {/* Mobile layout - 2 columns, 4 categories */}

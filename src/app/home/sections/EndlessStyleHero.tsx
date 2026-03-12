@@ -91,7 +91,7 @@ export default function EndlessStyleHero() {
 
           {/* Buttons */}
           <motion.div
-            className="flex gap-4 justify-center"
+            className="flex flex-col sm:flex-row gap-4 items-center justify-center"
             variants={{
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0 },
