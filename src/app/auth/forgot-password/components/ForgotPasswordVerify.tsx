@@ -5,6 +5,7 @@ import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useResetPassword } from "@/lib/mutations";
 import { AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 
 const ForgotPasswordVerify: React.FC = () => {
   const [code, setCode] = useState("");
@@ -51,11 +52,10 @@ const ForgotPasswordVerify: React.FC = () => {
       },
       {
         onSuccess: (response: any) => {
-          if (response.success) {
-            sessionStorage.removeItem("resetEmail");
-            sessionStorage.removeItem("forgotPasswordReturnTo");
-            router.push(`${returnTo}?message=Password reset successfully`);
-          }
+          sessionStorage.removeItem("resetEmail");
+          sessionStorage.removeItem("forgotPasswordReturnTo");
+          toast.success(response.message || "Password reset successfully!");
+          router.push("/auth/sign-in");
         },
         onError: (error: any) => {
           const errorMessage =
