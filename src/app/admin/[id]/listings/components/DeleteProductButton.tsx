@@ -13,7 +13,11 @@ const DeleteProductButton = ({
   productName = "Product",
 }: DeleteProductButtonProps) => {
   const [open, setOpen] = useState(false);
-  const { mutate: deleteProduct, isPending, isSuccess } = useDeleteProduct(productId);
+  const {
+    mutate: deleteProduct,
+    isPending,
+    isSuccess,
+  } = useDeleteProduct(productId);
 
   const handleDelete = () => {
     deleteProduct(undefined, {

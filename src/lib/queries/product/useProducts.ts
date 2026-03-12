@@ -32,7 +32,7 @@ export const useProducts = (filters?: ProductFilters) =>
       // Filter products with status "APPROVED" or "AVAILABLE"
       const filteredProducts = response.data.products.filter(
         (product) =>
-          product.status === "APPROVED" || product.status === "AVAILABLE"
+          product.status === "APPROVED" || product.status === "AVAILABLE",
       );
       return filteredProducts;
     },

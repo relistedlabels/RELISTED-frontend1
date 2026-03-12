@@ -86,7 +86,9 @@ const CreateAccountForm: React.FC<CreateAccountFormProps> = ({ redirect }) => {
               {
                 onSuccess: () => {
                   // Pass redirect parameter to verify-email
-                  const redirectQuery = redirect ? `?redirect=${encodeURIComponent(redirect)}` : "";
+                  const redirectQuery = redirect
+                    ? `?redirect=${encodeURIComponent(redirect)}`
+                    : "";
                   router.push(`/auth/verify-email${redirectQuery}`);
                 },
                 onSettled: () => setSubmitting(false),

@@ -49,7 +49,6 @@ export function CityLGASelect({ value, onChange }: CityLGASelectProps) {
 
   return (
     <div className="flex-1 relative">
-      
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React, { useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";

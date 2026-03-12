@@ -52,7 +52,7 @@ export default function NewListingsSection() {
 
   if (error) {
     return (
-      <section className="w-full px-4 md:px-10 bg-white py-4 sm:py-10">
+      <section className="w-full px-4 md:px-10 bg-white py-4 sm:pb-10">
         <div className="container mx-auto">
           <div className="text-center mb-2 sm:mb-6">
             <Header1Plus className="sm:text-center font-light flex-1">
@@ -66,7 +66,7 @@ export default function NewListingsSection() {
   }
 
   return (
-    <section className="w-full px-4 md:px-10 bg-white py-4 sm:py-10">
+    <section className="w-full px-4 md:px-10 bg-white py-4 ">
       <div className=" container mx-auto">
         {/* Top Bar */}
         <div className="flex items-center justify-between gap-4 mb-2 sm:mb-6">

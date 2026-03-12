@@ -2,9 +2,16 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { Search, Heart, ShoppingCart, ChevronDown, ShoppingBag, ShoppingBagIcon } from "lucide-react";
+import {
+  Search,
+  Heart,
+  ShoppingCart,
+  ChevronDown,
+  ShoppingBag,
+  ShoppingBagIcon,
+} from "lucide-react";
 import { ParagraphLink1 } from "../ui/Text";
-import Button from "../ui/Button"; 
+import Button from "../ui/Button";
 import BrandsDropdown from "./BrandsDropdown";
 
 export default function DesktopNavbar() {

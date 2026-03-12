@@ -15,39 +15,38 @@ export const uploadFile = async ({
   const formData = new FormData();
   formData.append("file", file);
   const token = getAuthToken();
-  const response = await axios.post(
-    `${BASE_URL}/upload/${id}`,
-    formData,
-    {
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      // withCredentials: true, 
-      onUploadProgress: (progressEvent) => {
-        if (!progressEvent.total) return;
+  const response = await axios.post(`${BASE_URL}/upload/${id}`, formData, {
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    // withCredentials: true,
+    onUploadProgress: (progressEvent) => {
+      if (!progressEvent.total) return;
 
-        const percent = Math.round(
-          (progressEvent.loaded * 100) / progressEvent.total
-        );
+      const percent = Math.round(
+        (progressEvent.loaded * 100) / progressEvent.total,
+      );
 
-        onProgress?.(percent);
-      },
-    }
-  );
+      onProgress?.(percent);
+    },
+  });
 
-  return response.data; 
+  return response.data;
 };
 
 export const getUploads = async (ids: string[]) => {
-  return apiFetch<{ id: string; url: string,name?:string,type?:string }[]>("/upload/bulk", {
-    method: "POST",
-    body: JSON.stringify({ ids }),
-  });
+  return apiFetch<{ id: string; url: string; name?: string; type?: string }[]>(
+    "/upload/bulk",
+    {
+      method: "POST",
+      body: JSON.stringify({ ids }),
+    },
+  );
 };
 
-
-export const cleanupUploads = async (ids: string[]|string) => {
+export const cleanupUploads = async (ids: string[] | string) => {
   return apiFetch(`upload`, {
     method: "DELETE",
     body: JSON.stringify({ ids }),
-  })}
+  });
+};

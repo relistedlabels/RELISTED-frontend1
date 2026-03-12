@@ -1,15 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
-import { SlidersVertical, X, Search, ChevronLeft, ArrowLeft } from "lucide-react";
+import {
+  SlidersVertical,
+  X,
+  Search,
+  ChevronLeft,
+  ArrowLeft,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
 import RentalDurationSelector from "./RentalDurationSelector";
 import RentalSummaryCard from "./RentalSummaryCard";
 import SizeChartTable from "./SizeChartTable";
-
-
 
 // --------------------
 // Slide-in Filter Panel
@@ -19,10 +23,7 @@ interface SizeGuidePanelProps {
   onClose: () => void;
 }
 
-const SizeGuidePanel: React.FC<SizeGuidePanelProps> = ({
-  isOpen,
-  onClose,
-}) => {
+const SizeGuidePanel: React.FC<SizeGuidePanelProps> = ({ isOpen, onClose }) => {
   const minPrice = 50000;
   const maxPrice = 200000;
 

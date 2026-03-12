@@ -1,4 +1,3 @@
-
 import BrandLogosCarousel from "./home/components/BrandLogosCarousel";
 import BecomeCurator from "./home/sections/BecomeCurator";
 import EndlessStyleHero from "./home/sections/EndlessStyleHero";
@@ -11,7 +10,6 @@ import TopListingSection1 from "./home/sections/TopListingSection1";
 import TopListingSection2 from "./home/sections/TopListingSection2";
 
 export default function Home() {
- 
   return (
     <div>
       <EndlessStyleHero />

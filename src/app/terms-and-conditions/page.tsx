@@ -27,16 +27,22 @@ export default function TermsAndConditions() {
               Relisted Protection
             </Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
-              Relisted Labels is designed to make peer-to-peer fashion rental secure, transparent, and reliable for both vendors and renters.
+              Relisted Labels is designed to make peer-to-peer fashion rental
+              secure, transparent, and reliable for both vendors and renters.
             </Paragraph1>
             <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
               Our protection framework ensures that:
             </Paragraph1>
             <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2 mb-4">
-              <li>Vendors maintain full ownership and control of their items</li>
+              <li>
+                Vendors maintain full ownership and control of their items
+              </li>
               <li>Renters receive items that match their descriptions</li>
               <li>Payments and collateral are securely handled</li>
-              <li>Deliveries and returns are managed through trusted logistics partners</li>
+              <li>
+                Deliveries and returns are managed through trusted logistics
+                partners
+              </li>
             </ul>
             <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
               Transactions on Relisted Labels are supported by:
@@ -47,7 +53,8 @@ export default function TermsAndConditions() {
               <li>Collateral protection to safeguard item value</li>
             </ul>
             <Paragraph1 className="text-gray-700 leading-relaxed">
-              This protection policy applies to all users of the Relisted Labels platform.
+              This protection policy applies to all users of the Relisted Labels
+              platform.
             </Paragraph1>
           </div>
 
@@ -57,7 +64,8 @@ export default function TermsAndConditions() {
               Lister Protection (For Vendors)
             </Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
-              Relisted Labels ensures vendors can earn from their collections and pieces while maintaining full control of their items.
+              Relisted Labels ensures vendors can earn from their collections
+              and pieces while maintaining full control of their items.
             </Paragraph1>
 
             <div className="space-y-6">
@@ -79,7 +87,8 @@ export default function TermsAndConditions() {
                   <li>Remove items from the platform at any time</li>
                 </ul>
                 <Paragraph1 className="text-gray-700 leading-relaxed">
-                  Relisted Labels does not take ownership of any vendor inventory.
+                  Relisted Labels does not take ownership of any vendor
+                  inventory.
                 </Paragraph1>
               </div>
 
@@ -88,10 +97,12 @@ export default function TermsAndConditions() {
                   Collateral Protection
                 </h3>
                 <Paragraph1 className="text-gray-700 leading-relaxed mb-3">
-                  To protect vendors from potential loss or damage, every listing may include a collateral deposit set by the vendor.
+                  To protect vendors from potential loss or damage, every
+                  listing may include a collateral deposit set by the vendor.
                 </Paragraph1>
                 <Paragraph1 className="text-gray-700 leading-relaxed mb-3">
-                  Collateral typically ranges between: <strong>60–80% of the item's original retail value.</strong>
+                  Collateral typically ranges between:{" "}
+                  <strong>60–80% of the item's original retail value.</strong>
                 </Paragraph1>
                 <Paragraph1 className="text-gray-700 leading-relaxed mb-3">
                   This collateral is:
@@ -99,7 +110,9 @@ export default function TermsAndConditions() {
                 <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
                   <li>Temporarily held during the rental period</li>
                   <li>Released once the item is returned and inspected</li>
-                  <li>Used to cover repair or replacement costs if necessary</li>
+                  <li>
+                    Used to cover repair or replacement costs if necessary
+                  </li>
                 </ul>
               </div>
 
@@ -108,7 +121,8 @@ export default function TermsAndConditions() {
                   Secure Payments
                 </h3>
                 <Paragraph1 className="text-gray-700 leading-relaxed mb-3">
-                  All transactions are processed through a secure wallet infrastructure powered by Wema Bank.
+                  All transactions are processed through a secure wallet
+                  infrastructure powered by Wema Bank.
                 </Paragraph1>
                 <Paragraph1 className="text-gray-700 leading-relaxed">
                   Vendor earnings are protected until:
@@ -135,7 +149,8 @@ export default function TermsAndConditions() {
                   <li>Arrange professional cleaning after rentals</li>
                 </ul>
                 <Paragraph1 className="text-gray-700 leading-relaxed">
-                  Failure to meet these standards may result in listing removal or account suspension.
+                  Failure to meet these standards may result in listing removal
+                  or account suspension.
                 </Paragraph1>
               </div>
             </div>
@@ -147,7 +162,8 @@ export default function TermsAndConditions() {
               Renter Protection
             </Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
-              Relisted Labels aims to ensure renters receive a reliable and transparent rental experience.
+              Relisted Labels aims to ensure renters receive a reliable and
+              transparent rental experience.
             </Paragraph1>
 
             <div className="space-y-6">
@@ -164,7 +180,9 @@ export default function TermsAndConditions() {
                   <li>The item is authentic and wearable</li>
                 </ul>
                 <Paragraph1 className="text-gray-700 leading-relaxed">
-                  If a renter receives an item that significantly differs from its listing, they should report the issue to Relisted Labels support immediately.
+                  If a renter receives an item that significantly differs from
+                  its listing, they should report the issue to Relisted Labels
+                  support immediately.
                 </Paragraph1>
               </div>
 
@@ -183,7 +201,8 @@ export default function TermsAndConditions() {
                   <li>Applicable taxes</li>
                 </ul>
                 <Paragraph1 className="text-gray-700 leading-relaxed">
-                  No additional hidden fees will be charged beyond those shown during checkout.
+                  No additional hidden fees will be charged beyond those shown
+                  during checkout.
                 </Paragraph1>
               </div>
 
@@ -192,10 +211,12 @@ export default function TermsAndConditions() {
                   Secure Transactions
                 </h3>
                 <Paragraph1 className="text-gray-700 leading-relaxed mb-3">
-                  Payments and collateral deposits are securely processed through the Relisted Labels platform.
+                  Payments and collateral deposits are securely processed
+                  through the Relisted Labels platform.
                 </Paragraph1>
                 <Paragraph1 className="text-gray-700 leading-relaxed">
-                  Collateral is automatically released after the item is returned and verified.
+                  Collateral is automatically released after the item is
+                  returned and verified.
                 </Paragraph1>
               </div>
 
@@ -204,14 +225,17 @@ export default function TermsAndConditions() {
                   Item Condition Standards
                 </h3>
                 <Paragraph1 className="text-gray-700 leading-relaxed mb-3">
-                  To ensure fairness for both renters and vendors, Relisted Labels follows standard condition guidelines commonly used by fashion rental platforms.
+                  To ensure fairness for both renters and vendors, Relisted
+                  Labels follows standard condition guidelines commonly used by
+                  fashion rental platforms.
                 </Paragraph1>
 
                 <h4 className="font-semibold text-black mb-2">
                   Acceptable Rental Wear
                 </h4>
                 <Paragraph1 className="text-gray-700 leading-relaxed mb-3">
-                  Normal wear from responsible use is expected. Examples include:
+                  Normal wear from responsible use is expected. Examples
+                  include:
                 </Paragraph1>
                 <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2 mb-3">
                   <li>Light wrinkles</li>
@@ -222,11 +246,10 @@ export default function TermsAndConditions() {
                   These do not qualify as damage.
                 </Paragraph1>
 
-                <h4 className="font-semibold text-black mb-2">
-                  Damage
-                </h4>
+                <h4 className="font-semibold text-black mb-2">Damage</h4>
                 <Paragraph1 className="text-gray-700 leading-relaxed mb-3">
-                  Damage refers to any condition that affects the garment's appearance, structure, or usability. Examples include:
+                  Damage refers to any condition that affects the garment's
+                  appearance, structure, or usability. Examples include:
                 </Paragraph1>
                 <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2 mb-3">
                   <li>Permanent stains</li>
@@ -237,14 +260,17 @@ export default function TermsAndConditions() {
                   <li>Stretching or deformation of the garment</li>
                 </ul>
                 <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
-                  If damage occurs, repair costs may be deducted from the renter's collateral.
+                  If damage occurs, repair costs may be deducted from the
+                  renter's collateral.
                 </Paragraph1>
 
                 <h4 className="font-semibold text-black mb-2">
                   Severe Damage or Loss (Total Collateral Forfeiture)
                 </h4>
                 <Paragraph1 className="text-gray-700 leading-relaxed">
-                  If an item is lost, not returned, or returned in unusable condition, Relisted Labels may deduct up to the full collateral amount to compensate the vendor.
+                  If an item is lost, not returned, or returned in unusable
+                  condition, Relisted Labels may deduct up to the full
+                  collateral amount to compensate the vendor.
                 </Paragraph1>
               </div>
             </div>
@@ -256,17 +282,25 @@ export default function TermsAndConditions() {
               Late Return Policy
             </Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed mb-3">
-              Items must be returned on the agreed rental end date through the designated logistics provider.
+              Items must be returned on the agreed rental end date through the
+              designated logistics provider.
             </Paragraph1>
             <Paragraph1 className="text-gray-700 leading-relaxed mb-3">
               If an item is returned late:
             </Paragraph1>
             <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2 mb-3">
-              <li>10% of the collateral value will be deducted for each day the item is overdue.</li>
-              <li>This deduction continues daily until the item is returned, or the collateral value is fully exhausted.</li>
+              <li>
+                10% of the collateral value will be deducted for each day the
+                item is overdue.
+              </li>
+              <li>
+                This deduction continues daily until the item is returned, or
+                the collateral value is fully exhausted.
+              </li>
             </ul>
             <Paragraph1 className="text-gray-700 leading-relaxed">
-              This policy protects vendors from lost rental opportunities and delayed inventory availability.
+              This policy protects vendors from lost rental opportunities and
+              delayed inventory availability.
             </Paragraph1>
           </div>
 
@@ -305,10 +339,14 @@ export default function TermsAndConditions() {
                 <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2 mb-3">
                   <li>The renter returns the item through Topship.</li>
                   <li>The vendor confirms the item's condition upon return.</li>
-                  <li>The renter's collateral is released if no issues are identified.</li>
+                  <li>
+                    The renter's collateral is released if no issues are
+                    identified.
+                  </li>
                 </ul>
                 <Paragraph1 className="text-gray-700 leading-relaxed">
-                  Relisted Labels is not responsible for delays caused by third-party logistics providers (Topship).
+                  Relisted Labels is not responsible for delays caused by
+                  third-party logistics providers (Topship).
                 </Paragraph1>
               </div>
             </div>
@@ -320,7 +358,8 @@ export default function TermsAndConditions() {
               Cleaning &amp; Garment Care
             </Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
-              Dry cleaning is included within the rental cost paid by the renter.
+              Dry cleaning is included within the rental cost paid by the
+              renter.
             </Paragraph1>
 
             <div className="space-y-4">
@@ -329,8 +368,14 @@ export default function TermsAndConditions() {
                   Vendor Responsibilities
                 </h3>
                 <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
-                  <li>Vendors must arrange professional cleaning after each rental.</li>
-                  <li>Relisted Labels may recommend trusted cleaning partners, but vendors are free to use their preferred services.</li>
+                  <li>
+                    Vendors must arrange professional cleaning after each
+                    rental.
+                  </li>
+                  <li>
+                    Relisted Labels may recommend trusted cleaning partners, but
+                    vendors are free to use their preferred services.
+                  </li>
                 </ul>
               </div>
 
@@ -354,17 +399,18 @@ export default function TermsAndConditions() {
             </Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
               <strong>
-                Once a rental request is confirmed by the vendor and payment is completed, the booking is considered final.
+                Once a rental request is confirmed by the vendor and payment is
+                completed, the booking is considered final.
               </strong>
             </Paragraph1>
 
             <div className="space-y-6">
               <div>
-                <h3 className="font-semibold text-black mb-2">
-                  Cancellations
-                </h3>
+                <h3 className="font-semibold text-black mb-2">Cancellations</h3>
                 <Paragraph1 className="text-gray-700 leading-relaxed">
-                  Relisted Labels does not allow cancellations after confirmation and payment. This policy ensures vendors can reliably plan inventory availability.
+                  Relisted Labels does not allow cancellations after
+                  confirmation and payment. This policy ensures vendors can
+                  reliably plan inventory availability.
                 </Paragraph1>
               </div>
 
@@ -377,14 +423,21 @@ export default function TermsAndConditions() {
                 </Paragraph1>
                 <ol className="list-decimal list-inside space-y-2 text-gray-700 ml-2 mb-3">
                   <li>The item was never delivered.</li>
-                  <li>The item arrives with significant damage that prevents it from being worn.</li>
-                  <li>The item delivered is materially different from the listing.</li>
+                  <li>
+                    The item arrives with significant damage that prevents it
+                    from being worn.
+                  </li>
+                  <li>
+                    The item delivered is materially different from the listing.
+                  </li>
                 </ol>
                 <Paragraph1 className="text-gray-700 leading-relaxed">
                   <strong>
-                    Refund requests must be submitted within 24 hours of delivery.
+                    Refund requests must be submitted within 24 hours of
+                    delivery.
                   </strong>
-                  Relisted Labels reserves the right to review all refund claims before approval.
+                  Relisted Labels reserves the right to review all refund claims
+                  before approval.
                 </Paragraph1>
               </div>
             </div>
@@ -396,7 +449,8 @@ export default function TermsAndConditions() {
               Pricing Guidelines
             </Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed mb-3">
-              While vendors are free to determine pricing, Relisted Labels recommends:
+              While vendors are free to determine pricing, Relisted Labels
+              recommends:
             </Paragraph1>
 
             <div className="bg-gray-50 p-4 rounded-lg">
@@ -407,27 +461,25 @@ export default function TermsAndConditions() {
                 <strong>8–10% of the item's original retail value.</strong>
               </Paragraph1>
 
-              <h4 className="font-semibold text-black mb-2">
-                Example:
-              </h4>
+              <h4 className="font-semibold text-black mb-2">Example:</h4>
               <ul className="space-y-1 text-gray-700 ml-4">
                 <li>Retail Value: 240,000</li>
                 <li>Rental Fee (10%): 24,000</li>
               </ul>
 
               <Paragraph1 className="text-gray-700 leading-relaxed mt-4">
-                This structure balances accessibility for renters with profitability for vendors.
+                This structure balances accessibility for renters with
+                profitability for vendors.
               </Paragraph1>
             </div>
           </div>
 
           {/* Contact Us */}
           <div className="bg-gray-100 p-6 rounded-lg">
-            <Header2 className="text-2xl font-bold mb-4">
-              Contact Us
-            </Header2>
+            <Header2 className="text-2xl font-bold mb-4">Contact Us</Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
-              If you have any questions about these Terms and Conditions or need support, please reach out to us:
+              If you have any questions about these Terms and Conditions or need
+              support, please reach out to us:
             </Paragraph1>
             <div className="space-y-3 text-gray-700">
               <p>

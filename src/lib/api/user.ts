@@ -36,9 +36,12 @@ export type UsersListResponse = {
 
 export const userApi = {
   deleteUser: (userId: string) =>
-    apiFetch<{ success: boolean; message: string }>(`/api/admin/users/${userId}`, {
-      method: "DELETE",
-    }),
+    apiFetch<{ success: boolean; message: string }>(
+      `/api/admin/users/${userId}`,
+      {
+        method: "DELETE",
+      },
+    ),
 
   resetUserPassword: (userId: string, newPassword: string) =>
     apiFetch<{ success: boolean; message: string }>(

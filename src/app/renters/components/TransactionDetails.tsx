@@ -89,24 +89,24 @@ const TransactionDetailsPanel: React.FC<TransactionDetailsPanelProps> = ({
             </div>
 
             {/* Content */}
-              <div className="grow pt-4 pb-20 space-y-8">
-                {transaction ? (
-                  <TransactionDetailView
-                    type="Debit"
-                    summaryDate={transaction.date}
-                    summaryAmount={transaction.amount}
-                    summaryStatus={transaction.status}
-                    transactionID={transaction.id}
-                    description={transaction.description}
-                    amount={transaction.amount}
-                    paymentMethod="Wallet"
-                    item="Fendi Acro Boots"
-                    orderID={transaction.id}
-                  />
-                ) : (
-                  <Paragraph1>No transaction selected</Paragraph1>
-                )}
-              </div>
+            <div className="grow pt-4 pb-20 space-y-8">
+              {transaction ? (
+                <TransactionDetailView
+                  type="Debit"
+                  summaryDate={transaction.date}
+                  summaryAmount={transaction.amount}
+                  summaryStatus={transaction.status}
+                  transactionID={transaction.id}
+                  description={transaction.description}
+                  amount={transaction.amount}
+                  paymentMethod="Wallet"
+                  item="Fendi Acro Boots"
+                  orderID={transaction.id}
+                />
+              ) : (
+                <Paragraph1>No transaction selected</Paragraph1>
+              )}
+            </div>
 
             {/* Footer */}
             <div className="mt-auto py-2 text-black bg-white flex justify-between gap-4 sticky bottom-0">
@@ -127,7 +127,6 @@ const TransactionDetailsPanel: React.FC<TransactionDetailsPanelProps> = ({
 
 export default TransactionDetailsPanel;
 
-
 // --------------------
 // Main Component
 // --------------------
@@ -137,8 +136,6 @@ const TransactionDetails: React.FC = () => {
   return (
     <>
       {/* Toggle Button */}
-
-     
 
       <button
         onClick={() => setIsOpen(true)}

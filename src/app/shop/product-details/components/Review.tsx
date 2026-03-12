@@ -66,17 +66,30 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({ reviews }) => {
 
 // --- Example Usage matching the provided image content ---
 
-
-
 const ExampleReviewsBlock: React.FC<any> = ({ productId }) => {
   // Fetch reviews from backend
-  const { data: reviews, isLoading, error } = usePublicReviews({ minRating: 1, limit: 10, sort: "newest", type: "product" });
+  const {
+    data: reviews,
+    isLoading,
+    error,
+  } = usePublicReviews({
+    minRating: 1,
+    limit: 10,
+    sort: "newest",
+    type: "product",
+  });
 
   if (isLoading) {
-    return <Paragraph1 className="text-gray-600 p-4">Loading reviews...</Paragraph1>;
+    return (
+      <Paragraph1 className="text-gray-600 p-4">Loading reviews...</Paragraph1>
+    );
   }
   if (error) {
-    return <Paragraph1 className="text-red-600 p-4">Failed to load reviews.</Paragraph1>;
+    return (
+      <Paragraph1 className="text-red-600 p-4">
+        Failed to load reviews.
+      </Paragraph1>
+    );
   }
   // Map backend reviews to local Review type
   const mappedReviews = Array.isArray(reviews)

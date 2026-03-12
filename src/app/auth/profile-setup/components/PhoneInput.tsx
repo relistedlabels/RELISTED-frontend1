@@ -47,7 +47,7 @@ export function PhoneInput({
     <div>
       <label className="block- mb-2 hidden">
         <Paragraph1 className="text-sm font-medium text-gray-800">
-          Phone Number 
+          Phone Number
         </Paragraph1>
       </label>
 

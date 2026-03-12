@@ -319,7 +319,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 <>
                   <Link href="/listers/inbox" className="relative hidden">
                     <Mail className="w-5 h-5 text-white cursor-pointer" />
-         fh           {/* Red dot indicator for unread inbox */}
+                    fh {/* Red dot indicator for unread inbox */}
                     {hasUnreadInbox && (
                       <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
                     )}

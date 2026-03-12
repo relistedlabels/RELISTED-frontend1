@@ -75,7 +75,7 @@ const CalendarPanel: React.FC<CalendarPanelProps> = ({ isOpen, onClose }) => {
               </button>
 
               <Paragraph1 className=" uppercase font-bold tracking-widest text-gray-800">
-                Calendar 
+                Calendar
               </Paragraph1>
               <button
                 onClick={onClose}

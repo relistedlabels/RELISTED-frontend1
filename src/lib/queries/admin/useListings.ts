@@ -186,13 +186,8 @@ export const useDeleteCategory = () => {
 export const useCreateCategory = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      name,
-      imageFile,
-    }: {
-      name: string;
-      imageFile: File;
-    }) => productsApi.createCategory(name, imageFile),
+    mutationFn: ({ name, imageFile }: { name: string; imageFile: File }) =>
+      productsApi.createCategory(name, imageFile),
     onSuccess: (data) => {
       queryClient.invalidateQueries({
         queryKey: ["admin", "categories", "all"],

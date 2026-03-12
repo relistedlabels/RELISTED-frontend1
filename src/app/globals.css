@@ -1,18 +1,9 @@
 @import "tailwindcss";
 
-
 :root {
-  --primary: #1B1F26B8;
-  --p-black: #1B1F26B8;
-  --bggray: #FBFBFB;
-  
-
-  
-
-
-
-
-  
+  --primary: #1b1f26b8;
+  --p-black: #1b1f26b8;
+  --bggray: #fbfbfb;
 
   --background: #ffffff;
   --foreground: #000000;
@@ -28,27 +19,25 @@
   --color-foreground: var(--foreground);
 }
 
-
-html, body {
+html,
+body {
   width: 100%;
   overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
 .hide-scrollbar {
-  overflow: auto;              /* or overflow-x/overflow-y as needed */
-  -ms-overflow-style: none;    /* IE and Edge */
-  scrollbar-width: none;       /* Firefox */
+  overflow: auto; /* or overflow-x/overflow-y as needed */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
-
-
 
 /* Chrome, Safari, Opera */
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
 
-body{
-  background-color: #FAFAF8;
+body {
+  background-color: #fafaf8;
   color: #121212;
 }
 
@@ -59,7 +48,6 @@ html {
 html::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Edge */
 }
-
 
 /* ✅ Optional: Also fix some elements that can cause overflow */
 * {

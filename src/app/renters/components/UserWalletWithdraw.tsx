@@ -26,7 +26,8 @@ const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
   const withdrawMutation = useWithdrawFunds();
 
   const balance =
-    propBalance || `₦${(walletData?.availableBalance ?? 0).toLocaleString()}`;
+    propBalance ||
+    `₦${(walletData?.wallet?.balance?.availableBalance ?? 0).toLocaleString()}`;
   const bankAccounts = bankAccountsData?.bankAccounts || [];
 
   const handleWithdraw = async () => {

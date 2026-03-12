@@ -118,16 +118,16 @@ export default function ProductCard({
             Size: {size || measurement}
           </Paragraph1>
         )}
-        <div className="flex justify-between items-start mt-2">
-          <Paragraph1 className="text-gray-600 ">RRP:</Paragraph1>
-          <Paragraph1 className="text-gray-600 line-through">
-            {price}
-          </Paragraph1>
-        </div>
         <div className="flex justify-between items-start ">
           <Paragraph1 className="text-gray-700">Rent from </Paragraph1>
           <Paragraph1 className="text-black font-semibold">
             ₦{dailyPrice?.toLocaleString() || "0"}
+          </Paragraph1>
+        </div>{" "}
+        <div className="flex justify-between items-start mt-2">
+          <Paragraph1 className="text-gray-600 ">RRP:</Paragraph1>
+          <Paragraph1 className="text-gray-600 line-through">
+            {price}
           </Paragraph1>
         </div>
       </div>

@@ -17,7 +17,6 @@ export default function LogoutConfirmModal({
   isLoading = false,
 }: LogoutConfirmModalProps) {
   return (
-    
     <ActionConfirmModal
       isOpen={isOpen}
       onClose={onClose}

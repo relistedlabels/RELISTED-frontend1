@@ -34,8 +34,6 @@ export const TagSelector: React.FC = () => {
   const { data: tags = [] } = useTags();
   const createMutation = useCreateTag();
 
-
-
   const sortedTags = useMemo(() => {
     const boxOrderMap = new Map(
       PREFERRED_TAG_NAMES.map((n, i) => [n.toLowerCase(), i]),

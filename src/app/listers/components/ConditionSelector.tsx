@@ -55,7 +55,9 @@ export const ConditionSelector: React.FC = () => {
               className="flex w-full items-center justify-between px-3 py-2 text-sm hover:bg-gray-50"
             >
               <span>{condition}</span>
-              {selected === condition && <Check className="h-4 w-4 text-black" />}
+              {selected === condition && (
+                <Check className="h-4 w-4 text-black" />
+              )}
             </button>
           ))}
         </div>

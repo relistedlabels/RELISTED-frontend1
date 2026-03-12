@@ -68,11 +68,10 @@ export default function PrivacyPolicy() {
 
           {/* Data Sharing */}
           <div>
-            <Header2 className="text-2xl font-bold mb-4">
-              Data Sharing
-            </Header2>
+            <Header2 className="text-2xl font-bold mb-4">Data Sharing</Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
-              We may share necessary information with trusted partners including:
+              We may share necessary information with trusted partners
+              including:
             </Paragraph1>
             <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2 mb-4">
               <li>Logistics providers (Topship)</li>
@@ -85,19 +84,16 @@ export default function PrivacyPolicy() {
 
           {/* Data Security */}
           <div>
-            <Header2 className="text-2xl font-bold mb-4">
-              Data Security
-            </Header2>
+            <Header2 className="text-2xl font-bold mb-4">Data Security</Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed">
-              We implement industry-standard security measures to protect user information from unauthorized access or misuse.
+              We implement industry-standard security measures to protect user
+              information from unauthorized access or misuse.
             </Paragraph1>
           </div>
 
           {/* User Rights */}
           <div>
-            <Header2 className="text-2xl font-bold mb-4">
-              User Rights
-            </Header2>
+            <Header2 className="text-2xl font-bold mb-4">User Rights</Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
               Users may request to:
             </Paragraph1>
@@ -113,11 +109,10 @@ export default function PrivacyPolicy() {
 
           {/* Contact Us */}
           <div className="bg-gray-100 p-6 rounded-lg">
-            <Header2 className="text-2xl font-bold mb-4">
-              Contact Us
-            </Header2>
+            <Header2 className="text-2xl font-bold mb-4">Contact Us</Header2>
             <Paragraph1 className="text-gray-700 leading-relaxed mb-4">
-              If you have any questions about this Privacy Policy or to exercise your data rights, please contact us:
+              If you have any questions about this Privacy Policy or to exercise
+              your data rights, please contact us:
             </Paragraph1>
             <div className="space-y-3 text-gray-700">
               <p>

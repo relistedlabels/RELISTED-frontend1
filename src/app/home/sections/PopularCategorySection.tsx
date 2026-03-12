@@ -3,7 +3,14 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Header1Plus, Header2, HeaderAny, Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import {
+  Header1Plus,
+  Header2,
+  HeaderAny,
+  Paragraph1,
+  Paragraph2,
+  Paragraph3,
+} from "@/common/ui/Text";
 import { categories, Category } from "@/data/categoryData"; // import data
 
 interface CategoryBoxProps extends Category {}
@@ -18,7 +25,7 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({
   return (
     <Link
       href={link}
-      className={`relative w-full group overflow-hidden cursor-pointer h-[160px] sm:h-full`}
+      className={`relative w-full group overflow-hidden cursor-pointer h-[220px] sm:h-full`}
     >
       <div
         className="hidden sm:block"

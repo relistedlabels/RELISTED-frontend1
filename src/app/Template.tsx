@@ -14,8 +14,6 @@ import {
   Paragraph2,
 } from "@/common/ui/Text";
 
-
-
 export default function Home() {
   const handleClick = () => {
     alert("Button clicked!");
@@ -51,7 +49,6 @@ export default function Home() {
         onClick={handleClick} // onClick is passed from a client component
         additionalClasses="border-white bg-black w-[300px]"
       />
-     
     </div>
   );
 }

@@ -53,7 +53,6 @@ export default function WaitlistPage() {
     }
   };
 
-
   return (
     <main className="relative min-h-screen w-full flex flex-col items-center bg-black text-white overflow-hidden">
       {/* Background */}

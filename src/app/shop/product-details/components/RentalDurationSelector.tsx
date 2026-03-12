@@ -216,8 +216,6 @@ const RentalDurationSelector = ({
   const { isLoading: isCheckingAuth, isError: authError } = useMe();
   const submitRentalRequest = useSubmitRentalRequest();
 
-
-
   // Show loading state while checking auth
   if (isCheckingAuth) {
     return (
@@ -364,7 +362,6 @@ const RentalDurationSelector = ({
           </div>
         </div>
       </div>
-
     </>
   );
 };

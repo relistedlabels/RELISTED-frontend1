@@ -100,9 +100,7 @@ const CuratorProfileCard: React.FC<CuratorProfileCardProps> = ({ userId }) => {
     },
     {
       label: "Email",
-      icon: (
-        <img src="/icons/gmail.png" alt="gmail" className="w-5 h-5" />
-      ),
+      icon: <img src="/icons/gmail.png" alt="gmail" className="w-5 h-5" />,
       href: `mailto:?subject=Check%20out%20this%20curator%20on%20RELISTED!&body=${shareMsg}`,
     },
   ];

@@ -27,13 +27,11 @@ export default function Page({ params }: PageProps) {
     <DashboardLayout>
       <div className="mb-4">
         <Breadcrumbs items={path} />
-      </div>     
+      </div>
 
       <div>
         <OrderDetailsCard orderId={orderId} />
       </div>
-
-     
     </DashboardLayout>
   );
 }

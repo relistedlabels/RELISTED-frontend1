@@ -19,5 +19,4 @@ export const missions = [
       "Every outfit is a canvas. We empower people to create art through what they wear, every single day.",
     image: "/images/mis2.jpg",
   },
- 
 ];

@@ -60,8 +60,15 @@ export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { fullName?: string; phone?: string }) =>
-      rentersApi.updateProfile(data),
+    mutationFn: (data: {
+      fullName?: string;
+      phone?: string;
+      bankAccount?: {
+        bankName: string;
+        accountNumber: string;
+        accountName: string;
+      };
+    }) => rentersApi.updateProfile(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["renters", "profile"] });
     },

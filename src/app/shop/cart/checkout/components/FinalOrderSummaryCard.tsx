@@ -554,8 +554,6 @@ export default function FinalOrderSummaryCard({
                     </label>
                   </div>
                 )}
-
-              
               </>
             );
           })()}

@@ -21,8 +21,6 @@ export function StateSelect({ value, onChange }: StateSelectProps) {
 
   return (
     <div className="flex-1 relative">
-     
-
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

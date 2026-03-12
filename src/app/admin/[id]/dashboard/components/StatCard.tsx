@@ -3,7 +3,13 @@
 import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts";
 import { ReactNode } from "react";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
-import { HeaderAny, Paragraph1, Paragraph2, Paragraph3, ParagraphAny } from "@/common/ui/Text";
+import {
+  HeaderAny,
+  Paragraph1,
+  Paragraph2,
+  Paragraph3,
+  ParagraphAny,
+} from "@/common/ui/Text";
 
 interface StatCardProps {
   icon: ReactNode;

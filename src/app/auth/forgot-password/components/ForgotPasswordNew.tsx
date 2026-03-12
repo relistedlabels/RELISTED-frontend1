@@ -5,7 +5,6 @@ import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { HiOutlineLockClosed, HiOutlineEye, HiEyeSlash } from "react-icons/hi2";
 import { ArrowBigDown } from "lucide-react";
 
-
 const ForgotPasswordNew: React.FC = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -33,8 +32,7 @@ const ForgotPasswordNew: React.FC = () => {
           <Paragraph1 className="text-sm text-gray-600 max-w-[350px] leading-relaxed">
             Choose a strong password to secure your Relisted account.{" "}
           </Paragraph1>
-              </div>
-              
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>

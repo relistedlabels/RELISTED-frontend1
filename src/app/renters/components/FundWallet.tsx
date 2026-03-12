@@ -1,15 +1,15 @@
-// ENDPOINTS: POST /api/renters/wallet/deposit
+// ENDPOINTS: GET /api/renters/profile (virtual account)
 
 "use client";
 
 import React, { useState } from "react";
-import { X, ArrowLeft } from "lucide-react";
+import { X, ArrowLeft, Copy, RotateCcw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
-import WalletTopUpForm from "@/app/shop/cart/checkout/components/WalletTopUpForm";
 import { FaPlus } from "react-icons/fa";
-import { useDepositFunds } from "@/lib/mutations/renters/useWalletMutations";
+import { useProfile } from "@/lib/queries/renters/useProfile";
+import { toast } from "sonner";
 
 // --------------------
 // Slide-in Filter Panel
@@ -23,20 +23,20 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
   isOpen,
   onClose,
 }) => {
-  const [amount, setAmount] = useState(50000);
-  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
-  const depositMutation = useDepositFunds();
+  const { data: profileResponse, isLoading, refetch } = useProfile();
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (amount <= 0) {
-      alert("Please enter a valid amount");
-      return;
-    }
-    depositMutation.mutate({
-      amount,
-      paymentMethod,
-    });
+  const virtualAccount = profileResponse?.profile?.virtualAccount;
+
+  const handleCopy = (text: string, fieldName: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(fieldName);
+    toast.success(`${fieldName} copied to clipboard`);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const handleRefresh = () => {
+    window.location.reload();
   };
 
   const variants = {
@@ -89,97 +89,143 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
             </div>
 
             {/* Content */}
-            <div className="grow pt-4 pb-20 space-y-8">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Amount Input */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Amount to Deposit
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-3 text-gray-600">
-                      ₦
-                    </span>
-                    <input
-                      type="number"
-                      min="1000"
-                      max="5000000"
-                      value={amount}
-                      onChange={(e) => setAmount(parseInt(e.target.value) || 0)}
-                      className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                      required
-                    />
-                  </div>
-                  <Paragraph1 className="text-xs text-gray-500 mt-2">
-                    Minimum: ₦1,000 | Maximum: ₦5,000,000
+            <div className="grow pt-6 pb-20 space-y-6">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Paragraph1 className="text-gray-500">
+                    Loading virtual account...
                   </Paragraph1>
                 </div>
+              ) : virtualAccount ? (
+                <div className="space-y-6">
+                  {/* Virtual Account Card */}
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-300 rounded-lg p-6">
+                    <Paragraph3 className="text-sm font-semibold text-blue-900 mb-4 uppercase tracking-wide">
+                      Your Virtual Account
+                    </Paragraph3>
 
-                {/* Payment Method */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Payment Method
-                  </label>
-                  <select
-                    value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                  >
-                    <option value="bank_transfer">Bank Transfer</option>
-                    <option value="card">Debit Card</option>
-                    <option value="ussd">USSD Transfer</option>
-                  </select>
+                    {/* VA Number */}
+                    <div className="space-y-2 mb-5">
+                      <Paragraph3 className="text-xs text-blue-700">
+                        VA Number
+                      </Paragraph3>
+                      <div className="flex items-center gap-3 bg-white rounded-lg px-4 py-3 border border-blue-200">
+                        <input
+                          type="text"
+                          value={virtualAccount.vaNumber || "N/A"}
+                          readOnly
+                          className="flex-1 bg-transparent text-lg font-mono font-bold text-gray-900 outline-none"
+                        />
+                        <button
+                          onClick={() =>
+                            handleCopy(virtualAccount.vaNumber, "VA Number")
+                          }
+                          className="text-blue-600 hover:text-blue-800 transition p-2"
+                          title="Copy VA Number"
+                        >
+                          <Copy
+                            size={18}
+                            className={
+                              copiedField === "VA Number"
+                                ? "text-green-600"
+                                : ""
+                            }
+                          />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Bank Name */}
+                    <div className="space-y-2 mb-5">
+                      <Paragraph3 className="text-xs text-blue-700">
+                        Bank Name
+                      </Paragraph3>
+                      <div className="flex items-center gap-3 bg-white rounded-lg px-4 py-3 border border-blue-200">
+                        <input
+                          type="text"
+                          value={virtualAccount.bankName || "N/A"}
+                          readOnly
+                          className="flex-1 bg-transparent text-base font-semibold text-gray-900 outline-none"
+                        />
+                        <button
+                          onClick={() =>
+                            handleCopy(virtualAccount.bankName, "Bank Name")
+                          }
+                          className="text-blue-600 hover:text-blue-800 transition p-2"
+                          title="Copy Bank Name"
+                        >
+                          <Copy
+                            size={18}
+                            className={
+                              copiedField === "Bank Name"
+                                ? "text-green-600"
+                                : ""
+                            }
+                          />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Status */}
+                    <div className="space-y-2">
+                      <Paragraph3 className="text-xs text-blue-700">
+                        Status
+                      </Paragraph3>
+                      <div className="bg-white rounded-lg px-4 py-3 border border-blue-200 flex items-center">
+                        <span
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                            virtualAccount.status === "ACTIVE"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          <span
+                            className={`w-2 h-2 rounded-full mr-2 ${
+                              virtualAccount.status === "ACTIVE"
+                                ? "bg-green-600"
+                                : "bg-gray-400"
+                            }`}
+                          />
+                          {virtualAccount.status || "UNKNOWN"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Info Box */}
+                  <div className="bg-amber-50 border border-amber-300 rounded-lg p-4">
+                    <Paragraph1 className="text-sm text-amber-800">
+                      Transfer funds to this virtual account to instantly credit
+                      your wallet. Use the copy buttons above for quick access.
+                    </Paragraph1>
+                  </div>
+
+                  {/* Footer Buttons */}
+                  <div className="flex gap-4 pt-6">
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="flex-1 px-4 py-3 font-semibold border text-black border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                    >
+                      <Paragraph1>Cancel</Paragraph1>
+                    </button>
+
+                    <button
+                      // onClick={onClose}
+                      onClick={handleRefresh}
+                      className="flex-1 px-4 py-3 font-semibold bg-black text-white rounded-lg hover:bg-gray-900 transition"
+                    >
+                      <Paragraph1>Done</Paragraph1>
+                    </button>
+                  </div>
                 </div>
-
-                {/* Info Box */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <Paragraph1 className="text-sm text-blue-800">
-                    Funds will be credited to your wallet immediately after
-                    successful payment confirmation.
+              ) : (
+                <div className="bg-red-50 border border-red-300 rounded-lg p-4">
+                  <Paragraph1 className="text-sm text-red-800">
+                    Virtual account not found. Please contact support.
                   </Paragraph1>
                 </div>
-
-                {/* Footer Buttons */}
-                <div className="flex gap-4 pt-6">
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="flex-1 px-4 py-3 font-semibold border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-                  >
-                    <Paragraph1>Cancel</Paragraph1>
-                  </button>
-
-                  <button
-                    type="submit"
-                    disabled={depositMutation.isPending}
-                    className="flex-1 px-4 py-3 font-semibold bg-black text-white rounded-lg hover:bg-gray-900 transition disabled:opacity-50"
-                  >
-                    <Paragraph1>
-                      {depositMutation.isPending ? "Processing..." : "Proceed"}
-                    </Paragraph1>
-                  </button>
-                </div>
-
-                {/* Error Message */}
-                {depositMutation.error && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <Paragraph1 className="text-sm text-red-800">
-                      {(depositMutation.error as any)?.message ||
-                        "An error occurred. Please try again."}
-                    </Paragraph1>
-                  </div>
-                )}
-
-                {/* Success Message */}
-                {depositMutation.isSuccess && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <Paragraph1 className="text-sm text-green-800">
-                      Deposit request submitted successfully! You will be
-                      redirected to complete payment.
-                    </Paragraph1>
-                  </div>
-                )}
-              </form>
+              )}
             </div>
           </motion.div>
         </motion.div>

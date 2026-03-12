@@ -1,4 +1,4 @@
-// ENDPOINTS: POST /api/renters/wallet/withdraw, GET /api/renters/wallet/bank-accounts
+// ENDPOINTS: POST /api/renters/wallet/withdraw, GET /api/renters/wallet/bank-accounts, GET /api/renters/wallet (wallet balance), GET /api/renters/profile (bank accounts)
 
 "use client";
 
@@ -11,12 +11,19 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import { Paragraph1, Paragraph2, Header3, Paragraph3 } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
 import WalletTopUpForm from "@/app/shop/cart/checkout/components/WalletTopUpForm";
 import { FaPlus } from "react-icons/fa";
 import ExampleWithdrawalForm from "./UserWalletWithdraw";
-import { HiOutlineArrowDownRight } from "react-icons/hi2";
+import {
+  HiOutlineArrowDownRight,
+  HiOutlinePencil,
+  HiOutlineCheckCircle,
+} from "react-icons/hi2";
+import { useWallet } from "@/lib/queries/renters/useWallet";
+import { useProfile } from "@/lib/queries/renters/useProfile";
+import { useUpdateProfile } from "@/lib/mutations/renters/useProfileMutations";
 
 // --------------------
 // Slide-in Filter Panel
@@ -27,19 +34,67 @@ interface WithdrawPanelProps {
 }
 
 const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
-  const minPrice = 50000;
-  const maxPrice = 200000;
+  const [isEditBankOpen, setIsEditBankOpen] = useState(false);
+  const [bankName, setBankName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [accountName, setAccountName] = useState("");
+  const [bankError, setBankError] = useState("");
+
+  const { data: walletResponse, isLoading: walletLoading } = useWallet();
+  const { data: profileResponse, isLoading: profileLoading } = useProfile();
+  const updateProfileMutation = useUpdateProfile();
+
+  const wallet = walletResponse?.wallet;
+  const walletBalance = wallet?.balance?.totalBalance ?? 0;
+  const availableBalance = wallet?.balance?.availableBalance ?? 0;
+  const bankAccount = profileResponse?.bankAccount;
+
+  const handleEditBank = () => {
+    setBankName(bankAccount?.bankName || "");
+    setAccountNumber(bankAccount?.accountNumber || "");
+    setAccountName(bankAccount?.accountName || "");
+    setBankError("");
+    setIsEditBankOpen(true);
+  };
+
+  const handleSubmitBank = () => {
+    setBankError("");
+
+    if (!bankName.trim() || !accountNumber.trim() || !accountName.trim()) {
+      setBankError("Please fill in all fields");
+      return;
+    }
+
+    if (accountNumber.length < 10) {
+      setBankError("Account number must be at least 10 digits");
+      return;
+    }
+
+    updateProfileMutation.mutate(
+      {
+        bankAccount: {
+          bankName,
+          accountNumber,
+          accountName,
+        },
+      },
+      {
+        onSuccess: () => {
+          setIsEditBankOpen(false);
+          setBankName("");
+          setAccountNumber("");
+          setAccountName("");
+        },
+        onError: () => {
+          setBankError("Failed to update bank account");
+        },
+      },
+    );
+  };
 
   const variants = {
     hidden: { x: "100%" },
     visible: { x: 0 },
-  };
-
-  const ExampleData = {
-    rentalDays: 3,
-    rentalFeePerPeriod: 165000,
-    securityDeposit: 15000,
-    cleaningFee: 10000,
   };
 
   return (
@@ -87,13 +142,183 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
             </div>
 
             {/* Content */}
-            <div className="grow pt-4 pb-20 space-y-8">
-              <ExampleWithdrawalForm />{" "}
+            <div className="grow pt-4 pb-20 space-y-6">
+              {/* Wallet Balance Card */}
+
+              {/* Available Balance Display */}
+              <div className="p-4 bg-gray-100 rounded-xl mb-6">
+                <Paragraph1 className="text-sm text-gray-500 mb-1">
+                  Total Balance
+                </Paragraph1>
+                <div className="flex items-center space-x-2">
+                  <img src="/icons/lock2.png" className="h-[41px] w-auto" />
+
+                  {walletLoading ? (
+                    <div className="h-8 w-32 bg-slate-300 rounded animate-pulse" />
+                  ) : wallet ? (
+                    <div className="flex flex-col">
+                      <Paragraph3 className="text-3xl text-black font-extrabold">
+                        ₦{walletBalance.toLocaleString()}
+                      </Paragraph3>
+                      <Paragraph1 className="text-xs text-gray-600 mt-1">
+                        Available: ₦{availableBalance.toLocaleString()}
+                      </Paragraph1>
+                    </div>
+                  ) : (
+                    <Paragraph1 className="text-red-600">
+                      Failed to load wallet balance
+                    </Paragraph1>
+                  )}
+                </div>
+                <Paragraph1 className="text-xs text-gray-500 mt-2">
+                  Make only 5 withdrawals per month
+                </Paragraph1>
+              </div>
+
+              {/* Bank Account Card */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-blue-50 border border-blue-200 rounded-lg p-4"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="bg-blue-100 p-2 rounded-lg">
+                      <HiOutlineCheckCircle className="w-5 h-5 text-blue-700" />
+                    </div>
+                    <Paragraph1 className="text-sm font-medium text-gray-900">
+                      Bank Account
+                    </Paragraph1>
+                  </div>
+                  {!isEditBankOpen && (
+                    <motion.button
+                      onClick={() => handleEditBank()}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="p-2 hover:bg-blue-100 rounded-lg transition"
+                    >
+                      <HiOutlinePencil className="w-4 h-4 text-blue-700" />
+                    </motion.button>
+                  )}
+                </div>
+
+                {profileLoading ? (
+                  <div className="space-y-2">
+                    <div className="h-4 bg-blue-200 rounded animate-pulse" />
+                    <div className="h-4 bg-blue-200 rounded animate-pulse w-3/4" />
+                  </div>
+                ) : isEditBankOpen ? (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-3 mt-3"
+                  >
+                    {bankError && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <Paragraph1 className="text-xs text-red-700">
+                          {bankError}
+                        </Paragraph1>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Bank Name
+                      </label>
+                      <input
+                        type="text"
+                        value={bankName}
+                        onChange={(e) => setBankName(e.target.value)}
+                        placeholder="e.g., Access Bank"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Account Number
+                      </label>
+                      <input
+                        type="text"
+                        value={accountNumber}
+                        onChange={(e) => setAccountNumber(e.target.value)}
+                        placeholder="10-digit account number"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Account Name
+                      </label>
+                      <input
+                        type="text"
+                        value={accountName}
+                        onChange={(e) => setAccountName(e.target.value)}
+                        placeholder="Name on account"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"
+                      />
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <motion.button
+                        onClick={() => setIsEditBankOpen(false)}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="flex-1 px-3 py-2 text-xs font-medium border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+                      >
+                        Cancel
+                      </motion.button>
+                      <motion.button
+                        onClick={handleSubmitBank}
+                        disabled={updateProfileMutation.isPending}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="flex-1 px-3 py-2 text-xs font-medium bg-blue-700 text-white rounded-lg hover:bg-blue-800 disabled:bg-gray-400 transition"
+                      >
+                        {updateProfileMutation.isPending ? "Saving..." : "Save"}
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                ) : bankAccount ? (
+                  <div className="space-y-1">
+                    <Paragraph1 className="font-semibold text-gray-900">
+                      {bankAccount.bankName}
+                    </Paragraph1>
+                    <Paragraph1 className="text-sm text-gray-600">
+                      {bankAccount.accountNumber
+                        .slice(-4)
+                        .padStart(bankAccount.accountNumber.length, "*")}
+                    </Paragraph1>
+                    <Paragraph1 className="text-xs text-gray-500 mt-1">
+                      {bankAccount.accountName}
+                    </Paragraph1>
+                  </div>
+                ) : (
+                  <motion.button
+                    onClick={() => handleEditBank()}
+                    className="w-full flex items-center justify-center gap-2 py-2 text-blue-700 hover:bg-blue-100 rounded transition"
+                  >
+                    <FaPlus size={14} />
+                    <Paragraph1 className="text-sm font-medium">
+                      Add Bank Account
+                    </Paragraph1>
+                  </motion.button>
+                )}
+              </motion.div>
+
+              {/* Withdrawal Form */}
+              {/* <ExampleWithdrawalForm /> */}
             </div>
 
             {/* Footer */}
-            <div className="mt-auto py-2 text-black bg-white flex justify-between gap-4 sticky bottom-0">
-              <button className="flex-1  px-4 py-3  font-semibold border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+            <div className="mt-auto hidden py-2 text-black bg-white flex- justify-between gap-4 sticky bottom-0">
+              <button
+                onClick={onClose}
+                className="flex-1  px-4 py-3  font-semibold border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+              >
                 <Paragraph1>Cancel </Paragraph1>
               </button>
 

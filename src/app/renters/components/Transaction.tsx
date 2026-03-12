@@ -242,7 +242,6 @@ const AllTransactionsList: React.FC = () => {
       <Paragraph1 className="text-xl font-extrabold text-gray-900 uppercase mb-4">
         All Transactions
       </Paragraph1>
-
       {transactions.length === 0 ? (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
           <Paragraph1 className="text-gray-600">
@@ -290,11 +289,11 @@ const AllTransactionsList: React.FC = () => {
       )}
 
       {/* Transaction Details Panel */}
-      <TransactionDetailView
+      {/* <TransactionDetailView
         isOpen={isDetailsOpen}
         onClose={() => setIsDetailsOpen(false)}
         transaction={selectedTx}
-      />
+      /> */}
     </div>
   );
 };

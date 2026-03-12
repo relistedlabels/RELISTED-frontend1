@@ -11,7 +11,10 @@ const BackButton: React.FC = () => {
   };
 
   return (
-    <button onClick={handleBack} className="text-gray-900 cursor-pointer hover:text-gray-700">
+    <button
+      onClick={handleBack}
+      className="text-gray-900 cursor-pointer hover:text-gray-700"
+    >
       <HiOutlineChevronLeft className="w-6 h-6" />
     </button>
   );

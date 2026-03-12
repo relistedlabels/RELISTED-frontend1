@@ -44,7 +44,11 @@ export default function UserDashboardLayout() {
           </div>
         );
       case "/dashboard/favourites":
-        return <div><Favorites /> </div>;
+        return (
+          <div>
+            <Favorites />{" "}
+          </div>
+        );
       case "/dashboard/dispute":
         return <div>Dispute Resolution Center</div>;
       case "/dashboard/account":

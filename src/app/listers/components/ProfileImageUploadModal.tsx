@@ -27,8 +27,6 @@ export default function ProfileImageUploadModal({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const queryClient = useQueryClient();
 
- 
-
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(true);

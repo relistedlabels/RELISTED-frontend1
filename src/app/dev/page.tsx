@@ -3,7 +3,13 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Header1, Header1Plus, Header2, Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import {
+  Header1,
+  Header1Plus,
+  Header2,
+  Paragraph1,
+  Paragraph3,
+} from "@/common/ui/Text";
 import { Lock, ShieldCheck, KeyRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

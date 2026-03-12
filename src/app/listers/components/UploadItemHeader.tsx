@@ -182,8 +182,8 @@ const UploadItemHeader: React.FC<UploadItemHeaderProps> = ({
         {/* Verification Status Messages */}
         {verificationSubmittedAt && countdown > 0 && (
           <div className="text-xs bg-blue-50 text-blue-900 border border-blue-200 px-3 py-2 rounded">
-            ⏱️ Verification in progress. Please wait{" "}
-            {formatCountdown(countdown)} to check status.
+            ⏱️ Verification in progress. Please wait {formatCountdown(countdown)}{" "}
+            to check status.
           </div>
         )}
 

@@ -6,8 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { faqs } from "@/data/faqsData";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 
-
-
 export default function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 

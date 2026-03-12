@@ -38,12 +38,37 @@ export type RentalOrder = {
 };
 
 export type WalletInfo = {
+  walletId: string;
   userId: string;
-  totalBalance: number;
-  availableBalance: number;
-  lockedBalance: number;
-  totalDeposits: number;
-  totalSpent: number;
+  balance: {
+    availableBalance: number;
+    lockedBalance: number;
+    totalBalance: number;
+    currency: string;
+    lastUpdated: string;
+  };
+  lockedBreakdown: {
+    activeRentals: Array<any>;
+    disputeHolds: Array<any>;
+    totalLockedAmount: number;
+  };
+  statistics: {
+    totalDeposits: number;
+    totalSpent: number;
+    totalRefunds: number;
+    lifetimeTransactions: number;
+    activeRentalOrders: number;
+    activeDisputes: number;
+  };
+  lastTransaction: {
+    type: "credit" | "debit";
+    amount: number;
+    description: string;
+    date: string;
+  };
+  linkedBankAccounts: number;
+  canWithdraw: boolean;
+  minimumFundsForTransaction: number;
 };
 
 export type Transaction = {
@@ -174,6 +199,11 @@ export const rentersApi = {
       address?: string;
       city?: string;
       state?: string;
+    };
+    bankAccount?: {
+      bankName: string;
+      accountNumber: string;
+      accountName: string;
     };
   }) =>
     apiFetch<{ success: boolean; message: string; data: { profile: any } }>(
@@ -349,9 +379,12 @@ export const rentersApi = {
 
   // Wallet
   getWallet: () =>
-    apiFetch<{ success: boolean; data: WalletInfo }>("/api/renters/wallet", {
-      method: "GET",
-    }),
+    apiFetch<{ success: boolean; data: { wallet: WalletInfo } }>(
+      "/api/renters/wallet",
+      {
+        method: "GET",
+      },
+    ),
 
   getTransactions: (params?: {
     page?: number;

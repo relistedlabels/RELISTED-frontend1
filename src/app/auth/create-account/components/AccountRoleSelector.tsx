@@ -67,10 +67,7 @@ const AccountRoleSelector: React.FC = () => {
   return (
     <div className="font-sans min-h-screen flex items-center justify-center p-4">
       <div className="max-w-4xl w-full bg-white p-4 py-10 sm:p-10 rounded-xl shadow-2xl text-center">
-        <div className=" flex w-full  items-center justify-center">
-          {" "}
-         
-        </div>{" "}
+        <div className=" flex w-full  items-center justify-center"> </div>{" "}
         <div className="mb-6 flex justify-center">
           <img src="/images/logo1.svg" alt="Logo" />
         </div>

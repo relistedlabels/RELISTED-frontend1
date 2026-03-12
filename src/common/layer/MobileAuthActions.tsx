@@ -202,10 +202,7 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
           Sign In
         </button>
       </Link>
-      <Link
-        href={`/auth/create-account`}
-        onClick={handleLinkClick}
-      >
+      <Link href={`/auth/create-account`} onClick={handleLinkClick}>
         <button className="w-full px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors font-medium text-sm">
           Sign Up
         </button>

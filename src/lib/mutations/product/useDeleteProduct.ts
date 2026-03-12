@@ -6,9 +6,12 @@ export const useDeleteProduct = (productId: string) => {
 
   return useMutation({
     mutationFn: async () => {
-      return apiFetch<{ success: boolean }>(`/api/listers/inventory/${productId}`, {
-        method: "DELETE",
-      });
+      return apiFetch<{ success: boolean }>(
+        `/api/listers/inventory/${productId}`,
+        {
+          method: "DELETE",
+        },
+      );
     },
     onSuccess: () => {
       // Invalidate product queries
