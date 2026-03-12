@@ -353,6 +353,18 @@ export interface WalletStatsResponse {
   data: WalletStats;
 }
 
+export interface WalletBalance {
+  availableBalance: number;
+  lockedBalance: number;
+  totalBalance: number;
+  currency: string;
+}
+
+export interface WalletBalanceResponse {
+  success: boolean;
+  data: WalletBalance;
+}
+
 export interface Transaction {
   id: string;
   type: "credit" | "debit";
@@ -437,6 +449,12 @@ export interface LockedBalancesResponse {
 
 export async function getWalletStats(): Promise<WalletStatsResponse> {
   return apiFetch("/api/listers/wallet/stats", {
+    method: "GET",
+  });
+}
+
+export async function getWalletBalance(): Promise<WalletBalanceResponse> {
+  return apiFetch("/api/listers/wallet", {
     method: "GET",
   });
 }
@@ -872,6 +890,12 @@ export interface ListerProfile {
   profileImage?: string;
   dateJoined?: string;
   addresses?: ListerAddress[];
+  bankAccounts?: {
+    id: string;
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
+  }[];
 }
 
 export interface ListerProfileResponse {
@@ -1015,6 +1039,11 @@ export interface UpdateListerProfilePayload {
   phone?: string;
   bvn?: string;
   nin?: string;
+  bankAccount?: {
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
+  };
 }
 
 export async function updateListerProfile(

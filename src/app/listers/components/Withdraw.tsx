@@ -92,7 +92,7 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
             </div>
 
             {/* Footer */}
-            <div className="mt-auto py-2 text-black bg-white flex justify-between gap-4 sticky bottom-0">
+            <div className="mt-auto hidden py-2 text-black bg-white flex- justify-between gap-4 sticky bottom-0">
               <button className="flex-1  px-4 py-3  font-semibold border border-gray-300 rounded-lg hover:bg-gray-50 transition">
                 <Paragraph1>Cancel </Paragraph1>
               </button>

@@ -11,9 +11,9 @@ export function useWithdrawFunds() {
       notes?: string;
     }) => withdrawFunds(data),
     onSuccess: () => {
-      // Invalidate wallet stats
+      // Invalidate wallet balance
       queryClient.invalidateQueries({
-        queryKey: ["listers", "wallet", "stats"],
+        queryKey: ["listers", "wallet", "balance"],
       });
       // Invalidate transactions
       queryClient.invalidateQueries({
