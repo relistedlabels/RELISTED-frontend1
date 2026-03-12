@@ -87,10 +87,10 @@ const TopListingSection = () => {
           <Header1Plus className="tracking-wide uppercase">
             BLACK TIE OUTFITS{" "}
           </Header1Plus>
-          <Paragraph1 className="text-gray-600 max-w-[280px]">
+          <Paragraph1 className="text-gray-600 max-w-[280px] sm:max-w-[480px]">
             {" "}
             Find the perfect look for your black tie events, no matter the style
-            or season. 
+            or season.
           </Paragraph1>
         </div>
 

@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Header1Plus, Header2, HeaderAny, Paragraph1 } from "@/common/ui/Text";
+import { Header1Plus, Header2, HeaderAny, Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import { categories, Category } from "@/data/categoryData"; // import data
 
 interface CategoryBoxProps extends Category {}
@@ -18,10 +18,12 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({
   return (
     <Link
       href={link}
-      className={`relative w-full group overflow-hidden cursor-pointer h-[200px] sm:h-auto`}
-      style={{ height: undefined, ...(height && { ["--h"]: height }) }}
+      className={`relative w-full group overflow-hidden cursor-pointer h-[160px] sm:h-full`}
     >
-      <div className="hidden sm:block" style={{ height }}></div>
+      <div
+        className="hidden sm:block"
+        style={{ height: height || "280px" }}
+      ></div>
 
       {/* Background Image */}
       <Image
@@ -37,7 +39,7 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({
 
       {/* Text content */}
       <div className="absolute sm:bottom-[35px] bottom-4 left-4 sm:left-[34px] text-white z-10">
-        <HeaderAny className="text-lg font-bold">{title}</HeaderAny>
+        <Paragraph3 className="text-lg font-bold">{title}</Paragraph3>
         <Paragraph1 className="text-sm hidden sm:flex">
           {description}
         </Paragraph1>
@@ -52,14 +54,13 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({
 };
 
 const PopularCategorySection = () => {
-  // Mobile: 2 columns of 2 boxes = 4 categories
-  const mobileColumns = [categories.slice(0, 2), categories.slice(2, 4)];
+  // Limit to 4 categories
+  const displayCategories = categories.slice(0, 4);
 
-  // Desktop: 3 columns of 2 boxes = 6 categories
-  const desktopColumns = [
-    categories.slice(0, 2),
-    categories.slice(2, 4),
-    categories.slice(4, 6),
+  // Mobile: 2x2 grid
+  const mobileColumns = [
+    displayCategories.slice(0, 2),
+    displayCategories.slice(2, 4),
   ];
 
   return (
@@ -81,7 +82,7 @@ const PopularCategorySection = () => {
         </div>
       </div>
 
-      {/* Mobile layout - 2 columns, 4 categories */}
+      {/* Mobile layout - 2x2 grid, 4 categories */}
       <div className="grid grid-cols-1 sm:hidden gap-2">
         {mobileColumns.map((col, colIndex) => (
           <div key={colIndex} className="flex flex-row gap-2">
@@ -92,16 +93,15 @@ const PopularCategorySection = () => {
         ))}
       </div>
 
-      {/* Desktop layout - 3 columns, 6 categories */}
-      <div className="hidden sm:grid grid-cols-1 xl:grid-cols-3 gap-2 sm:gap-[23px]">
-        {desktopColumns.map((col, colIndex) => (
+      {/* Desktop layout - Masonry 2x2, 4 categories with heights from data */}
+      <div className="hidden sm:grid grid-cols-2 gap-2 sm:gap-[23px]">
+        {displayCategories.map((box, idx) => (
           <div
-            key={colIndex}
-            className="flex flex-row xl:flex-col gap-2 sm:gap-[23px]"
+            key={idx}
+            className="overflow-hidden"
+            style={{ height: box.height || "280px" }}
           >
-            {col.map((box, idx) => (
-              <CategoryBox key={idx} {...box} />
-            ))}
+            <CategoryBox {...box} />
           </div>
         ))}
       </div>

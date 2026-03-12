@@ -20,7 +20,7 @@ function HowItWorks() {
       {/* Overlay */}
       <div className="absolute inset-0 bg-black-/60"></div>
       <div className=" sm:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="flex flex-col items-center text-center sm:gap-8">
+        <div className="flex flex-col items-center text-center sm:gap-4">
           <img
             src="/icons/Box.svg"
             alt="Delivery"
@@ -28,8 +28,8 @@ function HowItWorks() {
           />
 
           {/* Text Content */}
-          <div className="flex flex-col sm:space-y-2 space-y-2-  max-w-[340px] sm:max-w-4xl">
-            <HeaderAny className="text-white text-[28px] sm:text-[32px]">
+          <div className="flex flex-col sm:space-y-2 space-y-2-  max-w-[340px] sm:max-w-[580px] ">
+            <HeaderAny className="text-white text-[28px] sm:text-[46px]">
               Delivered as soon as... today
             </HeaderAny>
 

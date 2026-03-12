@@ -5,7 +5,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Header1Plus, Header2, Paragraph1 } from "@/common/ui/Text";
+import { Header1Plus, Header2, Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import { useCategories } from "@/lib/queries/category/useCategories";
 import { CategoryCardSkeleton } from "@/common/ui/SkeletonLoaders";
 
@@ -29,9 +29,9 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({
   return (
     <Link
       href={shopUrl}
-      className={`relative w-full group overflow-hidden cursor-pointer h-[200px] sm:h-auto`}
+      className={`relative w-full group overflow-hidden cursor-pointer h-[160px] sm:h-full`}
     >
-      <div className="hidden sm:block" style={{ height: "280px" }}></div>
+      <div className="hidden sm:block" style={{ height: "320px" }}></div>
 
       {/* Background Image */}
       <Image
@@ -47,7 +47,7 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({
 
       {/* Text content */}
       <div className="absolute sm:bottom-[35px] bottom-4 left-4 sm:left-[34px] text-white z-10">
-        <Header2 className="text-lg font-bold">{name}</Header2>
+        <Paragraph2 className="text-lg font-bold">{name}</Paragraph2>
         <Paragraph1 className="text-sm hidden sm:flex">
           {description}
         </Paragraph1>
@@ -72,7 +72,7 @@ const PopularCategorySection = () => {
             Popular Categories
           </Header1Plus>
         </div>
-        <CategoryCardSkeleton count={6} />
+        <CategoryCardSkeleton count={4} />
       </section>
     );
   }
@@ -85,19 +85,14 @@ const PopularCategorySection = () => {
             Popular Categories
           </Header1Plus>
         </div>
-        <CategoryCardSkeleton count={6} />
+        <CategoryCardSkeleton count={4} />
       </section>
     );
   }
 
-  // Limit to 6 categories and split into 3 columns of 2 boxes each
+  // Limit to 4 categories
   const displayCategories =
-    (Array.isArray(categories) ? categories : [])?.slice(0, 6) || [];
-  const columns = [
-    displayCategories.slice(0, 2),
-    displayCategories.slice(2, 4),
-    displayCategories.slice(4, 6),
-  ];
+    (Array.isArray(categories) ? categories : [])?.slice(0, 4) || [];
 
   return (
     <section className=" container px-4 sm:px-0 mx-auto py-6 sm:py-12">
@@ -112,15 +107,13 @@ const PopularCategorySection = () => {
           </Link>
         </Paragraph1>
       </div>
-      <div className="grid grid-cols-1  xl:grid-cols-3 gap-2 sm:gap-[23px]">
-        {columns.map((col, colIndex) => (
+      <div className="grid grid-cols-2 xl:grid-cols-2 xl:auto-rows-[320px] gap-2 sm:gap-[20px]">
+        {displayCategories.map((box, index) => (
           <div
-            key={colIndex}
-            className="flex flex-row xl:flex-col gap-2 sm:gap-[23px]"
+            key={box.id}
+            className={index === 0 || index === 3 ? "xl:row-span-2" : ""}
           >
-            {col.map((box) => (
-              <CategoryBox key={box.id} {...box} />
-            ))}
+            <CategoryBox {...box} />
           </div>
         ))}
       </div>

@@ -26,7 +26,7 @@ export default function Home() {
       </div>
       {/* <TopCuratorsSection /> */}
       {/* <br /> */}
-      <br />
+      <br className=" flex sm:hidden" />
       {/* <ReviewCarousel /> */}
     </div>
   );
