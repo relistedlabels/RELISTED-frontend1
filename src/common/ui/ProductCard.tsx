@@ -119,15 +119,15 @@ export default function ProductCard({
           </Paragraph1>
         )}
         <div className="flex justify-between items-start mt-2">
-          <Paragraph1 className="text-gray-700">Rent from </Paragraph1>
-          <Paragraph1 className="text-black font-semibold">
-            ₦{dailyPrice?.toLocaleString() || "0"}
+          <Paragraph1 className="text-gray-500 ">RRP:</Paragraph1>
+          <Paragraph1 className="text-gray-500 line-through">
+            {price}
           </Paragraph1>
         </div>
         <div className="flex justify-between items-start ">
-          <Paragraph1 className="text-gray-400 line-through">RRP:</Paragraph1>
-          <Paragraph1 className="text-gray-400 line-through">
-            {price}
+          <Paragraph1 className="text-gray-700">Rent from </Paragraph1>
+          <Paragraph1 className="text-black font-semibold">
+            ₦{dailyPrice?.toLocaleString() || "0"}
           </Paragraph1>
         </div>
       </div>

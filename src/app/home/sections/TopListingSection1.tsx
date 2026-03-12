@@ -143,7 +143,7 @@ const TopListingSection = () => {
           <Link
             href="/shop?title=BLACK+TIE+OUTFITS&category=7589478207"
             className="inline-flex items-center justify-center w-full max-w-md px-8 py-3 
-                 bg-black text-white text-sm font-medium tracking-wider uppercase 
+                 bg-black text-white text-sm font-medium tracking-wider  
                  transition-colors duration-200 hover:bg-neutral-800 focus:outline-none 
                  focus:ring-2 focus:ring-offset-2 focus:ring-black"
             aria-label="Browse all items"
