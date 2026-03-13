@@ -179,8 +179,8 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
     <div className="min-h-screen ">
       <div className="">
         {/* Header */}
-        <div className="flex items-center justify-between gap-4 mb-6 border-b border-gray-200 pb-6">
-          <div className="flex items-center gap-4 flex-1">
+        <div className="flex items-start justify-between gap-4 mb-6 border-b border-gray-200 pb-6">
+          <div className="flex items-start gap-4 flex-1">
             <img
               src={
                 user?.profile?.avatarUpload?.url ||
@@ -193,6 +193,9 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
               <Paragraph2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
                 {user?.name || "Loading..."}
               </Paragraph2>
+               <Paragraph1 className="text-2xl py-1 text-gray-900 tracking-tight">
+                {user?.role || "Loading..."}
+              </Paragraph1>
               <Paragraph1 className="text-xs text-gray-500">
                 Joined{" "}
                 {user?.createdAt
@@ -206,15 +209,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span
-              className={`px-3 py-1 rounded-full text-xs font-medium ${
-                user?.isSuspended
-                  ? "bg-red-50 text-red-600"
-                  : "bg-green-50 text-green-600"
-              }`}
-            >
-              {user?.isSuspended ? "Suspended" : "Active"}
-            </span>
+            
             <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium text-sm">
               Suspend
             </button>

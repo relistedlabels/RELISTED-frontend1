@@ -112,7 +112,7 @@ export default function UserProfileOverview({
           </Paragraph3>
           <span className="ml-auto flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-semibold">
             <CheckCircle size={14} />
-            {profile?.isApproved ? "Approved" : "Pending"}
+            {profile?.isApproved ? "Verified" : "Pending"}
           </span>
         </div>
 
@@ -176,16 +176,16 @@ export default function UserProfileOverview({
         </div>
       </div>
 
-      {/* Profile Picture */}
-      {avatarUpload && (
+      {/* NIN Document Upload */}
+      {ninUpload && (
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <Paragraph3 className="text-base font-bold mb-4 text-gray-900">
-            Profile Picture
+            NIN Document Preview
           </Paragraph3>
           <div className="bg-gray-100 rounded-lg p-8 mb-4 flex items-center justify-center h-56">
             <img
-              src={avatarUpload.url}
-              alt="Profile"
+              src={ninUpload.url}
+              alt="NIN Document"
               className="max-h-full max-w-full object-contain rounded"
             />
           </div>
@@ -199,12 +199,30 @@ export default function UserProfileOverview({
             </button>
             <a
               href={avatarUpload.url}
+              target="_blank"
+              rel="noopener noreferrer"
               download
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium text-sm text-gray-700"
             >
               <Download size={18} />
               Download
             </a>
+          </div>
+        </div>
+      )}
+
+      {/* Profile Picture */}
+      {avatarUpload && (
+        <div className="bg-white hidden p-6 rounded-lg border border-gray-200">
+          <Paragraph3 className="text-base font-bold mb-4 text-gray-900">
+            Profile Picture
+          </Paragraph3>
+          <div className="bg-gray-100 rounded-lg p-8 mb-4 flex items-center justify-center h-56">
+            <img
+              src={avatarUpload.url}
+              alt="Profile"
+              className="max-h-full max-w-full object-contain rounded"
+            />
           </div>
         </div>
       )}
@@ -401,41 +419,6 @@ export default function UserProfileOverview({
                 </Paragraph1>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* NIN Document Upload */}
-      {ninUpload && (
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <Paragraph3 className="text-base font-bold mb-4 text-gray-900">
-            NIN Document Preview
-          </Paragraph3>
-          <div className="bg-gray-100 rounded-lg p-8 mb-4 flex items-center justify-center h-56">
-            <img
-              src={ninUpload.url}
-              alt="NIN Document"
-              className="max-h-full max-w-full object-contain rounded"
-            />
-          </div>
-          <div className="flex gap-3">
-            <a
-              href={ninUpload.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium text-sm text-gray-700"
-            >
-              <Eye size={18} />
-              View Full Document
-            </a>
-            <a
-              href={ninUpload.url}
-              download
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium text-sm text-gray-700"
-            >
-              <Download size={18} />
-              Download
-            </a>
           </div>
         </div>
       )}
