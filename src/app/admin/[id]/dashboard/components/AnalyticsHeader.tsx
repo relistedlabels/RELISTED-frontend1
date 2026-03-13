@@ -335,7 +335,7 @@ const AnalyticsHeader: React.FC<AnalyticsHeaderProps> = ({
           />
 
           {/* Export Button */}
-          <button className="flex items-center gap-2 px-5 py-2 bg-yellow-600 hover:bg-yellow-700 transition-colors rounded-lg text-white shadow-sm">
+          <button className="flex- hidden items-center gap-2 px-5 py-2 bg-yellow-600 hover:bg-yellow-700 transition-colors rounded-lg text-white shadow-sm">
             <HiOutlineDownload className="w-4 h-4" />
             <Paragraph1 className="text-sm font-bold">Export Report</Paragraph1>
           </button>
@@ -343,7 +343,7 @@ const AnalyticsHeader: React.FC<AnalyticsHeaderProps> = ({
       </div>
 
       {/* Bottom Row: Inline Stats */}
-      <div className="flex items-center py-4 border-y border-gray-300">
+      <div className="flex- hidden items-center py-4 border-y border-gray-300">
         <StatItem icon={HiOutlineAcademicCap} label="Chanel" />
         <StatItem icon={HiOutlineMapPin} label="Lagos" />
         <StatItem icon={HiOutlineScale} label="2.3%" />

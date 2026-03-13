@@ -85,7 +85,7 @@ export default function UsersPage() {
 
         {/* Tabs */}
         <div className="flex border-b border-gray-200">
-          {["LISTER", "DRESSER", "ADMIN"].map((tab) => (
+          {["LISTER", "RENTERS"].map((tab) => (
             <button
               key={tab}
               disabled

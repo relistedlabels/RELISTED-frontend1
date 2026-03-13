@@ -96,7 +96,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
     );
   }
 
-  const user = userProfile.data?.data;
+  const user = userProfile.data?.data as any;
 
   const handleTabChange = (tabId: string) => {
     const currentIndex = TABS.findIndex((t) => t.id === activeTab);
@@ -182,7 +182,10 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
         <div className="flex items-center justify-between gap-4 mb-6 border-b border-gray-200 pb-6">
           <div className="flex items-center gap-4 flex-1">
             <img
-              src={user?.avatar || "https://i.pravatar.cc/150?img=0"}
+              src={
+                user?.profile?.avatarUpload?.url ||
+                "https://i.pravatar.cc/150?img=0"
+              }
               alt={user?.name || "User"}
               className="w-12 h-12 rounded-full object-cover"
             />
@@ -191,13 +194,26 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
                 {user?.name || "Loading..."}
               </Paragraph2>
               <Paragraph1 className="text-xs text-gray-500">
-                Joined {user?.joinDate || "—"}
+                Joined{" "}
+                {user?.createdAt
+                  ? new Date(user.createdAt).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "2-digit",
+                    })
+                  : "—"}
               </Paragraph1>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="px-3 py-1 bg-red-50 text-red-600 rounded-full text-xs font-medium">
-              {user?.status || "—"}
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-medium ${
+                user?.isSuspended
+                  ? "bg-red-50 text-red-600"
+                  : "bg-green-50 text-green-600"
+              }`}
+            >
+              {user?.isSuspended ? "Suspended" : "Active"}
             </span>
             <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium text-sm">
               Suspend
@@ -212,7 +228,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
         </div>
 
         {/* Tabs */}
-        <div className="ba border-b border-gray-200">
+        <div className="border-b border-gray-200">
           <div className="flex">
             {TABS.map((tab) => {
               const IconComponent = tab.icon;
