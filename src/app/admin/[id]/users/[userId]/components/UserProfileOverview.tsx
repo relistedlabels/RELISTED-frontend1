@@ -112,7 +112,7 @@ export default function UserProfileOverview({
           </Paragraph3>
           <span className="ml-auto flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-semibold">
             <CheckCircle size={14} />
-            {profile?.isApproved ? "Verified" : "Pending"}
+            {profile?.isApproved ? "Approved" : "Pending"}
           </span>
         </div>
 

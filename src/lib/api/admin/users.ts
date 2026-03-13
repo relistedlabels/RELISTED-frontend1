@@ -41,32 +41,55 @@ export interface UserRental {
 export interface UserListing {
   id: string;
   name: string;
-  image: string;
-  brand: string;
-  category: string;
-  itemValue: number;
+  subText?: string;
+  description?: string;
+  condition?: string;
+  productVerified?: boolean;
   dailyPrice: number;
-  status: string;
-  dateAdded: string;
-  totalRentals: number;
-  earnings: number;
+  isActive?: boolean;
+  quantity?: number;
+  status: "AVAILABLE" | "PENDING" | "APPROVED" | "REJECTED";
+  rejectionComment?: string | null;
+  composition?: string;
+  measurement?: string;
+  originalValue?: number;
+  collateralPrice?: number | null;
+  material?: string | null;
+  warning?: string;
+  color?: string;
+  brandId?: string;
+  categoryId?: string | null;
+  curatorId?: string;
+  receiveSmsNotifications?: boolean;
+  receiveEmailNotifications?: boolean;
+  receiveProductRecommendations?: boolean;
+  careInstruction?: string;
+  careSteps?: string;
+  stylingTip?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface UserWallet {
+  id: string;
   userId: string;
-  walletBalance: number;
-  currency: string;
-  lastUpdated: string;
+  mainBalance: number;
+  availableBalance: number;
+  collateralBalance: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Transaction {
   id: string;
-  date: string;
-  description: string;
-  type: "Debit" | "Credit";
+  walletId: string;
   amount: number;
-  status: string;
-  relatedRentalId?: string;
+  type: "MAIN" | "AVAILABLE" | "COLLATERAL";
+  status: "SUCCESS" | "PENDING" | "FAILED";
+  note: string;
+  orderId?: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface UserDispute {
@@ -83,14 +106,41 @@ export interface UserDispute {
 
 export interface UserFavorite {
   id: string;
+  userId: string;
   productId: string;
-  image: string;
-  brand: string;
-  title: string;
-  rentalPrice?: number;
-  retailPrice: number;
-  savedDate: string;
-  status: string;
+  createdAt: string;
+  fullText: string;
+  product: {
+    id: string;
+    name: string;
+    subText?: string;
+    description?: string;
+    condition?: string;
+    productVerified?: boolean;
+    dailyPrice: number;
+    isActive?: boolean;
+    quantity?: number;
+    status: "AVAILABLE" | "PENDING" | "APPROVED" | "REJECTED";
+    rejectionComment?: string | null;
+    composition?: string;
+    measurement?: string;
+    originalValue?: number;
+    collateralPrice?: number | null;
+    material?: string | null;
+    warning?: string;
+    color?: string;
+    brandId?: string | null;
+    categoryId?: string | null;
+    curatorId?: string;
+    receiveSmsNotifications?: boolean;
+    receiveEmailNotifications?: boolean;
+    receiveProductRecommendations?: boolean;
+    careInstruction?: string;
+    careSteps?: string;
+    stylingTip?: string;
+    createdAt: string;
+    updatedAt: string;
+  };
 }
 
 interface ListParams {
@@ -165,12 +215,7 @@ export const usersApi = {
   getUserListings: (userId: string, params: ListParams) =>
     apiFetch<{
       success: true;
-      data: {
-        listings: UserListing[];
-        total: number;
-        page: number;
-        limit: number;
-      };
+      data: UserListing[];
     }>(`/api/admin/users/${userId}/listings?${buildListParams(params)}`),
 
   getUserWallet: (userId: string) =>
@@ -181,12 +226,7 @@ export const usersApi = {
   getUserTransactions: (userId: string, params: ListParams) =>
     apiFetch<{
       success: true;
-      data: {
-        transactions: Transaction[];
-        total: number;
-        page: number;
-        limit: number;
-      };
+      data: Transaction[];
     }>(`/api/admin/users/${userId}/transactions?${buildListParams(params)}`),
 
   getUserDisputes: (userId: string, params: ListParams) =>
@@ -203,11 +243,6 @@ export const usersApi = {
   getUserFavorites: (userId: string, params: ListParams) =>
     apiFetch<{
       success: true;
-      data: {
-        favorites: UserFavorite[];
-        total: number;
-        page: number;
-        limit: number;
-      };
+      data: UserFavorite[];
     }>(`/api/admin/users/${userId}/favorites?${buildListParams(params)}`),
 };

@@ -135,7 +135,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
             Error loading listings
           </Paragraph1>
         ) : (
-          <UserListings listings={userListings.data?.data?.listings || []} />
+          <UserListings listings={userListings.data?.data || []} />
         );
       case "wallet":
         return userWallet.isLoading ? (
@@ -145,7 +145,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
         ) : (
           <UserWallet
             wallet={userWallet.data?.data}
-            transactions={userTransactions.data?.data?.transactions || []}
+            transactions={userTransactions.data?.data || []}
             transactionsLoading={userTransactions.isLoading}
             transactionsError={userTransactions.error}
           />
@@ -168,7 +168,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
             Error loading saved items
           </Paragraph1>
         ) : (
-          <SavedItems favorites={userFavorites.data?.data?.favorites || []} />
+          <SavedItems favorites={userFavorites.data?.data || []} />
         );
       default:
         return user ? <UserProfileOverview user={user} /> : <TableSkeleton />;
@@ -193,7 +193,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
               <Paragraph2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
                 {user?.name || "Loading..."}
               </Paragraph2>
-               <Paragraph1 className="text-2xl py-1 text-gray-900 tracking-tight">
+              <Paragraph1 className="text-2xl py-1 text-gray-900 tracking-tight">
                 {user?.role || "Loading..."}
               </Paragraph1>
               <Paragraph1 className="text-xs text-gray-500">
@@ -209,7 +209,6 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            
             <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium text-sm">
               Suspend
             </button>
