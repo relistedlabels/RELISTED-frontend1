@@ -48,12 +48,7 @@ const ProductImageRow: React.FC<{ productId: string }> = ({ productId }) => {
           alt="Product"
           className="w-full h-full object-cover"
           onError={(e) => {
-            (e.target as HTMLImageElement).style.display = "none";
-            const parent = (e.target as HTMLImageElement).parentElement;
-            if (parent) {
-              parent.innerHTML =
-                '<div class="w-full h-full bg-gray-300 flex items-center justify-center"><span class="text-xs text-gray-600">N/A</span></div>';
-            }
+            e.currentTarget.style.display = "none";
           }}
         />
       )}
@@ -103,7 +98,7 @@ export default function UserListings({ listings }: UserListingsProps) {
               <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
                 Item Name
               </th>
-              
+
               <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
                 Original Value
               </th>
@@ -148,7 +143,7 @@ export default function UserListings({ listings }: UserListingsProps) {
                       {listing.name}
                     </Paragraph1>
                   </td>
-                 
+
                   <td className="py-4 px-6">
                     <Paragraph1 className="font-medium text-gray-900">
                       ₦{(listing.originalValue || 0).toLocaleString()}

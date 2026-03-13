@@ -13,24 +13,25 @@ import {
 } from "lucide-react";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { TableSkeleton, StatCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import ListingDetailModal from "./components/ListingDetailModal";
 import PendingListingsTable from "./components/PendingListingsTable";
-import ApprovedListingsTable from "./components/ApprovedListingsTable";
+import ActiveListingsTable from "./components/ActiveListingsTable";
 import RejectedListingsTable from "./components/RejectedListingsTable";
 import ManagementPanel from "./components/ManagementPanel";
 import {
   useListingsStatistics,
   useApproveListing,
   useRejectListing,
+  useSetAvailability,
   usePendingProducts,
-  useApprovedProducts,
   useActiveProducts,
   useRejectedProducts,
 } from "@/lib/queries/admin/useListings";
 import { Product, ProductDetail } from "@/lib/api/admin/listings";
 
-type TabType = "Pending" | "Approved" | "Active" | "Rejected";
+type TabType = "Pending" | "Active" | "Rejected";
 
 export default function ListingsPage() {
   const queryClient = useQueryClient();
@@ -38,6 +39,15 @@ export default function ListingsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedListing, setSelectedListing] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [approvingFromModalId, setApprovingFromModalId] = useState<
+    string | null
+  >(null);
+  const [rejectingFromModalId, setRejectingFromModalId] = useState<
+    string | null
+  >(null);
+  const [disablingFromModalId, setDisablingFromModalId] = useState<
+    string | null
+  >(null);
   const [rejectingProductId, setRejectingProductId] = useState<string | null>(
     null,
   );
@@ -48,7 +58,6 @@ export default function ListingsPage() {
 
   // Pagination state for each tab
   const [pendingPage, setPendingPage] = useState(1);
-  const [approvedPage, setApprovedPage] = useState(1);
   const [activePage, setActivePage] = useState(1);
   const [rejectedPage, setRejectedPage] = useState(1);
 
@@ -66,39 +75,40 @@ export default function ListingsPage() {
     console.error("Failed to load product statistics:", statsError);
   }
 
-  const TABS: TabType[] = ["Pending", "Approved", "Active", "Rejected"];
+  const TABS: TabType[] = ["Pending", "Active", "Rejected"];
 
-  // Fetch products for each tab
+  // Fetch products for active tab only to reduce API calls
   const { data: pendingResponse, isLoading: pendingLoading } =
-    usePendingProducts({
-      page: pendingPage,
+    usePendingProducts(
+      {
+        page: pendingPage,
+        count: 20,
+      },
+      activeTab === "Pending",
+    );
+  const { data: activeResponse, isLoading: activeLoading } = useActiveProducts(
+    {
+      page: activePage,
       count: 20,
-    });
-  const { data: approvedResponse, isLoading: approvedLoading } =
-    useApprovedProducts({
-      page: approvedPage,
-      count: 20,
-    });
-  const { data: activeResponse, isLoading: activeLoading } = useActiveProducts({
-    page: activePage,
-    count: 20,
-  });
+    },
+    activeTab === "Active",
+  );
   const { data: rejectedResponse, isLoading: rejectedLoading } =
-    useRejectedProducts({
-      page: rejectedPage,
-      count: 20,
-    });
+    useRejectedProducts(
+      {
+        page: rejectedPage,
+        count: 20,
+      },
+      activeTab === "Rejected",
+    );
 
   const pendingProducts = pendingResponse?.data?.products || [];
-  const approvedProducts = approvedResponse?.data?.products || [];
   const activeProducts = activeResponse?.data?.products || [];
   const rejectedProducts = rejectedResponse?.data?.products || [];
 
   // Pagination data
   const pendingTotal = pendingResponse?.data?.total || 0;
   const pendingTotalPages = pendingResponse?.data?.totalPages || 1;
-  const approvedTotal = approvedResponse?.data?.total || 0;
-  const approvedTotalPages = approvedResponse?.data?.totalPages || 1;
   const activeTotal = activeResponse?.data?.total || 0;
   const activeTotalPages = activeResponse?.data?.totalPages || 1;
   const rejectedTotal = rejectedResponse?.data?.total || 0;
@@ -107,15 +117,52 @@ export default function ListingsPage() {
   // Mutations
   const approveMutation = useApproveListing();
   const rejectMutation = useRejectListing();
+  const setAvailabilityMutation = useSetAvailability();
 
   const handleApprove = (productId: string) => {
     setApprovingProductId(productId);
+
+    // Prepare query key for cache update
+    const queryKey = [
+      "admin",
+      "products",
+      "pending",
+      { page: pendingPage, count: 20 },
+    ];
+
+    // Get current cached data
+    const previousData = queryClient.getQueryData(queryKey);
+
+    // Optimistically update cache to remove the product
+    if (previousData) {
+      queryClient.setQueryData(queryKey, (oldData: any) => ({
+        ...oldData,
+        data: {
+          ...oldData.data,
+          products: oldData.data.products.filter(
+            (product: Product) => product.id !== productId,
+          ),
+          total: Math.max(0, (oldData.data.total || 1) - 1),
+        },
+      }));
+    }
+
     approveMutation.mutate(productId, {
-      onSuccess: () => {
+      onSuccess: (response) => {
         setApprovingProductId(null);
+        const message =
+          (response as any)?.message || "Product approved successfully!";
+        toast.success(message);
       },
-      onError: () => {
+      onError: (error: any) => {
         setApprovingProductId(null);
+        // Revert optimistic update on error
+        if (previousData) {
+          queryClient.setQueryData(queryKey, previousData);
+        }
+        const errorMessage =
+          error?.response?.data?.message || "Failed to approve product";
+        toast.error(errorMessage);
       },
     });
   };
@@ -127,22 +174,199 @@ export default function ListingsPage() {
 
   const handleConfirmReject = () => {
     if (rejectingProductId && rejectionComment.trim()) {
+      // Prepare query key for cache update
+      const queryKey = [
+        "admin",
+        "products",
+        "pending",
+        { page: pendingPage, count: 20 },
+      ];
+
+      // Get current cached data
+      const previousData = queryClient.getQueryData(queryKey);
+
+      // Optimistically update cache to remove the product from pending
+      if (previousData) {
+        queryClient.setQueryData(queryKey, (oldData: any) => ({
+          ...oldData,
+          data: {
+            ...oldData.data,
+            products: oldData.data.products.filter(
+              (product: Product) => product.id !== rejectingProductId,
+            ),
+            total: Math.max(0, (oldData.data.total || 1) - 1),
+          },
+        }));
+      }
+
       rejectMutation.mutate(
         {
           productId: rejectingProductId,
           rejectionComment,
         },
         {
-          onSuccess: () => {
+          onSuccess: (response) => {
             setRejectingProductId(null);
             setRejectionComment("");
+            const message =
+              (response as any)?.message || "Product rejected successfully!";
+            toast.success(message);
           },
-          onError: () => {
+          onError: (error: any) => {
             setRejectingProductId(null);
+            // Revert optimistic update on error
+            if (previousData) {
+              queryClient.setQueryData(queryKey, previousData);
+            }
+            const errorMessage =
+              error?.response?.data?.message || "Failed to reject product";
+            toast.error(errorMessage);
           },
         },
       );
     }
+  };
+
+  // Handlers for modal actions
+  const handleModalApprove = (productId: string) => {
+    setApprovingFromModalId(productId);
+    const queryKey = [
+      "admin",
+      "products",
+      "pending",
+      { page: pendingPage, count: 20 },
+    ];
+    const previousData = queryClient.getQueryData(queryKey);
+
+    if (previousData) {
+      queryClient.setQueryData(queryKey, (oldData: any) => ({
+        ...oldData,
+        data: {
+          ...oldData.data,
+          products: oldData.data.products.filter(
+            (product: Product) => product.id !== productId,
+          ),
+          total: Math.max(0, (oldData.data.total || 1) - 1),
+        },
+      }));
+    }
+
+    approveMutation.mutate(productId, {
+      onSuccess: (response) => {
+        setApprovingFromModalId(null);
+        setIsModalOpen(false);
+        const message =
+          (response as any)?.message || "Product approved successfully!";
+        toast.success(message);
+      },
+      onError: (error: any) => {
+        setApprovingFromModalId(null);
+        if (previousData) {
+          queryClient.setQueryData(queryKey, previousData);
+        }
+        const errorMessage =
+          error?.response?.data?.message || "Failed to approve product";
+        toast.error(errorMessage);
+      },
+    });
+  };
+
+  const handleModalReject = (productId: string, comment: string) => {
+    setRejectingFromModalId(productId);
+    const queryKey = [
+      "admin",
+      "products",
+      "pending",
+      { page: pendingPage, count: 20 },
+    ];
+    const previousData = queryClient.getQueryData(queryKey);
+
+    if (previousData) {
+      queryClient.setQueryData(queryKey, (oldData: any) => ({
+        ...oldData,
+        data: {
+          ...oldData.data,
+          products: oldData.data.products.filter(
+            (product: Product) => product.id !== productId,
+          ),
+          total: Math.max(0, (oldData.data.total || 1) - 1),
+        },
+      }));
+    }
+
+    rejectMutation.mutate(
+      {
+        productId,
+        rejectionComment: comment,
+      },
+      {
+        onSuccess: (response) => {
+          setRejectingFromModalId(null);
+          setIsModalOpen(false);
+          const message =
+            (response as any)?.message || "Product rejected successfully!";
+          toast.success(message);
+        },
+        onError: (error: any) => {
+          setRejectingFromModalId(null);
+          if (previousData) {
+            queryClient.setQueryData(queryKey, previousData);
+          }
+          const errorMessage =
+            error?.response?.data?.message || "Failed to reject product";
+          toast.error(errorMessage);
+        },
+      },
+    );
+  };
+
+  const handleModalDisable = (productId: string) => {
+    setDisablingFromModalId(productId);
+    const queryKey = [
+      "admin",
+      "products",
+      "active",
+      { page: activePage, count: 20 },
+    ];
+    const previousData = queryClient.getQueryData(queryKey);
+
+    if (previousData) {
+      queryClient.setQueryData(queryKey, (oldData: any) => ({
+        ...oldData,
+        data: {
+          ...oldData.data,
+          products: oldData.data.products.filter(
+            (product: Product) => product.id !== productId,
+          ),
+          total: Math.max(0, (oldData.data.total || 1) - 1),
+        },
+      }));
+    }
+
+    setAvailabilityMutation.mutate(
+      {
+        productId,
+        isAvailable: false,
+      },
+      {
+        onSuccess: (response) => {
+          setDisablingFromModalId(null);
+          setIsModalOpen(false);
+          const message =
+            (response as any)?.message || "Product disabled successfully!";
+          toast.success(message);
+        },
+        onError: (error: any) => {
+          setDisablingFromModalId(null);
+          if (previousData) {
+            queryClient.setQueryData(queryKey, previousData);
+          }
+          const errorMessage =
+            error?.response?.data?.message || "Failed to disable product";
+          toast.error(errorMessage);
+        },
+      },
+    );
   };
 
   return (
@@ -217,7 +441,7 @@ export default function ListingsPage() {
           <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium text-sm text-gray-700 bg-white">
             All Categories
           </button>
-          <button className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-800 text-gray-900 rounded-lg hover:bg-gray-50 transition font-medium text-sm bg-white">
+          <button className="flex- hidden items-center justify-center gap-2 px-4 py-2 border border-gray-800 text-gray-900 rounded-lg hover:bg-gray-50 transition font-medium text-sm bg-white">
             <Download size={18} />
             Export
           </button>
@@ -356,25 +580,13 @@ export default function ListingsPage() {
                 approvingProductId={approvingProductId}
               />
             )}
-            {activeTab === "Approved" && (
-              <ApprovedListingsTable
-                products={approvedProducts}
-                isLoading={approvedLoading}
-                error={null}
-                searchQuery={searchQuery}
-                onView={(product) => {
-                  setSelectedListing(product);
-                  setIsModalOpen(true);
-                }}
-              />
-            )}
             {activeTab === "Active" && (
-              <ApprovedListingsTable
+              <ActiveListingsTable
                 products={activeProducts}
                 isLoading={activeLoading}
                 error={null}
                 searchQuery={searchQuery}
-                onView={(product) => {
+                onView={(product: Product) => {
                   setSelectedListing(product);
                   setIsModalOpen(true);
                 }}
@@ -399,15 +611,12 @@ export default function ListingsPage() {
       {/* Pagination Controls */}
       {!statsLoading &&
         ((activeTab === "Pending" && pendingProducts.length > 0) ||
-          (activeTab === "Approved" && approvedProducts.length > 0) ||
           (activeTab === "Active" && activeProducts.length > 0) ||
           (activeTab === "Rejected" && rejectedProducts.length > 0)) && (
           <div className="mt-6 flex items-center justify-between">
             <Paragraph1 className="text-sm text-gray-600">
               {activeTab === "Pending" &&
                 `Page ${pendingPage} of ${pendingTotalPages} • ${pendingTotal} pending products`}
-              {activeTab === "Approved" &&
-                `Page ${approvedPage} of ${approvedTotalPages} • ${approvedTotal} approved products`}
               {activeTab === "Active" &&
                 `Page ${activePage} of ${activeTotalPages} • ${activeTotal} active products`}
               {activeTab === "Rejected" &&
@@ -419,8 +628,6 @@ export default function ListingsPage() {
                 onClick={() => {
                   if (activeTab === "Pending" && pendingPage > 1)
                     setPendingPage(pendingPage - 1);
-                  if (activeTab === "Approved" && approvedPage > 1)
-                    setApprovedPage(approvedPage - 1);
                   if (activeTab === "Active" && activePage > 1)
                     setActivePage(activePage - 1);
                   if (activeTab === "Rejected" && rejectedPage > 1)
@@ -428,7 +635,6 @@ export default function ListingsPage() {
                 }}
                 disabled={
                   (activeTab === "Pending" && pendingPage <= 1) ||
-                  (activeTab === "Approved" && approvedPage <= 1) ||
                   (activeTab === "Active" && activePage <= 1) ||
                   (activeTab === "Rejected" && rejectedPage <= 1)
                 }
@@ -444,11 +650,6 @@ export default function ListingsPage() {
                     pendingPage < pendingTotalPages
                   )
                     setPendingPage(pendingPage + 1);
-                  if (
-                    activeTab === "Approved" &&
-                    approvedPage < approvedTotalPages
-                  )
-                    setApprovedPage(approvedPage + 1);
                   if (activeTab === "Active" && activePage < activeTotalPages)
                     setActivePage(activePage + 1);
                   if (
@@ -460,8 +661,6 @@ export default function ListingsPage() {
                 disabled={
                   (activeTab === "Pending" &&
                     pendingPage >= pendingTotalPages) ||
-                  (activeTab === "Approved" &&
-                    approvedPage >= approvedTotalPages) ||
                   (activeTab === "Active" && activePage >= activeTotalPages) ||
                   (activeTab === "Rejected" &&
                     rejectedPage >= rejectedTotalPages)
@@ -477,6 +676,24 @@ export default function ListingsPage() {
 
       {/* Management Panel - Categories, Tags, Brands */}
       <ManagementPanel />
+
+      {/* Listing Detail Modal */}
+      {selectedListing && (
+        <ListingDetailModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedListing(null);
+          }}
+          product={selectedListing}
+          onApprove={handleModalApprove}
+          onReject={handleModalReject}
+          onDisable={handleModalDisable}
+          isApproving={approvingFromModalId === selectedListing.id}
+          isRejecting={rejectingFromModalId === selectedListing.id}
+          isDisabling={disablingFromModalId === selectedListing.id}
+        />
+      )}
     </div>
   );
 }

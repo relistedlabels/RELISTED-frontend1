@@ -35,20 +35,28 @@ export const useListingCategories = () =>
 // Note: getListings removed - use usePendingProducts(), useApprovedProducts(), or useRejectedProducts() instead
 // These replace the old generic listing query with status-specific endpoints matching the new API
 
-export const usePendingProducts = (params: { page?: number; count?: number }) =>
+export const usePendingProducts = (
+  params: { page?: number; count?: number },
+  enabled = true,
+) =>
   useQuery({
     queryKey: ["admin", "products", "pending", params],
     queryFn: () => productsApi.getPending(params),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
+    enabled,
   });
 
-export const useActiveProducts = (params: { page?: number; count?: number }) =>
+export const useActiveProducts = (
+  params: { page?: number; count?: number },
+  enabled = true,
+) =>
   useQuery({
     queryKey: ["admin", "products", "active", params],
     queryFn: () => productsApi.getActive(params),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
+    enabled,
   });
 
 // Approved products use the same endpoint as active for now
@@ -63,15 +71,19 @@ export const useApprovedProducts = (params: {
     refetchOnWindowFocus: false,
   });
 
-export const useRejectedProducts = (params: {
-  page?: number;
-  count?: number;
-}) =>
+export const useRejectedProducts = (
+  params: {
+    page?: number;
+    count?: number;
+  },
+  enabled = true,
+) =>
   useQuery({
     queryKey: ["admin", "products", "rejected", params],
     queryFn: () => productsApi.getRejected(params),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
+    enabled,
   });
 
 export const useListingDetail = (productId: string) =>
@@ -125,6 +137,31 @@ export const useRejectListing = () => {
     },
     onError: (error) => {
       console.error("Failed to reject listing:", error);
+    },
+  });
+};
+
+export const useSetAvailability = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      productId,
+      isAvailable,
+    }: {
+      productId: string;
+      isAvailable: boolean;
+    }) => productsApi.setAvailability(productId, isAvailable),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "listings"] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "listings", "statistics"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "listings", "detail"],
+      });
+    },
+    onError: (error) => {
+      console.error("Failed to set availability:", error);
     },
   });
 };

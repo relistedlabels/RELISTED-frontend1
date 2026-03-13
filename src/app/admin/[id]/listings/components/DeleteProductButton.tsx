@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { useDeleteProduct } from "@/lib/mutations/product/useDeleteProduct";
+import { useDeleteAdminProduct } from "@/lib/queries/admin/useDeleteAdminProduct";
 import { Paragraph1 } from "@/common/ui/Text";
 
 interface DeleteProductButtonProps {
@@ -13,11 +13,7 @@ const DeleteProductButton = ({
   productName = "Product",
 }: DeleteProductButtonProps) => {
   const [open, setOpen] = useState(false);
-  const {
-    mutate: deleteProduct,
-    isPending,
-    isSuccess,
-  } = useDeleteProduct(productId);
+  const { mutate: deleteProduct, isPending } = useDeleteAdminProduct(productId);
 
   const handleDelete = () => {
     deleteProduct(undefined, {
@@ -29,7 +25,7 @@ const DeleteProductButton = ({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="w-full px-4 py-2 border border-red-400 text-red-500 rounded-lg font-semibold hover:bg-red-50 transition mt-2"
+        className="w-full px-4 py-2 border border-red-400 text-red-500 rounded-lg font-semibold hover:bg-red-50 transition "
       >
         <Paragraph1>Delete Listing</Paragraph1>
       </button>
@@ -64,11 +60,6 @@ const DeleteProductButton = ({
                 </Paragraph1>
               </button>
             </div>
-            {isSuccess && (
-              <Paragraph1 className="text-green-600 mt-4">
-                Listing deleted successfully.
-              </Paragraph1>
-            )}
           </div>
         </div>
       )}

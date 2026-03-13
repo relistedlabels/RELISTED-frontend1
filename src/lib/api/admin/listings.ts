@@ -25,15 +25,17 @@ export interface ListingBrand {
 }
 
 export interface Curator {
+  id?: string;
   name: string;
   email: string;
+  avatar?: string;
 }
 
 export interface Product {
   id: string;
   name: string;
   subText: string;
-  category: string;
+  category: string | { id: string; name: string };
   image: string;
   condition: string;
   originalValue: number;
@@ -43,6 +45,7 @@ export interface Product {
   dateAdded: string;
   listerName: string;
   curator?: Curator;
+  curatorId?: string;
   productVerified: boolean;
 }
 
@@ -111,14 +114,14 @@ export const productsApi = {
 
   // 5. PATCH /api/admin/products/:productId/approve
   approveProduct: (productId: string) =>
-    apiFetch<{ success: true; data: any }>(
+    apiFetch<{ success: true; message: string; data: any }>(
       `/api/admin/products/${productId}/approve`,
       { method: "PATCH" },
     ),
 
   // 6. PATCH /api/admin/products/:productId/reject
   rejectProduct: (productId: string, rejectionComment: string) =>
-    apiFetch<{ success: true; data: any }>(
+    apiFetch<{ success: true; message: string; data: any }>(
       `/api/admin/products/${productId}/reject`,
       {
         method: "PATCH",

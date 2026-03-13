@@ -2,6 +2,8 @@ import React from "react";
 import { Eye } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { Product } from "@/lib/api/admin/listings";
+import { usePublicProductById } from "@/lib/queries/product/usePublicProductById";
+import { usePublicUserById } from "@/lib/queries/user/usePublicUserById";
 
 interface RejectedListingsTableProps {
   products: Product[];
@@ -11,6 +13,67 @@ interface RejectedListingsTableProps {
   onView: (product: Product) => void;
 }
 
+// Helper to get initials from name
+const getInitials = (name?: string): string => {
+  if (!name) return "U";
+  const parts = name.split(" ");
+  return parts
+    .map((p) => p.charAt(0).toUpperCase())
+    .join("")
+    .slice(0, 2);
+};
+
+// Curator avatar component
+const CuratorAvatar = React.memo<{
+  curatorId?: string;
+  curatorName?: string;
+}>(({ curatorId, curatorName }) => {
+  const { data: publicUser, isLoading } = usePublicUserById(curatorId || "");
+  const avatar = publicUser?.avatar || null;
+
+  return (
+    <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center text-xs font-semibold text-gray-600 flex-shrink-0">
+      {avatar && !isLoading ? (
+        <img
+          src={avatar}
+          alt={curatorName || "Curator"}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            e.currentTarget.style.display = "none";
+          }}
+        />
+      ) : (
+        <span>{getInitials(curatorName)}</span>
+      )}
+    </div>
+  );
+});
+
+// Product image component
+const ProductImage: React.FC<{ productId: string }> = ({ productId }) => {
+  const { data: product, isLoading } = usePublicProductById(productId);
+  const firstImageUrl = product?.attachments?.uploads?.[0]?.url;
+
+  if (isLoading) {
+    return <div className="w-16 h-16 rounded object-cover bg-gray-200" />;
+  }
+
+  if (!firstImageUrl) {
+    return <div className="w-16 h-16 rounded object-cover bg-gray-200" />;
+  }
+
+  return (
+    <img
+      src={firstImageUrl}
+      alt="Product"
+      className="w-16 h-16 rounded object-cover"
+      onError={(e) => {
+        e.currentTarget.style.display = "none";
+      }}
+    />
+  );
+};
+
 export default function RejectedListingsTable({
   products,
   isLoading,
@@ -18,13 +81,6 @@ export default function RejectedListingsTable({
   searchQuery,
   onView,
 }: RejectedListingsTableProps) {
-  const getImageUrl = (listing: Product): string => {
-    if (listing.image) {
-      return listing.image;
-    }
-    return "https://via.placeholder.com/100?text=No+Image";
-  };
-
   const filteredProducts = products.filter((product: Product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -65,7 +121,7 @@ export default function RejectedListingsTable({
               Image
             </th>
             <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-              Item Name
+              Curator
             </th>
             <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide w-32">
               Curator
@@ -91,24 +147,23 @@ export default function RejectedListingsTable({
               className="border-b border-gray-200 hover:bg-gray-50 transition"
             >
               <td className="py-4 px-6">
-                <img
-                  src={getImageUrl(product)}
-                  alt={product.name}
-                  className="w-16 h-16 rounded object-cover"
-                />
+                <ProductImage productId={product.id} />
               </td>
               <td className="py-4 px-6">
                 <Paragraph1 className="font-medium text-gray-900">
                   {product.name}
                 </Paragraph1>
-                <Paragraph1 className="text-xs text-gray-500">
-                  {product.subText || "—"}
-                </Paragraph1>
               </td>
-              <td className="py-4 px-6 max-w-xs">
-                <Paragraph1 className="text-sm text-gray-900 truncate">
-                  {product.curator?.name || "N/A"}
-                </Paragraph1>
+              <td className="py-4 px-6">
+                <div className="flex items-center gap-2">
+                  <CuratorAvatar
+                    curatorId={product.curatorId}
+                    curatorName={product.curator?.name}
+                  />
+                  <Paragraph1 className="text-sm text-gray-900">
+                    {product.curator?.name || "Unknown"}
+                  </Paragraph1>
+                </div>
               </td>
               <td className="py-4 px-6">
                 <Paragraph1 className="font-medium text-gray-900">
