@@ -16,7 +16,7 @@ export const categories: Category[] = [
     description:
       "Irresistible looks designed to turn heads, spark chemistry, and leave a lasting impression.",
     link: `/shop?category=${encodeURIComponent("Date Night")}&title=${encodeURIComponent("Date Night")}&description=${encodeURIComponent("Irresistible looks designed to turn heads, spark chemistry, and leave a lasting impression.")}`,
-    height: "463px",
+    height: "500px",
     filterType: "categories",
     filterValue: "Date Night",
   },
@@ -26,7 +26,7 @@ export const categories: Category[] = [
     description:
       "Effortlessly chic styles made for slow mornings, good vibes, and Instagram-worthy moments.",
     link: `/shop?category=${encodeURIComponent("Brunch Outfits")}&title=${encodeURIComponent("Brunch Outfits")}&description=${encodeURIComponent("Effortlessly chic styles made for slow mornings, good vibes, and Instagram-worthy moments.")}`,
-    height: "477px",
+    height: "500px",
     filterType: "categories",
     filterValue: "Brunch Outfits",
   },
@@ -36,7 +36,7 @@ export const categories: Category[] = [
     description:
       "Elevated pieces crafted for moments that matter — when looking unforgettable is non-negotiable.",
     link: `/shop?category=${encodeURIComponent("Special Occasions")}&title=${encodeURIComponent("Special Occasions")}&description=${encodeURIComponent("Elevated pieces crafted for moments that matter — when looking unforgettable is non-negotiable.")}`,
-    height: "333px",
+    height: "500px",
     filterType: "categories",
     filterValue: "Special Occasions",
   },
@@ -46,7 +46,7 @@ export const categories: Category[] = [
     description:
       "Power dressing redefined. Polished, confident silhouettes for the modern professional woman.",
     link: `/shop?category=${encodeURIComponent("Corporate Closet")}&title=${encodeURIComponent("Corporate Closet")}&description=${encodeURIComponent("Power dressing redefined. Polished, confident silhouettes for the modern professional woman.")}`,
-    height: "607px",
+    height: "500px",
     filterType: "categories",
     filterValue: "Corporate Closet",
   },
