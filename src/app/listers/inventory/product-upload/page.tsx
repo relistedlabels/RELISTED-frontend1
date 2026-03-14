@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect } from "react";
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import DashboardLayout from "../../components/DashboardLayout";
 import UploadItemHeader from "../../components/UploadItemHeader";
@@ -5,8 +8,16 @@ import { ItemImageUploader } from "../../components/ItemImageUploader";
 import { BasicInformationForm } from "../../components/BasicInformationForm";
 import { TagSelector } from "../../components/TagSelector";
 import { ItemDescription } from "../../components/ItemDescription";
+import { useProductDraftStore } from "@/store/useProductDraftStore";
 
 export default function Page() {
+  const reset = useProductDraftStore((state) => state.reset);
+
+  // Clear store and image previews when creating a new item
+  useEffect(() => {
+    reset();
+  }, [reset]);
+
   const path = [
     // { label: "Dashboard", href: "/listers/dashboard" },
     { label: "Dashboard", href: "#" },

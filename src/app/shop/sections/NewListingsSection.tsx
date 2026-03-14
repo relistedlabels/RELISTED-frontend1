@@ -15,7 +15,7 @@ export default function NewListingsSection() {
     window.scrollTo(0, 0);
   }, []);
   const {
-    data: filteredProducts = [],
+    data: { products: filteredProducts = [], pagination } = {},
     isLoading: loading,
     error,
     refetch,
@@ -27,9 +27,17 @@ export default function NewListingsSection() {
     const params = new URLSearchParams(searchParams);
     if (search) {
       params.set("search", search);
+      params.set("page", "1");
     } else {
       params.delete("search");
+      params.set("page", "1");
     }
+    router.push(`?${params.toString()}`);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("page", newPage.toString());
     router.push(`?${params.toString()}`);
   };
 
@@ -45,6 +53,7 @@ export default function NewListingsSection() {
               Loading products...
             </Paragraph1>
           </div>
+          <ProductCardSkeleton count={12} />
         </div>
       </section>
     );
@@ -59,7 +68,7 @@ export default function NewListingsSection() {
               Available Listings
             </Header1Plus>
           </div>
-          <ProductCardSkeleton count={9} />
+          <ProductCardSkeleton count={12} />
         </div>
       </section>
     );
@@ -98,22 +107,66 @@ export default function NewListingsSection() {
             </Paragraph1>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
-            {filteredProducts.map((product: any) => (
-              <ProductCard
-                key={product.id}
-                id={product.id}
-                image={
-                  product.attachments?.uploads?.[0]?.url || "/placeholder.jpg"
-                }
-                brand={product.brand?.name || "BRAND"}
-                name={product.name}
-                price={`₦${product.originalValue.toLocaleString()}`}
-                dailyPrice={product.dailyPrice}
-                size={product.measurement}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
+              {filteredProducts.map((product: any) => (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  image={
+                    product.attachments?.uploads?.[0]?.url || "/placeholder.jpg"
+                  }
+                  brand={product.brand?.name || "BRAND"}
+                  name={product.name}
+                  price={`₦${product.originalValue.toLocaleString()}`}
+                  dailyPrice={product.dailyPrice}
+                  size={product.measurement}
+                />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {pagination && pagination.totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-8">
+                <button
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  disabled={!pagination.hasPrevious}
+                  className="px-4 py-2 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  Previous
+                </button>
+
+                {/* Page Numbers */}
+                {Array.from({ length: pagination.totalPages }).map(
+                  (_, index) => {
+                    const pageNum = index + 1;
+                    const isActive = pageNum === pagination.page;
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`px-3 py-2 rounded border ${
+                          isActive
+                            ? "bg-black text-white border-black"
+                            : "border-gray-300 hover:bg-gray-50"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  },
+                )}
+
+                <button
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  disabled={!pagination.hasNext}
+                  className="px-4 py-2 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>

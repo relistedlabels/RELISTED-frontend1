@@ -18,10 +18,8 @@ const TopListingSection = () => {
     error,
   } = useProducts({
     sort: "newest",
-    categories: ["Dresses"],
-    brands: ["Gucci"],
-    priceMin: 5000,
-    priceMax: 50000,
+    categories: ["Vacation"],
+    limit: 7,
   });
   // Convert vertical wheel to horizontal scroll for mouse users
   const onWheel = (e: React.WheelEvent) => {
@@ -70,8 +68,7 @@ const TopListingSection = () => {
     );
   }
 
-  const displayProducts =
-    products && products.length > 0 ? [...products, ...products] : [];
+  const displayProducts = products || [];
 
   return (
     <section className="py-6 sm:py-12 px-4 sm:px-0 bg-white">
@@ -135,7 +132,7 @@ const TopListingSection = () => {
         )}
         <div className="mt-2 flex items-center w-full justify-center">
           <Link
-            href="/shop?title=VACATION+OUTFITS&category=585273612"
+            href={`/shop?category=${encodeURIComponent("Vacation")}&title=${encodeURIComponent("VACATION OUTFITS")}`}
             className="inline-flex items-center justify-center w-full max-w-md px-8 py-3 
                          bg-black text-white text-sm font-medium tracking-wider  
                          transition-colors duration-200 hover:bg-neutral-800 focus:outline-none 

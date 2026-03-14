@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -13,13 +13,29 @@ import SearchModal from "./SearchModal";
 import { AuthActions } from "./AuthActions";
 import { shouldShowNavBar } from "@/lib/navbarRoutes";
 import { useFavoriteCountStore } from "@/store/useFavoriteCountStore";
+import { useCartCountStore } from "@/store/useCartCountStore";
 import { useRentalRequests } from "@/lib/queries/renters/useRentalRequests";
 
 function DesktopNavbarContent() {
   const favoriteCount = useFavoriteCountStore((state) => state.favoriteCount);
-  const { data } = useRentalRequests("pending", 1, 50);
+  const cartCount = useCartCountStore((state) => state.cartCount);
+  const setCartCount = useCartCountStore((state) => state.setCartCount);
 
-  const totalItems = data?.cartSummary?.totalItems ?? 0;
+  // Sync cart count from DB on mount (only once, no polling or refetching)
+  const { data } = useRentalRequests("pending", 1, 1, {
+    staleTime: Infinity,
+    refetchInterval: undefined,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+  });
+
+  useEffect(() => {
+    if (data?.cartSummary?.totalItems !== undefined) {
+      setCartCount(data.cartSummary.totalItems);
+    }
+  }, [data?.cartSummary?.totalItems, setCartCount]);
+
   return (
     <nav className="bg-black/95 backdrop-blur-md hidden xl:block text-white fixed w-full z-50">
       <div className="relative flex items-center justify-between container mx-auto w-full py-4 px-[20px]">
@@ -53,7 +69,7 @@ function DesktopNavbarContent() {
 
           <Link href="/shop/cart" className="flex items-center space-x-1">
             <ShoppingBagIcon className="w-6 h-6" />
-            <Paragraph1>{totalItems}</Paragraph1>
+            <Paragraph1>{cartCount}</Paragraph1>
           </Link>
 
           {/* <RentalCartView /> */}

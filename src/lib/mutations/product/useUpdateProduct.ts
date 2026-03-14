@@ -26,7 +26,7 @@ export const useUpdateProduct = (productId: string) => {
         measurement: draft.measurement,
         originalValue: draft.originalValue,
         dailyPrice: draft.dailyRentalPrice, // ✅ Correct field name
-        // collateralPrice: draft.collateralPrice, // ✅ Collateral amount
+        collateralPrice: draft.collateralPrice, // ✅ Collateral amount
         quantity: draft.quantity, // ✅ Include quantity
         color: draft.color, // ✅ String, not array
         warning: draft.warning.trim(),

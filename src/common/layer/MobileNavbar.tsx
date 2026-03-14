@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Heart, ShoppingBag, ShoppingBagIcon } from "lucide-react";
 import Image from "next/image";
@@ -14,15 +14,30 @@ import ShopDropdownMobile from "./ShopDropdownMobile";
 import { shouldShowNavBar } from "@/lib/navbarRoutes";
 import { MobileAuthActions } from "./MobileAuthActions";
 import { useFavoriteCountStore } from "@/store/useFavoriteCountStore";
+import { useCartCountStore } from "@/store/useCartCountStore";
 import { useRentalRequests } from "@/lib/queries/renters/useRentalRequests";
 
 function MobileNavbarContent() {
   const [open, setOpen] = useState(false);
   const [isShopMenuOpen, setIsShopMenuOpen] = useState(false);
   const favoriteCount = useFavoriteCountStore((state) => state.favoriteCount);
-  const { data } = useRentalRequests("pending", 1, 50);
+  const cartCount = useCartCountStore((state) => state.cartCount);
+  const setCartCount = useCartCountStore((state) => state.setCartCount);
 
-  const totalItems = data?.cartSummary?.totalItems ?? 0;
+  // Sync cart count from DB on mount (only once, no polling or refetching)
+  const { data } = useRentalRequests("pending", 1, 1, {
+    staleTime: Infinity,
+    refetchInterval: undefined,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+  });
+
+  useEffect(() => {
+    if (data?.cartSummary?.totalItems !== undefined) {
+      setCartCount(data.cartSummary.totalItems);
+    }
+  }, [data?.cartSummary?.totalItems, setCartCount]);
 
   return (
     <div className="fixed top-0 left-0 w-full bg-black text-white  px-4 py-5 z-50 xl:hidden">
@@ -52,7 +67,7 @@ function MobileNavbarContent() {
 
           <Link href="/shop/cart" className="flex items-center space-x-1">
             <ShoppingBagIcon className="w-6 h-6" />
-            <Paragraph1>{totalItems}</Paragraph1>
+            <Paragraph1>{cartCount}</Paragraph1>
           </Link>
         </div>
       </div>

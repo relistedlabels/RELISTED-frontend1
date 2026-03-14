@@ -8,7 +8,8 @@ export const useProductsQuery = () => {
   // Parse URL parameters
   const search = searchParams.get("search") || undefined;
   const gender = searchParams.get("gender") || undefined;
-  const categories = searchParams.getAll("categories");
+  const category = searchParams.get("category") || undefined;
+  const categories = category ? [category] : searchParams.getAll("categories");
   const brands = searchParams.getAll("brands");
   const sizes = searchParams.get("sizes") || undefined;
   const priceMin = searchParams.get("priceMin")
@@ -17,11 +18,14 @@ export const useProductsQuery = () => {
   const priceMax = searchParams.get("priceMax")
     ? parseInt(searchParams.get("priceMax")!)
     : undefined;
+  const page = searchParams.get("page")
+    ? parseInt(searchParams.get("page")!)
+    : 1;
 
-  const query = useQuery({
+  const query = useQuery<any, Error, { products: any[]; pagination?: any }>({
     queryKey: [
       "products",
-      { search, gender, categories, brands, sizes, priceMin, priceMax },
+      { search, gender, categories, brands, sizes, priceMin, priceMax, page },
     ],
     queryFn: async () => {
       const response = await productApi.getAll({
@@ -32,6 +36,8 @@ export const useProductsQuery = () => {
         sizes,
         priceMin,
         priceMax,
+        page,
+        limit: 12,
       });
 
       // Filter products with status "APPROVED" or "AVAILABLE"
@@ -40,7 +46,10 @@ export const useProductsQuery = () => {
           product.status === "APPROVED" || product.status === "AVAILABLE",
       );
 
-      return filteredProducts;
+      return {
+        products: filteredProducts,
+        pagination: response.data.pagination,
+      };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,

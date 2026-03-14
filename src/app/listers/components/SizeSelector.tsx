@@ -18,10 +18,9 @@ const SIZE_MAP: Record<string, string[]> = {
     const size = 2 + Math.floor(i / 2);
     return i % 2 === 0 ? String(size) : String(size) + ".5";
   }),
-  International: ["XS", "S", "M", "L", "XL", "XXL", "XXXL", "4XL", "5XL"],
 };
 
-const UNITS = ["EU", "UK", "US", "International"] as const;
+const UNITS = ["EU", "UK", "US"] as const;
 type Unit = (typeof UNITS)[number];
 
 export const SizeSelector: React.FC = () => {
@@ -32,11 +31,11 @@ export const SizeSelector: React.FC = () => {
   // 👇 extract from store (measurement format: "size-unit", e.g. "38-EU")
   const parsed = useMemo(() => {
     if (!data.measurement?.includes("-")) {
-      return { size: null, unit: "International" as Unit };
+      return { size: null, unit: "UK" as Unit };
     }
     const [size, unit] = data.measurement.split("-");
     const validUnit =
-      unit && UNITS.includes(unit as Unit) ? (unit as Unit) : "International";
+      unit && UNITS.includes(unit as Unit) ? (unit as Unit) : "UK";
     return { size: size || null, unit: validUnit };
   }, [data.measurement]);
 

@@ -5,6 +5,7 @@ export const useRentalRequests = (
   status?: "pending" | "approved" | "rejected" | "expired" | "all",
   page?: number,
   limit?: number,
+  options?: Record<string, unknown>,
 ) =>
   useQuery({
     queryKey: ["renters", "rental-requests", status, page, limit],
@@ -19,4 +20,5 @@ export const useRentalRequests = (
     staleTime: 30 * 1000, // 30 seconds - short cache since items are expiring
     retry: 1,
     refetchInterval: 5 * 1000, // Poll every 5 seconds for cart updates
+    ...options, // Allow overriding options for specific use cases
   });

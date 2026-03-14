@@ -33,7 +33,7 @@ export const useCreateProduct = () => {
         measurement: draft.measurement,
         originalValue: draft.originalValue,
         dailyPrice: draft.dailyRentalPrice,
-        // collateralPrice: draft.collateralPrice,
+        collateralPrice: draft.collateralPrice,
         quantity: draft.quantity,
         color: draft.color,
         warning: draft.warning.trim(),

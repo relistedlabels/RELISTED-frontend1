@@ -86,11 +86,21 @@ export type UserProductsResponse = {
   data: UserProduct[];
 };
 
+export type PaginationData = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+};
+
 export type ProductsResponse = {
   success: boolean;
   message: string;
   data: {
     products: UserProduct[];
+    pagination?: PaginationData;
   };
 };
 

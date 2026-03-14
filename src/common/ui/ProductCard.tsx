@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useBrowseStore } from "@/store/useBrowseStore";
 import { Paragraph1 } from "./Text";
 import { Heart } from "lucide-react";
@@ -35,6 +36,7 @@ export default function ProductCard({
 }: ProductCardProps) {
   const router = useRouter();
   const addViewed = useBrowseStore((state) => state.addViewed);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const { data: user } = useMe();
   const { data: favoritesData } = useFavorites(1, 100);
