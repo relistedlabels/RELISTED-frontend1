@@ -122,38 +122,30 @@ export default function WalletsPage() {
     ? [
         {
           label: "Total Wallet Balance",
-          value: formatCurrency(
-            statsQuery.data.data.totalWalletBalance?.amount || 0,
-          ),
-          currency: statsQuery.data.data.totalWalletBalance?.currency || "₦",
-          percentage: statsQuery.data.data.totalWalletBalance?.percentage || 0,
+          value: formatCurrency(statsQuery.data.data.totalWalletBalance.amount),
+          currency: statsQuery.data.data.totalWalletBalance.currency,
+          percentage: statsQuery.data.data.totalWalletBalance.percentage,
           icon: walletIcon,
         },
         {
           label: "Total Escrow (Locked)",
-          value: formatCurrency(
-            statsQuery.data.data.totalEscrowLocked?.amount || 0,
-          ),
-          currency: statsQuery.data.data.totalEscrowLocked?.currency || "₦",
-          percentage: statsQuery.data.data.totalEscrowLocked?.percentage || 0,
+          value: formatCurrency(statsQuery.data.data.totalEscrowLocked.amount),
+          currency: statsQuery.data.data.totalEscrowLocked.currency,
+          percentage: statsQuery.data.data.totalEscrowLocked.percentage,
           icon: escrowIcon,
         },
         {
           label: "Released to Curators",
-          value: formatCurrency(
-            statsQuery.data.data.releasedToCurators?.amount || 0,
-          ),
-          currency: statsQuery.data.data.releasedToCurators?.currency || "₦",
-          percentage: statsQuery.data.data.releasedToCurators?.percentage || 0,
+          value: formatCurrency(statsQuery.data.data.releasedToCurators.amount),
+          currency: statsQuery.data.data.releasedToCurators.currency,
+          percentage: statsQuery.data.data.releasedToCurators.percentage,
           icon: curatorIcon,
         },
         {
           label: "Platform Earnings",
-          value: formatCurrency(
-            statsQuery.data.data.platformEarnings?.amount || 0,
-          ),
-          currency: statsQuery.data.data.platformEarnings?.currency || "₦",
-          percentage: statsQuery.data.data.platformEarnings?.percentage || 0,
+          value: formatCurrency(statsQuery.data.data.platformEarnings.amount),
+          currency: statsQuery.data.data.platformEarnings.currency,
+          percentage: statsQuery.data.data.platformEarnings.percentage,
           icon: earningsIcon,
         },
       ]

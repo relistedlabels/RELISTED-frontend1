@@ -11,23 +11,28 @@ interface UserTransactionsProps {
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case "Completed":
+    case "SUCCESS":
       return "bg-green-50 text-green-700";
-    case "Pending":
+    case "PENDING":
       return "bg-yellow-50 text-yellow-700";
-    case "Failed":
+    case "FAILED":
       return "bg-red-50 text-red-700";
-    case "Cancelled":
-      return "bg-gray-50 text-gray-700";
     default:
       return "bg-gray-50 text-gray-700";
   }
 };
 
-const getTypeColor = (type: "Debit" | "Credit") => {
-  return type === "Credit"
-    ? "text-green-600 font-semibold"
-    : "text-red-600 font-semibold";
+const getTypeColor = (type: string) => {
+  switch (type) {
+    case "AVAILABLE":
+      return "text-green-600 font-semibold";
+    case "MAIN":
+      return "text-blue-600 font-semibold";
+    case "COLLATERAL":
+      return "text-orange-600 font-semibold";
+    default:
+      return "text-gray-600 font-semibold";
+  }
 };
 
 export default function UserTransactions({
@@ -73,12 +78,12 @@ export default function UserTransactions({
                   >
                     <td className="py-4 px-6">
                       <Paragraph1 className="text-sm text-gray-700">
-                        {new Date(transaction.date).toLocaleDateString()}
+                        {new Date(transaction.createdAt).toLocaleDateString()}
                       </Paragraph1>
                     </td>
                     <td className="py-4 px-6">
                       <Paragraph1 className="text-sm font-medium text-gray-900">
-                        {transaction.description}
+                        {transaction.note}
                       </Paragraph1>
                     </td>
                     <td className="py-4 px-6">
