@@ -1,26 +1,10 @@
 import { apiFetch } from "../http";
 
 export interface WalletStats {
-  totalWalletBalance: {
-    amount: number;
-    currency: string;
-    percentage: number;
-  };
-  totalEscrowLocked: {
-    amount: number;
-    currency: string;
-    percentage: number;
-  };
-  releasedToCurators: {
-    amount: number;
-    currency: string;
-    percentage: number;
-  };
-  platformEarnings: {
-    amount: number;
-    currency: string;
-    percentage: number;
-  };
+  totalWalletBalance: number;
+  totalEscrowBalance: number;
+  totalReleasedToCurators: number;
+  platformEarnings: number;
 }
 
 export interface Wallet {

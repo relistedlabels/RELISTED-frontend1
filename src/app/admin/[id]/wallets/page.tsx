@@ -89,11 +89,20 @@ export default function WalletsPage() {
   const [activeTab, setActiveTab] = useState<TabType>("wallet");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch data from APIs
+  // Fetch data from APIs - only when tab is active (lazy loading)
   const statsQuery = useWalletStats();
-  const walletsQuery = useWallets({ search: searchQuery });
-  const escrowsQuery = useEscrows({ search: searchQuery });
-  const transactionsQuery = useWalletTransactions({ search: searchQuery });
+  const walletsQuery = useWallets({
+    search: searchQuery,
+    enabled: activeTab === "wallet",
+  });
+  const escrowsQuery = useEscrows({
+    search: searchQuery,
+    enabled: activeTab === "escrow",
+  });
+  const transactionsQuery = useWalletTransactions({
+    search: searchQuery,
+    enabled: activeTab === "transactions",
+  });
 
   // Log errors
   if (statsQuery.isError) {
@@ -122,38 +131,32 @@ export default function WalletsPage() {
     ? [
         {
           label: "Total Wallet Balance",
-          value: formatCurrency(
-            statsQuery.data.data.totalWalletBalance?.amount || 0,
-          ),
-          currency: statsQuery.data.data.totalWalletBalance?.currency || "₦",
-          percentage: statsQuery.data.data.totalWalletBalance?.percentage || 0,
+          value: formatCurrency(statsQuery.data.data.totalWalletBalance || 0),
+          currency: "₦",
+          percentage: 0,
           icon: walletIcon,
         },
         {
           label: "Total Escrow (Locked)",
-          value: formatCurrency(
-            statsQuery.data.data.totalEscrowLocked?.amount || 0,
-          ),
-          currency: statsQuery.data.data.totalEscrowLocked?.currency || "₦",
-          percentage: statsQuery.data.data.totalEscrowLocked?.percentage || 0,
+          value: formatCurrency(statsQuery.data.data.totalEscrowBalance || 0),
+          currency: "₦",
+          percentage: 0,
           icon: escrowIcon,
         },
         {
           label: "Released to Curators",
           value: formatCurrency(
-            statsQuery.data.data.releasedToCurators?.amount || 0,
+            statsQuery.data.data.totalReleasedToCurators || 0,
           ),
-          currency: statsQuery.data.data.releasedToCurators?.currency || "₦",
-          percentage: statsQuery.data.data.releasedToCurators?.percentage || 0,
+          currency: "₦",
+          percentage: 0,
           icon: curatorIcon,
         },
         {
           label: "Platform Earnings",
-          value: formatCurrency(
-            statsQuery.data.data.platformEarnings?.amount || 0,
-          ),
-          currency: statsQuery.data.data.platformEarnings?.currency || "₦",
-          percentage: statsQuery.data.data.platformEarnings?.percentage || 0,
+          value: formatCurrency(statsQuery.data.data.platformEarnings || 0),
+          currency: "₦",
+          percentage: 0,
           icon: earningsIcon,
         },
       ]
@@ -197,7 +200,7 @@ export default function WalletsPage() {
             />
           </div>
         </div>
-        <div className="flex gap-2 w-full md:w-auto">
+        <div className="flex- hidden gap-2 w-full md:w-auto">
           <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">
             <Download size={18} />
             Export CSV

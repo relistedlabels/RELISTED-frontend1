@@ -4,105 +4,67 @@
 import React, { useMemo } from "react";
 import { ArrowUpRight, ArrowDownLeft, Send } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
-
-interface TransactionData {
-  id: string;
-  transactionId: string;
-  userName: string;
-  userAvatar: string;
-  type: "deposit" | "withdrawal" | "transfer";
-  amount: string;
-  balance: string;
-  description: string;
-  date: string;
-  time: string;
-  status: "completed" | "pending" | "failed";
-}
+import { useWalletTransactions } from "@/lib/queries/admin/useWallets";
+import { usePublicUserById } from "@/lib/queries/user/usePublicUserById";
 
 interface TransactionsTableProps {
   searchQuery: string;
 }
 
-const mockTransactionData: TransactionData[] = [
-  {
-    id: "TXN-001",
-    transactionId: "TXN20251010001",
-    userName: "Chioma Eze",
-    userAvatar: "https://i.pravatar.cc/40?img=1",
-    type: "deposit",
-    amount: "₦500,000",
-    balance: "₦2,500,000",
-    description: "Wallet Top-up Deposit",
-    date: "Oct 10, 2025",
-    time: "02:45 PM",
-    status: "completed",
-  },
-  {
-    id: "TXN-002",
-    transactionId: "TXN20251008002",
-    userName: "Ada Okafor",
-    userAvatar: "https://i.pravatar.cc/40?img=2",
-    type: "withdrawal",
-    amount: "₦250,000",
-    balance: "₦1,200,000",
-    description: "Withdrawal to Bank",
-    date: "Oct 8, 2025",
-    time: "10:30 AM",
-    status: "completed",
-  },
-  {
-    id: "TXN-003",
-    transactionId: "TXN20251005003",
-    userName: "Ngozi Bello",
-    userAvatar: "https://i.pravatar.cc/40?img=3",
-    type: "transfer",
-    amount: "₦150,000",
-    balance: "₦800,000",
-    description: "Transfer to User",
-    date: "Oct 5, 2025",
-    time: "04:15 PM",
-    status: "pending",
-  },
-  {
-    id: "TXN-004",
-    transactionId: "TXN20251003004",
-    userName: "Amara Obi",
-    userAvatar: "https://i.pravatar.cc/40?img=4",
-    type: "deposit",
-    amount: "₦800,000",
-    balance: "₦3,100,000",
-    description: "Rental Payment Received",
-    date: "Oct 3, 2025",
-    time: "11:20 AM",
-    status: "completed",
-  },
-  {
-    id: "TXN-005",
-    transactionId: "TXN20251001005",
-    userName: "Chukwu Emma",
-    userAvatar: "https://i.pravatar.cc/40?img=5",
-    type: "withdrawal",
-    amount: "₦100,000",
-    balance: "₦900,000",
-    description: "Failed Withdrawal",
-    date: "Oct 1, 2025",
-    time: "03:00 PM",
-    status: "failed",
-  },
-];
+// Component to display a single transaction row
+function TransactionRow({ transaction }: { transaction: any }) {
+  // Extract user ID from wallet structure and fetch user details
+  const userId = transaction.walletId; // We'll use walletId to identify unique wallet/user
+  const userName = transaction.wallet?.user?.name || "Unknown User";
+  const userEmail = transaction.wallet?.user?.email || "";
 
-export default function TransactionsTable({
-  searchQuery,
-}: TransactionsTableProps) {
-  const filteredData = useMemo(() => {
-    return mockTransactionData.filter(
-      (item) =>
-        item.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.transactionId.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
-  }, [searchQuery]);
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      minimumFractionDigits: 0,
+    }).format(Math.abs(amount));
+  };
 
-  const getTransactionIcon = (type: string) => {
+  const truncateId = (id: string): string => {
+    return id.substring(0, 5);
+  };
+
+  const getFormattedDateTime = (
+    dateString: string,
+  ): { date: string; time: string } => {
+    const date = new Date(dateString);
+    const dateFormatted = date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+    const timeFormatted = date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+    return { date: dateFormatted, time: timeFormatted };
+  };
+
+  const getInitials = (name: string): string => {
+    return name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
+  const getTransactionType = (
+    amount: number,
+  ): "deposit" | "withdrawal" | "transfer" => {
+    if (amount > 0) return "deposit";
+    if (amount < 0) return "withdrawal";
+    return "transfer";
+  };
+
+  const getTransactionIcon = (type: "deposit" | "withdrawal" | "transfer") => {
     switch (type) {
       case "deposit":
         return <ArrowDownLeft size={16} className="text-green-600" />;
@@ -114,6 +76,114 @@ export default function TransactionsTable({
         return null;
     }
   };
+
+  const getStatusColor = (status: string): string => {
+    switch (status?.toUpperCase()) {
+      case "SUCCESS":
+        return "bg-green-100 text-green-700";
+      case "PENDING":
+        return "bg-yellow-100 text-yellow-700";
+      case "FAILED":
+        return "bg-red-100 text-red-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  };
+
+  const getStatusLabel = (status: string): string => {
+    switch (status?.toUpperCase()) {
+      case "SUCCESS":
+        return "Completed";
+      case "PENDING":
+        return "Pending";
+      case "FAILED":
+        return "Failed";
+      default:
+        return status;
+    }
+  };
+
+  const transactionType = getTransactionType(transaction.amount);
+  const { date, time } = getFormattedDateTime(transaction.createdAt);
+
+  const amountColor =
+    transaction.amount > 0 ? "text-green-600" : "text-red-600";
+
+  return (
+    <tr className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+      <td className="px-6 py-4">
+        <Paragraph1 className="text-gray-900 font-medium">
+          {truncateId(transaction.id)}
+        </Paragraph1>
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center text-xs font-semibold">
+            {getInitials(userName)}
+          </div>
+          <div>
+            <Paragraph1 className="font-medium text-gray-900">
+              {userName}
+            </Paragraph1>
+            <span className="text-xs text-gray-500">{userEmail}</span>
+          </div>
+        </div>
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-2">
+          {getTransactionIcon(transactionType)}
+          <Paragraph1 className="font-medium text-gray-900 capitalize">
+            {transaction.type?.toLowerCase() || "transfer"}
+          </Paragraph1>
+        </div>
+      </td>
+      <td className="px-6 py-4">
+        <Paragraph1 className={`font-semibold ${amountColor}`}>
+          {transaction.amount >= 0 ? "+" : "-"}
+          {formatCurrency(transaction.amount)}
+        </Paragraph1>
+      </td>
+      <td className="px-6 py-4">
+        <Paragraph1 className="text-gray-600">-</Paragraph1>
+      </td>
+      <td className="px-6 py-4">
+        <Paragraph1 className="text-gray-600">
+          {transaction.note || "-"}
+        </Paragraph1>
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex flex-col">
+          <Paragraph1 className="text-gray-600">{date}</Paragraph1>
+          <Paragraph1 className="text-gray-500 text-xs">{time}</Paragraph1>
+        </div>
+      </td>
+      <td className="px-6 py-4">
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}
+        >
+          {getStatusLabel(transaction.status)}
+        </span>
+      </td>
+    </tr>
+  );
+}
+
+export default function TransactionsTable({
+  searchQuery,
+}: TransactionsTableProps) {
+  const transactionsQuery = useWalletTransactions({ search: searchQuery });
+
+  const filteredData = useMemo(() => {
+    if (!transactionsQuery.data?.data?.transactions) return [];
+    return transactionsQuery.data.data.transactions.filter(
+      (item: any) =>
+        (item.wallet?.user?.name
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+          item.id?.toLowerCase().includes(searchQuery.toLowerCase())) ??
+        false,
+    );
+  }, [transactionsQuery.data, searchQuery]);
 
   return (
     <div className="overflow-x-auto">
@@ -163,86 +233,21 @@ export default function TransactionsTable({
           </tr>
         </thead>
         <tbody>
-          {filteredData.length === 0 ? (
+          {transactionsQuery.isPending ? (
+            <tr>
+              <td colSpan={8} className="px-6 py-8 text-center">
+                <p className="text-gray-500">Loading transactions...</p>
+              </td>
+            </tr>
+          ) : filteredData.length === 0 ? (
             <tr>
               <td colSpan={8} className="px-6 py-8 text-center">
                 <p className="text-gray-500">No transactions found</p>
               </td>
             </tr>
           ) : (
-            filteredData.map((item) => (
-              <tr
-                key={item.id}
-                className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
-              >
-                <td className="px-6 py-4">
-                  <Paragraph1 className="text-gray-900 font-medium">
-                    {item.transactionId}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={item.userAvatar}
-                      alt={item.userName}
-                      className="w-8 h-8 rounded-full"
-                    />
-                    <Paragraph1 className="font-medium text-gray-900">
-                      {item.userName}
-                    </Paragraph1>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    {getTransactionIcon(item.type)}
-                    <Paragraph1 className="font-medium text-gray-900 capitalize">
-                      {item.type}
-                    </Paragraph1>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <Paragraph1 className="font-semibold text-gray-900">
-                    {item.amount}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <Paragraph1 className="text-gray-600">
-                    {item.balance}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <Paragraph1 className="text-gray-600">
-                    {item.description}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex flex-col">
-                    <Paragraph1 className="text-gray-600">
-                      {item.date}
-                    </Paragraph1>
-                    <Paragraph1 className="text-gray-500 text-xs">
-                      {item.time}
-                    </Paragraph1>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      item.status === "completed"
-                        ? "bg-green-100 text-green-700"
-                        : item.status === "pending"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-red-100 text-red-700"
-                    }`}
-                  >
-                    {item.status === "completed"
-                      ? "Completed"
-                      : item.status === "pending"
-                        ? "Pending"
-                        : "Failed"}
-                  </span>
-                </td>
-              </tr>
+            filteredData.map((transaction: any) => (
+              <TransactionRow key={transaction.id} transaction={transaction} />
             ))
           )}
         </tbody>

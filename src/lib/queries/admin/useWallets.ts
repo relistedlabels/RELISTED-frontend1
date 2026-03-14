@@ -5,6 +5,7 @@ interface WalletListParams {
   search?: string;
   page?: number;
   limit?: number;
+  enabled?: boolean;
 }
 
 interface EscrowListParams {
@@ -12,6 +13,7 @@ interface EscrowListParams {
   status?: string;
   page?: number;
   limit?: number;
+  enabled?: boolean;
 }
 
 interface TransactionListParams {
@@ -20,6 +22,7 @@ interface TransactionListParams {
   status?: string;
   page?: number;
   limit?: number;
+  enabled?: boolean;
 }
 
 export const useWalletStats = () =>
@@ -36,6 +39,7 @@ export const useWallets = (params: WalletListParams = {}) =>
     queryFn: () => walletsApi.getWallets(params),
     staleTime: 5 * 60 * 1000,
     retry: 1,
+    enabled: params.enabled !== false,
   });
 
 export const useWalletById = (walletId: string) =>
@@ -61,6 +65,7 @@ export const useEscrows = (params: EscrowListParams = {}) =>
     queryFn: () => walletsApi.getEscrows(params),
     staleTime: 5 * 60 * 1000,
     retry: 1,
+    enabled: params.enabled !== false,
   });
 
 export const useWalletTransactions = (params: TransactionListParams = {}) =>
@@ -78,4 +83,5 @@ export const useWalletTransactions = (params: TransactionListParams = {}) =>
     queryFn: () => walletsApi.getTransactions(params),
     staleTime: 5 * 60 * 1000,
     retry: 1,
+    enabled: params.enabled !== false,
   });

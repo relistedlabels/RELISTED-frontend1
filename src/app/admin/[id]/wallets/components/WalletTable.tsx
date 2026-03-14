@@ -1,81 +1,159 @@
 "use client";
-// ENDPOINTS: GET /api/admin/wallets?search=&page=1&limit=20, GET /api/admin/wallets/:walletId
+// ENDPOINTS: GET /api/admin/wallets?search=&page=1&limit=20, GET /api/public/users/:userId
 
 import React, { useMemo } from "react";
 import { ChevronRight } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
-
-interface WalletData {
-  id: string;
-  userId: string;
-  userName: string;
-  userAvatar: string;
-  totalBalance: string;
-  availableBalance: string;
-  lockedAmount: string;
-  lastUpdated: string;
-  status: "active" | "inactive";
-}
+import { useWallets } from "@/lib/queries/admin/useWallets";
+import { usePublicUserById } from "@/lib/queries/user/usePublicUserById";
 
 interface WalletTableProps {
   searchQuery: string;
 }
 
-const mockWalletData: WalletData[] = [
-  {
-    id: "WAL-001",
-    userId: "USER-001",
-    userName: "Chioma Eze",
-    userAvatar: "https://i.pravatar.cc/40?img=1",
-    totalBalance: "₦2,500,000",
-    availableBalance: "₦1,800,000",
-    lockedAmount: "₦700,000",
-    lastUpdated: "Oct 10, 2025",
-    status: "active",
-  },
-  {
-    id: "WAL-002",
-    userId: "USER-002",
-    userName: "Ada Okafor",
-    userAvatar: "https://i.pravatar.cc/40?img=2",
-    totalBalance: "₦1,200,000",
-    availableBalance: "₦1,000,000",
-    lockedAmount: "₦200,000",
-    lastUpdated: "Oct 8, 2025",
-    status: "active",
-  },
-  {
-    id: "WAL-003",
-    userId: "USER-003",
-    userName: "Ngozi Bello",
-    userAvatar: "https://i.pravatar.cc/40?img=3",
-    totalBalance: "₦800,000",
-    availableBalance: "₦500,000",
-    lockedAmount: "₦300,000",
-    lastUpdated: "Oct 5, 2025",
-    status: "inactive",
-  },
-  {
-    id: "WAL-004",
-    userId: "USER-004",
-    userName: "Amara Obi",
-    userAvatar: "https://i.pravatar.cc/40?img=4",
-    totalBalance: "₦3,100,000",
-    availableBalance: "₦2,500,000",
-    lockedAmount: "₦600,000",
-    lastUpdated: "Oct 3, 2025",
-    status: "active",
-  },
-];
+// Component to display a single wallet row with user details
+function WalletRow({
+  wallet,
+}: {
+  wallet: {
+    id: string;
+    userId: string;
+    mainBalance: number;
+    availableBalance: number;
+    collateralBalance: number;
+    createdAt: string;
+    user: {
+      name: string;
+      email: string;
+    };
+  };
+}) {
+  const { data: userDetails, isLoading } = usePublicUserById(wallet.userId);
+
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const truncateWalletId = (id: string): string => {
+    return id.substring(0, 5);
+  };
+
+  const getLastUpdatedDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const getRoleBadgeColor = (role: string | undefined): string => {
+    switch (role?.toLowerCase()) {
+      case "lister":
+        return "bg-blue-100 text-blue-700";
+      case "dresser":
+        return "bg-purple-100 text-purple-700";
+      case "admin":
+        return "bg-red-100 text-red-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  };
+
+  const getInitials = (name: string): string => {
+    return name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
+  return (
+    <tr className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+      <td className="px-6 py-4">
+        <Paragraph1 className="text-gray-900 font-medium">
+          {truncateWalletId(wallet.id)}
+        </Paragraph1>
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-3">
+          {userDetails?.avatar ? (
+            <img
+              src={userDetails.avatar}
+              alt={wallet.user.name}
+              className="w-8 h-8 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center text-xs font-semibold">
+              {getInitials(wallet.user.name)}
+            </div>
+          )}
+          <div>
+            <Paragraph1 className="font-medium text-gray-900">
+              {wallet.user.name}
+            </Paragraph1>
+            <span className="text-xs text-gray-500">{wallet.user.email}</span>
+          </div>
+        </div>
+      </td>
+      <td className="px-6 py-4">
+        <Paragraph1 className="text-gray-900 font-semibold">
+          {formatCurrency(wallet.mainBalance)}
+        </Paragraph1>
+      </td>
+      <td className="px-6 py-4">
+        <Paragraph1 className="text-green-600 font-medium">
+          {formatCurrency(wallet.availableBalance)}
+        </Paragraph1>
+      </td>
+      <td className="px-6 py-4">
+        <Paragraph1 className="text-orange-600 font-medium">
+          {formatCurrency(wallet.collateralBalance)}
+        </Paragraph1>
+      </td>
+      <td className="px-6 py-4">
+        {isLoading ? (
+          <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+            Loading...
+          </span>
+        ) : (
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${getRoleBadgeColor(userDetails?.role)}`}
+          >
+            {userDetails?.role || "N/A"}
+          </span>
+        )}
+      </td>
+      <td className="px-6 py-4">
+        <Paragraph1 className="text-gray-600">
+          {getLastUpdatedDate(wallet.updatedAt)}
+        </Paragraph1>
+      </td>
+      <td className="px-6 py-4">
+        <button className="flex items-center gap-1 text-gray-600 hover:text-gray-900 font-medium">
+          <Paragraph1>View</Paragraph1> <ChevronRight size={16} />
+        </button>
+      </td>
+    </tr>
+  );
+}
 
 export default function WalletTable({ searchQuery }: WalletTableProps) {
+  const walletsQuery = useWallets({ search: searchQuery });
+
   const filteredData = useMemo(() => {
-    return mockWalletData.filter(
-      (item) =>
-        item.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.id.toLowerCase().includes(searchQuery.toLowerCase()),
+    if (!walletsQuery.data?.data?.wallets) return [];
+    return walletsQuery.data.data.wallets.filter(
+      (item: any) =>
+        item.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.email.toLowerCase().includes(searchQuery.toLowerCase()),
     );
-  }, [searchQuery]);
+  }, [walletsQuery.data, searchQuery]);
 
   return (
     <div className="overflow-x-auto">
@@ -109,7 +187,7 @@ export default function WalletTable({ searchQuery }: WalletTableProps) {
             </th>
             <th className="px-6 py-4 text-left">
               <Paragraph1 className="text-gray-900 font-semibold">
-                STATUS
+                ROLE
               </Paragraph1>
             </th>
             <th className="px-6 py-4 text-left">
@@ -125,72 +203,21 @@ export default function WalletTable({ searchQuery }: WalletTableProps) {
           </tr>
         </thead>
         <tbody>
-          {filteredData.length === 0 ? (
+          {walletsQuery.isPending ? (
+            <tr>
+              <td colSpan={8} className="px-6 py-8 text-center">
+                <p className="text-gray-500">Loading wallets...</p>
+              </td>
+            </tr>
+          ) : filteredData.length === 0 ? (
             <tr>
               <td colSpan={8} className="px-6 py-8 text-center">
                 <p className="text-gray-500">No wallets found</p>
               </td>
             </tr>
           ) : (
-            filteredData.map((item) => (
-              <tr
-                key={item.id}
-                className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
-              >
-                <td className="px-6 py-4">
-                  <Paragraph1 className="text-gray-900 font-medium">
-                    {item.id}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={item.userAvatar}
-                      alt={item.userName}
-                      className="w-8 h-8 rounded-full"
-                    />
-                    <Paragraph1 className="font-medium text-gray-900">
-                      {item.userName}
-                    </Paragraph1>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <Paragraph1 className="text-gray-900 font-semibold">
-                    {item.totalBalance}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <Paragraph1 className="text-green-600 font-medium">
-                    {item.availableBalance}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <Paragraph1 className="text-orange-600 font-medium">
-                    {item.lockedAmount}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      item.status === "active"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-700"
-                    }`}
-                  >
-                    {item.status === "active" ? "Active" : "Inactive"}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <Paragraph1 className="text-gray-600">
-                    {item.lastUpdated}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <button className="flex items-center gap-1 text-gray-600 hover:text-gray-900 font-medium">
-                    <Paragraph1>View</Paragraph1> <ChevronRight size={16} />
-                  </button>
-                </td>
-              </tr>
+            filteredData.map((wallet: any) => (
+              <WalletRow key={wallet.id} wallet={wallet} />
             ))
           )}
         </tbody>

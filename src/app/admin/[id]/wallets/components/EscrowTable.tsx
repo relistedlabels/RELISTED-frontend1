@@ -4,86 +4,49 @@
 import React, { useMemo } from "react";
 import { Lock, Unlock, AlertCircle } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
-
-interface EscrowData {
-  id: string;
-  orderId: string;
-  userName: string;
-  curatorName: string;
-  userAvatar: string;
-  lockedAmount: string;
-  reason: string;
-  lockedDate: string;
-  releaseDate: string;
-  status: "locked" | "pending" | "released";
-}
+import { useEscrows } from "@/lib/queries/admin/useWallets";
+import { usePublicUserById } from "@/lib/queries/user/usePublicUserById";
 
 interface EscrowTableProps {
   searchQuery: string;
 }
 
-const mockEscrowData: EscrowData[] = [
-  {
-    id: "ESC-001",
-    orderId: "#RLS-23984",
-    userName: "Chioma Eze",
-    curatorName: "Grace Adebayo",
-    userAvatar: "https://i.pravatar.cc/40?img=1",
-    lockedAmount: "₦550,000",
-    reason: "Rental Dispute",
-    lockedDate: "Oct 10, 2025",
-    releaseDate: "Oct 20, 2025",
-    status: "locked",
-  },
-  {
-    id: "ESC-002",
-    orderId: "#RLS-23985",
-    userName: "Ada Okafor",
-    curatorName: "Funmi Adeleke",
-    userAvatar: "https://i.pravatar.cc/40?img=2",
-    lockedAmount: "₦380,000",
-    reason: "Payment Hold",
-    lockedDate: "Oct 8, 2025",
-    releaseDate: "Oct 18, 2025",
-    status: "pending",
-  },
-  {
-    id: "ESC-003",
-    orderId: "#RLS-23986",
-    userName: "Ngozi Bello",
-    curatorName: "Grace Adebayo",
-    userAvatar: "https://i.pravatar.cc/40?img=3",
-    lockedAmount: "₦420,000",
-    reason: "Warranty Period",
-    lockedDate: "Oct 5, 2025",
-    releaseDate: "Oct 12, 2025",
-    status: "locked",
-  },
-  {
-    id: "ESC-004",
-    orderId: "#RLS-23987",
-    userName: "Amara Obi",
-    curatorName: "Kemi Okoye",
-    userAvatar: "https://i.pravatar.cc/40?img=4",
-    lockedAmount: "₦650,000",
-    reason: "Quality Verification",
-    lockedDate: "Oct 1, 2025",
-    releaseDate: "Oct 8, 2025",
-    status: "released",
-  },
-];
+// Component to display a single escrow row with user details
+function EscrowRow({ escrow }: { escrow: any }) {
+  const { data: userDetails, isLoading } = usePublicUserById(escrow.userId);
 
-export default function EscrowTable({ searchQuery }: EscrowTableProps) {
-  const filteredData = useMemo(() => {
-    return mockEscrowData.filter(
-      (item) =>
-        item.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.orderId.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
-  }, [searchQuery]);
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const truncateEscrowId = (id: string): string => {
+    return id.substring(0, 5);
+  };
+
+  const getFormattedDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const getInitials = (name: string): string => {
+    return name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
 
   const getStatusIcon = (status: string) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
       case "locked":
         return <Lock size={16} className="text-orange-600" />;
       case "pending":
@@ -94,6 +57,114 @@ export default function EscrowTable({ searchQuery }: EscrowTableProps) {
         return null;
     }
   };
+
+  const getStatusColor = (status: string): string => {
+    switch (status?.toLowerCase()) {
+      case "locked":
+        return "bg-orange-100 text-orange-700";
+      case "pending":
+        return "bg-yellow-100 text-yellow-700";
+      case "released":
+        return "bg-green-100 text-green-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  };
+
+  const getStatusLabel = (status: string): string => {
+    switch (status?.toLowerCase()) {
+      case "locked":
+        return "Locked";
+      case "pending":
+        return "Pending";
+      case "released":
+        return "Released";
+      default:
+        return status;
+    }
+  };
+
+  return (
+    <tr className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+      <td className="px-6 py-4">
+        <Paragraph1 className="text-gray-900 font-medium">
+          {truncateEscrowId(escrow.id)}
+        </Paragraph1>
+      </td>
+      <td className="px-6 py-4">
+        <Paragraph1 className="font-medium text-blue-600">
+          {escrow.orderId || "N/A"}
+        </Paragraph1>
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-3">
+          {userDetails?.avatar ? (
+            <img
+              src={userDetails.avatar}
+              alt={escrow.userName || "User"}
+              className="w-8 h-8 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center text-xs font-semibold">
+              {getInitials(escrow.userName || "User")}
+            </div>
+          )}
+          <Paragraph1 className="font-medium text-gray-900">
+            {escrow.userName || "N/A"}
+          </Paragraph1>
+        </div>
+      </td>
+      <td className="px-6 py-4">
+        <Paragraph1 className="text-gray-900 font-medium">
+          {escrow.curatorName || "N/A"}
+        </Paragraph1>
+      </td>
+      <td className="px-6 py-4">
+        <Paragraph1 className="font-semibold text-orange-600">
+          {formatCurrency(escrow.amount || 0)}
+        </Paragraph1>
+      </td>
+      <td className="px-6 py-4">
+        <Paragraph1 className="text-gray-600">
+          {escrow.reason || "N/A"}
+        </Paragraph1>
+      </td>
+      <td className="px-6 py-4">
+        <Paragraph1 className="text-gray-600">
+          {escrow.lockedDate ? getFormattedDate(escrow.lockedDate) : "N/A"}
+        </Paragraph1>
+      </td>
+      <td className="px-6 py-4">
+        <Paragraph1 className="text-gray-600">
+          {escrow.releaseDate ? getFormattedDate(escrow.releaseDate) : "N/A"}
+        </Paragraph1>
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-2">
+          {getStatusIcon(escrow.status)}
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(escrow.status)}`}
+          >
+            {getStatusLabel(escrow.status)}
+          </span>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+export default function EscrowTable({ searchQuery }: EscrowTableProps) {
+  const escrowsQuery = useEscrows({ search: searchQuery });
+
+  const filteredData = useMemo(() => {
+    if (!escrowsQuery.data?.data?.escrows) return [];
+    return escrowsQuery.data.data.escrows.filter(
+      (item: any) =>
+        (item.userName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.orderId?.toLowerCase().includes(searchQuery.toLowerCase())) ??
+        false,
+    );
+  }, [escrowsQuery.data, searchQuery]);
 
   return (
     <div className="overflow-x-auto">
@@ -148,86 +219,21 @@ export default function EscrowTable({ searchQuery }: EscrowTableProps) {
           </tr>
         </thead>
         <tbody>
-          {filteredData.length === 0 ? (
+          {escrowsQuery.isPending ? (
+            <tr>
+              <td colSpan={9} className="px-6 py-8 text-center">
+                <p className="text-gray-500">Loading escrow records...</p>
+              </td>
+            </tr>
+          ) : filteredData.length === 0 ? (
             <tr>
               <td colSpan={9} className="px-6 py-8 text-center">
                 <p className="text-gray-500">No escrow records found</p>
               </td>
             </tr>
           ) : (
-            filteredData.map((item) => (
-              <tr
-                key={item.id}
-                className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
-              >
-                <td className="px-6 py-4">
-                  <Paragraph1 className="text-gray-900 font-medium">
-                    {item.id}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <Paragraph1 className="font-medium text-blue-600">
-                    {item.orderId}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={item.userAvatar}
-                      alt={item.userName}
-                      className="w-8 h-8 rounded-full"
-                    />
-                    <Paragraph1 className="font-medium text-gray-900">
-                      {item.userName}
-                    </Paragraph1>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <Paragraph1 className="text-gray-900 font-medium">
-                    {item.curatorName}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <Paragraph1 className="font-semibold text-orange-600">
-                    {item.lockedAmount}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <Paragraph1 className="text-gray-600">
-                    {item.reason}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <Paragraph1 className="text-gray-600">
-                    {item.lockedDate}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <Paragraph1 className="text-gray-600">
-                    {item.releaseDate}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(item.status)}
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        item.status === "locked"
-                          ? "bg-orange-100 text-orange-700"
-                          : item.status === "pending"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-green-100 text-green-700"
-                      }`}
-                    >
-                      {item.status === "locked"
-                        ? "Locked"
-                        : item.status === "pending"
-                          ? "Pending"
-                          : "Released"}
-                    </span>
-                  </div>
-                </td>
-              </tr>
+            filteredData.map((escrow: any) => (
+              <EscrowRow key={escrow.id} escrow={escrow} />
             ))
           )}
         </tbody>
