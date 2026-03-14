@@ -1059,7 +1059,7 @@ export async function updateBusinessProfile(
   message: string;
   data: { businessProfile: BusinessProfile };
 }> {
-  return apiFetch("/api/listers/profile/business", {
+  return apiFetch("/api/listers/profile", {
     method: "PUT",
     body: JSON.stringify(data),
   });
