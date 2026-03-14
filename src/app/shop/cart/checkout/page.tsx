@@ -8,14 +8,20 @@ import { Header1, Header1Plus } from "@/common/ui/Text";
 import CheckoutContactAndPayment from "./components/CheckoutContactAndPayment";
 import FinalOrderSummaryCard from "./components/FinalOrderSummaryCard";
 import { useRentalRequests } from "@/lib/queries/renters/useRentalRequests";
-import { useCreateOrder } from "@/lib/mutations/renters/useCreateOrder";
 import { productApi } from "@/lib/api/product";
+import { getOrderSummaryApi } from "@/lib/api/cart";
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { mutate: createOrder, isPending: isCreatingOrder } = useCreateOrder();
-  const [hasCreatedOrder, setHasCreatedOrder] = useState(false);
-  const [orderError, setOrderError] = useState<string | null>(null);
+  const [shippingTiers, setShippingTiers] = useState<
+    Array<{
+      name: string;
+      totalShippingCost: number;
+      grandTotal: number;
+    }>
+  >([]);
+  const [selectedShippingTier, setSelectedShippingTier] = useState<string>("");
+
   const path = [
     { label: "Home", href: "/" },
     { label: "Shop", href: "/shop" },
@@ -27,6 +33,21 @@ export default function CheckoutPage() {
   const [cartItemsWithProduct, setCartItemsWithProduct] = useState<Array<any>>(
     [],
   );
+
+  // Fetch shipping tiers on mount
+  useEffect(() => {
+    const fetchShippingTiers = async () => {
+      try {
+        const response = await getOrderSummaryApi();
+        if (response.data?.shippingTiers) {
+          setShippingTiers(response.data.shippingTiers);
+        }
+      } catch (err) {
+        console.error("Failed to fetch shipping tiers:", err);
+      }
+    };
+    fetchShippingTiers();
+  }, []);
 
   useEffect(() => {
     async function fetchProductDetails() {
@@ -53,31 +74,6 @@ export default function CheckoutPage() {
     }
     fetchProductDetails();
   }, [data]);
-
-  // Retry order creation function
-  const retryCreateOrder = () => {
-    setOrderError(null);
-    createOrder(undefined, {
-      onSuccess: () => {
-        toast.success("Order created successfully!");
-        setHasCreatedOrder(true);
-        setOrderError(null);
-      },
-      onError: (err: any) => {
-        const errorMessage =
-          err?.message || "Failed to create order. Please try again.";
-        setOrderError(errorMessage);
-        toast.error(errorMessage);
-      },
-    });
-  };
-
-  // Create order on component mount
-  useEffect(() => {
-    if (hasCreatedOrder) return; // Only create once
-
-    retryCreateOrder();
-  }, [hasCreatedOrder]);
 
   // Group cart items by listerID
   const groupedByLister = cartItemsWithProduct.reduce(
@@ -108,16 +104,17 @@ export default function CheckoutPage() {
       <Header1Plus className="uppercase mb-8">CHECKOUT</Header1Plus>
       <div className="grid xl:grid-cols-3 gap-4 sm:gap-16">
         <div className="col-span-2">
-          <CheckoutContactAndPayment />
+          <CheckoutContactAndPayment
+            onShippingTierSelected={setSelectedShippingTier}
+            shippingTiers={shippingTiers}
+          />
         </div>
         <div className="flex flex-col gap-4">
           <FinalOrderSummaryCard
             listerGroups={listerGroups}
             isLoading={isLoading}
             error={error}
-            orderCreationError={orderError}
-            isCreatingOrder={isCreatingOrder}
-            onRetryOrder={() => retryCreateOrder()}
+            selectedShippingTier={selectedShippingTier}
           />
         </div>
       </div>

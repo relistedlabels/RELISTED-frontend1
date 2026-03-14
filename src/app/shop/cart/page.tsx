@@ -149,7 +149,6 @@ export default function CartPage() {
             isLoading={approvedIsLoading}
             error={approvedError}
           />
-
           {/* Pagination Info */}
           {data && data.totalPages && data.totalPages > 1 && (
             <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">

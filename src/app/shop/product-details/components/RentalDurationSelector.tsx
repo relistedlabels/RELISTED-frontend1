@@ -318,14 +318,14 @@ const RentalDurationSelector = ({
             <Paragraph1>Enter days:</Paragraph1>
             <input
               type="number"
-              min={2}
+              min={1}
               max={30}
               value={customDays}
               onChange={(e) => {
                 // Enforce min 2, max 12
                 let val = Number(e.target.value);
-                if (isNaN(val)) val = 2;
-                val = Math.max(2, Math.min(12, val));
+                if (isNaN(val)) val = 1;
+                val = Math.max(1, Math.min(30, val));
                 setCustomDays(val);
               }}
               className="border rounded px-2 py-1 w-20 text-center"

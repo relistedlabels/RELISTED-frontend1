@@ -10,6 +10,8 @@ import { useVerificationStatus } from "@/lib/queries/renters/useVerificationStat
 import { useRouter } from "next/navigation";
 import VerificationModal from "./VerificationModal";
 import { getOrderSummaryApi } from "@/lib/api/cart";
+import { usePassCart } from "@/lib/mutations/renters/usePassCartMutation";
+import { toast } from "sonner";
 
 const CURRENCY = "₦";
 const VERIFICATION_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
@@ -49,21 +51,18 @@ interface FinalOrderSummaryCardProps {
   }>;
   isLoading?: boolean;
   error?: Error | null;
-  orderCreationError?: string | null;
-  isCreatingOrder?: boolean;
-  onRetryOrder?: () => void;
+  selectedShippingTier?: string;
 }
 
 export default function FinalOrderSummaryCard({
   listerGroups = [],
   isLoading,
   error,
-  orderCreationError,
-  isCreatingOrder = false,
-  onRetryOrder,
+  selectedShippingTier = "",
 }: FinalOrderSummaryCardProps) {
   const router = useRouter();
   const checkoutMutation = useCheckout();
+  const passCartMutation = usePassCart();
   const { data: profile } = useProfile();
   const verificationStatusQuery = useVerificationStatus();
   const [isAgree, setIsAgree] = useState(false);
@@ -159,12 +158,6 @@ export default function FinalOrderSummaryCard({
   const approvedGroups = listerGroups.filter((group) => group.items.length > 0);
 
   const handleCheckout = async () => {
-    // If order creation failed, retry it first
-    if (orderCreationError) {
-      onRetryOrder?.();
-      return;
-    }
-
     // If verification is pending, check status first
     if (verificationSubmittedAt && countdown > 0) {
       alert(
@@ -189,6 +182,87 @@ export default function FinalOrderSummaryCard({
       alert("Please agree to the terms of service");
       return;
     }
+
+    if (!selectedShippingTier) {
+      alert("Please select a shipping method");
+      return;
+    }
+
+    // Collect all request IDs from all lister groups
+    const requestIds = approvedGroups.flatMap((group) =>
+      group.items.map((item) => item.requestId),
+    );
+
+    if (requestIds.length === 0) return;
+
+    // First, pass cart with selected shipping tier
+    passCartMutation.mutate(selectedShippingTier, {
+      onSuccess: () => {
+        toast.success("Shipping method selected");
+
+        // Then proceed with checkout
+        // For now, send the first request ID - backend may need to handle multiple
+        // TODO: Update backend to accept multiple requestIds for multi-lister checkout
+        checkoutMutation.mutate(
+          { requestId: requestIds[0] },
+          {
+            onSuccess: (response) => {
+              const res = response as {
+                success: boolean;
+                data: { orderId: string };
+              };
+              router.push(
+                `/shop/cart/checkout/success?orderId=${res.data.orderId}`,
+              );
+            },
+            onError: (err: any) => {
+              toast.error(
+                err?.message ||
+                  "Failed to complete checkout. Please try again.",
+              );
+            },
+          },
+        );
+      },
+      onError: (err: any) => {
+        toast.error(
+          err?.message || "Failed to select shipping method. Please try again.",
+        );
+      },
+    });
+  };
+
+  const testHandleCheckout = async () => {
+    // If order creation failed, retry it first
+    // if (orderCreationError) {
+    //   onRetryOrder?.();
+    //   return;
+    // }
+
+    // If verification is pending, check status first
+    // if (verificationSubmittedAt && countdown > 0) {
+    //   alert(
+    //     `Please wait ${formatCountdown(countdown)} before checking verification status.`,
+    //   );
+    //   return;
+    // }
+
+    // If verification was submitted but countdown expired, check status
+    // if (verificationSubmittedAt && countdown === 0) {
+    //   await checkVerificationStatus();
+    //   return;
+    // }
+
+    // Check if user is verified
+    // if (!isVerified) {
+    //   setIsVerificationModalOpen(true);
+    //   return;
+    // }
+
+    // if (!isAgree) {
+    //   alert("Please agree to the terms of service");
+    //   return;
+    // }
 
     // Collect all request IDs from all lister groups
     const requestIds = approvedGroups.flatMap((group) =>
@@ -504,21 +578,21 @@ export default function FinalOrderSummaryCard({
                       disabled={
                         (!isAgree && !verificationSubmittedAt) ||
                         checkoutMutation.isPending ||
-                        isCheckingStatus ||
-                        isCreatingOrder
+                        passCartMutation.isPending ||
+                        isCheckingStatus
                       }
                       className="w-full flex justify-center bg-black text-white font-semibold py-3 rounded-lg hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <Paragraph1>
-                        {isCreatingOrder
+                        {passCartMutation.isPending ||
+                        checkoutMutation.isPending ||
+                        isCheckingStatus
                           ? "Processing..."
-                          : checkoutMutation.isPending || isCheckingStatus
-                            ? "Processing..."
-                            : verificationSubmittedAt && countdown > 0
-                              ? `Check In ${formatCountdown(countdown)}`
-                              : verificationSubmittedAt && countdown === 0
-                                ? "Check Verification Status"
-                                : "Complete Order"}
+                          : verificationSubmittedAt && countdown > 0
+                            ? `Check In ${formatCountdown(countdown)}`
+                            : verificationSubmittedAt && countdown === 0
+                              ? "Check Verification Status"
+                              : "Complete Order"}
                       </Paragraph1>
                     </button>
 
@@ -554,6 +628,13 @@ export default function FinalOrderSummaryCard({
                     </label>
                   </div>
                 )}
+
+                <button
+                  onClick={testHandleCheckout}
+                  className="w-full flex- - hidden justify-center bg-black text-white font-semibold py-3 rounded-lg hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Paragraph1>Test Complete Order</Paragraph1>
+                </button>
               </>
             );
           })()}

@@ -1,18 +1,28 @@
 "use client";
 
-import React, { useState } from "react";
-import { User, Home, Wallet, Check } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { User, Home, Wallet, Check, Truck } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import ChangeAddress from "./ChangeAddress";
 import FundWallet from "./FundWallet";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useProfile } from "@/lib/queries/user/useProfile";
 import { useWallet } from "@/lib/queries/renters/useWallet";
+import { getOrderSummaryApi } from "@/lib/api/cart";
+
+interface CheckoutContactAndPaymentProps {
+  onShippingTierSelected?: (tierName: string) => void;
+  shippingTiers?: Array<{
+    name: string;
+    totalShippingCost: number;
+    grandTotal: number;
+  }>;
+}
 
 // === Skeleton Loader ===
 const ContactSkeleton = () => (
   <div className="bg-gray-50 space-y-6 animate-pulse">
-    {[...Array(3)].map((_, i) => (
+    {[...Array(4)].map((_, i) => (
       <div key={i} className="p-4 bg-white rounded-xl border border-gray-100">
         <div className="h-5 bg-gray-200 rounded w-32 mb-3"></div>
         <hr className="mb-3" />
@@ -22,11 +32,56 @@ const ContactSkeleton = () => (
   </div>
 );
 
-export default function CheckoutContactAndPayment() {
+export default function CheckoutContactAndPayment({
+  onShippingTierSelected,
+  shippingTiers = [],
+}: CheckoutContactAndPaymentProps) {
   const { data: user } = useMe();
   const { data: profile } = useProfile();
   const { data: walletResponse } = useWallet();
   const [isSameAsBilling, setIsSameAsBilling] = useState(true);
+  const [selectedShippingTier, setSelectedShippingTier] = useState<string>(
+    shippingTiers[0]?.name || "",
+  );
+  const [localShippingTiers, setLocalShippingTiers] = useState(shippingTiers);
+  const [isLoadingShipping, setIsLoadingShipping] = useState(false);
+
+  // Fetch shipping tiers if not provided
+  useEffect(() => {
+    if (shippingTiers.length === 0) {
+      const fetchShippingTiers = async () => {
+        setIsLoadingShipping(true);
+        try {
+          const response = await getOrderSummaryApi();
+          if (response.data?.shippingTiers) {
+            setLocalShippingTiers(response.data.shippingTiers);
+            const defaultTier = response.data.shippingTiers[0];
+            if (defaultTier?.name) {
+              setSelectedShippingTier(defaultTier.name);
+              onShippingTierSelected?.(defaultTier.name);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to fetch shipping tiers:", err);
+        } finally {
+          setIsLoadingShipping(false);
+        }
+      };
+      fetchShippingTiers();
+    } else {
+      setLocalShippingTiers(shippingTiers);
+      const defaultTier = shippingTiers[0];
+      if (defaultTier?.name) {
+        setSelectedShippingTier(defaultTier.name);
+        onShippingTierSelected?.(defaultTier.name);
+      }
+    }
+  }, [shippingTiers, onShippingTierSelected]);
+
+  const handleShippingTierChange = (tierName: string) => {
+    setSelectedShippingTier(tierName);
+    onShippingTierSelected?.(tierName);
+  };
 
   if (!user) return <ContactSkeleton />;
 
@@ -108,7 +163,79 @@ export default function CheckoutContactAndPayment() {
         </label>
       </div>
 
-      {/* 3. PAYMENT Section */}
+      {/* 3. SHIPPING METHOD Section */}
+      <div className="p-4 bg-white rounded-xl border border-gray-100">
+        <Paragraph1 className="font-bold text-gray-800 tracking-wider mb-4">
+          SHIPPING METHOD
+        </Paragraph1>
+        <hr className="mb-4 text-gray-300" />
+
+        {isLoadingShipping ? (
+          <div className="space-y-2">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className="h-16 bg-gray-200 rounded-lg animate-pulse"
+              ></div>
+            ))}
+          </div>
+        ) : localShippingTiers.length > 0 ? (
+          <div className="space-y-3">
+            {localShippingTiers.map((tier) => (
+              <label
+                key={tier.name}
+                className="flex items-center p-3 border-2 rounded-lg cursor-pointer transition-colors"
+                style={{
+                  borderColor:
+                    selectedShippingTier === tier.name ? "#000" : "#e5e7eb",
+                  backgroundColor:
+                    selectedShippingTier === tier.name ? "#f9fafb" : "#ffffff",
+                }}
+              >
+                <input
+                  type="radio"
+                  name="shippingTier"
+                  value={tier.name}
+                  checked={selectedShippingTier === tier.name}
+                  onChange={() => handleShippingTierChange(tier.name)}
+                  className="hidden"
+                />
+                <span
+                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                    selectedShippingTier === tier.name
+                      ? "bg-black border-black"
+                      : "bg-white border-gray-400"
+                  }`}
+                >
+                  {selectedShippingTier === tier.name && (
+                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                  )}
+                </span>
+                <div className="ml-3 flex-1">
+                  <div className="flex items-center gap-2">
+                    <Truck size={18} className="text-gray-700" />
+                    <Paragraph1 className="font-semibold text-gray-900">
+                      {tier.name}
+                    </Paragraph1>
+                  </div>
+                  <Paragraph1 className="text-xs text-gray-600 ml-6">
+                    Shipping cost: ₦{formatCurrency(tier.totalShippingCost)}
+                  </Paragraph1>
+                </div>
+                <Paragraph1 className="font-bold text-gray-900 text-sm">
+                  ₦{formatCurrency(tier.grandTotal)}
+                </Paragraph1>
+              </label>
+            ))}
+          </div>
+        ) : (
+          <Paragraph1 className="text-gray-600 text-sm">
+            No shipping methods available
+          </Paragraph1>
+        )}
+      </div>
+
+      {/* 4. PAYMENT Section */}
       <div className="p-4 bg-white rounded-xl border border-gray-100">
         <Paragraph1 className="font-bold text-gray-800 tracking-wider mb-4">
           PAYMENT

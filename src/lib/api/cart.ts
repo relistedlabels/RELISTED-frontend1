@@ -79,3 +79,17 @@ export const getOrderSummaryApi = () =>
   apiFetch<any>("/order/summary", {
     method: "GET",
   });
+
+/**
+ * Pass cart with selected shipping tier (POST /order/checkout)
+ * @param shippingTierName - The selected shipping tier name (e.g., "Express", "Dellyman")
+ */
+export const passCartApi = (shippingTierName: string) =>
+  apiFetch<{
+    success: boolean;
+    data?: any;
+    message?: string;
+  }>("/order", {
+    method: "POST",
+    body: JSON.stringify({ pricingTier: shippingTierName }),
+  });

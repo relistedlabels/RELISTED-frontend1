@@ -131,7 +131,7 @@ function WalletRow({
       </td>
       <td className="px-6 py-4">
         <Paragraph1 className="text-gray-600">
-          {getLastUpdatedDate(wallet.updatedAt)}
+          {getLastUpdatedDate(wallet.createdAt)}
         </Paragraph1>
       </td>
       <td className="px-6 py-4">
