@@ -183,18 +183,12 @@ function ActiveListingsTable({
               <td className="py-4 px-6">
                 <span
                   className={`px-2 py-1 rounded text-xs font-semibold ${
-                    product.status === "active"
+                    product.status === "APPROVED"
                       ? "bg-green-100 text-green-700"
-                      : product.status === "rented"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-gray-100 text-gray-700"
+                      : "bg-gray-100 text-gray-700"
                   }`}
                 >
-                  {product.status === "active"
-                    ? "Available"
-                    : product.status === "rented"
-                      ? "Out for Rent"
-                      : "Inactive"}
+                  {product.status === "APPROVED" ? "Available" : "Inactive"}
                 </span>
               </td>
               <td className="py-4 px-6">
@@ -208,16 +202,16 @@ function ActiveListingsTable({
                 </Paragraph1>
               </td>
               <td className="py-4 px-6 flex gap-2">
+                <button className="px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-sm">
+                  <Power size={18} />
+                  Deactivate
+                </button>
                 <button
                   onClick={() => onView(product)}
                   className="px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-sm"
                 >
                   <Eye size={18} />
                   View
-                </button>
-                <button className="px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-sm">
-                  <Power size={18} />
-                  Deactivate
                 </button>
               </td>
             </tr>
