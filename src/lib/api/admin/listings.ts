@@ -62,6 +62,68 @@ export interface ProductDetail extends Product {
   listerPhone: string;
 }
 
+export interface AvailabilityCalendarEntry {
+  date: string;
+  status: "available" | "rented";
+  booking?: {
+    id: string;
+    dresserId: string;
+    dresserName: string;
+    startDate: string;
+    endDate: string;
+    orderTotal: number;
+  };
+}
+
+export interface ProductAvailability {
+  productId: string;
+  month: number;
+  year: number;
+  nextAvailableDate: string | null;
+  currentlyRented: boolean;
+  currentRentalEndDate: string | null;
+  stats: {
+    daysRentedThisMonth: number;
+    totalRentalsThisMonth: number;
+    totalRentalRevenue: number;
+  };
+  calendar: AvailabilityCalendarEntry[];
+}
+
+export interface ActivityActor {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface ProductActivityEntry {
+  id: string;
+  type:
+    | "listed"
+    | "approved"
+    | "rejected"
+    | "rented"
+    | "returned"
+    | "damaged"
+    | "updated"
+    | "suspended"
+    | "reactivated";
+  title: string;
+  description: string;
+  timestamp: string;
+  actor: ActivityActor | null;
+  metadata?: {
+    orderId?: string;
+    endDate?: string;
+    rejectionReason?: string;
+  };
+}
+
+export interface ProductActivityResponse {
+  productId: string;
+  activities: ProductActivityEntry[];
+}
+
 export interface PaginatedProductsResponse {
   products: Product[];
   total: number;
@@ -152,6 +214,18 @@ export const productsApi = {
   getProductById: (productId: string) =>
     apiFetch<{ success: true; data: ProductDetail }>(
       `/api/admin/products/${productId}`,
+    ),
+
+  // 9. GET /api/admin/listings/:productId/availability
+  getProductAvailability: (productId: string, month: number, year: number) =>
+    apiFetch<{ success: true; data: ProductAvailability }>(
+      `/api/admin/listings/${productId}/availability?month=${month}&year=${year}`,
+    ),
+
+  // 10. GET /api/admin/listings/:productId/activity
+  getProductActivity: (productId: string) =>
+    apiFetch<{ success: true; data: ProductActivityResponse }>(
+      `/api/admin/listings/${productId}/activity`,
     ),
 
   // ...existing code...

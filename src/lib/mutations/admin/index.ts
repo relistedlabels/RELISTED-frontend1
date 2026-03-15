@@ -304,6 +304,17 @@ export const useDeleteUser = () => {
   });
 };
 
+export const useVerifyUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => usersApi.verifyUser(userId),
+    onSuccess: (_, userId) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users", userId] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+};
+
 export const useLogoutAllDevices = () => {
   const queryClient = useQueryClient();
   return useMutation({

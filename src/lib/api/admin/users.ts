@@ -251,4 +251,15 @@ export const usersApi = {
     apiFetch<{ success: true; message: string }>(`/api/admin/users/${userId}`, {
       method: "DELETE",
     }),
+
+  // 6. PATCH /api/admin/users/:userId/verify
+  verifyUser: (userId: string) =>
+    apiFetch<{ success: true; data: UserProfile }>(
+      `/api/admin/users/${userId}/verify`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ verified: true }),
+        headers: { "Content-Type": "application/json" },
+      },
+    ),
 };

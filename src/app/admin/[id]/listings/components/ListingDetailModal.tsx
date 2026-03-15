@@ -465,18 +465,16 @@ export default function ListingDetailModal({
               )}
 
               {activeTab === "availability" && (
-                <AvailabilityTab
-                  nextAvailableDate="Oct 22, 2025"
-                  currentlyRented={true}
-                  daysRentedThisMonth={10}
-                />
+                <AvailabilityTab productId={displayProduct?.id} />
               )}
 
               {activeTab === "rental-history" && (
                 <RentalHistoryTab listerUserId={displayProduct?.curatorId} />
               )}
 
-              {activeTab === "activity" && <ActivityTab />}
+              {activeTab === "activity" && (
+                <ActivityTab productId={displayProduct?.id} />
+              )}
             </div>
           </motion.div>
 

@@ -9,48 +9,28 @@ import {
   Clock,
 } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { useProductAvailability } from "@/lib/queries/admin/useListings";
 
-interface AvailabilityProps {
-  nextAvailableDate?: string;
-  currentlyRented?: boolean;
-  daysRentedThisMonth?: number;
+interface AvailabilityTabProps {
+  productId: string;
 }
 
-const RENTAL_PACKAGES = [
-  { duration: "3 Days", price: "₦75,000" },
-  { duration: "6 Days", price: "₦175,000" },
-  { duration: "9 Days", price: "₦500,000" },
-  { duration: "Custom", price: "NO" },
-];
+export default function AvailabilityTab({ productId }: AvailabilityTabProps) {
+  const today = new Date();
+  const [currentMonth, setCurrentMonth] = useState(today);
 
-const AVAILABILITY_STATS = [
-  {
-    label: "Next Available Date",
-    value: "Oct 22, 2025",
-    icon: Calendar,
-    color: "text-gray-700",
-  },
-  {
-    label: "Currently Rented",
-    value: "Yes (until Oct 20)",
-    icon: AlertCircle,
-    color: "text-red-600",
-  },
-  {
-    label: "Days Rented This Month",
-    value: "10 Days",
-    icon: Clock,
-    color: "text-blue-600",
-  },
-];
+  // Fetch availability data from API
+  const {
+    data: availabilityData,
+    isLoading,
+    error,
+  } = useProductAvailability(
+    productId,
+    currentMonth.getMonth() + 1,
+    currentMonth.getFullYear(),
+  );
 
-export default function AvailabilityTab({
-  nextAvailableDate = "Oct 22, 2025",
-  currentlyRented = true,
-  daysRentedThisMonth = 10,
-}: AvailabilityProps) {
-  const [currentMonth, setCurrentMonth] = useState(new Date(2025, 9)); // October 2025
-  const [selectedDates, setSelectedDates] = useState<number[]>([]);
+  const availability = availabilityData?.data;
 
   const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -81,9 +61,6 @@ export default function AvailabilityTab({
   const firstDayOfMonth = getFirstDayOfMonth(currentMonth);
   const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
-  // Mock unavailable dates
-  const unavailableDates = [22, 23, 24, 25, 26, 27, 28, 29, 30];
-
   const handlePrevMonth = () => {
     setCurrentMonth(
       new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1),
@@ -96,39 +73,67 @@ export default function AvailabilityTab({
     );
   };
 
-  const isDateUnavailable = (day: number) => unavailableDates.includes(day);
+  // Get availability status for a specific date
+  const getDateStatus = (day: number) => {
+    if (!availability?.calendar) return "unavailable";
+    const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const entry = availability.calendar.find((e) => e.date === dateStr);
+    return entry?.status || "unavailable";
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Paragraph1>Loading availability data...</Paragraph1>
+      </div>
+    );
+  }
+
+  if (error || !availability) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Paragraph1 className="text-red-600">
+          Failed to load availability data
+        </Paragraph1>
+      </div>
+    );
+  }
+
+  // Build dynamic stats
+  const stats = [
+    {
+      label: "Next Available Date",
+      value: availability.nextAvailableDate
+        ? new Date(availability.nextAvailableDate).toLocaleDateString()
+        : "N/A",
+      icon: Calendar,
+      color: "text-gray-700",
+    },
+    {
+      label: "Currently Rented",
+      value: availability.currentlyRented
+        ? `Yes (until ${new Date(availability.currentRentalEndDate || "").toLocaleDateString()})`
+        : "No",
+      icon: AlertCircle,
+      color: availability.currentlyRented ? "text-red-600" : "text-green-600",
+    },
+    {
+      label: "Days Rented This Month",
+      value: `${availability.stats.daysRentedThisMonth} Days`,
+      icon: Clock,
+      color: "text-blue-600",
+    },
+  ];
 
   return (
     <div className="space-y-6">
-      {/* Rental Duration */}
-      <div>
-        <Paragraph3 className="text-base font-bold text-gray-900 mb-4">
-          Rental Duration
-        </Paragraph3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {RENTAL_PACKAGES.map((pkg, index) => (
-            <button
-              key={index}
-              className="p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-center"
-            >
-              <Paragraph1 className="text-sm font-semibold text-gray-900 mb-1">
-                {pkg.duration}
-              </Paragraph1>
-              <Paragraph1 className="text-sm font-bold text-gray-700">
-                {pkg.price}
-              </Paragraph1>
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Availability Overview */}
       <div>
         <Paragraph3 className="text-base font-bold text-gray-900 mb-4">
           Availability Overview
         </Paragraph3>
         <div className="grid grid-cols-3 gap-4">
-          {AVAILABILITY_STATS.map((stat) => {
+          {stats.map((stat) => {
             const IconComponent = stat.icon;
             return (
               <div
@@ -153,7 +158,8 @@ export default function AvailabilityTab({
       {/* Booking Calendar */}
       <div>
         <Paragraph3 className="text-base font-bold text-gray-900 mb-4">
-          Booking Calendar
+          Booking Calendar - {availability.stats.totalRentalsThisMonth} Rentals
+          ({availability.stats.totalRentalRevenue.toLocaleString()} NGN)
         </Paragraph3>
 
         <div className="bg-white border border-gray-200 rounded-lg p-6">
@@ -196,21 +202,25 @@ export default function AvailabilityTab({
 
             {/* Days of the month */}
             {daysArray.map((day) => {
-              const isUnavailable = isDateUnavailable(day);
+              const status = getDateStatus(day);
+              const isRented = status === "rented";
               return (
-                <button
+                <div
                   key={day}
-                  className={`py-2 flex items-center justify-center rounded-lg text-xs font-medium transition ${
-                    isUnavailable
-                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : day >= 10 && day <= 20
-                        ? "bg-yellow-300 text-gray-900"
-                        : "text-gray-900 hover:bg-gray-100"
+                  className={`py-2 flex items-center justify-center rounded-lg text-xs font-medium transition relative group ${
+                    isRented
+                      ? "bg-red-100 text-red-700 cursor-not-allowed"
+                      : "bg-green-100 text-green-700 hover:bg-green-200"
                   }`}
-                  disabled={isUnavailable}
+                  title={isRented ? "Rented" : "Available"}
                 >
                   {day}
-                </button>
+                  {isRented && (
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-900 text-white text-xs rounded p-2 whitespace-nowrap z-10">
+                      Click to view booking details
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -218,16 +228,14 @@ export default function AvailabilityTab({
           {/* Legend */}
           <div className="flex items-center justify-center gap-6 pt-4 border-t border-gray-200">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-yellow-300 rounded"></div>
+              <div className="w-4 h-4 bg-green-100 rounded border border-green-700"></div>
               <Paragraph1 className="text-xs text-gray-600">
-                Selected range
+                Available
               </Paragraph1>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-gray-200 rounded"></div>
-              <Paragraph1 className="text-xs text-gray-600">
-                Unavailable
-              </Paragraph1>
+              <div className="w-4 h-4 bg-red-100 rounded border border-red-700"></div>
+              <Paragraph1 className="text-xs text-gray-600">Rented</Paragraph1>
             </div>
           </div>
         </div>

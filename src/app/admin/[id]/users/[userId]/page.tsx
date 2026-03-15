@@ -13,6 +13,7 @@ import {
   Package,
   Heart,
   X,
+  CheckCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
@@ -27,7 +28,11 @@ import {
   useUserDisputes,
   useUserFavorites,
 } from "@/lib/queries/admin/useUsers";
-import { useSuspendUser, useDeleteUser } from "@/lib/mutations/admin";
+import {
+  useSuspendUser,
+  useDeleteUser,
+  useVerifyUser,
+} from "@/lib/mutations/admin";
 import UserProfileOverview from "./components/UserProfileOverview";
 import UserRecords from "./components/UserRecords";
 import UserListings from "./components/UserListings";
@@ -56,10 +61,12 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
   const [activeTab, setActiveTab] = useState("summary");
   const [direction, setDirection] = useState(0);
   const [showActionModal, setShowActionModal] = useState(false);
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
 
   // API Mutations
   const { mutate: suspendUser, isPending: isSuspending } = useSuspendUser();
   const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser();
+  const { mutate: verifyUser, isPending: isVerifying } = useVerifyUser();
 
   // Unwrap the params Promise
   const { userId } = React.use(params);
@@ -217,6 +224,22 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {user?.isVerified ? (
+              <button
+                disabled
+                className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium text-sm flex items-center gap-2 opacity-75 cursor-not-allowed"
+              >
+                Verified <CheckCircle />
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowVerifyModal(true)}
+                disabled={isVerifying}
+                className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition font-medium text-sm disabled:opacity-50"
+              >
+                {isVerifying ? "Verifying..." : "Verify User"}
+              </button>
+            )}
             <button
               onClick={() => setShowActionModal(true)}
               className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium text-sm"
@@ -364,6 +387,83 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
                 <button
                   onClick={() => setShowActionModal(false)}
                   disabled={isSuspending || isDeleting}
+                  className="w-full px-4 py-3 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 font-medium disabled:opacity-50 transition"
+                >
+                  <Paragraph1 className="text-gray-900">Cancel</Paragraph1>
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Verify Confirmation Modal */}
+      {showVerifyModal && user && (
+        <div className="fixed inset-0 z-50">
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowVerifyModal(false)}
+            className="absolute inset-0 bg-black/50"
+          />
+
+          {/* Modal - Center */}
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            className="absolute inset-0 flex items-center justify-center p-4"
+          >
+            <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+              <div className="flex items-center justify-between mb-4">
+                <Paragraph2 className="text-gray-900 font-bold">
+                  Verify User
+                </Paragraph2>
+                <button
+                  onClick={() => setShowVerifyModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <Paragraph1 className="text-gray-600 mb-6">
+                Are you sure you want to verify{" "}
+                <span className="font-medium">{user.name}</span>? This will mark
+                their account as verified.
+              </Paragraph1>
+
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    verifyUser(userId, {
+                      onSuccess: () => {
+                        toast.success(`${user.name} has been verified!`, {
+                          description: "User account is now verified.",
+                        });
+                        setShowVerifyModal(false);
+                      },
+                      onError: (error: any) => {
+                        toast.error("Failed to verify user", {
+                          description:
+                            error?.message || "Please try again later.",
+                        });
+                      },
+                    });
+                  }}
+                  disabled={isVerifying}
+                  className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium disabled:opacity-50 transition"
+                >
+                  <Paragraph1 className="text-white">
+                    {isVerifying ? "Verifying..." : "✓ Verify User"}
+                  </Paragraph1>
+                </button>
+
+                <button
+                  onClick={() => setShowVerifyModal(false)}
+                  disabled={isVerifying}
                   className="w-full px-4 py-3 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 font-medium disabled:opacity-50 transition"
                 >
                   <Paragraph1 className="text-gray-900">Cancel</Paragraph1>

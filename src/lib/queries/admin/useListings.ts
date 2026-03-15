@@ -95,6 +95,29 @@ export const useListingDetail = (productId: string) =>
     refetchOnWindowFocus: false,
   });
 
+export const useProductAvailability = (
+  productId: string,
+  month: number,
+  year: number,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: ["admin", "listings", "availability", productId, month, year],
+    queryFn: () => productsApi.getProductAvailability(productId, month, year),
+    enabled: !!productId && enabled,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+export const useProductActivity = (productId: string, enabled = true) =>
+  useQuery({
+    queryKey: ["admin", "listings", "activity", productId],
+    queryFn: () => productsApi.getProductActivity(productId),
+    enabled: !!productId && enabled,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
 // --- Listings Mutations ---
 
 export const useApproveListing = () => {
