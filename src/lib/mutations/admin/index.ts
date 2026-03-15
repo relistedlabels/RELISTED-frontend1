@@ -4,6 +4,7 @@ import {
   disputesApi,
   walletsApi,
   settingsApi,
+  usersApi,
 } from "@/lib/api/admin/";
 
 // Orders mutations
@@ -278,6 +279,27 @@ export const useSuspendAdmin = () => {
       queryClient.invalidateQueries({
         queryKey: ["admin", "settings", "admins"],
       });
+    },
+  });
+};
+
+// User management mutations
+export const useSuspendUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => usersApi.suspendUser(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+};
+
+export const useDeleteUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => usersApi.deleteUser(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
     },
   });
 };

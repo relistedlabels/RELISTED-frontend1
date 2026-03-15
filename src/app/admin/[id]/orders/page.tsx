@@ -153,7 +153,7 @@ export default function OrdersPage() {
               />
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex- hidden items-center gap-2">
               <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
                 <Calendar size={16} className="text-gray-600" />
                 <select className="bg-transparent text-sm font-medium text-gray-900 outline-none">
@@ -221,7 +221,7 @@ export default function OrdersPage() {
                 }`}
               >
                 {tab.label}
-                <span className="ml-2 text-gray-500">({tab.count})</span>
+                {/* <span className="ml-2 text-gray-500">({tab.count})</span> */}
               </button>
             ))}
           </div>
@@ -303,11 +303,11 @@ export default function OrdersPage() {
                         Return Due
                       </Paragraph1>
                     </th>
-                    <th className="px-6 py-4 text-left">
+                    {/* <th className="px-6 py-4 text-left">
                       <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
                         Action
                       </Paragraph1>
-                    </th>
+                    </th> */}
                   </tr>
                 </thead>
                 <tbody>
@@ -392,7 +392,7 @@ export default function OrdersPage() {
                           {order.returnDue}
                         </Paragraph1>
                       </td>
-                      <td className="px-6 py-4">
+                      {/* <td className="px-6 py-4">
                         <button
                           onClick={() => {
                             setSelectedOrder({
@@ -409,7 +409,7 @@ export default function OrdersPage() {
                           <Eye size={16} />
                           View Details
                         </button>
-                      </td>
+                      </td> */}
                     </tr>
                   ))}
                 </tbody>

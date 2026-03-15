@@ -14,26 +14,20 @@ interface Order {
   id: string;
   date: string;
   curator: {
+    id: string;
     name: string;
     avatar: string;
-    email?: string;
   };
   dresser: {
+    id: string;
     name: string;
     avatar: string;
-    email?: string;
-    phone?: string;
   };
   items: number;
-  total: string;
-  status:
-    | "Preparing"
-    | "In Transit"
-    | "Delivered"
-    | "Return Due"
-    | "Return Pickup"
-    | "Disputed";
-  returnDue: string;
+  total: number;
+  status: string;
+  returnDue: string | null;
+  paymentReference: string | null;
 }
 
 interface OrderDetailModalProps {
@@ -41,25 +35,6 @@ interface OrderDetailModalProps {
   onClose: () => void;
   order?: Order;
 }
-
-const DEFAULT_ORDER: Order = {
-  id: "#RL5-23894",
-  date: "Oct 10, 2025",
-  curator: {
-    name: "Grace Adebayo",
-    avatar:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=40&h=40&fit=crop&radius=50",
-  },
-  dresser: {
-    name: "Chioma Eze",
-    avatar:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&radius=50",
-  },
-  items: 3,
-  total: "₦300,000",
-  status: "In Transit",
-  returnDue: "Oct 15, 2025",
-};
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -83,8 +58,9 @@ const getStatusColor = (status: string) => {
 export default function OrderDetailModal({
   isOpen,
   onClose,
-  order = DEFAULT_ORDER,
+  order,
 }: OrderDetailModalProps) {
+  if (!order) return null;
   return (
     <AnimatePresence>
       {isOpen && (
@@ -137,28 +113,20 @@ export default function OrderDetailModal({
 
             {/* Content - 4 Sections */}
             <div className="p-6 space-y-6">
-              {/* Section 1: Order Information */}
-              <OrderSection1 />
-
               {/* Section 2: Order Details with Curator & Dresser */}
               <OrderSection2
-                rentalPeriod="5 days"
-                returnDue="Oct 19, 2025"
-                trackingId="TRK-4589Z301"
-                courier="DHL Express"
+                returnDue={order.returnDue || "N/A"}
+                paymentReference={order.paymentReference || "N/A"}
                 curatorName={order.curator.name}
-                curatorEmail={order.curator.email || "curator@example.com"}
                 curatorAvatar={order.curator.avatar}
                 dresserName={order.dresser.name}
-                dresserEmail={order.dresser.email || "dresser@example.com"}
-                dresserPhone={order.dresser.phone || "+234 803-456-7890"}
                 dresserAvatar={order.dresser.avatar}
               />
               {/* Section 3: Payment Breakdown */}
               <OrderSection3 />
 
               {/* Section 4: Activity Log */}
-              <OrderSection4 />
+              {/* <OrderSection4 /> */}
             </div>
           </motion.div>
         </>

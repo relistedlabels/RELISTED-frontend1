@@ -1,8 +1,9 @@
-// ENDPOINTS: GET /api/admin/users/:userId, GET /api/admin/users/:userId/rentals, GET /api/admin/users/:userId/listings, GET /api/admin/users/:userId/wallet, GET /api/admin/users/:userId/transactions, GET /api/admin/users/:userId/disputes, GET /api/admin/users/:userId/favorites
+// ENDPOINTS: GET /api/admin/users/:userId, GET /api/admin/users/:userId/rentals, GET /api/admin/users/:userId/listings, GET /api/admin/users/:userId/wallet, GET /api/admin/users/:userId/transactions, GET /api/admin/users/:userId/disputes, GET /api/admin/users/:userId/favorites, PATCH /api/admin/users/:userId/suspend, DELETE /api/admin/users/:userId
 "use client";
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   BarChart3,
@@ -11,6 +12,7 @@ import {
   AlertCircle,
   Package,
   Heart,
+  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
@@ -25,6 +27,7 @@ import {
   useUserDisputes,
   useUserFavorites,
 } from "@/lib/queries/admin/useUsers";
+import { useSuspendUser, useDeleteUser } from "@/lib/mutations/admin";
 import UserProfileOverview from "./components/UserProfileOverview";
 import UserRecords from "./components/UserRecords";
 import UserListings from "./components/UserListings";
@@ -52,6 +55,11 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
   const adminId = useAdminIdStore((state) => state.adminId);
   const [activeTab, setActiveTab] = useState("summary");
   const [direction, setDirection] = useState(0);
+  const [showActionModal, setShowActionModal] = useState(false);
+
+  // API Mutations
+  const { mutate: suspendUser, isPending: isSuspending } = useSuspendUser();
+  const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser();
 
   // Unwrap the params Promise
   const { userId } = React.use(params);
@@ -209,7 +217,10 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium text-sm">
+            <button
+              onClick={() => setShowActionModal(true)}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium text-sm"
+            >
               Suspend
             </button>
             <button
@@ -256,6 +267,112 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
           {renderTabContent()}
         </motion.div>
       </div>
+
+      {/* Action Confirmation Modal */}
+      {showActionModal && user && (
+        <div className="fixed inset-0 z-50">
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowActionModal(false)}
+            className="absolute inset-0 bg-black/50"
+          />
+
+          {/* Modal - Center */}
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            className="absolute inset-0 flex items-center justify-center p-4"
+          >
+            <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+              <div className="flex items-center justify-between mb-4">
+                <Paragraph2 className="text-gray-900 font-bold">
+                  User Action
+                </Paragraph2>
+                <button
+                  onClick={() => setShowActionModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <Paragraph1 className="text-gray-600 mb-6">
+                What action would you like to take for{" "}
+                <span className="font-medium">{user.name}</span>?
+              </Paragraph1>
+
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    suspendUser(userId, {
+                      onSuccess: () => {
+                        toast.success(`${user.name} has been suspended!`, {
+                          description:
+                            "User access has been temporarily revoked.",
+                        });
+                        setShowActionModal(false);
+                      },
+                      onError: (error: any) => {
+                        toast.error("Failed to suspend user", {
+                          description:
+                            error?.message || "Please try again later.",
+                        });
+                      },
+                    });
+                  }}
+                  disabled={isSuspending || isDeleting}
+                  className="w-full px-4 py-3 border-2 border-yellow-500 text-yellow-600 rounded-lg hover:bg-yellow-50 font-medium disabled:opacity-50 transition"
+                >
+                  <Paragraph1 className="text-yellow-600">
+                    {isSuspending ? "Suspending..." : "⚠️ Suspend User"}
+                  </Paragraph1>
+                </button>
+
+                <button
+                  onClick={() => {
+                    deleteUser(userId, {
+                      onSuccess: () => {
+                        toast.success(
+                          `${user.name}'s account has been permanently deleted!`,
+                          {
+                            description: "This action cannot be undone.",
+                          },
+                        );
+                        setShowActionModal(false);
+                        router.push(`/admin/${adminId}/users`);
+                      },
+                      onError: (error: any) => {
+                        toast.error("Failed to delete user", {
+                          description:
+                            error?.message || "Please try again later.",
+                        });
+                      },
+                    });
+                  }}
+                  disabled={isSuspending || isDeleting}
+                  className="w-full px-4 py-3 border-2 border-red-600 text-red-600 rounded-lg hover:bg-red-50 font-medium disabled:opacity-50 transition"
+                >
+                  <Paragraph1 className="text-red-600">
+                    {isDeleting ? "Deleting..." : "🗑️ Delete Account"}
+                  </Paragraph1>
+                </button>
+
+                <button
+                  onClick={() => setShowActionModal(false)}
+                  disabled={isSuspending || isDeleting}
+                  className="w-full px-4 py-3 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 font-medium disabled:opacity-50 transition"
+                >
+                  <Paragraph1 className="text-gray-900">Cancel</Paragraph1>
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

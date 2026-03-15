@@ -5,30 +5,20 @@ import React from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 
 interface OrderSection2Props {
-  rentalPeriod: string;
   returnDue: string;
-  trackingId: string;
-  courier: string;
+  paymentReference: string;
   curatorName: string;
-  curatorEmail: string;
   curatorAvatar: string;
   dresserName: string;
-  dresserEmail: string;
-  dresserPhone: string;
   dresserAvatar: string;
 }
 
 export default function OrderSection2({
-  rentalPeriod,
   returnDue,
-  trackingId,
-  courier,
+  paymentReference,
   curatorName,
-  curatorEmail,
   curatorAvatar,
   dresserName,
-  dresserEmail,
-  dresserPhone,
   dresserAvatar,
 }: OrderSection2Props) {
   return (
@@ -41,14 +31,6 @@ export default function OrderSection2({
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <Paragraph1 className="text-sm text-gray-600">
-              Rental Period:
-            </Paragraph1>
-            <Paragraph1 className="text-sm font-medium text-gray-900">
-              {rentalPeriod}
-            </Paragraph1>
-          </div>
-          <div className="flex justify-between items-center">
-            <Paragraph1 className="text-sm text-gray-600">
               Return Due:
             </Paragraph1>
             <Paragraph1 className="text-sm font-medium text-gray-900">
@@ -57,16 +39,10 @@ export default function OrderSection2({
           </div>
           <div className="flex justify-between items-center">
             <Paragraph1 className="text-sm text-gray-600">
-              Tracking ID:
+              Payment Reference:
             </Paragraph1>
             <Paragraph1 className="text-sm font-medium text-gray-900">
-              {trackingId}
-            </Paragraph1>
-          </div>
-          <div className="flex justify-between items-center">
-            <Paragraph1 className="text-sm text-gray-600">Courier:</Paragraph1>
-            <Paragraph1 className="text-sm font-medium text-gray-900">
-              {courier}
+              {paymentReference}
             </Paragraph1>
           </div>
         </div>
@@ -87,9 +63,6 @@ export default function OrderSection2({
             <Paragraph1 className="text-sm font-medium text-gray-900">
               {curatorName}
             </Paragraph1>
-            <Paragraph1 className="text-xs text-gray-500">
-              {curatorEmail}
-            </Paragraph1>
           </div>
         </div>
       </div>
@@ -108,12 +81,6 @@ export default function OrderSection2({
           <div>
             <Paragraph1 className="text-sm font-medium text-gray-900">
               {dresserName}
-            </Paragraph1>
-            <Paragraph1 className="text-xs text-gray-500">
-              {dresserEmail}
-            </Paragraph1>
-            <Paragraph1 className="text-xs text-gray-500">
-              {dresserPhone}
             </Paragraph1>
           </div>
         </div>

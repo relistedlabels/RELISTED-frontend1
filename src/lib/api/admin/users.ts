@@ -245,4 +245,10 @@ export const usersApi = {
       success: true;
       data: UserFavorite[];
     }>(`/api/admin/users/${userId}/favorites?${buildListParams(params)}`),
+
+  // 5. DELETE /api/admin/users/:userId
+  deleteUser: (userId: string) =>
+    apiFetch<{ success: true; message: string }>(`/api/admin/users/${userId}`, {
+      method: "DELETE",
+    }),
 };
