@@ -120,6 +120,9 @@ export interface FullProfile {
   id: string;
   userId: string;
   phoneNumber: string;
+  phone?: string;
+  avatar?: string;
+  status?: string;
   bvn: string | null;
   isApproved: boolean;
   avatarUploadId: string | null;

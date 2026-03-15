@@ -66,15 +66,9 @@ export interface AdminUser {
 }
 
 export interface Device {
-  id: string;
-  type: string;
-  name: string;
-  osVersion: string;
-  browser: string;
-  ipAddress: string;
+  device: string;
   location: string;
-  lastActive: string;
-  isCurrent: boolean;
+  current: boolean;
 }
 
 export interface AuditLog {
@@ -140,7 +134,7 @@ export const settingsApi = {
   getDevices: () =>
     apiFetch<{
       success: true;
-      data: { devices: Device[]; totalSessions: number };
+      data: Device[];
     }>(`/api/admin/settings/profile/devices`),
 
   logoutAllDevices: (exceptCurrentDevice: boolean = true) =>
@@ -184,15 +178,7 @@ export const settingsApi = {
   getAdmins: (page: number = 1, limit: number = 20) =>
     apiFetch<{
       success: true;
-      data: {
-        admins: AdminUser[];
-        pagination: {
-          total: number;
-          page: number;
-          limit: number;
-          pages: number;
-        };
-      };
+      data: any;
     }>(`/api/admin/settings/admins?page=${page}&limit=${limit}`),
 
   createAdmin: (
@@ -212,6 +198,13 @@ export const settingsApi = {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ roleId, status }),
+    }),
+
+  suspendAdmin: (adminId: string, suspended: boolean) =>
+    apiFetch(`/api/admin/settings/admins/${adminId}/suspend`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ suspended }),
     }),
 
   getAuditLogs: (

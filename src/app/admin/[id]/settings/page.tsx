@@ -27,16 +27,16 @@ export default function SettingsPage() {
       label: "Profile & Security",
       icon: <User size={18} />,
     },
-    {
-      id: "platform-controls",
-      label: "Platform Controls",
-      icon: <Settings size={18} />,
-    },
-    {
-      id: "roles-permissions",
-      label: "Roles & Permissions",
-      icon: <Users size={18} />,
-    },
+    // {
+    //   id: "platform-controls",
+    //   label: "Platform Controls",
+    //   icon: <Settings size={18} />,
+    // },
+    // {
+    //   id: "roles-permissions",
+    //   label: "Roles & Permissions",
+    //   icon: <Users size={18} />,
+    // },
     {
       id: "admin-management",
       label: "Admin Management",
@@ -80,8 +80,8 @@ export default function SettingsPage() {
         {/* Tab Content */}
         <div className="py-6 md:py-8">
           {activeTab === "profile-security" && <ProfileSecurityTab />}
-          {activeTab === "platform-controls" && <PlatformControlsTab />}
-          {activeTab === "roles-permissions" && <RolesPermissionsTab />}
+          {/* {activeTab === "platform-controls" && <PlatformControlsTab />} */}
+          {/* {activeTab === "roles-permissions" && <RolesPermissionsTab />} */}
           {activeTab === "admin-management" && <AdminManagementTab />}
           {activeTab === "audit-logs" && <AuditLogsTab />}
         </div>

@@ -66,6 +66,47 @@ export interface WalletTransaction {
   status: "completed" | "pending" | "failed";
 }
 
+export interface WithdrawalRequest {
+  id: string;
+  userId: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatar: string;
+  };
+  bankAccount: {
+    accountNumber: string;
+    bankName: string;
+    accountName: string;
+  };
+  amount: number;
+  status: "pending" | "paid" | "failed";
+  requestedDate: string;
+  paidDate?: string;
+  trackingId?: string;
+  reason?: string;
+}
+
+export interface Payout {
+  id: string;
+  userId: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatar: string;
+  };
+  bankAccount: {
+    accountNumber: string;
+    bankName: string;
+    accountName: string;
+  };
+  amount: number;
+  status: "completed" | "paid";
+  completedDate: string;
+}
+
 interface WalletListParams {
   search?: string;
   page?: number;
@@ -83,6 +124,18 @@ interface TransactionListParams {
   search?: string;
   type?: string;
   status?: string;
+  page?: number;
+  limit?: number;
+}
+
+interface WithdrawalListParams {
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+interface PayoutListParams {
+  search?: string;
   page?: number;
   limit?: number;
 }
@@ -109,6 +162,22 @@ function buildTransactionParams(params: TransactionListParams): string {
   if (params.search) searchParams.append("search", params.search);
   if (params.type) searchParams.append("type", params.type);
   if (params.status) searchParams.append("status", params.status);
+  if (params.page) searchParams.append("page", params.page.toString());
+  if (params.limit) searchParams.append("limit", params.limit.toString());
+  return searchParams.toString();
+}
+
+function buildWithdrawalParams(params: WithdrawalListParams): string {
+  const searchParams = new URLSearchParams();
+  if (params.search) searchParams.append("search", params.search);
+  if (params.page) searchParams.append("page", params.page.toString());
+  if (params.limit) searchParams.append("limit", params.limit.toString());
+  return searchParams.toString();
+}
+
+function buildPayoutParams(params: PayoutListParams): string {
+  const searchParams = new URLSearchParams();
+  if (params.search) searchParams.append("search", params.search);
   if (params.page) searchParams.append("page", params.page.toString());
   if (params.limit) searchParams.append("limit", params.limit.toString());
   return searchParams.toString();
@@ -178,4 +247,41 @@ export const walletsApi = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ format, dataType, filters }),
     }),
+
+  getWithdrawalRequests: (params: WithdrawalListParams) =>
+    apiFetch<{
+      success: true;
+      data: {
+        withdrawals: WithdrawalRequest[];
+        pagination: {
+          total: number;
+          page: number;
+          limit: number;
+          pages: number;
+        };
+      };
+    }>(
+      `/api/admin/wallets/withdrawal-requests?${buildWithdrawalParams(params)}`,
+    ),
+
+  markWithdrawalAsPaid: (withdrawalId: string, trackingId: string) =>
+    apiFetch(`/api/admin/wallets/withdrawal-requests/${withdrawalId}/paid`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ trackingId }),
+    }),
+
+  getPayouts: (params: PayoutListParams) =>
+    apiFetch<{
+      success: true;
+      data: {
+        payouts: Payout[];
+        pagination: {
+          total: number;
+          page: number;
+          limit: number;
+          pages: number;
+        };
+      };
+    }>(`/api/admin/wallets/payouts?${buildPayoutParams(params)}`),
 };

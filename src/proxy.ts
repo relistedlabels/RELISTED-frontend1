@@ -18,7 +18,7 @@ export function proxy(req: NextRequest) {
   const userRole = req.cookies.get("user_role")?.value ?? null;
 
   // Admin auth routes: public (no auth required)
-  if (pathname.match(/^\/admin\/[^/]+\/auth\//)) {
+  if (pathname.match(/^\/admin\/[^/]+\/auth(\/|$)/)) {
     return NextResponse.next();
   }
 

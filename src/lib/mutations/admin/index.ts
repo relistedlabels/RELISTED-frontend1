@@ -161,6 +161,17 @@ export const useUpdateAdminPassword = () => {
   });
 };
 
+export const useUpdateProfilePhoto = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (formData: FormData) =>
+      settingsApi.updateProfilePhoto(formData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user", "profile"] });
+    },
+  });
+};
+
 export const useUpdatePlatformControls = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -248,6 +259,37 @@ export const useUpdateAdmin = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["admin", "settings", "admins"],
+      });
+    },
+  });
+};
+
+export const useSuspendAdmin = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      adminId,
+      suspended,
+    }: {
+      adminId: string;
+      suspended: boolean;
+    }) => settingsApi.suspendAdmin(adminId, suspended),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "settings", "admins"],
+      });
+    },
+  });
+};
+
+export const useLogoutAllDevices = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (exceptCurrentDevice: boolean = true) =>
+      settingsApi.logoutAllDevices(exceptCurrentDevice),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "settings", "devices"],
       });
     },
   });

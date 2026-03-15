@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { X, Upload, ImageIcon } from "lucide-react";
+import { X, Upload, ImageIcon, Loader2 } from "lucide-react";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import { useUpdateProfilePhoto } from "@/lib/mutations/admin";
 
 interface ChangePhotoModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ export default function ChangePhotoModal({
 }: ChangePhotoModalProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const uploadMutation = useUpdateProfilePhoto();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -28,11 +30,18 @@ export default function ChangePhotoModal({
     }
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (file) {
-      console.log("Uploading file:", file);
-      // Handle upload logic here
-      onClose();
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        await uploadMutation.mutateAsync(formData);
+        setPreview(null);
+        setFile(null);
+        onClose();
+      } catch (error) {
+        console.error("Error uploading photo:", error);
+      }
     }
   };
 
@@ -95,16 +104,24 @@ export default function ChangePhotoModal({
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
+              disabled={uploadMutation.isPending}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Paragraph1>Cancel</Paragraph1>
             </button>
             <button
               onClick={handleUpload}
-              disabled={!file}
-              className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!file || uploadMutation.isPending}
+              className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              <Paragraph1>Upload Photo</Paragraph1>
+              {uploadMutation.isPending ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <Paragraph1>Uploading...</Paragraph1>
+                </>
+              ) : (
+                <Paragraph1>Upload Photo</Paragraph1>
+              )}
             </button>
           </div>
         </div>

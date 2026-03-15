@@ -1,5 +1,5 @@
 "use client";
-// ENDPOINTS: GET /api/admin/wallets/stats, GET /api/admin/wallets, GET /api/admin/wallets/escrow, GET /api/admin/wallets/transactions, POST /api/admin/wallets/export
+// ENDPOINTS: GET /api/admin/wallets/stats, GET /api/admin/wallets, GET /api/admin/wallets/escrow, GET /api/admin/wallets/transactions, POST /api/admin/wallets/export, GET /api/admin/wallets/withdrawal-requests, PUT /api/admin/wallets/withdrawal-requests/:id/paid, GET /api/admin/wallets/payouts
 
 import { useState } from "react";
 import { Search, Download, FileText } from "lucide-react";
@@ -14,9 +14,11 @@ import {
 import WalletTable from "./components/WalletTable";
 import EscrowTable from "./components/EscrowTable";
 import TransactionsTable from "./components/TransactionsTable";
+import WithdrawalRequestTable from "./components/WithdrawalRequestTable";
+import PayoutsTable from "./components/PayoutsTable";
 import MetricsCard from "./components/MetricsCard";
 
-type TabType = "wallet" | "escrow" | "transactions";
+type TabType = "wallet" | "escrow" | "transactions" | "withdrawals" | "payouts";
 
 interface MetricData {
   label: string;
@@ -230,6 +232,16 @@ export default function WalletsPage() {
             onClick={() => setActiveTab("transactions")}
             label="Transactions"
           />
+          <TabButton
+            active={activeTab === "withdrawals"}
+            onClick={() => setActiveTab("withdrawals")}
+            label="Withdrawal Requests"
+          />
+          <TabButton
+            active={activeTab === "payouts"}
+            onClick={() => setActiveTab("payouts")}
+            label="Payouts"
+          />
         </div>
 
         {/* Table Content */}
@@ -238,6 +250,12 @@ export default function WalletsPage() {
           {activeTab === "escrow" && <EscrowTable searchQuery={searchQuery} />}
           {activeTab === "transactions" && (
             <TransactionsTable searchQuery={searchQuery} />
+          )}
+          {activeTab === "withdrawals" && (
+            <WithdrawalRequestTable searchQuery={searchQuery} />
+          )}
+          {activeTab === "payouts" && (
+            <PayoutsTable searchQuery={searchQuery} />
           )}
         </div>
       </div>
