@@ -5,13 +5,7 @@ export function useUpdateListerAddress() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      addressId,
-      data,
-    }: {
-      addressId: string;
-      data: Partial<AddAddressPayload>;
-    }) => updateListerAddress(addressId, data),
+    mutationFn: (data: AddAddressPayload) => updateListerAddress(data),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["listers", "profile", "addresses"],

@@ -244,22 +244,16 @@ const AccountProfileDetails: React.FC = () => {
 
     if (!editingAddressId) return;
 
-    updateAddressMutation.mutate(
-      {
-        addressId: editingAddressId,
-        data: editAddress,
+    updateAddressMutation.mutate(editAddress, {
+      onSuccess: () => {
+        setEditingAddressId(null);
+        setUpdateStatus("success");
+        setTimeout(() => setUpdateStatus("idle"), 3000);
       },
-      {
-        onSuccess: () => {
-          setEditingAddressId(null);
-          setUpdateStatus("success");
-          setTimeout(() => setUpdateStatus("idle"), 3000);
-        },
-        onError: () => {
-          setAddressError("Failed to update address. Please try again.");
-        },
+      onError: () => {
+        setAddressError("Failed to update address. Please try again.");
       },
-    );
+    });
   };
 
   return (
@@ -458,12 +452,12 @@ const AccountProfileDetails: React.FC = () => {
                   <span className="font-medium">State: </span>
                   <span>{address.state}</span>
                 </div>
-                <div>
+                <div className=" hi">
                   <span className="font-medium">Country: </span>
                   <span>{address.country || "-"}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2 sm:self-center">
+              <div className="flex- hidden items-center gap-2 sm:self-center">
                 {address.isDefault && (
                   <span className="rounded-full bg-black px-3 py-1 text-[10px] font-medium uppercase tracking-wide text-white">
                     Default
@@ -491,7 +485,7 @@ const AccountProfileDetails: React.FC = () => {
           className="flex items-center justify-center space-x-1 px-4 py-2 text-sm font-semibold text-black border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150"
         >
           <HiOutlinePlus className="w-4 h-4" />
-          <span>{isAddingAddress ? "Cancel" : "Add New Address"}</span>
+          <span>{isAddingAddress ? "Cancel" : "Change Address"}</span>
         </button>
 
         <AnimatePresence>
@@ -594,13 +588,13 @@ const AccountProfileDetails: React.FC = () => {
                       type="text"
                       className="w-full rounded-md border border-gray-300 p-2 text-sm"
                       value={newAddress.country}
-                      onChange={(e) =>
-                        handleNewAddressChange("country", e.target.value)
-                      }
+                      // onChange={(e) =>
+                      //   handleNewAddressChange("country", e.target.value)
+                      // }
                     />
                   </div>
                 </div>
-                <label className="mb-3 flex items-center gap-2 text-xs text-gray-700">
+                <label className="mb-3 flex- hidden items-center gap-2 text-xs text-gray-700">
                   <input
                     type="checkbox"
                     className="h-4 w-4 rounded border-gray-300"
@@ -737,7 +731,7 @@ const AccountProfileDetails: React.FC = () => {
                     />
                   </div>
                 </div>
-                <label className="mb-3 flex items-center gap-2 text-xs text-gray-700">
+                <label className="mb-3 flex- hidden items-center gap-2 text-xs text-gray-700">
                   <input
                     type="checkbox"
                     className="h-4 w-4 rounded border-gray-300"

@@ -977,16 +977,13 @@ export async function addListerAddress(data: AddAddressPayload): Promise<{
   });
 }
 
-export async function updateListerAddress(
-  addressId: string,
-  data: Partial<AddAddressPayload>,
-): Promise<{
+export async function updateListerAddress(data: AddAddressPayload): Promise<{
   success: boolean;
   message: string;
   data: { address: ListerAddress };
 }> {
-  return apiFetch(`/api/listers/profile/addresses/${addressId}`, {
-    method: "PUT",
+  return apiFetch(`/api/listers/profile/addresses`, {
+    method: "POST",
     body: JSON.stringify(data),
   });
 }
