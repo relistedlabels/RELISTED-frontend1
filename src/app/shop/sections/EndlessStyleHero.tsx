@@ -14,16 +14,19 @@ export default function EndlessStyleHero() {
   const pageTitle = searchParams.get("title") || "Shop amazing";
   const pageDescription = searchParams.get("description") || "Style Brands";
   return (
-    <section className="w-full pt-[70px] sm:pt-[100px] px-4 md:px-10 bg-white py-4 ">
+    <section className="w-full  pt-[70px] sm:pt-[100px] px-4 md:px-10 bg-white py-4 ">
       {/* Title */}
       <motion.div
         variants={{
           hidden: { opacity: 0, y: 20 },
           visible: { opacity: 1, y: 0 },
         }}
+        className="container mx-auto"
         transition={{ duration: 0.8 }}
       >
-        <HeaderAny className=" text-[28px] sm:text-[44px]">{pageTitle}</HeaderAny>
+        <HeaderAny className=" text-[28px] sm:text-[44px]">
+          {pageTitle}
+        </HeaderAny>
         <ParagraphAny className="line-clamp-1 text-[12px] sm:text-[12px] sm:line-clamp-none">
           {pageDescription}
         </ParagraphAny>

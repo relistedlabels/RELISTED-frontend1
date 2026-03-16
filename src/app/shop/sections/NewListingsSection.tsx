@@ -61,7 +61,7 @@ export default function NewListingsSection() {
 
   if (error) {
     return (
-      <section className="w-full px-4 md:px-10 bg-white py-4 sm:pb-10">
+      <section className="w-full px-4 md:px-0 bg-white py-4 sm:pb-10">
         <div className="container mx-auto">
           <div className="text-center mb-2 sm:mb-6">
             <Header1Plus className="sm:text-center font-light flex-1">
