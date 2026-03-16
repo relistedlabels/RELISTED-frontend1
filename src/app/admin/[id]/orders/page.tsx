@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import { TableSkeleton, StatCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import { Calendar, Download, Eye } from "lucide-react";
@@ -45,6 +46,10 @@ const getStatusColor = (status: string) => {
 };
 
 export default function OrdersPage() {
+  const router = useRouter();
+  const params = useParams();
+  const adminId = params.id as string;
+
   const [activeTab, setActiveTab] = useState("all");
   const [statusFilter, setStatusFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -275,12 +280,12 @@ export default function OrdersPage() {
                     </th>
                     <th className="px-6 py-4 text-left">
                       <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                        Curator
+                        Lister
                       </Paragraph1>
                     </th>
                     <th className="px-6 py-4 text-left">
                       <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                        Dresser
+                        Renter
                       </Paragraph1>
                     </th>
                     <th className="px-6 py-4 text-left">
@@ -314,7 +319,14 @@ export default function OrdersPage() {
                   {orders.map((order) => (
                     <tr
                       key={order.id}
-                      className="border-b border-gray-100 hover:bg-gray-50 transition"
+                      onClick={() => {
+                        if (order.curator?.id) {
+                          router.push(
+                            `/admin/${adminId}/users/${order.curator.id}`,
+                          );
+                        }
+                      }}
+                      className="border-b border-gray-100 hover:bg-gray-50 transition cursor-pointer"
                     >
                       <td className="px-6 py-4">
                         <Paragraph1 className="text-sm font-medium text-gray-900">
