@@ -3,27 +3,10 @@
 import React from "react";
 import { Star } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
+import { useOrderDetails } from "@/lib/queries/renters/useOrderDetails";
 
-// --- Product and Curator Placeholder Data ---
-const productData = {
-  name: "Fendi Arco",
-  description: "Black hagfish leather boots",
-  size: "Small",
-  color: "Black",
-  rentalFee: 20000,
-  itemValueEscrow: 200000,
-  returnDuration: "Oct 19, 2025",
-};
-
-const curatorData = {
-  name: "BETTY DANIELS",
-  rating: 4.9,
-  // Placeholder for a profile image URL
-  profileImageUrl: "/path/to/betty_daniels_profile.png",
-};
-
-// Formatting Helper
-const formatCurrency = (amount: number): string => {
+const formatCurrency = (amount: number | undefined): string => {
+  if (!amount) return "0";
   return amount.toLocaleString("en-NG");
 };
 const CURRENCY = "₦";
@@ -35,86 +18,165 @@ interface ProductCuratorDetailsProps {
 export default function ProductCuratorDetails({
   orderId,
 }: ProductCuratorDetailsProps) {
+  const { data: order, isLoading } = useOrderDetails(orderId || "");
+
+  if (isLoading) {
+    return (
+      <div className="animate-pulse space-y-4">
+        <div className="h-48 bg-gray-200 rounded-xl"></div>
+        <div className="h-32 bg-gray-200 rounded-xl"></div>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className="text-center py-8 text-red-500">
+        Failed to load order details
+      </div>
+    );
+  }
+
+  // Extract product and pricing data from order
+  const productInfo = {
+    name: order.itemName || "Item",
+    description: order.itemDescription || "",
+    images: order.itemImages || [],
+    condition: order.condition || "Good",
+  };
+
+  const pricingInfo = order.pricing || {
+    rentalPrice: 0,
+    deliveryFee: 0,
+    serviceFee: 0,
+    totalAmount: 0,
+  };
+
+  const timeline = order.rentalTimeline || {};
+
+  // Extract lister data
+  const listerInfo = order.listerProfile || {
+    name: "Lister",
+    avatar: "",
+    rating: 0,
+    totalRentals: 0,
+  };
+
+  const returnDate = timeline.returnDueDate
+    ? new Date(timeline.returnDueDate).toLocaleDateString("en-NG", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : "N/A";
+
   return (
-    <div className=" space-y-4">
+    <div className="space-y-4">
       {/* --- 1. PRODUCT DETAILS CARD --- */}
-      <div className="bg-white p-4 rounded-xl  border border-gray-300">
+      <div className="bg-white p-4 rounded-xl border border-gray-300">
         <div className="flex flex-col sm:flex-row gap-4">
           {/* Product Image */}
-          <div className="w-full sm:w-1/3 shrink-0 bg-gray-100 rounded-md overflow-hidden">
-            {/* Placeholder for the image */}
+          <div className="w-full sm:w-1/3 shrink-0 bg-gray-100 rounded-md overflow-hidden h-32">
+            {productInfo.images?.[0] ? (
+              <img
+                src={productInfo.images[0]}
+                alt={productInfo.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                No image
+              </div>
+            )}
           </div>
 
           {/* Product Info */}
           <div className="grow">
             {/* Title and Description */}
             <Paragraph1 className="text-xl font-bold text-gray-900 leading-tight mb-1">
-              {productData.name}
+              {productInfo.name}
             </Paragraph1>
             <Paragraph1 className="text-sm text-gray-600 mb-4">
-              {productData.description}
+              {productInfo.description}
             </Paragraph1>
 
             <hr className="mb-4 border-gray-200" />
 
             {/* Grid Details */}
             <div className="grid grid-cols-2 gap-4 text-sm">
-              {/* Size */}
+              {/* Condition */}
               <div>
-                <span className="text-xs text-gray-500 block mb-1">Size</span>
+                <Paragraph1 className="text-xs text-gray-500 block mb-1">
+                  Condition
+                </Paragraph1>
                 <Paragraph1 className="font-semibold text-gray-800">
-                  {productData.size}
+                  {productInfo.condition}
                 </Paragraph1>
               </div>
 
-              {/* Color */}
+              {/* Rental Period */}
               <div>
-                <span className="text-xs text-gray-500 block mb-1">Color</span>
-                <Paragraph1 className="font-semibold text-gray-800">
-                  {productData.color}
+                <Paragraph1 className="text-xs text-gray-500 block mb-1">
+                  Rental Period
                 </Paragraph1>
-              </div>
-
-              {/* Return Duration */}
-              <div>
-                <span className="text-xs text-gray-500 block mb-1">
-                  <Paragraph1> </Paragraph1> Return Duration
-                </span>
                 <Paragraph1 className="font-semibold text-gray-800">
-                  {productData.returnDuration}
+                  {timeline.rentalStartDate && timeline.rentalEndDate
+                    ? `${new Date(timeline.rentalStartDate).toLocaleDateString("en-NG", { month: "short", day: "numeric" })} - ${new Date(timeline.rentalEndDate).toLocaleDateString("en-NG", { month: "short", day: "numeric" })}`
+                    : "N/A"}
                 </Paragraph1>
               </div>
 
               {/* Return Due */}
               <div>
-                <span className="text-xs text-gray-500 block mb-1">
-                  <Paragraph1>Return Due</Paragraph1>
-                </span>
-                <Paragraph1 className="font-semibold text-gray-800">
-                  {productData.returnDuration}
+                <Paragraph1 className="text-xs text-gray-500 block mb-1">
+                  Return Due
                 </Paragraph1>
-                {/* Assuming Return Due is the same as the date calculated from duration */}
+                <Paragraph1 className="font-semibold text-gray-800">
+                  {returnDate}
+                </Paragraph1>
               </div>
 
               {/* Rental Fee */}
               <div>
-                <span className="text-xs text-gray-500 block mb-1">
-                  <Paragraph1> Rental Fee</Paragraph1>
-                </span>
+                <Paragraph1 className="text-xs text-gray-500 block mb-1">
+                  Rental Fee
+                </Paragraph1>
                 <Paragraph1 className="text-lg font-bold text-gray-900">
                   {CURRENCY}
-                  {formatCurrency(productData.rentalFee)}
+                  {formatCurrency(pricingInfo.rentalPrice)}
                 </Paragraph1>
               </div>
 
-              {/* Item Value (Escrow) */}
+              {/* Delivery Fee */}
               <div>
-                <span className="text-xs text-gray-500 block mb-1">
-                  <Paragraph1>Item Value (Escrow)</Paragraph1>
-                </span>
+                <Paragraph1 className="text-xs text-gray-500 block mb-1">
+                  Delivery Fee
+                </Paragraph1>
                 <Paragraph1 className="text-lg font-bold text-gray-900">
                   {CURRENCY}
-                  {formatCurrency(productData.itemValueEscrow)}
+                  {formatCurrency(pricingInfo.deliveryFee)}
+                </Paragraph1>
+              </div>
+
+              {/* Service Fee */}
+              <div>
+                <Paragraph1 className="text-xs text-gray-500 block mb-1">
+                  Service Fee
+                </Paragraph1>
+                <Paragraph1 className="text-lg font-bold text-gray-900">
+                  {CURRENCY}
+                  {formatCurrency(pricingInfo.serviceFee)}
+                </Paragraph1>
+              </div>
+
+              {/* Total Amount */}
+              <div>
+                <Paragraph1 className="text-xs text-gray-500 block mb-1">
+                  Total Amount
+                </Paragraph1>
+                <Paragraph1 className="text-lg font-bold text-black">
+                  {CURRENCY}
+                  {formatCurrency(pricingInfo.totalAmount)}
                 </Paragraph1>
               </div>
             </div>
@@ -122,25 +184,35 @@ export default function ProductCuratorDetails({
         </div>
       </div>
 
-      {/* --- 2. CURATOR CARD --- */}
-      <div className="bg-white p-4 rounded-xl  border border-gray-300">
+      {/* --- 2. LISTER CARD --- */}
+      <div className="bg-white p-4 rounded-xl border border-gray-300">
         <Paragraph1 className="text-lg font-bold text-gray-900 mb-4">
-          Curator
+          Lister
         </Paragraph1>
 
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4">
-            {/* Curator Profile Image/Avatar */}
-            <div className="w-14 h-14 bg-gray-200 rounded-full overflow-hidden shrink-0">
-              {/* Placeholder image tag */}
+            {/* Lister Avatar */}
+            <div className="w-14 h-14 bg-gray-300 rounded-full overflow-hidden shrink-0 flex items-center justify-center">
+              {listerInfo.avatar ? (
+                <img
+                  src={listerInfo.avatar}
+                  alt={listerInfo.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Paragraph1 className="text-xl font-bold text-white">
+                  {listerInfo.name?.charAt(0) || "L"}
+                </Paragraph1>
+              )}
             </div>
 
-            {/* Curator Info */}
+            {/* Lister Info */}
             <div>
               <Paragraph1 className="text-sm font-bold text-gray-900 uppercase">
-                {curatorData.name}
+                {listerInfo.name}
               </Paragraph1>
-              <div className="flex items-center mt-1">
+              <div className="flex items-center mt-1 gap-1">
                 {/* Rating Stars */}
                 {Array(5)
                   .fill(0)
@@ -149,22 +221,23 @@ export default function ProductCuratorDetails({
                       key={i}
                       size={16}
                       className={
-                        i < Math.floor(curatorData.rating)
+                        i < Math.floor(listerInfo.rating || 0)
                           ? "text-yellow-400 fill-yellow-400"
                           : "text-gray-300"
                       }
                     />
                   ))}
-                <span className="ml-1 text-sm font-medium text-gray-700">
-                  {curatorData.rating}
-                </span>
+                <Paragraph1 className="ml-1 text-sm font-medium text-gray-700">
+                  {listerInfo.rating?.toFixed(1) || "0.0"} (
+                  {listerInfo.totalRentals || 0} rentals)
+                </Paragraph1>
               </div>
             </div>
           </div>
 
           {/* View Profile Button */}
           <button className="text-sm font-semibold text-gray-900 underline hover:text-black transition-colors">
-            <Paragraph1> VIEW PROFILE</Paragraph1>
+            <Paragraph1>PROFILE</Paragraph1>
           </button>
         </div>
       </div>

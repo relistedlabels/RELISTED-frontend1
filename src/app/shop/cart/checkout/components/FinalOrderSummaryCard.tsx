@@ -52,6 +52,11 @@ interface FinalOrderSummaryCardProps {
   isLoading?: boolean;
   error?: Error | null;
   selectedShippingTier?: string;
+  selectedTierData?: {
+    name: string;
+    totalShippingCost: number;
+    grandTotal: number;
+  };
 }
 
 export default function FinalOrderSummaryCard({
@@ -59,6 +64,7 @@ export default function FinalOrderSummaryCard({
   isLoading,
   error,
   selectedShippingTier = "",
+  selectedTierData,
 }: FinalOrderSummaryCardProps) {
   const router = useRouter();
   const checkoutMutation = useCheckout();
@@ -75,6 +81,16 @@ export default function FinalOrderSummaryCard({
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [orderSummary, setOrderSummary] = useState<any>(null);
   const [orderSummaryLoading, setOrderSummaryLoading] = useState(false);
+
+  // Calculate shipping share for each lister based on item count ratio
+  const calculateListerShippingShare = (
+    totalShippingCost: number,
+    listerItemCount: number,
+    totalItemsCount: number,
+  ): number => {
+    if (totalItemsCount === 0) return 0;
+    return Math.floor((totalShippingCost * listerItemCount) / totalItemsCount);
+  };
 
   // Check if user is verified on mount
   useEffect(() => {
@@ -454,7 +470,16 @@ export default function FinalOrderSummaryCard({
                                   {CURRENCY}
                                   {formatCurrency(
                                     listerBreakdown.pickupCost +
-                                      listerBreakdown.shippingCost,
+                                      (selectedTierData
+                                        ? calculateListerShippingShare(
+                                            selectedTierData.totalShippingCost,
+                                            listerBreakdown.itemsCount || 1,
+                                            approvedGroups.reduce(
+                                              (sum, g) => sum + g.items.length,
+                                              0,
+                                            ),
+                                          )
+                                        : listerBreakdown.shippingCost),
                                   )}
                                 </Paragraph1>
                               </div>
@@ -478,7 +503,20 @@ export default function FinalOrderSummaryCard({
                               <Paragraph1 className="text-lg font-extrabold text-gray-900">
                                 {CURRENCY}
                                 {formatCurrency(
-                                  listerBreakdown.listerGrandTotal,
+                                  listerBreakdown.rentalTotal +
+                                    listerBreakdown.collateralTotal +
+                                    listerBreakdown.cleaningTotal +
+                                    listerBreakdown.pickupCost +
+                                    (selectedTierData
+                                      ? calculateListerShippingShare(
+                                          selectedTierData.totalShippingCost,
+                                          listerBreakdown.itemsCount || 1,
+                                          approvedGroups.reduce(
+                                            (sum, g) => sum + g.items.length,
+                                            0,
+                                          ),
+                                        )
+                                      : listerBreakdown.shippingCost),
                                 )}
                               </Paragraph1>
                             </div>
@@ -529,7 +567,9 @@ export default function FinalOrderSummaryCard({
                           {CURRENCY}
                           {formatCurrency(
                             orderSummary.data.summary.pickupTotal +
-                              orderSummary.data.summary.shippingTotal,
+                              (selectedTierData
+                                ? selectedTierData.totalShippingCost
+                                : orderSummary.data.summary.shippingTotal),
                           )}
                         </Paragraph1>
                       </div>
@@ -541,7 +581,15 @@ export default function FinalOrderSummaryCard({
                       </Paragraph1>
                       <Paragraph1 className="text-2xl font-extrabold text-gray-900">
                         {CURRENCY}
-                        {formatCurrency(orderSummary.data.summary.grandTotal)}
+                        {formatCurrency(
+                          orderSummary.data.summary.rentalTotal +
+                            orderSummary.data.summary.collateralTotal +
+                            orderSummary.data.summary.cleaningTotal +
+                            orderSummary.data.summary.pickupTotal +
+                            (selectedTierData
+                              ? selectedTierData.totalShippingCost
+                              : orderSummary.data.summary.shippingTotal),
+                        )}
                       </Paragraph1>
                     </div>
 

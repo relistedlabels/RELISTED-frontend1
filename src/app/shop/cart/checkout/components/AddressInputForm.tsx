@@ -1,51 +1,21 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Paragraph1 } from "@/common/ui/Text";
+import { MapPin } from "lucide-react";
+import { ToolInfo } from "@/common/ui/ToolInfo";
+import { StateSelect } from "@/app/auth/profile-setup/components/StateSelect";
+import { CityLGASelect } from "@/app/auth/profile-setup/components/CityLGASelect";
 import { useProfile } from "@/lib/queries/user/useProfile";
 import { useUpdateProfile } from "@/lib/mutations/user/useUpdateProfile";
 
-const NigerianStates = [
-  "Abia State",
-  "Adamawa State",
-  "Akwa Ibom State",
-  "Anambra State",
-  "Bauchi State",
-  "Bayelsa State",
-  "Benue State",
-  "Borno State",
-  "Cross River State",
-  "Delta State",
-  "Ebonyi State",
-  "Edo State",
-  "Ekiti State",
-  "Enugu State",
-  "Gombe State",
-  "Imo State",
-  "Jigawa State",
-  "Kaduna State",
-  "Kano State",
-  "Katsina State",
-  "Kebbi State",
-  "Kogi State",
-  "Kwara State",
-  "Lagos State",
-  "Nasarawa State",
-  "Niger State",
-  "Ogun State",
-  "Ondo State",
-  "Osun State",
-  "Oyo State",
-  "Plateau State",
-  "Rivers State",
-  "Sokoto State",
-  "Taraba State",
-  "Yobe State",
-  "Zamfara State",
-  "FCT Abuja",
-];
+interface AddressInputFormProps {
+  onClose?: () => void;
+}
 
-export default function AddressInputForm() {
+export default function AddressInputForm({ onClose }: AddressInputFormProps) {
+  const router = useRouter();
   const { data: profile } = useProfile();
   const updateProfile = useUpdateProfile();
 
@@ -69,6 +39,14 @@ export default function AddressInputForm() {
       });
     }
   }, [profile]);
+
+  // Close modal and refresh on successful save
+  useEffect(() => {
+    if (updateProfile.isSuccess) {
+      onClose?.();
+      router.refresh();
+    }
+  }, [updateProfile.isSuccess, onClose, router]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -100,83 +78,44 @@ export default function AddressInputForm() {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Address Field */}
         <div>
-          <label
-            htmlFor="street"
-            className="block text-xs font-medium text-gray-500 mb-1"
-          >
-            <Paragraph1>Street Address</Paragraph1>
+          <label className="block mb-2">
+            <div className="flex items-center gap-1">
+              <Paragraph1 className="text-sm font-medium text-gray-800">
+                Address
+              </Paragraph1>
+              <ToolInfo content="Your residential address used for identity verification and deliveries." />
+            </div>
           </label>
-          <input
-            type="text"
-            id="street"
-            name="street"
-            value={address.street}
-            onChange={handleInputChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-black focus:border-black transition duration-150 font-medium"
-            placeholder="e.g., 01 Olusegun Street"
-            required
-            disabled={updateProfile.isPending}
-          />
-        </div>
-
-        {/* City and State Fields (side-by-side) */}
-        <div className="flex gap-4">
-          {/* City Field */}
-          <div className="flex-1">
-            <label
-              htmlFor="city"
-              className="block text-xs font-medium text-gray-500 mb-1"
-            >
-              <Paragraph1>City</Paragraph1>
-            </label>
+          <div className="relative">
+            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              id="city"
-              name="city"
-              value={address.city}
+              id="street"
+              name="street"
+              value={address.street}
               onChange={handleInputChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-black focus:border-black transition duration-150 font-medium"
-              placeholder="e.g., Iyana Ipaja"
+              className="w-full p-4 pl-12 border rounded-lg"
+              placeholder="e.g., 01 Olusegun Street"
               required
               disabled={updateProfile.isPending}
             />
           </div>
+        </div>
 
-          {/* State Field (Dropdown) */}
-          <div className="flex-1">
-            <label
-              htmlFor="state"
-              className="block text-xs font-medium text-gray-500 mb-1"
-            >
-              <Paragraph1>State</Paragraph1>
-            </label>
-            <div className="relative">
-              <select
-                id="state"
-                name="state"
-                value={address.state}
-                onChange={handleInputChange}
-                className="w-full appearance-none px-4 py-3 border border-gray-300 rounded-lg focus:ring-black focus:border-black transition duration-150 font-medium pr-8 bg-white disabled:opacity-50"
-                required
-                disabled={updateProfile.isPending}
-              >
-                {NigerianStates.map((stateName) => (
-                  <option key={stateName} value={stateName}>
-                    {stateName}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                <svg
-                  className="fill-current h-4 w-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                </svg>
-              </div>
-            </div>
-          </div>
+        {/* City and State Fields (side-by-side) */}
+        <div className="flex gap-4">
+          <CityLGASelect
+            value={address.city}
+            onChange={(value) =>
+              setAddress((prev) => ({ ...prev, city: value }))
+            }
+          />
+          <StateSelect
+            value={address.state}
+            onChange={(value) =>
+              setAddress((prev) => ({ ...prev, state: value }))
+            }
+          />
         </div>
 
         {/* Postal Code Field */}

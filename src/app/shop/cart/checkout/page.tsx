@@ -115,6 +115,9 @@ export default function CheckoutPage() {
             isLoading={isLoading}
             error={error}
             selectedShippingTier={selectedShippingTier}
+            selectedTierData={shippingTiers.find(
+              (tier) => tier.name === selectedShippingTier,
+            )}
           />
         </div>
       </div>

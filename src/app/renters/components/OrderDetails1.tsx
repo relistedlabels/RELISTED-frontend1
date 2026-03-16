@@ -11,11 +11,12 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import { Paragraph1 } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
 import ProductCuratorDetails from "./ProductCuratorDetails";
 import OrderProgressTimeline from "./OrderProgressTimeline";
 import OrderStatusDetails from "./OrderStatusDetails";
+import ReadyToReturnSection from "./ReadyToReturnSection";
 
 interface OrderDetailsPanelProps {
   isOpen: boolean;
@@ -92,6 +93,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
               <ProductCuratorDetails orderId={orderId} />
               <OrderProgressTimeline orderId={orderId || ""} />
               <OrderStatusDetails orderId={orderId} />
+              <ReadyToReturnSection orderId={orderId} />
             </div>
 
             {/* Footer */}

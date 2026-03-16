@@ -2,6 +2,78 @@ missing endpoints
 
 ---
 
+## Renter Return Management
+
+### Ready To Return Item with Images
+
+POST /api/renters/orders/:orderId/ready-to-return
+
+**Purpose:** Submit item for return with condition images. User previews images in UI first, then submits all images at once along with condition assessment and damage notes.
+
+**Request Format:**
+
+```
+POST /api/renters/orders/:orderId/ready-to-return
+Content-Type: multipart/form-data
+
+{
+  "images": [<File>, <File>, <File>],  // Multiple image files (binary)
+  "itemCondition": "good|fair|poor",
+  "damageNotes": "string" (optional)
+}
+```
+
+**URL Parameters:**
+
+- `:orderId` - ID of the rental order
+
+**Form Data:**
+
+- `images` (required): One or more image files (accepts .jpg, .png, .webp)
+- `itemCondition` (required): Condition of the item ("good", "fair", or "poor")
+- `damageNotes` (optional): Additional notes about any damage or issues
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "orderId": "string",
+    "returnId": "string",
+    "status": "initiated",
+    "trackingNumber": "TRK-2026-001",
+    "pickupInfo": {
+      "address": "string",
+      "phone": "string",
+      "instructions": "string"
+    },
+    "returnDeadline": "ISO date",
+    "uploadedImageUrls": [
+      "https://cloudinary.com/image-1.jpg",
+      "https://cloudinary.com/image-2.jpg"
+    ]
+  }
+}
+```
+
+**Status Codes:**
+
+- `200 OK` - Return initiated successfully
+- `400 Bad Request` - Missing images or invalid condition
+- `401 Unauthorized` - User not authenticated
+- `404 Not Found` - Order not found
+- `413 Payload Too Large` - Total file size exceeds limit
+
+**Notes:**
+
+- User previews images in UI before submission
+- All images submitted together in one request
+- Backend processes images (condition assessment, damage detection, etc.)
+- Returns pickup information and tracking details
+
+---
+
 ## Admin Product/Listing Management
 
 ### Get Product Rental Availability & Calendar

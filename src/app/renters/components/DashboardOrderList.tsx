@@ -130,26 +130,21 @@ export default function DashboardOrderList() {
 
               <div className="flex items-center text-xs text-gray-500 mb-3 space-x-2 flex-wrap">
                 <Package size={14} className="shrink-0" />
-                {order.items?.map((item, index) => (
-                  <span key={index}>
-                    {item}
-                    {index < order.items.length - 1 && (
-                      <span className="mx-1">||</span>
-                    )}
-                  </span>
-                ))}
+                <span>{order.itemName}</span>
                 <Package size={14} className="shrink-0" />
                 <Calendar size={14} className="shrink-0" />
-                <span>{new Date(order.date).toLocaleDateString()}</span>
+                <span>
+                  {new Date(order.rentalStartDate).toLocaleDateString()}
+                </span>
               </div>
               <hr className="text-gray-300" />
               <div className="flex pt-3 flex-col sm:flex-row justify-between gap-3 sm:items-center">
                 <div className="text-lg font-bold text-gray-900">
-                  <Paragraph1> Total Amount</Paragraph1>{" "}
+                  <Paragraph1> Rental Price</Paragraph1>{" "}
                   <Paragraph1>
                     {" "}
-                    {currency}
-                    {formatCurrency(order.totalAmount)}
+                    {order.currency}
+                    {formatCurrency(order.rentalPrice)}
                   </Paragraph1>{" "}
                 </div>
                 <OrderDetails orderId={order.orderId} />

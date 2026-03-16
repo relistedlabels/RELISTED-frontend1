@@ -218,13 +218,18 @@ export default function CheckoutContactAndPayment({
                       {tier.name}
                     </Paragraph1>
                   </div>
-                  <Paragraph1 className="text-xs text-gray-600 ml-6">
-                    Shipping cost: ₦{formatCurrency(tier.totalShippingCost)}
-                  </Paragraph1>
+                  <div className=" flex justify-between items-center">
+                    <Paragraph1 className="text-xs text-gray-600 ml-6">
+                      Shipping cost:
+                    </Paragraph1>
+                    <Paragraph1 className="text-sm font-bold text-gray-600 ml-6">
+                      ₦{formatCurrency(tier.totalShippingCost)}
+                    </Paragraph1>
+                  </div>
                 </div>
-                <Paragraph1 className="font-bold text-gray-900 text-sm">
+                {/* <Paragraph1 className="font-bold text-gray-900 text-sm">
                   ₦{formatCurrency(tier.grandTotal)}
-                </Paragraph1>
+                </Paragraph1> */}
               </label>
             ))}
           </div>

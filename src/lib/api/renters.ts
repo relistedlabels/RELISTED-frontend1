@@ -28,13 +28,69 @@ export type FavoriteItem = {
   addedDate: string;
 };
 
+export type OrderListItem = {
+  orderId: string;
+  itemId: string;
+  itemName: string;
+  itemImage: string;
+  listerName: string;
+  listerId: string;
+  rentalStartDate: string;
+  rentalEndDate: string;
+  rentalPrice: number;
+  currency: string;
+  status: "active" | "completed" | "returned" | "cancelled";
+  daysRemaining: number;
+  deliveryDate: string;
+  returnTrackingId: string;
+  condition: string;
+};
+
 export type RentalOrder = {
   orderId: string;
-  items: string[];
-  totalAmount: number;
-  status: string;
-  date: string;
-  image: string | null;
+  itemId: string;
+  itemName: string;
+  itemImages: string[];
+  itemDescription: string;
+  condition: "Good" | "Fair" | "Poor";
+  listerProfile: {
+    listerId: string;
+    name: string;
+    avatar: string;
+    rating: number;
+    totalRentals: number;
+  };
+  rentalTimeline: {
+    orderDate: string;
+    rentalStartDate: string;
+    deliveryDate: string;
+    rentalEndDate: string;
+    returnDueDate: string;
+    returnedDate: string | null;
+  };
+  pricing: {
+    rentalPrice: number;
+    deliveryFee: number;
+    serviceFee: number;
+    totalAmount: number;
+    currency: string;
+  };
+  status: "active" | "completed" | "cancelled" | "disputed";
+  deliveryTracking: {
+    trackingId: string;
+    carrier: string;
+    currentLocation: string;
+    estimatedDelivery: string;
+  };
+  returnTracking: {
+    trackingId: string;
+    carrier: string;
+    currentLocation: string;
+    estimatedDelivery: string;
+  } | null;
+  damageAssessment: any;
+  canRaiseDispute: boolean;
+  canReturn: boolean;
 };
 
 export type WalletInfo = {
@@ -343,7 +399,7 @@ export const rentersApi = {
   }) =>
     apiFetch<{
       success: boolean;
-      data: { orders: RentalOrder[]; total: number };
+      data: { orders: OrderListItem[]; total: number };
     }>("/api/renters/orders", { method: "GET", ...(params && { params }) }),
 
   getOrderDetails: (orderId: string) =>
@@ -368,14 +424,26 @@ export const rentersApi = {
       };
     }>(`/api/renters/orders/${orderId}/progress`, { method: "GET" }),
 
-  initiateReturn: (
-    orderId: string,
-    data: { returnMethod: "pickup" | "dropoff"; damageNotes?: string },
-  ) =>
-    apiFetch<{ success: boolean; data: { trackingNumber: string } }>(
-      `/api/renters/orders/${orderId}/return`,
-      { method: "POST", body: JSON.stringify(data) },
-    ),
+  readyToReturn: (orderId: string, formData: FormData) =>
+    apiFetch<{
+      success: boolean;
+      data: {
+        orderId: string;
+        returnId: string;
+        status: string;
+        trackingNumber: string;
+        pickupInfo?: {
+          address: string;
+          phone: string;
+          instructions: string;
+        };
+        returnDeadline: string;
+        uploadedImageUrls: string[];
+      };
+    }>(`/api/renters/orders/${orderId}/ready-to-return`, {
+      method: "POST",
+      body: formData,
+    }),
 
   // Wallet
   getWallet: () =>
