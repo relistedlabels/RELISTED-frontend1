@@ -213,7 +213,7 @@ export default function ListingDetailModal({
                 )}
 
                 {/* Disable Button - Only show for Active/Approved */}
-                {(displayProduct.status?.toUpperCase() === "ACTIVE" ||
+                {/* {(displayProduct.status?.toUpperCase() === "ACTIVE" ||
                   displayProduct.status?.toUpperCase() === "APPROVED") && (
                   <button
                     onClick={() => setShowDisableModal(true)}
@@ -223,7 +223,7 @@ export default function ListingDetailModal({
                     <Power size={18} />
                     Disable
                   </button>
-                )}
+                )} */}
 
                 <DeleteProductButton
                   productId={displayProduct.id}

@@ -202,10 +202,10 @@ function ActiveListingsTable({
                 </Paragraph1>
               </td>
               <td className="py-4 px-6 flex gap-2">
-                <button className="px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-sm">
+                {/* <button className="px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-sm">
                   <Power size={18} />
                   Deactivate
-                </button>
+                </button> */}
                 <button
                   onClick={() => onView(product)}
                   className="px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-sm"

@@ -219,13 +219,13 @@ export const productsApi = {
   // 9. GET /api/admin/listings/:productId/availability
   getProductAvailability: (productId: string, month: number, year: number) =>
     apiFetch<{ success: true; data: ProductAvailability }>(
-      `/api/admin/listings/${productId}/availability?month=${month}&year=${year}`,
+      `/api/admin/products/listings/${productId}/availability?month=${month}&year=${year}`,
     ),
 
   // 10. GET /api/admin/listings/:productId/activity
   getProductActivity: (productId: string) =>
     apiFetch<{ success: true; data: ProductActivityResponse }>(
-      `/api/admin/listings/${productId}/activity`,
+      `/api/admin/products/listings/${productId}/activity`,
     ),
 
   // ...existing code...

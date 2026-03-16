@@ -37,7 +37,7 @@ export default function AdminManagementTab() {
         <Paragraph3 className="text-gray-900 font-bold">Admin Users</Paragraph3>
         <button
           disabled={showSkeleton}
-          className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium disabled:opacity-50"
+          className="px-4 py-2 hidden bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium disabled:opacity-50"
         >
           <Paragraph1 className="text-white">+ Add Admin</Paragraph1>
         </button>
