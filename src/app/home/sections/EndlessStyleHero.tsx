@@ -38,6 +38,7 @@ export default function EndlessStyleHero() {
     // Navigate to profile setup (will show lister flow since role is now LISTER)
     window.location.href = "/auth/profile-setup";
   };
+  
   return (
     <section className="relative w-full h-screen overflow-hidden bg-black">
       {/* Background Video */}

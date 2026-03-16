@@ -1,4 +1,4 @@
-// ENDPOINTS: GET /api/listers/notifications/preferences, PUT /api/listers/notifications/preferences
+// ENDPOINTS: GET /api/listers/notifications/preferences, PUT /api/listers/notifications/preferences, POST /api/newsletter/subscribe, POST /api/newsletter/unsubscribe
 
 "use client";
 
@@ -6,6 +6,9 @@ import React, { useEffect, useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useNotificationPreferences } from "@/lib/queries/listers/useNotificationPreferences";
 import { useUpdateNotificationPreferences } from "@/lib/mutations/listers/useUpdateNotificationPreferences";
+import { useNewsletterSubscribe } from "@/lib/mutations/newsletter/useNewsletterSubscribe";
+import { useNewsletterUnsubscribe } from "@/lib/mutations/newsletter/useNewsletterUnsubscribe";
+import { useUserStore } from "@/store/useUserStore";
 
 interface NotificationSettingProps {
   /** The main title of the setting (e.g., "Email Alerts") */
@@ -63,11 +66,15 @@ const NotificationSetting: React.FC<NotificationSettingProps> = ({
 const AccountNotifications: React.FC = () => {
   const { data } = useNotificationPreferences();
   const updatePreferencesMutation = useUpdateNotificationPreferences();
+  const newsletterSubscribeMutation = useNewsletterSubscribe();
+  const newsletterUnsubscribeMutation = useNewsletterUnsubscribe();
+  const userEmail = useUserStore((state) => state.email);
 
   const [toggles, setToggles] = useState({
     emailAlerts: true,
     smsUpdates: false,
     productRecommendations: true,
+    newsletter: false,
   });
 
   useEffect(() => {
@@ -77,11 +84,21 @@ const AccountNotifications: React.FC = () => {
       emailAlerts: prefs.emailAlerts?.enabled ?? true,
       smsUpdates: prefs.smsUpdates?.enabled ?? false,
       productRecommendations: prefs.productRecommendations?.enabled ?? true,
+      newsletter: prefs.newsletter?.enabled ?? false,
     });
   }, [data]);
 
   const handleToggle = (key: string, next: boolean) => {
     setToggles((prev) => ({ ...prev, [key]: next }));
+
+    // Handle newsletter subscription/unsubscription
+    if (key === "newsletter" && userEmail) {
+      if (next) {
+        newsletterSubscribeMutation.mutate(userEmail);
+      } else {
+        newsletterUnsubscribeMutation.mutate(userEmail);
+      }
+    }
   };
 
   const handleSave = () => {
@@ -89,6 +106,7 @@ const AccountNotifications: React.FC = () => {
       emailAlerts: toggles.emailAlerts,
       smsUpdates: toggles.smsUpdates,
       productRecommendations: toggles.productRecommendations,
+      newsletter: toggles.newsletter,
     });
   };
 
@@ -126,6 +144,15 @@ const AccountNotifications: React.FC = () => {
           description="Receive personalized product suggestions and exclusive offers based on your preferences"
           enabled={toggles.productRecommendations}
           settingKey="productRecommendations"
+          onToggle={handleToggle}
+        />
+
+        {/* Newsletter Subscription */}
+        <NotificationSetting
+          title="Newsletter Subscription"
+          description="Receive our weekly newsletter with fashion tips, exclusive deals, and platform updates"
+          enabled={toggles.newsletter}
+          settingKey="newsletter"
           onToggle={handleToggle}
         />
       </div>

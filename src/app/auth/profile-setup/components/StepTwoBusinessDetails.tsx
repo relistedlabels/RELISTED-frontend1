@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { User, Mail, Hash, MapPin, Loader2 } from "lucide-react";
 import { useProfileStore } from "@/store/useProfileStore";
+import { useUserStore } from "@/store/useUserStore";
 import { CityLGASelect } from "./CityLGASelect";
 import { StateSelect } from "./StateSelect";
 import { useRouter } from "next/navigation";
@@ -24,6 +25,8 @@ const StepTwoBusinessDetails: React.FC<StepTwoBusinessDetailsProps> = ({
 }) => {
   const businessInfo = useProfileStore((s) => s.businessInfo);
   const setProfile = useProfileStore((s) => s.setProfile);
+  const role = useUserStore((s) => s.role);
+  const setUser = useUserStore((s) => s.setUser);
 
   const [businessName, setBusinessName] = useState(businessInfo.businessName);
   const [businessEmail, setBusinessEmail] = useState(
@@ -58,6 +61,11 @@ const StepTwoBusinessDetails: React.FC<StepTwoBusinessDetailsProps> = ({
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Ensure user role is set to LISTER before submitting
+    if (role !== "LISTER") {
+      setUser({ role: "LISTER" });
+    }
 
     setProfile({
       businessInfo: {

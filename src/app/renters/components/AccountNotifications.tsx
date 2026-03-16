@@ -1,4 +1,4 @@
-// ENDPOINTS: GET /api/renters/notifications/preferences, PUT /api/renters/notifications/preferences
+// ENDPOINTS: GET /api/renters/notifications/preferences, PUT /api/renters/notifications/preferences, POST /api/newsletter/subscribe, POST /api/newsletter/unsubscribe
 
 "use client";
 
@@ -8,6 +8,9 @@ import {
   useNotificationPreferences,
   useUpdateNotificationPreferences,
 } from "@/lib/queries/renters/useNotifications";
+import { useNewsletterSubscribe } from "@/lib/mutations/newsletter/useNewsletterSubscribe";
+import { useNewsletterUnsubscribe } from "@/lib/mutations/newsletter/useNewsletterUnsubscribe";
+import { useUserStore } from "@/store/useUserStore";
 import { Paragraph1 } from "@/common/ui/Text";
 import { toast } from "sonner";
 
@@ -115,12 +118,23 @@ const NOTIFICATION_PREFERENCES: NotificationPreference[] = [
     description: "Receive news on special promotions and discounts",
     default: false,
   },
+  {
+    key: "newsletter",
+    alternateKeys: ["newsletter_subscription"],
+    title: "Newsletter Subscription",
+    description:
+      "Receive our weekly newsletter with fashion tips, exclusive deals, and platform updates",
+    default: false,
+  },
 ];
 
 const AccountNotifications: React.FC = () => {
   const queryClient = useQueryClient();
   const { data, isPending, isError, error } = useNotificationPreferences();
   const updateMutation = useUpdateNotificationPreferences();
+  const newsletterSubscribeMutation = useNewsletterSubscribe();
+  const newsletterUnsubscribeMutation = useNewsletterUnsubscribe();
+  const userEmail = useUserStore((state) => state.email);
   const [preferences, setPreferences] = useState<Record<string, boolean>>({});
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -179,6 +193,15 @@ const AccountNotifications: React.FC = () => {
     console.log(`🔔 Toggling ${key} to ${enabled}`);
     setPreferences((prev) => ({ ...prev, [key]: enabled }));
     setHasChanges(true);
+
+    // Handle newsletter subscription/unsubscription
+    if (key === "newsletter" && userEmail) {
+      if (enabled) {
+        newsletterSubscribeMutation.mutate(userEmail);
+      } else {
+        newsletterUnsubscribeMutation.mutate(userEmail);
+      }
+    }
   };
 
   const handleSavePreferences = async () => {

@@ -1,14 +1,50 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { Header1, Header1Plus, ParagraphLink2 } from "../ui/Text";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { shouldShowNavBar } from "@/lib/navbarRoutes";
+import { useNewsletterSubscribe } from "@/lib/mutations/newsletter/useNewsletterSubscribe";
 
 export default function Footer() {
   const pathname = usePathname();
+  const [email, setEmail] = useState("");
+  const [subscribeMessage, setSubscribeMessage] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  const subscriptionMutation = useNewsletterSubscribe();
 
   if (!shouldShowNavBar(pathname)) return null;
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) {
+      setSubscribeMessage({
+        type: "error",
+        message: "Please enter a valid email",
+      });
+      return;
+    }
+
+    subscriptionMutation.mutate(email, {
+      onSuccess: () => {
+        setSubscribeMessage({
+          type: "success",
+          message: "Thanks for subscribing!",
+        });
+        setEmail("");
+        setTimeout(() => setSubscribeMessage(null), 3000);
+      },
+      onError: (error: any) => {
+        setSubscribeMessage({
+          type: "error",
+          message: error?.message || "Failed to subscribe. Please try again.",
+        });
+      },
+    });
+  };
 
   return (
     <footer className="w-full bg-black text-white py-14 px-4 sm:px-0  font-light tracking-wide">
@@ -173,19 +209,41 @@ export default function Footer() {
               SUBSCRIBE TO NEWSLETTER
             </ParagraphLink2>
 
-            <form className="flex items-center p-2 font-semibold bg-transparent border border-gray-700 overflow-hidden lg:w-full justify-between">
-              <input
-                type="email"
-                placeholder="Your Email"
-                className=" bg-transparent outline-none  px-3 placeholder-gray-500"
-              />
-              <button
-                type="submit"
-                className="bg-white text-black py-2 px-5  h-full"
+            <div className="space-y-2">
+              <form
+                onSubmit={handleSubscribe}
+                className="flex items-center p-2 font-semibold bg-transparent border border-gray-700 overflow-hidden lg:w-full justify-between"
               >
-                SUBSCRIBE
-              </button>
-            </form>
+                <input
+                  type="email"
+                  placeholder="Your Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className=" bg-transparent outline-none  px-3 placeholder-gray-500 flex-1"
+                  disabled={subscriptionMutation.isPending}
+                />
+                <button
+                  type="submit"
+                  disabled={subscriptionMutation.isPending}
+                  className="bg-white text-black py-2 px-5 h-full hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {subscriptionMutation.isPending ? "..." : "SUBSCRIBE"}
+                </button>
+              </form>
+
+              {/* Feedback Message */}
+              {subscribeMessage && (
+                <div
+                  className={`text-xs px-3 py-2 rounded ${
+                    subscribeMessage.type === "success"
+                      ? "bg-green-50 text-green-600"
+                      : "bg-red-50 text-red-600"
+                  }`}
+                >
+                  {subscribeMessage.message}
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <hr className=" mt-14 text-gray-500" />

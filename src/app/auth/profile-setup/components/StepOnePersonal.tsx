@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { MapPin, Loader2 } from "lucide-react";
 import { useProfileStore } from "@/store/useProfileStore";
+import { useUserStore } from "@/store/useUserStore";
 import { PhoneInput } from "./PhoneInput";
 import { StateSelect } from "./StateSelect";
 import { CityLGASelect } from "./CityLGASelect";
@@ -23,6 +24,8 @@ const StepOnePersonal: React.FC<StepOnePersonalProps> = ({
 }) => {
   const profile = useProfileStore((s) => s);
   const setProfile = useProfileStore((s) => s.setProfile);
+  const role = useUserStore((s) => s.role);
+  const setUser = useUserStore((s) => s.setUser);
   const router = useRouter();
   const submitAddress = useSubmitRenterAddress();
   const isLoading = submitAddress.isPending;
@@ -57,6 +60,11 @@ const StepOnePersonal: React.FC<StepOnePersonalProps> = ({
     }
 
     setError(null);
+
+    // Ensure user role is set to LISTER before submitting
+    if (role !== "LISTER") {
+      setUser({ role: "LISTER" });
+    }
 
     const profileData = {
       phoneNumber,

@@ -2,11 +2,12 @@
 
 import React, { useState, useMemo } from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
-import { Search, ChevronDown } from "lucide-react";
+import { Search, ChevronDown, Mail } from "lucide-react";
 import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
 import DresserTable from "./DresserTable";
 import CuratorTable from "./CuratorTable";
 import AdminTable from "./AdminTable";
+import NewsletterModal from "./NewsletterModal";
 import { useAdminAllUsers } from "@/lib/queries/admin/useUsers";
 
 type UserRole = "LISTER" | "RENTER" | "ADMIN";
@@ -15,6 +16,7 @@ export default function UsersPage() {
   const [activeTab, setActiveTab] = useState<UserRole>("LISTER");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Status");
+  const [isNewsletterModalOpen, setIsNewsletterModalOpen] = useState(false);
 
   // Fetch all users from API with filters
   const {
@@ -172,7 +174,13 @@ export default function UsersPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-
+        <button
+          onClick={() => setIsNewsletterModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-black text-white rounded-lg hover:bg-gray-800 transition font-semibold text-sm"
+        >
+          <Mail className="w-5 h-5" />
+          Newsletter
+        </button>
         <div className="relative w-full md:w-1/4">
           <select
             className="w-full appearance-none px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none pr-10 cursor-pointer"
@@ -220,6 +228,12 @@ export default function UsersPage() {
         )}
         {/* TODO: Uncomment AdminTable when ADMIN tab is ready */}
       </div>
+
+      {/* Newsletter Modal */}
+      <NewsletterModal
+        isOpen={isNewsletterModalOpen}
+        onClose={() => setIsNewsletterModalOpen(false)}
+      />
     </div>
   );
 }
