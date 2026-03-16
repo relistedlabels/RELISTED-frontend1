@@ -424,6 +424,15 @@ export const rentersApi = {
       };
     }>(`/api/renters/orders/${orderId}/progress`, { method: "GET" }),
 
+  initiateReturn: (
+    orderId: string,
+    data: { returnMethod: "pickup" | "dropoff"; damageNotes?: string },
+  ) =>
+    apiFetch<{ success: boolean; data: { trackingNumber: string } }>(
+      `/api/renters/orders/${orderId}/return`,
+      { method: "POST", body: JSON.stringify(data) },
+    ),
+
   readyToReturn: (orderId: string, formData: FormData) =>
     apiFetch<{
       success: boolean;
