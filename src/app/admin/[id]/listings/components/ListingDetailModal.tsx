@@ -228,6 +228,7 @@ export default function ListingDetailModal({
                 <DeleteProductButton
                   productId={displayProduct.id}
                   productName={displayProduct.name}
+                  onDeleteSuccess={onClose}
                 />
               </div>
             </div>
@@ -528,6 +529,7 @@ export default function ListingDetailModal({
                           if (onApprove) {
                             onApprove(displayProduct.id);
                             setShowApproveModal(false);
+                            onClose();
                           }
                         }}
                         disabled={isApproving}
@@ -617,6 +619,7 @@ export default function ListingDetailModal({
                             onReject(displayProduct.id, rejectionComment);
                             setShowRejectModal(false);
                             setRejectionComment("");
+                            onClose();
                           }
                         }}
                         disabled={!rejectionComment.trim() || isRejecting}

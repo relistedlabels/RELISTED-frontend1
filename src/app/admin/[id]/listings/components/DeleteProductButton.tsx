@@ -6,18 +6,23 @@ import { Paragraph1 } from "@/common/ui/Text";
 interface DeleteProductButtonProps {
   productId: string;
   productName?: string;
+  onDeleteSuccess?: () => void;
 }
 
 const DeleteProductButton = ({
   productId,
   productName = "Product",
+  onDeleteSuccess,
 }: DeleteProductButtonProps) => {
   const [open, setOpen] = useState(false);
   const { mutate: deleteProduct, isPending } = useDeleteAdminProduct(productId);
 
   const handleDelete = () => {
     deleteProduct(undefined, {
-      onSuccess: () => setOpen(false),
+      onSuccess: () => {
+        setOpen(false);
+        onDeleteSuccess?.();
+      },
     });
   };
 
