@@ -9,6 +9,7 @@ import {
   Search,
   ChevronLeft,
   ArrowLeft,
+  ChevronDown,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1, Paragraph2, Header3, Paragraph3 } from "@/common/ui/Text";
@@ -25,6 +26,37 @@ import { useWallet } from "@/lib/queries/renters/useWallet";
 import { useProfile } from "@/lib/queries/renters/useProfile";
 import { useUpdateProfile } from "@/lib/mutations/renters/useProfileMutations";
 
+// Nigerian Banks List
+const NIGERIAN_BANKS = [
+  "Access Bank",
+  "Banco Santander",
+  "BenchMark Bank",
+  "Central Bank of Nigeria",
+  "Citibank",
+  "Ecobank",
+  "Fidelity Bank",
+  "First Bank",
+  "FIRST CITY MONUMENT BANK",
+  "Guaranty Trust Bank (GTBank)",
+  "HSBC Bank",
+  "Keystone Bank",
+  "Kuda Bank",
+  "Mono Bank",
+  "Polaris Bank",
+  "Providus Bank",
+  "Stanbic IBTC Bank",
+  "Standard Chartered Bank",
+  "Sterling Bank",
+  "SunTrust Bank",
+  "Titan Trust Bank",
+  "UBA",
+  "Union Bank",
+  "United Bank for Africa (UBA)",
+  "Unity Bank",
+  "Wema Bank",
+  "Zenith Bank",
+];
+
 // --------------------
 // Slide-in Filter Panel
 // --------------------
@@ -36,6 +68,8 @@ interface WithdrawPanelProps {
 const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
   const [isEditBankOpen, setIsEditBankOpen] = useState(false);
   const [bankName, setBankName] = useState("");
+  const [bankSearchQuery, setBankSearchQuery] = useState("");
+  const [isBankDropdownOpen, setIsBankDropdownOpen] = useState(false);
   const [accountNumber, setAccountNumber] = useState("");
   const [accountName, setAccountName] = useState("");
   const [bankError, setBankError] = useState("");
@@ -44,15 +78,33 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
   const { data: profileResponse, isLoading: profileLoading } = useProfile();
   const updateProfileMutation = useUpdateProfile();
 
+  // Filter banks based on search
+  const filteredBanks = NIGERIAN_BANKS.filter((bank) =>
+    bank.toLowerCase().includes(bankSearchQuery.toLowerCase()),
+  );
+
   const wallet = walletResponse?.wallet;
   const walletBalance = wallet?.balance?.totalBalance ?? 0;
   const availableBalance = wallet?.balance?.availableBalance ?? 0;
   const bankAccount = profileResponse?.bankAccount;
 
+  const closePanel = () => {
+    setBankSearchQuery("");
+    setIsBankDropdownOpen(false);
+    setIsEditBankOpen(false);
+    setBankName("");
+    setAccountNumber("");
+    setAccountName("");
+    setBankError("");
+    onClose();
+  };
+
   const handleEditBank = () => {
     setBankName(bankAccount?.bankName || "");
     setAccountNumber(bankAccount?.accountNumber || "");
     setAccountName(bankAccount?.accountName || "");
+    setBankSearchQuery("");
+    setIsBankDropdownOpen(false);
     setBankError("");
     setIsEditBankOpen(true);
   };
@@ -102,7 +154,7 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
       {isOpen && (
         <motion.div
           className="fixed inset-0 z-99 bg-black/70 backdrop--blur-sm"
-          onClick={onClose}
+          onClick={closePanel}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -122,7 +174,7 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
             {/* Header */}
             <div className="flex justify-between sticky top-0 items-center pb-4 border-b border-gray-100 pt-6 z-10  bg-white">
               <button
-                onClick={onClose}
+                onClick={closePanel}
                 className="text-gray-500 xl:hidden hover:text-black p-1 rounded-full transition"
                 aria-label="Close Withdraw"
               >
@@ -133,7 +185,7 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
                 WITHDRAW FUNDS{" "}
               </Paragraph1>
               <button
-                onClick={onClose}
+                onClick={closePanel}
                 className="text-gray-500  hover:text-black p-1 rounded-full transition"
                 aria-label="Close Withdraw"
               >
@@ -225,15 +277,83 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
 
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">
-                        Bank Name
+                        Bank Name <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="text"
-                        value={bankName}
-                        onChange={(e) => setBankName(e.target.value)}
-                        placeholder="e.g., Access Bank"
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"
-                      />
+                      <div className="relative">
+                        <motion.button
+                          onClick={() =>
+                            setIsBankDropdownOpen(!isBankDropdownOpen)
+                          }
+                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition bg-white text-left flex items-center justify-between hover:border-gray-400"
+                        >
+                          <span
+                            className={
+                              bankName ? "text-gray-900" : "text-gray-500"
+                            }
+                          >
+                            {bankName || "Select a bank"}
+                          </span>
+                          <ChevronDown
+                            size={16}
+                            className={`transform transition ${
+                              isBankDropdownOpen ? "rotate-180" : ""
+                            }`}
+                          />
+                        </motion.button>
+
+                        <AnimatePresence>
+                          {isBankDropdownOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -8 }}
+                              className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-20 max-h-48 overflow-hidden flex flex-col"
+                            >
+                              {/* Search Input */}
+                              <div className="p-2 border-b border-gray-200">
+                                <input
+                                  type="text"
+                                  placeholder="Search banks..."
+                                  value={bankSearchQuery}
+                                  onChange={(e) =>
+                                    setBankSearchQuery(e.target.value)
+                                  }
+                                  className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  autoFocus
+                                />
+                              </div>
+
+                              {/* Banks List */}
+                              <div className="overflow-y-auto flex-1">
+                                {filteredBanks.length > 0 ? (
+                                  filteredBanks.map((bank) => (
+                                    <motion.button
+                                      key={bank}
+                                      onClick={() => {
+                                        setBankName(bank);
+                                        setIsBankDropdownOpen(false);
+                                        setBankSearchQuery("");
+                                      }}
+                                      className={`w-full px-3 py-2 text-sm text-left hover:bg-blue-50 transition ${
+                                        bankName === bank
+                                          ? "bg-blue-100 text-blue-900 font-medium"
+                                          : "text-gray-700"
+                                      }`}
+                                      whileHover={{ paddingLeft: 16 }}
+                                    >
+                                      {bank}
+                                    </motion.button>
+                                  ))
+                                ) : (
+                                  <div className="px-3 py-4 text-center text-xs text-gray-500">
+                                    No banks found
+                                  </div>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </div>
 
                     <div>
@@ -245,7 +365,7 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
                         value={accountNumber}
                         onChange={(e) => setAccountNumber(e.target.value)}
                         placeholder="10-digit account number"
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"
+                        className="w-full px-3 py-2 text-sm border bg-white text-black border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"
                       />
                     </div>
 
@@ -258,11 +378,11 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
                         value={accountName}
                         onChange={(e) => setAccountName(e.target.value)}
                         placeholder="Name on account"
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"
+                        className="w-full px-3 py-2 text-sm bg-white text-black border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"
                       />
                     </div>
 
-                    <div className="flex gap-2 pt-2">
+                    <div className="flex gap-2 pt-4">
                       <motion.button
                         onClick={() => setIsEditBankOpen(false)}
                         whileHover={{ scale: 1.02 }}
@@ -271,16 +391,31 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
                       >
                         Cancel
                       </motion.button>
-                      <motion.button
-                        onClick={handleSubmitBank}
-                        disabled={updateProfileMutation.isPending}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="flex-1 px-3 py-2 text-xs font-medium bg-blue-700 text-white rounded-lg hover:bg-blue-800 disabled:bg-gray-400 transition"
-                      >
-                        {updateProfileMutation.isPending ? "Saving..." : "Save"}
-                      </motion.button>
                     </div>
+
+                    {/* Double Check Warning */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-4"
+                    >
+                      <Paragraph1 className="text-xs text-yellow-800">
+                        <span className="font-semibold">⚠️ Important:</span>{" "}
+                        Please double-check your bank details are correct before
+                        saving. Incorrect details may result in failed
+                        withdrawals.
+                      </Paragraph1>
+                    </motion.div>
+
+                    <motion.button
+                      onClick={handleSubmitBank}
+                      disabled={updateProfileMutation.isPending || !bankName}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full mt-4 px-3 py-2 text-xs font-medium bg-blue-700 text-white rounded-lg hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+                    >
+                      {updateProfileMutation.isPending ? "Saving..." : "Save"}
+                    </motion.button>
                   </motion.div>
                 ) : bankAccount ? (
                   <div className="space-y-1">
@@ -316,7 +451,7 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
             {/* Footer */}
             <div className="mt-auto hidden py-2 text-black bg-white flex- justify-between gap-4 sticky bottom-0">
               <button
-                onClick={onClose}
+                onClick={closePanel}
                 className="flex-1  px-4 py-3  font-semibold border border-gray-300 rounded-lg hover:bg-gray-50 transition"
               >
                 <Paragraph1>Cancel </Paragraph1>

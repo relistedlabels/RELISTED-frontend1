@@ -33,6 +33,9 @@ const AccountProfileDetails: React.FC = () => {
   const updateAddressMutation = useUpdateListerAddress();
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const { data } = useListerProfile();
+  const profile = data?.data.profile;
+  const avatar = profile?.profileImage ?? null;
 
   const [updateStatus, setUpdateStatus] = useState<
     "idle" | "success" | "error"
@@ -263,10 +266,19 @@ const AccountProfileDetails: React.FC = () => {
     <div className="font-sans">
       {/* Profile Header and Image Upload */}
       <div className="flex flex-col bg-[#3A3A32] p-6 items-center mb-6 rounded-lg">
-        <div className="relative w-28 h-28 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+        <div className="relative w-28 h-28  flex items-center justify-center overflow-hidden">
           {/* Profile Picture or Placeholder (no avatar URL yet from API) */}
-          <HiOutlineUser className="w-16 h-16 text-gray-500" />
-
+          {avatar ? (
+            <img
+              src={avatar}
+              alt="profile"
+              className="w-full rounded-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-28 h-28 rounded-full bg-gray-300  flex items-center justify-center overflow-hidden">
+              <HiOutlineUser className="w-16 h-16 text-gray-500" />
+            </div>
+          )}
           {/* Upload Button Overlay */}
           <button
             type="button"
@@ -275,6 +287,7 @@ const AccountProfileDetails: React.FC = () => {
           >
             <HiOutlineCamera className="w-4 h-4 text-white" />
           </button>
+
           <input
             ref={fileInputRef}
             type="file"

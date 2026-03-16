@@ -178,7 +178,7 @@ const UserWalletDashboard: React.FC = () => {
 
       {/* Metrics Grid Section */}
       <div className="space-y-4">
-        <Header2 className="text-black">Wallet Activity</Header2>
+        <Paragraph1 className="text-black font-bold">Wallet Activity</Paragraph1>
 
         {/* First Row - Primary Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

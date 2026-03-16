@@ -8,6 +8,7 @@ export function UserProfileBadge() {
   const { data } = useListerProfile();
   const profile = data?.data.profile;
 
+  
   const name = profile?.fullName?.trim() || "New user";
   const role = profile?.role;
   const avatar = profile?.profileImage ?? null;
