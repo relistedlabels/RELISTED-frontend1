@@ -27,10 +27,11 @@ export default function AdminVerifyMfaPage() {
       }
     }
 
-    // If user has a full auth token and no longer requires MFA,
-    // ensure they are on the dashboard (fallback in case the OTP
-    // modal navigation doesn't run for any reason).
+    // If user has verified MFA and no longer requires it, they should be routed
+    // by the AdminAccessPrompt component - don't route here to avoid conflicts
     if (token && !requiresMfa && !sessionToken && adminId) {
+      // This is a fallback - AdminAccessPrompt should handle routing
+      // Only use this if somehow the OTP modal doesn't redirect
       router.replace(`/admin/${adminId}/dashboard`);
     }
   }, [sessionToken, requiresMfa, token, router, adminId]);

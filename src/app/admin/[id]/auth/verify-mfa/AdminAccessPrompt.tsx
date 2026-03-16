@@ -41,21 +41,21 @@ export default function AdminAccessPrompt({
   useEffect(() => {
     if (!isMfaVerified) return;
     if (!token) return; // Wait for token to be set first
+    if (isMeLoading) return; // Wait for useMe query to finish loading
+    if (!user) return; // Wait for user data to be available
 
-    // If useMe query has loaded and user role is ADMIN, role is confirmed
-    if (!isMeLoading && user && user.role === "ADMIN") {
+    // If user role is ADMIN, role is confirmed
+    if (user.role === "ADMIN") {
       setIsRoleConfirmed(true);
     }
   }, [isMfaVerified, token, isMeLoading, user]);
 
-  // Redirect after role is confirmed
+  // Redirect after role is confirmed - remove delay and route immediately
   useEffect(() => {
     if (!isRoleConfirmed) return;
 
-    const timer = setTimeout(() => {
-      router.push(`/admin/${adminId}/dashboard`);
-    }, 2000);
-    return () => clearTimeout(timer);
+    // Route immediately since we've already waited for the data to load
+    router.push(`/admin/${adminId}/dashboard`);
   }, [isRoleConfirmed, adminId, router]);
 
   if (!sessionToken && !isMfaVerified) return null;
