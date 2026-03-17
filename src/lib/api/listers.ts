@@ -1342,3 +1342,25 @@ export async function deleteProduct(
     body: JSON.stringify(data || { reason: "Deleted by lister" }),
   });
 }
+
+// ============================================================================
+// UPGRADE TO LISTER
+// ============================================================================
+
+export interface UpgradeListerResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    profileId: string;
+    role: string;
+    upgradedAt: string;
+  };
+}
+
+export async function upgradeLister(
+  profileId: string,
+): Promise<UpgradeListerResponse> {
+  return apiFetch(`/profile/${profileId}/upgrade-lister`, {
+    method: "POST",
+  });
+}

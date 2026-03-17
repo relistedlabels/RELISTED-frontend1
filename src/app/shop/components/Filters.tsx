@@ -12,13 +12,40 @@ import { useCategories } from "@/lib/queries/category/useCategories";
 // --------------------
 // Static Data
 // --------------------
-const genderOptions = ["Woman", "Men", "Kids"];
 const sizeOptions = [
   "Small (e.g. 2-5, S-SL, 5-10, 30-35)",
   "Medium (e.g. 6-10, M-ML, 11-15, 36-40)",
   "Large (e.g. 11-15, L-XL, 16-20, 41-45)",
   "Plus Size (e.g. 16-20, XL-2XL, 21-25, 46-50)",
   "Sexy Plus Size (e.g. 21-25, 2XL-3XL, 26-30, 51-55)",
+];
+const colorOptions = [
+  "Red",
+  "Blue",
+  "Black",
+  "White",
+  "Green",
+  "Yellow",
+  "Purple",
+  "Pink",
+  "Gray",
+  "Brown",
+];
+const conditionOptions = [
+  "New",
+  "Like New",
+  "Excellent",
+  "Good",
+  "Fair",
+  "Poor",
+];
+const materialOptions = [
+  "Cotton",
+  "Polyester",
+  "Silk",
+  "Wool",
+  "Linen",
+  "Blend",
 ];
 
 // --------------------
@@ -54,45 +81,49 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
   const searchParams = useSearchParams();
   const [localFilters, setLocalFilters] = useState({
     search: searchParams.get("search") || "",
-    gender: searchParams.get("gender") || "",
-    categories: searchParams.getAll("categories"),
-    brands: searchParams.getAll("brands"),
-    sizes: searchParams.get("sizes") || "",
+    category: searchParams.getAll("category"),
+    brand: searchParams.getAll("brand"),
+    size: searchParams.get("size") || "",
+    color: searchParams.get("color") || "",
+    condition: searchParams.get("condition") || "",
+    material: searchParams.get("material") || "",
     priceRange: [
-      searchParams.get("priceMin")
-        ? parseInt(searchParams.get("priceMin")!)
+      searchParams.get("minPrice")
+        ? parseInt(searchParams.get("minPrice")!)
         : 50000,
-      searchParams.get("priceMax")
-        ? parseInt(searchParams.get("priceMax")!)
+      searchParams.get("maxPrice")
+        ? parseInt(searchParams.get("maxPrice")!)
         : 200000,
     ] as [number, number],
   });
 
   const handleCategoryChange = (category: string, checked: boolean) => {
     const newCategories = checked
-      ? [...localFilters.categories, category]
-      : localFilters.categories.filter((c: string) => c !== category);
-    setLocalFilters({ ...localFilters, categories: newCategories });
+      ? [...localFilters.category, category]
+      : localFilters.category.filter((c: string) => c !== category);
+    setLocalFilters({ ...localFilters, category: newCategories });
   };
 
   const handleBrandChange = (brand: string, checked: boolean) => {
     const newBrands = checked
-      ? [...localFilters.brands, brand]
-      : localFilters.brands.filter((b: string) => b !== brand);
-    setLocalFilters({ ...localFilters, brands: newBrands });
+      ? [...localFilters.brand, brand]
+      : localFilters.brand.filter((b: string) => b !== brand);
+    setLocalFilters({ ...localFilters, brand: newBrands });
   };
 
   const handleApplyFilters = () => {
     const params = new URLSearchParams();
     if (localFilters.search) params.set("search", localFilters.search);
-    if (localFilters.gender) params.set("gender", localFilters.gender);
-    localFilters.categories.forEach((cat) => params.append("categories", cat));
-    localFilters.brands.forEach((brand) => params.append("brands", brand));
-    if (localFilters.sizes) params.set("sizes", localFilters.sizes);
+    localFilters.category.forEach((cat) => params.append("category", cat));
+    localFilters.brand.forEach((brand) => params.append("brand", brand));
+    if (localFilters.size) params.set("size", localFilters.size);
+    if (localFilters.color) params.set("color", localFilters.color);
+    if (localFilters.condition) params.set("condition", localFilters.condition);
+    if (localFilters.material) params.set("material", localFilters.material);
     if (localFilters.priceRange[0] > 50000)
-      params.set("priceMin", localFilters.priceRange[0].toString());
+      params.set("minPrice", localFilters.priceRange[0].toString());
     if (localFilters.priceRange[1] < 200000)
-      params.set("priceMax", localFilters.priceRange[1].toString());
+      params.set("maxPrice", localFilters.priceRange[1].toString());
 
     router.push(`?${params.toString()}`);
     onClose();
@@ -163,34 +194,6 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
                 </div>
               </div>
 
-              {/* Gender */}
-              <section>
-                <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
-                  Gender
-                </Paragraph1>
-                {genderOptions.map((item) => (
-                  <label
-                    key={item}
-                    className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
-                  >
-                    <input
-                      type="radio"
-                      name="gender"
-                      value={item}
-                      checked={localFilters.gender === item}
-                      onChange={(e) =>
-                        setLocalFilters({
-                          ...localFilters,
-                          gender: e.target.value,
-                        })
-                      }
-                      className="h-4 w-4 text-black border-gray-300 rounded-full focus:ring-black"
-                    />
-                    <Paragraph1>{item}</Paragraph1>
-                  </label>
-                ))}
-              </section>
-
               {/* Categories */}
               <section>
                 <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
@@ -227,7 +230,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
                       >
                         <input
                           type="checkbox"
-                          checked={localFilters.categories.includes(cat.name)}
+                          checked={localFilters.category.includes(cat.name)}
                           onChange={(e) =>
                             handleCategoryChange(cat.name, e.target.checked)
                           }
@@ -275,7 +278,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
                       >
                         <input
                           type="checkbox"
-                          checked={localFilters.brands.includes(brand.name)}
+                          checked={localFilters.brand.includes(brand.name)}
                           onChange={(e) =>
                             handleBrandChange(brand.name, e.target.checked)
                           }
@@ -287,7 +290,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
                 )}
               </section>
 
-              {/* Sizes */}
+              {/* Size */}
               <section>
                 <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
                   Size
@@ -299,13 +302,97 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
                   >
                     <input
                       type="radio"
-                      name="sizes"
+                      name="size"
                       value={item}
-                      checked={localFilters.sizes === item}
+                      checked={localFilters.size === item}
                       onChange={(e) =>
                         setLocalFilters({
                           ...localFilters,
-                          sizes: e.target.value,
+                          size: e.target.value,
+                        })
+                      }
+                      className="h-4 w-4 text-black border-gray-300 rounded-full focus:ring-black"
+                    />
+                    <Paragraph1>{item}</Paragraph1>
+                  </label>
+                ))}
+              </section>
+
+              {/* Color */}
+              <section>
+                <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
+                  Color
+                </Paragraph1>
+                {colorOptions.map((item) => (
+                  <label
+                    key={item}
+                    className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
+                  >
+                    <input
+                      type="radio"
+                      name="color"
+                      value={item}
+                      checked={localFilters.color === item}
+                      onChange={(e) =>
+                        setLocalFilters({
+                          ...localFilters,
+                          color: e.target.value,
+                        })
+                      }
+                      className="h-4 w-4 text-black border-gray-300 rounded-full focus:ring-black"
+                    />
+                    <Paragraph1>{item}</Paragraph1>
+                  </label>
+                ))}
+              </section>
+
+              {/* Condition */}
+              <section>
+                <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
+                  Condition
+                </Paragraph1>
+                {conditionOptions.map((item) => (
+                  <label
+                    key={item}
+                    className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
+                  >
+                    <input
+                      type="radio"
+                      name="condition"
+                      value={item}
+                      checked={localFilters.condition === item}
+                      onChange={(e) =>
+                        setLocalFilters({
+                          ...localFilters,
+                          condition: e.target.value,
+                        })
+                      }
+                      className="h-4 w-4 text-black border-gray-300 rounded-full focus:ring-black"
+                    />
+                    <Paragraph1>{item}</Paragraph1>
+                  </label>
+                ))}
+              </section>
+
+              {/* Material */}
+              <section>
+                <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
+                  Material
+                </Paragraph1>
+                {materialOptions.map((item) => (
+                  <label
+                    key={item}
+                    className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
+                  >
+                    <input
+                      type="radio"
+                      name="material"
+                      value={item}
+                      checked={localFilters.material === item}
+                      onChange={(e) =>
+                        setLocalFilters({
+                          ...localFilters,
+                          material: e.target.value,
                         })
                       }
                       className="h-4 w-4 text-black border-gray-300 rounded-full focus:ring-black"

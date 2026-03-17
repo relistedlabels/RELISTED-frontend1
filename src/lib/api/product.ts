@@ -132,28 +132,31 @@ export const productApi = {
   // Public API - Browse products (no auth required)
   getAll: (filters?: {
     search?: string;
-    gender?: string;
-    categories?: string[];
-    brands?: string[];
-    sizes?: string;
-    priceMin?: number;
-    priceMax?: number;
+    category?: string[];
+    brand?: string[];
+    size?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    color?: string;
+    condition?: string;
+    material?: string;
     page?: number;
     limit?: number;
     sort?: string;
   }) => {
     const params = new URLSearchParams();
     if (filters?.search) params.append("search", filters.search);
-    if (filters?.gender) params.append("gender", filters.gender);
-    if (filters?.categories?.length)
-      params.append("categories", filters.categories.join(","));
-    if (filters?.brands?.length)
-      params.append("brands", filters.brands.join(","));
-    if (filters?.sizes) params.append("sizes", filters.sizes);
-    if (filters?.priceMin !== undefined)
-      params.append("priceMin", filters.priceMin.toString());
-    if (filters?.priceMax !== undefined)
-      params.append("priceMax", filters.priceMax.toString());
+    if (filters?.category?.length)
+      params.append("category", filters.category.join(","));
+    if (filters?.brand?.length) params.append("brand", filters.brand.join(","));
+    if (filters?.size) params.append("size", filters.size);
+    if (filters?.minPrice !== undefined)
+      params.append("minPrice", filters.minPrice.toString());
+    if (filters?.maxPrice !== undefined)
+      params.append("maxPrice", filters.maxPrice.toString());
+    if (filters?.color) params.append("color", filters.color);
+    if (filters?.condition) params.append("condition", filters.condition);
+    if (filters?.material) params.append("material", filters.material);
     if (filters?.page !== undefined)
       params.append("page", filters.page.toString());
     if (filters?.limit !== undefined)

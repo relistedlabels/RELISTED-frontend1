@@ -9,6 +9,7 @@ import { CityLGASelect } from "./CityLGASelect";
 import { StateSelect } from "./StateSelect";
 import { useRouter } from "next/navigation";
 import { useUpdateBusinessProfile } from "@/lib/mutations/listers/useUpdateBusinessProfile";
+import { useUpgradeLister } from "@/lib/mutations/listers/useUpgradeLister";
 import { ToolInfo } from "@/common/ui/ToolInfo";
 import { toast } from "sonner";
 
@@ -26,6 +27,7 @@ const StepTwoBusinessDetails: React.FC<StepTwoBusinessDetailsProps> = ({
   const businessInfo = useProfileStore((s) => s.businessInfo);
   const setProfile = useProfileStore((s) => s.setProfile);
   const role = useUserStore((s) => s.role);
+  const userId = useUserStore((s) => s.userId);
   const setUser = useUserStore((s) => s.setUser);
 
   const [businessName, setBusinessName] = useState(businessInfo.businessName);
@@ -41,7 +43,8 @@ const StepTwoBusinessDetails: React.FC<StepTwoBusinessDetailsProps> = ({
 
   const router = useRouter();
   const updateBusinessProfile = useUpdateBusinessProfile();
-  const isLoading = updateBusinessProfile.isPending;
+  const upgradeLister = useUpgradeLister();
+  const isLoading = updateBusinessProfile.isPending || upgradeLister.isPending;
 
   useEffect(() => {
     setBusinessName(businessInfo.businessName || "");
@@ -62,11 +65,36 @@ const StepTwoBusinessDetails: React.FC<StepTwoBusinessDetailsProps> = ({
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Ensure user role is set to LISTER before submitting
-    if (role !== "LISTER") {
-      setUser({ role: "LISTER" });
-    }
+    // If role is not LISTER, trigger upgrade endpoint first
+    if (role !== "LISTER" && userId) {
+      upgradeLister.mutate(userId, {
+        onSuccess: () => {
+          // Set user role to LISTER
+          setUser({ role: "LISTER" });
 
+          // Wait 3 seconds before proceeding with form submission
+          setTimeout(() => {
+            proceedWithFormSubmission();
+          }, 3000);
+        },
+        onError: (error: any) => {
+          const errorMessage =
+            error?.response?.data?.message ||
+            error?.message ||
+            "Failed to upgrade to lister. Please try again.";
+          toast.error("Upgrade Failed", {
+            description: errorMessage,
+            duration: 4000,
+          });
+        },
+      });
+    } else {
+      // User is already a LISTER, proceed directly
+      proceedWithFormSubmission();
+    }
+  };
+
+  const proceedWithFormSubmission = () => {
     setProfile({
       businessInfo: {
         businessName,

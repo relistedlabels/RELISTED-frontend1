@@ -12,6 +12,7 @@ import { ToolInfo } from "@/common/ui/ToolInfo";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useSubmitRenterAddress } from "@/lib/mutations";
+import { useUpgradeLister } from "@/lib/mutations/listers/useUpgradeLister";
 
 interface StepOnePersonalProps {
   onNext: () => void;
@@ -25,10 +26,12 @@ const StepOnePersonal: React.FC<StepOnePersonalProps> = ({
   const profile = useProfileStore((s) => s);
   const setProfile = useProfileStore((s) => s.setProfile);
   const role = useUserStore((s) => s.role);
+  const userId = useUserStore((s) => s.userId);
   const setUser = useUserStore((s) => s.setUser);
   const router = useRouter();
   const submitAddress = useSubmitRenterAddress();
-  const isLoading = submitAddress.isPending;
+  const upgradeLister = useUpgradeLister();
+  const isLoading = submitAddress.isPending || upgradeLister.isPending;
 
   const [phoneNumber, setPhoneNumber] = useState(profile.phoneNumber);
   const [address, setAddress] = useState(profile.address.street);
@@ -61,11 +64,36 @@ const StepOnePersonal: React.FC<StepOnePersonalProps> = ({
 
     setError(null);
 
-    // Ensure user role is set to LISTER before submitting
-    if (role !== "LISTER") {
-      setUser({ role: "LISTER" });
-    }
+    // If role is not LISTER, trigger upgrade endpoint first
+    if (role !== "LISTER" && userId) {
+      upgradeLister.mutate(userId, {
+        onSuccess: () => {
+          // Set user role to LISTER
+          setUser({ role: "LISTER" });
 
+          // Wait 3 seconds before proceeding with form submission
+          setTimeout(() => {
+            proceedWithFormSubmission();
+          }, 3000);
+        },
+        onError: (error: any) => {
+          const errorMessage =
+            error?.response?.data?.message ||
+            error?.message ||
+            "Failed to upgrade to lister. Please try again.";
+          toast.error("Upgrade Failed", {
+            description: errorMessage,
+            duration: 4000,
+          });
+        },
+      });
+    } else {
+      // User is already a LISTER, proceed directly
+      proceedWithFormSubmission();
+    }
+  };
+
+  const proceedWithFormSubmission = () => {
     const profileData = {
       phoneNumber,
       bvn,

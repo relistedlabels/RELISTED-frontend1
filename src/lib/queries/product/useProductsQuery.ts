@@ -7,17 +7,18 @@ export const useProductsQuery = () => {
 
   // Parse URL parameters
   const search = searchParams.get("search") || undefined;
-  const gender = searchParams.get("gender") || undefined;
-  const category = searchParams.get("category") || undefined;
-  const categories = category ? [category] : searchParams.getAll("categories");
-  const brands = searchParams.getAll("brands");
-  const sizes = searchParams.get("sizes") || undefined;
-  const priceMin = searchParams.get("priceMin")
-    ? parseInt(searchParams.get("priceMin")!)
+  const category = searchParams.getAll("category");
+  const brand = searchParams.getAll("brand");
+  const size = searchParams.get("size") || undefined;
+  const minPrice = searchParams.get("minPrice")
+    ? parseInt(searchParams.get("minPrice")!)
     : undefined;
-  const priceMax = searchParams.get("priceMax")
-    ? parseInt(searchParams.get("priceMax")!)
+  const maxPrice = searchParams.get("maxPrice")
+    ? parseInt(searchParams.get("maxPrice")!)
     : undefined;
+  const color = searchParams.get("color") || undefined;
+  const condition = searchParams.get("condition") || undefined;
+  const material = searchParams.get("material") || undefined;
   const page = searchParams.get("page")
     ? parseInt(searchParams.get("page")!)
     : 1;
@@ -25,17 +26,30 @@ export const useProductsQuery = () => {
   const query = useQuery<any, Error, { products: any[]; pagination?: any }>({
     queryKey: [
       "products",
-      { search, gender, categories, brands, sizes, priceMin, priceMax, page },
+      {
+        search,
+        category,
+        brand,
+        size,
+        minPrice,
+        maxPrice,
+        color,
+        condition,
+        material,
+        page,
+      },
     ],
     queryFn: async () => {
       const response = await productApi.getAll({
         search,
-        gender,
-        categories: categories.length > 0 ? categories : undefined,
-        brands: brands.length > 0 ? brands : undefined,
-        sizes,
-        priceMin,
-        priceMax,
+        category: category.length > 0 ? category : undefined,
+        brand: brand.length > 0 ? brand : undefined,
+        size,
+        minPrice,
+        maxPrice,
+        color,
+        condition,
+        material,
         page,
         limit: 12,
       });
