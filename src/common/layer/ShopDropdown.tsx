@@ -6,6 +6,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { ParagraphLink1 } from "../ui/Text";
 import { motion, AnimatePresence } from "framer-motion";
 import { useBrands } from "@/lib/queries/brand/useBrands";
+import { useCategories } from "@/lib/queries/category/useCategories";
 
 // Type for navigation items
 type NavItem = {
@@ -34,45 +35,41 @@ const buildShopUrl = (
 const NAV_LINKS: NavItem[] = [
   {
     name: "Brands",
-    subMenu: null, // Will be populated dynamically
-  },
-  {
-    name: "Men",
     subMenu: null,
-    filter: { key: "gender", value: "Men" },
-    title: "Men",
-    description: "Shop men's collections",
-  },
-  {
-    name: "Women",
-    subMenu: null,
-    filter: { key: "gender", value: "Woman" },
-    title: "Women",
-    description: "Shop women's collections",
   },
   // {
-  //   name: "Kids",
+  //   name: "Sale",
   //   subMenu: null,
-  //   filter: { key: "gender", value: "Kids" },
-  //   title: "Kids",
-  //   description: "Shop kids' collections",
+  //   title: "Sale",
+  //   description: "Browse our sale items",
   // },
-  {
-    name: "Sale",
-    subMenu: null,
-    title: "Sale",
-    description: "Browse our sale items",
-  },
 ];
 
 const ShopDropdown: React.FC = () => {
   const { data: brandsData, isLoading: brandsLoading } = useBrands();
+  const { data: categoriesData = [] } = useCategories();
   const [isShopModalOpen, setIsShopModalOpen] = useState(false);
   const [expandedBrand, setExpandedBrand] = useState(false);
   const [navLinks, setNavLinks] = useState<NavItem[]>(NAV_LINKS);
+  const [randomCategories, setRandomCategories] = useState<NavItem[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const shopDropdownTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const brandsSubmenuTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
+  // Select 3 random categories
+  useEffect(() => {
+    if (categoriesData && categoriesData.length > 0) {
+      const shuffled = [...categoriesData].sort(() => 0.5 - Math.random());
+      const randomCats = shuffled.slice(0, 3).map((cat: any) => ({
+        name: cat.name,
+        subMenu: null,
+        title: cat.name,
+        description: `Shop ${cat.name} collection`,
+        filter: { key: "category", value: cat.name },
+      }));
+      setRandomCategories(randomCats);
+    }
+  }, [categoriesData]);
 
   // Update NAV_LINKS when brands data is fetched
   useEffect(() => {
@@ -88,29 +85,16 @@ const ShopDropdown: React.FC = () => {
           name: "Brands",
           subMenu: brandNames,
         },
-        {
-          name: "Men",
-          subMenu: null,
-          filter: { key: "gender", value: "Men" },
-          title: "Men",
-          description: "Shop men's collections",
-        },
-        {
-          name: "Women",
-          subMenu: null,
-          filter: { key: "gender", value: "Woman" },
-          title: "Women",
-          description: "Shop women's collections",
-        },
-        {
-          name: "Sale",
-          subMenu: null,
-          title: "Sale",
-          description: "Browse our sale items",
-        },
+        ...randomCategories,
+        // {
+        //   name: "Sale",
+        //   subMenu: null,
+        //   title: "Sale",
+        //   description: "Browse our sale items",
+        // },
       ]);
     }
-  }, [brandsData]);
+  }, [brandsData, randomCategories]);
 
   // Close dropdown if clicked outside
   useEffect(() => {

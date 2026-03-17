@@ -1,92 +1,29 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import DashboardLayout from "../components/DashboardLayout";
-
-const mockNotifications = [
-  {
-    id: "notif_1",
-    title: "New Login Detected",
-    summary: "A new login to your account was detected from Lagos, Nigeria.",
-    details:
-      "If this was you, no action is needed. If not, please secure your account immediately.",
-    date: "2026-02-27T10:00:00Z",
-    read: false,
-  },
-  {
-    id: "notif_2",
-    title: "Payment Received",
-    summary: "You received a payment of ₦50,000 for a completed rental.",
-    details:
-      "Funds have been credited to your wallet. View your wallet for details.",
-    date: "2026-02-27T09:00:00Z",
-    read: false,
-  },
-  {
-    id: "notif_3",
-    title: "Feature Update: Auto-Payments",
-    summary: "Auto-payments are now available for all rentals.",
-    details:
-      "Enable auto-pay to streamline your rental process and never miss a payment.",
-    date: "2026-02-26T18:00:00Z",
-    read: true,
-  },
-  {
-    id: "notif_4",
-    title: "Welcome to Relisted!",
-    summary: "We're excited to have you on board.",
-    details: "Explore the platform, list your first item, and start earning.",
-    date: "2026-02-25T08:00:00Z",
-    read: true,
-  },
-  {
-    id: "notif_5",
-    title: "Happy New Month!",
-    summary: "Wishing you a successful month on Relisted.",
-    details:
-      "Check out this month's tips and best practices to maximize your earnings.",
-    date: "2026-02-01T07:00:00Z",
-    read: true,
-  },
-  {
-    id: "notif_6",
-    title: "Monthly Tip: Optimize Your Listings",
-    summary: "High-quality photos and detailed descriptions boost rentals.",
-    details:
-      "Update your listings to attract more renters and increase your income.",
-    date: "2026-02-01T07:00:00Z",
-    read: true,
-  },
-  {
-    id: "notif_7",
-    title: "Market Trends: Best Performing Categories",
-    summary: "Dresses and Bags are trending this month.",
-    details:
-      "List more items in these categories to take advantage of high demand.",
-    date: "2026-02-01T07:00:00Z",
-    read: true,
-  },
-  {
-    id: "notif_8",
-    title: "Platform Update: 1,200 Users Online",
-    summary: "There are currently 1,200 users active on Relisted.",
-    details:
-      "More users means more opportunities for your listings to be seen and rented.",
-    date: "2026-02-27T11:00:00Z",
-    read: false,
-  },
-];
+import { useNotifications } from "@/lib/queries/notifications/useNotifications";
+import { useMarkNotificationAsRead } from "@/lib/mutations/notifications/useMarkNotificationAsRead";
 
 export default function NotificationsPage() {
   const [openId, setOpenId] = useState<string | null>(null);
+  const { data: notifications = [], isLoading, isError } = useNotifications();
+  const markAsRead = useMarkNotificationAsRead();
   const path = [
     { label: "Dashboard", href: "/listers/dashboard" },
     { label: "Notifications", href: null },
   ];
+
+  useEffect(() => {
+    const unreadNotifications = notifications.filter((notif) => !notif.isRead);
+    unreadNotifications.forEach((notif) => {
+      markAsRead.mutate(notif.id);
+    });
+  }, [notifications, markAsRead]);
   return (
     <DashboardLayout>
       <div className="mb-4 px-4 sm:px-0">
@@ -97,31 +34,59 @@ export default function NotificationsPage() {
         <Paragraph2>Notifications</Paragraph2>
       </div>
       <div className=" space-y-4">
-        {mockNotifications.map((notif) => (
+        {isLoading && (
+          <div className="text-center py-8">
+            <Paragraph1 className="text-gray-500">
+              Loading notifications...
+            </Paragraph1>
+          </div>
+        )}
+        {isError && (
+          <div className="text-center py-8">
+            <Paragraph1 className="text-red-500">
+              Failed to load notifications
+            </Paragraph1>
+          </div>
+        )}
+        {!isLoading && !isError && notifications.length === 0 && (
+          <div className="text-center py-8">
+            <Paragraph1 className="text-gray-500">
+              No notifications yet
+            </Paragraph1>
+          </div>
+        )}
+        {notifications.map((notif) => (
           <motion.div
             key={notif.id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`bg-white border border-gray-50 rounded-lg p-4 shadow-sm transition-all ${notif.read ? "opacity-70" : ""}`}
+            className={`bg-white border border-gray-50 rounded-lg p-4 shadow-sm transition-all ${notif.isRead ? "opacity-70" : "border-orange-200"}`}
           >
-            <div
-              className="flex justify-between items-center cursor-pointer"
-              onClick={() => setOpenId(openId === notif.id ? null : notif.id)}
-            >
-              <div>
-                <Paragraph1 className="font-semibold text-gray-900">
-                  {notif.title}
-                </Paragraph1>
+            <div className="flex justify-between items-start">
+              <div
+                className="flex-1 cursor-pointer"
+                onClick={() => setOpenId(openId === notif.id ? null : notif.id)}
+              >
+                <div className="flex items-center gap-2">
+                  <Paragraph1 className="font-semibold text-gray-900">
+                    {notif.title}
+                  </Paragraph1>
+                  {!notif.isRead && (
+                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                  )}
+                </div>
                 <Paragraph1 className="text-sm text-gray-600 mt-1">
-                  {notif.summary}
+                  {notif.message}
                 </Paragraph1>
                 <Paragraph1 className="text-xs text-gray-400 mt-1">
-                  {new Date(notif.date).toLocaleString()}
+                  {new Date(notif.createdAt).toLocaleString()} · {notif.type}
                 </Paragraph1>
               </div>
-              <span className="text-xs text-orange-500">
-                {openId === notif.id ? "Hide" : "View"}
-              </span>
+              <div className="flex items-center gap-2 ml-4">
+                <span className="text-xs text-gray-500">
+                  {openId === notif.id ? "Hide" : "View"}
+                </span>
+              </div>
             </div>
             {openId === notif.id && (
               <motion.div
@@ -130,7 +95,33 @@ export default function NotificationsPage() {
                 exit={{ height: 0, opacity: 0 }}
                 className="mt-4 border-t pt-3 text-gray-700"
               >
-                <Paragraph1>{notif.details}</Paragraph1>
+                <div className="space-y-2">
+                  <div>
+                    <Paragraph1 className="text-xs text-gray-500 font-semibold">
+                      Type:
+                    </Paragraph1>
+                    <Paragraph1 className="text-sm">{notif.type}</Paragraph1>
+                  </div>
+                  {notif.metadata && Object.keys(notif.metadata).length > 0 && (
+                    <div>
+                      <Paragraph1 className="text-xs text-gray-500 font-semibold">
+                        Details:
+                      </Paragraph1>
+                      <div className="text-sm space-y-1">
+                        {Object.entries(notif.metadata).map(([key, value]) => (
+                          <div key={key} className="flex justify-between">
+                            <span className="text-gray-600">{key}:</span>
+                            <span className="text-gray-900 font-mono text-xs">
+                              {typeof value === "string"
+                                ? value
+                                : JSON.stringify(value)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </motion.div>
             )}
           </motion.div>

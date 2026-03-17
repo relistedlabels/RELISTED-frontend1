@@ -1,10 +1,11 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Header1, Header1Plus, ParagraphLink2 } from "../ui/Text";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { shouldShowNavBar } from "@/lib/navbarRoutes";
 import { useNewsletterSubscribe } from "@/lib/mutations/newsletter/useNewsletterSubscribe";
+import { useCategories } from "@/lib/queries/category/useCategories";
 
 export default function Footer() {
   const pathname = usePathname();
@@ -13,8 +14,18 @@ export default function Footer() {
     type: "success" | "error";
     message: string;
   } | null>(null);
+  const [randomCategories, setRandomCategories] = useState<any[]>([]);
 
   const subscriptionMutation = useNewsletterSubscribe();
+  const { data: allCategories = [] } = useCategories();
+
+  // Select 3 random categories on mount
+  useEffect(() => {
+    if (allCategories.length > 0) {
+      const shuffled = [...allCategories].sort(() => 0.5 - Math.random());
+      setRandomCategories(shuffled.slice(0, 3));
+    }
+  }, [allCategories]);
 
   if (!shouldShowNavBar(pathname)) return null;
 
@@ -113,27 +124,17 @@ export default function Footer() {
                   </ParagraphLink2>
                 </Link>
               </li>
-              <li>
-                <Link href="/shop?gender=Men&title=Men%27s+Collections&description=Shop+men%27s+fashion">
-                  <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
-                    Mens
-                  </ParagraphLink2>
-                </Link>
-              </li>
-              <li>
-                <Link href="/shop?gender=Woman&title=Women%27s+Collections&description=Shop+women%27s+fashion">
-                  <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
-                    Womens
-                  </ParagraphLink2>
-                </Link>
-              </li>
-              {/* <li>
-                <Link href="/shop?gender=Kids&title=Kids+Collections&description=Shop+kids+fashion">
-                  <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
-                    Kids
-                  </ParagraphLink2>
-                </Link>
-              </li> */}
+              {randomCategories.map((category) => (
+                <li key={category.id}>
+                  <Link
+                    href={`/shop?category=${encodeURIComponent(category.name)}`}
+                  >
+                    <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
+                      {category.name}
+                    </ParagraphLink2>
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 

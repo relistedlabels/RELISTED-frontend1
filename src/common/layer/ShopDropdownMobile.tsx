@@ -6,6 +6,7 @@ import { ChevronRight, X } from "lucide-react";
 import { ParagraphLink1, Paragraph1 } from "../ui/Text";
 import { motion, AnimatePresence } from "framer-motion";
 import { useBrands } from "@/lib/queries/brand/useBrands";
+import { useCategories } from "@/lib/queries/category/useCategories";
 
 // Type for navigation items
 type NavItem = {
@@ -34,21 +35,7 @@ const buildShopUrl = (
 const NAV_LINKS: NavItem[] = [
   {
     name: "Brands",
-    subMenu: null, // Will be populated dynamically
-  },
-  {
-    name: "Men",
     subMenu: null,
-    filter: { key: "gender", value: "Men" },
-    title: "Men",
-    description: "Shop men's collections",
-  },
-  {
-    name: "Women",
-    subMenu: null,
-    filter: { key: "gender", value: "Woman" },
-    title: "Women",
-    description: "Shop women's collections",
   },
 ];
 
@@ -62,8 +49,25 @@ const ShopDropdownMobile: React.FC<ShopDropdownMobileProps> = ({
   onClose,
 }) => {
   const { data: brandsData } = useBrands();
+  const { data: categoriesData = [] } = useCategories();
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [navLinks, setNavLinks] = useState<NavItem[]>(NAV_LINKS);
+  const [randomCategories, setRandomCategories] = useState<NavItem[]>([]);
+
+  // Select 3 random categories
+  useEffect(() => {
+    if (categoriesData && categoriesData.length > 0) {
+      const shuffled = [...categoriesData].sort(() => 0.5 - Math.random());
+      const randomCats = shuffled.slice(0, 3).map((cat: any) => ({
+        name: cat.name,
+        subMenu: null,
+        title: cat.name,
+        description: `Shop ${cat.name} collection`,
+        filter: { key: "category", value: cat.name },
+      }));
+      setRandomCategories(randomCats);
+    }
+  }, [categoriesData]);
 
   // Update NAV_LINKS when brands data is fetched
   useEffect(() => {
@@ -77,23 +81,10 @@ const ShopDropdownMobile: React.FC<ShopDropdownMobileProps> = ({
           name: "Brands",
           subMenu: brandNames,
         },
-        {
-          name: "Men",
-          subMenu: null,
-          filter: { key: "gender", value: "Men" },
-          title: "Men",
-          description: "Shop men's collections",
-        },
-        {
-          name: "Women",
-          subMenu: null,
-          filter: { key: "gender", value: "Woman" },
-          title: "Women",
-          description: "Shop women's collections",
-        },
+        ...randomCategories,
       ]);
     }
-  }, [brandsData]);
+  }, [brandsData, randomCategories]);
 
   const handleCategoryClick = (categoryName: string, hasSubMenu: boolean) => {
     if (hasSubMenu) {
