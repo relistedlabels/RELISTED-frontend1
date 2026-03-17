@@ -24,6 +24,7 @@ export default function NotificationsPage() {
       markAsRead.mutate(notif.id);
     });
   }, [notifications, markAsRead]);
+  
   return (
     <DashboardLayout>
       <div className="mb-4 px-4 sm:px-0">
