@@ -18,7 +18,7 @@ const TopListingSection = () => {
     error,
   } = useProducts({
     sort: "newest",
-    category: "Vacation",
+    category: ["Vacation"],
     limit: 7,
   });
   // Convert vertical wheel to horizontal scroll for mouse users

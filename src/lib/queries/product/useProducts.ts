@@ -12,16 +12,18 @@ type ProductFilters = {
     | "price_high"
     | "popular"
     | "rating";
-  category?: string;
-  brand?: string;
+  category?: string[];
+  brand?: string[];
   priceMin?: number;
   priceMax?: number;
   condition?: "Excellent" | "Good" | "Fair";
   gender?: "Woman" | "Man" | "Unisex";
   search?: string;
-  sizes?: string;
-  categories?: string[];
-  brands?: string[];
+  size?: string;
+  color?: string;
+  material?: string;
+  minPrice?: number;
+  maxPrice?: number;
 };
 
 export const useProducts = (filters?: ProductFilters) =>
