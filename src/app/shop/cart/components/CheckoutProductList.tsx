@@ -210,8 +210,11 @@ export default function CheckoutProductList({
       </AnimatePresence>
       {/* Table Header Row (Desktop/Tablet View - hidden on mobile) */}
       <div className="hidden sm:grid grid-cols-12 text-xs font-medium text-gray-500 p-2 py-6 border rounded-lg border-gray-200">
-        <div className="col-span-5 pl-4 ">
+        <div className="col-span-3 pl-4 ">
           <Paragraph1>Product Name</Paragraph1>
+        </div>
+        <div className="col-span-2 text-center">
+          <Paragraph1>Request</Paragraph1>
         </div>
         <div className="col-span-2 text-center">
           <Paragraph1>Unit Price</Paragraph1>
@@ -237,7 +240,7 @@ export default function CheckoutProductList({
               className="py-4 px-4 sm:px-0 sm:grid sm:grid-cols-12 items-start hover:bg-gray-50 transition-colors"
             >
               {/* === Product Info (Mobile/Desktop) === */}
-              <div className="col-span-5 flex items-start gap-3 w-full">
+              <div className="col-span-3 flex items-start gap-3 w-full">
                 {/* Checkbox */}
                 <div className="shrink-0 pt-1">
                   <input
@@ -264,10 +267,7 @@ export default function CheckoutProductList({
                     <Paragraph1 className="text-sm font-semibold text-gray-800 uppercase leading-snug">
                       {product.name || item.productName}
                     </Paragraph1>
-                    {/* Timer for each item */}
-                    {item.expiresAt && (
-                      <RentalTimer expiresAt={item.expiresAt} />
-                    )}
+
                     {item.status === "pending_lister_approval" &&
                       !item.expiresAt && (
                         <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-200">
@@ -292,7 +292,9 @@ export default function CheckoutProductList({
 
               {/* === Price Columns (Desktop View) === */}
               <div className="hidden sm:contents text-sm font-medium">
-                {/* Rental Price (Desktop) */}
+                <div className="col-span-2 text-center text-gray-900">
+                  {item.expiresAt && <RentalTimer expiresAt={item.expiresAt} />}
+                </div>
                 <div className="col-span-2 text-center text-gray-900">
                   <Paragraph1>
                     {currency}

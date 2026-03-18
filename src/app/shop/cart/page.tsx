@@ -28,7 +28,7 @@ export default function CartPage() {
   } = useCartItems();
 
   // Fetch pending rental requests for CheckoutProductList
-  const { data, isLoading, error } = useRentalRequests("pending", page, limit);
+  const { data, isLoading, error } = useRentalRequests("all", page, limit);
   // Fetch approved rental requests for FinalOrderSummaryCard
   const {
     data: approvedData,

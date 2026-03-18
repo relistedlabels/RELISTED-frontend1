@@ -2,13 +2,15 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, ArrowLeft, Copy, RotateCcw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
 import { FaPlus } from "react-icons/fa";
 import { useProfile } from "@/lib/queries/renters/useProfile";
+import { useVerificationStatus } from "@/lib/queries/renters/useVerificationStatus";
+import VerificationModal from "@/app/shop/cart/checkout/components/VerificationModal";
 import { toast } from "sonner";
 
 // --------------------
@@ -24,9 +26,80 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
   onClose,
 }) => {
   const { data: profileResponse, isLoading, refetch } = useProfile();
+  const verificationStatusQuery = useVerificationStatus();
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+  const [verificationSubmittedAt, setVerificationSubmittedAt] = useState<
+    number | null
+  >(null);
+  const [countdown, setCountdown] = useState(0);
 
   const virtualAccount = profileResponse?.profile?.virtualAccount;
+
+  // Check if user is verified on mount
+  useEffect(() => {
+    if (profileResponse?.profile?.bvn) {
+      setIsVerified(true);
+    } else if (isOpen) {
+      // If modal is open and not verified, show verification modal
+      setIsVerificationModalOpen(true);
+    }
+  }, [isOpen, profileResponse?.profile?.bvn]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (!verificationSubmittedAt) return;
+
+    const VERIFICATION_TIMEOUT = 10 * 60 * 1000; // 10 minutes
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - verificationSubmittedAt;
+      const remaining = VERIFICATION_TIMEOUT - elapsed;
+
+      if (remaining <= 0) {
+        setCountdown(0);
+        clearInterval(interval);
+      } else {
+        setCountdown(remaining);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [verificationSubmittedAt]);
+
+  const handleVerificationComplete = () => {
+    setVerificationSubmittedAt(Date.now());
+    setIsVerificationModalOpen(false);
+  };
+
+  const checkVerificationStatus = async () => {
+    const VERIFICATION_TIMEOUT = 10 * 60 * 1000;
+    if (countdown > 0) {
+      const minutes = Math.floor(countdown / 60000);
+      const seconds = Math.floor((countdown % 60000) / 1000);
+      alert(
+        `Please wait ${minutes}:${seconds.toString().padStart(2, "0")} before checking verification status.`,
+      );
+      return;
+    }
+
+    try {
+      await verificationStatusQuery.refetch();
+      if (profileResponse?.profile?.bvn) {
+        setIsVerified(true);
+        setVerificationSubmittedAt(null);
+        setCountdown(0);
+        toast.success("Verification successful!");
+      } else {
+        alert(
+          "Verification is still pending. Please try again in a few moments.",
+        );
+      }
+    } catch (err) {
+      console.error("Failed to check verification status:", err);
+      alert("Failed to check verification status. Please try again.");
+    }
+  };
 
   const handleCopy = (text: string, fieldName: string) => {
     navigator.clipboard.writeText(text);
@@ -90,13 +163,67 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
 
             {/* Content */}
             <div className="grow pt-6 pb-20 space-y-6">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Paragraph1 className="text-gray-500">
-                    Loading virtual account...
+              {/* Verification messages */}
+              {verificationSubmittedAt && countdown > 0 && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <Paragraph1 className="text-xs text-blue-700">
+                    ⏱️ Verification in progress. Please wait{" "}
+                    <strong>
+                      {Math.floor(countdown / 60000)}:
+                      {Math.floor((countdown % 60000) / 1000)
+                        .toString()
+                        .padStart(2, "0")}
+                    </strong>{" "}
+                    to check status.
                   </Paragraph1>
                 </div>
-              ) : virtualAccount ? (
+              )}
+
+              {verificationSubmittedAt && countdown === 0 && (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <Paragraph1 className="text-xs text-amber-700">
+                    ✓ Verification timer complete. Click below to check status.
+                  </Paragraph1>
+                </div>
+              )}
+
+              {!isVerified && !isLoading && (
+                <div className="bg-red-50 border border-red-300 rounded-lg p-6 flex flex-col gap-4">
+                  <Paragraph1 className="text-sm text-red-800 font-semibold">
+                    Verification Required
+                  </Paragraph1>
+                  <Paragraph1 className="text-xs text-red-700">
+                    You need to verify your identity before funding your wallet.
+                    Please complete the verification process below.
+                  </Paragraph1>
+
+                  {verificationSubmittedAt && countdown === 0 && (
+                    <button
+                      onClick={checkVerificationStatus}
+                      className="w-full px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition font-semibold text-sm"
+                    >
+                      Check Verification Status
+                    </button>
+                  )}
+
+                  {!verificationSubmittedAt && (
+                    <button
+                      onClick={() => setIsVerificationModalOpen(true)}
+                      className="w-full px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition font-semibold text-sm"
+                    >
+                      Verify Identity
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {isLoading && (
+                <div className="flex items-center justify-center py-8">
+                  <Paragraph1 className="text-gray-500">Loading...</Paragraph1>
+                </div>
+              )}
+
+              {isVerified && !isLoading ? (
                 <div className="space-y-6">
                   {/* Virtual Account Card */}
                   <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-300 rounded-lg p-6">
@@ -227,6 +354,15 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
                 </div>
               )}
             </div>
+
+            {/* Verification Modal */}
+            <VerificationModal
+              isOpen={isVerificationModalOpen}
+              onClose={() => setIsVerificationModalOpen(false)}
+              onVerified={handleVerificationComplete}
+              currentBvn={profileResponse?.profile?.bvn || ""}
+              currentNin={profileResponse?.profile?.nin}
+            />
           </motion.div>
         </motion.div>
       )}

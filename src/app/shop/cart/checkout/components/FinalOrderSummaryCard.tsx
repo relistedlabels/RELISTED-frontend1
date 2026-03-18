@@ -6,25 +6,15 @@ import { Check, CheckCircle } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useCheckout } from "@/lib/mutations/renters/useCheckoutMutations";
 import { useProfile } from "@/lib/queries/user/useProfile";
-import { useVerificationStatus } from "@/lib/queries/renters/useVerificationStatus";
 import { useRouter } from "next/navigation";
-import VerificationModal from "./VerificationModal";
 import { getOrderSummaryApi } from "@/lib/api/cart";
 import { usePassCart } from "@/lib/mutations/renters/usePassCartMutation";
 import { toast } from "sonner";
 
 const CURRENCY = "₦";
-const VERIFICATION_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
 
 const formatCurrency = (amount: number): string => {
   return amount.toLocaleString("en-NG");
-};
-
-const formatCountdown = (ms: number): string => {
-  const totalSeconds = Math.ceil(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 };
 
 // === Skeleton Loader ===
@@ -70,15 +60,7 @@ export default function FinalOrderSummaryCard({
   const checkoutMutation = useCheckout();
   const passCartMutation = usePassCart();
   const { data: profile } = useProfile();
-  const verificationStatusQuery = useVerificationStatus();
   const [isAgree, setIsAgree] = useState(false);
-  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
-  const [verificationSubmittedAt, setVerificationSubmittedAt] = useState<
-    number | null
-  >(null);
-  const [countdown, setCountdown] = useState(0);
-  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [orderSummary, setOrderSummary] = useState<any>(null);
   const [orderSummaryLoading, setOrderSummaryLoading] = useState(false);
 
@@ -95,34 +77,9 @@ export default function FinalOrderSummaryCard({
   // Check if user is verified on mount
   useEffect(() => {
     if (profile?.bvn) {
-      setIsVerified(true);
+      // User is verified, proceed with checkout
     }
   }, [profile]);
-
-  // Countdown timer
-  useEffect(() => {
-    if (!verificationSubmittedAt) return;
-
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - verificationSubmittedAt;
-      const remaining = VERIFICATION_TIMEOUT - elapsed;
-
-      if (remaining <= 0) {
-        setCountdown(0);
-        clearInterval(interval);
-      } else {
-        setCountdown(remaining);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [verificationSubmittedAt]);
-
-  const handleVerificationComplete = () => {
-    // Record when verification was submitted
-    setVerificationSubmittedAt(Date.now());
-    setIsVerificationModalOpen(false);
-  };
 
   // Fetch order summary on mount
   useEffect(() => {
@@ -141,59 +98,10 @@ export default function FinalOrderSummaryCard({
     fetchOrderSummary();
   }, []);
 
-  const checkVerificationStatus = async () => {
-    if (countdown > 0) {
-      alert(
-        `Please wait ${formatCountdown(countdown)} before checking verification status.`,
-      );
-      return;
-    }
-
-    setIsCheckingStatus(true);
-    try {
-      await verificationStatusQuery.refetch();
-      // Check if user has BVN verified
-      if (profile?.bvn) {
-        setIsVerified(true);
-        setVerificationSubmittedAt(null);
-        setCountdown(0);
-      } else {
-        alert(
-          "Verification is still pending. Please try again in a few moments.",
-        );
-      }
-    } catch (err) {
-      console.error("Failed to check verification status:", err);
-      alert("Failed to check verification status. Please try again.");
-    } finally {
-      setIsCheckingStatus(false);
-    }
-  };
-
   // All items are already approved from the API
   const approvedGroups = listerGroups.filter((group) => group.items.length > 0);
 
   const handleCheckout = async () => {
-    // If verification is pending, check status first
-    if (verificationSubmittedAt && countdown > 0) {
-      alert(
-        `Please wait ${formatCountdown(countdown)} before checking verification status.`,
-      );
-      return;
-    }
-
-    // If verification was submitted but countdown expired, check status
-    if (verificationSubmittedAt && countdown === 0) {
-      await checkVerificationStatus();
-      return;
-    }
-
-    // Check if user is verified
-    if (!isVerified) {
-      setIsVerificationModalOpen(true);
-      return;
-    }
-
     if (!isAgree) {
       alert("Please agree to the terms of service");
       return;
@@ -430,7 +338,7 @@ export default function FinalOrderSummaryCard({
                       </div>
 
                       {/* Cost Breakdown for this Lister - From Order Summary */}
-                      {orderSummary?.data?.listerBreakdowns &&
+                      {/* {orderSummary?.data?.listerBreakdowns &&
                         (() => {
                           const listerBreakdown =
                             orderSummary.data.listerBreakdowns.find(
@@ -485,10 +393,10 @@ export default function FinalOrderSummaryCard({
                               </div>
                             </div>
                           ) : null;
-                        })()}
+                        })()} */}
 
                       {/* Lister Subtotal */}
-                      {orderSummary?.data?.listerBreakdowns &&
+                      {/* {orderSummary?.data?.listerBreakdowns &&
                         (() => {
                           const listerBreakdown =
                             orderSummary.data.listerBreakdowns.find(
@@ -521,7 +429,7 @@ export default function FinalOrderSummaryCard({
                               </Paragraph1>
                             </div>
                           ) : null;
-                        })()}
+                        })()} */}
                     </div>
                   );
                 })}
@@ -602,45 +510,20 @@ export default function FinalOrderSummaryCard({
                       </div>
                     )}
 
-                    {verificationSubmittedAt && countdown > 0 && (
-                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-4">
-                        <Paragraph1 className="text-xs text-blue-700">
-                          ⏱️ Verification in progress. Please wait{" "}
-                          <strong>{formatCountdown(countdown)}</strong> to check
-                          status.
-                        </Paragraph1>
-                      </div>
-                    )}
-
-                    {verificationSubmittedAt && countdown === 0 && (
-                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg mb-4">
-                        <Paragraph1 className="text-xs text-amber-700">
-                          ✓ Verification timer complete. Click below to check
-                          status.
-                        </Paragraph1>
-                      </div>
-                    )}
-
                     <button
                       onClick={handleCheckout}
                       disabled={
-                        (!isAgree && !verificationSubmittedAt) ||
+                        !isAgree ||
                         checkoutMutation.isPending ||
-                        passCartMutation.isPending ||
-                        isCheckingStatus
+                        passCartMutation.isPending
                       }
                       className="w-full flex justify-center bg-black text-white font-semibold py-3 rounded-lg hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <Paragraph1>
                         {passCartMutation.isPending ||
-                        checkoutMutation.isPending ||
-                        isCheckingStatus
+                        checkoutMutation.isPending
                           ? "Processing..."
-                          : verificationSubmittedAt && countdown > 0
-                            ? `Check In ${formatCountdown(countdown)}`
-                            : verificationSubmittedAt && countdown === 0
-                              ? "Check Verification Status"
-                              : "Complete Order"}
+                          : "Complete Order"}
                       </Paragraph1>
                     </button>
 
@@ -688,15 +571,6 @@ export default function FinalOrderSummaryCard({
           })()}
         </>
       )}
-
-      {/* Verification Modal */}
-      <VerificationModal
-        isOpen={isVerificationModalOpen}
-        onClose={() => setIsVerificationModalOpen(false)}
-        onVerified={handleVerificationComplete}
-        currentBvn={profile?.bvn || ""}
-        currentNin={undefined}
-      />
     </div>
   );
 }
