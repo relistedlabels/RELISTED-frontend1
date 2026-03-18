@@ -504,11 +504,7 @@ export default function ListingDetailModal({
 
               {activeTab === "edit" && (
                 <div className="space-y-6">
-                  <div>
-                    <Paragraph3 className="text-base font-bold text-gray-900 mb-4">
-                      Edit Product
-                    </Paragraph3>
-                  </div>
+                 
 
                   <ItemImageUploader />
 
