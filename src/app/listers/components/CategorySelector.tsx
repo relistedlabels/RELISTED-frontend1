@@ -4,6 +4,7 @@
 import React, { useState, useMemo } from "react";
 import { ChevronDown, Check, Plus } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
+import { ToolInfo } from "@/common/ui/ToolInfo";
 import { useProductDraftStore } from "@/store/useProductDraftStore";
 import {
   useCategories,
@@ -57,9 +58,12 @@ export const CategorySelector: React.FC = () => {
 
   return (
     <div className="relative w-full">
-      <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
-        Category
-      </Paragraph1>
+      <div className="flex items-center gap-2 mb-1">
+        <Paragraph1 className="text-xs font-bold text-gray-700">
+          Primary Category
+        </Paragraph1>
+        <ToolInfo content="Specify the main type or style of item this is. Choose from categories like Dresses, Tops, Bags, Shoes, Accessories, etc. This helps renters find exactly what they're looking for." />
+      </div>
 
       <button
         type="button"

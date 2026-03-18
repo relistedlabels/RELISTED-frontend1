@@ -6,6 +6,7 @@ import { Paragraph1 } from "@/common/ui/Text";
 import { ToolInfo } from "@/common/ui/ToolInfo";
 import { useProductDraftStore } from "@/store/useProductDraftStore";
 import { useTags, useCreateTag } from "@/lib/queries/tag/useTags";
+import { CategorySelector } from "./CategorySelector";
 
 // Preferred tags from backend - used for initial display ordering
 // When backend provides tags, these names will be prioritized and shown first
@@ -93,11 +94,12 @@ export const TagSelector: React.FC = () => {
 
   return (
     <div className="rounded-xl border border-gray-200 p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <Paragraph1 className="text-xs font-bold text-black">
-          Search Tags
+       <CategorySelector />
+      <div className="flex items-center gap-2 mt-4 mb-3">
+        <Paragraph1 className="text-xs font-bol">
+          Sub Categories
         </Paragraph1>
-        <ToolInfo content="Select multiple tags to categorize your item. You can add new tags if one doesn't exist." />
+        <ToolInfo content="Tell renters where they can happily wear this item — pick occasions, events, and moments perfect for this piece. For example: 'Date night', 'Wedding guest', 'Brunch outfit', 'Vacation', 'Party', or 'Night out'." />
       </div>
 
       {/* Selected Tags Display */}

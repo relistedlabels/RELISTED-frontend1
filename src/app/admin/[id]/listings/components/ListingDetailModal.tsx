@@ -33,6 +33,7 @@ import { useUpdateProduct } from "@/lib/mutations/product/useUpdateProduct";
 import { toast } from "sonner";
 
 import DeleteProductButton from "./DeleteProductButton";
+import { CategorySelector } from "@/app/listers/components/CategorySelector";
 
 interface ListingDetailModalProps {
   isOpen: boolean;
@@ -514,6 +515,7 @@ export default function ListingDetailModal({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <BasicInformationForm />
                     <div className="space-y-4">
+                     
                       <TagSelector />
                       <ItemDescription />
                     </div>
