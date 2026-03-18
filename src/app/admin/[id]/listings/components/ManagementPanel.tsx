@@ -29,6 +29,12 @@ import {
 
 type ManagementTab = "Categories" | "Tags" | "Brands";
 
+const TAB_LABELS: Record<ManagementTab, string> = {
+  Categories: "Primary Category",
+  Tags: "Subcategory",
+  Brands: "Brands",
+};
+
 export default function ManagementPanel() {
   const [activeTab, setActiveTab] = useState<ManagementTab>("Categories");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -306,7 +312,7 @@ export default function ManagementPanel() {
     <div className="my-8 bg-white rounded-lg border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
         <Paragraph1 className="text-lg font-bold text-gray-900">
-          Manage {activeTab}
+          Manage {TAB_LABELS[activeTab]}
         </Paragraph1>
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -388,7 +394,7 @@ export default function ManagementPanel() {
                 : "text-gray-500 border-transparent hover:text-gray-700"
             }`}
           >
-            {tab}
+            {TAB_LABELS[tab]}
           </button>
         ))}
       </div>

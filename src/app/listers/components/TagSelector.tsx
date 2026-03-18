@@ -8,23 +8,6 @@ import { useProductDraftStore } from "@/store/useProductDraftStore";
 import { useTags, useCreateTag } from "@/lib/queries/tag/useTags";
 import { CategorySelector } from "./CategorySelector";
 
-// Preferred tags from backend - used for initial display ordering
-// When backend provides tags, these names will be prioritized and shown first
-const PREFERRED_TAG_NAMES = [
-  "New season",
-  "Date night",
-  "Brunch outfit",
-  "Night out",
-  "Wedding guest",
-  "Mini dress",
-  "Midi dress",
-  "Classy",
-  "Vacation",
-  "Party",
-  "Luxury",
-  "Formal wear",
-];
-
 export const TagSelector: React.FC = () => {
   const [query, setQuery] = useState("");
   const [isCreatingTag, setIsCreatingTag] = useState(false);
@@ -36,23 +19,8 @@ export const TagSelector: React.FC = () => {
   const createMutation = useCreateTag();
 
   const sortedTags = useMemo(() => {
-    const boxOrderMap = new Map(
-      PREFERRED_TAG_NAMES.map((n, i) => [n.toLowerCase(), i]),
-    );
-    const boxSet = new Set(PREFERRED_TAG_NAMES.map((n) => n.toLowerCase()));
-    const inBox: typeof tags = [];
-    const rest: typeof tags = [];
-    for (const t of tags) {
-      if (boxSet.has(t.name.toLowerCase())) inBox.push(t);
-      else rest.push(t);
-    }
-    inBox.sort(
-      (a, b) =>
-        (boxOrderMap.get(a.name.toLowerCase()) ?? 999) -
-          (boxOrderMap.get(b.name.toLowerCase()) ?? 999) ||
-        a.name.localeCompare(b.name),
-    );
-    return [...inBox, ...rest];
+    // Tags are already sorted by backend, just use them directly
+    return tags;
   }, [tags]);
 
   const visibleTags = useMemo(() => {
