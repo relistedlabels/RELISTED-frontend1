@@ -24,6 +24,13 @@ import AvailabilityTab from "./AvailabilityTab";
 import RentalHistoryTab from "./RentalHistoryTab";
 import ActivityTab from "./ActivityTab";
 import { useListingDetail } from "@/lib/queries/admin/useListings";
+import { ItemImageUploader } from "@/app/listers/components/ItemImageUploader";
+import { BasicInformationForm } from "@/app/listers/components/BasicInformationForm";
+import { TagSelector } from "@/app/listers/components/TagSelector";
+import { ItemDescription } from "@/app/listers/components/ItemDescription";
+import { useProductDraftStore } from "@/store/useProductDraftStore";
+import { useUpdateProduct } from "@/lib/mutations/product/useUpdateProduct";
+import { toast } from "sonner";
 
 import DeleteProductButton from "./DeleteProductButton";
 
@@ -68,7 +75,7 @@ export default function ListingDetailModal({
   isDisabling = false,
 }: ListingDetailModalProps) {
   const [activeTab, setActiveTab] = React.useState<
-    "details" | "rental-history" | "availability" | "activity"
+    "details" | "edit" | "rental-history" | "availability" | "activity"
   >("details");
   const [showApproveModal, setShowApproveModal] = React.useState(false);
   const [showRejectModal, setShowRejectModal] = React.useState(false);
@@ -81,6 +88,34 @@ export default function ListingDetailModal({
   const { data: productDetail, isLoading } = useListingDetail(
     isOpen && product?.id ? product.id : "",
   );
+
+  // Product draft store
+  const draftData = useProductDraftStore((state) => state.data);
+  const populateFromProduct = useProductDraftStore(
+    (state) => state.populateFromProduct,
+  );
+  const reset = useProductDraftStore((state) => state.reset);
+
+  // Update product mutation
+  const updateProduct = useUpdateProduct(product?.id || "");
+
+  // Populate draft store when product detail loads
+  React.useEffect(() => {
+    if (productDetail?.data && activeTab === "edit") {
+      populateFromProduct(
+        productDetail.data as unknown as Parameters<
+          typeof populateFromProduct
+        >[0],
+      );
+    }
+  }, [productDetail?.data, activeTab, populateFromProduct]);
+
+  // Clean up draft store when tab changes away from edit
+  React.useEffect(() => {
+    if (activeTab !== "edit") {
+      reset();
+    }
+  }, [activeTab, reset]);
 
   // Use full product detail if available, fall back to basic product prop
   const displayProduct = productDetail?.data || product;
@@ -140,7 +175,7 @@ export default function ListingDetailModal({
             className="fixed right-0 top-0 bottom-0 w-full md:w-3/4 bg-white z-50 overflow-y-auto shadow-lg"
           >
             {/* Header */}
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-6">
+            <div className="sticky z-50 top-0 bg-white border-b border-gray-200 p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-start gap-4 flex-1">
                   {isLoading ? (
@@ -238,6 +273,7 @@ export default function ListingDetailModal({
               <div className="flex gap-8">
                 {[
                   { id: "details", label: "Product Details", icon: Package },
+                  { id: "edit", label: "Edit Product", icon: Edit },
                   {
                     id: "rental-history",
                     label: "Rental History",
@@ -461,6 +497,76 @@ export default function ListingDetailModal({
                         Message via Disputes
                       </button>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "edit" && (
+                <div className="space-y-6">
+                  <div>
+                    <Paragraph3 className="text-base font-bold text-gray-900 mb-4">
+                      Edit Product
+                    </Paragraph3>
+                  </div>
+
+                  <ItemImageUploader />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <BasicInformationForm />
+                    <div className="space-y-4">
+                      <TagSelector />
+                      <ItemDescription />
+                    </div>
+                  </div>
+
+                  {/* Save Button */}
+                  <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+                    <button
+                      onClick={() => {
+                        reset();
+                        setActiveTab("details");
+                      }}
+                      disabled={updateProduct.isPending}
+                      className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        updateProduct.mutate(draftData, {
+                          onSuccess: () => {
+                            toast.success("Product updated successfully!");
+                            reset();
+                            setActiveTab("details");
+                          },
+                          onError: (error: any) => {
+                            const message =
+                              error?.response?.data?.message ||
+                              error?.message ||
+                              "Failed to update product. Please try again.";
+                            toast.error(message);
+                          },
+                        });
+                      }}
+                      disabled={updateProduct.isPending}
+                      className={`px-6 py-2.5 text-white rounded-lg transition font-medium text-sm flex items-center gap-2 ${
+                        updateProduct.isPending
+                          ? "cursor-not-allowed bg-gray-400"
+                          : "bg-black hover:bg-gray-900"
+                      }`}
+                    >
+                      {updateProduct.isPending ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Check size={18} />
+                          Save Changes
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               )}
