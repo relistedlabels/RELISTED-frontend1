@@ -3,6 +3,7 @@
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useListerProfile } from "@/lib/queries/listers/useListerProfile";
 import { useProfile as useRenterProfile } from "@/lib/queries/renters/useProfile";
+import { useLogout } from "@/lib/mutations";
 import { useState } from "react";
 import {
   ChevronDown,
@@ -18,6 +19,8 @@ import { useUserStore } from "@/store/useUserStore";
 import Link from "next/link";
 import { Paragraph1 } from "../ui/Text";
 import { usePathname } from "next/navigation";
+import LogoutConfirmModal from "./LogoutConfirmModal";
+import { useRouter } from "next/navigation";
 
 interface MobileAuthActionsProps {
   onClose?: () => void;
@@ -28,8 +31,11 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
   const { data: listerProfileData } = useListerProfile();
   const { data: renterProfileData } = useRenterProfile();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { clearUser } = useUserStore();
   const pathname = usePathname();
+  const router = useRouter();
+  const logout = useLogout();
 
   // Avoid flicker while auth state is resolving
   if (isLoading) return null;
@@ -37,6 +43,16 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
   const handleLinkClick = () => {
     setIsDropdownOpen(false);
     onClose?.();
+  };
+
+  const handleLogoutConfirm = () => {
+    setShowLogoutConfirm(false);
+    setIsDropdownOpen(false);
+    logout.mutate(undefined, {
+      onSuccess: () => {
+        router.replace("/auth/sign-in");
+      },
+    });
   };
 
   const getSettingsRoute = () => {
@@ -176,16 +192,27 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
             </Link>
             <button
               onClick={() => {
-                clearUser();
-                handleLinkClick();
+                setIsDropdownOpen(false);
+                setShowLogoutConfirm(true);
               }}
-              className="w-full flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-900 transition-colors text-left"
+              disabled={logout.isPending}
+              className="w-full flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-900 transition-colors text-left disabled:opacity-50"
             >
               <LogOut size={18} className="text-red-500" />
-              <Paragraph1 className="text-sm text-red-500">Logout</Paragraph1>
+              <Paragraph1 className="text-sm text-red-500">
+                {logout.isPending ? "Logging out..." : "Logout"}
+              </Paragraph1>
             </button>
           </div>
         )}
+
+        {/* Logout Confirmation Modal */}
+        <LogoutConfirmModal
+          isOpen={showLogoutConfirm}
+          onClose={() => setShowLogoutConfirm(false)}
+          onConfirm={handleLogoutConfirm}
+          isLoading={logout.isPending}
+        />
       </div>
     );
   }
