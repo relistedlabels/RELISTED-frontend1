@@ -53,7 +53,7 @@ export default function NewListingsSection() {
               Loading products...
             </Paragraph1>
           </div>
-          <ProductCardSkeleton count={12} />
+          <ProductCardSkeleton count={15} />
         </div>
       </section>
     );
@@ -68,7 +68,7 @@ export default function NewListingsSection() {
               Available Listings
             </Header1Plus>
           </div>
-          <ProductCardSkeleton count={12} />
+          <ProductCardSkeleton count={15} />
         </div>
       </section>
     );
@@ -108,7 +108,7 @@ export default function NewListingsSection() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4">
               {filteredProducts.map((product: any) => (
                 <ProductCard
                   key={product.id}
@@ -116,7 +116,7 @@ export default function NewListingsSection() {
                   image={
                     product.attachments?.uploads?.[0]?.url || "/placeholder.jpg"
                   }
-                  brand={product.brand?.name || "BRAND"}
+                  brand={product.brand?.name || ""}
                   name={product.name}
                   price={`₦${product.originalValue.toLocaleString()}`}
                   dailyPrice={product.dailyPrice}

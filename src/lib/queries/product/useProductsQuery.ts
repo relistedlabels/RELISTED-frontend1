@@ -51,7 +51,7 @@ export const useProductsQuery = () => {
         condition,
         material,
         page,
-        limit: 12,
+        limit: 15,
       });
 
       // Filter products with status "APPROVED" or "AVAILABLE"

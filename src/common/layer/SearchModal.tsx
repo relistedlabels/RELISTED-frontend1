@@ -186,8 +186,8 @@ export default function SearchModal() {
                                   {item.name}
                                 </Paragraph1>
                                 <Paragraph1 className="text-sm text-gray-500">
-                                  {item.lister || "BRAND"} • ₦
-                                  {item.price?.toLocaleString()}
+                                  By {item.lister?.split(" ").pop() || "New user"}{" "}
+                                  • ₦{item.price?.toLocaleString()}
                                 </Paragraph1>
                               </div>
                               <ArrowRight className="rotate-225" />
