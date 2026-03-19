@@ -338,13 +338,13 @@ export default function ManagementPanel() {
                       onClick={() => handleCreateClick("Categories")}
                       className="w-full px-4 py-2 text-left hover:bg-gray-50 transition text-black"
                     >
-                      Create Category
+                      Create Primary Category
                     </button>
                     <button
                       onClick={() => handleCreateClick("Tags")}
                       className="w-full px-4 py-2 text-left hover:bg-gray-50 transition text-black"
                     >
-                      Create Tags
+                      Create Subcategory
                     </button>
                     <button
                       onClick={() => handleCreateClick("Brands")}
