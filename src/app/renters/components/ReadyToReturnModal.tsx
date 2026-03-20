@@ -247,7 +247,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                             Pickup:{" "}
                           </span>
                           A rider will be assigned to come collect the item at
-                          this location:{" "}
+                          your location:{" "}
                           <span className="font-semibold"> {location}</span>
                         </Paragraph1>
                       </div>
