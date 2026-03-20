@@ -9,6 +9,7 @@ import { useProductsQuery } from "@/lib/queries/product/useProductsQuery";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
+import { CheckCircle } from "lucide-react";
 
 export default function NewListingsSection() {
   useEffect(() => {
@@ -89,7 +90,8 @@ export default function NewListingsSection() {
           </div>
 
           {/* Search */}
-          <div className="w-full md:w-[200px] hidden sm:flex">
+          <CheckCircle />
+          <div className="w-full md:w-[200px] hidden sm:flex-">
             <input
               type="text"
               placeholder="Search"
