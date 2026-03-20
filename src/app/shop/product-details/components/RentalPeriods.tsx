@@ -354,7 +354,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
               {/* Footer */}
               <div className="mt-auto py-2 bg-white flex justify-between gap-4 sticky bottom-0">
                 <button className="flex-1  px-4 py-3 text-sm font-semibold border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-                  <Paragraph1>Cancel </Paragraph1>
+                  <Paragraph1>Shop More </Paragraph1>
                 </button>
 
                 <Link

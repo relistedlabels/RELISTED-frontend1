@@ -133,6 +133,7 @@ export const productApi = {
   getAll: (filters?: {
     search?: string;
     category?: string[];
+    tags?: string;
     brand?: string[];
     size?: string;
     minPrice?: number;
@@ -148,6 +149,7 @@ export const productApi = {
     if (filters?.search) params.append("search", filters.search);
     if (filters?.category?.length)
       params.append("category", filters.category.join(","));
+    if (filters?.tags) params.append("tags", filters.tags);
     if (filters?.brand?.length) params.append("brand", filters.brand.join(","));
     if (filters?.size) params.append("size", filters.size);
     if (filters?.minPrice !== undefined)

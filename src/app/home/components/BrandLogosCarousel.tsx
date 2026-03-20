@@ -20,7 +20,7 @@ export default function BrandLogosCarousel() {
           brands.slice(0, 10).map((brand) => (
             <Link
               key={brand.id}
-              href={`/shop?brand=${encodeURIComponent(brand.name)}&title=${encodeURIComponent(brand.name)}&description=${encodeURIComponent(`Shop ${brand.name} fashion`)}`}
+              href={`/shop?brand=${encodeURIComponent(brand.id)}&title=${encodeURIComponent(brand.name)}&description=${encodeURIComponent(`Shop ${brand.name} fashion`)}`}
             >
               <motion.div
                 className="shrink-0 cursor-pointer  px-2  text-[16px] sm:text-[24px] whitespace-nowrap"

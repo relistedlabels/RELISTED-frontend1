@@ -8,6 +8,7 @@ export const useProductsQuery = () => {
   // Parse URL parameters
   const search = searchParams.get("search") || undefined;
   const category = searchParams.getAll("category");
+  const tags = searchParams.get("tags") || undefined;
   const brand = searchParams.getAll("brand");
   const size = searchParams.get("size") || undefined;
   const minPrice = searchParams.get("minPrice")
@@ -29,6 +30,7 @@ export const useProductsQuery = () => {
       {
         search,
         category,
+        tags,
         brand,
         size,
         minPrice,
@@ -43,6 +45,7 @@ export const useProductsQuery = () => {
       const response = await productApi.getAll({
         search,
         category: category.length > 0 ? category : undefined,
+        tags,
         brand: brand.length > 0 ? brand : undefined,
         size,
         minPrice,

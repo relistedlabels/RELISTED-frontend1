@@ -52,9 +52,8 @@ export default function StyleCategoriesSection() {
       {/* Grid Layout */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
         {(Array.isArray(categories) ? categories : []).map((category, idx) => {
-          const categoryDescription =
-            category.description || "Explore this collection";
-          const categoryImage = category.image || "/images/placeholder.jpg";
+          const categoryDescription = "Explore this collection";
+          const categoryImage = category.imageUrl || "/images/placeholder.jpg";
           const shopUrl = `/shop?category=${encodeURIComponent(category.name)}&title=${encodeURIComponent(category.name)}&description=${encodeURIComponent(categoryDescription)}`;
 
           return (

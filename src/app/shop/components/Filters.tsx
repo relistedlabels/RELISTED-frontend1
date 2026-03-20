@@ -8,6 +8,7 @@ import PriceRangeSlider from "./PriceRangeSlider";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useBrands } from "@/lib/queries/brand/useBrands";
 import { useCategories } from "@/lib/queries/category/useCategories";
+import { useTags } from "@/lib/queries/tag/useTags";
 
 // --------------------
 // Static Data
@@ -72,16 +73,19 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
     isPending: categoriesLoading,
     isError: categoriesError,
   } = useCategories();
+  const { data: tags, isPending: tagsLoading, isError: tagsError } = useTags();
 
-  // Search state for brands and categories
+  // Search state for brands, categories, and tags
   const [brandSearch, setBrandSearch] = useState("");
   const [categorySearch, setCategorySearch] = useState("");
+  const [tagSearch, setTagSearch] = useState("");
 
   const router = useRouter();
   const searchParams = useSearchParams();
   const [localFilters, setLocalFilters] = useState({
     search: searchParams.get("search") || "",
     category: searchParams.getAll("category"),
+    tags: searchParams.get("tags") ? searchParams.get("tags")!.split(",") : [],
     brand: searchParams.getAll("brand"),
     size: searchParams.get("size") || "",
     color: searchParams.get("color") || "",
@@ -111,10 +115,19 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
     setLocalFilters({ ...localFilters, brand: newBrands });
   };
 
+  const handleTagChange = (tag: string, checked: boolean) => {
+    const newTags = checked
+      ? [...localFilters.tags, tag]
+      : localFilters.tags.filter((t: string) => t !== tag);
+    setLocalFilters({ ...localFilters, tags: newTags });
+  };
+
   const handleApplyFilters = () => {
     const params = new URLSearchParams();
     if (localFilters.search) params.set("search", localFilters.search);
     localFilters.category.forEach((cat) => params.append("category", cat));
+    if (localFilters.tags.length > 0)
+      params.set("tags", localFilters.tags.join(","));
     localFilters.brand.forEach((brand) => params.append("brand", brand));
     if (localFilters.size) params.set("size", localFilters.size);
     if (localFilters.color) params.set("color", localFilters.color);
@@ -197,7 +210,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
               {/* Categories */}
               <section>
                 <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
-                  Categories
+                 Primary Categories
                 </Paragraph1>
                 {/* Category Search Bar */}
                 <div className="mb-2">
@@ -237,6 +250,52 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
                           className="h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
                         />
                         <Paragraph1>{cat.name}</Paragraph1>
+                      </label>
+                    ))
+                )}
+              </section>
+
+              {/* Tags */}
+              <section>
+                <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
+                  Subcategories
+                </Paragraph1>
+                {/* Tag Search Bar */}
+                <div className="mb-2">
+                  <input
+                    type="text"
+                    placeholder="Search Subcategories..."
+                    value={tagSearch}
+                    onChange={(e) => setTagSearch(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded mb-1 text-sm"
+                  />
+                </div>
+                {tagsLoading ? (
+                  <Paragraph1>Loading...</Paragraph1>
+                ) : tagsError ? (
+                  <Paragraph1 className="text-red-500">
+                    Failed to load tags
+                  </Paragraph1>
+                ) : (
+                  tags
+                    ?.filter((tag) =>
+                      tag.name.toLowerCase().includes(tagSearch.toLowerCase()),
+                    )
+                    .slice(0, 10)
+                    .map((tag) => (
+                      <label
+                        key={tag.id}
+                        className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={localFilters.tags.includes(tag.name)}
+                          onChange={(e) =>
+                            handleTagChange(tag.name, e.target.checked)
+                          }
+                          className="h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
+                        />
+                        <Paragraph1>{tag.name}</Paragraph1>
                       </label>
                     ))
                 )}

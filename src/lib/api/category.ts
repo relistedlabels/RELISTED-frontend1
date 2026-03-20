@@ -3,15 +3,14 @@ import { apiFetch } from "./http";
 export type Category = {
   id: string;
   name: string;
-  userId?: string;
-  createdAt?: string;
-  description?: string;
-  image?: string;
+  imageUrl: string | null;
+  userId: string | null;
+  createdAt: string;
 };
 
 export const categoryApi = {
   getCategories: () =>
-    apiFetch<Category[]>("/api/public/categories", {
+    apiFetch<Category[]>("/categories", {
       method: "GET",
     }),
 

@@ -18,7 +18,7 @@ const TopListingSection = () => {
     error,
   } = useProducts({
     sort: "newest",
-    category: ["Black Tie"],
+    tags: "Black Tie",
     limit: 7,
   });
   // Convert vertical wheel to horizontal scroll for mouse users
@@ -138,7 +138,7 @@ const TopListingSection = () => {
         )}
         <div className="mt-2 flex items-center w-full justify-center">
           <Link
-            href={`/shop?category=${encodeURIComponent("Black Tie")}&title=${encodeURIComponent("BLACK TIE OUTFITS")}`}
+            href={`/shop?tags=${encodeURIComponent("Black Tie")}&title=${encodeURIComponent("BLACK TIE OUTFITS")}`}
             className="inline-flex items-center justify-center w-full max-w-md px-8 py-3 
                  bg-black text-white text-sm font-medium tracking-wider  
                  transition-colors duration-200 hover:bg-neutral-800 focus:outline-none 

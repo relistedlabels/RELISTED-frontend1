@@ -13,6 +13,7 @@ type ProductFilters = {
     | "popular"
     | "rating";
   category?: string[];
+  tags?: string;
   brand?: string[];
   priceMin?: number;
   priceMax?: number;

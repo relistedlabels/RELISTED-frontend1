@@ -56,7 +56,7 @@ const ProductMediaGallery: React.FC<ProductMediaGalleryProps> = ({
         layout
         whileHover={{ scale: 1.01 }}
         transition={{ type: "spring", stiffness: 200, damping: 20 }}
-        className="w-full h-[400px] sm:h-[420px] bg-black /5 rounded-xl overflow-hidden cursor-zoom-in"
+        className="w-full h-[400px] sm:h-[420px] bg-gray-100/5 rounded-xl- overflow-hidden cursor-zoom-in"
         onClick={() => setIsOpen(true)}
       >
         <AnimatePresence mode="wait">

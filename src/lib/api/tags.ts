@@ -4,10 +4,11 @@ import { apiFetch } from "./http";
 export type Tag = {
   id: string;
   name: string;
-  createdAt?: string;
+  userId: string | null;
+  createdAt: string;
 };
 
-/** Get all tags */
+/** Get all tags - Public endpoint for browsing */
 export const getTags = () =>
   apiFetch<Tag[]>("/tags", {
     method: "GET",
