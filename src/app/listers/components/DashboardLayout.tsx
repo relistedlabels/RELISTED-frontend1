@@ -235,7 +235,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 h-screen overflow-hidden hide-scrollbar  overflow-y-auto bg-[#241F20] text-white p-6 sticky top-0">
+      <aside className="hidden md:flex  flex-col w-64 h-screen overflow-hidden hide-scrollbar  overflow-y-auto bg-[#241F20] text-white p-6 sticky top-0">
         <div className="mb-10">
           <BrandHeader />
         </div>
@@ -257,7 +257,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
       {/* Mobile Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-black text-white p-6 transform transition-transform md:hidden ${
+        className={`fixed inset-y-0 left-0 z-90 w-64 bg-black text-white p-6 transform transition-transform md:hidden ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
