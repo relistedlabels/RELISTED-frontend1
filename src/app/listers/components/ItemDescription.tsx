@@ -18,7 +18,7 @@ export const ItemDescription: React.FC = () => {
       <div>
         <div className="flex items-center gap-2 mb-2">
           <Paragraph1 className="text-xs font-medium text-gray-700">
-            Description/Item condition
+            Description 
           </Paragraph1>
           <ToolInfo content="Write a detailed description of your item including its condition, features, and any notable details." />
         </div>
