@@ -127,7 +127,7 @@ export default function Footer() {
               {randomCategories.map((category) => (
                 <li key={category.id}>
                   <Link
-                    href={`/shop?category=${encodeURIComponent(category.name)}`}
+                    href={`/shop?category=${encodeURIComponent(category.id)}`}
                   >
                     <ParagraphLink2 className="hover:opacity-100 cursor-pointer">
                       {category.name}

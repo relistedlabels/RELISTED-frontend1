@@ -8,7 +8,7 @@ import Link from "next/link";
 const TagCard: React.FC<{ name: string }> = ({ name }) => {
   return (
     <Link
-      href={`/shop?tags=${encodeURIComponent(name)}`}
+      href={`/shop?tags=${encodeURIComponent(name)}&title=${encodeURIComponent(name)}`}
       className="group relative overflow-hidden rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 p-6 text-center transition-all duration-300 hover:shadow-lg hover:from-black hover:to-gray-900"
     >
       <Paragraph1 className="font-semibold text-gray-800 group-hover:text-white transition-colors duration-300">

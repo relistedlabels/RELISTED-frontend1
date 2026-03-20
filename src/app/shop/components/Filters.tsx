@@ -101,10 +101,10 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
     ] as [number, number],
   });
 
-  const handleCategoryChange = (category: string, checked: boolean) => {
+  const handleCategoryChange = (categoryId: string, checked: boolean) => {
     const newCategories = checked
-      ? [...localFilters.category, category]
-      : localFilters.category.filter((c: string) => c !== category);
+      ? [...localFilters.category, categoryId]
+      : localFilters.category.filter((c: string) => c !== categoryId);
     setLocalFilters({ ...localFilters, category: newCategories });
   };
 
@@ -210,7 +210,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
               {/* Categories */}
               <section>
                 <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
-                 Primary Categories
+                  Primary Categories
                 </Paragraph1>
                 {/* Category Search Bar */}
                 <div className="mb-2">
@@ -243,9 +243,9 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
                       >
                         <input
                           type="checkbox"
-                          checked={localFilters.category.includes(cat.name)}
+                          checked={localFilters.category.includes(cat.id)}
                           onChange={(e) =>
-                            handleCategoryChange(cat.name, e.target.checked)
+                            handleCategoryChange(cat.id, e.target.checked)
                           }
                           className="h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
                         />

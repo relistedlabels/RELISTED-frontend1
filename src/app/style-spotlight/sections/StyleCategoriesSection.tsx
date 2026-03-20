@@ -54,7 +54,7 @@ export default function StyleCategoriesSection() {
         {(Array.isArray(categories) ? categories : []).map((category, idx) => {
           const categoryDescription = "Explore this collection";
           const categoryImage = category.imageUrl || "/images/placeholder.jpg";
-          const shopUrl = `/shop?category=${encodeURIComponent(category.name)}&title=${encodeURIComponent(category.name)}&description=${encodeURIComponent(categoryDescription)}`;
+          const shopUrl = `/shop?category=${encodeURIComponent(category.id)}&title=${encodeURIComponent(category.name)}&description=${encodeURIComponent(categoryDescription)}`;
 
           return (
             <Link key={category.id} href={shopUrl}>
