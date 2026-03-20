@@ -78,7 +78,7 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
 
         {/* Info Cards */}
         <div className="grid grid-cols-1 gap-3">
-          {/* Card 1: Free Pickup */}
+          {/* Card 1: Easy Pickup */}
           <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
             <div className="flex gap-3 items-start">
               <div className="bg-blue-50 p-2 rounded-lg flex-shrink-0">
@@ -86,27 +86,27 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
               </div>
               <div>
                 <Paragraph1 className="font-semibold text-gray-900 text-sm">
-                  Free Pickup
+                  Easy Pickup
                 </Paragraph1>
                 <Paragraph1 className="text-gray-600 text-xs mt-0.5">
-                  A rider will be assigned at no extra cost
+                  Schedule your pickup in seconds
                 </Paragraph1>
               </div>
             </div>
           </div>
 
-          {/* Card 2: Easy Process */}
+          {/* Card 2: Return on Time */}
           <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
             <div className="flex gap-3 items-start">
-              <div className="bg-green-50 p-2 rounded-lg flex-shrink-0">
-                <Clock className="text-green-600" size={20} />
+              <div className="bg-amber-50 p-2 rounded-lg flex-shrink-0">
+                <Clock className="text-amber-600" size={20} />
               </div>
               <div>
                 <Paragraph1 className="font-semibold text-gray-900 text-sm">
-                  Quick & Easy
+                  Return on Time
                 </Paragraph1>
                 <Paragraph1 className="text-gray-600 text-xs mt-0.5">
-                  Upload photos and schedule pickup in minutes
+                  Late returns attract extra rental charges
                 </Paragraph1>
               </div>
             </div>
