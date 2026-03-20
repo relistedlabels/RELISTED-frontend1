@@ -10,7 +10,7 @@ export const MaterialSelector: React.FC = () => {
   return (
     <div className="w-full">
       <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
-        Material Type
+        Material Type  (optional)
       </Paragraph1>
 
       <input
