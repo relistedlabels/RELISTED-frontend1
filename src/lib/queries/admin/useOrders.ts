@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ordersApi } from "@/lib/api/admin/";
+import { ordersApi, Order, Return, OrderStats } from "@/lib/api/admin/";
 
 interface OrderListParams {
   page?: number;
@@ -9,8 +9,35 @@ interface OrderListParams {
   tab?: string;
 }
 
+type OrdersResponse =
+  | {
+      success: true;
+      data: {
+        orders: Order[];
+        pagination: {
+          total: number;
+          page: number;
+          limit: number;
+          pages: number;
+        };
+        stats: OrderStats;
+      };
+    }
+  | {
+      success: true;
+      data: {
+        returns: Return[];
+        pagination: {
+          total: number;
+          page: number;
+          limit: number;
+          pages: number;
+        };
+      };
+    };
+
 export const useOrders = (params: OrderListParams = {}) =>
-  useQuery({
+  useQuery<OrdersResponse>({
     queryKey: [
       "admin",
       "orders",

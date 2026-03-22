@@ -14,7 +14,7 @@ export type {
   TopCurator,
   TopItem,
 } from "./analytics";
-export type { Order, OrderDetail, OrderStats } from "./orders";
+export type { Order, OrderDetail, OrderStats, Return } from "./orders";
 export type { Dispute, DisputeDetail, DisputeStats } from "./disputes";
 export type {
   UserProfile,
