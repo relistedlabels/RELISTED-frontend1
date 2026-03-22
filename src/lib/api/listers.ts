@@ -329,6 +329,22 @@ export async function updateOrderStatus(
   });
 }
 
+export async function confirmReturn(
+  orderId: string,
+): Promise<{ success: boolean; message: string; data: Order }> {
+  return apiFetch(`/api/listers/orders/${orderId}/return/confirm`, {
+    method: "PATCH",
+  });
+}
+
+export async function rejectReturn(
+  orderId: string,
+): Promise<{ success: boolean; message: string }> {
+  return apiFetch(`/api/listers/orders/${orderId}/return/reject`, {
+    method: "PATCH",
+  });
+}
+
 // ============================================================================
 // WALLET MANAGEMENT ENDPOINTS
 // ============================================================================

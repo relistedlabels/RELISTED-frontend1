@@ -27,6 +27,27 @@ export interface Order {
   paymentReference: string;
 }
 
+export interface Return {
+  id: string;
+  orderId: string;
+  status: "APPROVED" | "REJECTED" | "PENDING";
+  itemCondition: "GOOD" | "FAIR" | "POOR";
+  damageNotes: string;
+  imageUrls: string[];
+  createdAt: string;
+  renter: {
+    id: string;
+    name: string;
+    avatar: string | null;
+  };
+  lister: {
+    id: string;
+    name: string;
+    avatar: string | null;
+  };
+  itemName: string;
+}
+
 export interface OrderDetail extends Order {
   curator: {
     id: string;
@@ -168,4 +189,18 @@ export const ordersApi = {
     apiFetch(`/api/admin/orders/export?format=${format}`, {
       method: "GET",
     }),
+
+  getReturns: () =>
+    apiFetch<{
+      success: true;
+      data: {
+        returns: Return[];
+        pagination: {
+          total: number;
+          page: number;
+          limit: number;
+          pages: number;
+        };
+      };
+    }>(`/api/admin/orders/returns`),
 };

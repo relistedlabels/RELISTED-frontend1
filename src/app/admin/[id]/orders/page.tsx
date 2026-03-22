@@ -5,13 +5,20 @@ import React, { useState, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import { TableSkeleton, StatCardSkeleton } from "@/common/ui/SkeletonLoaders";
-import { Calendar, Download, Eye } from "lucide-react";
+import {
+  Calendar,
+  Download,
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { HiOutlineShoppingBag } from "react-icons/hi";
 import { PiCheckCircle, PiWarning, PiPackage } from "react-icons/pi";
 import { PiHash } from "react-icons/pi";
 import OrderDetailModal from "./components/OrderDetailModal";
+import ReturnDetailModal from "./components/ReturnDetailModal";
 import { useOrders, useOrderStats } from "@/lib/queries/admin/useOrders";
-import type { Order } from "@/lib/api/admin/orders";
+import type { Order, Return } from "@/lib/api/admin/orders";
 
 const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat("en-NG", {
@@ -55,6 +62,9 @@ export default function OrdersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedReturn, setSelectedReturn] = useState<any>(null);
+  const [isReturnDetailModalOpen, setIsReturnDetailModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Fetch orders and stats
   const {
@@ -65,7 +75,7 @@ export default function OrdersPage() {
     tab: activeTab,
     status: statusFilter !== "All" ? statusFilter : undefined,
     search: searchQuery || undefined,
-  });
+  }) as any;
 
   const {
     data: statsData,
@@ -77,9 +87,19 @@ export default function OrdersPage() {
   if (statsError) console.error("Statistics error:", statsError);
   if (ordersError) console.error("Orders error:", ordersError);
 
-  // Extract orders from the response
+  // Extract orders or returns from the response
   const orders = useMemo(() => {
-    return ordersData?.data?.orders || [];
+    if (statusFilter === "Returns") {
+      return (ordersData?.data?.returns || []) as Return[];
+    }
+    return (ordersData?.data?.orders || []) as Order[];
+  }, [ordersData, statusFilter]);
+
+  // Get pagination info
+  const pagination = useMemo(() => {
+    return (
+      ordersData?.data?.pagination || { total: 0, page: 1, limit: 20, pages: 1 }
+    );
   }, [ordersData]);
 
   // Build stat cards from real data
@@ -241,6 +261,7 @@ export default function OrdersPage() {
               "In Transit",
               "Delivered",
               "Return Due",
+              "Returns",
               "Return Pickup",
               "Disputed",
             ].map((status) => (
@@ -259,175 +280,342 @@ export default function OrdersPage() {
           </div>
         </div>
 
-        {/* Orders Table */}
+        {/* Orders/Returns Table */}
         {ordersLoading || ordersError ? (
           <TableSkeleton rows={5} columns={9} />
         ) : (
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="px-6 py-4 text-left">
-                      <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                        Order ID
-                      </Paragraph1>
-                    </th>
-                    <th className="px-6 py-4 text-left">
-                      <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                        Date
-                      </Paragraph1>
-                    </th>
-                    <th className="px-6 py-4 text-left">
-                      <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                        Lister
-                      </Paragraph1>
-                    </th>
-                    <th className="px-6 py-4 text-left">
-                      <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                        Renter
-                      </Paragraph1>
-                    </th>
-                    <th className="px-6 py-4 text-left">
-                      <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                        Items
-                      </Paragraph1>
-                    </th>
-                    <th className="px-6 py-4 text-left">
-                      <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                        Total
-                      </Paragraph1>
-                    </th>
-                    <th className="px-6 py-4 text-left">
-                      <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                        Status
-                      </Paragraph1>
-                    </th>
-                    <th className="px-6 py-4 text-left">
-                      <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                        Return Due
-                      </Paragraph1>
-                    </th>
-                    {/* <th className="px-6 py-4 text-left">
-                      <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                        Action
-                      </Paragraph1>
-                    </th> */}
-                  </tr>
-                </thead>
-                <tbody>
-                  {orders.map((order) => (
-                    <tr
-                      key={order.id}
-                      onClick={() => {
-                        if (order.curator?.id) {
-                          router.push(
-                            `/admin/${adminId}/users/${order.curator.id}`,
-                          );
-                        }
-                      }}
-                      className="border-b border-gray-100 hover:bg-gray-50 transition cursor-pointer"
-                    >
-                      <td className="px-6 py-4">
-                        <Paragraph1 className="text-sm font-medium text-gray-900">
-                          {order.id}
-                        </Paragraph1>
-                      </td>
-                      <td className="px-6 py-4">
-                        <Paragraph1 className="text-sm text-gray-700">
-                          {order.date}
-                        </Paragraph1>
-                      </td>
-                      <td className="px-6 py-4">
-                        {order.curator ? (
-                          <div className="flex items-center gap-2">
-                            <img
-                              src={
-                                order.curator.avatar ||
-                                getDefaultAvatar(order.curator.name)
-                              }
-                              alt={order.curator.name}
-                              className="w-8 h-8 rounded-full object-cover"
-                            />
-                            <Paragraph1 className="text-sm text-gray-900">
-                              {order.curator.name}
+          <>
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200 bg-gray-50">
+                      {statusFilter === "Returns" ? (
+                        <>
+                          <th className="px-6 py-4 text-left">
+                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                              Return ID
                             </Paragraph1>
-                          </div>
-                        ) : (
-                          <Paragraph1 className="text-sm text-gray-500">
-                            N/A
-                          </Paragraph1>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        {order.dresser ? (
-                          <div className="flex items-center gap-2">
-                            <img
-                              src={
-                                order.dresser.avatar ||
-                                getDefaultAvatar(order.dresser.name)
-                              }
-                              alt={order.dresser.name}
-                              className="w-8 h-8 rounded-full object-cover"
-                            />
-                            <Paragraph1 className="text-sm text-gray-900">
-                              {order.dresser.name}
+                          </th>
+                          <th className="px-6 py-4 text-left">
+                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                              Order ID
                             </Paragraph1>
-                          </div>
-                        ) : (
-                          <Paragraph1 className="text-sm text-gray-500">
-                            N/A
-                          </Paragraph1>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <Paragraph1 className="text-sm text-gray-700">
-                          {order.items} items
-                        </Paragraph1>
-                      </td>
-                      <td className="px-6 py-4">
-                        <Paragraph1 className="text-sm font-medium text-gray-900">
-                          {formatCurrency(order.total)}
-                        </Paragraph1>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                            order.status,
-                          )}`}
-                        >
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <Paragraph1 className="text-sm text-gray-700">
-                          {order.returnDue}
-                        </Paragraph1>
-                      </td>
-                      {/* <td className="px-6 py-4">
-                        <button
-                          onClick={() => {
-                            setSelectedOrder({
-                              ...order,
-                              total:
-                                typeof order.total === "number"
-                                  ? order.total.toString()
-                                  : order.total,
-                            } as any);
-                            setIsDetailModalOpen(true);
-                          }}
-                          className="flex items-center gap-1 px-3 py-1 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition font-medium text-sm"
-                        >
-                          <Eye size={16} />
-                          View Details
-                        </button>
-                      </td> */}
+                          </th>
+                          <th className="px-6 py-4 text-left">
+                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                              Item Name
+                            </Paragraph1>
+                          </th>
+                          <th className="px-6 py-4 text-left">
+                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                              Lister
+                            </Paragraph1>
+                          </th>
+                          <th className="px-6 py-4 text-left">
+                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                              Renter
+                            </Paragraph1>
+                          </th>
+                          <th className="px-6 py-4 text-left">
+                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                              Condition
+                            </Paragraph1>
+                          </th>
+                          <th className="px-6 py-4 text-left">
+                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                              Damage Notes
+                            </Paragraph1>
+                          </th>
+                          <th className="px-6 py-4 text-left">
+                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                              Status
+                            </Paragraph1>
+                          </th>
+                          <th className="px-6 py-4 text-left">
+                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                              Date
+                            </Paragraph1>
+                          </th>
+                        </>
+                      ) : (
+                        <>
+                          <th className="px-6 py-4 text-left">
+                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                              Order ID
+                            </Paragraph1>
+                          </th>
+                          <th className="px-6 py-4 text-left">
+                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                              Date
+                            </Paragraph1>
+                          </th>
+                          <th className="px-6 py-4 text-left">
+                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                              Lister
+                            </Paragraph1>
+                          </th>
+                          <th className="px-6 py-4 text-left">
+                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                              Renter
+                            </Paragraph1>
+                          </th>
+                          <th className="px-6 py-4 text-left">
+                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                              Items
+                            </Paragraph1>
+                          </th>
+                          <th className="px-6 py-4 text-left">
+                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                              Total
+                            </Paragraph1>
+                          </th>
+                          <th className="px-6 py-4 text-left">
+                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                              Status
+                            </Paragraph1>
+                          </th>
+                          <th className="px-6 py-4 text-left">
+                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                              Return Due
+                            </Paragraph1>
+                          </th>
+                        </>
+                      )}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {orders.map((item: any) => (
+                      <tr
+                        key={item.id}
+                        onClick={() => {
+                          if (statusFilter === "Returns") {
+                            setSelectedReturn(item);
+                            setIsReturnDetailModalOpen(true);
+                          } else if (item.curator?.id) {
+                            router.push(
+                              `/admin/${adminId}/users/${item.curator.id}`,
+                            );
+                          }
+                        }}
+                        className={`border-b border-gray-100 ${
+                          statusFilter !== "Returns"
+                            ? "hover:bg-gray-50 cursor-pointer"
+                            : "hover:bg-gray-50 cursor-pointer"
+                        } transition`}
+                      >
+                        {statusFilter === "Returns" ? (
+                          <>
+                            <td className="px-6 py-4">
+                              <Paragraph1 className="text-sm font-medium text-gray-900">
+                                {item.id}
+                              </Paragraph1>
+                            </td>
+                            <td className="px-6 py-4">
+                              <Paragraph1 className="text-sm text-gray-700">
+                                {item.orderId}
+                              </Paragraph1>
+                            </td>
+                            <td className="px-6 py-4">
+                              <Paragraph1 className="text-sm text-gray-900">
+                                {item.itemName}
+                              </Paragraph1>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2">
+                                <img
+                                  src={
+                                    item.lister.avatar ||
+                                    getDefaultAvatar(item.lister.name)
+                                  }
+                                  alt={item.lister.name}
+                                  className="w-8 h-8 rounded-full object-cover"
+                                />
+                                <Paragraph1 className="text-sm text-gray-900">
+                                  {item.lister.name}
+                                </Paragraph1>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2">
+                                <img
+                                  src={
+                                    item.renter.avatar ||
+                                    getDefaultAvatar(item.renter.name)
+                                  }
+                                  alt={item.renter.name}
+                                  className="w-8 h-8 rounded-full object-cover"
+                                />
+                                <Paragraph1 className="text-sm text-gray-900">
+                                  {item.renter.name}
+                                </Paragraph1>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                                {item.itemCondition}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <Paragraph1 className="text-sm text-gray-700">
+                                {item.damageNotes || "-"}
+                              </Paragraph1>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span
+                                className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                                  item.status === "APPROVED"
+                                    ? "bg-green-100 text-green-700"
+                                    : item.status === "REJECTED"
+                                      ? "bg-red-100 text-red-700"
+                                      : "bg-yellow-100 text-yellow-700"
+                                }`}
+                              >
+                                {item.status}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <Paragraph1 className="text-sm text-gray-700">
+                                {new Date(item.createdAt).toLocaleDateString()}
+                              </Paragraph1>
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td className="px-6 py-4">
+                              <Paragraph1 className="text-sm font-medium text-gray-900">
+                                {item.id}
+                              </Paragraph1>
+                            </td>
+                            <td className="px-6 py-4">
+                              <Paragraph1 className="text-sm text-gray-700">
+                                {item.date}
+                              </Paragraph1>
+                            </td>
+                            <td className="px-6 py-4">
+                              {item.curator ? (
+                                <div className="flex items-center gap-2">
+                                  <img
+                                    src={
+                                      item.curator.avatar ||
+                                      getDefaultAvatar(item.curator.name)
+                                    }
+                                    alt={item.curator.name}
+                                    className="w-8 h-8 rounded-full object-cover"
+                                  />
+                                  <Paragraph1 className="text-sm text-gray-900">
+                                    {item.curator.name}
+                                  </Paragraph1>
+                                </div>
+                              ) : (
+                                <Paragraph1 className="text-sm text-gray-500">
+                                  N/A
+                                </Paragraph1>
+                              )}
+                            </td>
+                            <td className="px-6 py-4">
+                              {item.dresser ? (
+                                <div className="flex items-center gap-2">
+                                  <img
+                                    src={
+                                      item.dresser.avatar ||
+                                      getDefaultAvatar(item.dresser.name)
+                                    }
+                                    alt={item.dresser.name}
+                                    className="w-8 h-8 rounded-full object-cover"
+                                  />
+                                  <Paragraph1 className="text-sm text-gray-900">
+                                    {item.dresser.name}
+                                  </Paragraph1>
+                                </div>
+                              ) : (
+                                <Paragraph1 className="text-sm text-gray-500">
+                                  N/A
+                                </Paragraph1>
+                              )}
+                            </td>
+                            <td className="px-6 py-4">
+                              <Paragraph1 className="text-sm text-gray-700">
+                                {item.items} items
+                              </Paragraph1>
+                            </td>
+                            <td className="px-6 py-4">
+                              <Paragraph1 className="text-sm font-medium text-gray-900">
+                                {formatCurrency(item.total)}
+                              </Paragraph1>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span
+                                className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
+                                  item.status,
+                                )}`}
+                              >
+                                {item.status}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <Paragraph1 className="text-sm text-gray-700">
+                                {item.returnDue}
+                              </Paragraph1>
+                            </td>
+                          </>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+
+            {/* Pagination */}
+            {pagination.pages > 1 && (
+              <div className="flex items-center justify-between mt-6 px-6 py-4 bg-white rounded-lg border border-gray-200">
+                <Paragraph1 className="text-sm text-gray-600">
+                  Showing {(currentPage - 1) * pagination.limit + 1} to{" "}
+                  {Math.min(currentPage * pagination.limit, pagination.total)}{" "}
+                  of {pagination.total} results
+                </Paragraph1>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="flex items-center gap-1 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm font-medium"
+                  >
+                    <ChevronLeft size={16} />
+                    Previous
+                  </button>
+                  <div className="flex items-center gap-1">
+                    {Array.from(
+                      { length: pagination.pages },
+                      (_, i) => i + 1,
+                    ).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+                          currentPage === page
+                            ? "bg-gray-900 text-white"
+                            : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(pagination.pages, p + 1))
+                    }
+                    disabled={currentPage === pagination.pages}
+                    className="flex items-center gap-1 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm font-medium"
+                  >
+                    Next
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -435,6 +623,12 @@ export default function OrdersPage() {
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
         order={selectedOrder || undefined}
+      />
+
+      <ReturnDetailModal
+        isOpen={isReturnDetailModalOpen}
+        onClose={() => setIsReturnDetailModalOpen(false)}
+        return={selectedReturn || undefined}
       />
     </>
   );

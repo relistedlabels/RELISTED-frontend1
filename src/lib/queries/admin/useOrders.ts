@@ -20,7 +20,10 @@ export const useOrders = (params: OrderListParams = {}) =>
       params.status,
       params.tab,
     ],
-    queryFn: () => ordersApi.getOrders(params),
+    queryFn: () =>
+      params.status === "Returns"
+        ? ordersApi.getReturns()
+        : ordersApi.getOrders(params),
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });

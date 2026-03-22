@@ -134,6 +134,7 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
         onClose={handleModalClose}
         onConfirm={handleReturnConfirm}
         isLoading={initiateReturnMutation.isPending}
+        orderId={orderId}
       />
     </>
   );

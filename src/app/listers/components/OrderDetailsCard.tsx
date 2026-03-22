@@ -11,6 +11,8 @@
 import { useMutation } from "@tanstack/react-query";
 import { approveOrder } from "@/lib/api/listers";
 import { rejectOrder } from "@/lib/api/listers";
+import { confirmReturn } from "@/lib/api/listers";
+import { rejectReturn } from "@/lib/api/listers";
 
 import React, { useState, useEffect } from "react";
 import { useOrderDetails } from "@/lib/queries/listers/useOrderDetails";
@@ -47,6 +49,31 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
     },
     onError: () => {
       setShowRejectMessage(false);
+    },
+  });
+
+  // Return confirmation mutation state
+  const [showConfirmReturnMessage, setShowConfirmReturnMessage] =
+    useState(false);
+  const confirmReturnMutation = useMutation({
+    mutationFn: () => confirmReturn(orderId),
+    onSuccess: () => {
+      setShowConfirmReturnMessage(true);
+    },
+    onError: () => {
+      setShowConfirmReturnMessage(false);
+    },
+  });
+
+  // Return rejection mutation state
+  const [showRejectReturnMessage, setShowRejectReturnMessage] = useState(false);
+  const rejectReturnMutation = useMutation({
+    mutationFn: () => rejectReturn(orderId),
+    onSuccess: () => {
+      setShowRejectReturnMessage(true);
+    },
+    onError: () => {
+      setShowRejectReturnMessage(false);
     },
   });
   // Use local state for orderId
@@ -110,6 +137,7 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
   const totalAmount = order ? `₦${order.totalAmount?.toLocaleString()}` : "-";
 
   const isPendingApproval = order?.status === "pending_approval";
+  const isPendingReturn = order?.status === "return_due";
 
   // Countdown timer effect
   useEffect(() => {
@@ -312,6 +340,54 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
             <Paragraph1 className="text-xs font-bold text-red-700">
               ⚠ This order&apos;s approval deadline has expired and will be
               automatically cancelled.
+            </Paragraph1>
+          </div>
+        )}
+
+        {isPendingReturn &&
+          !showConfirmReturnMessage &&
+          !showRejectReturnMessage && (
+            <div className="flex gap-3 mt-8 pt-8 border-t border-gray-300">
+              <button
+                className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-black font-bold text-sm rounded-lg"
+                onClick={() => rejectReturnMutation.mutate()}
+                disabled={rejectReturnMutation.isPending}
+              >
+                {rejectReturnMutation.isPending
+                  ? "Rejecting..."
+                  : "Reject Return"}
+              </button>
+              <button
+                className="flex-1 px-6 py-3 bg-black hover:bg-gray-900 text-white font-bold text-sm rounded-lg"
+                onClick={() => confirmReturnMutation.mutate()}
+                disabled={confirmReturnMutation.isPending}
+              >
+                {confirmReturnMutation.isPending
+                  ? "Confirming..."
+                  : "Confirm Return"}
+              </button>
+            </div>
+          )}
+
+        {showConfirmReturnMessage && (
+          <div className="flex flex-col items-center justify-center mt-8 pt-8 border-t border-gray-300">
+            <Paragraph1 className="text-green-700 font-bold text-lg mb-2">
+              Return confirmed.
+            </Paragraph1>
+            <Paragraph1 className="text-gray-500 text-sm">
+              The item return has been confirmed. The renter will be notified
+              and payment processing will begin.
+            </Paragraph1>
+          </div>
+        )}
+
+        {showRejectReturnMessage && (
+          <div className="flex flex-col items-center justify-center mt-8 pt-8 border-t border-gray-300">
+            <Paragraph1 className="text-red-700 font-bold text-lg mb-2">
+              Return rejected.
+            </Paragraph1>
+            <Paragraph1 className="text-gray-500 text-sm">
+              The returned item has been rejected. The renter has been notified.
             </Paragraph1>
           </div>
         )}

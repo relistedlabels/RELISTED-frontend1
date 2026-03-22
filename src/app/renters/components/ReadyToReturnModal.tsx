@@ -15,6 +15,7 @@ interface ReadyToReturnModalProps {
     damageNotes: string,
   ) => Promise<void>;
   isLoading?: boolean;
+  orderId?: string;
 }
 
 type ModalStep = "confirmation" | "upload" | "success" | "review";
@@ -31,6 +32,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
   onClose,
   onConfirm,
   isLoading: externalIsLoading = false,
+  orderId,
 }) => {
   const [currentStep, setCurrentStep] = useState<ModalStep>("confirmation");
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
@@ -107,6 +109,16 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
 
     setIsLoading(true);
     try {
+      // Log delivery option to be sent to different endpoint
+      const selectedDeliveryOption = shippingOptions.find(
+        (opt) => opt.id === shippingType,
+      );
+      console.log("Delivery Option (to be sent to different endpoint):", {
+        shippingType,
+        deliveryOption: selectedDeliveryOption,
+        orderId,
+      });
+
       await onConfirm(uploadedImages, itemCondition, damageNotes);
       setCurrentStep("success");
     } catch (error) {
@@ -178,7 +190,9 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
           >
             {/* Header */}
             <div className="sticky top-0 bg-white border-b border-gray-100 p-4 flex justify-between items-center">
-              <Paragraph3 className="text-lg font-bold text-gray-900">Return Item</Paragraph3>
+              <Paragraph3 className="text-lg font-bold text-gray-900">
+                Return Item
+              </Paragraph3>
               <button
                 onClick={handleClose}
                 className="text-gray-400 hover:text-gray-600 transition"
@@ -243,11 +257,9 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4 space-y-3">
                       <div className="space-y-2">
                         <Paragraph1 className="text-blue-700 text-sm">
-                          <span className="font-semibold">
-                            Pickup:{" "}
-                          </span>
-                          A rider will be assigned to come collect the item at
-                          your location:{" "}
+                          <span className="font-semibold">Pickup: </span>A rider
+                          will be assigned to come collect the item at your
+                          location:{" "}
                           <span className="font-semibold"> {location}</span>
                         </Paragraph1>
                       </div>
@@ -578,16 +590,16 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
 
                   {/* Buttons */}
                   <div className="flex gap-3 pt-2">
-                    <button
+                    {/* <button
                       onClick={() => setCurrentStep("success")}
                       className="flex-1 px-4 py-3 text-sm font-semibold border border-gray-300 rounded-lg hover:bg-gray-50 transition text-gray-700"
                     >
                       Skip
-                    </button>
+                    </button> */}
                     <button
                       onClick={handleSubmitReview}
                       disabled={rating === 0}
-                      className="flex-1 px-4 py-3 text-sm font-semibold bg-black text-white rounded-lg hover:bg-gray-900 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      className="flex w-full justify-center px-4 py-3 text-sm font-semibold bg-black text-white rounded-lg hover:bg-gray-900 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >
                       Submit Review
                     </button>
