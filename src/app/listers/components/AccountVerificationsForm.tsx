@@ -227,6 +227,25 @@ const AccountVerificationsForm: React.FC = () => {
         Bank Verification Number
       </Paragraph1>
 
+      {!bvnData?.data.bvn.maskedValue && (
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-300 rounded-lg">
+          <Paragraph1 className="text-sm text-amber-900 font-medium">
+            ⚠️ Important: Add your correct BVN
+          </Paragraph1>
+          <Paragraph1 className="text-xs text-amber-800 mt-2">
+            A correct BVN is essential for your account. Without it, you will:
+          </Paragraph1>
+          <ul className="text-xs text-amber-800 mt-2 ml-4 list-disc space-y-1">
+            <li>Not be able to make purchases on the platform</li>
+            <li>Experience delays in the verification process</li>
+            <li>Have limited access to platform features</li>
+          </ul>
+          <Paragraph1 className="text-xs text-amber-800 mt-2">
+            Please ensure you provide a valid and accurate BVN to proceed.
+          </Paragraph1>
+        </div>
+      )}
+
       <div className="mb-6">
         <div className="flex justify-between items-center mb-2">
           <Paragraph1 className="text-base text-gray-900">BVN</Paragraph1>

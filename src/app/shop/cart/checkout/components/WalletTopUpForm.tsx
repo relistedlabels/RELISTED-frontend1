@@ -404,6 +404,17 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
                     transition={{ duration: 0.3 }}
                     className="mt-4 pt-4 border-t border-amber-200 space-y-3"
                   >
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <Paragraph1 className="text-xs font-medium text-amber-900 mb-1">
+                        ⚠️ Important: Use correct BVN and NIN
+                      </Paragraph1>
+                      <Paragraph1 className="text-xs text-amber-800">
+                        Ensure the BVN and NIN you provide are accurate.
+                        Incorrect information will prevent account generation
+                        and affect your verification status on the platform.
+                      </Paragraph1>
+                    </div>
+
                     {vaError && (
                       <div className="p-3 bg-red-100 border border-red-300 rounded-lg">
                         <Paragraph1 className="text-xs text-red-700">

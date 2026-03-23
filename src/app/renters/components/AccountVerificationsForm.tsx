@@ -292,6 +292,26 @@ const AccountVerificationsForm: React.FC = () => {
         Bank Verification Number
       </Paragraph1>
 
+      {!bvnNumber && bvnStatus === "Pending" && (
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-300 rounded-lg">
+          <Paragraph1 className="text-sm text-amber-900 font-medium">
+            ⚠️ Important: Provide your correct BVN
+          </Paragraph1>
+          <Paragraph1 className="text-xs text-amber-800 mt-2">
+            Please ensure the BVN you enter is accurate and correct. An
+            incorrect BVN will:
+          </Paragraph1>
+          <ul className="text-xs text-amber-800 mt-2 ml-4 list-disc space-y-1">
+            <li>Prevent you from making purchases on the platform</li>
+            <li>Hinder your account verification process</li>
+            <li>Delay access to all platform features</li>
+          </ul>
+          <Paragraph1 className="text-xs text-amber-800 mt-2">
+            Double-check your BVN before submitting to avoid these issues.
+          </Paragraph1>
+        </div>
+      )}
+
       <div className="mb-6">
         <div className="flex justify-between items-center mb-2">
           <Paragraph1 className="text-base text-gray-900">BVN</Paragraph1>

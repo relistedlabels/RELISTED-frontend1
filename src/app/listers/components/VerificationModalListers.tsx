@@ -217,6 +217,17 @@ export default function VerificationModalListers({
                   </Paragraph1>
                 </div>
 
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <Paragraph1 className="text-xs font-medium text-amber-900 mb-1">
+                    ⚠️ Important: Use your correct BVN
+                  </Paragraph1>
+                  <Paragraph1 className="text-xs text-amber-800">
+                    Ensure the BVN you provide is accurate. An incorrect BVN
+                    will prevent you from making purchases and delay your
+                    verification.
+                  </Paragraph1>
+                </div>
+
                 {error && (
                   <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                     <Paragraph1 className="text-xs text-red-700">
