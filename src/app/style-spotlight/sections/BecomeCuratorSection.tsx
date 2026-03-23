@@ -90,7 +90,7 @@ export default function BecomeCuratorSection() {
             >
               <Link href="/auth/create-account">
                 <button className="px-8 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 transition-colors duration-300 text-sm sm:text-base">
-                  Become a Curator
+                  Become a Lister
                 </button>
               </Link>
             </motion.div>

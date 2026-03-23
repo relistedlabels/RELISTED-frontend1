@@ -9,8 +9,8 @@ import BecomeCuratorSection from "./sections/BecomeCuratorSection";
 
 export default function StyleSpotlightPage() {
   return (
-    <div>
-      <StyleSpotlightHero />
+    <div className=" pt-[70px]">
+      {/* <StyleSpotlightHero /> */}
       {/* <MeetCuratorsSection /> */}
       <StyleCategoriesSection />
       <TagsGridSection />
