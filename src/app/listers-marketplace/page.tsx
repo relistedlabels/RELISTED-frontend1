@@ -10,16 +10,21 @@ import Link from "next/link";
 import Image from "next/image";
 
 export default function AllListersPage() {
-  const { data: users, isLoading, error } = useUsers();
+  const { data: users, isLoading, error } = useUsers({ role: "lister" });
   const [searchTerm, setSearchTerm] = useState("");
 
-  // ✅ Filter to show only listers with profile pictures + search filter
+  // ✅ Filter and sort: show users with avatars first, then the rest
   const filteredUsers =
-    users?.filter(
-      (user) =>
-        user.avatar &&
+    users
+      ?.filter((user) =>
         user.name?.toLowerCase().includes(searchTerm.toLowerCase()),
-    ) || [];
+      )
+      .sort((a, b) => {
+        // Users with avatars come first
+        if (a.avatar && !b.avatar) return -1;
+        if (!a.avatar && b.avatar) return 1;
+        return 0;
+      }) || [];
 
   if (isLoading) {
     return (

@@ -1,22 +1,20 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Plus, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { ToolInfo } from "@/common/ui/ToolInfo";
 import { useProductDraftStore } from "@/store/useProductDraftStore";
-import { useTags, useCreateTag } from "@/lib/queries/tag/useTags";
+import { useTags } from "@/lib/queries/tag/useTags";
 import { CategorySelector } from "./CategorySelector";
 
 export const TagSelector: React.FC = () => {
   const [query, setQuery] = useState("");
-  const [isCreatingTag, setIsCreatingTag] = useState(false);
   const { data, setField } = useProductDraftStore();
 
   const selectedTagIds = data.tagIds || [];
   // Fetch all tags from backend
   const { data: tags = [] } = useTags();
-  const createMutation = useCreateTag();
 
   const sortedTags = useMemo(() => {
     // Tags are already sorted by backend, just use them directly
@@ -36,18 +34,6 @@ export const TagSelector: React.FC = () => {
         ? selectedTagIds.filter((id) => id !== tagId)
         : [...selectedTagIds, tagId],
     );
-  };
-
-  const handleAddTag = async () => {
-    if (!query.trim()) return;
-    setIsCreatingTag(true);
-    try {
-      const result = await createMutation.mutateAsync({ name: query.trim() });
-      setField("tagIds", [...selectedTagIds, result.id]);
-      setQuery("");
-    } finally {
-      setIsCreatingTag(false);
-    }
   };
 
   const removeTag = (tagId: string) => {
@@ -114,15 +100,9 @@ export const TagSelector: React.FC = () => {
 
         {query &&
           !tags.some((t) => t.name.toLowerCase() === query.toLowerCase()) && (
-            <button
-              type="button"
-              onClick={handleAddTag}
-              disabled={isCreatingTag}
-              className="flex items-center gap-1 rounded-md border border-dashed border-gray-400 px-3 py-1.5 text-xs font-medium text-gray-700 hover:border-black disabled:opacity-50"
-            >
-              <Plus className="h-3 w-3" />
-              Add “{query}”
-            </button>
+            <p className="text-xs text-gray-400 px-3 py-1.5">
+              No matching sub categories
+            </p>
           )}
       </div>
     </div>
