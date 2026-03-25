@@ -337,7 +337,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                 </button>
                 {countdownActive && countdown !== null && (
                   <div className="text-center mt-2 text-yellow-700 font-medium">
-                    Waiting for Lister to confirm request...
+                    Item has been added to cart while Waiting for Lister to confirm your request...
                   </div>
                 )}
                 {summaryData && (

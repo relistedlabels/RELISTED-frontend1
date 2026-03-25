@@ -8,6 +8,11 @@ import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 
 export default function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [showAll, setShowAll] = useState(false);
+
+  // Display first 10 FAQs or all FAQs based on showAll state
+  const displayedFaqs = showAll ? faqs : faqs.slice(0, 10);
+  const hasMore = faqs.length > 10;
 
   return (
     <section className="w-full max-w-4xl mx-auto py-20 px-6">
@@ -18,7 +23,7 @@ export default function FAQSection() {
 
       {/* FAQ list */}
       <div className="space-y-0 border-t border-black/10">
-        {faqs.map((faq, index) => {
+        {displayedFaqs.map((faq, index) => {
           const isOpen = openIndex === index;
 
           return (
@@ -62,6 +67,18 @@ export default function FAQSection() {
           );
         })}
       </div>
+
+      {/* Show More Button */}
+      {hasMore && (
+        <div className="flex justify-center mt-10">
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className="px-8 py-3 border border-black font-semibold transition-all hover:bg-black hover:text-white"
+          >
+            <Paragraph1>{showAll ? "Show Less" : "Show More"}</Paragraph1>
+          </button>
+        </div>
+      )}
     </section>
   );
 }

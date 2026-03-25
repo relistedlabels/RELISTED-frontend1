@@ -17,7 +17,7 @@ export default function DressersSection() {
         viewport={{ once: true }}
         className="text-center flex flex-col items-center px-4 max-w-3xl mx-auto mb-16"
       >
-        <Paragraph1 className="tracking-widest text-sm">DRESSERS</Paragraph1>
+        <Paragraph1 className="tracking-widest text-sm uppercase">Renters</Paragraph1>
         <hr className="mb-8 w-full" />
 
         <Header1Plus className="mb-6">

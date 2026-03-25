@@ -48,7 +48,7 @@ export default function CuratorsSection() {
         viewport={{ once: true }}
         className="text-center flex flex-col items-center max-w-3xl px-4 mx-auto mb-16"
       >
-        <Paragraph1 className="tracking-widest text-sm">CURATORS</Paragraph1>
+        <Paragraph1 className="tracking-widest text-sm uppercase">Listers</Paragraph1>
         <hr className="mb-8 w-full" />
 
         <Header1Plus className="mb-6">
