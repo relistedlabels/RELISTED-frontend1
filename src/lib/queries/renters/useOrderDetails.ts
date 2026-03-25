@@ -6,7 +6,7 @@ export const useOrderDetails = (orderId: string) =>
     queryKey: ["renters", "orders", orderId],
     queryFn: async () => {
       const response = await rentersApi.getOrderDetails(orderId);
-      return response.data;
+      return response.data.order;
     },
     staleTime: 5 * 60 * 1000,
     retry: 1,

@@ -39,11 +39,23 @@ export type OrderListItem = {
   rentalEndDate: string;
   rentalPrice: number;
   currency: string;
-  status: "active" | "completed" | "returned" | "cancelled";
+  status:
+    | "active"
+    | "completed"
+    | "returned"
+    | "cancelled"
+    | "PROCESSING"
+    | "RETURNED"
+    | "CANCELLED"
+    | "COMPLETED";
   daysRemaining: number;
   deliveryDate: string;
   returnTrackingId: string;
   condition: string;
+  items: string[];
+  totalAmount: number;
+  date: string;
+  image: string | null;
 };
 
 export type RentalOrder = {

@@ -3,7 +3,6 @@
 import React from "react";
 import { Star } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
-import { useOrderDetails } from "@/lib/queries/renters/useOrderDetails";
 
 const formatCurrency = (amount: number | undefined): string => {
   if (!amount) return "0";
@@ -12,58 +11,53 @@ const formatCurrency = (amount: number | undefined): string => {
 const CURRENCY = "₦";
 
 interface ProductCuratorDetailsProps {
-  orderId?: string;
+  orderData?: any;
 }
 
 export default function ProductCuratorDetails({
-  orderId,
+  orderData,
 }: ProductCuratorDetailsProps) {
-  const { data: order, isLoading } = useOrderDetails(orderId || "");
-
-  if (isLoading) {
-    return (
-      <div className="animate-pulse space-y-4">
-        <div className="h-48 bg-gray-200 rounded-xl"></div>
-        <div className="h-32 bg-gray-200 rounded-xl"></div>
-      </div>
-    );
-  }
-
-  if (!order) {
+  if (!orderData) {
     return (
       <div className="text-center py-8 text-red-500">
-        Failed to load order details
+        <Paragraph1>No order data available</Paragraph1>
       </div>
     );
   }
 
+  // Extract first item from items array
+  const firstItem = orderData.items?.[0];
+  
   // Extract product and pricing data from order
   const productInfo = {
-    name: order.itemName || "Item",
-    description: order.itemDescription || "",
-    images: order.itemImages || [],
-    condition: order.condition || "Good",
+    name: firstItem?.name || "Item",
+    description: "",
+    images: firstItem?.imageUrl ? [firstItem.imageUrl] : [],
+    condition: "Good",
   };
 
-  const pricingInfo = order.pricing || {
-    rentalPrice: 0,
-    deliveryFee: 0,
-    serviceFee: 0,
-    totalAmount: 0,
+  const pricingInfo = {
+    rentalPrice: firstItem?.rentalFee || 0,
+    cleaningFee: firstItem?.cleaningFee || 0,
+    collateralFee: firstItem?.collateralFee || 0,
+    deliveryFee: orderData.deliveryFee || 0,
+    serviceFee: orderData.serviceFee || 0,
+    totalAmount: orderData.totalAmount || 0,
   };
-
-  const timeline = order.rentalTimeline || {};
 
   // Extract lister data
-  const listerInfo = order.listerProfile || {
-    name: "Lister",
-    avatar: "",
-    rating: 0,
+  const listerInfo = {
+    name: orderData.lister?.businessName || "Lister",
+    avatar: orderData.lister?.imageUrl || "",
+    rating: orderData.lister?.rating || 0,
     totalRentals: 0,
   };
 
-  const returnDate = timeline.returnDueDate
-    ? new Date(timeline.returnDueDate).toLocaleDateString("en-NG", {
+  const rentalStartDate = firstItem?.rentalStartDate || orderData.rentalStartDate;
+  const rentalEndDate = firstItem?.rentalEndDate || orderData.rentalEndDate;
+
+  const returnDate = rentalEndDate
+    ? new Date(rentalEndDate).toLocaleDateString("en-NG", {
         year: "numeric",
         month: "short",
         day: "numeric",
@@ -97,7 +91,7 @@ export default function ProductCuratorDetails({
               {productInfo.name}
             </Paragraph1>
             <Paragraph1 className="text-sm text-gray-600 mb-4">
-              {productInfo.description}
+              {productInfo.description || `Quantity: ${firstItem?.quantity || 1}`}
             </Paragraph1>
 
             <hr className="mb-4 border-gray-200" />
@@ -120,8 +114,8 @@ export default function ProductCuratorDetails({
                   Rental Period
                 </Paragraph1>
                 <Paragraph1 className="font-semibold text-gray-800">
-                  {timeline.rentalStartDate && timeline.rentalEndDate
-                    ? `${new Date(timeline.rentalStartDate).toLocaleDateString("en-NG", { month: "short", day: "numeric" })} - ${new Date(timeline.rentalEndDate).toLocaleDateString("en-NG", { month: "short", day: "numeric" })}`
+                  {rentalStartDate && rentalEndDate
+                    ? `${new Date(rentalStartDate).toLocaleDateString("en-NG", { month: "short", day: "numeric" })} - ${new Date(rentalEndDate).toLocaleDateString("en-NG", { month: "short", day: "numeric" })}`
                     : "N/A"}
                 </Paragraph1>
               </div>

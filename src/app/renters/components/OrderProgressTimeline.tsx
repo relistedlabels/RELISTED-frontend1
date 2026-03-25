@@ -27,7 +27,7 @@ interface TimelineStage {
 }
 
 interface OrderProgressTimelineProps {
-  orderId: string;
+  orderData?: any;
 }
 
 // Skeleton Loader
@@ -46,45 +46,27 @@ const TimelineSkeleton = () => (
 );
 
 export default function OrderProgressTimeline({
-  orderId,
+  orderData,
 }: OrderProgressTimelineProps) {
-  const { data, isLoading, error } = useOrderProgress(orderId);
-  const [currentStageId, setCurrentStageId] = useState(0);
+  const [currentStageId, setCurrentStageId] = useState(1);
+  const percentComplete = 50;
 
-  // Map API milestone to stage ID
-  const milestoneToStageId: Record<string, number> = {
-    order_placed: 1,
-    payment_processed: 2,
-    item_packaged: 2,
-    in_transit: 3,
-    delivered: 4,
-    rental_active: 4,
-    return_collected: 5,
+  // Status to stage mapping based on order status
+  const statusToStageId: Record<string, number> = {
+    active: 4,
     completed: 6,
+    cancelled: 1,
+    disputed: 3,
   };
 
   useEffect(() => {
-    if (data?.currentMilestone) {
-      const stageId = milestoneToStageId[data.currentMilestone] || 1;
+    if (orderData?.status) {
+      const stageId = statusToStageId[orderData.status] || 1;
       setCurrentStageId(stageId);
     }
-  }, [data?.currentMilestone]);
+  }, [orderData?.status]);
 
-  if (isLoading) {
-    return <TimelineSkeleton />;
-  }
-
-  if (error) {
-    return (
-      <div className="p-6 bg-white border border-gray-300 rounded-xl">
-        <Paragraph1 className="text-red-500">
-          Failed to load order progress. Please try again.
-        </Paragraph1>
-      </div>
-    );
-  }
-
-  if (!data?.timeline) {
+  if (!orderData) {
     return (
       <div className="p-6 bg-white border border-gray-300 rounded-xl">
         <Paragraph1 className="text-gray-600">
@@ -94,77 +76,51 @@ export default function OrderProgressTimeline({
     );
   }
 
-  // Build timeline from API data
-  const getBuildStages = (): TimelineStage[] => {
-    const mapMilestoneToStage = (item: any): TimelineStage | null => {
-      const milestoneMap: Record<string, TimelineStage> = {
-        order_placed: {
-          id: 1,
-          label: "Order Placed",
-          description: "Your order has been placed and is being processed.",
-          icon: Package,
-          milestone: "order_placed",
-        },
-        payment_processed: {
-          id: 2,
-          label: "Payment Processed",
-          description: "Payment has been confirmed.",
-          icon: CheckCircle,
-          milestone: "payment_processed",
-        },
-        item_packaged: {
-          id: 2,
-          label: "Item Packaged",
-          description: "Curator is getting your item ready.",
-          icon: Package,
-          milestone: "item_packaged",
-        },
-        in_transit: {
-          id: 3,
-          label: "In Transit",
-          description: "Item is on the way via delivery partner.",
-          icon: Truck,
-          milestone: "in_transit",
-        },
-        delivered: {
-          id: 4,
-          label: "Delivered",
-          description: "Item has arrived and delivery is confirmed.",
-          icon: Home,
-          milestone: "delivered",
-        },
-        rental_active: {
-          id: 4,
-          label: "Rental Active",
-          description: "You can now enjoy your rental.",
-          icon: Home,
-          milestone: "rental_active",
-        },
-        return_collected: {
-          id: 5,
-          label: "Return Collected",
-          description: "Item has been picked up, awaiting curator approval.",
-          icon: RefreshCw,
-          milestone: "return_collected",
-        },
-        completed: {
-          id: 6,
-          label: "Completed",
-          description: "Curator confirmed return, transaction closed.",
-          icon: CheckCircle,
-          milestone: "completed",
-        },
-      };
-
-      return milestoneMap[item.milestone] || null;
-    };
-
-    return data.timeline
-      .map(mapMilestoneToStage)
-      .filter((stage): stage is TimelineStage => stage !== null);
-  };
-
-  const stages = getBuildStages();
+  // Define timeline stages
+  const stages: TimelineStage[] = [
+    {
+      id: 1,
+      label: "Order Placed",
+      description: "Your order has been placed and is being processed.",
+      icon: Package,
+      milestone: "order_placed",
+    },
+    {
+      id: 2,
+      label: "Confirmed",
+      description: "Lister confirmed and is preparing the item.",
+      icon: CheckCircle,
+      milestone: "processing",
+    },
+    {
+      id: 3,
+      label: "In Transit",
+      description: "Item is on the way via delivery partner.",
+      icon: Truck,
+      milestone: "in_transit",
+    },
+    {
+      id: 4,
+      label: "Delivered",
+      description: "Item has arrived and delivery is confirmed.",
+      icon: Home,
+      milestone: "delivered",
+    },
+    {
+      id: 5,
+      label: "Return Initiated",
+      description: "Item return has been initiated.",
+      icon: RefreshCw,
+      milestone: "return_initiated",
+    },
+    {
+      id: 6,
+      label: "Completed",
+      description: "Lister confirmed return, transaction closed.",
+      icon: CheckCircle,
+      milestone: "completed",
+    },
+  ];
 
   // Determine the active state for each line/icon
   const isActive = (stageId: number) => stageId === currentStageId;
@@ -173,18 +129,16 @@ export default function OrderProgressTimeline({
   return (
     <div className="p-6 bg-white border border-gray-300 rounded-xl">
       <Paragraph1 className="text-xl font-bold text-gray-900 mb-6">
-        Progress ({data.percentComplete || 0}%)
+        Progress ({percentComplete}%)
       </Paragraph1>
 
       {/* Progress Bar */}
-      {data.percentComplete !== undefined && (
-        <div className="mb-6 bg-gray-200 rounded-full h-2 overflow-hidden">
-          <div
-            className="bg-black h-full transition-all duration-500"
-            style={{ width: `${data.percentComplete}%` }}
-          ></div>
-        </div>
-      )}
+      <div className="mb-6 bg-gray-200 rounded-full h-2 overflow-hidden">
+        <div
+          className="bg-black h-full transition-all duration-500"
+          style={{ width: `${percentComplete}%` }}
+        ></div>
+      </div>
 
       {/* Vertical Timeline Container */}
       <div className="relative border-l-2 border-gray-200 pl-8">

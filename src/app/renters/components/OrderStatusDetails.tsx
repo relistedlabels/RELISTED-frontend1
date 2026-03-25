@@ -3,8 +3,6 @@
 import React from "react";
 import { Lock, ShoppingBag, AlertCircle } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
-import { useOrderDetails } from "@/lib/queries/renters/useOrderDetails";
-import { useWallet } from "@/lib/queries/renters/useWallet";
 
 const CURRENCY = "₦";
 
@@ -14,35 +12,29 @@ const formatCurrency = (amount: number | undefined): string => {
 };
 
 interface OrderStatusDetailsProps {
-  orderId?: string;
+  orderData?: any;
 }
 
 export default function OrderStatusDetails({
-  orderId,
+  orderData,
 }: OrderStatusDetailsProps) {
-  const { data: order, isLoading: orderLoading } = useOrderDetails(
-    orderId || "",
-  );
-  const { data: walletData, isLoading: walletLoading } = useWallet();
-
-  if (orderLoading || walletLoading) {
-    return <div className="animate-pulse h-40 bg-gray-200 rounded-xl"></div>;
-  }
-
-  if (!order) {
+  if (!orderData) {
     return (
       <div className="text-center py-8 text-red-500">
-        Failed to load order status
+        <Paragraph1>No order data available</Paragraph1>
       </div>
     );
   }
 
-  // Get locked amount from wallet data or use security deposit from order
-  const lockedAmount = order.pricing?.totalAmount || 0;
+  // Get locked amount from order
+  const lockedAmount = orderData.totalAmount || 0;
 
-  // Get return date from order timeline
-  const returnDate = order.rentalTimeline?.returnDueDate
-    ? new Date(order.rentalTimeline.returnDueDate).toLocaleDateString("en-NG", {
+  // Get return date (rental end date, or N/A if not set)
+  const firstItem = orderData.items?.[0];
+  const rentalEndDate = firstItem?.rentalEndDate || orderData.rentalEndDate;
+
+  const returnDate = rentalEndDate
+    ? new Date(rentalEndDate).toLocaleDateString("en-NG", {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -50,7 +42,21 @@ export default function OrderStatusDetails({
     : "N/A";
 
   // Get current status
-  const status = order.status || "pending";
+  const status = orderData.status || "PROCESSING";
+
+  // Format status for display
+  const formatStatus = (status: string) => {
+    return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+  };
+
+  // Get order date
+  const orderDate = orderData.createdAt
+    ? new Date(orderData.createdAt).toLocaleDateString("en-NG", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : "N/A";
 
   return (
     <div className="space-y-6">
@@ -88,8 +94,8 @@ export default function OrderStatusDetails({
             </Paragraph1>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              <Paragraph1 className="font-semibold text-gray-900 capitalize">
-                {status}
+              <Paragraph1 className="font-semibold text-gray-900">
+                {formatStatus(status)}
               </Paragraph1>
             </div>
           </div>
@@ -100,16 +106,7 @@ export default function OrderStatusDetails({
               Order Date
             </Paragraph1>
             <Paragraph1 className="font-semibold text-gray-900">
-              {order.rentalTimeline?.orderDate
-                ? new Date(order.rentalTimeline.orderDate).toLocaleDateString(
-                    "en-NG",
-                    {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    },
-                  )
-                : "N/A"}
+              {orderDate}
             </Paragraph1>
           </div>
         </div>
@@ -138,7 +135,7 @@ export default function OrderStatusDetails({
                 </span>
               </Paragraph1>
 
-              {order.canReturn === false && (
+              {orderData.canReturn === false && (
                 <div className="flex items-start gap-2 mt-3 p-3 bg-orange-50 rounded border border-orange-200">
                   <AlertCircle
                     size={16}
@@ -150,7 +147,7 @@ export default function OrderStatusDetails({
                 </div>
               )}
 
-              {order.canReturn === true && (
+              {orderData.canReturn === true && (
                 <div className="flex items-start gap-2 mt-3 p-3 bg-green-50 rounded border border-green-200">
                   <AlertCircle
                     size={16}
@@ -166,41 +163,66 @@ export default function OrderStatusDetails({
         </div>
       </div>
 
-      {/* --- 4. DELIVERY TRACKING --- */}
-      {order.deliveryTracking && (
+      {/* --- 4. TRACKING STATUS --- */}
+      {orderData.tracking && (
         <div>
           <Paragraph1 className="text-base font-bold text-gray-900 mb-3">
-            Delivery Tracking
+            Tracking Status
           </Paragraph1>
 
           <div className="p-4 bg-white rounded-xl border border-gray-300 space-y-3">
-            <div className="flex justify-between items-start">
-              <div>
-                <Paragraph1 className="text-xs text-gray-500 block mb-1">
-                  Tracking ID
-                </Paragraph1>
-                <Paragraph1 className="font-semibold text-gray-900">
-                  {order.deliveryTracking.trackingId}
-                </Paragraph1>
-              </div>
-              <div className="text-right">
-                <Paragraph1 className="text-xs text-gray-500 block mb-1">
-                  Carrier
-                </Paragraph1>
-                <Paragraph1 className="font-semibold text-gray-900">
-                  {order.deliveryTracking.carrier}
-                </Paragraph1>
-              </div>
-            </div>
-
             <div>
               <Paragraph1 className="text-xs text-gray-500 block mb-1">
-                Status
+                Current Status
               </Paragraph1>
               <Paragraph1 className="font-semibold text-blue-600">
-                {order.deliveryTracking.currentLocation}
+                {orderData.tracking.status}
               </Paragraph1>
             </div>
+
+            {orderData.tracking.updates &&
+              orderData.tracking.updates.length > 0 && (
+                <div>
+                  <Paragraph1 className="text-xs text-gray-500 block mb-2">
+                    Updates
+                  </Paragraph1>
+                  <div className="space-y-1">
+                    {orderData.tracking.updates.map(
+                      (update: any, index: number) => (
+                        <Paragraph1
+                          key={index}
+                          className="text-sm text-gray-700"
+                        >
+                          {update}
+                        </Paragraph1>
+                      ),
+                    )}
+                  </div>
+                </div>
+              )}
+          </div>
+        </div>
+      )}
+
+      {/* --- 5. SHIPPING ADDRESS --- */}
+      {orderData.shippingAddress && (
+        <div>
+          <Paragraph1 className="text-base font-bold text-gray-900 mb-3">
+            Shipping Address
+          </Paragraph1>
+
+          <div className="p-4 bg-white rounded-xl border border-gray-300">
+            <Paragraph1 className="text-sm text-gray-700 mb-2">
+              {orderData.shippingAddress.street}
+            </Paragraph1>
+            <Paragraph1 className="text-sm text-gray-700">
+              {orderData.shippingAddress.city},{" "}
+              {orderData.shippingAddress.state}{" "}
+              {orderData.shippingAddress.zipCode}
+            </Paragraph1>
+            <Paragraph1 className="text-sm text-gray-700">
+              {orderData.shippingAddress.country}
+            </Paragraph1>
           </div>
         </div>
       )}

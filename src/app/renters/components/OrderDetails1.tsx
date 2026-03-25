@@ -17,17 +17,22 @@ import ProductCuratorDetails from "./ProductCuratorDetails";
 import OrderProgressTimeline from "./OrderProgressTimeline";
 import OrderStatusDetails from "./OrderStatusDetails";
 import ReadyToReturnSection from "./ReadyToReturnSection";
+import { useOrderDetails } from "@/lib/queries/renters/useOrderDetails";
 
 interface OrderDetailsPanelProps {
   isOpen: boolean;
   onClose: () => void;
   orderId?: string;
+  orderData?: any;
+  isLoading?: boolean;
 }
 
 const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
   isOpen,
   onClose,
   orderId,
+  orderData,
+  isLoading,
 }) => {
   const minPrice = 50000;
   const maxPrice = 200000;
@@ -90,10 +95,24 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
 
             {/* Content */}
             <div className="grow pt-4 pb-20 space-y-8">
-              <ProductCuratorDetails orderId={orderId} />
-              <OrderProgressTimeline orderId={orderId || ""} />
-              <OrderStatusDetails orderId={orderId} />
-              <ReadyToReturnSection orderId={orderId} />
+              {isLoading ? (
+                <div className="space-y-4 animate-pulse">
+                  <div className="h-48 bg-gray-200 rounded-xl"></div>
+                  <div className="h-32 bg-gray-200 rounded-xl"></div>
+                  <div className="h-40 bg-gray-200 rounded-xl"></div>
+                </div>
+              ) : !orderData ? (
+                <div className="text-center py-8 text-red-500">
+                  <Paragraph1>Failed to load order details</Paragraph1>
+                </div>
+              ) : (
+                <>
+                  <ProductCuratorDetails orderData={orderData} />
+                  <OrderProgressTimeline orderData={orderData} />
+                  <OrderStatusDetails orderData={orderData} />
+                  <ReadyToReturnSection orderId={orderId} />
+                </>
+              )}
             </div>
 
             {/* Footer */}
@@ -125,6 +144,7 @@ interface OrderDetailsProps {
 
 const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const { data: orderData, isLoading } = useOrderDetails(orderId || "");
 
   return (
     <>
@@ -141,6 +161,8 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId }) => {
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
         orderId={orderId}
+        orderData={orderData}
+        isLoading={isLoading}
       />
     </>
   );

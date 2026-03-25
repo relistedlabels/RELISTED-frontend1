@@ -111,7 +111,7 @@ const TopListingSection = () => {
               {displayProducts.map((product, index) => (
                 <div
                   key={`${product.id}-${index}`}
-                  className="w-[170px] sm:w-[250px] shrink-0"
+                  className="w-[170px] sm:w-[200px] xl:w-[250px] shrink-0"
                 >
                   <ProductCard
                     id={product.id}

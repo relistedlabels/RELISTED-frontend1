@@ -25,10 +25,10 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({
   return (
     <Link
       href={link}
-      className={`relative w-full group overflow-hidden cursor-pointer h-[220px] sm:h-full`}
+      className={`relative w-full group overflow-hidden cursor-pointer h-[220px] sm:h-auto`}
     >
       <div
-        className="hidden sm:block"
+        className="hidden sm:block w-full"
         style={{ height: height || "280px" }}
       ></div>
 
@@ -71,7 +71,7 @@ const PopularCategorySection = () => {
   ];
 
   return (
-    <section className=" container px-4 sm:px-0 mx-auto py-6 sm:py-12">
+    <section className="container px-3 sm:px-4 md:px-6 lg:px-0 mx-auto py-6 sm:py-12">
       <div className="text-center flex flex-col items-center mb-6">
         <Header1Plus className="tracking-wide uppercase">
           Popular Categories
@@ -101,12 +101,12 @@ const PopularCategorySection = () => {
       </div>
 
       {/* Desktop layout - Masonry 2x2, 4 categories with heights from data */}
-      <div className="hidden sm:grid grid-cols-2 gap-2 sm:gap-[23px]">
+      <div className="hidden sm:grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 lg:gap-[23px] px-0">
         {displayCategories.map((box, idx) => (
           <div
             key={idx}
-            className="overflow-hidden"
-            style={{ height: box.height || "280px" }}
+            className="overflow-hidden w-full"
+            style={{ height: box.height || "280px", minHeight: "200px" }}
           >
             <CategoryBox {...box} />
           </div>
