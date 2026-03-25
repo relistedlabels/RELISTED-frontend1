@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { X, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { Paragraph1 } from "@/common/ui/Text";
 import WalletTopUpForm from "./WalletTopUpForm";
 
@@ -18,6 +19,7 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
   isOpen,
   onClose,
 }) => {
+  const router = useRouter();
   const variants = {
     hidden: { x: "100%" },
     visible: { x: 0 },
@@ -71,6 +73,17 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
             <div className="grow pt-4 pb-20">
               <WalletTopUpForm onClose={onClose} />
             </div>
+
+            {/* Continue Shopping Button */}
+            <button
+              onClick={() => {
+                onClose();
+                router.push("/shop");
+              }}
+              className="fixed bottom-4 left-4 right-4 sm:absolute w-full sm:w-114 bg-black text-white font-semibold py-3 px-4 hover:bg-gray-900 transition"
+            >
+              <Paragraph1>Continue Shopping</Paragraph1>
+            </button>
           </motion.div>
         </motion.div>
       )}

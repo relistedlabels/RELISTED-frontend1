@@ -53,6 +53,7 @@ export default function CartPage() {
   useEffect(() => {
     async function fetchProductDetails() {
       if (!data?.rentalRequests) return;
+      // Show all items (pending + approved) - approved items will show "Approved" status
       const requests = data.rentalRequests;
       const results = await Promise.all(
         requests.map(async (item) => {
@@ -139,6 +140,12 @@ export default function CartPage() {
         <div className="col-span-2">
           <CheckoutProductList
             cartItems={cartItemsWithProduct}
+            approvedItemIds={
+              new Set(
+                approvedData?.rentalRequests?.map((item) => item.requestId) ||
+                  [],
+              )
+            }
             isLoading={isLoading}
             error={error}
           />

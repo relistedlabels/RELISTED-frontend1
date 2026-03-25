@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { MapPin, Loader2 } from "lucide-react";
 import { useProfileStore } from "@/store/useProfileStore";
-import { useUserStore } from "@/store/useUserStore";
 import { PhoneInput } from "./PhoneInput";
 import { StateSelect } from "./StateSelect";
 import { CityLGASelect } from "./CityLGASelect";
@@ -12,7 +11,6 @@ import { ToolInfo } from "@/common/ui/ToolInfo";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useSubmitRenterAddress } from "@/lib/mutations";
-import { useUpgradeLister } from "@/lib/mutations/listers/useUpgradeLister";
 
 interface StepOnePersonalProps {
   onNext: () => void;
@@ -25,13 +23,9 @@ const StepOnePersonal: React.FC<StepOnePersonalProps> = ({
 }) => {
   const profile = useProfileStore((s) => s);
   const setProfile = useProfileStore((s) => s.setProfile);
-  const role = useUserStore((s) => s.role);
-  const userId = useUserStore((s) => s.userId);
-  const setUser = useUserStore((s) => s.setUser);
   const router = useRouter();
   const submitAddress = useSubmitRenterAddress();
-  const upgradeLister = useUpgradeLister();
-  const isLoading = submitAddress.isPending || upgradeLister.isPending;
+  const isLoading = submitAddress.isPending;
 
   const [phoneNumber, setPhoneNumber] = useState(profile.phoneNumber);
   const [address, setAddress] = useState(profile.address.street);
@@ -63,34 +57,7 @@ const StepOnePersonal: React.FC<StepOnePersonalProps> = ({
     }
 
     setError(null);
-
-    // If role is not LISTER, trigger upgrade endpoint first
-    if (role !== "LISTER" && userId) {
-      upgradeLister.mutate(userId, {
-        onSuccess: () => {
-          // Set user role to LISTER
-          setUser({ role: "LISTER" });
-
-          // Wait 3 seconds before proceeding with form submission
-          setTimeout(() => {
-            proceedWithFormSubmission();
-          }, 3000);
-        },
-        onError: (error: any) => {
-          const errorMessage =
-            error?.response?.data?.message ||
-            error?.message ||
-            "Failed to upgrade to lister. Please try again.";
-          toast.error("Upgrade Failed", {
-            description: errorMessage,
-            duration: 4000,
-          });
-        },
-      });
-    } else {
-      // User is already a LISTER, proceed directly
-      proceedWithFormSubmission();
-    }
+    proceedWithFormSubmission();
   };
 
   const proceedWithFormSubmission = () => {
@@ -126,10 +93,10 @@ const StepOnePersonal: React.FC<StepOnePersonalProps> = ({
           });
 
           setTimeout(() => {
-            // If returnUrl is provided, decode and navigate to it; otherwise go to default
+            // If returnUrl is provided, decode and navigate to it; otherwise go to shop
             const redirectUrl = returnUrl
               ? decodeURIComponent(returnUrl)
-              : "/listers/inventory";
+              : "/shop";
             router.replace(redirectUrl);
           }, 1500);
         },

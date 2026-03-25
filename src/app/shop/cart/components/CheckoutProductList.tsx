@@ -59,12 +59,14 @@ const RentalTimer: React.FC<{ expiresAt: string }> = ({ expiresAt }) => {
 
 interface CheckoutProductListProps {
   cartItems?: any[];
+  approvedItemIds?: Set<string>;
   isLoading?: boolean;
   error?: Error | null;
 }
 
 export default function CheckoutProductList({
   cartItems = [],
+  approvedItemIds = new Set(),
   isLoading,
   error,
 }: CheckoutProductListProps) {
@@ -293,7 +295,13 @@ export default function CheckoutProductList({
               {/* === Price Columns (Desktop View) === */}
               <div className="hidden sm:contents text-sm font-medium">
                 <div className="col-span-2 text-center text-gray-900">
-                  {item.expiresAt && <RentalTimer expiresAt={item.expiresAt} />}
+                  {approvedItemIds.has(item.requestId) ? (
+                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200">
+                      Approved
+                    </span>
+                  ) : (
+                    item.expiresAt && <RentalTimer expiresAt={item.expiresAt} />
+                  )}
                 </div>
                 <div className="col-span-2 text-center text-gray-900">
                   <Paragraph1>

@@ -14,9 +14,9 @@ const DeliveryAndReturnDetails: React.FC = () => {
           DELIVERY:
         </Paragraph1>
         <ul className="space-y-1 text-sm text-gray-700 list-disc list-inside">
-          {/* <li>Free delivery within Lagos (1-2 days)</li> */}
-          <li>Express delivery available (same day)</li>
-          <li>Nationwide shipping (2-3 days)</li>
+          <li>Managed by Topship logistics partner</li>
+          <li>Delivery timelines depend on location and logistics schedules</li>
+          <li>Nationwide coverage available</li>
         </ul>
       </div>
 
@@ -26,18 +26,19 @@ const DeliveryAndReturnDetails: React.FC = () => {
           RETURNS:
         </Paragraph1>
         <ul className="space-y-1 text-sm text-gray-700 list-disc list-inside">
-          {/* <li>Free return pickup included</li> */}
-          <li>Return within 24 hours of rental end</li>
-          <li>Professional cleaning handled by us</li>
+          <li>Return through Topship by the rental end date</li>
+          <li>Vendor verifies item condition upon return</li>
+          <li>Collateral released if no damage is identified</li>
+          <li>Late returns: 10% of collateral deducted per day</li>
         </ul>
       </div>
 
-      {/* Highlighted Note for Same-Day Delivery */}
+      {/* Highlighted Note about Cleaning */}
       <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg flex items-start space-x-2">
         <HiOutlineInformationCircle className="w-5 h-5 text-gray-600 mt-0.5 shrink-0" />
         <Paragraph1 className="text-xs text-gray-700 leading-snug font-medium">
-          Need it faster? **Same-day delivery available for orders placed before
-          2pm**
+          Professional dry cleaning is included in the rental cost and arranged
+          by the vendor after return.
         </Paragraph1>
       </div>
     </div>

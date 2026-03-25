@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
+import { toast } from "sonner";
 import {
   HiOutlineBriefcase,
   HiOutlineTag,
@@ -77,6 +78,20 @@ const BusinessDetailsForm: React.FC = () => {
       {
         onSuccess: () => {
           setIsEditing(false);
+          toast.success("Business details updated successfully!", {
+            description: "Your business information has been saved.",
+            duration: 4000,
+          });
+        },
+        onError: (error: any) => {
+          const errorMessage =
+            error?.response?.data?.message ||
+            error?.message ||
+            "Failed to update business details. Please try again.";
+          toast.error("Update Failed", {
+            description: errorMessage,
+            duration: 4000,
+          });
         },
       },
     );
@@ -258,9 +273,9 @@ const BusinessDetailsForm: React.FC = () => {
                 type="text"
                 value={formData.taxId}
                 onChange={(e) => handleInputChange("taxId", e.target.value)}
-                disabled={true}
+                disabled={!isEditing}
                 placeholder="Tax identification number"
-                className="w-full p-3 pl-10 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition disabled:bg-gray-50 disabled:text-gray-600 disabled:cursor-not-allowed"
               />
             </div>
             <Paragraph1 className="text-xs text-gray-500 mt-1">
@@ -282,9 +297,9 @@ const BusinessDetailsForm: React.FC = () => {
               onChange={(e) =>
                 handleInputChange("businessRegistration", e.target.value)
               }
-              disabled={true}
+              disabled={!isEditing}
               placeholder="CAC or registration number"
-              className="w-full p-3 pl-10 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+              className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition disabled:bg-gray-50 disabled:text-gray-600 disabled:cursor-not-allowed"
             />
           </div>
           <Paragraph1 className="text-xs text-gray-500 mt-1">
@@ -306,15 +321,24 @@ const BusinessDetailsForm: React.FC = () => {
           <>
             <button
               onClick={() => setIsEditing(false)}
-              className="px-6 py-2 text-sm font-semibold text-black border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150"
+              disabled={updateBusinessProfileMutation.isPending}
+              className="px-6 py-2 text-sm font-semibold text-black border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
-              className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition duration-150"
+              disabled={updateBusinessProfileMutation.isPending}
+              className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              Save Changes
+              {updateBusinessProfileMutation.isPending ? (
+                <>
+                  <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
             </button>
           </>
         )}
