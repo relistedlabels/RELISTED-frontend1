@@ -124,7 +124,7 @@ export default function Footer() {
                   </ParagraphLink2>
                 </Link>
               </li>
-              {randomCategories.map((category) => (
+              {/* {randomCategories.map((category) => (
                 <li key={category.id}>
                   <Link
                     href={`/shop?category=${encodeURIComponent(category.id)}`}
@@ -134,7 +134,7 @@ export default function Footer() {
                     </ParagraphLink2>
                   </Link>
                 </li>
-              ))}
+              ))} */}
             </ul>
           </div>
 
