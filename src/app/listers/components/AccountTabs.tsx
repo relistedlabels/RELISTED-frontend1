@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Paragraph1 } from "@/common/ui/Text";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 
@@ -110,7 +111,16 @@ const BusinessDetailsContent: React.FC = () => (
 );
 
 const AccountTabs: React.FC = () => {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabKey>("profile");
+
+  // Set active tab from URL query parameter on mount
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam && ACCOUNT_TABS.some((t) => t.key === tabParam)) {
+      setActiveTab(tabParam as TabKey);
+    }
+  }, [searchParams]);
 
   const contentMap: Record<TabKey, React.ReactNode> = {
     profile: <ProfileContent key="profile" />,
