@@ -338,7 +338,7 @@ export default function FinalOrderSummaryCard({
                       </div>
 
                       {/* Cost Breakdown for this Lister - From Order Summary */}
-                      {/* {orderSummary?.data?.listerBreakdowns &&
+                      {orderSummary?.data?.listerBreakdowns &&
                         (() => {
                           const listerBreakdown =
                             orderSummary.data.listerBreakdowns.find(
@@ -393,10 +393,10 @@ export default function FinalOrderSummaryCard({
                               </div>
                             </div>
                           ) : null;
-                        })()} */}
+                        })()}
 
                       {/* Lister Subtotal */}
-                      {/* {orderSummary?.data?.listerBreakdowns &&
+                      {orderSummary?.data?.listerBreakdowns &&
                         (() => {
                           const listerBreakdown =
                             orderSummary.data.listerBreakdowns.find(
@@ -429,7 +429,7 @@ export default function FinalOrderSummaryCard({
                               </Paragraph1>
                             </div>
                           ) : null;
-                        })()} */}
+                        })()}
                     </div>
                   );
                 })}
@@ -470,14 +470,41 @@ export default function FinalOrderSummaryCard({
                         </Paragraph1>
                       </div>
                       <div className="flex justify-between text-sm font-medium text-gray-700">
+                        <Paragraph1>Pick-up Fee</Paragraph1>
+                        <Paragraph1>
+                          {CURRENCY}
+                          {formatCurrency(
+                            orderSummary.data.summary.pickupTotal,
+                          )}
+                        </Paragraph1>
+                      </div>
+
+                      <div className="flex justify-between text-sm font-medium text-gray-700">
                         <Paragraph1>Delivery Fee</Paragraph1>
                         <Paragraph1>
                           {CURRENCY}
                           {formatCurrency(
-                            orderSummary.data.summary.pickupTotal +
-                              (selectedTierData
-                                ? selectedTierData.totalShippingCost
-                                : orderSummary.data.summary.shippingTotal),
+                            selectedTierData
+                              ? selectedTierData.totalShippingCost
+                              : orderSummary.data.summary.shippingTotal,
+                          )}
+                        </Paragraph1>
+                      </div>
+                      <div className="flex justify-between text-sm font-medium text-gray-700">
+                        <Paragraph1>Service Charge</Paragraph1>
+                        <Paragraph1>
+                          {CURRENCY}
+                          {formatCurrency(
+                            orderSummary.data.summary.serviceCharge || 0,
+                          )}
+                        </Paragraph1>
+                      </div>
+                      <div className="flex justify-between text-sm font-medium text-gray-700">
+                        <Paragraph1>VAT</Paragraph1>
+                        <Paragraph1>
+                          {CURRENCY}
+                          {formatCurrency(
+                            orderSummary.data.summary.vatAmount || 0,
                           )}
                         </Paragraph1>
                       </div>
@@ -496,7 +523,9 @@ export default function FinalOrderSummaryCard({
                             orderSummary.data.summary.pickupTotal +
                             (selectedTierData
                               ? selectedTierData.totalShippingCost
-                              : orderSummary.data.summary.shippingTotal),
+                              : orderSummary.data.summary.shippingTotal) +
+                            (orderSummary.data.summary.serviceCharge || 0) +
+                            (orderSummary.data.summary.vatAmount || 0),
                         )}
                       </Paragraph1>
                     </div>
