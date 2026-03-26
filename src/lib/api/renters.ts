@@ -415,7 +415,7 @@ export const rentersApi = {
     }>("/api/renters/orders", { method: "GET", ...(params && { params }) }),
 
   getOrderDetails: (orderId: string) =>
-    apiFetch<{ success: boolean; data: RentalOrder }>(
+    apiFetch<{ success: boolean; data: { order: RentalOrder } }>(
       `/api/renters/orders/${orderId}`,
       { method: "GET" },
     ),
