@@ -18,14 +18,14 @@ export const ItemDescription: React.FC = () => {
       <div>
         <div className="flex items-center gap-2 mb-2">
           <Paragraph1 className="text-xs font-medium text-gray-700">
-            Description 
+            Description
           </Paragraph1>
-          <ToolInfo content="Write a detailed description of your item including its condition, features, and any notable details." />
+          <ToolInfo content="Tell the story of your item. What makes it special? Is it a rare piece, vintage find, limited edition, or mini style? Share what makes renters want to wear it." />
         </div>
         <textarea
           value={data.description}
           onChange={(e) => setField("description", e.target.value)}
-          placeholder="E.g., Gently used, minor scuff on left side, original tags attached, authentic designer piece..."
+          placeholder="E.g., Rare vintage Hermès mini bag, limited edition designer collaboration, summer must-have mini skirt, timeless investment piece from the 90s..."
           className="w-full h-24 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black resize-none"
         />
       </div>
