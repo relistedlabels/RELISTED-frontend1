@@ -28,7 +28,7 @@ const PopularCategorySection = () => {
       </div>
 
       {/* 2x2 Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 gap-4 ">
+      <div className="grid grid-cols-2 sm:grid-cols-2 gap-2 sm:gap-4 ">
         {displayCategories.map((category, idx) => (
           <Link
             key={idx}
@@ -53,7 +53,7 @@ const PopularCategorySection = () => {
               <Paragraph3 className="text-lg sm:text-xl font-bold">
                 {category.title}
               </Paragraph3>
-              <Paragraph1 className="text-sm mt-1 opacity-90">
+              <Paragraph1 className="text-sm sm:block hidden mt-1 opacity-90">
                 {category.description}
               </Paragraph1>
             </div>
