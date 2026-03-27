@@ -9,12 +9,213 @@ import { useProfile } from "@/lib/queries/user/useProfile";
 import { useRouter } from "next/navigation";
 import { getOrderSummaryApi } from "@/lib/api/cart";
 import { usePassCart } from "@/lib/mutations/renters/usePassCartMutation";
+import { useListerProfile } from "@/lib/queries/shop/useListerProfile";
 import { toast } from "sonner";
 
 const CURRENCY = "₦";
 
 const formatCurrency = (amount: number): string => {
   return amount.toLocaleString("en-NG");
+};
+
+// === Lister Summary Card Component ===
+interface ListerSummaryCardProps {
+  group: {
+    listerId: string;
+    items: any[];
+  };
+  orderSummary: any;
+  selectedTierData?: {
+    name: string;
+    totalShippingCost: number;
+    grandTotal: number;
+  };
+  approvedGroups: Array<{
+    listerId: string;
+    items: any[];
+  }>;
+}
+
+const ListerOrderCard: React.FC<ListerSummaryCardProps> = ({
+  group,
+  orderSummary,
+  selectedTierData,
+  approvedGroups,
+}) => {
+  // Hook called at top level of component
+  const { data: listerData, isLoading: isListerLoading } = useListerProfile(
+    group.listerId,
+  );
+
+  // Calculate per-lister totals
+  let listerSubtotal = 0;
+  let listerDeliveryFees = 0;
+  let listerSecurityDeposit = 0;
+
+  group.items.forEach((item) => {
+    listerSubtotal += item.rentalPrice || 0;
+    listerDeliveryFees += item.deliveryFee || 0;
+    listerSecurityDeposit += item.securityDeposit || 0;
+  });
+
+  // Use fetched lister name with fallbacks
+  const listerName =
+    listerData?.name ||
+    group.items[0]?.listerName ||
+    `Lister ${group.listerId}`;
+
+  const calculateListerShippingShare = (
+    totalShippingCost: number,
+    listerItemCount: number,
+    totalItemsCount: number,
+  ): number => {
+    if (totalItemsCount === 0) return 0;
+    return Math.floor((totalShippingCost * listerItemCount) / totalItemsCount);
+  };
+
+  return (
+    <div key={group.listerId} className="p-4 border border-gray-200 rounded-xl">
+      <div className=" flex gap-4 items-center justify-between mb-4">
+        <Paragraph1 className="text-lg font-bold text-gray-900  tracking-wide">
+          ORDER SUMMARY
+        </Paragraph1>
+        <Paragraph1 className="text-lg font-bold text-gray-500  tracking-wide">
+          From -{" "}
+          {isListerLoading ? (
+            <span className="inline-block w-24 h-5 bg-gray-200 rounded animate-pulse"></span>
+          ) : (
+            listerName
+          )}
+        </Paragraph1>
+      </div>
+
+      {/* Item List for this Lister */}
+      <div className="space-y-4 pb-6 border-b border-gray-200">
+        {group.items.map((item) => {
+          const product = item.productDetail || {};
+          const productImageUrl =
+            product.attachments?.uploads?.[0]?.url || item.productImage || "";
+
+          return (
+            <div key={item.requestId} className="flex items-start gap-4">
+              <div className="shrink-0 w-16 h-20 bg-gray-200 rounded-md overflow-hidden border border-gray-100 relative">
+                {productImageUrl && (
+                  <Image
+                    src={productImageUrl}
+                    alt={product.name || item.productName}
+                    fill
+                    className="object-cover"
+                  />
+                )}
+              </div>
+
+              <div className="grow">
+                <Paragraph1 className="text-sm font-semibold text-gray-800 uppercase leading-snug">
+                  {product.name || item.productName}
+                </Paragraph1>
+                <Paragraph1 className="text-xs text-gray-600 leading-snug mt-1">
+                  Duration: <strong>{item.rentalDays} Days</strong>
+                </Paragraph1>
+              </div>
+
+              <div className="shrink-0 text-sm font-bold text-gray-900 mt-1">
+                <Paragraph1>
+                  {CURRENCY}
+                  {formatCurrency(item.totalPrice || 0)}
+                </Paragraph1>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Cost Breakdown for this Lister - From Order Summary */}
+      {orderSummary?.data?.listerBreakdowns &&
+        (() => {
+          const listerBreakdown = orderSummary.data.listerBreakdowns.find(
+            (breakdown: any) => breakdown.listerId === group.listerId,
+          );
+          return listerBreakdown ? (
+            <div className="space-y-2 py-4 border-b border-gray-200">
+              <div className="flex justify-between text-sm font-medium text-gray-700">
+                <Paragraph1>Rental Total</Paragraph1>
+                <Paragraph1>
+                  {CURRENCY}
+                  {formatCurrency(listerBreakdown.rentalTotal)}
+                </Paragraph1>
+              </div>
+              <div className="flex justify-between text-sm font-medium text-gray-700">
+                <Paragraph1>Security Deposit</Paragraph1>
+                <Paragraph1>
+                  {CURRENCY}
+                  {formatCurrency(listerBreakdown.collateralTotal)}
+                </Paragraph1>
+              </div>
+              <div className="flex justify-between text-sm font-medium text-gray-700">
+                <Paragraph1>Cleaning Fees</Paragraph1>
+                <Paragraph1>
+                  {CURRENCY}
+                  {formatCurrency(listerBreakdown.cleaningTotal)}
+                </Paragraph1>
+              </div>
+              <div className="flex justify-between text-sm font-medium text-gray-700">
+                <Paragraph1>Delivery Fee</Paragraph1>
+                <Paragraph1>
+                  {CURRENCY}
+                  {formatCurrency(
+                    listerBreakdown.pickupCost +
+                      (selectedTierData
+                        ? calculateListerShippingShare(
+                            selectedTierData.totalShippingCost,
+                            listerBreakdown.itemsCount || 1,
+                            approvedGroups.reduce(
+                              (sum, g) => sum + g.items.length,
+                              0,
+                            ),
+                          )
+                        : listerBreakdown.shippingCost),
+                  )}
+                </Paragraph1>
+              </div>
+            </div>
+          ) : null;
+        })()}
+
+      {/* Lister Subtotal */}
+      {orderSummary?.data?.listerBreakdowns &&
+        (() => {
+          const listerBreakdown = orderSummary.data.listerBreakdowns.find(
+            (breakdown: any) => breakdown.listerId === group.listerId,
+          );
+          return listerBreakdown ? (
+            <div className="flex justify-between items-center pt-4">
+              <Paragraph1 className="text-sm font-bold text-gray-900">
+                Subtotal:
+              </Paragraph1>
+              <Paragraph1 className="text-lg font-extrabold text-gray-900">
+                {CURRENCY}
+                {formatCurrency(
+                  listerBreakdown.rentalTotal +
+                    listerBreakdown.collateralTotal +
+                    listerBreakdown.cleaningTotal +
+                    listerBreakdown.pickupCost +
+                    (selectedTierData
+                      ? calculateListerShippingShare(
+                          selectedTierData.totalShippingCost,
+                          listerBreakdown.itemsCount || 1,
+                          approvedGroups.reduce(
+                            (sum, g) => sum + g.items.length,
+                            0,
+                          ),
+                        )
+                      : listerBreakdown.shippingCost),
+                )}
+              </Paragraph1>
+            </div>
+          ) : null;
+        })()}
+    </div>
+  );
 };
 
 // === Skeleton Loader ===
@@ -63,16 +264,6 @@ export default function FinalOrderSummaryCard({
   const [isAgree, setIsAgree] = useState(false);
   const [orderSummary, setOrderSummary] = useState<any>(null);
   const [orderSummaryLoading, setOrderSummaryLoading] = useState(false);
-
-  // Calculate shipping share for each lister based on item count ratio
-  const calculateListerShippingShare = (
-    totalShippingCost: number,
-    listerItemCount: number,
-    totalItemsCount: number,
-  ): number => {
-    if (totalItemsCount === 0) return 0;
-    return Math.floor((totalShippingCost * listerItemCount) / totalItemsCount);
-  };
 
   // Check if user is verified on mount
   useEffect(() => {
@@ -260,179 +451,15 @@ export default function FinalOrderSummaryCard({
             return (
               <>
                 {/* Per-Lister Summary Cards */}
-                {approvedGroups.map((group) => {
-                  // Calculate per-lister totals
-                  let listerSubtotal = 0;
-                  let listerDeliveryFees = 0;
-                  let listerSecurityDeposit = 0;
-
-                  group.items.forEach((item) => {
-                    listerSubtotal += item.rentalPrice || 0;
-                    listerDeliveryFees += item.deliveryFee || 0;
-                    listerSecurityDeposit += item.securityDeposit || 0;
-                  });
-
-                  const listerTotal =
-                    listerSubtotal + listerDeliveryFees + listerSecurityDeposit;
-                  const listerName =
-                    group.items[0]?.listerName || `Lister ${group.listerId}`;
-
-                  return (
-                    <div
-                      key={group.listerId}
-                      className="p-4 border border-gray-200 rounded-xl"
-                    >
-                      <div className=" flex gap-4 items-center justify-between mb-4">
-                        <Paragraph1 className="text-lg font-bold text-gray-900  tracking-wide">
-                          ORDER SUMMARY
-                        </Paragraph1>
-                        <Paragraph1 className="text-lg font-bold text-gray-500  tracking-wide">
-                          From - {listerName}{" "}
-                        </Paragraph1>
-                      </div>
-
-                      {/* Item List for this Lister */}
-                      <div className="space-y-4 pb-6 border-b border-gray-200">
-                        {group.items.map((item) => {
-                          const product = item.productDetail || {};
-                          const productImageUrl =
-                            product.attachments?.uploads?.[0]?.url ||
-                            item.productImage ||
-                            "";
-
-                          return (
-                            <div
-                              key={item.requestId}
-                              className="flex items-start gap-4"
-                            >
-                              <div className="shrink-0 w-16 h-20 bg-gray-200 rounded-md overflow-hidden border border-gray-100 relative">
-                                {productImageUrl && (
-                                  <Image
-                                    src={productImageUrl}
-                                    alt={product.name || item.productName}
-                                    fill
-                                    className="object-cover"
-                                  />
-                                )}
-                              </div>
-
-                              <div className="grow">
-                                <Paragraph1 className="text-sm font-semibold text-gray-800 uppercase leading-snug">
-                                  {product.name || item.productName}
-                                </Paragraph1>
-                                <Paragraph1 className="text-xs text-gray-600 leading-snug mt-1">
-                                  Duration:{" "}
-                                  <strong>{item.rentalDays} Days</strong>
-                                </Paragraph1>
-                              </div>
-
-                              <div className="shrink-0 text-sm font-bold text-gray-900 mt-1">
-                                <Paragraph1>
-                                  {CURRENCY}
-                                  {formatCurrency(item.totalPrice || 0)}
-                                </Paragraph1>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Cost Breakdown for this Lister - From Order Summary */}
-                      {orderSummary?.data?.listerBreakdowns &&
-                        (() => {
-                          const listerBreakdown =
-                            orderSummary.data.listerBreakdowns.find(
-                              (breakdown: any) =>
-                                breakdown.listerId === group.listerId,
-                            );
-                          return listerBreakdown ? (
-                            <div className="space-y-2 py-4 border-b border-gray-200">
-                              <div className="flex justify-between text-sm font-medium text-gray-700">
-                                <Paragraph1>Rental Total</Paragraph1>
-                                <Paragraph1>
-                                  {CURRENCY}
-                                  {formatCurrency(listerBreakdown.rentalTotal)}
-                                </Paragraph1>
-                              </div>
-                              <div className="flex justify-between text-sm font-medium text-gray-700">
-                                <Paragraph1>Security Deposit</Paragraph1>
-                                <Paragraph1>
-                                  {CURRENCY}
-                                  {formatCurrency(
-                                    listerBreakdown.collateralTotal,
-                                  )}
-                                </Paragraph1>
-                              </div>
-                              <div className="flex justify-between text-sm font-medium text-gray-700">
-                                <Paragraph1>Cleaning Fees</Paragraph1>
-                                <Paragraph1>
-                                  {CURRENCY}
-                                  {formatCurrency(
-                                    listerBreakdown.cleaningTotal,
-                                  )}
-                                </Paragraph1>
-                              </div>
-                              <div className="flex justify-between text-sm font-medium text-gray-700">
-                                <Paragraph1>Delivery Fee</Paragraph1>
-                                <Paragraph1>
-                                  {CURRENCY}
-                                  {formatCurrency(
-                                    listerBreakdown.pickupCost +
-                                      (selectedTierData
-                                        ? calculateListerShippingShare(
-                                            selectedTierData.totalShippingCost,
-                                            listerBreakdown.itemsCount || 1,
-                                            approvedGroups.reduce(
-                                              (sum, g) => sum + g.items.length,
-                                              0,
-                                            ),
-                                          )
-                                        : listerBreakdown.shippingCost),
-                                  )}
-                                </Paragraph1>
-                              </div>
-                            </div>
-                          ) : null;
-                        })()}
-
-                      {/* Lister Subtotal */}
-                      {orderSummary?.data?.listerBreakdowns &&
-                        (() => {
-                          const listerBreakdown =
-                            orderSummary.data.listerBreakdowns.find(
-                              (breakdown: any) =>
-                                breakdown.listerId === group.listerId,
-                            );
-                          return listerBreakdown ? (
-                            <div className="flex justify-between items-center pt-4">
-                              <Paragraph1 className="text-sm font-bold text-gray-900">
-                                Subtotal:
-                              </Paragraph1>
-                              <Paragraph1 className="text-lg font-extrabold text-gray-900">
-                                {CURRENCY}
-                                {formatCurrency(
-                                  listerBreakdown.rentalTotal +
-                                    listerBreakdown.collateralTotal +
-                                    listerBreakdown.cleaningTotal +
-                                    listerBreakdown.pickupCost +
-                                    (selectedTierData
-                                      ? calculateListerShippingShare(
-                                          selectedTierData.totalShippingCost,
-                                          listerBreakdown.itemsCount || 1,
-                                          approvedGroups.reduce(
-                                            (sum, g) => sum + g.items.length,
-                                            0,
-                                          ),
-                                        )
-                                      : listerBreakdown.shippingCost),
-                                )}
-                              </Paragraph1>
-                            </div>
-                          ) : null;
-                        })()}
-                    </div>
-                  );
-                })}
+                {approvedGroups.map((group) => (
+                  <ListerOrderCard
+                    key={group.listerId}
+                    group={group}
+                    orderSummary={orderSummary}
+                    selectedTierData={selectedTierData}
+                    approvedGroups={approvedGroups}
+                  />
+                ))}
 
                 {/* Grand Total and Checkout - From Order Summary */}
                 {orderSummary?.data?.summary && (
