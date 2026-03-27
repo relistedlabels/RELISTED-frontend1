@@ -15,6 +15,15 @@ export default function SearchModal() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
+  // Check if running on localhost
+  const isLocalhost =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1" ||
+      window.location.hostname.startsWith("localhost:"));
+
+  const HIDDEN_ID = "7d172d18-daad-46cd-ab6d-8d8af28c0b16";
+
   const recentSearches = useBrowseStore((s) => s.recentSearches);
   const clearSearches = useBrowseStore((s) => s.clearSearches);
   const recentlyViewed = useBrowseStore((s) => s.recentlyViewed);
@@ -29,20 +38,32 @@ export default function SearchModal() {
     error,
   } = usePublicSearch(query, { type: "all", limit: 50 });
 
-  // Separate and limit results
+  // Separate and limit results, filtering out hidden items on production
   const { products, listers } = useMemo(() => {
     if (!results) return { products: [], listers: [] };
 
     const products = results
       .filter((item: any) => item.type === "product")
+      .filter((item: any) => {
+        if (!isLocalhost && item.curatorId === HIDDEN_ID) {
+          return false;
+        }
+        return true;
+      })
       .slice(0, 7);
 
     const listers = results
       .filter((item: any) => item.type === "lister")
+      .filter((item: any) => {
+        if (!isLocalhost && item.id === HIDDEN_ID) {
+          return false;
+        }
+        return true;
+      })
       .slice(0, 3);
 
     return { products, listers };
-  }, [results]);
+  }, [results, isLocalhost]);
 
   // Persist current query as search term before navigating to recent searches
   const handleRecentSearchClick = (term: string) => {
@@ -186,7 +207,8 @@ export default function SearchModal() {
                                   {item.name}
                                 </Paragraph1>
                                 <Paragraph1 className="text-sm text-gray-500">
-                                  By {item.lister?.split(" ").pop() || "New user"}{" "}
+                                  By{" "}
+                                  {item.lister?.split(" ").pop() || "New user"}{" "}
                                   • ₦{item.price?.toLocaleString()}
                                 </Paragraph1>
                               </div>

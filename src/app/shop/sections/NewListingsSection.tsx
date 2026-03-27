@@ -24,6 +24,22 @@ export default function NewListingsSection() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // Check if running on localhost
+  const isLocalhost =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1" ||
+      window.location.hostname.startsWith("localhost:"));
+
+  // Filter out test curator products on production
+  const HIDDEN_CURATOR_ID = "7d172d18-daad-46cd-ab6d-8d8af28c0b16";
+  const visibleProducts = filteredProducts.filter((product: any) => {
+    if (!isLocalhost && product.curatorId === HIDDEN_CURATOR_ID) {
+      return false;
+    }
+    return true;
+  });
+
   const handleSearchChange = (search: string) => {
     const params = new URLSearchParams(searchParams);
     if (search) {
@@ -102,7 +118,7 @@ export default function NewListingsSection() {
         </div>
 
         {/* Product Grid */}
-        {filteredProducts.length === 0 ? (
+        {visibleProducts.length === 0 ? (
           <div className="text-center py-12">
             <Paragraph1 className="text-gray-600">
               No products found matching your criteria.
@@ -111,7 +127,7 @@ export default function NewListingsSection() {
         ) : (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4">
-              {filteredProducts.map((product: any) => (
+              {visibleProducts.map((product: any) => (
                 <ProductCard
                   key={product.id}
                   id={product.id}

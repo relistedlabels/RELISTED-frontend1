@@ -13,18 +13,34 @@ export default function AllListersPage() {
   const { data: users, isLoading, error } = useUsers({ role: "lister" });
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Check if running on localhost
+  const isLocalhost =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1" ||
+      window.location.hostname.startsWith("localhost:"));
+
+  // Filter out test user on production
+  const HIDDEN_USER_ID = "7d172d18-daad-46cd-ab6d-8d8af28c0b16";
+  const visibleUsers =
+    users?.filter((user) => {
+      if (!isLocalhost && user.id === HIDDEN_USER_ID) {
+        return false;
+      }
+      return true;
+    }) || [];
+
   // ✅ Filter and sort: show users with avatars first, then the rest
-  const filteredUsers =
-    users
-      ?.filter((user) =>
-        user.name?.toLowerCase().includes(searchTerm.toLowerCase()),
-      )
-      .sort((a, b) => {
-        // Users with avatars come first
-        if (a.avatar && !b.avatar) return -1;
-        if (!a.avatar && b.avatar) return 1;
-        return 0;
-      }) || [];
+  const filteredUsers = visibleUsers
+    .filter((user) =>
+      user.name?.toLowerCase().includes(searchTerm.toLowerCase()),
+    )
+    .sort((a, b) => {
+      // Users with avatars come first
+      if (a.avatar && !b.avatar) return -1;
+      if (!a.avatar && b.avatar) return 1;
+      return 0;
+    });
 
   if (isLoading) {
     return (
