@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { publicApi } from "@/lib/api/public";
+import { publicApi, type PublicUsersResponse } from "@/lib/api/public";
 
 export const useUsers = (params?: {
   page?: number;
@@ -12,7 +12,10 @@ export const useUsers = (params?: {
     queryKey: ["users", params],
     queryFn: async () => {
       const response = await publicApi.getUsers(params);
-      return response.data;
+      return {
+        users: response.data,
+        pagination: response.pagination,
+      };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,

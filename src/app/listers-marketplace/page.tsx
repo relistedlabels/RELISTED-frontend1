@@ -10,8 +10,16 @@ import Link from "next/link";
 import Image from "next/image";
 
 export default function AllListersPage() {
-  const { data: users, isLoading, error } = useUsers({ role: "lister" });
+  const [currentPage, setCurrentPage] = useState(1);
+  const { data, isLoading, error } = useUsers({
+    role: "lister",
+    page: currentPage,
+    limit: 20,
+  });
   const [searchTerm, setSearchTerm] = useState("");
+
+  const users = data?.users || [];
+  const pagination = data?.pagination;
 
   // Check if running on localhost
   const isLocalhost =
@@ -176,6 +184,107 @@ export default function AllListersPage() {
           )}
         </div>
       </section>
+
+      {/* Pagination */}
+      {pagination && pagination.totalPages > 1 && !searchTerm && (
+        <section className="w-full py-8 px-4 sm:px-0 border-t border-gray-200">
+          <div className="container mx-auto flex items-center justify-center gap-2">
+            {/* Previous button */}
+            <button
+              onClick={() => {
+                if (pagination.currentPage > 1) {
+                  setCurrentPage(pagination.currentPage - 1);
+                  window.scrollTo(0, 0);
+                }
+              }}
+              disabled={pagination.currentPage === 1}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
+            >
+              Previous
+            </button>
+
+            {/* Page numbers */}
+            <div className="flex gap-1">
+              {Array.from(
+                { length: pagination.totalPages },
+                (_, i) => i + 1,
+              ).map((page) => {
+                // Show first page, last page, current page, and pages around current page
+                const showPage =
+                  page === 1 ||
+                  page === pagination.totalPages ||
+                  Math.abs(page - pagination.currentPage) <= 1;
+
+                if (!showPage) {
+                  // Show ellipsis for skipped pages
+                  if (page === 2 && pagination.currentPage > 3) {
+                    return (
+                      <span key={`ellipsis-start`} className="px-2 py-2">
+                        ...
+                      </span>
+                    );
+                  }
+                  if (
+                    page === pagination.totalPages - 1 &&
+                    pagination.currentPage < pagination.totalPages - 2
+                  ) {
+                    return (
+                      <span key={`ellipsis-end`} className="px-2 py-2">
+                        ...
+                      </span>
+                    );
+                  }
+                  return null;
+                }
+
+                return (
+                  <button
+                    key={page}
+                    onClick={() => {
+                      setCurrentPage(page);
+                      window.scrollTo(0, 0);
+                    }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                      page === pagination.currentPage
+                        ? "bg-black text-white"
+                        : "border border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Next button */}
+            <button
+              onClick={() => {
+                if (pagination.currentPage < pagination.totalPages) {
+                  setCurrentPage(pagination.currentPage + 1);
+                  window.scrollTo(0, 0);
+                }
+              }}
+              disabled={pagination.currentPage === pagination.totalPages}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
+            >
+              Next
+            </button>
+          </div>
+
+          {/* Page info */}
+          <div className="container hidden mx-auto text-center mt-4">
+            <Paragraph1 className="text-gray-600 text-sm">
+              Page {pagination.currentPage} of {pagination.totalPages} • Showing{" "}
+              {(pagination.currentPage - 1) * pagination.itemsPerPage + 1}-
+              {Math.min(
+                pagination.currentPage * pagination.itemsPerPage,
+                pagination.totalItems,
+              )}{" "}
+              of {pagination.totalItems} listers
+            </Paragraph1>
+          </div>
+        </section>
+      )}
 
       {/* Featured Section */}
       {filteredUsers.length > 0 && !searchTerm && (
