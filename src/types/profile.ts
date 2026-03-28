@@ -124,6 +124,7 @@ export interface FullProfile {
   avatar?: string;
   status?: string;
   bvn: string | null;
+  nin: string | null;
   isApproved: boolean;
   avatarUploadId: string | null;
   ninUploadId: string | null;

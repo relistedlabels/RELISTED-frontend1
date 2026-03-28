@@ -18,7 +18,6 @@ import { Paragraph1 } from "@/common/ui/Text";
 import { useUpdateEmergencyContact } from "@/lib/mutations/listers/useUpdateEmergencyContact";
 import { useUploadNinDocument } from "@/lib/mutations/listers/useUploadNinDocument";
 import { useSubmitBvn } from "@/lib/mutations/listers";
-import { useBvnVerification } from "@/lib/queries/listers/useBvnVerification";
 import { useVerificationDocuments } from "@/lib/queries/listers/useVerificationDocuments";
 import { useVerificationStatus } from "@/lib/queries/listers/useVerificationStatus";
 import { useProfile } from "@/lib/queries/user/useProfile";
@@ -50,7 +49,6 @@ const AccountVerificationsForm: React.FC = () => {
   const { data: profile, isLoading } = useProfile();
   const { data: statusData } = useVerificationStatus();
   const { data: documentsData } = useVerificationDocuments();
-  const { data: bvnData } = useBvnVerification();
   const updateEmergencyContactMutation = useUpdateEmergencyContact();
   const uploadNinMutation = useUploadNinDocument();
   const submitBvnMutation = useSubmitBvn();
@@ -64,11 +62,11 @@ const AccountVerificationsForm: React.FC = () => {
     relationship: emergencyContact?.relationship || "",
   });
 
-  const [ninNumber, setNinNumber] = useState("");
+  const [ninNumber, setNinNumber] = useState(profile?.nin || "");
   const [ninFile, setNinFile] = useState<File | null>(null);
   const [ninError, setNinError] = useState<string | null>(null);
 
-  const [bvnInput, setBvnInput] = useState("");
+  const [bvnInput, setBvnInput] = useState(profile?.bvn || "");
   const [bvnError, setBvnError] = useState<string | null>(null);
 
   const handleEmergencyChange = (
@@ -86,22 +84,27 @@ const AccountVerificationsForm: React.FC = () => {
     return parts.join(", ");
   }, [emergencyContact]);
 
-  const ninStatusRaw = statusData?.data.verifications.nin.status ?? "pending";
-  const bvnStatusRaw =
-    statusData?.data.verifications.bvn.status ?? bvnData?.data.bvn.status;
+  // Get overall verification status - if any verification is not verified, account is not verified
+  const getOverallStatus = (): "Verified" | "Pending" | "Failed" => {
+    if (!statusData?.data?.verifications) return "Pending";
 
-  const mapStatus = (
-    status: string | undefined,
-  ): "Verified" | "Pending" | "Failed" => {
-    const lower = (status || "").toLowerCase();
-    if (lower === "verified") return "Verified";
-    if (lower === "pending") return "Pending";
-    if (lower === "failed" || lower === "not_verified") return "Failed";
-    return "Pending";
+    const verifications = statusData.data.verifications;
+    const statuses = [
+      verifications.nin?.status,
+      verifications.bvn?.status,
+      verifications.businessRegistration?.status,
+    ].map((s) => (s || "").toLowerCase());
+
+    // If any is "failed", overall is failed
+    if (statuses.some((s) => s === "failed" || s === "not_verified"))
+      return "Failed";
+    // If any is "pending", overall is pending
+    if (statuses.some((s) => s === "pending")) return "Pending";
+    // All verified
+    return "Verified";
   };
 
-  const ninStatus = mapStatus(ninStatusRaw);
-  const bvnStatus = mapStatus(bvnStatusRaw);
+  const verificationStatus = getOverallStatus();
 
   const handleNinFileChange: React.ChangeEventHandler<HTMLInputElement> = (
     event,
@@ -113,7 +116,7 @@ const AccountVerificationsForm: React.FC = () => {
 
   const handleUploadNin = () => {
     if (!ninFile) {
-      setNinError("Please select a NIN document to upload.");
+      setNinError("Please select an ID document to upload.");
       return;
     }
 
@@ -150,48 +153,37 @@ const AccountVerificationsForm: React.FC = () => {
 
   return (
     <div className="font-sans w-full">
-      <Paragraph1 className="mb-6 uppercase font-bold">
-        Verifications
-      </Paragraph1>
+      <div className=" flex justify-between items-center"> 
+        {" "}
+        <Paragraph1 className="mb-6 uppercase font-bold">
+          Verifications
+        </Paragraph1>
+        <div className="sm:self-center">
+          <VerificationBadge status={verificationStatus} />
+        </div>
+      </div>
 
       {/* Identification Section */}
       <Paragraph1 className="text-lg text-gray-900 mb-4">
         Identification
       </Paragraph1>
 
-      {/* Uploaded NIN Document (basic status driven by profile for now) */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 p-3 border border-gray-300 rounded-lg bg-white mb-6">
-        <div className="flex items-center gap-3 min-w-0">
-          <HiOutlineDocumentText className="w-10 h-10 sm:w-14 sm:h-14 text-gray-500 shrink-0" />
-          <div className="min-w-0">
-            <Paragraph1 className="text-sm font-medium text-gray-900 truncate">
-              NIN Verification Document
-            </Paragraph1>
-            <Paragraph1 className="text-xs text-gray-500">
-              {documentsData?.data.documents.find((d) => d.type === "NIN")
-                ? "Document uploaded"
-                : "No NIN document uploaded yet"}
-            </Paragraph1>
-          </div>
-        </div>
+      
 
-        <div className="sm:self-center">
-          <VerificationBadge status={ninStatus} />
-        </div>
-      </div>
-
-      {/* NIN Upload Controls */}
+      {/* ID Upload Controls */}
       <div className="mb-6 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4">
         <Paragraph1 className="mb-2 text-sm font-medium text-gray-900">
-          Upload NIN Document
+          {profile?.nin ? "Edit ID Information" : "Upload ID Document"}
         </Paragraph1>
         <Paragraph1 className="mb-3 text-xs text-gray-600">
-          Accepted formats: JPEG, PNG. Maximum size 5MB.
+          {profile?.nin
+            ? "Update your ID number or upload a new document"
+            : "Accepted formats: JPEG, PNG. Maximum size 5MB."}
         </Paragraph1>
         <div className="mb-3 grid grid-cols-1 gap-3 md:grid-cols-2">
           <div>
             <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
-              ID Number (optional)
+              ID Number
             </Paragraph1>
             <input
               type="text"
@@ -200,6 +192,11 @@ const AccountVerificationsForm: React.FC = () => {
               className="w-full rounded-md border border-gray-300 p-2 text-sm"
               placeholder="Enter ID number"
             />
+            {profile?.nin && (
+              <Paragraph1 className="mt-1 text-xs text-gray-500">
+                Current ID: {profile.nin}
+              </Paragraph1>
+            )}
           </div>
           <div>
             <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
@@ -211,6 +208,11 @@ const AccountVerificationsForm: React.FC = () => {
               onChange={handleNinFileChange}
               className="w-full text-xs text-gray-700"
             />
+            {profile?.ninUploadId && (
+              <Paragraph1 className="mt-1 text-xs text-green-600">
+                ✓ Document already uploaded
+              </Paragraph1>
+            )}
           </div>
         </div>
         {ninError && (
@@ -224,7 +226,7 @@ const AccountVerificationsForm: React.FC = () => {
           disabled={uploadNinMutation.isPending}
           className="mt-1 inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {uploadNinMutation.isPending ? "Uploading..." : "Upload NIN"}
+          {uploadNinMutation.isPending ? "Uploading..." : "Upload ID"}
         </button>
       </div>
 
@@ -233,7 +235,7 @@ const AccountVerificationsForm: React.FC = () => {
         Bank Verification Number
       </Paragraph1>
 
-      {!bvnData?.data.bvn.maskedValue && (
+      {verificationStatus !== "Verified" && (
         <div className="mb-4 p-4 bg-amber-50 border border-amber-300 rounded-lg">
           <Paragraph1 className="text-sm text-amber-900 font-medium">
             ⚠️ Important: Add your correct BVN
@@ -254,36 +256,50 @@ const AccountVerificationsForm: React.FC = () => {
 
       <div className="mb-6">
         <div className="flex justify-between items-center mb-2">
-          <Paragraph1 className="text-base text-gray-900">BVN</Paragraph1>
+          <Paragraph1 className="text-base text-gray-900">
+            {profile?.bvn ? "Update BVN" : "Bank Verification Number (BVN)"}
+          </Paragraph1>
         </div>
         <div className="border bg-gray-50 border-gray-300 rounded-lg flex flex-col md:flex-row justify-between items-center p-4 gap-2">
-          {/* If BVN is verified, show masked value as read-only. If not, allow input and submission */}
-          {bvnStatus === "Verified" ? (
-            <input
-              type="text"
-              value={bvnData?.data.bvn.maskedValue || ""}
-              placeholder={
-                bvnData?.data.bvn.maskedValue
-                  ? "BVN on file"
-                  : "No BVN added yet"
-              }
-              readOnly
-              className="w-full outline-none text-lg tracking-wider text-gray-700 font-mono bg-gray-50"
-            />
+          {/* If verification is verified, show masked value. If not verified, allow BVN input and submission */}
+          {verificationStatus === "Verified" ? (
+            <>
+              <div className="w-full">
+                <input
+                  type="text"
+                  value={
+                    profile?.bvn
+                      ? `${profile.bvn.slice(0, 4)}****${profile.bvn.slice(-3)}`
+                      : "BVN Verified"
+                  }
+                  readOnly
+                  className="w-full outline-none text-lg tracking-wider text-gray-700 font-mono bg-gray-50"
+                />
+                {profile?.bvn && (
+                  <Paragraph1 className="text-xs text-gray-500 mt-2">
+                    Your BVN is encrypted and secure. Only partial digits shown.
+                  </Paragraph1>
+                )}
+              </div>
+            </>
           ) : (
             <>
               <input
                 type="text"
                 value={bvnInput}
                 onChange={(e) => setBvnInput(e.target.value.replace(/\D/g, ""))}
-                placeholder="Enter your BVN"
+                placeholder={
+                  profile?.bvn
+                    ? `Current: ${profile.bvn}`
+                    : "Enter your 11-digit BVN"
+                }
                 maxLength={11}
                 className="w-full outline-none text-lg tracking-wider text-gray-700 font-mono bg-white border border-gray-300 rounded-md px-3 py-2"
                 disabled={submitBvnMutation.isPending}
               />
               <button
                 type="button"
-                className="ml-0 md:ml-4 mt-2 md:mt-0 px-4 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="ml-0 md:ml-4 mt-2 md:mt-0 px-4 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                 disabled={
                   submitBvnMutation.isPending ||
                   !bvnInput ||
@@ -312,9 +328,7 @@ const AccountVerificationsForm: React.FC = () => {
               </button>
             </>
           )}
-          <div className="ml-0 md:ml-4 mt-2 md:mt-0">
-            <VerificationBadge status={bvnStatus} />
-          </div>
+         
         </div>
         {bvnError && (
           <Paragraph1 className="text-xs text-red-600 mt-2">
