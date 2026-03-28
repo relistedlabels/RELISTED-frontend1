@@ -2,13 +2,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import {
-  HiOutlineDocumentText,
+  HiOutlineEnvelope,
   HiOutlineHome,
   HiOutlinePhone,
+  HiOutlinePlus,
   HiOutlineUser,
   HiOutlineUsers,
-} from "react-icons/hi";
-import { HiOutlineEnvelope } from "react-icons/hi2";
+} from "react-icons/hi2";
 import { toast } from "sonner";
 import { CityLGASelect } from "@/app/auth/profile-setup/components/CityLGASelect";
 import { StateSelect } from "@/app/auth/profile-setup/components/StateSelect";
@@ -20,6 +20,42 @@ import {
   useUploadIdDocument,
   useVerificationsStatus,
 } from "@/lib/queries/renters/useVerifications";
+
+const ID_TYPE_OPTIONS = [
+  { value: "NIN", label: "National ID (NIN)" },
+  { value: "PASSPORT", label: "International passport" },
+  { value: "DRIVERS_LICENSE", label: "Driver's licence" },
+] as const;
+
+/** Values expected by POST /api/renters/profile/verifications/id-document (FormData) */
+const RENTER_ID_TYPE_API: Record<
+  (typeof ID_TYPE_OPTIONS)[number]["value"],
+  string
+> = {
+  NIN: "national_id",
+  PASSPORT: "passport",
+  DRIVERS_LICENSE: "drivers_license",
+};
+
+function toRenterApiIdType(formValue: string): string {
+  const key = formValue as keyof typeof RENTER_ID_TYPE_API;
+  return RENTER_ID_TYPE_API[key] ?? "national_id";
+}
+
+function validateIdNumber(
+  documentType: string,
+  value: string,
+): string | null {
+  const v = value.trim();
+  if (!v) return "Please enter your ID number.";
+  if (documentType === "NIN") {
+    if (!/^\d{11}$/.test(v)) return "NIN must be exactly 11 digits.";
+    return null;
+  }
+  if (v.length < 5) return "ID number looks too short.";
+  if (v.length > 50) return "ID number is too long.";
+  return null;
+}
 
 // Sub-component for displaying a verification status on a document or field
 const VerificationBadge: React.FC<{
@@ -47,6 +83,7 @@ const VerificationBadge: React.FC<{
 const AccountVerificationsForm: React.FC = () => {
   const queryClient = useQueryClient();
   const { data: profile, isLoading } = useProfile();
+
   const { data: statusData } = useVerificationsStatus();
   const submitBvnMutation = useSubmitBvn();
   const updateVerificationMutation = useUpdateVerificationDetails();
@@ -81,6 +118,18 @@ const AccountVerificationsForm: React.FC = () => {
     }
   }, [emergencyContact]);
 
+  // ✅ Sync NIN and BVN when profile data loads
+  useEffect(() => {
+    if (profile) {
+      console.log("🔄 Profile loaded, syncing NIN and BVN:", {
+        nin: profile.nin,
+        bvn: profile.bvn,
+      });
+      setNinNumber(profile.nin || "");
+      setBvnNumber(profile.bvn || "");
+    }
+  }, [profile?.nin, profile?.bvn]);
+
   const handleEmergencyChange = (
     field: keyof typeof emergencyForm,
     value: string,
@@ -89,28 +138,53 @@ const AccountVerificationsForm: React.FC = () => {
   };
 
   const ninStatusRaw =
-    statusData?.data?.verifications?.nin?.status ?? "pending";
+    statusData?.data?.verifications?.validId?.status ?? "not_verified";
   const bvnStatusRaw =
-    statusData?.data?.verifications?.bvn?.status ?? "pending";
+    statusData?.data?.verifications?.bvn?.status ?? "not_verified";
 
   const mapStatus = (
     status: string | undefined,
   ): "Verified" | "Pending" | "Failed" => {
     const lower = (status || "").toLowerCase();
-    if (lower === "verified") return "Verified";
-    if (lower === "pending") return "Pending";
-    if (lower === "failed" || lower === "not_verified") return "Failed";
+    if (
+      lower === "verified" ||
+      lower === "approved" ||
+      lower === "success" ||
+      lower === "complete"
+    ) {
+      return "Verified";
+    }
+    if (lower === "not_verified") return "Failed";
+    if (lower === "pending" || lower === "processing" || lower === "in_review")
+      return "Pending";
+    if (lower === "failed" || lower === "rejected" || lower === "declined")
+      return "Failed";
     return "Pending";
   };
 
   const ninStatus = mapStatus(ninStatusRaw);
   const bvnStatus = mapStatus(bvnStatusRaw);
 
-  const [ninNumber, setNinNumber] = useState("");
+  // Get overall verification status - if any verification is not verified, account is not verified
+  const getOverallStatus = (): "Verified" | "Pending" | "Failed" => {
+    const statuses = [ninStatus, bvnStatus];
+    // If any is "failed", overall is failed
+    if (statuses.some((s) => s === "Failed")) return "Failed";
+    // If any is "pending", overall is pending
+    if (statuses.some((s) => s === "Pending")) return "Pending";
+    // All verified
+    return "Verified";
+  };
+
+  const verificationStatus = getOverallStatus();
+
+  const [ninNumber, setNinNumber] = useState(profile?.nin || "");
   const [ninFile, setNinFile] = useState<File | null>(null);
   const [ninError, setNinError] = useState<string | null>(null);
+  const [documentType, setDocumentType] = useState<string>(ID_TYPE_OPTIONS[0].value);
+  const [isDraggingNin, setIsDraggingNin] = useState(false);
 
-  const [bvnNumber, setBvnNumber] = useState("");
+  const [bvnNumber, setBvnNumber] = useState(profile?.bvn || "");
   const [bvnError, setBvnError] = useState<string | null>(null);
 
   const handleNinFileChange: React.ChangeEventHandler<HTMLInputElement> = (
@@ -121,48 +195,62 @@ const AccountVerificationsForm: React.FC = () => {
     setNinError(null);
   };
 
-  const handleUploadNin = () => {
+  const handleNinDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingNin(true);
+  };
+
+  const handleNinDragLeave = () => {
+    setIsDraggingNin(false);
+  };
+
+  const handleNinDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingNin(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      setNinFile(file);
+      setNinError(null);
+    }
+  };
+
+  const handleUploadNin = async () => {
     if (!ninFile) {
-      setNinError("Please select a NIN document to upload.");
+      setNinError("Please select an ID document to upload.");
       return;
     }
 
-    if (!ninNumber.trim()) {
-      setNinError("Please enter your NIN number.");
-      return;
-    }
-
-    if (ninNumber.trim().length !== 11 || !/^\d+$/.test(ninNumber.trim())) {
-      setNinError("NIN must be 11 digits.");
+    const idErr = validateIdNumber(documentType, ninNumber);
+    if (idErr) {
+      setNinError(idErr);
       return;
     }
 
     setNinError(null);
-    console.log(
-      "📤 Uploading NIN document to POST /api/renters/profile/verifications/id-document",
-    );
 
     const formData = new FormData();
-    formData.append("document", ninFile);
-    formData.append("ninNumber", ninNumber.trim());
+    formData.append("idDocument", ninFile, ninFile.name);
+    formData.append("idType", toRenterApiIdType(documentType));
 
-    uploadIdDocumentMutation.mutate(formData, {
-      onSuccess: () => {
-        toast.success("NIN document uploaded successfully!");
-        setNinNumber("");
-        setNinFile(null);
-      },
-      onError: (error: any) => {
-        toast.error(
-          error?.message || "Failed to upload NIN document. Please try again.",
-        );
-        setNinError(
-          error?.message || "Failed to upload NIN document. Please try again.",
-        );
-      },
-    });
+    try {
+      await Promise.all([
+        updateVerificationMutation.mutateAsync({
+          nin: ninNumber.trim(),
+        }),
+        uploadIdDocumentMutation.mutateAsync(formData),
+      ]);
+      toast.success("ID document uploaded successfully!");
+      setNinNumber("");
+      setNinFile(null);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to upload ID document. Please try again.";
+      toast.error(message);
+      setNinError(message);
+    }
   };
-
   const handleSubmitBvn = () => {
     if (!bvnNumber.trim()) {
       setBvnError("Please enter a BVN number.");
@@ -194,6 +282,7 @@ const AccountVerificationsForm: React.FC = () => {
       },
     );
   };
+
   if (isLoading && !profile) {
     return (
       <div className="font-sans w-full">
@@ -209,68 +298,127 @@ const AccountVerificationsForm: React.FC = () => {
 
   return (
     <div className="font-sans w-full">
-      <Paragraph1 className="mb-6 uppercase font-bold">
-        Verifications
-      </Paragraph1>
+      <div className=" flex justify-between items-center">
+        {" "}
+        <Paragraph1 className="mb-6 uppercase font-bold">
+          Verifications
+        </Paragraph1>
+        <div className="sm:self-center">
+          <VerificationBadge status={verificationStatus} />
+        </div>
+      </div>
 
       {/* Identification Section */}
       <Paragraph1 className="text-lg text-gray-900 mb-4">
         Identification
       </Paragraph1>
 
-      {/* Uploaded NIN Document (basic status driven by profile for now) */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 p-3 border border-gray-300 rounded-lg bg-white mb-6">
-        <div className="flex items-center gap-3 min-w-0">
-          <HiOutlineDocumentText className="w-10 h-10 sm:w-14 sm:h-14 text-gray-500 shrink-0" />
-          <div className="min-w-0">
-            <Paragraph1 className="text-sm font-medium text-gray-900 truncate">
-              NIN Verification Document
-            </Paragraph1>
-            <Paragraph1 className="text-xs text-gray-500">
-              {profile?.ninDocumentUrl
-                ? "Document uploaded"
-                : "No NIN document uploaded yet"}
-            </Paragraph1>
-          </div>
-        </div>
-
-        <div className="sm:self-center">
-          <VerificationBadge status={ninStatus} />
-        </div>
-      </div>
-
-      {/* NIN Upload Controls */}
+      {/* ID Upload Controls */}
       <div className="mb-6 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4">
         <Paragraph1 className="mb-2 text-sm font-medium text-gray-900">
-          Upload NIN Document
+          {profile?.nin ? "Edit ID Information" : "Upload ID Document"}
         </Paragraph1>
         <Paragraph1 className="mb-3 text-xs text-gray-600">
-          Upload your NIN document for verification. Accepted formats: JPEG,
-          PNG, PDF. Maximum size 5MB.
+          {profile?.nin
+            ? "Update your ID number or upload a new document"
+            : "Accepted formats: JPEG, PNG, or PDF. Maximum size 5MB."}
         </Paragraph1>
-        <div className="mb-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div className="mb-4">
+          <label
+            htmlFor="renter-id-document-type"
+            className="mb-1 block text-xs font-medium text-gray-700"
+          >
+            Document type
+          </label>
+          <select
+            id="renter-id-document-type"
+            value={documentType}
+            onChange={(e) => setDocumentType(e.target.value)}
+            disabled={uploadIdDocumentMutation.isPending}
+            className="w-full max-w-lg rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-black focus:outline-none focus:ring-1 focus:ring-black disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label="ID document type"
+          >
+            {ID_TYPE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="mb-3 flex flex-col gap-4">
           <div>
             <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
-              ID Number (required)
+              ID Number
             </Paragraph1>
             <input
               type="text"
               value={ninNumber}
               onChange={(e) => setNinNumber(e.target.value)}
               className="w-full rounded-md border border-gray-300 p-2 text-sm"
-              placeholder="Enter 11-digit ID number"
+              placeholder="Enter ID number"
             />
+            {profile?.nin && (
+              <Paragraph1 className="mt-1 text-xs text-gray-500">
+                Current ID: {profile.nin}
+              </Paragraph1>
+            )}
           </div>
           <div>
             <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
-              NIN Document
+              ID Document
             </Paragraph1>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,application/pdf"
-              onChange={handleNinFileChange}
-              className="w-full text-xs text-gray-700"
-            />
+            {/* Dropbox-style file upload area */}
+            <div className="relative">
+              <div
+                className={`border-2 border-dashed rounded-lg p-8 py-12 bg-white transition cursor-pointer text-center flex flex-col items-center justify-center ${
+                  isDraggingNin
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-300 hover:bg-gray-50"
+                }`}
+                onDragOver={handleNinDragOver}
+                onDragLeave={handleNinDragLeave}
+                onDrop={handleNinDrop}
+              >
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,application/pdf"
+                  onChange={handleNinFileChange}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                  disabled={uploadIdDocumentMutation.isPending}
+                />
+                {uploadIdDocumentMutation.isPending ? (
+                  <>
+                    <Paragraph1 className="text-sm text-blue-600 font-medium">
+                      ⏳ Uploading...
+                    </Paragraph1>
+                  </>
+                ) : ninFile ? (
+                  <>
+                    <Paragraph1 className="text-sm text-green-600 font-medium">
+                      ✓ {ninFile.name}
+                    </Paragraph1>
+                    <Paragraph1 className="text-xs text-gray-500 mt-2">
+                      {(ninFile.size / 1024 / 1024).toFixed(2)} MB
+                    </Paragraph1>
+                  </>
+                ) : (
+                  <>
+                    <HiOutlinePlus className="w-10 h-10 text-gray-400 mb-2" />
+                    <Paragraph1 className="text-sm text-gray-600 font-medium">
+                      Click to upload or drag file
+                    </Paragraph1>
+                    <Paragraph1 className="text-xs text-gray-400 mt-1">
+                      PNG, JPEG or PDF • Max 5MB
+                    </Paragraph1>
+                  </>
+                )}
+              </div>
+            </div>
+            {profile?.ninDocumentUrl && (
+              <Paragraph1 className="mt-1 text-xs text-green-600">
+                ✓ Document already uploaded
+              </Paragraph1>
+            )}
           </div>
         </div>
         {ninError && (
@@ -284,68 +432,128 @@ const AccountVerificationsForm: React.FC = () => {
           disabled={uploadIdDocumentMutation.isPending}
           className="mt-1 inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {uploadIdDocumentMutation.isPending ? "Uploading..." : "Upload NIN"}
+          {uploadIdDocumentMutation.isPending ? "Uploading..." : "Upload ID"}
         </button>
       </div>
 
-      {/* Bank Verification Section */}
+      {/* Bank Verification */}
       <Paragraph1 className="text-lg font-bold text-gray-900 mb-4">
         Bank Verification Number
       </Paragraph1>
 
-      {!bvnNumber && bvnStatus === "Pending" && (
+      {verificationStatus !== "Verified" && (
         <div className="mb-4 p-4 bg-amber-50 border border-amber-300 rounded-lg">
           <Paragraph1 className="text-sm text-amber-900 font-medium">
-            ⚠️ Important: Provide your correct BVN
+            ⚠️ Important: Add your correct BVN
           </Paragraph1>
           <Paragraph1 className="text-xs text-amber-800 mt-2">
-            Please ensure the BVN you enter is accurate and correct. An
-            incorrect BVN will:
+            A correct BVN is essential for your account. Without it, you will:
           </Paragraph1>
           <ul className="text-xs text-amber-800 mt-2 ml-4 list-disc space-y-1">
-            <li>Prevent you from making purchases on the platform</li>
-            <li>Hinder your account verification process</li>
-            <li>Delay access to all platform features</li>
+            <li>Not be able to make purchases on the platform</li>
+            <li>Experience delays in the verification process</li>
+            <li>Have limited access to platform features</li>
           </ul>
           <Paragraph1 className="text-xs text-amber-800 mt-2">
-            Double-check your BVN before submitting to avoid these issues.
+            Please ensure you provide a valid and accurate BVN to proceed.
           </Paragraph1>
         </div>
       )}
 
       <div className="mb-6">
         <div className="flex justify-between items-center mb-2">
-          <Paragraph1 className="text-base text-gray-900">BVN</Paragraph1>
+          <Paragraph1 className="text-base text-gray-900">
+            {profile?.bvn ? "Update BVN" : "Bank Verification Number (BVN)"}
+          </Paragraph1>
         </div>
-        <div className="flex gap-4">
-          <input
-            type="text"
-            value={bvnNumber}
-            onChange={(e) => setBvnNumber(e.target.value)}
-            placeholder="Enter 11-digit BVN"
-            className="flex-1 rounded-lg border border-gray-300 p-3 text-sm"
-          />
-          <VerificationBadge status={bvnStatus} />
+        <div className="border bg-gray-50 border-gray-300 rounded-lg flex flex-col md:flex-row justify-between items-center p-4 gap-2">
+          {/* If verification is verified, show masked value. If not verified, allow BVN input and submission */}
+          {verificationStatus === "Verified" ? (
+            <>
+              <div className="w-full">
+                <input
+                  type="text"
+                  value={
+                    profile?.bvn
+                      ? `${profile.bvn.slice(0, 4)}****${profile.bvn.slice(-3)}`
+                      : "BVN Verified"
+                  }
+                  readOnly
+                  className="w-full outline-none text-lg tracking-wider text-gray-700 font-mono bg-gray-50"
+                />
+                {profile?.bvn && (
+                  <Paragraph1 className="text-xs text-gray-500 mt-2">
+                    Your BVN is encrypted and secure. Only partial digits shown.
+                  </Paragraph1>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <input
+                type="text"
+                value={bvnNumber}
+                onChange={(e) =>
+                  setBvnNumber(e.target.value.replace(/\D/g, ""))
+                }
+                placeholder={
+                  profile?.bvn
+                    ? `Current: ${profile.bvn}`
+                    : "Enter your 11-digit BVN"
+                }
+                maxLength={11}
+                className="w-full outline-none text-lg tracking-wider text-gray-700 font-mono bg-white border border-gray-300 rounded-md px-3 py-2"
+                disabled={updateVerificationMutation.isPending}
+              />
+              <button
+                type="button"
+                className="ml-0 md:ml-4 mt-2 md:mt-0 px-4 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                disabled={
+                  updateVerificationMutation.isPending ||
+                  !bvnNumber ||
+                  bvnNumber.length !== 11
+                }
+                onClick={() => {
+                  setBvnError(null);
+                  if (!bvnNumber || bvnNumber.length !== 11) {
+                    setBvnError("Please enter a valid 11-digit BVN.");
+                    return;
+                  }
+                  updateVerificationMutation.mutate(
+                    { bvn: bvnNumber },
+                    {
+                      onSuccess: () => {
+                        toast.success("BVN submitted successfully!");
+                        setBvnNumber("");
+                      },
+                      onError: (error: any) => {
+                        toast.error(
+                          error?.message ||
+                            "Failed to submit BVN. Please try again.",
+                        );
+                        setBvnError(
+                          error?.message ||
+                            "Failed to submit BVN. Please try again.",
+                        );
+                      },
+                    },
+                  );
+                }}
+              >
+                {updateVerificationMutation.isPending
+                  ? "Submitting..."
+                  : "Submit BVN"}
+              </button>
+            </>
+          )}
         </div>
         {bvnError && (
-          <Paragraph1 className="mt-2 text-xs text-red-600">
+          <Paragraph1 className="text-xs text-red-600 mt-2">
             {bvnError}
           </Paragraph1>
         )}
-        <div className="flex gap-2 mt-3">
-          <button
-            type="button"
-            onClick={handleSubmitBvn}
-            disabled={updateVerificationMutation.isPending}
-            className="px-4 py-2 bg-black text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {updateVerificationMutation.isPending
-              ? "Submitting..."
-              : "Submit BVN"}
-          </button>
-        </div>
         <Paragraph1 className="text-xs text-gray-500 mt-2">
-          Enter your 11-digit Bank Verification Number for verification
+          Your BVN is encrypted and secure. Only the last 4 digits are shown.
         </Paragraph1>
       </div>
 
