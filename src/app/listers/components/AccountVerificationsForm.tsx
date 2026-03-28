@@ -6,6 +6,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import type React from "react";
+import { toast } from "sonner";
 import { useMemo, useState } from "react";
 import {
   HiOutlineDocumentText,
@@ -257,14 +258,28 @@ function EmergencyContactBlock({
           type="button"
           disabled={updateEmergencyContactMutation.isPending}
           onClick={() => {
-            updateEmergencyContactMutation.mutate({
-              fullName: emergencyForm.fullName,
-              email: emergencyForm.email,
-              phone: emergencyForm.phone,
-              relationship: emergencyForm.relationship,
-              city: emergencyForm.city,
-              state: emergencyForm.state,
-            });
+            updateEmergencyContactMutation.mutate(
+              {
+                fullName: emergencyForm.fullName,
+                email: emergencyForm.email,
+                phone: emergencyForm.phone,
+                relationship: emergencyForm.relationship,
+                city: emergencyForm.city,
+                state: emergencyForm.state,
+              },
+              {
+                onSuccess: () => {
+                  toast.success("Emergency contact saved successfully!");
+                },
+                onError: (error: unknown) => {
+                  const message =
+                    error instanceof Error
+                      ? error.message
+                      : "Failed to save emergency contact";
+                  toast.error(message);
+                },
+              },
+            );
           }}
         >
           {updateEmergencyContactMutation.isPending
