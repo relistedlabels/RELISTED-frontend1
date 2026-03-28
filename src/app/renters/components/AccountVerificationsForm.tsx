@@ -6,6 +6,7 @@ import {
   HiOutlineEnvelope,
   HiOutlineHome,
   HiOutlinePhone,
+  HiOutlinePlus,
   HiOutlineUser,
   HiOutlineUsers,
 } from "react-icons/hi2";
@@ -48,10 +49,6 @@ const AccountVerificationsForm: React.FC = () => {
   const queryClient = useQueryClient();
   const { data: profile, isLoading } = useProfile();
 
-  console.log("🔍 DEBUG - Profile data:", profile);
-  console.log("🔍 DEBUG - Profile nin:", profile?.nin);
-  console.log("🔍 DEBUG - Profile bvn:", profile?.bvn);
-
   const { data: statusData } = useVerificationsStatus();
   const submitBvnMutation = useSubmitBvn();
   const updateVerificationMutation = useUpdateVerificationDetails();
@@ -86,17 +83,17 @@ const AccountVerificationsForm: React.FC = () => {
     }
   }, [emergencyContact]);
 
-  // ✅ Sync NIN and BVN from profile on load
+  // ✅ Sync NIN and BVN when profile data loads
   useEffect(() => {
     if (profile) {
-      console.log("🔄 Loading NIN and BVN from profile:", {
+      console.log("🔄 Profile loaded, syncing NIN and BVN:", {
         nin: profile.nin,
         bvn: profile.bvn,
       });
       setNinNumber(profile.nin || "");
       setBvnNumber(profile.bvn || "");
     }
-  }, [profile]);
+  }, [profile?.nin, profile?.bvn]);
 
   const handleEmergencyChange = (
     field: keyof typeof emergencyForm,
@@ -106,18 +103,19 @@ const AccountVerificationsForm: React.FC = () => {
   };
 
   const ninStatusRaw =
-    statusData?.data?.verifications?.nin?.status ?? "pending";
+    statusData?.data?.verifications?.validId?.status ?? "not_verified";
   const bvnStatusRaw =
-    statusData?.data?.verifications?.bvn?.status ?? "pending";
+    statusData?.data?.verifications?.bvn?.status ?? "not_verified";
 
   const mapStatus = (
     status: string | undefined,
   ): "Verified" | "Pending" | "Failed" => {
     const lower = (status || "").toLowerCase();
     if (lower === "verified") return "Verified";
+    if (lower === "not_verified") return "Failed";
     if (lower === "pending") return "Pending";
-    if (lower === "failed" || lower === "not_verified") return "Failed";
-    return "Pending";
+    if (lower === "failed") return "Failed";
+    return "Failed";
   };
 
   const ninStatus = mapStatus(ninStatusRaw);
@@ -136,11 +134,12 @@ const AccountVerificationsForm: React.FC = () => {
 
   const verificationStatus = getOverallStatus();
 
-  const [ninNumber, setNinNumber] = useState("");
+  const [ninNumber, setNinNumber] = useState(profile?.nin || "");
   const [ninFile, setNinFile] = useState<File | null>(null);
   const [ninError, setNinError] = useState<string | null>(null);
+  const [isDraggingNin, setIsDraggingNin] = useState(false);
 
-  const [bvnNumber, setBvnNumber] = useState("");
+  const [bvnNumber, setBvnNumber] = useState(profile?.bvn || "");
   const [bvnError, setBvnError] = useState<string | null>(null);
 
   const handleNinFileChange: React.ChangeEventHandler<HTMLInputElement> = (
@@ -149,6 +148,25 @@ const AccountVerificationsForm: React.FC = () => {
     const file = event.target.files?.[0] ?? null;
     setNinFile(file);
     setNinError(null);
+  };
+
+  const handleNinDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingNin(true);
+  };
+
+  const handleNinDragLeave = () => {
+    setIsDraggingNin(false);
+  };
+
+  const handleNinDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingNin(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      setNinFile(file);
+      setNinError(null);
+    }
   };
 
   const handleUploadNin = () => {
@@ -286,12 +304,53 @@ const AccountVerificationsForm: React.FC = () => {
             <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
               ID Document
             </Paragraph1>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,application/pdf"
-              onChange={handleNinFileChange}
-              className="w-full text-xs text-gray-700"
-            />
+            {/* Dropbox-style file upload area */}
+            <div className="relative">
+              <div
+                className={`border-2 border-dashed rounded-lg p-8 py-12 bg-white transition cursor-pointer text-center flex flex-col items-center justify-center ${
+                  isDraggingNin
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-300 hover:bg-gray-50"
+                }`}
+                onDragOver={handleNinDragOver}
+                onDragLeave={handleNinDragLeave}
+                onDrop={handleNinDrop}
+              >
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,application/pdf"
+                  onChange={handleNinFileChange}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                  disabled={uploadIdDocumentMutation.isPending}
+                />
+                {uploadIdDocumentMutation.isPending ? (
+                  <>
+                    <Paragraph1 className="text-sm text-blue-600 font-medium">
+                      ⏳ Uploading...
+                    </Paragraph1>
+                  </>
+                ) : ninFile ? (
+                  <>
+                    <Paragraph1 className="text-sm text-green-600 font-medium">
+                      ✓ {ninFile.name}
+                    </Paragraph1>
+                    <Paragraph1 className="text-xs text-gray-500 mt-2">
+                      {(ninFile.size / 1024 / 1024).toFixed(2)} MB
+                    </Paragraph1>
+                  </>
+                ) : (
+                  <>
+                    <HiOutlinePlus className="w-10 h-10 text-gray-400 mb-2" />
+                    <Paragraph1 className="text-sm text-gray-600 font-medium">
+                      Click to upload or drag file
+                    </Paragraph1>
+                    <Paragraph1 className="text-xs text-gray-400 mt-1">
+                      PNG, JPEG or PDF • Max 5MB
+                    </Paragraph1>
+                  </>
+                )}
+              </div>
+            </div>
             {profile?.ninDocumentUrl && (
               <Paragraph1 className="mt-1 text-xs text-green-600">
                 ✓ Document already uploaded

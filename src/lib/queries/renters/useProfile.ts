@@ -6,14 +6,13 @@ export const useProfile = () =>
     queryKey: ["renters", "profile"],
     queryFn: async () => {
       const response = await rentersApi.getProfile();
-      console.log("📦 useProfile - Full API response:", response);
-      console.log("📦 useProfile - response.data:", response.data);
-      console.log(
-        "📦 useProfile - response.data.profile:",
-        response.data?.profile,
-      );
-      return response.data?.profile || response.data;
+      console.log("✅ Full API response:", response);
+      const profile = response.data?.profile;
+      console.log("✅ Extracted profile:", profile);
+      console.log("✅ Profile nin:", profile?.nin);
+      console.log("✅ Profile bvn:", profile?.bvn);
+      return profile;
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 10 * 60 * 1000,
     retry: 1,
   });

@@ -11,6 +11,7 @@ import {
   HiOutlineEnvelope,
   HiOutlineHome,
   HiOutlinePhone,
+  HiOutlinePlus,
   HiOutlineUser,
   HiOutlineUsers,
 } from "react-icons/hi2";
@@ -65,6 +66,7 @@ const AccountVerificationsForm: React.FC = () => {
   const [ninNumber, setNinNumber] = useState(profile?.nin || "");
   const [ninFile, setNinFile] = useState<File | null>(null);
   const [ninError, setNinError] = useState<string | null>(null);
+  const [isDraggingNin, setIsDraggingNin] = useState(false);
 
   const [bvnInput, setBvnInput] = useState(profile?.bvn || "");
   const [bvnError, setBvnError] = useState<string | null>(null);
@@ -114,6 +116,25 @@ const AccountVerificationsForm: React.FC = () => {
     setNinError(null);
   };
 
+  const handleNinDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingNin(true);
+  };
+
+  const handleNinDragLeave = () => {
+    setIsDraggingNin(false);
+  };
+
+  const handleNinDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingNin(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      setNinFile(file);
+      setNinError(null);
+    }
+  };
+
   const handleUploadNin = () => {
     if (!ninFile) {
       setNinError("Please select an ID document to upload.");
@@ -153,7 +174,7 @@ const AccountVerificationsForm: React.FC = () => {
 
   return (
     <div className="font-sans w-full">
-      <div className=" flex justify-between items-center"> 
+      <div className=" flex justify-between items-center">
         {" "}
         <Paragraph1 className="mb-6 uppercase font-bold">
           Verifications
@@ -167,8 +188,6 @@ const AccountVerificationsForm: React.FC = () => {
       <Paragraph1 className="text-lg text-gray-900 mb-4">
         Identification
       </Paragraph1>
-
-      
 
       {/* ID Upload Controls */}
       <div className="mb-6 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4">
@@ -202,12 +221,53 @@ const AccountVerificationsForm: React.FC = () => {
             <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
               ID Document
             </Paragraph1>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,application/pdf"
-              onChange={handleNinFileChange}
-              className="w-full text-xs text-gray-700"
-            />
+            {/* Dropbox-style file upload area */}
+            <div className="relative">
+              <div
+                className={`border-2 border-dashed rounded-lg p-8 py-12 bg-white transition cursor-pointer text-center flex flex-col items-center justify-center ${
+                  isDraggingNin
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-300 hover:bg-gray-50"
+                }`}
+                onDragOver={handleNinDragOver}
+                onDragLeave={handleNinDragLeave}
+                onDrop={handleNinDrop}
+              >
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,application/pdf"
+                  onChange={handleNinFileChange}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                  disabled={uploadNinMutation.isPending}
+                />
+                {uploadNinMutation.isPending ? (
+                  <>
+                    <Paragraph1 className="text-sm text-blue-600 font-medium">
+                      ⏳ Uploading...
+                    </Paragraph1>
+                  </>
+                ) : ninFile ? (
+                  <>
+                    <Paragraph1 className="text-sm text-green-600 font-medium">
+                      ✓ {ninFile.name}
+                    </Paragraph1>
+                    <Paragraph1 className="text-xs text-gray-500 mt-2">
+                      {(ninFile.size / 1024 / 1024).toFixed(2)} MB
+                    </Paragraph1>
+                  </>
+                ) : (
+                  <>
+                    <HiOutlinePlus className="w-10 h-10 text-gray-400 mb-2" />
+                    <Paragraph1 className="text-sm text-gray-600 font-medium">
+                      Click to upload or drag file
+                    </Paragraph1>
+                    <Paragraph1 className="text-xs text-gray-400 mt-1">
+                      PNG, JPEG or PDF • Max 5MB
+                    </Paragraph1>
+                  </>
+                )}
+              </div>
+            </div>
             {profile?.ninUploadId && (
               <Paragraph1 className="mt-1 text-xs text-green-600">
                 ✓ Document already uploaded
@@ -328,7 +388,6 @@ const AccountVerificationsForm: React.FC = () => {
               </button>
             </>
           )}
-         
         </div>
         {bvnError && (
           <Paragraph1 className="text-xs text-red-600 mt-2">
