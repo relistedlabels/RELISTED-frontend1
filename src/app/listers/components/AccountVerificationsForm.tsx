@@ -4,18 +4,19 @@
 // POST /api/listers/verifications/nin, POST /api/listers/verifications/bvn, PUT /api/listers/profile (NIN),
 // PUT /api/listers/verifications/emergency-contact
 
+import { useQueryClient } from "@tanstack/react-query";
 import type React from "react";
 import { useMemo, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   HiOutlineDocumentText,
   HiOutlineEnvelope,
-  HiOutlineHome,
   HiOutlinePhone,
   HiOutlinePlus,
   HiOutlineUser,
   HiOutlineUsers,
 } from "react-icons/hi2";
+import { CityLGASelect } from "@/app/auth/profile-setup/components/CityLGASelect";
+import { StateSelect } from "@/app/auth/profile-setup/components/StateSelect";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useSubmitBvn } from "@/lib/mutations/listers";
 import { useUpdateEmergencyContact } from "@/lib/mutations/listers/useUpdateEmergencyContact";
@@ -107,6 +108,8 @@ type EmergencyFormState = {
   email: string;
   phone: string;
   relationship: string;
+  city: string;
+  state: string;
 };
 
 function emergencyFormFromContact(
@@ -118,6 +121,8 @@ function emergencyFormFromContact(
     email: ec?.email || "",
     phone: ec?.phoneNumber || "",
     relationship: ec?.relationship || "",
+    city: ec?.city || "",
+    state: ec?.state || "",
   };
 }
 
@@ -127,9 +132,7 @@ function EmergencyContactBlock({
   updateEmergencyContactMutation,
 }: {
   contact: ProfileEmergencyContact | undefined;
-  updateEmergencyContactMutation: ReturnType<
-    typeof useUpdateEmergencyContact
-  >;
+  updateEmergencyContactMutation: ReturnType<typeof useUpdateEmergencyContact>;
 }) {
   const [emergencyForm, setEmergencyForm] = useState<EmergencyFormState>(() =>
     emergencyFormFromContact(contact),
@@ -227,18 +230,23 @@ function EmergencyContactBlock({
         </div>
       </div>
 
-      <div className="mb-6">
-        <Paragraph1 className="mb-2 font-medium text-gray-900 text-sm">
-          Address (City, State)
-        </Paragraph1>
-        <div className="relative">
-          <HiOutlineHome className="top-1/2 left-3 absolute w-5 h-5 text-gray-400 -translate-y-1/2" />
-          <input
-            type="text"
-            value={emergencyAddress}
-            placeholder="Not provided yet"
-            readOnly
-            className="bg-gray-50 p-3 pl-10 border border-gray-300 rounded-lg w-full text-gray-700"
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div>
+          <Paragraph1 className="mb-2 font-medium text-gray-900 text-sm">
+            City/LGA
+          </Paragraph1>
+          <CityLGASelect
+            value={emergencyForm.city}
+            onChange={(city) => handleEmergencyChange("city", city)}
+          />
+        </div>
+        <div>
+          <Paragraph1 className="mb-2 font-medium text-gray-900 text-sm">
+            State
+          </Paragraph1>
+          <StateSelect
+            value={emergencyForm.state}
+            onChange={(state) => handleEmergencyChange("state", state)}
           />
         </div>
       </div>
@@ -254,6 +262,8 @@ function EmergencyContactBlock({
               email: emergencyForm.email,
               phone: emergencyForm.phone,
               relationship: emergencyForm.relationship,
+              city: emergencyForm.city,
+              state: emergencyForm.state,
             });
           }}
         >
@@ -281,7 +291,9 @@ const AccountVerificationsForm: React.FC = () => {
   const [ninNumber, setNinNumber] = useState("");
   const [ninFile, setNinFile] = useState<File | null>(null);
   const [ninError, setNinError] = useState<string | null>(null);
-  const [documentType, setDocumentType] = useState<string>(ID_TYPE_OPTIONS[0].value);
+  const [documentType, setDocumentType] = useState<string>(
+    ID_TYPE_OPTIONS[0].value,
+  );
   const [isDraggingNin, setIsDraggingNin] = useState(false);
 
   const [bvnInput, setBvnInput] = useState("");
@@ -555,8 +567,8 @@ const AccountVerificationsForm: React.FC = () => {
               ✓ Your ID has been verified
             </Paragraph1>
             <Paragraph1 className="mt-2 text-green-700 text-sm">
-              Your identification document is verified. You can still update your
-              ID from settings if needed.
+              Your identification document is verified. You can still update
+              your ID from settings if needed.
             </Paragraph1>
           </div>
         </div>

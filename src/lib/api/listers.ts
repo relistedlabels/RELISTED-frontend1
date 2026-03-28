@@ -1205,6 +1205,8 @@ export interface EmergencyContactPayload {
   email: string;
   phone: string;
   relationship: string;
+  city?: string;
+  state?: string;
 }
 
 export interface EmergencyContactResponse {
