@@ -8,6 +8,7 @@ export interface UserProfile {
   avatar: string;
   status: string;
   joinDate: string;
+  isVerified: boolean;
   walletBalance: number;
   totalRentals: number;
   activeDisputes: number;
