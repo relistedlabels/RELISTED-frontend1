@@ -121,15 +121,9 @@ const AccountVerificationsForm: React.FC = () => {
   const ninStatus = mapStatus(ninStatusRaw);
   const bvnStatus = mapStatus(bvnStatusRaw);
 
-  // Get overall verification status - if any verification is not verified, account is not verified
+  // Get overall verification status - only use BVN status
   const getOverallStatus = (): "Verified" | "Pending" | "Failed" => {
-    const statuses = [ninStatus, bvnStatus];
-    // If any is "failed", overall is failed
-    if (statuses.some((s) => s === "Failed")) return "Failed";
-    // If any is "pending", overall is pending
-    if (statuses.some((s) => s === "Pending")) return "Pending";
-    // All verified
-    return "Verified";
+    return bvnStatus;
   };
 
   const verificationStatus = getOverallStatus();
@@ -272,106 +266,126 @@ const AccountVerificationsForm: React.FC = () => {
         Identification
       </Paragraph1>
 
-      {/* ID Upload Controls */}
-      <div className="mb-6 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4">
-        <Paragraph1 className="mb-2 text-sm font-medium text-gray-900">
-          {profile?.nin ? "Edit ID Information" : "Upload ID Document"}
-        </Paragraph1>
-        <Paragraph1 className="mb-3 text-xs text-gray-600">
-          {profile?.nin
-            ? "Update your ID number or upload a new document"
-            : "Accepted formats: JPEG, PNG. Maximum size 5MB."}
-        </Paragraph1>
-        <div className="mb-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div>
-            <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
-              ID Number
-            </Paragraph1>
-            <input
-              type="text"
-              value={ninNumber}
-              onChange={(e) => setNinNumber(e.target.value)}
-              className="w-full rounded-md border border-gray-300 p-2 text-sm"
-              placeholder="Enter ID number"
-            />
-            {profile?.nin && (
-              <Paragraph1 className="mt-1 text-xs text-gray-500">
-                Current ID: {profile.nin}
+      {/* ID Upload Controls - Hide when verified */}
+      {verificationStatus !== "Verified" ? (
+        <div className="mb-6 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4">
+          <Paragraph1 className="mb-2 text-sm font-medium text-gray-900">
+            {profile?.nin ? "Edit ID Information" : "Upload ID Document"}
+          </Paragraph1>
+          <Paragraph1 className="mb-3 text-xs text-gray-600">
+            {profile?.nin
+              ? "Update your ID number or upload a new document"
+              : "Accepted formats: JPEG, PNG. Maximum size 5MB."}
+          </Paragraph1>
+          <div className="mb-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+            <div>
+              <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
+                ID Number
               </Paragraph1>
-            )}
-          </div>
-          <div>
-            <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
-              ID Document
-            </Paragraph1>
-            {/* Dropbox-style file upload area */}
-            <div className="relative">
-              <div
-                className={`border-2 border-dashed rounded-lg p-8 py-12 bg-white transition cursor-pointer text-center flex flex-col items-center justify-center ${
-                  isDraggingNin
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-300 hover:bg-gray-50"
-                }`}
-                onDragOver={handleNinDragOver}
-                onDragLeave={handleNinDragLeave}
-                onDrop={handleNinDrop}
-              >
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,application/pdf"
-                  onChange={handleNinFileChange}
-                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                  disabled={uploadIdDocumentMutation.isPending}
-                />
-                {uploadIdDocumentMutation.isPending ? (
-                  <>
-                    <Paragraph1 className="text-sm text-blue-600 font-medium">
-                      ⏳ Uploading...
-                    </Paragraph1>
-                  </>
-                ) : ninFile ? (
-                  <>
-                    <Paragraph1 className="text-sm text-green-600 font-medium">
-                      ✓ {ninFile.name}
-                    </Paragraph1>
-                    <Paragraph1 className="text-xs text-gray-500 mt-2">
-                      {(ninFile.size / 1024 / 1024).toFixed(2)} MB
-                    </Paragraph1>
-                  </>
-                ) : (
-                  <>
-                    <HiOutlinePlus className="w-10 h-10 text-gray-400 mb-2" />
-                    <Paragraph1 className="text-sm text-gray-600 font-medium">
-                      Click to upload or drag file
-                    </Paragraph1>
-                    <Paragraph1 className="text-xs text-gray-400 mt-1">
-                      PNG, JPEG or PDF • Max 5MB
-                    </Paragraph1>
-                  </>
-                )}
-              </div>
+              <input
+                type="text"
+                value={ninNumber}
+                onChange={(e) => setNinNumber(e.target.value)}
+                className="w-full rounded-md border border-gray-300 p-2 text-sm"
+                placeholder="Enter ID number"
+              />
+              {profile?.nin && (
+                <Paragraph1 className="mt-1 text-xs text-gray-500">
+                  Current ID: {profile.nin}
+                </Paragraph1>
+              )}
             </div>
-            {profile?.ninDocumentUrl && (
-              <Paragraph1 className="mt-1 text-xs text-green-600">
-                ✓ Document already uploaded
+            <div>
+              <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
+                ID Document
               </Paragraph1>
-            )}
+              {/* Dropbox-style file upload area */}
+              <div className="relative">
+                <div
+                  className={`border-2 border-dashed rounded-lg p-8 py-12 bg-white transition cursor-pointer text-center flex flex-col items-center justify-center ${
+                    isDraggingNin
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-300 hover:bg-gray-50"
+                  }`}
+                  onDragOver={handleNinDragOver}
+                  onDragLeave={handleNinDragLeave}
+                  onDrop={handleNinDrop}
+                >
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,application/pdf"
+                    onChange={handleNinFileChange}
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    disabled={uploadIdDocumentMutation.isPending}
+                  />
+                  {uploadIdDocumentMutation.isPending ? (
+                    <>
+                      <Paragraph1 className="text-sm text-blue-600 font-medium">
+                        ⏳ Uploading...
+                      </Paragraph1>
+                    </>
+                  ) : ninFile ? (
+                    <>
+                      <Paragraph1 className="text-sm text-green-600 font-medium">
+                        ✓ {ninFile.name}
+                      </Paragraph1>
+                      <Paragraph1 className="text-xs text-gray-500 mt-2">
+                        {(ninFile.size / 1024 / 1024).toFixed(2)} MB
+                      </Paragraph1>
+                    </>
+                  ) : (
+                    <>
+                      <HiOutlinePlus className="w-10 h-10 text-gray-400 mb-2" />
+                      <Paragraph1 className="text-sm text-gray-600 font-medium">
+                        Click to upload or drag file
+                      </Paragraph1>
+                      <Paragraph1 className="text-xs text-gray-400 mt-1">
+                        PNG, JPEG or PDF • Max 5MB
+                      </Paragraph1>
+                    </>
+                  )}
+                </div>
+              </div>
+              {profile?.ninDocumentUrl && (
+                <Paragraph1 className="mt-1 text-xs text-green-600">
+                  ✓ Document already uploaded
+                </Paragraph1>
+              )}
+            </div>
+          </div>
+          {ninError && (
+            <Paragraph1 className="mb-2 text-xs text-red-600">
+              {ninError}
+            </Paragraph1>
+          )}
+          <button
+            type="button"
+            onClick={handleUploadNin}
+            disabled={uploadIdDocumentMutation.isPending}
+            className="mt-1 inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {uploadIdDocumentMutation.isPending ? "Uploading..." : "Upload ID"}
+          </button>
+        </div>
+      ) : (
+        <div className="mb-6 p-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg flex items-start gap-4">
+          <div className="flex-shrink-0">
+            <div className="flex items-center justify-center h-12 w-12 rounded-lg bg-green-100">
+              <HiOutlineDocumentText className="h-6 w-6 text-green-600" />
+            </div>
+          </div>
+          <div className="flex-1">
+            <Paragraph1 className="text-base font-semibold text-green-900">
+              ✓ Your documents have been verified
+            </Paragraph1>
+            <Paragraph1 className="text-sm text-green-700 mt-2">
+              All your identification documents have been successfully verified.
+              Your account is now fully verified and you can access all platform
+              features without restrictions.
+            </Paragraph1>
           </div>
         </div>
-        {ninError && (
-          <Paragraph1 className="mb-2 text-xs text-red-600">
-            {ninError}
-          </Paragraph1>
-        )}
-        <button
-          type="button"
-          onClick={handleUploadNin}
-          disabled={uploadIdDocumentMutation.isPending}
-          className="mt-1 inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {uploadIdDocumentMutation.isPending ? "Uploading..." : "Upload ID"}
-        </button>
-      </div>
+      )}
 
       {/* Bank Verification */}
       <Paragraph1 className="text-lg font-bold text-gray-900 mb-4">
