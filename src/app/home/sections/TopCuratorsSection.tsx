@@ -2,8 +2,9 @@
 
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
 import { motion, useAnimation, useMotionValue } from "framer-motion";
+import React, { useEffect, useRef, useState } from "react";
+import { UserCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import {
   Header1Plus,
   Paragraph1,
@@ -11,7 +12,6 @@ import {
   ParagraphLink1,
 } from "@/common/ui/Text";
 import { useUsers } from "@/lib/queries/user/useUsers";
-import { UserCardSkeleton } from "@/common/ui/SkeletonLoaders";
 
 interface Curator {
   name: string;
@@ -105,7 +105,7 @@ export default function TopCuratorsSection() {
   }
 
   const curators: Curator[] = users
-    ? users
+    ? users.users
         .filter((user) => user.avatar)
         .map((user) => ({
           name: user.name || "Unknown Curator",

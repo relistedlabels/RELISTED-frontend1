@@ -1,38 +1,38 @@
 "use client";
 
-import React, { useState, type ReactNode } from "react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
-
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Bell,
-  Menu,
-  X,
+  ChevronDown,
   FileText,
-  Settings,
-  LogOut,
   HelpCircle,
-  Mail,
   LayoutDashboard,
+  LogOut,
+  type LucideIcon,
+  Mail,
+  Menu,
   Package,
+  Settings,
   ShoppingCart,
   Wallet,
-  LucideIcon,
-  ChevronDown,
+  X,
 } from "lucide-react";
-import { useUserStore } from "@/store/useUserStore";
-import { useLogout } from "@/lib/mutations";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import React, { type ReactNode, useState } from "react";
 import {
   Header2Plus,
   HeaderAny,
   Paragraph1,
   Paragraph3,
 } from "@/common/ui/Text";
+import { useLogout } from "@/lib/mutations";
+import { useBusinessProfile } from "@/lib/queries/listers/useBusinessProfile";
+import { useNotifications } from "@/lib/queries/notifications/useNotifications";
+import { useUserStore } from "@/store/useUserStore";
 import { UserProfileBadge } from "./UserProfileBadge";
 import { UserProfileBadge2 } from "./UserProfileBadge2";
-import { useBusinessProfile } from "@/lib/queries/listers/useBusinessProfile";
 
 // --------------------
 // Types
@@ -169,6 +169,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const logout = useLogout();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
+  const { data: notifications = [] } = useNotifications();
+  const hasUnreadNotifications = notifications.some(
+    (notif: any) => !notif.isRead,
+  );
+
   const handleConfirmLogout = () => {
     logout.mutate(undefined, {
       onSuccess: () => {
@@ -300,40 +305,15 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           <div className="hidden md:block">{/* <BrandHeader /> */}</div>
 
           <div className="flex items-center gap-4">
-            {/* Mock data for indicators */}
-            {/* In production, fetch these from API or context */}
-            {(() => {
-              const mockInbox = [
-                { id: "msg_1", read: false },
-                { id: "msg_2", read: true },
-              ];
-              const mockNotifications = [
-                { id: "notif_1", read: false },
-                { id: "notif_2", read: true },
-              ];
-              const hasUnreadInbox = mockInbox.some((msg) => !msg.read);
-              const hasUnreadNotifications = mockNotifications.some(
-                (notif) => !notif.read,
-              );
-              return (
-                <>
-                  <Link href="/listers/inbox" className="relative hidden">
-                    <Mail className="w-5 h-5 text-white cursor-pointer" />
-                    fh {/* Red dot indicator for unread inbox */}
-                    {hasUnreadInbox && (
-                      <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-                    )}
-                  </Link>
-                  <Link href="/listers/notifications" className="relative">
-                    <Bell className="w-5 h-5 text-white cursor-pointer" />
-                    {/* Red dot indicator for unread notifications */}
-                    {hasUnreadNotifications && (
-                      <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-                    )}
-                  </Link>
-                </>
-              );
-            })()}
+            <Link href="/listers/inbox" className="relative hidden">
+              <Mail className="w-5 h-5 text-white cursor-pointer" />
+            </Link>
+            <Link href="/listers/notifications" className="relative">
+              <Bell className="w-5 h-5 text-white cursor-pointer" />
+              {hasUnreadNotifications && (
+                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+              )}
+            </Link>
             <UserProfileBadge2 />
           </div>
         </header>
@@ -343,8 +323,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           {children}
         </main>
       </div>
-
-      {/* Motion Popup Modal - Rendered at top level */}
       <AnimatePresence>
         {showLogoutModal && (
           <>

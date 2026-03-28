@@ -1,24 +1,25 @@
-import React, { useMemo, useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import type React from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   HiOutlineDocumentText,
-  HiOutlineUser,
-  HiOutlinePhone,
-  HiOutlineUsers,
   HiOutlineHome,
+  HiOutlinePhone,
+  HiOutlineUser,
+  HiOutlineUsers,
 } from "react-icons/hi";
 import { HiOutlineEnvelope } from "react-icons/hi2";
+import { toast } from "sonner";
+import { CityLGASelect } from "@/app/auth/profile-setup/components/CityLGASelect";
+import { StateSelect } from "@/app/auth/profile-setup/components/StateSelect";
+import { Paragraph1 } from "@/common/ui/Text";
 import { useProfile } from "@/lib/queries/renters/useProfile";
 import {
-  useVerificationsStatus,
   useSubmitBvn,
   useUpdateVerificationDetails,
   useUploadIdDocument,
+  useVerificationsStatus,
 } from "@/lib/queries/renters/useVerifications";
-import { StateSelect } from "@/app/auth/profile-setup/components/StateSelect";
-import { CityLGASelect } from "@/app/auth/profile-setup/components/CityLGASelect";
-import { Paragraph1 } from "@/common/ui/Text";
-import { toast } from "sonner";
 
 // Sub-component for displaying a verification status on a document or field
 const VerificationBadge: React.FC<{
@@ -250,14 +251,14 @@ const AccountVerificationsForm: React.FC = () => {
         <div className="mb-3 grid grid-cols-1 gap-3 md:grid-cols-2">
           <div>
             <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
-              NIN Number (required)
+              ID Number (required)
             </Paragraph1>
             <input
               type="text"
               value={ninNumber}
               onChange={(e) => setNinNumber(e.target.value)}
               className="w-full rounded-md border border-gray-300 p-2 text-sm"
-              placeholder="Enter 11-digit NIN"
+              placeholder="Enter 11-digit ID number"
             />
           </div>
           <div>

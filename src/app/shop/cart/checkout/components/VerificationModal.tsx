@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { X, CheckCircle, Loader, Upload, FileText } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { CheckCircle, FileText, Loader, Upload, X } from "lucide-react";
+import type React from "react";
+import { useState } from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { useUpdateProfileMutation } from "@/lib/queries/renters/useUpdateProfileMutation";
 import { useUploadIdDocument } from "@/lib/queries/renters/useUploadIdDocument";
@@ -57,7 +58,7 @@ export default function VerificationModal({
 
   const handleVerify = async () => {
     if (!bvn.trim() || !nin.trim() || !idFile) {
-      setError("Please fill in all fields: BVN, NIN, and ID document");
+      setError("Please fill in all fields: BVN, ID Number, and ID document");
       return;
     }
 
@@ -188,7 +189,7 @@ export default function VerificationModal({
                     Verify Your Identity
                   </Paragraph3>
                   <Paragraph1 className="text-sm text-gray-600">
-                    Enter your BVN and NIN to verify your identity
+                    Enter your BVN and ID Number to verify your identity
                   </Paragraph1>
                 </div>
 
@@ -228,12 +229,12 @@ export default function VerificationModal({
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    NIN (National Identification Number)
+                    ID Number
                     <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="Enter your 11-digit NIN"
+                    placeholder="Enter your 11-digit ID number"
                     value={nin}
                     onChange={(e) => setNin(e.target.value.replace(/\D/g, ""))}
                     maxLength={11}

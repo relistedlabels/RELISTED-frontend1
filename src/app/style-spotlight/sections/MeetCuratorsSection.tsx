@@ -2,13 +2,13 @@
 
 "use client";
 
-import React, { useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import React, { useRef, useState } from "react";
+import { UserCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import { Header1Plus, Header2, Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { useUsers } from "@/lib/queries/user/useUsers";
-import { UserCardSkeleton } from "@/common/ui/SkeletonLoaders";
 
 export default function MeetCuratorsSection() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -108,7 +108,7 @@ export default function MeetCuratorsSection() {
           style={{ scrollBehavior: "smooth" }}
         >
           <div className="flex gap-6 sm:gap-8 pb-4 px-4 sm:px-0">
-            {users
+            {users?.users
               ?.filter((user) => user.avatar)
               .map((user) => (
                 <Link key={user.id} href={`/lister-profile/${user.id}`}>
