@@ -8,12 +8,14 @@ export const useUpdateListerProfileMutation = () => {
     mutationFn: (data: { bvn?: string; nin?: string }) =>
       updateListerProfile(data),
     onSuccess: () => {
-      // Invalidate profile and verification queries
       queryClient.invalidateQueries({
         queryKey: ["lister", "profile"],
       });
       queryClient.invalidateQueries({
         queryKey: ["lister", "verification", "status"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["listers", "verifications", "status"],
       });
       queryClient.invalidateQueries({
         queryKey: ["profile"],
