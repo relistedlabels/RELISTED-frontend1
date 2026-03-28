@@ -1128,7 +1128,7 @@ export interface VerificationStatusResponse {
 }
 
 export async function getVerificationStatus(): Promise<VerificationStatusResponse> {
-  return apiFetch("/api/listers/profile/verification/status", {
+  return apiFetch("/api/listers/verifications/status", {
     method: "GET",
   });
 }
