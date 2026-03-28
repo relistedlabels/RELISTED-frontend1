@@ -8,6 +8,7 @@ import type React from "react";
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  HiOutlineDocumentText,
   HiOutlineEnvelope,
   HiOutlineHome,
   HiOutlinePhone,
@@ -16,7 +17,6 @@ import {
   HiOutlineUsers,
 } from "react-icons/hi2";
 import { Paragraph1 } from "@/common/ui/Text";
-import { useSubmitBvn } from "@/lib/mutations/listers";
 import { useUpdateEmergencyContact } from "@/lib/mutations/listers/useUpdateEmergencyContact";
 import { useUploadNinDocument } from "@/lib/mutations/listers/useUploadNinDocument";
 import { useUpdateListerProfileMutation } from "@/lib/queries/listers/useUpdateListerProfileMutation";
@@ -267,8 +267,10 @@ const AccountVerificationsForm: React.FC = () => {
   const updateEmergencyContactMutation = useUpdateEmergencyContact();
   const uploadNinMutation = useUploadNinDocument();
   const uploadMutation = useUpload();
-  const submitBvnMutation = useSubmitBvn();
+  /** Profile PUT for ID number during document flow */
   const updateProfileMutation = useUpdateListerProfileMutation();
+  /** Separate mutation so BVN submit does not toggle ID upload loading state */
+  const updateBvnMutation = useUpdateListerProfileMutation();
 
   const [isUploadingFile, setIsUploadingFile] = useState(false);
 
@@ -396,6 +398,9 @@ const AccountVerificationsForm: React.FC = () => {
 
       setNinFile(null);
       await queryClient.invalidateQueries({ queryKey: ["profile"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["listers", "verifications", "status"],
+      });
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to upload document.";
@@ -442,128 +447,143 @@ const AccountVerificationsForm: React.FC = () => {
         <VerificationBadge status={idVerificationStatus} />
       </div>
 
-      {/* ID Upload Controls */}
-      <div className="mb-6 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4">
-        <Paragraph1 className="mb-2 text-sm font-medium text-gray-900">
-          {profile?.nin ? "Edit ID Information" : "Upload ID Document"}
-        </Paragraph1>
-        <Paragraph1 className="mb-3 text-xs text-gray-600">
-          {profile?.nin
-            ? "Update your ID number or upload a new document"
-            : "Accepted formats: JPEG, PNG, or PDF. Maximum size 5MB."}
-        </Paragraph1>
-        <div className="mb-4">
-          <label
-            htmlFor="lister-id-document-type"
-            className="mb-1 block text-xs font-medium text-gray-700"
-          >
-            Document type
-          </label>
-          <select
-            id="lister-id-document-type"
-            value={documentType}
-            onChange={(e) => setDocumentType(e.target.value)}
-            disabled={idUploadBusy}
-            className="w-full max-w-lg rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-black focus:outline-none focus:ring-1 focus:ring-black disabled:cursor-not-allowed disabled:opacity-50"
-            aria-label="ID document type"
-          >
-            {ID_TYPE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="mb-3 flex flex-col gap-4">
-          <div>
-            <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
-              ID Number
-            </Paragraph1>
-            <input
-              type="text"
-              value={ninNumber}
-              onChange={(e) => setNinNumber(e.target.value)}
-              className="w-full rounded-md border border-gray-300 p-2 text-sm"
-              placeholder="Enter ID number"
-            />
-            {profile?.nin && (
-              <Paragraph1 className="mt-1 text-xs text-gray-500">
-                Current ID: {profile.nin}
-              </Paragraph1>
-            )}
+      {idVerificationStatus !== "Verified" ? (
+        <div className="mb-6 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4">
+          <Paragraph1 className="mb-2 text-sm font-medium text-gray-900">
+            {profile?.nin ? "Edit ID Information" : "Upload ID Document"}
+          </Paragraph1>
+          <Paragraph1 className="mb-3 text-xs text-gray-600">
+            {profile?.nin
+              ? "Update your ID number or upload a new document"
+              : "Accepted formats: JPEG, PNG, or PDF. Maximum size 5MB."}
+          </Paragraph1>
+          <div className="mb-4">
+            <label
+              htmlFor="lister-id-document-type"
+              className="mb-1 block text-xs font-medium text-gray-700"
+            >
+              Document type
+            </label>
+            <select
+              id="lister-id-document-type"
+              value={documentType}
+              onChange={(e) => setDocumentType(e.target.value)}
+              disabled={idUploadBusy}
+              className="w-full max-w-lg rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-black focus:outline-none focus:ring-1 focus:ring-black disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="ID document type"
+            >
+              {ID_TYPE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
           </div>
-          <div>
-            <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
-              ID Document
-            </Paragraph1>
-            {/* Dropbox-style file upload area */}
-            <div className="relative">
-              <div
-                className={`border-2 border-dashed rounded-lg p-8 py-12 bg-white transition cursor-pointer text-center flex flex-col items-center justify-center ${
-                  isDraggingNin
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-300 hover:bg-gray-50"
-                }`}
-                onDragOver={handleNinDragOver}
-                onDragLeave={handleNinDragLeave}
-                onDrop={handleNinDrop}
-              >
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,application/pdf"
-                  onChange={handleNinFileChange}
-                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                  disabled={idUploadBusy}
-                />
-                {idUploadBusy ? (
-                  <>
-                    <Paragraph1 className="text-sm text-blue-600 font-medium">
+          <div className="mb-3 flex flex-col gap-4">
+            <div>
+              <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
+                ID Number
+              </Paragraph1>
+              <input
+                type="text"
+                value={ninNumber}
+                onChange={(e) => setNinNumber(e.target.value)}
+                className="w-full rounded-md border border-gray-300 p-2 text-sm"
+                placeholder="Enter ID number"
+              />
+              {profile?.nin && (
+                <Paragraph1 className="mt-1 text-xs text-gray-500">
+                  Current ID: {profile.nin}
+                </Paragraph1>
+              )}
+            </div>
+            <div>
+              <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
+                ID Document
+              </Paragraph1>
+              <div className="relative">
+                <div
+                  className={`border-2 border-dashed rounded-lg p-8 py-12 bg-white transition cursor-pointer text-center flex flex-col items-center justify-center ${
+                    isDraggingNin
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-300 hover:bg-gray-50"
+                  }`}
+                  onDragOver={handleNinDragOver}
+                  onDragLeave={handleNinDragLeave}
+                  onDrop={handleNinDrop}
+                >
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,application/pdf"
+                    onChange={handleNinFileChange}
+                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    disabled={idUploadBusy}
+                  />
+                  {idUploadBusy ? (
+                    <Paragraph1 className="text-sm font-medium text-blue-600">
                       ⏳ Uploading...
                     </Paragraph1>
-                  </>
-                ) : ninFile ? (
-                  <>
-                    <Paragraph1 className="text-sm text-green-600 font-medium">
-                      ✓ {ninFile.name}
-                    </Paragraph1>
-                    <Paragraph1 className="text-xs text-gray-500 mt-2">
-                      {(ninFile.size / 1024 / 1024).toFixed(2)} MB
-                    </Paragraph1>
-                  </>
-                ) : (
-                  <>
-                    <HiOutlinePlus className="w-10 h-10 text-gray-400 mb-2" />
-                    <Paragraph1 className="text-sm text-gray-600 font-medium">
-                      Click to upload or drag file
-                    </Paragraph1>
-                    <Paragraph1 className="text-xs text-gray-400 mt-1">
-                      PNG, JPEG or PDF • Max 5MB
-                    </Paragraph1>
-                  </>
-                )}
+                  ) : ninFile ? (
+                    <>
+                      <Paragraph1 className="text-sm font-medium text-green-600">
+                        ✓ {ninFile.name}
+                      </Paragraph1>
+                      <Paragraph1 className="mt-2 text-xs text-gray-500">
+                        {(ninFile.size / 1024 / 1024).toFixed(2)} MB
+                      </Paragraph1>
+                    </>
+                  ) : (
+                    <>
+                      <HiOutlinePlus className="mb-2 h-10 w-10 text-gray-400" />
+                      <Paragraph1 className="text-sm font-medium text-gray-600">
+                        Click to upload or drag file
+                      </Paragraph1>
+                      <Paragraph1 className="mt-1 text-xs text-gray-400">
+                        PNG, JPEG or PDF • Max 5MB
+                      </Paragraph1>
+                    </>
+                  )}
+                </div>
               </div>
+              {profile?.ninUploadId && (
+                <Paragraph1 className="mt-1 text-xs text-green-600">
+                  ✓ Document already uploaded
+                </Paragraph1>
+              )}
             </div>
-            {profile?.ninUploadId && (
-              <Paragraph1 className="mt-1 text-xs text-green-600">
-                ✓ Document already uploaded
-              </Paragraph1>
-            )}
+          </div>
+          {ninError && (
+            <Paragraph1 className="mb-2 text-xs text-red-600">
+              {ninError}
+            </Paragraph1>
+          )}
+          <button
+            type="button"
+            onClick={handleUploadNin}
+            disabled={idUploadBusy}
+            className="mt-1 inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {idUploadBusy ? "Uploading..." : "Upload ID"}
+          </button>
+        </div>
+      ) : (
+        <div className="mb-6 flex items-start gap-4 rounded-lg border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 p-6">
+          <div className="shrink-0">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
+              <HiOutlineDocumentText className="h-6 w-6 text-green-600" />
+            </div>
+          </div>
+          <div className="flex-1">
+            <Paragraph1 className="text-base font-semibold text-green-900">
+              ✓ Your ID has been verified
+            </Paragraph1>
+            <Paragraph1 className="mt-2 text-sm text-green-700">
+              Your identification document is verified. You can still update your
+              ID from settings if needed.
+            </Paragraph1>
           </div>
         </div>
-        {ninError && (
-          <Paragraph1 className="mb-2 text-xs text-red-600">
-            {ninError}
-          </Paragraph1>
-        )}
-        <button
-          type="button"
-          onClick={handleUploadNin}
-          disabled={idUploadBusy}
-          className="mt-1 inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {idUploadBusy ? "Uploading..." : "Upload ID"}
-        </button>
-      </div>
+      )}
 
       {/* Bank Verification */}
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
@@ -632,13 +652,13 @@ const AccountVerificationsForm: React.FC = () => {
                 }
                 maxLength={11}
                 className="w-full outline-none text-lg tracking-wider text-gray-700 font-mono bg-white border border-gray-300 rounded-md px-3 py-2"
-                disabled={submitBvnMutation.isPending}
+                disabled={updateBvnMutation.isPending}
               />
               <button
                 type="button"
                 className="ml-0 md:ml-4 mt-2 md:mt-0 px-4 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                 disabled={
-                  submitBvnMutation.isPending ||
+                  updateBvnMutation.isPending ||
                   !bvnInput ||
                   bvnInput.length !== 11
                 }
@@ -648,7 +668,7 @@ const AccountVerificationsForm: React.FC = () => {
                     setBvnError("Please enter a valid 11-digit BVN.");
                     return;
                   }
-                  submitBvnMutation.mutate(
+                  updateBvnMutation.mutate(
                     { bvn: bvnInput },
                     {
                       onSuccess: () => {
@@ -661,7 +681,7 @@ const AccountVerificationsForm: React.FC = () => {
                   );
                 }}
               >
-                {submitBvnMutation.isPending ? "Submitting..." : "Submit BVN"}
+                {updateBvnMutation.isPending ? "Submitting..." : "Submit BVN"}
               </button>
             </>
           )}

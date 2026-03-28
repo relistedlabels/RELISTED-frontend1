@@ -1120,9 +1120,10 @@ export interface VerificationStatusResponse {
   success: boolean;
   data: {
     verifications: {
-      nin: VerificationStatusDetails;
+      nin?: VerificationStatusDetails;
+      validId?: VerificationStatusDetails;
       bvn: VerificationStatusDetails;
-      businessRegistration: VerificationStatusDetails;
+      businessRegistration?: VerificationStatusDetails;
     };
   };
 }

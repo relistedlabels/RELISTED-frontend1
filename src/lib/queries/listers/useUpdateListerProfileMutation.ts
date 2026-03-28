@@ -13,7 +13,7 @@ export const useUpdateListerProfileMutation = () => {
         queryKey: ["lister", "profile"],
       });
       queryClient.invalidateQueries({
-        queryKey: ["lister", "verification", "status"],
+        queryKey: ["listers", "verifications", "status"],
       });
       queryClient.invalidateQueries({
         queryKey: ["profile"],
