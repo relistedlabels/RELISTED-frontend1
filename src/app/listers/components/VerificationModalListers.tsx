@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, CheckCircle, Loader, Upload, FileText } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { useSubmitBvn } from "@/lib/mutations/listers";
 import { useUpdateListerProfileMutation } from "@/lib/queries/listers/useUpdateListerProfileMutation";
 import { useUpload } from "@/lib/queries/renters/useUpload";
 import { useUploadNinDocument } from "@/lib/queries/listers/useUploadNinDocument";
@@ -35,6 +36,7 @@ export default function VerificationModalListers({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const updateListerProfileMutation = useUpdateListerProfileMutation();
+  const submitBvnMutation = useSubmitBvn();
   const uploadMutation = useUpload();
   const uploadNinMutation = useUploadNinDocument();
 
@@ -93,15 +95,16 @@ export default function VerificationModalListers({
       // Submit both requests in parallel
       const promises = [];
 
-      // 1. Update profile with BVN and NIN via PUT /api/listers/profile
+      promises.push(
+        submitBvnMutation.mutateAsync({ bvn: bvn.trim() }),
+      );
       promises.push(
         updateListerProfileMutation.mutateAsync({
-          bvn,
           nin,
         }),
       );
 
-      // 2. POST /api/listers/verifications/id (JSON: uploadId + idType)
+      // POST /api/listers/verifications/id (uploadId + idType)
       promises.push(
         uploadNinMutation.mutateAsync({
           uploadId,
@@ -109,7 +112,6 @@ export default function VerificationModalListers({
         }),
       );
 
-      // Wait for both to complete
       await Promise.all(promises);
 
       // Show success message

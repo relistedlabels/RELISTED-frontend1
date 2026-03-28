@@ -1,7 +1,7 @@
 "use client";
 
 // ENDPOINTS: GET /api/listers/verifications/status, GET /api/listers/verifications/documents,
-// POST /api/listers/verifications/nin, GET /api/listers/verifications/bvn,
+// POST /api/listers/verifications/nin, POST /api/listers/verifications/bvn, PUT /api/listers/profile (NIN),
 // PUT /api/listers/verifications/emergency-contact
 
 import type React from "react";
@@ -49,12 +49,17 @@ function mapApiStatusToUI(
   ) {
     return "Verified";
   }
+  // `not_verified` often means "not yet verified / in review" after upload — not a hard failure
   if (
-    s === "failed" ||
-    s === "not_verified" ||
-    s === "rejected" ||
-    s === "declined"
+    s === "pending" ||
+    s === "processing" ||
+    s === "in_review" ||
+    s === "submitted" ||
+    s === "not_verified"
   ) {
+    return "Pending";
+  }
+  if (s === "failed" || s === "rejected" || s === "declined") {
     return "Failed";
   }
   return "Pending";
@@ -268,8 +273,8 @@ const AccountVerificationsForm: React.FC = () => {
   const updateEmergencyContactMutation = useUpdateEmergencyContact();
   const uploadNinMutation = useUploadNinDocument();
   const uploadMutation = useUpload();
-  const submitBvnMutation = useSubmitBvn();
   const updateProfileMutation = useUpdateListerProfileMutation();
+  const submitBvnMutation = useSubmitBvn();
 
   const [isUploadingFile, setIsUploadingFile] = useState(false);
 
@@ -291,28 +296,6 @@ const AccountVerificationsForm: React.FC = () => {
   const bvnVerificationStatus = mapApiStatusToUI(
     statusData?.data?.verifications?.bvn?.status,
   );
-
-  // Overall: failed if any tracked check failed; pending if any not verified; else verified
-  const getOverallStatus = (): "Verified" | "Pending" | "Failed" => {
-    if (!statusData?.data?.verifications) return "Pending";
-
-    const v = statusData.data.verifications;
-    const idStatus =
-      v.validId?.status ?? v.nin?.status;
-    const buckets = [
-      mapApiStatusToUI(idStatus),
-      mapApiStatusToUI(v.bvn?.status),
-      v.businessRegistration?.status
-        ? mapApiStatusToUI(v.businessRegistration.status)
-        : null,
-    ].filter(Boolean) as ("Verified" | "Pending" | "Failed")[];
-
-    if (buckets.some((b) => b === "Failed")) return "Failed";
-    if (buckets.some((b) => b !== "Verified")) return "Pending";
-    return "Verified";
-  };
-
-  const verificationStatus = getOverallStatus();
 
   const assignIdFile = (file: File | null) => {
     if (!file) {
@@ -397,6 +380,9 @@ const AccountVerificationsForm: React.FC = () => {
 
       setNinFile(null);
       await queryClient.invalidateQueries({ queryKey: ["profile"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["listers", "verifications", "status"],
+      });
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to upload document.";
@@ -426,14 +412,9 @@ const AccountVerificationsForm: React.FC = () => {
 
   return (
     <div className="w-full font-sans">
-      <div className="flex justify-between items-center">
-        <Paragraph1 className="mb-6 font-bold uppercase">
-          Verifications
-        </Paragraph1>
-        <div className="sm:self-center">
-          <VerificationBadge status={verificationStatus} />
-        </div>
-      </div>
+      <Paragraph1 className="mb-6 font-bold uppercase">
+        Verifications
+      </Paragraph1>
 
       {/* Identification Section */}
       <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
@@ -589,7 +570,7 @@ const AccountVerificationsForm: React.FC = () => {
         <VerificationBadge status={bvnVerificationStatus} />
       </div>
 
-      {verificationStatus !== "Verified" && (
+      {bvnVerificationStatus !== "Verified" && (
         <div className="bg-amber-50 mb-4 p-4 border border-amber-300 rounded-lg">
           <Paragraph1 className="font-medium text-amber-900 text-sm">
             ⚠️ Important: Add your correct BVN
@@ -667,8 +648,14 @@ const AccountVerificationsForm: React.FC = () => {
                   submitBvnMutation.mutate(
                     { bvn: bvnInput },
                     {
-                      onSuccess: () => {
+                      onSuccess: async () => {
                         setBvnInput("");
+                        await queryClient.invalidateQueries({
+                          queryKey: ["listers", "verifications", "status"],
+                        });
+                        await queryClient.invalidateQueries({
+                          queryKey: ["profile"],
+                        });
                       },
                       onError: () => {
                         setBvnError("Failed to submit BVN. Please try again.");
