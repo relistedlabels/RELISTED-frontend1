@@ -1,11 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { uploadNinDocument } from "@/lib/api/listers";
+import { uploadIdDocument } from "@/lib/api/listers";
 
 export function useUploadNinDocument() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (formData: FormData) => uploadNinDocument(formData),
+    mutationFn: (data: { uploadId: string; idType: string }) =>
+      uploadIdDocument(data),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["listers", "verifications", "status"],

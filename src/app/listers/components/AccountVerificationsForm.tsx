@@ -20,6 +20,7 @@ import { useUploadNinDocument } from "@/lib/mutations/listers/useUploadNinDocume
 import { useBvnVerification } from "@/lib/queries/listers/useBvnVerification";
 import { useVerificationDocuments } from "@/lib/queries/listers/useVerificationDocuments";
 import { useVerificationStatus } from "@/lib/queries/listers/useVerificationStatus";
+import { useUpload } from "@/lib/queries/renters/useUpload";
 import { useProfile } from "@/lib/queries/user/useProfile";
 
 // Sub-component for displaying a verification status on a document or field
@@ -52,6 +53,10 @@ const AccountVerificationsForm: React.FC = () => {
   const { data: bvnData } = useBvnVerification();
   const updateEmergencyContactMutation = useUpdateEmergencyContact();
   const uploadNinMutation = useUploadNinDocument();
+  const uploadMutation = useUpload();
+
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const [uploadId, setUploadId] = useState<string | null>(null);
 
   const emergencyContact = profile?.emergencyContact;
 
@@ -94,9 +99,9 @@ const AccountVerificationsForm: React.FC = () => {
   const ninStatus = mapStatus(ninStatusRaw);
   const bvnStatus = mapStatus(bvnStatusRaw);
 
-  const [ninNumber, setNinNumber] = useState("");
   const [ninFile, setNinFile] = useState<File | null>(null);
   const [ninError, setNinError] = useState<string | null>(null);
+  const [documentType, setDocumentType] = useState("NIN");
 
   const handleNinFileChange: React.ChangeEventHandler<HTMLInputElement> = (
     event,
@@ -104,30 +109,49 @@ const AccountVerificationsForm: React.FC = () => {
     const file = event.target.files?.[0] ?? null;
     setNinFile(file);
     setNinError(null);
+    setUploadId(null);
   };
 
-  const handleUploadNin = () => {
+  const handleUploadNin = async () => {
     if (!ninFile) {
-      setNinError("Please select a NIN document to upload.");
+      setNinError("Please select a document to upload.");
       return;
     }
 
-    const formData = new FormData();
-    formData.append("ninDocument", ninFile);
-    if (ninNumber.trim()) {
-      formData.append("ninNumber", ninNumber.trim());
-    }
-
     setNinError(null);
-    uploadNinMutation.mutate(formData, {
-      onSuccess: () => {
-        setNinNumber("");
-        setNinFile(null);
-      },
-      onError: () => {
-        setNinError("Failed to upload NIN document. Please try again.");
-      },
-    });
+    setIsUploadingFile(true);
+
+    try {
+      // Step 1: Upload file to get uploadId
+      const uploadFormData = new FormData();
+      uploadFormData.append("file", ninFile);
+      const uploadResponse = await uploadMutation.mutateAsync(uploadFormData);
+      const id =
+        uploadResponse.id ||
+        uploadResponse.data?.uploadId ||
+        uploadResponse.data?.id;
+
+      if (!id) {
+        throw new Error("No upload ID received");
+      }
+
+      setUploadId(id);
+
+      // Step 2: Submit with uploadId + idType
+      await uploadNinMutation.mutateAsync({
+        uploadId: id,
+        idType: documentType,
+      });
+
+      setNinFile(null);
+      setUploadId(null);
+    } catch (err: any) {
+      setNinError(
+        err?.message || "Failed to upload document. Please try again.",
+      );
+    } finally {
+      setIsUploadingFile(false);
+    }
   };
 
   if (isLoading && !profile) {
@@ -175,38 +199,63 @@ const AccountVerificationsForm: React.FC = () => {
         </div>
       </div>
 
-      {/* NIN Upload Controls */}
+      {/* ID Upload Controls */}
       <div className="mb-6 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4">
         <Paragraph1 className="mb-2 text-sm font-medium text-gray-900">
-          Upload NIN Document
+          Upload ID Document
         </Paragraph1>
         <Paragraph1 className="mb-3 text-xs text-gray-600">
           Accepted formats: JPEG, PNG. Maximum size 5MB.
         </Paragraph1>
-        <div className="mb-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div>
-            <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
-              ID Number (optional)
-            </Paragraph1>
-            <input
-              type="text"
-              value={ninNumber}
-              onChange={(e) => setNinNumber(e.target.value)}
-              className="w-full rounded-md border border-gray-300 p-2 text-sm"
-              placeholder="Enter ID number"
-            />
-          </div>
-          <div>
-            <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
-              ID Document
-            </Paragraph1>
+        <div className="mb-3">
+          <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
+            Document Type
+          </Paragraph1>
+          <select
+            value={documentType}
+            onChange={(e) => setDocumentType(e.target.value)}
+            className="w-full rounded-md border border-gray-300 p-2 text-sm"
+          >
+            <option value="NIN">National ID (NIN)</option>
+            <option value="PASSPORT">Passport</option>
+            <option value="DRIVERS_LICENSE">Driver's License</option>
+            <option value="VOTERS_CARD">Voter's Card</option>
+          </select>
+        </div>
+        <div className="mb-3">
+          <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
+            Upload Document
+          </Paragraph1>
+          <label className="flex flex-col items-center justify-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-lg appearance-none cursor-pointer hover:bg-gray-50 focus:outline-none">
+            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+              <svg
+                className="w-8 h-8 mb-2 text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                />
+              </svg>
+              <Paragraph1 className="text-sm text-gray-500">
+                {ninFile ? ninFile.name : "Click to upload or drag and drop"}
+              </Paragraph1>
+              <Paragraph1 className="text-xs text-gray-400 mt-1">
+                JPEG, PNG or PDF (max 5MB)
+              </Paragraph1>
+            </div>
             <input
               type="file"
               accept="image/jpeg,image/png,application/pdf"
               onChange={handleNinFileChange}
-              className="w-full text-xs text-gray-700"
+              className="hidden"
             />
-          </div>
+          </label>
         </div>
         {ninError && (
           <Paragraph1 className="mb-2 text-xs text-red-600">

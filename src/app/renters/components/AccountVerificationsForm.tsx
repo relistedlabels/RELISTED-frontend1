@@ -106,9 +106,9 @@ const AccountVerificationsForm: React.FC = () => {
   const ninStatus = mapStatus(ninStatusRaw);
   const bvnStatus = mapStatus(bvnStatusRaw);
 
-  const [ninNumber, setNinNumber] = useState("");
   const [ninFile, setNinFile] = useState<File | null>(null);
   const [ninError, setNinError] = useState<string | null>(null);
+  const [documentType, setDocumentType] = useState("national_id");
 
   const [bvnNumber, setBvnNumber] = useState("");
   const [bvnError, setBvnError] = useState<string | null>(null);
@@ -123,33 +123,19 @@ const AccountVerificationsForm: React.FC = () => {
 
   const handleUploadNin = () => {
     if (!ninFile) {
-      setNinError("Please select a NIN document to upload.");
-      return;
-    }
-
-    if (!ninNumber.trim()) {
-      setNinError("Please enter your NIN number.");
-      return;
-    }
-
-    if (ninNumber.trim().length !== 11 || !/^\d+$/.test(ninNumber.trim())) {
-      setNinError("NIN must be 11 digits.");
+      setNinError("Please select a document to upload.");
       return;
     }
 
     setNinError(null);
-    console.log(
-      "📤 Uploading NIN document to POST /api/renters/profile/verifications/id-document",
-    );
 
     const formData = new FormData();
-    formData.append("document", ninFile);
-    formData.append("ninNumber", ninNumber.trim());
+    formData.append("idDocument", ninFile);
+    formData.append("idType", documentType);
 
     uploadIdDocumentMutation.mutate(formData, {
       onSuccess: () => {
-        toast.success("NIN document uploaded successfully!");
-        setNinNumber("");
+        toast.success("ID document uploaded successfully!");
         setNinFile(null);
       },
       onError: (error: any) => {
@@ -239,39 +225,63 @@ const AccountVerificationsForm: React.FC = () => {
         </div>
       </div>
 
-      {/* NIN Upload Controls */}
+      {/* ID Upload Controls */}
       <div className="mb-6 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4">
         <Paragraph1 className="mb-2 text-sm font-medium text-gray-900">
-          Upload NIN Document
+          Upload ID Document
         </Paragraph1>
         <Paragraph1 className="mb-3 text-xs text-gray-600">
-          Upload your NIN document for verification. Accepted formats: JPEG,
-          PNG, PDF. Maximum size 5MB.
+          Upload your ID document for verification. Accepted formats: JPEG, PNG,
+          PDF. Maximum size 5MB.
         </Paragraph1>
-        <div className="mb-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div>
-            <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
-              ID Number (required)
-            </Paragraph1>
-            <input
-              type="text"
-              value={ninNumber}
-              onChange={(e) => setNinNumber(e.target.value)}
-              className="w-full rounded-md border border-gray-300 p-2 text-sm"
-              placeholder="Enter 11-digit ID number"
-            />
-          </div>
-          <div>
-            <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
-              NIN Document
-            </Paragraph1>
+        <div className="mb-3">
+          <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
+            Document Type
+          </Paragraph1>
+          <select
+            value={documentType}
+            onChange={(e) => setDocumentType(e.target.value)}
+            className="w-full rounded-md border border-gray-300 p-2 text-sm"
+          >
+            <option value="national_id">National ID (NIN)</option>
+            <option value="passport">Passport</option>
+            <option value="drivers_license">Driver's License</option>
+          </select>
+        </div>
+        <div className="mb-3">
+          <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
+            Upload Document
+          </Paragraph1>
+          <label className="flex flex-col items-center justify-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-lg appearance-none cursor-pointer hover:bg-gray-50 focus:outline-none">
+            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+              <svg
+                className="w-8 h-8 mb-2 text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                />
+              </svg>
+              <Paragraph1 className="text-sm text-gray-500">
+                {ninFile ? ninFile.name : "Click to upload or drag and drop"}
+              </Paragraph1>
+              <Paragraph1 className="text-xs text-gray-400 mt-1">
+                JPEG, PNG or PDF (max 5MB)
+              </Paragraph1>
+            </div>
             <input
               type="file"
               accept="image/jpeg,image/png,application/pdf"
               onChange={handleNinFileChange}
-              className="w-full text-xs text-gray-700"
+              className="hidden"
             />
-          </div>
+          </label>
         </div>
         {ninError && (
           <Paragraph1 className="mb-2 text-xs text-red-600">
@@ -281,10 +291,10 @@ const AccountVerificationsForm: React.FC = () => {
         <button
           type="button"
           onClick={handleUploadNin}
-          disabled={uploadIdDocumentMutation.isPending}
+          disabled={uploadIdDocumentMutation.isPending || !ninFile}
           className="mt-1 inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {uploadIdDocumentMutation.isPending ? "Uploading..." : "Upload NIN"}
+          {uploadIdDocumentMutation.isPending ? "Uploading..." : "Upload ID"}
         </button>
       </div>
 
