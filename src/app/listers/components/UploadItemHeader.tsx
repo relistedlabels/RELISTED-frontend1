@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { Paragraph1 } from "@/common/ui/Text";
-import BackHeader from "@/common/ui/BackHeader";
-import { useCreateProduct, useUpdateProduct } from "@/lib/mutations";
-import { useProductDraftStore } from "@/store/useProductDraftStore";
+import type React from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import BackHeader from "@/common/ui/BackHeader";
+import { Paragraph1 } from "@/common/ui/Text";
+import { useCreateProduct, useUpdateProduct } from "@/lib/mutations";
 import { useProfile } from "@/lib/queries/user/useProfile";
+import { useProductDraftStore } from "@/store/useProductDraftStore";
 import PendingVerificationModal from "./PendingVerificationModal";
 
 interface UploadItemHeaderProps {
@@ -27,6 +28,7 @@ const UploadItemHeader: React.FC<UploadItemHeaderProps> = ({
   const productId = params.id as string;
 
   const { data } = useProductDraftStore();
+  const reset = useProductDraftStore((state) => state.reset);
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct(productId);
   const { data: profile } = useProfile();
@@ -56,14 +58,14 @@ const UploadItemHeader: React.FC<UploadItemHeaderProps> = ({
 
     mutation.mutate(data, {
       onSuccess: () => {
-        // ✅ Show success toast
+        reset();
+
         if (isEditing) {
           toast.success("Product updated successfully!");
         } else {
           toast.success("Product created successfully!");
         }
 
-        // ✅ Route to inventory after brief delay for toast visibility
         setTimeout(() => {
           router.push("/listers/inventory");
         }, 1000);

@@ -1,24 +1,42 @@
 "use client";
 
-import React, { useState } from "react";
-import { SlidersVertical, X, Search } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Paragraph1 } from "@/common/ui/Text";
-import PriceRangeSlider from "./PriceRangeSlider";
+import { AnimatePresence, motion } from "framer-motion";
+import { Search, SlidersVertical, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import type React from "react";
+import { useState } from "react";
+import { Paragraph1 } from "@/common/ui/Text";
 import { useBrands } from "@/lib/queries/brand/useBrands";
 import { useCategories } from "@/lib/queries/category/useCategories";
 import { useTags } from "@/lib/queries/tag/useTags";
+import PriceRangeSlider from "./PriceRangeSlider";
 
 // --------------------
 // Static Data
 // --------------------
 const sizeOptions = [
-  "Small (e.g. 2-5, S-SL, 5-10, 30-35)",
-  "Medium (e.g. 6-10, M-ML, 11-15, 36-40)",
-  "Large (e.g. 11-15, L-XL, 16-20, 41-45)",
-  "Plus Size (e.g. 16-20, XL-2XL, 21-25, 46-50)",
-  "Sexy Plus Size (e.g. 21-25, 2XL-3XL, 26-30, 51-55)",
+  "32-EU",
+  "34-EU",
+  "36-EU",
+  "38-EU",
+  "40-EU",
+  "42-EU",
+  "44-EU",
+  "6-UK",
+  "8-UK",
+  "10-UK",
+  "12-UK",
+  "14-UK",
+  "16-UK",
+  "18-UK",
+  "2-US",
+  "4-US",
+  "6-US",
+  "8-US",
+  "10-US",
+  "12-US",
+  "14-US",
+  "One Size",
 ];
 const colorOptions = [
   "Red",
@@ -33,12 +51,11 @@ const colorOptions = [
   "Brown",
 ];
 const conditionOptions = [
-  "New",
+  "Brand New",
   "Like New",
-  "Excellent",
-  "Good",
-  "Fair",
-  "Poor",
+  "Gently Used",
+  "Used",
+  "Heavily Used",
 ];
 const materialOptions = [
   "Cotton",
