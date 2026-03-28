@@ -101,11 +101,11 @@ export default function VerificationModalListers({
         }),
       );
 
-      // 2. Submit NIN verification with uploadId and ninNumber
+      // 2. POST /api/listers/verifications/id (JSON: uploadId + idType)
       promises.push(
         uploadNinMutation.mutateAsync({
           uploadId,
-          ninNumber: nin,
+          idType: "NIN",
         }),
       );
 

@@ -1120,9 +1120,11 @@ export interface VerificationStatusResponse {
   success: boolean;
   data: {
     verifications: {
-      validId: VerificationStatusDetails;
+      /** Legacy key; prefer `validId` when API returns unified shape */
+      nin?: VerificationStatusDetails;
+      validId?: VerificationStatusDetails;
       bvn: VerificationStatusDetails;
-      businessRegistration: VerificationStatusDetails;
+      businessRegistration?: VerificationStatusDetails;
     };
   };
 }
@@ -1164,12 +1166,16 @@ export interface NinUploadResponse {
   };
 }
 
-export async function uploadNinDocument(
-  formData: FormData,
-): Promise<NinUploadResponse> {
-  return apiFetch("/api/listers/verifications/nin", {
+export async function uploadIdDocument(data: {
+  uploadId: string;
+  idType: string;
+}): Promise<NinUploadResponse> {
+  return apiFetch("/api/listers/verifications/id", {
     method: "POST",
-    body: formData,
+    body: JSON.stringify(data),
+    headers: {
+      "Content-Type": "application/json",
+    },
   });
 }
 
