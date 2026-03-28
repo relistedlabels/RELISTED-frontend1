@@ -1120,9 +1120,11 @@ export interface VerificationStatusResponse {
   success: boolean;
   data: {
     verifications: {
-      nin: VerificationStatusDetails;
+      /** Legacy key; prefer `validId` when API returns unified shape */
+      nin?: VerificationStatusDetails;
+      validId?: VerificationStatusDetails;
       bvn: VerificationStatusDetails;
-      businessRegistration: VerificationStatusDetails;
+      businessRegistration?: VerificationStatusDetails;
     };
   };
 }
