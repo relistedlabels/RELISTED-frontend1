@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Check, Copy, RefreshCw, Shield } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
-import { RefreshCw, Check, Copy, Shield } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useUpdateProfile } from "@/lib/mutations/renters/useProfileMutations";
 import { useProfile } from "@/lib/queries/renters/useProfile";
 import { useVerificationStatus } from "@/lib/queries/renters/useVerificationStatus";
 import { useWallet } from "@/lib/queries/renters/useWallet";
-import { useUpdateProfile } from "@/lib/mutations/renters/useProfileMutations";
 import VerificationModal from "./VerificationModal";
-import { toast } from "sonner";
 
 // Currency constant
 const CURRENCY = "₦";
@@ -149,12 +149,12 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
     setVaError("");
 
     if (!nin.trim() || !bvn.trim()) {
-      setVaError("Please enter both NIN and BVN");
+      setVaError("Please enter both ID Number and BVN");
       return;
     }
 
     if (nin.length < 11) {
-      setVaError("NIN must be at least 11 digits");
+      setVaError("ID Number must be at least 11 digits");
       return;
     }
 
@@ -374,7 +374,7 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
               </Paragraph1>
               <Paragraph1 className="text-xs text-amber-800 mb-4">
                 To receive direct transfers, you need to generate a virtual
-                account. We'll need your NIN and BVN information.
+                account. We'll need your ID Number and BVN information.
               </Paragraph1>
 
               <button
@@ -406,10 +406,10 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
                   >
                     <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
                       <Paragraph1 className="text-xs font-medium text-amber-900 mb-1">
-                        ⚠️ Important: Use correct BVN and NIN
+                        ⚠️ Important: Use correct BVN and ID Number
                       </Paragraph1>
                       <Paragraph1 className="text-xs text-amber-800">
-                        Ensure the BVN and NIN you provide are accurate.
+                        Ensure the BVN and ID Number you provide are accurate.
                         Incorrect information will prevent account generation
                         and affect your verification status on the platform.
                       </Paragraph1>
@@ -425,13 +425,13 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
 
                     <div>
                       <label className="block text-xs text-gray-700 font-medium mb-1">
-                        NIN (National ID Number)
+                        ID Number
                       </label>
                       <input
                         type="text"
                         value={nin}
                         onChange={(e) => setNin(e.target.value)}
-                        placeholder="11-digit NIN"
+                        placeholder="11-digit ID Number"
                         maxLength={11}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600"
                       />

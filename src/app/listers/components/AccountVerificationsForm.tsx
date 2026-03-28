@@ -4,22 +4,23 @@
 // POST /api/listers/verifications/nin, GET /api/listers/verifications/bvn,
 // PUT /api/listers/verifications/emergency-contact
 
-import React, { useMemo, useState } from "react";
-import { Paragraph1 } from "@/common/ui/Text";
+import type React from "react";
+import { useMemo, useState } from "react";
 import {
   HiOutlineDocumentText,
-  HiOutlineUser,
   HiOutlineEnvelope,
-  HiOutlinePhone,
-  HiOutlineUsers,
   HiOutlineHome,
+  HiOutlinePhone,
+  HiOutlineUser,
+  HiOutlineUsers,
 } from "react-icons/hi2";
-import { useProfile } from "@/lib/queries/user/useProfile";
-import { useVerificationStatus } from "@/lib/queries/listers/useVerificationStatus";
-import { useVerificationDocuments } from "@/lib/queries/listers/useVerificationDocuments";
-import { useBvnVerification } from "@/lib/queries/listers/useBvnVerification";
+import { Paragraph1 } from "@/common/ui/Text";
 import { useUpdateEmergencyContact } from "@/lib/mutations/listers/useUpdateEmergencyContact";
 import { useUploadNinDocument } from "@/lib/mutations/listers/useUploadNinDocument";
+import { useBvnVerification } from "@/lib/queries/listers/useBvnVerification";
+import { useVerificationDocuments } from "@/lib/queries/listers/useVerificationDocuments";
+import { useVerificationStatus } from "@/lib/queries/listers/useVerificationStatus";
+import { useProfile } from "@/lib/queries/user/useProfile";
 
 // Sub-component for displaying a verification status on a document or field
 const VerificationBadge: React.FC<{
@@ -185,19 +186,19 @@ const AccountVerificationsForm: React.FC = () => {
         <div className="mb-3 grid grid-cols-1 gap-3 md:grid-cols-2">
           <div>
             <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
-              NIN Number (optional)
+              ID Number (optional)
             </Paragraph1>
             <input
               type="text"
               value={ninNumber}
               onChange={(e) => setNinNumber(e.target.value)}
               className="w-full rounded-md border border-gray-300 p-2 text-sm"
-              placeholder="Enter NIN number"
+              placeholder="Enter ID number"
             />
           </div>
           <div>
             <Paragraph1 className="mb-1 text-xs font-medium text-gray-700">
-              NIN Document
+              ID Document
             </Paragraph1>
             <input
               type="file"
