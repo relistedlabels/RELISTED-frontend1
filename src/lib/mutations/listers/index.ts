@@ -15,3 +15,4 @@ export { useWithdrawDispute } from "./useWithdrawDispute";
 export { useCreateDispute } from "./useCreateDispute";
 export { useAddListerAddress } from "./useAddListerAddress";
 export { useUploadNinDocument } from "./useUploadNinDocument";
+export { useSubmitBvn } from "./useSubmitBvn";

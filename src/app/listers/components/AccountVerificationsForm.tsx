@@ -20,6 +20,12 @@ import { useVerificationDocuments } from "@/lib/queries/listers/useVerificationD
 import { useBvnVerification } from "@/lib/queries/listers/useBvnVerification";
 import { useUpdateEmergencyContact } from "@/lib/mutations/listers/useUpdateEmergencyContact";
 import { useUploadNinDocument } from "@/lib/mutations/listers/useUploadNinDocument";
+import { useSubmitBvn } from "@/lib/mutations/listers";
+const submitBvnMutation = useSubmitBvn();
+
+// Local state for BVN input
+const [bvnInput, setBvnInput] = useState("");
+const [bvnError, setBvnError] = useState<string | null>(null);
 
 // Sub-component for displaying a verification status on a document or field
 const VerificationBadge: React.FC<{
@@ -250,20 +256,71 @@ const AccountVerificationsForm: React.FC = () => {
         <div className="flex justify-between items-center mb-2">
           <Paragraph1 className="text-base text-gray-900">BVN</Paragraph1>
         </div>
-        <div className=" border bg-gray-50 border-gray-300 rounded-lg flex justify-between items-center p-4">
-          <input
-            type="text"
-            value={bvnData?.data.bvn.maskedValue || ""}
-            placeholder={
-              bvnData?.data.bvn.maskedValue ? "BVN on file" : "No BVN added yet"
-            }
-            readOnly
-            className="w-full outline-none  text-lg tracking-wider text-gray-700 font-mono"
-          />
-
-          <VerificationBadge status={bvnStatus} />
+        <div className="border bg-gray-50 border-gray-300 rounded-lg flex flex-col md:flex-row justify-between items-center p-4 gap-2">
+          {/* If BVN is verified, show masked value as read-only. If not, allow input and submission */}
+          {bvnStatus === "Verified" ? (
+            <input
+              type="text"
+              value={bvnData?.data.bvn.maskedValue || ""}
+              placeholder={
+                bvnData?.data.bvn.maskedValue
+                  ? "BVN on file"
+                  : "No BVN added yet"
+              }
+              readOnly
+              className="w-full outline-none text-lg tracking-wider text-gray-700 font-mono bg-gray-50"
+            />
+          ) : (
+            <>
+              <input
+                type="text"
+                value={bvnInput}
+                onChange={(e) => setBvnInput(e.target.value.replace(/\D/g, ""))}
+                placeholder="Enter your BVN"
+                maxLength={11}
+                className="w-full outline-none text-lg tracking-wider text-gray-700 font-mono bg-white border border-gray-300 rounded-md px-3 py-2"
+                disabled={submitBvnMutation.isPending}
+              />
+              <button
+                type="button"
+                className="ml-0 md:ml-4 mt-2 md:mt-0 px-4 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={
+                  submitBvnMutation.isPending ||
+                  !bvnInput ||
+                  bvnInput.length !== 11
+                }
+                onClick={() => {
+                  setBvnError(null);
+                  if (!bvnInput || bvnInput.length !== 11) {
+                    setBvnError("Please enter a valid 11-digit BVN.");
+                    return;
+                  }
+                  submitBvnMutation.mutate(
+                    { bvn: bvnInput },
+                    {
+                      onSuccess: () => {
+                        setBvnInput("");
+                      },
+                      onError: () => {
+                        setBvnError("Failed to submit BVN. Please try again.");
+                      },
+                    },
+                  );
+                }}
+              >
+                {submitBvnMutation.isPending ? "Submitting..." : "Submit BVN"}
+              </button>
+            </>
+          )}
+          <div className="ml-0 md:ml-4 mt-2 md:mt-0">
+            <VerificationBadge status={bvnStatus} />
+          </div>
         </div>
-
+        {bvnError && (
+          <Paragraph1 className="text-xs text-red-600 mt-2">
+            {bvnError}
+          </Paragraph1>
+        )}
         <Paragraph1 className="text-xs text-gray-500 mt-2">
           Your BVN is encrypted and secure. Only the last 4 digits are shown.
         </Paragraph1>
