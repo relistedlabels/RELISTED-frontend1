@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   response.cookies.set("token", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "lax",
     maxAge: 0, // Expire immediately
     path: "/",
   });
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   response.cookies.set("user_role", "", {
     httpOnly: false,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "lax",
     maxAge: 0, // Expire immediately
     path: "/",
   });

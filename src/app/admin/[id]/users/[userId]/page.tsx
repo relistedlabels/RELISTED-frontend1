@@ -32,6 +32,7 @@ import {
   useSuspendUser,
   useDeleteUser,
   useVerifyUser,
+  useRestoreUser,
 } from "@/lib/mutations/admin";
 import UserProfileOverview from "./components/UserProfileOverview";
 import UserRecords from "./components/UserRecords";
@@ -67,6 +68,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
   const { mutate: suspendUser, isPending: isSuspending } = useSuspendUser();
   const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser();
   const { mutate: verifyUser, isPending: isVerifying } = useVerifyUser();
+  const { mutate: restoreUser, isPending: isRestoring } = useRestoreUser();
 
   // Unwrap the params Promise
   const { userId } = React.use(params);
@@ -242,9 +244,13 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
             )}
             <button
               onClick={() => setShowActionModal(true)}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium text-sm"
+              className={`px-4 py-2 text-white rounded-lg transition font-medium text-sm ${
+                user?.isSuspended
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-red-600 hover:bg-red-700"
+              }`}
             >
-              Suspend
+              {user?.isSuspended ? "Restore" : "Suspend"}
             </button>
             <button
               onClick={handleGoBack}
@@ -329,64 +335,124 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
               </Paragraph1>
 
               <div className="space-y-3">
-                <button
-                  onClick={() => {
-                    suspendUser(userId, {
-                      onSuccess: () => {
-                        toast.success(`${user.name} has been suspended!`, {
-                          description:
-                            "User access has been temporarily revoked.",
-                        });
-                        setShowActionModal(false);
-                      },
-                      onError: (error: any) => {
-                        toast.error("Failed to suspend user", {
-                          description:
-                            error?.message || "Please try again later.",
-                        });
-                      },
-                    });
-                  }}
-                  disabled={isSuspending || isDeleting}
-                  className="w-full px-4 py-3 border-2 border-yellow-500 text-yellow-600 rounded-lg hover:bg-yellow-50 font-medium disabled:opacity-50 transition"
-                >
-                  <Paragraph1 className="text-yellow-600">
-                    {isSuspending ? "Suspending..." : "⚠️ Suspend User"}
-                  </Paragraph1>
-                </button>
-
-                <button
-                  onClick={() => {
-                    deleteUser(userId, {
-                      onSuccess: () => {
-                        toast.success(
-                          `${user.name}'s account has been permanently deleted!`,
-                          {
-                            description: "This action cannot be undone.",
+                {user?.isSuspended ? (
+                  <>
+                    <button
+                      onClick={() => {
+                        restoreUser(userId, {
+                          onSuccess: () => {
+                            toast.success(`${user.name} has been restored!`, {
+                              description: "User access has been restored.",
+                            });
+                            setShowActionModal(false);
                           },
-                        );
-                        setShowActionModal(false);
-                        router.push(`/admin/${adminId}/users`);
-                      },
-                      onError: (error: any) => {
-                        toast.error("Failed to delete user", {
-                          description:
-                            error?.message || "Please try again later.",
+                          onError: (error: any) => {
+                            toast.error("Failed to restore user", {
+                              description:
+                                error?.message || "Please try again later.",
+                            });
+                          },
                         });
-                      },
-                    });
-                  }}
-                  disabled={isSuspending || isDeleting}
-                  className="w-full px-4 py-3 border-2 border-red-600 text-red-600 rounded-lg hover:bg-red-50 font-medium disabled:opacity-50 transition"
-                >
-                  <Paragraph1 className="text-red-600">
-                    {isDeleting ? "Deleting..." : "🗑️ Delete Account"}
-                  </Paragraph1>
-                </button>
+                      }}
+                      disabled={isRestoring || isDeleting}
+                      className="w-full px-4 py-3 border-2 border-green-500 text-green-600 rounded-lg hover:bg-green-50 font-medium disabled:opacity-50 transition"
+                    >
+                      <Paragraph1 className="text-green-600">
+                        {isRestoring ? "Restoring..." : "✓ Restore User"}
+                      </Paragraph1>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        deleteUser(userId, {
+                          onSuccess: () => {
+                            toast.success(
+                              `${user.name}'s account has been permanently deleted!`,
+                              {
+                                description: "This action cannot be undone.",
+                              },
+                            );
+                            setShowActionModal(false);
+                            router.push(`/admin/${adminId}/users`);
+                          },
+                          onError: (error: any) => {
+                            toast.error("Failed to delete user", {
+                              description:
+                                error?.message || "Please try again later.",
+                            });
+                          },
+                        });
+                      }}
+                      disabled={isRestoring || isDeleting}
+                      className="w-full px-4 py-3 border-2 border-red-600 text-red-600 rounded-lg hover:bg-red-50 font-medium disabled:opacity-50 transition"
+                    >
+                      <Paragraph1 className="text-red-600">
+                        {isDeleting ? "Deleting..." : "🗑️ Delete Account"}
+                      </Paragraph1>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => {
+                        suspendUser(userId, {
+                          onSuccess: () => {
+                            toast.success(`${user.name} has been suspended!`, {
+                              description:
+                                "User access has been temporarily revoked.",
+                            });
+                            setShowActionModal(false);
+                          },
+                          onError: (error: any) => {
+                            toast.error("Failed to suspend user", {
+                              description:
+                                error?.message || "Please try again later.",
+                            });
+                          },
+                        });
+                      }}
+                      disabled={isSuspending || isDeleting}
+                      className="w-full px-4 py-3 border-2 border-yellow-500 text-yellow-600 rounded-lg hover:bg-yellow-50 font-medium disabled:opacity-50 transition"
+                    >
+                      <Paragraph1 className="text-yellow-600">
+                        {isSuspending ? "Suspending..." : "⚠️ Suspend User"}
+                      </Paragraph1>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        deleteUser(userId, {
+                          onSuccess: () => {
+                            toast.success(
+                              `${user.name}'s account has been permanently deleted!`,
+                              {
+                                description: "This action cannot be undone.",
+                              },
+                            );
+                            setShowActionModal(false);
+                            router.push(`/admin/${adminId}/users`);
+                          },
+                          onError: (error: any) => {
+                            toast.error("Failed to delete user", {
+                              description:
+                                error?.message || "Please try again later.",
+                            });
+                          },
+                        });
+                      }}
+                      disabled={isSuspending || isDeleting}
+                      className="w-full px-4 py-3 border-2 border-red-600 text-red-600 rounded-lg hover:bg-red-50 font-medium disabled:opacity-50 transition"
+                    >
+                      <Paragraph1 className="text-red-600">
+                        {isDeleting ? "Deleting..." : "🗑️ Delete Account"}
+                      </Paragraph1>
+                    </button>
+                  </>
+                )}
 
                 <button
                   onClick={() => setShowActionModal(false)}
-                  disabled={isSuspending || isDeleting}
+                  disabled={isSuspending || isDeleting || isRestoring}
                   className="w-full px-4 py-3 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 font-medium disabled:opacity-50 transition"
                 >
                   <Paragraph1 className="text-gray-900">Cancel</Paragraph1>
