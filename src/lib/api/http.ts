@@ -103,6 +103,17 @@ export async function apiFetch<T>(
     if (res.status === 401) {
       useUserStore.getState().clearUser();
       useSessionStore.getState().setSessionExpired(true);
+
+      // Redirect to login with return URL, but avoid redirect loops
+      if (typeof window !== "undefined") {
+        const currentPath = window.location.pathname + window.location.search;
+        const isAuthPage =
+          currentPath.startsWith("/auth/") || currentPath.startsWith("/admin/");
+
+        if (!isAuthPage) {
+          window.location.href = `/auth/sign-in?redirect=${encodeURIComponent(currentPath)}`;
+        }
+      }
     }
 
     throw new Error(errorMessage);
