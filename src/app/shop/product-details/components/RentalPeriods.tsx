@@ -46,7 +46,7 @@ interface RentalPeriodsPanelProps {
   productId: string;
   listerId: string;
   dailyPrice: number;
-  securityDeposit: number;
+  collateralPrice: number;
 }
 
 const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
@@ -55,7 +55,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
   productId,
   listerId,
   dailyPrice,
-  securityDeposit,
+  collateralPrice,
 }) => {
   const minPrice = 50000;
   const maxPrice = 200000;
@@ -283,7 +283,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                   productId={productId}
                   listerId={listerId}
                   dailyPrice={dailyPrice}
-                  securityDeposit={securityDeposit}
+                  collateralPrice={collateralPrice}
                   onChangeRentalDays={(days, start) =>
                     handleRentalDaysChange(days, start)
                   }
@@ -337,14 +337,15 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                 </button>
                 {countdownActive && countdown !== null && (
                   <div className="text-center mt-2 text-yellow-700 font-medium">
-                    Item has been added to cart while Waiting for Lister to confirm your request...
+                    Item has been added to cart while Waiting for Lister to
+                    confirm your request...
                   </div>
                 )}
                 {summaryData && (
                   <RentalSummaryCard
                     rentalDays={summaryData.rentalDays}
                     rentalFeePerPeriod={summaryData.estimatedPrice.rentalFee}
-                    securityDeposit={summaryData.estimatedPrice.securityDeposit}
+                    securityDeposit={summaryData.estimatedPrice.collateralPrice}
                     cleaningFee={0}
                     shippingFee={summaryData.estimatedPrice.deliveryFee}
                   />
@@ -450,14 +451,14 @@ interface RentalPeriodsProps {
   productId: string;
   listerId: string;
   dailyPrice: number;
-  securityDeposit: number;
+  collateralPrice: number;
 }
 
 const RentalPeriods: React.FC<RentalPeriodsProps> = ({
   productId,
   listerId,
   dailyPrice,
-  securityDeposit,
+  collateralPrice,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { data: user } = useMe();
@@ -487,7 +488,7 @@ const RentalPeriods: React.FC<RentalPeriodsProps> = ({
         productId={productId}
         listerId={listerId}
         dailyPrice={dailyPrice}
-        securityDeposit={securityDeposit}
+        collateralPrice={collateralPrice}
       />
     </>
   );

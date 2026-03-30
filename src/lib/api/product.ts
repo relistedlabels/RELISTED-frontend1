@@ -53,6 +53,7 @@ export type UserProduct = {
   updatedAt: string;
   attachments: ProductAttachment | null;
   curator: ProductCurator;
+  collateralPrice: number;
 };
 
 export type ProductPayload = {

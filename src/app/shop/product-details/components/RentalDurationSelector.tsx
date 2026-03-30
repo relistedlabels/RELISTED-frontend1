@@ -179,7 +179,7 @@ interface RentalDurationSelectorProps {
   productId: string;
   listerId: string;
   dailyPrice: number;
-  securityDeposit: number;
+  collateralPrice: number;
   onChangeRentalDays?: (days: number, startDate?: Date) => void;
 }
 
@@ -187,7 +187,7 @@ const RentalDurationSelector = ({
   productId,
   listerId,
   dailyPrice,
-  securityDeposit,
+  collateralPrice,
   onChangeRentalDays,
 }: RentalDurationSelectorProps) => {
   const [selectedDuration, setSelectedDuration] = useState<number | "custom">(

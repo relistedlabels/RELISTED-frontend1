@@ -127,8 +127,8 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
     return <DetailPanelSkeleton />;
   }
 
-  // Calculate security deposit as percentage of original value if not provided
-  const securityDeposit = Math.round(product.originalValue); // 20% of original value
+  // Use collateralPrice from product (API now provides this)
+  const collateralPrice = product.collateralPrice;
 
   return (
     <div className="font-sans">
@@ -157,7 +157,7 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
                 (Refundable)
               </Paragraph1>
               <Paragraph1 className="text-lg font-bold text-gray-900">
-                ₦{securityDeposit.toLocaleString()}
+                ₦{collateralPrice.toLocaleString()}
               </Paragraph1>
             </div>
           </div>
@@ -170,12 +170,11 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
           </Paragraph1>
           <div className="flex space-x-2 mb-4">
             {/* RentalPeriods now receives product/lister info as props */}
-
             <RentalPeriods
               productId={product.id}
               listerId={product.curatorId}
               dailyPrice={product.dailyPrice}
-              securityDeposit={securityDeposit}
+              collateralPrice={collateralPrice}
             />
             <button
               onClick={handleFavoriteClick}

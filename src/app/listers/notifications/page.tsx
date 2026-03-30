@@ -8,6 +8,7 @@ import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import DashboardLayout from "../components/DashboardLayout";
 import { useNotifications } from "@/lib/queries/notifications/useNotifications";
 import { useMarkNotificationAsRead } from "@/lib/mutations/notifications/useMarkNotificationAsRead";
+import Link from "next/link";
 
 export default function NotificationsPage() {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -24,7 +25,7 @@ export default function NotificationsPage() {
       markAsRead.mutate(notif.id);
     });
   }, [notifications, markAsRead]);
-  
+
   return (
     <DashboardLayout>
       <div className="mb-4 px-4 sm:px-0">
@@ -64,7 +65,8 @@ export default function NotificationsPage() {
             className={`bg-white border border-gray-50 rounded-lg p-4 shadow-sm transition-all ${notif.isRead ? "opacity-70" : "border-orange-200"}`}
           >
             <div className="flex justify-between items-start">
-              <div
+              <Link
+                href={`/listers/orders/${notif.metadata.requestId}`}
                 className="flex-1 cursor-pointer"
                 onClick={() => setOpenId(openId === notif.id ? null : notif.id)}
               >
@@ -82,49 +84,14 @@ export default function NotificationsPage() {
                 <Paragraph1 className="text-xs text-gray-400 mt-1">
                   {new Date(notif.createdAt).toLocaleString()} · {notif.type}
                 </Paragraph1>
-              </div>
+              </Link>
               <div className="flex items-center gap-2 ml-4">
                 <span className="text-xs text-gray-500">
                   {openId === notif.id ? "Hide" : "View"}
                 </span>
               </div>
             </div>
-            {openId === notif.id && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="mt-4 border-t pt-3 text-gray-700"
-              >
-                <div className="space-y-2">
-                  <div>
-                    <Paragraph1 className="text-xs text-gray-500 font-semibold">
-                      Type:
-                    </Paragraph1>
-                    <Paragraph1 className="text-sm">{notif.type}</Paragraph1>
-                  </div>
-                  {notif.metadata && Object.keys(notif.metadata).length > 0 && (
-                    <div>
-                      <Paragraph1 className="text-xs text-gray-500 font-semibold">
-                        Details:
-                      </Paragraph1>
-                      <div className="text-sm space-y-1">
-                        {Object.entries(notif.metadata).map(([key, value]) => (
-                          <div key={key} className="flex justify-between">
-                            <span className="text-gray-600">{key}:</span>
-                            <span className="text-gray-900 font-mono text-xs">
-                              {typeof value === "string"
-                                ? value
-                                : JSON.stringify(value)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
+          
           </motion.div>
         ))}
       </div>
