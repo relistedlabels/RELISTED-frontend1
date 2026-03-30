@@ -1,5 +1,6 @@
-import { useUserStore } from "@/store/useUserStore";
+import { shouldSuppressSignInRedirect } from "@/lib/auth/signInRedirectPaths";
 import { useSessionStore } from "@/store/useSessionStore";
+import { useUserStore } from "@/store/useUserStore";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const USER_STORE_KEY = "user-store";
@@ -101,17 +102,23 @@ export async function apiFetch<T>(
 
     // Handle 401 Unauthorized - Session Expired
     if (res.status === 401) {
-      useUserStore.getState().clearUser();
-      useSessionStore.getState().setSessionExpired(true);
+      const currentState = useUserStore.getState();
+      const hadClientCredentials =
+        currentState.token !== null ||
+        currentState.sessionToken !== null ||
+        currentState.userId !== null;
 
-      // Redirect to login with return URL, but avoid redirect loops
+      if (hadClientCredentials) {
+        currentState.clearUser();
+        useSessionStore.getState().setSessionExpired(true);
+      }
+
       if (typeof window !== "undefined") {
-        const currentPath = window.location.pathname + window.location.search;
-        const isAuthPage =
-          currentPath.startsWith("/auth/") || currentPath.startsWith("/admin/");
-
-        if (!isAuthPage) {
-          window.location.href = `/auth/sign-in?redirect=${encodeURIComponent(currentPath)}`;
+        const pathname = window.location.pathname;
+        const returnUrl = pathname + window.location.search;
+        // Only queue sign-in redirect when we cleared a session
+        if (hadClientCredentials && !shouldSuppressSignInRedirect(pathname)) {
+          useSessionStore.getState().requestSignInRedirect(returnUrl);
         }
       }
     }

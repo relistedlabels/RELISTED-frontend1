@@ -1,6 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { rentersApi } from "@/lib/api/renters";
 import { useFavoriteCountStore } from "@/store/useFavoriteCountStore";
+import { useUserStore } from "@/store/useUserStore";
 
 export const useFavorites = (
   page = 1,
@@ -10,15 +11,17 @@ export const useFavorites = (
   const setFavoriteCount = useFavoriteCountStore(
     (state) => state.setFavoriteCount,
   );
+  const token = useUserStore((s) => s.token);
+  const shouldFetch = token !== null;
 
   return useQuery({
     queryKey: ["renters", "favorites", page, limit, sort],
     queryFn: async () => {
       const response = await rentersApi.getFavorites({ page, limit, sort });
-      // Update store with total favorites count
       setFavoriteCount(response.data.totalFavorites);
       return response.data;
     },
+    enabled: shouldFetch,
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
