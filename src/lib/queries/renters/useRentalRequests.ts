@@ -1,13 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { rentersApi } from "@/lib/api/renters";
+import { useUserStore } from "@/store/useUserStore";
 
 export const useRentalRequests = (
   status?: "pending" | "approved" | "rejected" | "expired" | "all",
   page?: number,
   limit?: number,
   options?: Record<string, unknown>,
-) =>
-  useQuery({
+) => {
+  const token = useUserStore((s) => s.token);
+  const shouldFetch = token !== null;
+
+  return useQuery({
     queryKey: ["renters", "rental-requests", status, page, limit],
     queryFn: async () => {
       const response = await rentersApi.getRentalRequests({
@@ -17,8 +21,9 @@ export const useRentalRequests = (
       });
       return response.data;
     },
-    staleTime: 30 * 1000, // 30 seconds - short cache since items are expiring
+    ...options,
+    enabled: shouldFetch,
+    staleTime: 30 * 1000,
     retry: 1,
-    refetchInterval: 5 * 1000, // Poll every 5 seconds for cart updates
-    ...options, // Allow overriding options for specific use cases
   });
+};

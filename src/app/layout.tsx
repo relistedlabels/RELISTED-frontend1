@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import DesktopNavbar from "@/common/layer/DesktopNavbar";
-import Footer from "@/common/layer/Footer";
-import MobileNavbar from "@/common/layer/MobileNavbar";
-import QueryProvider from "@/lib/providers/query-provider";
-import DevGuard from "@/common/layer/DevGuard";
-import { Header } from "./Header";
-import { UploaderProvider } from "@/context/UploaderProvider";
+import Script from "next/script";
 import { Toaster } from "sonner";
 import ApiTestComponent from "@/common/debug/ApiTestComponent";
-import Script from "next/script";
+import DesktopNavbar from "@/common/layer/DesktopNavbar";
+import DevGuard from "@/common/layer/DevGuard";
 import { FavoritesInitializer } from "@/common/layer/FavoritesInitializer";
+import Footer from "@/common/layer/Footer";
+import MobileNavbar from "@/common/layer/MobileNavbar";
+import { UnauthorizedSignInRedirect } from "@/common/layer/UnauthorizedSignInRedirect";
+import { UploaderProvider } from "@/context/UploaderProvider";
+import QueryProvider from "@/lib/providers/query-provider";
+import { Header } from "./Header";
 
 export const metadata: Metadata = {
   title:
@@ -70,6 +71,7 @@ export default function RootLayout({
       <body className=" ">
         {/* <DevGuard> */}
         <QueryProvider>
+          <UnauthorizedSignInRedirect />
           <FavoritesInitializer />
           <UploaderProvider>
             <DesktopNavbar />
