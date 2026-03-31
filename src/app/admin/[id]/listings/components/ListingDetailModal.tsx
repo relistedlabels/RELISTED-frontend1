@@ -120,6 +120,25 @@ export default function ListingDetailModal({
 
   // Use full product detail if available, fall back to basic product prop
   const displayProduct = productDetail?.data || product;
+  const subCategoryNames: string[] = React.useMemo(() => {
+    const source = displayProduct as any;
+    const tags = Array.isArray(source?.tags) ? source.tags : [];
+    const namesFromTags = tags
+      .map((tag: any) => tag?.name || tag?.label || tag?.value)
+      .filter((name: any): name is string => typeof name === "string" && !!name);
+
+    if (namesFromTags.length > 0) return namesFromTags;
+
+    const ids =
+      source?.tagids ||
+      source?.tagIds ||
+      (source?.tagId ? [source.tagId] : []) ||
+      [];
+
+    return Array.isArray(ids)
+      ? ids.filter((id: any): id is string => typeof id === "string" && !!id)
+      : [];
+  }, [displayProduct]);
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -418,6 +437,29 @@ export default function ListingDetailModal({
                       </Paragraph1>
                     </div>
                   )}
+
+                  {/* Sub Categories */}
+                  <div>
+                    <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      Sub Categories
+                    </Paragraph1>
+                    {subCategoryNames.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {subCategoryNames.map((subCategory) => (
+                          <span
+                            key={subCategory}
+                            className="inline-flex items-center rounded-full border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700"
+                          >
+                            {subCategory}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <Paragraph1 className="text-sm text-gray-500">
+                        No sub categories assigned
+                      </Paragraph1>
+                    )}
+                  </div>
 
                   {/* Warning */}
                   {(displayProduct as any).warning && (

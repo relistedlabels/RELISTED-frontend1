@@ -15,6 +15,7 @@ export const useCreateProduct = () => {
       const attachmentIds = draft.attachments
         .filter((att) => att.type === "image")
         .map((att) => att.id);
+      const tagIds = draft.tagIds;
 
       // ✅ Validate before sending
       console.group("🔍 VALIDATION CHECK");
@@ -42,7 +43,7 @@ export const useCreateProduct = () => {
         stylingTip: draft.stylingTip.trim(),
         attachments: attachmentIds,
         categoryId: draft.categoryId,
-        tagids: draft.tagIds,
+        tagids: tagIds,
         brandId: draft.brandId,
       };
 
