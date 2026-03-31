@@ -15,6 +15,7 @@ export const useUpdateProduct = (productId: string) => {
       const attachmentIds = draft.attachments
         .filter((att) => att.type === "image")
         .map((att) => att.id);
+      const tagIds = draft.tagIds;
 
       const payload = {
         name: draft.name.trim(),
@@ -35,7 +36,7 @@ export const useUpdateProduct = (productId: string) => {
         stylingTip: draft.stylingTip.trim(),
         attachments: attachmentIds, // ✅ Array of ID strings
         categoryId: draft.categoryId,
-        tagids: draft.tagIds, // ✅ Array of tag IDs
+        tagids: tagIds,
         brandId: draft.brandId,
       };
 
@@ -50,6 +51,11 @@ export const useUpdateProduct = (productId: string) => {
       console.log("✅ Product updated:", response.message);
       queryClient.invalidateQueries({ queryKey: ["product", productId] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "listings", "detail", productId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "listings"] });
       reset();
     },
     onError: (error: any) => {
