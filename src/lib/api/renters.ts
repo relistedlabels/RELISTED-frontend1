@@ -261,6 +261,7 @@ export const rentersApi = {
     nin?: string;
     emergencyContact?: {
       name?: string;
+      phoneNumber?: string;
       phone?: string;
       email?: string;
       relationship?: string;
