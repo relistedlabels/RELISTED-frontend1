@@ -104,6 +104,25 @@ export const useProductDraftStore = create<ProductDraftStore>()(
         // Map uploads to slots
         const uploads = product.attachments?.uploads || [];
         const slotMap = ["main", "photo1", "photo2", "photo3", "video"];
+        const productLike = product as Product & {
+          tagids?: string[];
+          tagId?: string | null;
+          tags?: Array<{ id?: string; tagId?: string }>;
+        };
+        const tagIdsFromList = productLike.tags
+          ?.map((t) => t.id || t.tagId)
+          .filter((id): id is string => !!id);
+        const normalizedTagIds = Array.from(
+          new Set(
+            (
+              productLike.tagIds ??
+              productLike.tagids ??
+              (productLike.tagId ? [productLike.tagId] : undefined) ??
+              tagIdsFromList ??
+              []
+            ).filter((id): id is string => !!id),
+          ),
+        );
         const mappedAttachments = uploads.map(
           (upload: { id: string; url: string }, idx: number) => ({
             id: upload.id,
@@ -133,7 +152,7 @@ export const useProductDraftStore = create<ProductDraftStore>()(
             careInstruction: product.careInstruction,
             careSteps: product.careSteps || "",
             stylingTip: product.stylingTip,
-            tagIds: product.tagIds || [],
+            tagIds: normalizedTagIds,
             attachments: mappedAttachments,
             categoryId: product.categoryId,
             brandId: product.brandId ?? "",

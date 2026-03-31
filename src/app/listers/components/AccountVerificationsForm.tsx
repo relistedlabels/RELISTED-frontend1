@@ -19,7 +19,6 @@ import { toast } from "sonner";
 import { CityLGASelect } from "@/app/auth/profile-setup/components/CityLGASelect";
 import { StateSelect } from "@/app/auth/profile-setup/components/StateSelect";
 import { Paragraph1 } from "@/common/ui/Text";
-import { useSubmitBvn } from "@/lib/mutations/listers";
 import { useUpdateEmergencyContact } from "@/lib/mutations/listers/useUpdateEmergencyContact";
 import { useUploadNinDocument } from "@/lib/mutations/listers/useUploadNinDocument";
 import { useUpdateListerProfileMutation } from "@/lib/queries/listers/useUpdateListerProfileMutation";
@@ -299,7 +298,6 @@ const AccountVerificationsForm: React.FC = () => {
   const uploadNinMutation = useUploadNinDocument();
   const uploadMutation = useUpload();
   const updateProfileMutation = useUpdateListerProfileMutation();
-  const submitBvnMutation = useSubmitBvn();
 
   const [isUploadingFile, setIsUploadingFile] = useState(false);
 
@@ -663,13 +661,13 @@ const AccountVerificationsForm: React.FC = () => {
                 }
                 maxLength={11}
                 className="bg-white px-3 py-2 border border-gray-300 rounded-md outline-none w-full font-mono text-gray-700 text-lg tracking-wider"
-                disabled={submitBvnMutation.isPending}
+                disabled={updateProfileMutation.isPending}
               />
               <button
                 type="button"
                 className="bg-black hover:bg-gray-800 disabled:opacity-50 mt-2 md:mt-0 ml-0 md:ml-4 px-4 py-2 rounded-lg font-semibold text-white text-sm whitespace-nowrap transition disabled:cursor-not-allowed"
                 disabled={
-                  submitBvnMutation.isPending ||
+                  updateProfileMutation.isPending ||
                   !bvnInput ||
                   bvnInput.length !== 11
                 }
@@ -679,7 +677,7 @@ const AccountVerificationsForm: React.FC = () => {
                     setBvnError("Please enter a valid 11-digit BVN.");
                     return;
                   }
-                  submitBvnMutation.mutate(
+                  updateProfileMutation.mutate(
                     { bvn: bvnInput },
                     {
                       onSuccess: async () => {
@@ -698,7 +696,7 @@ const AccountVerificationsForm: React.FC = () => {
                   );
                 }}
               >
-                {submitBvnMutation.isPending ? "Submitting..." : "Submit BVN"}
+                {updateProfileMutation.isPending ? "Submitting..." : "Submit BVN"}
               </button>
             </>
           )}
