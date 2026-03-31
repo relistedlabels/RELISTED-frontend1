@@ -28,21 +28,23 @@ const ID_TYPE_OPTIONS = [
   { value: "DRIVERS_LICENSE", label: "Driver's licence" },
 ] as const;
 
-/** Values expected by POST /api/renters/profile/verifications/id-document (FormData) */
-const RENTER_ID_TYPE_API: Record<
-  (typeof ID_TYPE_OPTIONS)[number]["value"],
-  string
-> = {
-  NIN: "national_id",
-  PASSPORT: "passport",
-  DRIVERS_LICENSE: "drivers_license",
-};
-
-function toRenterApiIdType(formValue: string): string {
-  const key = formValue as keyof typeof RENTER_ID_TYPE_API;
-  return RENTER_ID_TYPE_API[key] ?? "national_id";
+/** Map old/lowercase idType formats to uppercase for backend */
+function normalizeIdType(idType: string): string {
+  const normalized = idType.toUpperCase().trim();
+  const mapping: Record<string, string> = {
+    NATIONALID: "NIN",
+    NATIONAL_ID: "NIN",
+    NIN: "NIN",
+    PASSPORT: "PASSPORT",
+    DRIVERSLICENSE: "DRIVERS_LICENSE",
+    DRIVERS_LICENSE: "DRIVERS_LICENSE",
+    DRIVERS: "DRIVERS_LICENSE",
+    DRIVER: "DRIVERS_LICENSE",
+  };
+  return mapping[normalized] || "NIN";
 }
 
+/** Validate ID number based on document type */
 function validateIdNumber(documentType: string, value: string): string | null {
   const v = value.trim();
   if (!v) return "Please enter your ID number.";
@@ -234,7 +236,7 @@ const AccountVerificationsForm: React.FC = () => {
 
     const formData = new FormData();
     formData.append("idDocument", ninFile, ninFile.name);
-    formData.append("idType", toRenterApiIdType(documentType));
+    formData.append("idType", normalizeIdType(documentType));
 
     try {
       await Promise.all([
@@ -696,7 +698,7 @@ const AccountVerificationsForm: React.FC = () => {
               {
                 emergencyContact: {
                   name: emergencyForm.fullName,
-                  phone: emergencyForm.phone,
+                  phoneNumber: emergencyForm.phone,
                   email: emergencyForm.email,
                   relationship: emergencyForm.relationship,
                 },
