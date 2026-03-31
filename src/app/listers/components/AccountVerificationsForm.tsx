@@ -6,7 +6,6 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import type React from "react";
-import { toast } from "sonner";
 import { useMemo, useState } from "react";
 import {
   HiOutlineDocumentText,
@@ -16,6 +15,7 @@ import {
   HiOutlineUser,
   HiOutlineUsers,
 } from "react-icons/hi2";
+import { toast } from "sonner";
 import { CityLGASelect } from "@/app/auth/profile-setup/components/CityLGASelect";
 import { StateSelect } from "@/app/auth/profile-setup/components/StateSelect";
 import { Paragraph1 } from "@/common/ui/Text";
@@ -619,7 +619,11 @@ const AccountVerificationsForm: React.FC = () => {
       <div className="mb-6">
         <div className="flex justify-between items-center mb-2">
           <Paragraph1 className="text-gray-900 text-base">
-            {profile?.bvn ? "Update BVN" : "Bank Verification Number (BVN)"}
+            {bvnVerificationStatus === "Verified"
+              ? "Bank Verification Number (BVN)"
+              : profile?.bvn
+                ? "Update BVN"
+                : "Bank Verification Number (BVN)"}
           </Paragraph1>
         </div>
         <div className="flex md:flex-row flex-col justify-between items-center gap-2 bg-gray-50 p-4 border border-gray-300 rounded-lg">
@@ -629,18 +633,21 @@ const AccountVerificationsForm: React.FC = () => {
                 <input
                   type="text"
                   value={
-                    profile?.bvn
-                      ? `${profile.bvn.slice(0, 4)}****${profile.bvn.slice(-3)}`
-                      : "BVN Verified"
+                    statusData?.data?.verifications?.bvn?.maskedValue
+                      ? statusData.data.verifications.bvn.maskedValue.replace(
+                          /X/g,
+                          "*",
+                        )
+                      : profile?.bvn
+                        ? `${profile.bvn.slice(0, 4)}****${profile.bvn.slice(-3)}`
+                        : "BVN Verified"
                   }
                   readOnly
                   className="bg-gray-50 outline-none w-full font-mono text-gray-700 text-lg tracking-wider"
                 />
-                {profile?.bvn && (
-                  <Paragraph1 className="mt-2 text-gray-500 text-xs">
-                    Your BVN is encrypted and secure. Only partial digits shown.
-                  </Paragraph1>
-                )}
+                <Paragraph1 className="mt-2 text-gray-500 text-xs">
+                  Your BVN is encrypted and secure. Only partial digits shown.
+                </Paragraph1>
               </div>
             </>
           ) : (
