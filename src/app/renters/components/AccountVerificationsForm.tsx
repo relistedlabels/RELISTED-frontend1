@@ -698,9 +698,11 @@ const AccountVerificationsForm: React.FC = () => {
               {
                 emergencyContact: {
                   name: emergencyForm.fullName,
-                  phone: emergencyForm.phone,
+                  phoneNumber: emergencyForm.phone,
                   email: emergencyForm.email,
                   relationship: emergencyForm.relationship,
+                  city: emergencyForm.city,
+                  state: emergencyForm.state,
                 },
               },
               {
