@@ -2,14 +2,15 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { X, ArrowLeft, Copy, RotateCcw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
 import { FaPlus } from "react-icons/fa";
 import { useProfile } from "@/lib/queries/renters/useProfile";
-import { useVerificationStatus } from "@/lib/queries/renters/useVerificationStatus";
+import { useVerificationsStatus } from "@/lib/queries/renters/useVerifications";
+import { isRenterVerifiedForFundWallet } from "@/lib/renters/fundWalletVerification";
 import VerificationModal from "@/app/shop/cart/checkout/components/VerificationModal";
 import { toast } from "sonner";
 
@@ -26,7 +27,13 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
   onClose,
 }) => {
   const { data: profileResponse, isLoading, refetch } = useProfile();
-  const verificationStatusQuery = useVerificationStatus();
+  // Same hook + cache as Account Verifications so invalidation after verify updates this UI
+  const {
+    data: verificationsStatusResponse,
+    isLoading: verificationsLoading,
+    refetch: refetchVerificationsStatus,
+  } = useVerificationsStatus();
+  const verificationReady = !verificationsLoading;
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isVerified, setIsVerified] = useState(false);
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
@@ -35,17 +42,37 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
   >(null);
   const [countdown, setCountdown] = useState(0);
 
-  const virtualAccount = profileResponse?.profile?.virtualAccount;
+  // useProfile() returns the profile object directly (not { profile })
+  const virtualAccount = profileResponse?.virtualAccount;
 
-  // Check if user is verified on mount
+  const verifications = verificationsStatusResponse?.data?.verifications;
+
+  const satisfiesFundWallet = useMemo(
+    () =>
+      isRenterVerifiedForFundWallet(profileResponse, verifications),
+    [profileResponse, verifications],
+  );
+
+  // Sync verified state + modal: wait for profile; use verification status when BVN omitted from profile
   useEffect(() => {
-    if (profileResponse?.profile?.bvn) {
-      setIsVerified(true);
-    } else if (isOpen) {
-      // If modal is open and not verified, show verification modal
+    if (!isOpen) {
+      setIsVerificationModalOpen(false);
+      return;
+    }
+    if (isLoading || !verificationReady) return;
+
+    setIsVerified(satisfiesFundWallet);
+    if (satisfiesFundWallet) {
+      setIsVerificationModalOpen(false);
+    } else {
       setIsVerificationModalOpen(true);
     }
-  }, [isOpen, profileResponse?.profile?.bvn]);
+  }, [
+    isOpen,
+    isLoading,
+    verificationReady,
+    satisfiesFundWallet,
+  ]);
 
   // Countdown timer
   useEffect(() => {
@@ -84,9 +111,17 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
     }
 
     try {
-      await verificationStatusQuery.refetch();
-      if (profileResponse?.profile?.bvn) {
+      const [vRes, pRes] = await Promise.all([
+        refetchVerificationsStatus(),
+        refetch(),
+      ]);
+      const ok = isRenterVerifiedForFundWallet(
+        pRes.data,
+        vRes.data?.data?.verifications,
+      );
+      if (ok) {
         setIsVerified(true);
+        setIsVerificationModalOpen(false);
         setVerificationSubmittedAt(null);
         setCountdown(0);
         toast.success("Verification successful!");
@@ -121,14 +156,14 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-99 bg-black/70 backdrop-blur-sm"
+          className="z-99 fixed inset-0 bg-black/70 backdrop-blur-sm"
           onClick={onClose}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="fixed top-0 right-0 h-screen hide-scrollbar overflow-y-auto bg-white shadow-2xl px-4 flex flex-col w-full sm:w-114"
+            className="top-0 right-0 fixed flex flex-col bg-white shadow-2xl px-4 w-full sm:w-114 h-screen overflow-y-auto hide-scrollbar"
             role="dialog"
             aria-modal="true"
             aria-label="Fund Wallet"
@@ -140,21 +175,21 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex justify-between sticky top-0 items-center pb-4 border-b border-gray-100 pt-6 z-10 bg-white">
+            <div className="top-0 z-10 sticky flex justify-between items-center bg-white pt-6 pb-4 border-gray-100 border-b">
               <button
                 onClick={onClose}
-                className="text-gray-500 xl:hidden hover:text-black p-1 rounded-full transition"
+                className="xl:hidden p-1 rounded-full text-gray-500 hover:text-black transition"
                 aria-label="Close Fund Wallet"
               >
                 <ArrowLeft size={20} />
               </button>
 
-              <Paragraph1 className="uppercase font-bold tracking-widest text-gray-800">
+              <Paragraph1 className="font-bold text-gray-800 uppercase tracking-widest">
                 Fund your wallet
               </Paragraph1>
               <button
                 onClick={onClose}
-                className="text-gray-500 hover:text-black p-1 rounded-full transition"
+                className="p-1 rounded-full text-gray-500 hover:text-black transition"
                 aria-label="Close Fund Wallet"
               >
                 <X className="hidden xl:flex" size={20} />
@@ -162,11 +197,11 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
             </div>
 
             {/* Content */}
-            <div className="grow pt-6 pb-20 space-y-6">
+            <div className="space-y-6 pt-6 pb-20 grow">
               {/* Verification messages */}
               {verificationSubmittedAt && countdown > 0 && (
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <Paragraph1 className="text-xs text-blue-700">
+                <div className="bg-blue-50 p-4 border border-blue-200 rounded-lg">
+                  <Paragraph1 className="text-blue-700 text-xs">
                     ⏱️ Verification in progress. Please wait{" "}
                     <strong>
                       {Math.floor(countdown / 60000)}:
@@ -180,19 +215,19 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
               )}
 
               {verificationSubmittedAt && countdown === 0 && (
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                  <Paragraph1 className="text-xs text-amber-700">
+                <div className="bg-amber-50 p-4 border border-amber-200 rounded-lg">
+                  <Paragraph1 className="text-amber-700 text-xs">
                     ✓ Verification timer complete. Click below to check status.
                   </Paragraph1>
                 </div>
               )}
 
-              {!isVerified && !isLoading && (
-                <div className="bg-red-50 border border-red-300 rounded-lg p-6 flex flex-col gap-4">
-                  <Paragraph1 className="text-sm text-red-800 font-semibold">
+              {!isVerified && !isLoading && verificationReady && (
+                <div className="flex flex-col gap-4 bg-red-50 p-6 border border-red-300 rounded-lg">
+                  <Paragraph1 className="font-semibold text-red-800 text-sm">
                     Verification Required
                   </Paragraph1>
-                  <Paragraph1 className="text-xs text-red-700">
+                  <Paragraph1 className="text-red-700 text-xs">
                     You need to verify your identity before funding your wallet.
                     Please complete the verification process below.
                   </Paragraph1>
@@ -200,7 +235,7 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
                   {verificationSubmittedAt && countdown === 0 && (
                     <button
                       onClick={checkVerificationStatus}
-                      className="w-full px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition font-semibold text-sm"
+                      className="bg-black hover:bg-gray-900 px-4 py-2 rounded-lg w-full font-semibold text-white text-sm transition"
                     >
                       Check Verification Status
                     </button>
@@ -209,7 +244,7 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
                   {!verificationSubmittedAt && (
                     <button
                       onClick={() => setIsVerificationModalOpen(true)}
-                      className="w-full px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition font-semibold text-sm"
+                      className="bg-black hover:bg-gray-900 px-4 py-2 rounded-lg w-full font-semibold text-white text-sm transition"
                     >
                       Verify Identity
                     </button>
@@ -218,7 +253,7 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
               )}
 
               {isLoading && (
-                <div className="flex items-center justify-center py-8">
+                <div className="flex justify-center items-center py-8">
                   <Paragraph1 className="text-gray-500">Loading...</Paragraph1>
                 </div>
               )}
@@ -226,28 +261,28 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
               {isVerified && !isLoading ? (
                 <div className="space-y-6">
                   {/* Virtual Account Card */}
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-300 rounded-lg p-6">
-                    <Paragraph3 className="text-sm font-semibold text-blue-900 mb-4 uppercase tracking-wide">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 border border-blue-300 rounded-lg">
+                    <Paragraph3 className="mb-4 font-semibold text-blue-900 text-sm uppercase tracking-wide">
                       Your Virtual Account
                     </Paragraph3>
 
                     {/* VA Number */}
                     <div className="space-y-2 mb-5">
-                      <Paragraph3 className="text-xs text-blue-700">
+                      <Paragraph3 className="text-blue-700 text-xs">
                         VA Number
                       </Paragraph3>
-                      <div className="flex items-center gap-3 bg-white rounded-lg px-4 py-3 border border-blue-200">
+                      <div className="flex items-center gap-3 bg-white px-4 py-3 border border-blue-200 rounded-lg">
                         <input
                           type="text"
-                          value={virtualAccount.vaNumber || "N/A"}
+                          value={virtualAccount?.vaNumber || "N/A"}
                           readOnly
-                          className="flex-1 bg-transparent text-lg font-mono font-bold text-gray-900 outline-none"
+                          className="flex-1 bg-transparent outline-none font-mono font-bold text-gray-900 text-lg"
                         />
                         <button
                           onClick={() =>
-                            handleCopy(virtualAccount.vaNumber, "VA Number")
+                            handleCopy(virtualAccount?.vaNumber ?? "", "VA Number")
                           }
-                          className="text-blue-600 hover:text-blue-800 transition p-2"
+                          className="p-2 text-blue-600 hover:text-blue-800 transition"
                           title="Copy VA Number"
                         >
                           <Copy
@@ -264,21 +299,21 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
 
                     {/* Bank Name */}
                     <div className="space-y-2 mb-5">
-                      <Paragraph3 className="text-xs text-blue-700">
+                      <Paragraph3 className="text-blue-700 text-xs">
                         Bank Name
                       </Paragraph3>
-                      <div className="flex items-center gap-3 bg-white rounded-lg px-4 py-3 border border-blue-200">
+                      <div className="flex items-center gap-3 bg-white px-4 py-3 border border-blue-200 rounded-lg">
                         <input
                           type="text"
-                          value={virtualAccount.bankName || "N/A"}
+                          value={virtualAccount?.bankName || "N/A"}
                           readOnly
-                          className="flex-1 bg-transparent text-base font-semibold text-gray-900 outline-none"
+                          className="flex-1 bg-transparent outline-none font-semibold text-gray-900 text-base"
                         />
                         <button
                           onClick={() =>
-                            handleCopy(virtualAccount.bankName, "Bank Name")
+                            handleCopy(virtualAccount?.bankName ?? "", "Bank Name")
                           }
-                          className="text-blue-600 hover:text-blue-800 transition p-2"
+                          className="p-2 text-blue-600 hover:text-blue-800 transition"
                           title="Copy Bank Name"
                         >
                           <Copy
@@ -295,33 +330,33 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
 
                     {/* Status */}
                     <div className="space-y-2">
-                      <Paragraph3 className="text-xs text-blue-700">
+                      <Paragraph3 className="text-blue-700 text-xs">
                         Status
                       </Paragraph3>
-                      <div className="bg-white rounded-lg px-4 py-3 border border-blue-200 flex items-center">
+                      <div className="flex items-center bg-white px-4 py-3 border border-blue-200 rounded-lg">
                         <span
                           className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                            virtualAccount.status === "ACTIVE"
+                            virtualAccount?.status === "ACTIVE"
                               ? "bg-green-100 text-green-800"
                               : "bg-gray-100 text-gray-800"
                           }`}
                         >
                           <span
                             className={`w-2 h-2 rounded-full mr-2 ${
-                              virtualAccount.status === "ACTIVE"
+                              virtualAccount?.status === "ACTIVE"
                                 ? "bg-green-600"
                                 : "bg-gray-400"
                             }`}
                           />
-                          {virtualAccount.status || "UNKNOWN"}
+                          {virtualAccount?.status || "UNKNOWN"}
                         </span>
                       </div>
                     </div>
                   </div>
 
                   {/* Info Box */}
-                  <div className="bg-amber-50 border border-amber-300 rounded-lg p-4">
-                    <Paragraph1 className="text-sm text-amber-800">
+                  <div className="bg-amber-50 p-4 border border-amber-300 rounded-lg">
+                    <Paragraph1 className="text-amber-800 text-sm">
                       Transfer funds to this virtual account to instantly credit
                       your wallet. Use the copy buttons above for quick access.
                     </Paragraph1>
@@ -332,7 +367,7 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
                     <button
                       type="button"
                       onClick={onClose}
-                      className="flex-1 px-4 py-3 font-semibold border text-black border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                      className="flex-1 hover:bg-gray-50 px-4 py-3 border border-gray-300 rounded-lg font-semibold text-black transition"
                     >
                       <Paragraph1>Cancel</Paragraph1>
                     </button>
@@ -340,15 +375,15 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
                     <button
                       // onClick={onClose}
                       onClick={handleRefresh}
-                      className="flex-1 px-4 py-3 font-semibold bg-black text-white rounded-lg hover:bg-gray-900 transition"
+                      className="flex-1 bg-black hover:bg-gray-900 px-4 py-3 rounded-lg font-semibold text-white transition"
                     >
                       <Paragraph1>Done</Paragraph1>
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="bg-red-50 border border-red-300 rounded-lg p-4">
-                  <Paragraph1 className="text-sm text-red-800">
+                <div className="bg-red-50 p-4 border border-red-300 rounded-lg">
+                  <Paragraph1 className="text-red-800 text-sm">
                     Virtual account not found. Please contact support.
                   </Paragraph1>
                 </div>
@@ -360,8 +395,8 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
               isOpen={isVerificationModalOpen}
               onClose={() => setIsVerificationModalOpen(false)}
               onVerified={handleVerificationComplete}
-              currentBvn={profileResponse?.profile?.bvn || ""}
-              currentNin={profileResponse?.profile?.nin}
+              currentBvn={profileResponse?.bvn || ""}
+              currentNin={profileResponse?.nin}
             />
           </motion.div>
         </motion.div>
@@ -381,7 +416,7 @@ const FundWallet: React.FC = () => {
       {/* Toggle Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="flex-1 px-4 py-3 flex items-center justify-center space-x-2 text-sm font-semibold bg-white text-black rounded-lg hover:bg-gray-100 transition duration-150"
+        className="flex flex-1 justify-center items-center space-x-2 bg-white hover:bg-gray-100 px-4 py-3 rounded-lg font-semibold text-black text-sm transition duration-150"
       >
         <FaPlus className="w-4 h-4" />
         <Paragraph1>Fund Wallet</Paragraph1>

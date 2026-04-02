@@ -2,12 +2,13 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Copy, RefreshCw, Shield } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { useUpdateProfile } from "@/lib/mutations/renters/useProfileMutations";
 import { useProfile } from "@/lib/queries/renters/useProfile";
-import { useVerificationStatus } from "@/lib/queries/renters/useVerificationStatus";
+import { useVerificationsStatus } from "@/lib/queries/renters/useVerifications";
+import { isRenterVerifiedForFundWallet } from "@/lib/renters/fundWalletVerification";
 import { useWallet } from "@/lib/queries/renters/useWallet";
 import VerificationModal from "./VerificationModal";
 
@@ -42,7 +43,11 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
     isLoading: profileLoading,
     refetch: refetchProfile,
   } = useProfile();
-  const verificationStatusQuery = useVerificationStatus();
+  const {
+    data: verificationsStatusResponse,
+    isLoading: verificationsLoading,
+    refetch: refetchVerificationsStatus,
+  } = useVerificationsStatus();
   const {
     data: walletResponse,
     isLoading: walletLoading,
@@ -50,15 +55,25 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
   } = useWallet();
   const updateProfileMutation = useUpdateProfile();
 
-  // Check if user is verified on mount
+  const verifications = verificationsStatusResponse?.data?.verifications;
+  const satisfiesWallet = useMemo(
+    () => isRenterVerifiedForFundWallet(profileResponse, verifications),
+    [profileResponse, verifications],
+  );
+
   useEffect(() => {
-    if (profileResponse?.profile?.bvn) {
-      setIsVerified(true);
+    if (profileLoading || verificationsLoading) return;
+    setIsVerified(satisfiesWallet);
+    if (satisfiesWallet) {
+      setIsVerificationModalOpen(false);
     } else {
-      setIsVerified(false);
       setIsVerificationModalOpen(true);
     }
-  }, [profileResponse?.profile?.bvn]);
+  }, [
+    profileLoading,
+    verificationsLoading,
+    satisfiesWallet,
+  ]);
 
   // Countdown timer
   useEffect(() => {
@@ -97,9 +112,17 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
     }
 
     try {
-      await verificationStatusQuery.refetch();
-      if (profileResponse?.profile?.bvn) {
+      const [vRes, pRes] = await Promise.all([
+        refetchVerificationsStatus(),
+        refetchProfile(),
+      ]);
+      const ok = isRenterVerifiedForFundWallet(
+        pRes.data,
+        vRes.data?.data?.verifications,
+      );
+      if (ok) {
         setIsVerified(true);
+        setIsVerificationModalOpen(false);
         setVerificationSubmittedAt(null);
         setCountdown(0);
         toast.success("Verification successful!");
@@ -118,8 +141,7 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
   const walletData = walletResponse?.wallet?.balance;
   const totalBalance = walletData?.totalBalance ?? 0;
   const availableBalance = walletData?.availableBalance ?? 0;
-  const virtualAccount = profileResponse?.profile?.virtualAccount;
-  const profile = profileResponse?.profile;
+  const virtualAccount = profileResponse?.virtualAccount;
 
   const formatCurrency = (value: number): string => {
     return value.toLocaleString("en-NG", {
@@ -218,8 +240,8 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
     <div className="space-y-6">
       {/* Verification Status Messages */}
       {verificationSubmittedAt && countdown > 0 && (
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <Paragraph1 className="text-xs text-blue-700">
+        <div className="bg-blue-50 p-4 border border-blue-200 rounded-lg">
+          <Paragraph1 className="text-blue-700 text-xs">
             ⏱️ Verification in progress. Please wait{" "}
             <strong>
               {Math.floor(countdown / 60000)}:
@@ -233,19 +255,19 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
       )}
 
       {verificationSubmittedAt && countdown === 0 && (
-        <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-          <Paragraph1 className="text-xs text-amber-700">
+        <div className="bg-amber-50 p-4 border border-amber-200 rounded-lg">
+          <Paragraph1 className="text-amber-700 text-xs">
             ✓ Verification timer complete. Click below to check status.
           </Paragraph1>
         </div>
       )}
 
-      {!isVerified && !profileLoading && (
-        <div className="bg-red-50 border border-red-300 rounded-lg p-6 flex flex-col gap-4">
-          <Paragraph1 className="text-sm text-red-800 font-semibold">
+      {!isVerified && !profileLoading && !verificationsLoading && (
+        <div className="flex flex-col gap-4 bg-red-50 p-6 border border-red-300 rounded-lg">
+          <Paragraph1 className="font-semibold text-red-800 text-sm">
             Verification Required
           </Paragraph1>
-          <Paragraph1 className="text-xs text-red-700">
+          <Paragraph1 className="text-red-700 text-xs">
             You need to verify your identity before funding your wallet. Please
             complete the verification process below.
           </Paragraph1>
@@ -253,7 +275,7 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
           {verificationSubmittedAt && countdown === 0 && (
             <button
               onClick={checkVerificationStatus}
-              className="w-full px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition font-semibold text-sm"
+              className="bg-black hover:bg-gray-900 px-4 py-2 rounded-lg w-full font-semibold text-white text-sm transition"
             >
               Check Verification Status
             </button>
@@ -262,7 +284,7 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
           {!verificationSubmittedAt && (
             <button
               onClick={() => setIsVerificationModalOpen(true)}
-              className="w-full px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition font-semibold text-sm"
+              className="bg-black hover:bg-gray-900 px-4 py-2 rounded-lg w-full font-semibold text-white text-sm transition"
             >
               Verify Identity
             </button>
@@ -273,17 +295,17 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
       {isVerified && !profileLoading && (
         <>
           {/* --- WALLET BALANCE Section --- */}
-          <div className="bg-gradient-to-r from-black to-gray-800 rounded-xl p-6 text-white">
+          <div className="bg-gradient-to-r from-black to-gray-800 p-6 rounded-xl text-white">
             <div className="flex justify-between items-start mb-8">
               <div>
-                <Paragraph1 className="text-xs font-medium text-gray-300 mb-2">
+                <Paragraph1 className="mb-2 font-medium text-gray-300 text-xs">
                   Total Balance
                 </Paragraph1>
-                <Paragraph3 className="text-3xl font-bold mb-3">
+                <Paragraph3 className="mb-3 font-bold text-3xl">
                   {CURRENCY}
                   {formatCurrency(totalBalance)}
                 </Paragraph3>
-                <Paragraph1 className="text-xs text-gray-400">
+                <Paragraph1 className="text-gray-400 text-xs">
                   Available: {CURRENCY}
                   {formatCurrency(availableBalance)}
                 </Paragraph1>
@@ -292,7 +314,7 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
                 type="button"
                 onClick={handleRefreshBalance}
                 disabled={isRefreshing || walletLoading}
-                className="p-2 hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+                className="hover:bg-gray-700 disabled:opacity-50 p-2 rounded-lg transition-colors"
               >
                 <RefreshCw
                   size={20}
@@ -304,16 +326,16 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
 
           {/* --- VIRTUAL ACCOUNT Section --- */}
           {virtualAccount && virtualAccount.vaNumber ? (
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-              <Paragraph1 className="text-sm font-bold text-gray-900 mb-3">
+            <div className="bg-gray-50 p-4 border border-gray-200 rounded-xl">
+              <Paragraph1 className="mb-3 font-bold text-gray-900 text-sm">
                 TRANSFER MONEY DIRECTLY
               </Paragraph1>
-              <div className="space-y-3 text-sm text-gray-800">
+              <div className="space-y-3 text-gray-800 text-sm">
                 <div>
-                  <Paragraph1 className="text-xs text-gray-600 mb-2">
+                  <Paragraph1 className="mb-2 text-gray-600 text-xs">
                     Bank Name
                   </Paragraph1>
-                  <div className="flex justify-between items-center bg-white rounded-lg p-2 border border-gray-100">
+                  <div className="flex justify-between items-center bg-white p-2 border border-gray-100 rounded-lg">
                     <Paragraph1 className="font-semibold">
                       {virtualAccount.bankName || "Wema Bank"}
                     </Paragraph1>
@@ -325,7 +347,7 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
                           "bankName",
                         )
                       }
-                      className="p-1.5 hover:bg-gray-100 rounded transition-colors"
+                      className="hover:bg-gray-100 p-1.5 rounded transition-colors"
                     >
                       {copiedField === "bankName" ? (
                         <Check size={16} className="text-green-600" />
@@ -336,11 +358,11 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
                   </div>
                 </div>
                 <div>
-                  <Paragraph1 className="text-xs text-gray-600 mb-2">
+                  <Paragraph1 className="mb-2 text-gray-600 text-xs">
                     VA Number
                   </Paragraph1>
-                  <div className="flex justify-between items-center bg-white rounded-lg p-2 border border-gray-100">
-                    <Paragraph1 className="font-semibold font-mono">
+                  <div className="flex justify-between items-center bg-white p-2 border border-gray-100 rounded-lg">
+                    <Paragraph1 className="font-mono font-semibold">
                       {virtualAccount.vaNumber}
                     </Paragraph1>
                     <button
@@ -351,7 +373,7 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
                           "vaNumber",
                         )
                       }
-                      className="p-1.5 hover:bg-gray-100 rounded transition-colors"
+                      className="hover:bg-gray-100 p-1.5 rounded transition-colors"
                     >
                       {copiedField === "vaNumber" ? (
                         <Check size={16} className="text-green-600" />
@@ -362,17 +384,17 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
                   </div>
                 </div>
               </div>
-              <Paragraph1 className="text-xs text-gray-600 mt-3 italic">
+              <Paragraph1 className="mt-3 text-gray-600 text-xs italic">
                 Transfer funds to this account and your wallet will be updated
                 within minutes
               </Paragraph1>
             </div>
           ) : (
-            <div className="bg-amber-50 border border-amber-300 rounded-xl p-4">
-              <Paragraph1 className="text-sm font-bold text-amber-900 mb-3">
+            <div className="bg-amber-50 p-4 border border-amber-300 rounded-xl">
+              <Paragraph1 className="mb-3 font-bold text-amber-900 text-sm">
                 GENERATE VIRTUAL ACCOUNT
               </Paragraph1>
-              <Paragraph1 className="text-xs text-amber-800 mb-4">
+              <Paragraph1 className="mb-4 text-amber-800 text-xs">
                 To receive direct transfers, you need to generate a virtual
                 account. We'll need your ID Number and BVN information.
               </Paragraph1>
@@ -381,7 +403,7 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
                 type="button"
                 onClick={() => setShowVAForm(!showVAForm)}
                 disabled={isGeneratingVA}
-                className="w-full px-4 py-2 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-700 transition disabled:opacity-50"
+                className="bg-amber-600 hover:bg-amber-700 disabled:opacity-50 px-4 py-2 rounded-lg w-full font-semibold text-white transition"
               >
                 {isGeneratingVA ? (
                   <span>
@@ -402,13 +424,13 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="mt-4 pt-4 border-t border-amber-200 space-y-3"
+                    className="space-y-3 mt-4 pt-4 border-amber-200 border-t"
                   >
-                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                      <Paragraph1 className="text-xs font-medium text-amber-900 mb-1">
+                    <div className="bg-amber-50 p-3 border border-amber-200 rounded-lg">
+                      <Paragraph1 className="mb-1 font-medium text-amber-900 text-xs">
                         ⚠️ Important: Use correct BVN and ID Number
                       </Paragraph1>
-                      <Paragraph1 className="text-xs text-amber-800">
+                      <Paragraph1 className="text-amber-800 text-xs">
                         Ensure the BVN and ID Number you provide are accurate.
                         Incorrect information will prevent account generation
                         and affect your verification status on the platform.
@@ -416,15 +438,15 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
                     </div>
 
                     {vaError && (
-                      <div className="p-3 bg-red-100 border border-red-300 rounded-lg">
-                        <Paragraph1 className="text-xs text-red-700">
+                      <div className="bg-red-100 p-3 border border-red-300 rounded-lg">
+                        <Paragraph1 className="text-red-700 text-xs">
                           {vaError}
                         </Paragraph1>
                       </div>
                     )}
 
                     <div>
-                      <label className="block text-xs text-gray-700 font-medium mb-1">
+                      <label className="block mb-1 font-medium text-gray-700 text-xs">
                         ID Number
                       </label>
                       <input
@@ -433,12 +455,12 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
                         onChange={(e) => setNin(e.target.value)}
                         placeholder="11-digit ID Number"
                         maxLength={11}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600"
+                        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600 w-full"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs text-gray-700 font-medium mb-1">
+                      <label className="block mb-1 font-medium text-gray-700 text-xs">
                         BVN (Bank Verification Number)
                       </label>
                       <input
@@ -447,7 +469,7 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
                         onChange={(e) => setBvn(e.target.value)}
                         placeholder="11-digit BVN"
                         maxLength={11}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600"
+                        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600 w-full"
                       />
                     </div>
 
@@ -458,14 +480,14 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
                           setShowVAForm(false);
                           setVaError("");
                         }}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
+                        className="flex-1 hover:bg-gray-50 px-3 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 transition"
                       >
                         Cancel
                       </button>
                       <button
                         type="button"
                         onClick={handleGenerateVA}
-                        className="flex-1 px-3 py-2 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 transition"
+                        className="flex-1 bg-amber-600 hover:bg-amber-700 px-3 py-2 rounded-lg font-medium text-white transition"
                       >
                         Generate
                       </button>
@@ -480,11 +502,11 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
 
       {/* --- WEMA SECURITY FOOTER --- */}
       {isVerified && (
-        <div className="flex items-center justify-center gap-2 pt-4 border-t border-gray-200">
+        <div className="flex justify-center items-center gap-2 pt-4 border-gray-200 border-t">
           <Shield size={16} className="text-gray-600" />
-          <Paragraph1 className="text-xs text-gray-600">
+          <Paragraph1 className="text-gray-600 text-xs">
             Payment secured by
-            <span className="font-bold text-gray-800 ml-1">Wema Bank</span>
+            <span className="ml-1 font-bold text-gray-800">Wema Bank</span>
           </Paragraph1>
         </div>
       )}
@@ -494,8 +516,8 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
         isOpen={isVerificationModalOpen}
         onClose={() => setIsVerificationModalOpen(false)}
         onVerified={handleVerificationComplete}
-        currentBvn={profileResponse?.profile?.bvn || ""}
-        currentNin={profileResponse?.profile?.nin}
+        currentBvn={profileResponse?.bvn || ""}
+        currentNin={profileResponse?.nin}
       />
     </div>
   );
