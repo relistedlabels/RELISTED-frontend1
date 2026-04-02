@@ -81,7 +81,8 @@ export interface WithdrawalRequest {
     accountName: string;
   };
   amount: number;
-  status: "pending" | "paid" | "failed";
+  /** API may return various lifecycle values; normalize in UI via withdrawalAdminStatus helpers. */
+  status: string;
   requestedDate: string;
   paidDate?: string;
   trackingId?: string;
@@ -263,6 +264,26 @@ export const walletsApi = {
     }>(
       `/api/admin/wallets/withdrawal-requests?${buildWithdrawalParams(params)}`,
     ),
+
+  /**
+   * Approve or reject a withdrawal (admin review).
+   * PUT /api/admin/wallets/withdrawals/:withdrawalId/status
+   */
+  updateWithdrawalStatus: (
+    withdrawalId: string,
+    body: { status: "APPROVED" | "REJECTED"; note?: string },
+  ) => {
+    const payload: { status: string; note?: string } = {
+      status: body.status,
+    };
+    const trimmed = body.note?.trim();
+    if (trimmed) payload.note = trimmed;
+    return apiFetch(`/api/admin/wallets/withdrawals/${withdrawalId}/status`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  },
 
   markWithdrawalAsPaid: (withdrawalId: string, trackingId: string) =>
     apiFetch(`/api/admin/wallets/withdrawal-requests/${withdrawalId}/paid`, {

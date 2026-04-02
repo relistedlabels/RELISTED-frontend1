@@ -2,6 +2,8 @@
 // ENDPOINTS: GET /api/admin/wallets?search=&page=1&limit=20, GET /api/public/users/:userId
 
 import React, { useMemo } from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useWallets } from "@/lib/queries/admin/useWallets";
@@ -14,6 +16,7 @@ interface WalletTableProps {
 // Component to display a single wallet row with user details
 function WalletRow({
   wallet,
+  adminSegment,
 }: {
   wallet: {
     id: string;
@@ -27,8 +30,13 @@ function WalletRow({
       email: string;
     };
   };
+  adminSegment: string;
 }) {
   const { data: userDetails, isLoading } = usePublicUserById(wallet.userId);
+  const userHref =
+    adminSegment && wallet.userId
+      ? `/admin/${adminSegment}/users/${wallet.userId}`
+      : "#";
 
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat("en-NG", {
@@ -135,24 +143,31 @@ function WalletRow({
         </Paragraph1>
       </td>
       <td className="px-6 py-4">
-        <button className="flex items-center gap-1 text-gray-600 hover:text-gray-900 font-medium">
+        <Link
+          href={userHref}
+          className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900 font-medium"
+          aria-label={`View user ${wallet.user.name}`}
+        >
           <Paragraph1>View</Paragraph1> <ChevronRight size={16} />
-        </button>
+        </Link>
       </td>
     </tr>
   );
 }
 
 export default function WalletTable({ searchQuery }: WalletTableProps) {
+  const params = useParams<{ id: string }>();
+  const adminSegment = params?.id ?? "";
   const walletsQuery = useWallets({ search: searchQuery });
 
   const filteredData = useMemo(() => {
     if (!walletsQuery.data?.data?.wallets) return [];
-    return walletsQuery.data.data.wallets.filter(
-      (item: any) =>
-        item.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.email.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
+    const q = searchQuery.toLowerCase();
+    return walletsQuery.data.data.wallets.filter((item: any) => {
+      const name = item.user?.name?.toLowerCase() ?? "";
+      const email = item.user?.email?.toLowerCase() ?? "";
+      return name.includes(q) || email.includes(q);
+    });
   }, [walletsQuery.data, searchQuery]);
 
   return (
@@ -217,7 +232,11 @@ export default function WalletTable({ searchQuery }: WalletTableProps) {
             </tr>
           ) : (
             filteredData.map((wallet: any) => (
-              <WalletRow key={wallet.id} wallet={wallet} />
+              <WalletRow
+                key={wallet.id}
+                wallet={wallet}
+                adminSegment={adminSegment}
+              />
             ))
           )}
         </tbody>
