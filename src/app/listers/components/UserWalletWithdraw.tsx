@@ -1,5 +1,5 @@
 "use client";
-// ENDPOINTS: GET /api/listers/profile, GET /api/listers/wallet (wallet balance), PUT /api/listers/profile (bankAccount: {bankName, accountNumber, accountName}), POST /api/listers/wallet/withdraw (amount, bankAccountId)
+// ENDPOINTS: GET /api/listers/wallet/bank-accounts, GET /api/listers/profile, PUT /api/listers/profile (bankAccountInfo), GET /api/listers/wallet, POST /api/listers/wallet/withdraw
 import React, { useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
@@ -11,35 +11,13 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useWalletBalance } from "@/lib/queries/listers/useWalletBalance";
 import { useListerProfile } from "@/lib/queries/listers/useListerProfile";
+import { useBankAccounts } from "@/lib/queries/listers/useBankAccounts";
 import { useWithdrawFunds } from "@/lib/mutations/listers/useWithdrawFunds";
 import { useUpdateListerProfile } from "@/lib/mutations/listers/useUpdateListerProfile";
-import EditBankAccountPanel from "./EditBankAccountPanel";
-
-// Major Nigerian Banks
-const NIGERIAN_BANKS = [
-  "Access Bank",
-  "Guaranty Trust Bank (GTBank)",
-  "United Bank for Africa (UBA)",
-  "First Bank of Nigeria",
-  "Zenith Bank",
-  "FCMB Bank",
-  "Sterling Bank",
-  "Fidelity Bank",
-  "Polaris Bank",
-  "Stanbic IBTC Bank",
-  "Standard Chartered Bank",
-  "Citi Bank",
-  "HSBC Bank",
-  "Eco Bank",
-  "Wema Bank",
-  "Heritage Bank",
-  "Jaiz Bank",
-  "Keystone Bank",
-  "Providus Bank",
-  "Union Bank of Nigeria",
-  "Taj Bank",
-  "Infiniti Bank",
-];
+import {
+  RENTER_BANK_OPTIONS,
+  resolveRenterBankByName,
+} from "@/lib/renters/renterBankOptions";
 
 const ExampleWithdrawalForm: React.FC = () => {
   const [amount, setAmount] = useState<string>("");
@@ -74,6 +52,8 @@ const ExampleWithdrawalForm: React.FC = () => {
   const { data: walletBalance, isLoading: isLoadingWallet } =
     useWalletBalance();
   const { data: profileResponse } = useListerProfile();
+  const { data: walletBankPayload, isLoading: walletBankLoading } =
+    useBankAccounts(undefined);
   const withdrawMutation = useWithdrawFunds();
   const updateProfileMutation = useUpdateListerProfile();
 
@@ -84,7 +64,12 @@ const ExampleWithdrawalForm: React.FC = () => {
     maximumFractionDigits: 2,
   })}`;
 
-  const accounts = profileResponse?.data?.profile?.bankAccounts || [];
+  const walletBankRows = walletBankPayload?.bankAccounts ?? [];
+  const profileBankRows =
+    profileResponse?.data?.profile?.bankAccounts ?? [];
+  /** Prefer wallet API rows (real BankAccount ids for withdraw); fallback to profile. */
+  const accounts =
+    walletBankRows.length > 0 ? walletBankRows : profileBankRows;
 
   const handleSelectAccount = (account: any) => {
     setSelectedBankAccount(account);
@@ -101,14 +86,14 @@ const ExampleWithdrawalForm: React.FC = () => {
     setEditingAccount(null);
   };
 
-  const filteredBanks = NIGERIAN_BANKS.filter((bank) =>
-    bank.toLowerCase().includes(bankSearch.toLowerCase()),
+  const filteredBanks = RENTER_BANK_OPTIONS.filter((bank) =>
+    bank.bankName.toLowerCase().includes(bankSearch.toLowerCase()),
   );
 
-  const handleSelectBank = (bank: string) => {
+  const handleSelectBank = (bankName: string) => {
     setProfileFormData({
       ...profileFormData,
-      bankName: bank,
+      bankName,
     });
     setIsBankDropdownOpen(false);
     setBankSearch("");
@@ -125,12 +110,26 @@ const ExampleWithdrawalForm: React.FC = () => {
       return;
     }
 
+    const bankEntry = resolveRenterBankByName(profileFormData.bankName);
+    if (!bankEntry) {
+      setProfileError(
+        "Select a bank from the list so we can send a valid bank code.",
+      );
+      return;
+    }
+
     updateProfileMutation.mutate(
       {
+        bankAccountInfo: {
+          bankName: bankEntry.bankName,
+          bankCode: bankEntry.bankCode,
+          accountNumber: profileFormData.accountNumber.trim(),
+          accountName: profileFormData.accountName.trim(),
+        },
         bankAccount: {
-          bankName: profileFormData.bankName,
-          accountNumber: profileFormData.accountNumber,
-          accountName: profileFormData.accountName,
+          bankName: bankEntry.bankName,
+          accountNumber: profileFormData.accountNumber.trim(),
+          accountName: profileFormData.accountName.trim(),
         },
       },
       {
@@ -199,7 +198,7 @@ const ExampleWithdrawalForm: React.FC = () => {
   };
 
   return (
-    <div className="font-sans bg-white">
+    <div className="font-sans bg-white text-gray-900">
       {/* Available Balance Display */}
       <div className="p-4 bg-gray-100 rounded-xl mb-6">
         <Paragraph1 className="text-sm text-gray-500 mb-1">
@@ -227,16 +226,33 @@ const ExampleWithdrawalForm: React.FC = () => {
             <Paragraph1 className="text-sm font-medium text-gray-900 mb-1">
               Account Details
             </Paragraph1>
-            {accounts && accounts.length > 0 ? (
+            {walletBankLoading && accounts.length === 0 ? (
+              <Paragraph1 className="text-xs text-gray-500">
+                Loading linked accounts…
+              </Paragraph1>
+            ) : accounts && accounts.length > 0 ? (
               <div>
                 <Paragraph1 className="text-xs text-gray-600">
                   {accounts[0].accountName} • {accounts[0].bankName}
                 </Paragraph1>
                 <Paragraph1 className="text-xs text-gray-500 mt-1">
-                  {accounts[0].accountNumber
+                  {(accounts[0].accountNumber || "")
                     .slice(-4)
-                    .padStart(accounts[0].accountNumber.length, "*")}
+                    .padStart(
+                      (accounts[0].accountNumber || "").length || 4,
+                      "*",
+                    )}
                 </Paragraph1>
+                {(accounts[0] as { verificationStatus?: string })
+                  .verificationStatus ? (
+                  <Paragraph1 className="text-xs text-amber-800 bg-amber-100/80 rounded px-2 py-1 mt-2 inline-block">
+                    Bank verification:{" "}
+                    {
+                      (accounts[0] as { verificationStatus?: string })
+                        .verificationStatus
+                    }
+                  </Paragraph1>
+                ) : null}
               </div>
             ) : (
               <Paragraph1 className="text-xs text-amber-700">
@@ -274,18 +290,25 @@ const ExampleWithdrawalForm: React.FC = () => {
           Select Account to Withdraw To
         </Paragraph1>
 
-        {accounts.length === 0 ? (
+        {walletBankLoading && accounts.length === 0 ? (
+          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="h-10 bg-gray-200 rounded animate-pulse" />
+          </div>
+        ) : accounts.length === 0 ? (
           <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 text-center">
             <Paragraph1 className="text-sm text-gray-500">
-              No accounts available. Please add account details in your profile
-              first.
+              No accounts available. Add bank details below (saved via profile
+              with bank code) or wait for the wallet list to refresh.
             </Paragraph1>
           </div>
         ) : (
           <div className="space-y-3">
             {accounts.map((account) => (
               <motion.div
-                key={account.id}
+                key={
+                  account.id ||
+                  `${account.bankName}-${account.accountNumber}`
+                }
                 className={`w-full text-left p-4 rounded-lg border-2 transition duration-200 relative overflow-hidden ${
                   selectedBankAccount?.id === account.id
                     ? "border-black bg-black/5"
@@ -314,9 +337,12 @@ const ExampleWithdrawalForm: React.FC = () => {
                     </Paragraph1>
                     <Paragraph1 className="text-xs text-gray-600 mt-1">
                       Account:{" "}
-                      {account.accountNumber
+                      {(account.accountNumber || "")
                         .slice(-4)
-                        .padStart(account.accountNumber.length, "*")}
+                        .padStart(
+                          (account.accountNumber || "").length || 4,
+                          "*",
+                        )}
                     </Paragraph1>
                     <Paragraph1 className="text-xs text-gray-500 mt-2 font-medium">
                       {account.accountName}
@@ -361,7 +387,7 @@ const ExampleWithdrawalForm: React.FC = () => {
                   setAmount(e.target.value);
                   setError("");
                 }}
-                className="w-full p-3 pl-8 text-lg border border-gray-300 rounded-lg focus:ring-black focus:border-black transition duration-150"
+                className="w-full p-3 pl-8 text-lg text-gray-900 bg-white border border-gray-300 rounded-lg placeholder:text-gray-400 focus:ring-2 focus:ring-black focus:border-black outline-none transition duration-150"
               />
               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-lg text-gray-500 font-bold">
                 ₦
@@ -388,7 +414,7 @@ const ExampleWithdrawalForm: React.FC = () => {
               placeholder="Add any notes for this withdrawal..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full p-3 text-sm border border-gray-300 rounded-lg focus:ring-black focus:border-black transition duration-150 resize-none"
+              className="w-full p-3 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg placeholder:text-gray-400 focus:ring-2 focus:ring-black focus:border-black outline-none transition duration-150 resize-none"
               rows={3}
             />
           </motion.div>
@@ -569,7 +595,7 @@ const ExampleWithdrawalForm: React.FC = () => {
                 <div className="relative">
                   <motion.button
                     onClick={() => setIsBankDropdownOpen(!isBankDropdownOpen)}
-                    className="w-full p-3 border border-gray-300 rounded-lg text-left bg-white hover:border-gray-400 transition flex items-center justify-between"
+                    className="w-full p-3 border border-gray-300 rounded-lg text-left bg-white text-gray-900 hover:border-gray-400 transition flex items-center justify-between"
                   >
                     <span
                       className={
@@ -613,7 +639,7 @@ const ExampleWithdrawalForm: React.FC = () => {
                             placeholder="Search banks..."
                             value={bankSearch}
                             onChange={(e) => setBankSearch(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-black focus:border-black"
+                            className="w-full p-2 text-gray-900 bg-white border border-gray-300 rounded-lg text-sm placeholder:text-gray-400 focus:ring-2 focus:ring-black focus:border-black outline-none"
                             autoFocus
                           />
                         </div>
@@ -623,16 +649,18 @@ const ExampleWithdrawalForm: React.FC = () => {
                           {filteredBanks.length > 0 ? (
                             filteredBanks.map((bank) => (
                               <motion.button
-                                key={bank}
-                                onClick={() => handleSelectBank(bank)}
+                                key={bank.bankName}
+                                onClick={() =>
+                                  handleSelectBank(bank.bankName)
+                                }
                                 className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition ${
-                                  profileFormData.bankName === bank
+                                  profileFormData.bankName === bank.bankName
                                     ? "bg-black text-white"
                                     : "text-gray-900"
                                 }`}
                                 whileHover={{ x: 4 }}
                               >
-                                {bank}
+                                {bank.bankName}
                               </motion.button>
                             ))
                           ) : (
@@ -659,7 +687,7 @@ const ExampleWithdrawalForm: React.FC = () => {
                       accountNumber: e.target.value,
                     })
                   }
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-black focus:border-black"
+                  className="w-full p-3 text-gray-900 bg-white border border-gray-300 rounded-lg placeholder:text-gray-400 focus:ring-2 focus:ring-black focus:border-black outline-none"
                   placeholder="Enter 10-digit account number"
                 />
               </div>
@@ -676,7 +704,7 @@ const ExampleWithdrawalForm: React.FC = () => {
                       accountName: e.target.value,
                     })
                   }
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-black focus:border-black"
+                  className="w-full p-3 text-gray-900 bg-white border border-gray-300 rounded-lg placeholder:text-gray-400 focus:ring-2 focus:ring-black focus:border-black outline-none"
                   placeholder="Name on account"
                 />
               </div>
