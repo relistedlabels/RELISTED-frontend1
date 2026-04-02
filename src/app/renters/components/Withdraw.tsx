@@ -1,4 +1,4 @@
-// ENDPOINTS: POST /api/renters/wallet/withdraw, GET /api/renters/wallet/bank-accounts, GET /api/renters/wallet (wallet balance), GET /api/renters/profile (bank accounts)
+// ENDPOINTS: PUT /api/renters/profile (bankAccountInfo → BankAccount sync), GET /api/renters/wallet/bank-accounts, POST /api/renters/wallet/withdraw, GET /api/renters/wallet
 
 "use client";
 
@@ -16,7 +16,7 @@ import { Paragraph1, Paragraph2, Header3, Paragraph3 } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
 import WalletTopUpForm from "@/app/shop/cart/checkout/components/WalletTopUpForm";
 import { FaPlus } from "react-icons/fa";
-import ExampleWithdrawalForm from "./UserWalletWithdraw";
+import { WithdrawalForm } from "./UserWalletWithdraw";
 import {
   HiOutlineArrowDownRight,
   HiOutlinePencil,
@@ -24,38 +24,12 @@ import {
 } from "react-icons/hi2";
 import { useWallet } from "@/lib/queries/renters/useWallet";
 import { useProfile } from "@/lib/queries/renters/useProfile";
+import { useBankAccounts } from "@/lib/queries/renters/useBankAccounts";
 import { useUpdateProfile } from "@/lib/mutations/renters/useProfileMutations";
-
-// Nigerian Banks List
-const NIGERIAN_BANKS = [
-  "Access Bank",
-  "Banco Santander",
-  "BenchMark Bank",
-  "Central Bank of Nigeria",
-  "Citibank",
-  "Ecobank",
-  "Fidelity Bank",
-  "First Bank",
-  "FIRST CITY MONUMENT BANK",
-  "Guaranty Trust Bank (GTBank)",
-  "HSBC Bank",
-  "Keystone Bank",
-  "Kuda Bank",
-  "Mono Bank",
-  "Polaris Bank",
-  "Providus Bank",
-  "Stanbic IBTC Bank",
-  "Standard Chartered Bank",
-  "Sterling Bank",
-  "SunTrust Bank",
-  "Titan Trust Bank",
-  "UBA",
-  "Union Bank",
-  "United Bank for Africa (UBA)",
-  "Unity Bank",
-  "Wema Bank",
-  "Zenith Bank",
-];
+import {
+  RENTER_BANK_OPTIONS,
+  resolveRenterBankByName,
+} from "@/lib/renters/renterBankOptions";
 
 // --------------------
 // Slide-in Filter Panel
@@ -76,17 +50,35 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
 
   const { data: walletResponse, isLoading: walletLoading } = useWallet();
   const { data: profileResponse, isLoading: profileLoading } = useProfile();
+  const { data: bankListPayload, isLoading: bankListLoading } = useBankAccounts();
   const updateProfileMutation = useUpdateProfile();
 
-  // Filter banks based on search
-  const filteredBanks = NIGERIAN_BANKS.filter((bank) =>
-    bank.toLowerCase().includes(bankSearchQuery.toLowerCase()),
+  const filteredBanks = RENTER_BANK_OPTIONS.filter((bank) =>
+    bank.bankName.toLowerCase().includes(bankSearchQuery.toLowerCase()),
   );
 
   const wallet = walletResponse?.wallet;
   const walletBalance = wallet?.balance?.totalBalance ?? 0;
   const availableBalance = wallet?.balance?.availableBalance ?? 0;
-  const bankAccount = profileResponse?.bankAccount;
+
+  const walletBankRows = bankListPayload?.bankAccounts ?? [];
+  const primaryWalletBank =
+    walletBankRows.find((b) => b.isDefault) ?? walletBankRows[0];
+  /** Profile often omits bank; payout rows live on GET wallet/bank-accounts. */
+  const bankAccount =
+    profileResponse?.bankAccount ??
+    (primaryWalletBank
+      ? {
+          bankName: primaryWalletBank.bankName,
+          accountNumber: primaryWalletBank.accountNumber,
+          accountName: primaryWalletBank.accountName,
+        }
+      : null);
+
+  const bankVerificationLabel = primaryWalletBank?.verificationStatus;
+
+  const bankCardLoading =
+    !bankAccount && (profileLoading || bankListLoading);
 
   const closePanel = () => {
     setBankSearchQuery("");
@@ -122,12 +114,21 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
       return;
     }
 
+    const bankEntry = resolveRenterBankByName(bankName);
+    if (!bankEntry) {
+      setBankError(
+        "Select a bank from the list so we can send a valid bank code to the server.",
+      );
+      return;
+    }
+
     updateProfileMutation.mutate(
       {
-        bankAccount: {
-          bankName,
-          accountNumber,
-          accountName,
+        bankAccountInfo: {
+          bankName: bankEntry.bankName,
+          bankCode: bankEntry.bankCode,
+          accountNumber: accountNumber.trim(),
+          accountName: accountName.trim(),
         },
       },
       {
@@ -160,7 +161,7 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="fixed top-0 right-0 h-screen hide-scrollbar overflow-y-auto bg-white shadow-2xl px-4  flex flex-col w-full sm:w-114"
+            className="fixed top-0 right-0 h-screen hide-scrollbar overflow-y-auto bg-white text-gray-900 shadow-2xl px-4 flex flex-col w-full sm:w-114"
             role="dialog"
             aria-modal="true"
             aria-label="Product Withdraw"
@@ -254,7 +255,7 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
                   )}
                 </div>
 
-                {profileLoading ? (
+                {bankCardLoading ? (
                   <div className="space-y-2">
                     <div className="h-4 bg-blue-200 rounded animate-pulse" />
                     <div className="h-4 bg-blue-200 rounded animate-pulse w-3/4" />
@@ -328,20 +329,20 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
                                 {filteredBanks.length > 0 ? (
                                   filteredBanks.map((bank) => (
                                     <motion.button
-                                      key={bank}
+                                      key={bank.bankName}
                                       onClick={() => {
-                                        setBankName(bank);
+                                        setBankName(bank.bankName);
                                         setIsBankDropdownOpen(false);
                                         setBankSearchQuery("");
                                       }}
                                       className={`w-full px-3 py-2 text-sm text-left hover:bg-blue-50 transition ${
-                                        bankName === bank
+                                        bankName === bank.bankName
                                           ? "bg-blue-100 text-blue-900 font-medium"
                                           : "text-gray-700"
                                       }`}
                                       whileHover={{ paddingLeft: 16 }}
                                     >
-                                      {bank}
+                                      {bank.bankName}
                                     </motion.button>
                                   ))
                                 ) : (
@@ -430,6 +431,11 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
                     <Paragraph1 className="text-xs text-gray-500 mt-1">
                       {bankAccount.accountName}
                     </Paragraph1>
+                    {bankVerificationLabel ? (
+                      <Paragraph1 className="text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded px-2 py-1 mt-2">
+                        Bank verification: {bankVerificationLabel}
+                      </Paragraph1>
+                    ) : null}
                   </div>
                 ) : (
                   <motion.button
@@ -444,8 +450,23 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
                 )}
               </motion.div>
 
-              {/* Withdrawal Form */}
-              {/* <ExampleWithdrawalForm /> */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="border border-gray-200 rounded-lg p-4 space-y-2"
+              >
+                <Paragraph1 className="text-sm font-semibold text-gray-900">
+                  Withdraw to bank
+                </Paragraph1>
+                <Paragraph1 className="text-xs text-gray-600">
+                  Enter an amount, pick the payout account, then submit your
+                  request.
+                </Paragraph1>
+                <WithdrawalForm
+                  hideBalanceCard
+                  onWithdrawSuccess={closePanel}
+                />
+              </motion.div>
             </div>
 
             {/* Footer */}

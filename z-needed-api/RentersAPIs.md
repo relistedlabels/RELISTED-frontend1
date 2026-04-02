@@ -897,59 +897,33 @@ GET /api/renters/wallet/bank-accounts
 
 ---
 
-### 13. POST /api/renters/wallet/bank-accounts
+### 13. Renter bank accounts (profile PUT — no wallet POST)
 
-**Location:** `src/app/renters/components/AddNewBankAccountForm.tsx` (Add bank account form)
+**There is no `POST /api/renters/wallet/bank-accounts` on the renter wallet controller** (only `GET` bank-accounts and withdraw routes). Creating or updating `BankAccount` rows for the wallet list is done inside **`PUT /api/renters/profile`** when the body includes **`bankAccountInfo`** or **`bankAccounts`** (service uses `bankAccountInfo || bankAccounts`, matches on `accountNumber`, and creates or updates the user's `BankAccount` with `bankName`, `bankCode`, `accountName` / `nameOfAccount`).
 
-**UX Explanation:**
-Link a new bank account to the renter's wallet. Used for deposits and withdrawals. The form collects:
+**Location (frontend):** `Withdraw.tsx`, `AddNewBankAccountForm.tsx`, `useWalletMutations` → `rentersApi.updateProfile({ bankAccountInfo: { ... } })`.
 
-- Bank name/code
-- Account number
-- Account holder name
-- Account type
-
-Account verification happens automatically via BVN or account matching.
-
-**Request Format:**
+**Request shape (example):**
 
 ```json
-POST /api/renters/wallet/bank-accounts
+PUT /api/renters/profile
 Content-Type: application/json
 
 {
-  "bankCode": "057",
-  "accountNumber": "1234567890",
-  "accountName": "Chioma Okafor"
-}
-```
-
-**Response Format:**
-
-```json
-{
-  "success": true,
-  "message": "Bank account added successfully",
-  "data": {
-    "accountId": "bank_acc_125",
-    "bankName": "GTB",
+  "bankAccountInfo": {
+    "bankName": "Zenith Bank",
     "bankCode": "057",
-    "accountNumber": "XXXX7890",
-    "accountName": "Chioma Okafor",
-    "accountType": "Savings",
-    "verificationStatus": "pending",
-    "verificationMessage": "Account will be verified within 24 hours",
-    "addedAt": "2026-02-08T14:30:00Z"
+    "accountNumber": "1234567890",
+    "accountName": "Chioma Okafor"
   }
 }
 ```
 
-**Status Codes:**
+**Caveats:**
 
-- `201 Created` - Bank account added successfully
-- `400 Bad Request` - Invalid account details
-- `401 Unauthorized` - User not authenticated
-- `409 Conflict` - Account already linked
+- Sending only unrelated profile fields will **not** create `BankAccount` rows; the wallet dropdown from `GET /api/renters/wallet/bank-accounts` stays empty.
+- If the profile upsert tries an invalid nested write (e.g. `bankAccounts` on `Profile` where Prisma has no such relation), the request can **fail before** the `BankAccount` block runs—treat empty dropdown + error response as a possible **500 / failed profile update**, not “wrong client URL.”
+- Alternative server path: generic **`PATCH /profile/:id`** via `ProfileService` if that is what the deployment uses instead of the renter module.
 
 ---
 
@@ -2851,7 +2825,7 @@ GET /api/renters/rental-requests/:requestId
 - [x] GET /api/renters/wallet/transactions
 - [x] POST /api/renters/wallet/deposit
 - [x] GET /api/renters/wallet/bank-accounts
-- [x] POST /api/renters/wallet/bank-accounts
+- [ ] POST /api/renters/wallet/bank-accounts — **not implemented** (use `PUT /api/renters/profile` + `bankAccountInfo` / `bankAccounts`)
 - [x] GET /api/banks
 - [x] POST /api/renters/wallet/withdraw
 - [x] GET /api/renters/wallet/withdraw/:withdrawalId

@@ -1,5 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { rentersApi } from "@/lib/api/renters";
+import {
+  rentersApi,
+  type RenterProfileBankAccountInfo,
+} from "@/lib/api/renters";
 
 export const useSubmitRentalRequest = () => {
   const queryClient = useQueryClient();
@@ -65,14 +68,22 @@ export const useUpdateProfile = () => {
       phone?: string;
       nin?: string;
       bvn?: string;
+      /** @deprecated use bankAccountInfo for BankAccount sync */
       bankAccount?: {
         bankName: string;
         accountNumber: string;
         accountName: string;
       };
+      bankAccountInfo?: RenterProfileBankAccountInfo;
+      bankAccounts?: RenterProfileBankAccountInfo | RenterProfileBankAccountInfo[];
     }) => rentersApi.updateProfile(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["renters", "profile"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["renters", "profile"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["renters", "bank-accounts"],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["renters", "wallet"] });
+      await queryClient.refetchQueries({ queryKey: ["renters", "bank-accounts"] });
     },
   });
 };
