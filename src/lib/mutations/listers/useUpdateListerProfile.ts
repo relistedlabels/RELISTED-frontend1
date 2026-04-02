@@ -9,8 +9,17 @@ export function useUpdateListerProfile() {
 
   return useMutation({
     mutationFn: (data: UpdateListerProfilePayload) => updateListerProfile(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["listers", "profile"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["listers", "profile"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["listers", "wallet", "bank-accounts"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["listers", "wallet", "balance"],
+      });
+      await queryClient.refetchQueries({
+        queryKey: ["listers", "wallet", "bank-accounts"],
+      });
     },
   });
 }

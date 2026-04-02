@@ -1,5 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { rentersApi } from "@/lib/api/renters";
+import {
+  rentersApi,
+  type RenterProfileBankAccountInfo,
+} from "@/lib/api/renters";
 
 export const useDepositFunds = () => {
   const queryClient = useQueryClient();
@@ -39,15 +42,28 @@ export const useAddBankAccount = () => {
 
   return useMutation({
     mutationFn: (data: {
+      bankName: string;
       bankCode: string;
       accountNumber: string;
       accountName: string;
-      accountType: string;
-    }) => rentersApi.addBankAccount(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+    }) => {
+      const payload: { bankAccountInfo: RenterProfileBankAccountInfo } = {
+        bankAccountInfo: {
+          bankName: data.bankName,
+          bankCode: data.bankCode,
+          accountNumber: data.accountNumber.trim(),
+          accountName: data.accountName.trim(),
+        },
+      };
+      return rentersApi.updateProfile(payload);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["renters", "profile"] });
+      await queryClient.invalidateQueries({
         queryKey: ["renters", "bank-accounts"],
       });
+      await queryClient.invalidateQueries({ queryKey: ["renters", "wallet"] });
+      await queryClient.refetchQueries({ queryKey: ["renters", "bank-accounts"] });
     },
   });
 };

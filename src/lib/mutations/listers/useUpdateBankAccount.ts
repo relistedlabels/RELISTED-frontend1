@@ -18,9 +18,11 @@ export function useUpdateBankAccount() {
         accountName: data.accountName,
         accountType: data.accountType,
       }),
-    onSuccess: () => {
-      // Invalidate bank accounts list
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["listers", "wallet", "bank-accounts"],
+      });
+      await queryClient.refetchQueries({
         queryKey: ["listers", "wallet", "bank-accounts"],
       });
     },

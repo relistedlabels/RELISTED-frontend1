@@ -1,5 +1,5 @@
 "use client";
-// ENDPOINTS: GET /api/admin/wallets/stats, GET /api/admin/wallets, GET /api/admin/wallets/escrow, GET /api/admin/wallets/transactions, POST /api/admin/wallets/export, GET /api/admin/wallets/withdrawal-requests, PUT /api/admin/wallets/withdrawal-requests/:id/paid, GET /api/admin/wallets/payouts
+// ENDPOINTS: GET /api/admin/wallets/stats, GET /api/admin/wallets, GET /api/admin/wallets/escrow, GET /api/admin/wallets/transactions, POST /api/admin/wallets/export, GET /api/admin/wallets/withdrawal-requests, PUT /api/admin/wallets/withdrawals/:withdrawalId/status (APPROVED | REJECTED), PUT /api/admin/wallets/withdrawal-requests/:id/paid, GET /api/admin/wallets/payouts
 
 import { useState } from "react";
 import { Search, Download, FileText } from "lucide-react";

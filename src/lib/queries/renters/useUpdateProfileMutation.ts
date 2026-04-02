@@ -11,8 +11,9 @@ export function useUpdateProfileMutation() {
       return result;
     },
     onSuccess: (data: FullProfile) => {
-      // Invalidate profile query to refetch
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      // Renter profile + verification UI use these keys (not ["profile"])
+      queryClient.invalidateQueries({ queryKey: ["renters", "profile"] });
+      queryClient.invalidateQueries({ queryKey: ["renter-verifications-status"] });
       return data;
     },
     onError: (error: any) => {

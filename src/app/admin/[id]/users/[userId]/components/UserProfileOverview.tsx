@@ -20,6 +20,20 @@ interface UserProfileOverviewProps {
   user: any;
 }
 
+/** KYC on the lister/renter app comes from verifications APIs; admin user payload may expose it as `data.kyc.status` (or nested on `profile`). */
+function getKycStatusForAdmin(user: any): string {
+  const top = user?.kyc?.status;
+  if (top != null && String(top).trim()) return String(top).trim();
+  const fromProfile =
+    user?.profile?.kycStatus ??
+    user?.profile?.kyc?.status ??
+    user?.profile?.verificationStatus ??
+    user?.profile?.idVerificationStatus;
+  if (fromProfile != null && String(fromProfile).trim())
+    return String(fromProfile).trim();
+  return "—";
+}
+
 export default function UserProfileOverview({
   user,
 }: UserProfileOverviewProps) {
@@ -48,6 +62,9 @@ export default function UserProfileOverview({
     day: "2-digit",
   });
 
+  const kycStatusLabel = getKycStatusForAdmin(user);
+  const profileApproved = !!profile?.isApproved;
+
   return (
     <div className=" flex flex-col gap-4">
       <DocumentModal
@@ -62,8 +79,8 @@ export default function UserProfileOverview({
         }}
       />
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      {/* Summary Stats — admin `isVerified` is separate from KYC pipeline + profile.isApproved */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase mb-3">
             Account Status
@@ -74,11 +91,29 @@ export default function UserProfileOverview({
         </div>
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase mb-3">
-            Verification Status
+            Admin account flag
           </Paragraph1>
           <Paragraph3 className="text-lg font-bold text-gray-900">
-            {user.isVerified ? "Verified" : "Not Verified"}
+            {user.isVerified ? "Verified" : "Not verified"}
           </Paragraph3>
+          <Paragraph1 className="text-xs text-gray-500 mt-2 leading-snug">
+            Set when an admin uses &quot;Verify User&quot;. This is not the same
+            as document checks in lister settings.
+          </Paragraph1>
+        </div>
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase mb-3">
+            KYC (from admin API)
+          </Paragraph1>
+          <Paragraph3 className="text-lg font-bold text-gray-900">
+            {kycStatusLabel}
+          </Paragraph3>
+          <Paragraph1 className="text-xs text-gray-500 mt-2 leading-snug">
+            From the admin user payload (e.g.{" "}
+            <span className="font-medium">kyc.status</span>). If this shows a
+            dash, the API is not returning KYC summary here—lister settings still
+            use the separate verifications status endpoint.
+          </Paragraph1>
         </div>
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase mb-3">
@@ -97,7 +132,7 @@ export default function UserProfileOverview({
         </Paragraph3>
         <Paragraph1 className="text-sm text-gray-600 leading-relaxed">
           {user.name} is a {user.role.toLowerCase()} on the Relisted platform.
-          {user.isVerified && " Account has been verified."}
+          {user.isVerified && " An admin has marked the account verified."}
           {user.isSuspended && " Account is currently suspended."}
           Account created on {joinDate}.
         </Paragraph1>
@@ -110,11 +145,26 @@ export default function UserProfileOverview({
           <Paragraph3 className="text-base font-bold text-gray-900">
             Personal Information
           </Paragraph3>
-          <span className="ml-auto flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-semibold">
-            <CheckCircle size={14} />
-            {profile?.isApproved ? "Approved" : "Pending"}
+          <span
+            className={`ml-auto flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
+              profileApproved
+                ? "bg-green-50 text-green-700"
+                : "bg-amber-50 text-amber-900"
+            }`}
+          >
+            {profileApproved ? (
+              <CheckCircle size={14} />
+            ) : (
+              <AlertCircle size={14} />
+            )}
+            {profileApproved ? "Profile approved" : "Profile pending"}
           </span>
         </div>
+        <Paragraph1 className="text-xs text-gray-500 mb-4 -mt-2">
+          Reflects profile approval only. It can stay &quot;pending&quot; while
+          ID/BVN are already verified in lister settings unless the backend
+          updates this field when KYC completes.
+        </Paragraph1>
 
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">

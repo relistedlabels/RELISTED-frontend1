@@ -1,4 +1,4 @@
-// ENDPOINTS: POST /api/renters/wallet/bank-accounts, GET /api/banks
+// ENDPOINTS: PUT /api/renters/profile (bankAccountInfo), GET /api/banks (optional)
 
 "use client";
 
@@ -6,26 +6,12 @@ import React, { useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { HiOutlineChevronDown } from "react-icons/hi2";
 import { useAddBankAccount } from "@/lib/mutations/renters/useWalletMutations";
-
-// Hardcoded Nigerian banks - ideally this would come from GET /api/banks
-const NIGERIAN_BANKS = [
-  { code: "007", name: "Access Bank Nigeria" },
-  { code: "023", name: "Citibank Nigeria" },
-  { code: "050", name: "Eco Bank Nigeria" },
-  { code: "011", name: "First Bank Nigeria" },
-  { code: "058", name: "GTBank" },
-  { code: "081", name: "Guaranty Trust Bank" },
-  { code: "066", name: "Skye Bank" },
-  { code: "087", name: "Diamond Bank" },
-  { code: "033", name: "United Bank for Africa" },
-  { code: "032", name: "Union Bank of Nigeria" },
-  { code: "035", name: "Wema Bank" },
-  { code: "057", name: "Zenith Bank" },
-];
+import { useNgBankOptions } from "@/lib/queries/useNgBankOptions";
 
 const AddNewBankAccountForm: React.FC = () => {
   const [formData, setFormData] = useState({
     bankCode: "",
+    bankName: "",
     accountNumber: "",
     accountName: "",
     accountType: "savings",
@@ -33,9 +19,10 @@ const AddNewBankAccountForm: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const addBankAccountMutation = useAddBankAccount();
+  const { bankOptions } = useNgBankOptions("NG");
 
-  const handleBankChange = (code: string) => {
-    setFormData({ ...formData, bankCode: code });
+  const handleBankChange = (bankName: string, bankCode: string) => {
+    setFormData({ ...formData, bankName, bankCode });
     setIsOpen(false);
   };
 
@@ -48,6 +35,7 @@ const AddNewBankAccountForm: React.FC = () => {
 
     if (
       !formData.bankCode ||
+      !formData.bankName ||
       !formData.accountNumber ||
       !formData.accountName
     ) {
@@ -55,23 +43,34 @@ const AddNewBankAccountForm: React.FC = () => {
       return;
     }
 
-    addBankAccountMutation.mutate(formData, {
-      onSuccess: () => {
-        alert("Bank account added successfully!");
-        setFormData({
-          bankCode: "",
-          accountNumber: "",
-          accountName: "",
-          accountType: "savings",
-        });
+    addBankAccountMutation.mutate(
+      {
+        bankName: formData.bankName,
+        bankCode: formData.bankCode,
+        accountNumber: formData.accountNumber,
+        accountName: formData.accountName,
       },
-      onError: (error: any) => {
-        alert(error?.message || "Failed to add bank account");
+      {
+        onSuccess: () => {
+          alert("Bank account added successfully!");
+          setFormData({
+            bankCode: "",
+            bankName: "",
+            accountNumber: "",
+            accountName: "",
+            accountType: "savings",
+          });
+        },
+        onError: (error: any) => {
+          alert(error?.message || "Failed to add bank account");
+        },
       },
-    });
+    );
   };
 
-  const selectedBank = NIGERIAN_BANKS.find((b) => b.code === formData.bankCode);
+  const selectedBank = bankOptions.find(
+    (b) => b.bankCode === formData.bankCode,
+  );
 
   return (
     <div className="">
@@ -86,7 +85,7 @@ const AddNewBankAccountForm: React.FC = () => {
             onClick={() => setIsOpen(!isOpen)}
             className="w-full p-3 text-black border border-gray-300 rounded-lg bg-white text-left appearance-none focus:ring-black focus:border-black transition duration-150 flex justify-between items-center"
           >
-            <span>{selectedBank?.name || "Select bank"}</span>
+            <span>{selectedBank?.bankName || "Select bank"}</span>
             <HiOutlineChevronDown
               className={`w-5 h-5 text-gray-500 transition-transform ${
                 isOpen ? "rotate-180" : ""
@@ -96,14 +95,16 @@ const AddNewBankAccountForm: React.FC = () => {
 
           {isOpen && (
             <div className="absolute z-10 w-full mt-2 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-              {NIGERIAN_BANKS.map((bank) => (
+              {bankOptions.map((bank) => (
                 <button
-                  key={bank.code}
+                  key={bank.bankCode}
                   type="button"
-                  onClick={() => handleBankChange(bank.code)}
+                  onClick={() =>
+                    handleBankChange(bank.bankName, bank.bankCode)
+                  }
                   className="w-full px-3 py-2 text-left hover:bg-gray-100 text-sm text-gray-700"
                 >
-                  {bank.name}
+                  {bank.bankName}
                 </button>
               ))}
             </div>

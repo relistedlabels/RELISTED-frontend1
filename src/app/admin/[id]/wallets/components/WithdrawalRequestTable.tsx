@@ -1,14 +1,25 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { ChevronRight, Loader2 } from "lucide-react";
+import { Loader2, MoreHorizontal } from "lucide-react";
+import { toast } from "sonner";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
   useWithdrawalRequests,
+  useUpdateAdminWithdrawalStatus,
   useMarkWithdrawalAsPaid,
 } from "@/lib/queries/admin/useWallets";
 import { usePublicUserById } from "@/lib/queries/user/usePublicUserById";
 import ConfirmPaidModal from "./ConfirmPaidModal";
+import ApproveWithdrawalModal from "./ApproveWithdrawalModal";
+import RejectWithdrawalModal from "./RejectWithdrawalModal";
+import WithdrawalActionsPickerModal from "./WithdrawalActionsPickerModal";
+import {
+  normalizeAdminWithdrawalStatus,
+  withdrawalAdminStatusLabel,
+  withdrawalShowsApprove,
+  withdrawalShowsMarkPaid,
+} from "../utils/withdrawalAdminStatus";
 
 interface WithdrawalRequestTableProps {
   searchQuery: string;
@@ -33,14 +44,21 @@ function WithdrawalRequestRow({
       accountName: string;
     };
     amount: number;
-    status: "pending" | "paid" | "failed";
+    status: string;
     requestedDate: string;
     paidDate?: string;
   };
 }) {
-  const { data: userDetails, isLoading } = usePublicUserById(withdrawal.userId);
-  const mutation = useMarkWithdrawalAsPaid();
-  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const { data: userDetails } = usePublicUserById(withdrawal.userId);
+  const markPaidMutation = useMarkWithdrawalAsPaid();
+  const statusMutation = useUpdateAdminWithdrawalStatus();
+  const [isActionsPickerOpen, setIsActionsPickerOpen] = useState(false);
+  const [isConfirmPaidOpen, setIsConfirmPaidOpen] = useState(false);
+  const [isApproveOpen, setIsApproveOpen] = useState(false);
+  const [isRejectOpen, setIsRejectOpen] = useState(false);
+
+  const actionsBusy =
+    statusMutation.isPending || markPaidMutation.isPending;
 
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat("en-NG", {
@@ -51,16 +69,20 @@ function WithdrawalRequestRow({
   };
 
   const getStatusBadgeColor = (status: string): string => {
-    switch (status) {
-      case "paid":
-        return "bg-green-100 text-green-700";
-      case "pending":
-        return "bg-yellow-100 text-yellow-700";
-      case "failed":
-        return "bg-red-100 text-red-700";
-      default:
-        return "bg-gray-100 text-gray-700";
+    const n = normalizeAdminWithdrawalStatus(status);
+    if (n === "paid" || n === "completed") {
+      return "bg-green-100 text-green-700";
     }
+    if (n === "failed" || n === "rejected" || n === "cancelled") {
+      return "bg-red-100 text-red-700";
+    }
+    if (withdrawalShowsMarkPaid(status) && !withdrawalShowsApprove(status)) {
+      return "bg-blue-100 text-blue-800";
+    }
+    if (withdrawalShowsApprove(status)) {
+      return "bg-yellow-100 text-yellow-800";
+    }
+    return "bg-gray-100 text-gray-700";
   };
 
   const getInitials = (name: string): string => {
@@ -81,14 +103,62 @@ function WithdrawalRequestRow({
     });
   };
 
-  const handleMarkAsPaid = async (trackingId: string) => {
+  const handleApprove = async (note?: string) => {
     try {
-      await mutation.mutateAsync({ withdrawalId: withdrawal.id, trackingId });
-      setIsConfirmModalOpen(false);
-    } catch (error) {
-      console.error("Error marking withdrawal as paid:", error);
+      await statusMutation.mutateAsync({
+        withdrawalId: withdrawal.id,
+        status: "APPROVED",
+        note,
+      });
+      toast.success("Withdrawal approved.");
+      setIsApproveOpen(false);
+    } catch (error: unknown) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to approve withdrawal.",
+      );
     }
   };
+
+  const handleReject = async (note?: string) => {
+    try {
+      await statusMutation.mutateAsync({
+        withdrawalId: withdrawal.id,
+        status: "REJECTED",
+        note,
+      });
+      toast.success("Withdrawal rejected.");
+      setIsRejectOpen(false);
+    } catch (error: unknown) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to reject withdrawal.",
+      );
+    }
+  };
+
+  const handleMarkAsPaid = async (trackingId: string) => {
+    try {
+      await markPaidMutation.mutateAsync({
+        withdrawalId: withdrawal.id,
+        trackingId,
+      });
+      toast.success("Withdrawal marked as paid.");
+      setIsConfirmPaidOpen(false);
+    } catch (error: unknown) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to mark withdrawal as paid.",
+      );
+    }
+  };
+
+  const showApprove = withdrawalShowsApprove(withdrawal.status);
+  const showMarkPaid = withdrawalShowsMarkPaid(withdrawal.status);
+  const statusLabel = withdrawalAdminStatusLabel(withdrawal.status);
 
   return (
     <>
@@ -133,7 +203,7 @@ function WithdrawalRequestRow({
           <span
             className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${getStatusBadgeColor(withdrawal.status)}`}
           >
-            {withdrawal.status}
+            {statusLabel}
           </span>
         </td>
         <td className="px-6 py-4">
@@ -142,32 +212,55 @@ function WithdrawalRequestRow({
           </Paragraph1>
         </td>
         <td className="px-6 py-4">
-          {withdrawal.status === "pending" ? (
+          {showApprove || showMarkPaid ? (
             <button
-              onClick={() => setIsConfirmModalOpen(true)}
-              disabled={mutation.isPending}
-              className="px-3 py-1 bg-black text-white rounded text-xs font-medium hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+              type="button"
+              onClick={() => setIsActionsPickerOpen(true)}
+              disabled={actionsBusy}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 bg-white text-gray-800 rounded-lg text-xs font-medium hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
-              {mutation.isPending ? (
-                <>
-                  <Loader2 size={14} className="animate-spin" />
-                  Processing...
-                </>
+              {actionsBusy ? (
+                <Loader2 size={14} className="animate-spin shrink-0" />
               ) : (
-                "Mark as Paid"
+                <MoreHorizontal size={14} className="shrink-0 text-gray-500" />
               )}
+              Actions
             </button>
           ) : (
-            <Paragraph1 className="text-gray-500">No action</Paragraph1>
+            <Paragraph1 className="text-gray-500">—</Paragraph1>
           )}
         </td>
       </tr>
+      <WithdrawalActionsPickerModal
+        isOpen={isActionsPickerOpen}
+        onClose={() => setIsActionsPickerOpen(false)}
+        withdrawal={withdrawal}
+        showApprove={showApprove}
+        showMarkPaid={showMarkPaid}
+        onChooseApprove={() => setIsApproveOpen(true)}
+        onChooseReject={() => setIsRejectOpen(true)}
+        onChooseMarkPaid={() => setIsConfirmPaidOpen(true)}
+      />
+      <ApproveWithdrawalModal
+        isOpen={isApproveOpen}
+        onClose={() => setIsApproveOpen(false)}
+        onConfirm={handleApprove}
+        withdrawal={withdrawal}
+        isLoading={statusMutation.isPending}
+      />
+      <RejectWithdrawalModal
+        isOpen={isRejectOpen}
+        onClose={() => setIsRejectOpen(false)}
+        onConfirm={handleReject}
+        withdrawal={withdrawal}
+        isLoading={statusMutation.isPending}
+      />
       <ConfirmPaidModal
-        isOpen={isConfirmModalOpen}
-        onClose={() => setIsConfirmModalOpen(false)}
+        isOpen={isConfirmPaidOpen}
+        onClose={() => setIsConfirmPaidOpen(false)}
         onConfirm={handleMarkAsPaid}
         withdrawal={withdrawal}
-        isLoading={mutation.isPending}
+        isLoading={markPaidMutation.isPending}
       />
     </>
   );
