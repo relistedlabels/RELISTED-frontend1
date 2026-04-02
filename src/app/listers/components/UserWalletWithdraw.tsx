@@ -1,6 +1,6 @@
 "use client";
 // ENDPOINTS: GET /api/listers/wallet/bank-accounts, GET /api/listers/profile, PUT /api/listers/profile (bankAccountInfo), GET /api/listers/wallet, POST /api/listers/wallet/withdraw
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
   HiOutlineInformationCircle,
@@ -15,9 +15,10 @@ import { useBankAccounts } from "@/lib/queries/listers/useBankAccounts";
 import { useWithdrawFunds } from "@/lib/mutations/listers/useWithdrawFunds";
 import { useUpdateListerProfile } from "@/lib/mutations/listers/useUpdateListerProfile";
 import {
-  RENTER_BANK_OPTIONS,
   resolveRenterBankByName,
+  type RenterBankOption,
 } from "@/lib/renters/renterBankOptions";
+import { useNgBankOptions } from "@/lib/queries/useNgBankOptions";
 
 const ExampleWithdrawalForm: React.FC = () => {
   const [amount, setAmount] = useState<string>("");
@@ -56,6 +57,7 @@ const ExampleWithdrawalForm: React.FC = () => {
     useBankAccounts(undefined);
   const withdrawMutation = useWithdrawFunds();
   const updateProfileMutation = useUpdateListerProfile();
+  const { bankOptions } = useNgBankOptions("NG");
 
   const availableBalance =
     walletBalance?.data?.wallet?.balance?.availableBalance ?? 0;
@@ -86,14 +88,18 @@ const ExampleWithdrawalForm: React.FC = () => {
     setEditingAccount(null);
   };
 
-  const filteredBanks = RENTER_BANK_OPTIONS.filter((bank) =>
-    bank.bankName.toLowerCase().includes(bankSearch.toLowerCase()),
+  const filteredBanks = useMemo(
+    () =>
+      bankOptions.filter((bank) =>
+        bank.bankName.toLowerCase().includes(bankSearch.toLowerCase()),
+      ),
+    [bankOptions, bankSearch],
   );
 
-  const handleSelectBank = (bankName: string) => {
+  const handleSelectBank = (bank: RenterBankOption) => {
     setProfileFormData({
       ...profileFormData,
-      bankName,
+      bankName: bank.bankName,
     });
     setIsBankDropdownOpen(false);
     setBankSearch("");
@@ -110,7 +116,10 @@ const ExampleWithdrawalForm: React.FC = () => {
       return;
     }
 
-    const bankEntry = resolveRenterBankByName(profileFormData.bankName);
+    const bankEntry = resolveRenterBankByName(
+      profileFormData.bankName.trim(),
+      bankOptions,
+    );
     if (!bankEntry) {
       setProfileError(
         "Select a bank from the list so we can send a valid bank code.",
@@ -297,8 +306,8 @@ const ExampleWithdrawalForm: React.FC = () => {
         ) : accounts.length === 0 ? (
           <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 text-center">
             <Paragraph1 className="text-sm text-gray-500">
-              No accounts available. Add bank details below (saved via profile
-              with bank code) or wait for the wallet list to refresh.
+              No accounts available. Add bank details below (saved via your
+              profile) or wait for the wallet list to refresh.
             </Paragraph1>
           </div>
         ) : (
@@ -649,10 +658,8 @@ const ExampleWithdrawalForm: React.FC = () => {
                           {filteredBanks.length > 0 ? (
                             filteredBanks.map((bank) => (
                               <motion.button
-                                key={bank.bankName}
-                                onClick={() =>
-                                  handleSelectBank(bank.bankName)
-                                }
+                                key={bank.bankCode}
+                                onClick={() => handleSelectBank(bank)}
                                 className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition ${
                                   profileFormData.bankName === bank.bankName
                                     ? "bg-black text-white"
@@ -719,7 +726,10 @@ const ExampleWithdrawalForm: React.FC = () => {
               </motion.button>
               <motion.button
                 onClick={handleUpdateProfile}
-                disabled={updateProfileMutation.isPending}
+                disabled={
+                  updateProfileMutation.isPending ||
+                  !profileFormData.bankName?.trim()
+                }
                 className="flex-1 px-4 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-900 disabled:bg-gray-400 transition"
               >
                 {updateProfileMutation.isPending ? "Saving..." : "Save"}

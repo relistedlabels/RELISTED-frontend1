@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   SlidersVertical,
   X,
@@ -26,10 +26,8 @@ import { useWallet } from "@/lib/queries/renters/useWallet";
 import { useProfile } from "@/lib/queries/renters/useProfile";
 import { useBankAccounts } from "@/lib/queries/renters/useBankAccounts";
 import { useUpdateProfile } from "@/lib/mutations/renters/useProfileMutations";
-import {
-  RENTER_BANK_OPTIONS,
-  resolveRenterBankByName,
-} from "@/lib/renters/renterBankOptions";
+import { resolveRenterBankByName } from "@/lib/renters/renterBankOptions";
+import { useNgBankOptions } from "@/lib/queries/useNgBankOptions";
 
 // --------------------
 // Slide-in Filter Panel
@@ -52,9 +50,14 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
   const { data: profileResponse, isLoading: profileLoading } = useProfile();
   const { data: bankListPayload, isLoading: bankListLoading } = useBankAccounts();
   const updateProfileMutation = useUpdateProfile();
+  const { bankOptions } = useNgBankOptions("NG");
 
-  const filteredBanks = RENTER_BANK_OPTIONS.filter((bank) =>
-    bank.bankName.toLowerCase().includes(bankSearchQuery.toLowerCase()),
+  const filteredBanks = useMemo(
+    () =>
+      bankOptions.filter((bank) =>
+        bank.bankName.toLowerCase().includes(bankSearchQuery.toLowerCase()),
+      ),
+    [bankOptions, bankSearchQuery],
   );
 
   const wallet = walletResponse?.wallet;
@@ -114,7 +117,7 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
       return;
     }
 
-    const bankEntry = resolveRenterBankByName(bankName);
+    const bankEntry = resolveRenterBankByName(bankName.trim(), bankOptions);
     if (!bankEntry) {
       setBankError(
         "Select a bank from the list so we can send a valid bank code to the server.",
@@ -329,7 +332,7 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
                                 {filteredBanks.length > 0 ? (
                                   filteredBanks.map((bank) => (
                                     <motion.button
-                                      key={bank.bankName}
+                                      key={bank.bankCode}
                                       onClick={() => {
                                         setBankName(bank.bankName);
                                         setIsBankDropdownOpen(false);

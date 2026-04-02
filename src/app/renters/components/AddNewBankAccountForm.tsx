@@ -6,7 +6,7 @@ import React, { useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { HiOutlineChevronDown } from "react-icons/hi2";
 import { useAddBankAccount } from "@/lib/mutations/renters/useWalletMutations";
-import { RENTER_BANK_OPTIONS } from "@/lib/renters/renterBankOptions";
+import { useNgBankOptions } from "@/lib/queries/useNgBankOptions";
 
 const AddNewBankAccountForm: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -19,6 +19,7 @@ const AddNewBankAccountForm: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const addBankAccountMutation = useAddBankAccount();
+  const { bankOptions } = useNgBankOptions("NG");
 
   const handleBankChange = (bankName: string, bankCode: string) => {
     setFormData({ ...formData, bankName, bankCode });
@@ -67,7 +68,7 @@ const AddNewBankAccountForm: React.FC = () => {
     );
   };
 
-  const selectedBank = RENTER_BANK_OPTIONS.find(
+  const selectedBank = bankOptions.find(
     (b) => b.bankCode === formData.bankCode,
   );
 
@@ -94,7 +95,7 @@ const AddNewBankAccountForm: React.FC = () => {
 
           {isOpen && (
             <div className="absolute z-10 w-full mt-2 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-              {RENTER_BANK_OPTIONS.map((bank) => (
+              {bankOptions.map((bank) => (
                 <button
                   key={bank.bankCode}
                   type="button"
