@@ -32,7 +32,7 @@ const BankAccountsDropdownContent: React.FC<
             className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition duration-150"
           >
             <Paragraph1 className="text-sm font-semibold text-gray-900 leading-tight">
-              {account.bankName} - {account.accountNumber.slice(-4)}
+              {account.bankName} - {(account.accountNumber || "").slice(-4) || "—"}
             </Paragraph1>
             <Paragraph1 className="text-xs text-gray-500 mt-0.5">
               {account.accountName}
@@ -61,12 +61,11 @@ const ExampleBankAccountsDropdown: React.FC<BankAccountsDropdownProps> = ({
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   const { data: bankAccountsData, isLoading } = useBankAccounts(true);
 
-  const accounts = bankAccountsData?.data || [];
+  const accounts = bankAccountsData?.bankAccounts ?? [];
 
-  const selectedAccountLabel = accounts.find(
-    (acc) => acc.id === selectedAccount,
-  )
-    ? `${accounts.find((acc) => acc.id === selectedAccount)?.bankName} - ****${accounts.find((acc) => acc.id === selectedAccount)?.accountNumber.slice(-4)}`
+  const selectedAcc = accounts.find((acc) => acc.id === selectedAccount);
+  const selectedAccountLabel = selectedAcc
+    ? `${selectedAcc.bankName} - ****${(selectedAcc.accountNumber || "").slice(-4) || "—"}`
     : "Select Bank Account";
 
   const handleSelect = (accountId: string, account: any) => {

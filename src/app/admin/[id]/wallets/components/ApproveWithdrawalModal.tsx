@@ -1,17 +1,16 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1, Header2 } from "@/common/ui/Text";
-import { toast } from "sonner";
 
-interface ConfirmPaidModalProps {
+interface ApproveWithdrawalModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (trackingId: string) => void;
+  /** Optional internal note sent to the API. */
+  onConfirm: (note?: string) => void;
   withdrawal: {
-    id: string;
     user: {
       name: string;
       email: string;
@@ -22,19 +21,22 @@ interface ConfirmPaidModalProps {
       accountName: string;
     };
     amount: number;
-    requestedDate: string;
   };
   isLoading?: boolean;
 }
 
-export default function ConfirmPaidModal({
+export default function ApproveWithdrawalModal({
   isOpen,
   onClose,
   onConfirm,
   withdrawal,
   isLoading = false,
-}: ConfirmPaidModalProps) {
-  const [trackingId, setTrackingId] = useState("");
+}: ApproveWithdrawalModalProps) {
+  const [note, setNote] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) setNote("");
+  }, [isOpen]);
 
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat("en-NG", {
@@ -42,20 +44,6 @@ export default function ConfirmPaidModal({
       currency: "NGN",
       minimumFractionDigits: 0,
     }).format(amount);
-  };
-
-  const handleConfirm = () => {
-    if (!trackingId.trim()) {
-      toast.error("Please enter a transaction tracking ID.");
-      return;
-    }
-    onConfirm(trackingId);
-    setTrackingId("");
-  };
-
-  const handleClose = () => {
-    setTrackingId("");
-    onClose();
   };
 
   const backdropVariants = {
@@ -68,6 +56,11 @@ export default function ConfirmPaidModal({
     hidden: { scale: 0.95, opacity: 0, y: 20 },
     visible: { scale: 1, opacity: 1, y: 0 },
     exit: { scale: 0.95, opacity: 0, y: 20 },
+  };
+
+  const handleConfirm = () => {
+    const trimmed = note.trim();
+    onConfirm(trimmed ? trimmed : undefined);
   };
 
   return (
@@ -89,13 +82,13 @@ export default function ConfirmPaidModal({
             exit="exit"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
             <div className="border-b border-gray-100 px-6 py-4 flex justify-between items-center">
               <Header2 className="text-lg font-bold text-gray-900">
-                Confirm Payment
+                Approve withdrawal
               </Header2>
               <button
-                onClick={handleClose}
+                type="button"
+                onClick={onClose}
                 disabled={isLoading}
                 className="p-1 hover:bg-gray-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -103,14 +96,13 @@ export default function ConfirmPaidModal({
               </button>
             </div>
 
-            {/* Content */}
             <div className="px-6 py-6">
               <Paragraph1 className="text-gray-600 mb-6">
-                Please confirm to mark this withdrawal request as paid. This
-                action cannot be undone.
+                Approve this request so it can be paid out. After approval, use
+                &quot;Mark as paid&quot; and enter the bank transfer reference when
+                the transfer is complete.
               </Paragraph1>
 
-              {/* Withdrawal Details */}
               <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-3">
                 <div>
                   <Paragraph1 className="text-gray-600 text-xs font-semibold">
@@ -132,7 +124,7 @@ export default function ConfirmPaidModal({
                     {withdrawal.bankAccount.accountNumber}
                   </Paragraph1>
                   <span className="text-xs text-gray-500">
-                    {withdrawal.bankAccount.bankName} -{" "}
+                    {withdrawal.bankAccount.bankName} —{" "}
                     {withdrawal.bankAccount.accountName}
                   </span>
                 </div>
@@ -147,45 +139,46 @@ export default function ConfirmPaidModal({
                 </div>
               </div>
 
-              {/* Transaction Tracking ID Input */}
               <div className="mb-6">
-                <label className="block text-xs font-semibold text-gray-600 mb-2">
-                  TRANSACTION TRACKING ID *
+                <label
+                  htmlFor="approve-withdrawal-note"
+                  className="block text-xs font-semibold text-gray-600 mb-2"
+                >
+                  Note (optional)
                 </label>
-                <input
-                  type="text"
-                  value={trackingId}
-                  onChange={(e) => setTrackingId(e.target.value)}
-                  placeholder="Enter transaction tracking ID for future reference"
+                <textarea
+                  id="approve-withdrawal-note"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
                   disabled={isLoading}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black disabled:bg-gray-50 disabled:opacity-50"
+                  rows={2}
+                  placeholder="Internal note"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black disabled:bg-gray-50 resize-none"
                 />
-                <Paragraph1 className="text-gray-500 text-xs mt-1">
-                  This ID will be used for tracking and reference purposes
-                </Paragraph1>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex gap-3">
                 <button
-                  onClick={handleClose}
+                  type="button"
+                  onClick={onClose}
                   disabled={isLoading}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
+                  type="button"
                   onClick={handleConfirm}
-                  disabled={isLoading || !trackingId.trim()}
+                  disabled={isLoading}
                   className="flex-1 px-4 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isLoading ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
-                      Processing...
+                      Approving…
                     </>
                   ) : (
-                    "Confirm Payment"
+                    "Approve"
                   )}
                 </button>
               </div>

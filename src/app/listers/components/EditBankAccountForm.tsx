@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { HiOutlineChevronDown } from "react-icons/hi2";
-import { useBanks } from "@/lib/queries/listers/useBanks";
+import { useNgBankOptions } from "@/lib/queries/useNgBankOptions";
 import { useUpdateBankAccount } from "@/lib/mutations/listers/useUpdateBankAccount";
 
 interface EditBankAccountFormProps {
@@ -27,16 +27,13 @@ const EditBankAccountForm: React.FC<EditBankAccountFormProps> = ({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  const { data: banksData, isLoading: isLoadingBanks } = useBanks("NG");
+  const { bankOptions, isLoading: isLoadingBanks } = useNgBankOptions("NG");
   const updateBankMutation = useUpdateBankAccount();
-
-  const banks = banksData?.data || [];
 
   const handleSubmit = async () => {
     setError("");
     setSuccess(false);
 
-    // Validation
     if (!selectedBank) {
       setError("Please select a bank");
       return;
@@ -50,7 +47,6 @@ const EditBankAccountForm: React.FC<EditBankAccountFormProps> = ({
       return;
     }
 
-    // Submit
     updateBankMutation.mutate({
       id: account.id,
       bankCode: selectedBank,
@@ -91,9 +87,9 @@ const EditBankAccountForm: React.FC<EditBankAccountFormProps> = ({
             <option value="" disabled hidden>
               {isLoadingBanks ? "Loading banks..." : "Select bank"}
             </option>
-            {banks.map((bank) => (
-              <option key={bank.code} value={bank.code}>
-                {bank.name}
+            {bankOptions.map((bank) => (
+              <option key={bank.bankCode} value={bank.bankCode}>
+                {bank.bankName}
               </option>
             ))}
           </select>

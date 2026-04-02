@@ -1,4 +1,4 @@
-// ENDPOINTS: GET /api/renters/wallet/bank-accounts, POST /api/renters/wallet/bank-accounts
+// ENDPOINTS: GET /api/renters/wallet/bank-accounts, PUT /api/renters/profile (bankAccountInfo)
 
 "use client";
 

@@ -11,9 +11,12 @@ export function useAddBankAccount() {
       accountName: string;
       accountType?: "savings" | "current";
     }) => addBankAccount(data),
-    onSuccess: () => {
-      // Invalidate bank accounts list
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["listers", "wallet", "bank-accounts"],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["listers", "profile"] });
+      await queryClient.refetchQueries({
         queryKey: ["listers", "wallet", "bank-accounts"],
       });
     },

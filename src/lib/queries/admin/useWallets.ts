@@ -116,6 +116,26 @@ export const useWithdrawalRequests = (params: WithdrawalListParams = {}) =>
     enabled: params.enabled !== false,
   });
 
+export const useUpdateAdminWithdrawalStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      withdrawalId,
+      status,
+      note,
+    }: {
+      withdrawalId: string;
+      status: "APPROVED" | "REJECTED";
+      note?: string;
+    }) => walletsApi.updateWithdrawalStatus(withdrawalId, { status, note }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "wallets", "withdrawal-requests"],
+      });
+    },
+  });
+};
+
 export const useMarkWithdrawalAsPaid = () => {
   const queryClient = useQueryClient();
   return useMutation({

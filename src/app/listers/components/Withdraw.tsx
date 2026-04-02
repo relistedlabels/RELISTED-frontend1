@@ -53,7 +53,7 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="fixed top-0 right-0 h-screen hide-scrollbar overflow-y-auto bg-white shadow-2xl px-4  flex flex-col w-full sm:w-114"
+            className="fixed top-0 right-0 h-screen hide-scrollbar overflow-y-auto bg-white text-gray-900 shadow-2xl px-4 flex flex-col w-full sm:w-114"
             role="dialog"
             aria-modal="true"
             aria-label="Product Withdraw"

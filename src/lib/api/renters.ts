@@ -1,5 +1,17 @@
 import { apiFetch } from "./http";
 
+/**
+ * Body fields that drive `BankAccount` create/update in renters `updateProfile`
+ * (`bankAccountInfo` or `bankAccounts`; there is no POST …/wallet/bank-accounts).
+ */
+export type RenterProfileBankAccountInfo = {
+  bankName: string;
+  bankCode: string;
+  accountNumber: string;
+  accountName?: string;
+  nameOfAccount?: string;
+};
+
 export type RentersDashboardSummary = {
   activeRentals: number;
   pendingReturns: number;
@@ -152,11 +164,18 @@ export type Transaction = {
 
 export type BankAccount = {
   id: string;
+  userId?: string;
   bankName: string;
+  bankCode?: string;
   accountNumber: string;
   accountName: string;
-  accountType: string;
-  verified: boolean;
+  accountType?: string | null;
+  isDefault?: boolean;
+  verificationStatus?: string;
+  verifiedAt?: string | null;
+  verified?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type RentalRequest = {
@@ -252,7 +271,16 @@ export const rentersApi = {
   // --- Profile Endpoints ---
   // GET /api/renters/profile (already present as getProfile)
 
-  // PUT /api/renters/profile
+  /**
+   * PUT /api/renters/profile
+   *
+   * Wallet payout accounts for GET /api/renters/wallet/bank-accounts are synced here via
+   * **`bankAccountInfo`** or **`bankAccounts`** (not a separate wallet POST). The service
+   * matches on `accountNumber` and sets `bankName`, `bankCode`, `accountName` / `nameOfAccount`.
+   *
+   * Note: if the server upserts `Profile` with an invalid nested `bankAccounts` relation,
+   * the request can fail before the `BankAccount` block runs—watch for 500s on save.
+   */
   updateProfile: (data: {
     fullName?: string;
     phone?: string;
@@ -269,11 +297,14 @@ export const rentersApi = {
       city?: string;
       state?: string;
     };
+    /** @deprecated For this API use `bankAccountInfo` so BankAccount rows sync. */
     bankAccount?: {
       bankName: string;
       accountNumber: string;
       accountName: string;
     };
+    bankAccountInfo?: RenterProfileBankAccountInfo;
+    bankAccounts?: RenterProfileBankAccountInfo | RenterProfileBankAccountInfo[];
   }) =>
     apiFetch<{ success: boolean; message: string; data: { profile: any } }>(
       "/api/renters/profile",
@@ -502,21 +533,10 @@ export const rentersApi = {
     ),
 
   getBankAccounts: () =>
-    apiFetch<{ success: boolean; data: { bankAccounts: BankAccount[] } }>(
-      "/api/renters/wallet/bank-accounts",
-      { method: "GET" },
-    ),
-
-  addBankAccount: (data: {
-    bankCode: string;
-    accountNumber: string;
-    accountName: string;
-    accountType: string;
-  }) =>
-    apiFetch<{ success: boolean; data: BankAccount }>(
-      "/api/renters/wallet/bank-accounts",
-      { method: "POST", body: JSON.stringify(data) },
-    ),
+    apiFetch<{
+      success: boolean;
+      data: { bankAccounts: BankAccount[]; totalAccounts?: number };
+    }>("/api/renters/wallet/bank-accounts", { method: "GET" }),
 
   withdrawFunds: (data: { amount: number; bankAccountId: string }) =>
     apiFetch<{ success: boolean; data: { withdrawalId: string } }>(

@@ -435,18 +435,25 @@ export interface TransactionsResponse {
 
 export interface BankAccount {
   id: string;
+  userId?: string;
   bankName: string;
-  bankCode: string;
+  bankCode?: string;
   accountNumber: string;
   accountName: string;
-  accountType: string;
-  verified: boolean;
-  createdAt: string;
+  accountType?: string | null;
+  verified?: boolean;
+  isDefault?: boolean;
+  verificationStatus?: string;
+  verifiedAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface BankAccountsResponse {
   success: boolean;
-  data: BankAccount[];
+  data:
+    | BankAccount[]
+    | { bankAccounts: BankAccount[]; totalAccounts?: number };
 }
 
 export interface Bank {
@@ -524,14 +531,17 @@ export async function getTransactions(
 }
 
 export async function getBankAccounts(
-  verified: boolean = true,
+  verified?: boolean,
 ): Promise<BankAccountsResponse> {
-  const params = new URLSearchParams({
-    verified: verified.toString(),
-  });
-  return apiFetch(`/api/listers/wallet/bank-accounts?${params}`, {
-    method: "GET",
-  });
+  const params = new URLSearchParams();
+  if (verified !== undefined) {
+    params.set("verified", String(verified));
+  }
+  const q = params.toString();
+  return apiFetch(
+    `/api/listers/wallet/bank-accounts${q ? `?${q}` : ""}`,
+    { method: "GET" },
+  );
 }
 
 export async function addBankAccount(data: {
@@ -1078,16 +1088,25 @@ export async function updateBusinessProfile(
   });
 }
 
+export interface ListerBankAccountInfoPayload {
+  bankName: string;
+  bankCode: string;
+  accountNumber: string;
+  accountName: string;
+}
+
 export interface UpdateListerProfilePayload {
   fullName?: string;
   phone?: string;
   bvn?: string;
   nin?: string;
+  /** @deprecated Prefer bankAccountInfo when the API syncs BankAccount rows. */
   bankAccount?: {
     bankName: string;
     accountNumber: string;
     accountName: string;
   };
+  bankAccountInfo?: ListerBankAccountInfoPayload;
 }
 
 export async function updateListerProfile(
