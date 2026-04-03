@@ -8,6 +8,7 @@ import {
   Search,
   ChevronLeft,
   ArrowLeft,
+  Loader2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
@@ -107,30 +108,17 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
 
   // Handler for Check Availability
   const handleCheckAvailability = async () => {
-    setIsChecking(true);
     setSummaryData(null);
     try {
       // Wait for both profile and addresses to load
       if (isProfileLoading || isAddressesLoading) {
         toast.info("Loading your profile and addresses...");
-        setIsChecking(false);
         return;
       }
-
-      // Detailed logging for debugging
-      console.group("🔍 Profile Check Debug");
-      console.log("Profile data present:", !!profileData);
-      console.log("Profile data:", profileData);
-      console.log("Profile error:", isProfileError);
-      console.log("Addresses present:", !!addresses);
-      console.log("Addresses data:", addresses);
-      console.log("Addresses count:", addresses?.length || 0);
-      console.groupEnd();
 
       // Check if profile exists
       if (!profileData) {
         toast.error("Profile not found. Please complete your profile setup.");
-        setIsChecking(false);
         setIsProfileSetupModalOpen(true);
         return;
       }
@@ -138,7 +126,6 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
       // Check if there's a profile error
       if (isProfileError) {
         toast.error("Error loading profile. Please try again.");
-        setIsChecking(false);
         setIsProfileSetupModalOpen(true);
         return;
       }
@@ -146,7 +133,6 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
       // Check if addresses exist
       if (!addresses || addresses.length === 0) {
         toast.info("Please add a delivery address to continue.");
-        setIsChecking(false);
         setIsProfileSetupModalOpen(true);
         return;
       }
@@ -157,19 +143,25 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
 
       if (!deliveryAddressId) {
         toast.error("Unable to select a delivery address. Please try again.");
-        setIsChecking(false);
         return;
       }
+
+      setIsChecking(true);
 
       // --- Add to cart with only productId and days using mutation hook ---
       try {
         await addCartItem.mutateAsync({ productId, days: rentalDays });
       } catch (cartErr: any) {
-        console.error("❌ Error posting cart item:", cartErr);
-        toast.error(cartErr?.message || "Could not add to cart.");
+        const msg = String(cartErr?.message ?? "");
+        const alreadyInCart = /already in cart/i.test(msg);
+        if (alreadyInCart) {
+          // Item is already in cart; rental request flow can continue
+        } else {
+          console.error("❌ Error posting cart item:", cartErr);
+          toast.error(msg || "Could not add to cart.");
+          return;
+        }
       }
-
-      console.log("✅ All checks passed. Proceeding with rental request...");
 
       const rentalStartDate = startDate.toISOString();
       const rentalEndDate = new Date(
@@ -312,7 +304,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                 </div>
                 <button
                   type="button"
-                  className={`mt-4 w-full py-3 px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
+                  className={`mt-4 w-full py-3 px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2.5 ${
                     isChecking || countdownActive
                       ? "bg-gray-400 text-white cursor-not-allowed opacity-70"
                       : "bg-black text-white hover:bg-gray-900 active:scale-95"
@@ -322,7 +314,11 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                 >
                   {isChecking ? (
                     <>
-                      <span className="animate-spin mr-2">⏳</span>Checking...
+                      <Loader2
+                        className="h-4 w-4 animate-spin shrink-0"
+                        aria-hidden
+                      />
+                      Checking…
                     </>
                   ) : countdownActive && countdown !== null ? (
                     <>
@@ -343,11 +339,27 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                 )}
                 {summaryData && (
                   <RentalSummaryCard
-                    rentalDays={summaryData.rentalDays}
-                    rentalFeePerPeriod={summaryData.estimatedPrice.rentalFee}
-                    securityDeposit={summaryData.estimatedPrice.collateralPrice}
-                    cleaningFee={0}
-                    shippingFee={summaryData.estimatedPrice.deliveryFee}
+                    rentalDays={summaryData.rentalDays ?? 0}
+                    rentalFeePerPeriod={
+                      summaryData.estimatedPrice?.rentalFee ??
+                      summaryData.rentalPrice ??
+                      0
+                    }
+                    securityDeposit={
+                      summaryData.estimatedPrice?.securityDeposit ??
+                      summaryData.estimatedPrice?.collateralPrice ??
+                      0
+                    }
+                    cleaningFee={
+                      summaryData.estimatedPrice?.cleaningFee ??
+                      summaryData.cleaningFee ??
+                      0
+                    }
+                    shippingFee={
+                      summaryData.estimatedPrice?.deliveryFee ??
+                      summaryData.deliveryFee ??
+                      0
+                    }
                   />
                 )}
               </div>

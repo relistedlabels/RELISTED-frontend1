@@ -1,5 +1,5 @@
 "use client";
-// ENDPOINTS: GET /api/listers/orders (list), POST /api/listers/orders/:orderId/approve, POST /api/listers/orders/:orderId/reject
+// ENDPOINTS: GET /api/listers/orders (list), POST …/orders/:orderId/approve, POST …/reject
 
 import Link from "next/link";
 import type React from "react";
@@ -8,52 +8,95 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Calendar, Clock, Package } from "lucide-react";
 
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
-import { useOrders, useAllOrders } from "@/lib/queries/listers/useOrders";
+import { useOrders } from "@/lib/queries/listers/useOrders";
+import {
+  getListerOrderStatusLabel,
+  getListerOrderBadgeClassName,
+  isListerAvailabilityPending,
+} from "@/lib/listers/listerOrderStatus";
+import {
+  isListerAvailabilityRequestRow,
+  shouldShowListerAvailabilityDeadlineUi,
+} from "@/lib/listers/listerOrderRow";
+import type { ListerOrdersSummary } from "@/lib/api/listers";
 
-// --- Types ---
-type OrderLabel =
-  | "pending_approval"
-  | "approved"
-  | "in_progress"
-  | "completed"
-  | "cancelled";
+type ListerTabKey = "all" | "pending" | "ongoing" | "completed" | "cancelled";
 
-const statusLabelMap: Record<string, OrderLabel> = {
-  pending_approval: "pending_approval",
-  ongoing: "approved",
-  in_progress: "in_progress",
-  completed: "completed",
-  cancelled: "cancelled",
-};
+const TABS: ListerTabKey[] = [
+  "all",
+  "pending",
+  "ongoing",
+  "completed",
+  "cancelled",
+];
 
-const displayStatusMap: Record<string, string> = {
-  pending_approval: "Pending Approval",
-  approved: "Approved",
-  in_progress: "In Progress",
+const TAB_LABEL: Record<ListerTabKey, string> = {
+  all: "All",
+  pending: "Pending Approval",
+  ongoing: "In Progress",
   completed: "Completed",
   cancelled: "Cancelled",
-  all: "All",
 };
 
-const OrdersManagement: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<string>("pending_approval");
-  const tabs: string[] = [
-    "pending_approval",
-    "approved",
-    "in_progress",
-    "completed",
-    "cancelled",
-  ];
+function tabSummaryCount(
+  tab: ListerTabKey,
+  summary?: ListerOrdersSummary,
+): number | undefined {
+  if (!summary) return undefined;
+  switch (tab) {
+    case "pending":
+      return summary.pendingApprovalCount;
+    case "ongoing":
+      return summary.ongoingCount;
+    case "completed":
+      return summary.completedCount;
+    case "cancelled":
+      return summary.cancelledCount;
+    case "all": {
+      const a = summary.pendingApprovalCount ?? 0;
+      const b = summary.ongoingCount ?? 0;
+      const c = summary.completedCount ?? 0;
+      const d = summary.cancelledCount ?? 0;
+      return a + b + c + d;
+    }
+    default:
+      return undefined;
+  }
+}
 
-  // Use correct query for each tab
+function resolveOrderExpiresAt(
+  order: Record<string, unknown>,
+): string | undefined {
+  const abs =
+    (typeof order.expiresAt === "string" && order.expiresAt.trim()) ||
+    (typeof order.expires_at === "string" && order.expires_at.trim()) ||
+    (typeof order.approvalDeadline === "string" &&
+      order.approvalDeadline.trim());
+  if (abs) return abs;
+
+  const approval = order.approval as Record<string, unknown> | undefined;
+  if (
+    approval &&
+    typeof approval.expiresAt === "string" &&
+    approval.expiresAt.trim()
+  ) {
+    return approval.expiresAt.trim();
+  }
+
+  const sec = order.timeRemainingSeconds;
+  if (typeof sec === "number" && Number.isFinite(sec)) {
+    return new Date(Date.now() + sec * 1000).toISOString();
+  }
+  return undefined;
+}
+
+const OrdersManagement: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<ListerTabKey>("pending");
+
+  const apiStatus = activeTab === "all" ? undefined : activeTab;
+
   const { data: ordersData, isLoading } = useOrders(
-    activeTab === "pending_approval"
-      ? "pending_approval"
-      : activeTab === "approved"
-        ? "ongoing"
-        : activeTab === "in_progress"
-          ? "in_progress"
-          : activeTab,
+    apiStatus,
     1,
     20,
   ) as {
@@ -61,19 +104,32 @@ const OrdersManagement: React.FC = () => {
     isLoading: boolean;
   };
 
-  const orders = useMemo(() => {
-    if (!ordersData) return [];
-    const rawOrders: any[] = Array.isArray(ordersData.data)
-      ? ordersData.data
-      : (ordersData.data?.orders ?? []);
-    return rawOrders.map((order: any) => ({
+  const { orders, summary, pagination } = useMemo(() => {
+    if (!ordersData?.data) {
+      return {
+        orders: [] as Record<string, unknown>[],
+        summary: undefined as ListerOrdersSummary | undefined,
+        pagination: undefined as
+          | { page: number; limit: number; total: number; pages: number }
+          | undefined,
+      };
+    }
+    const d = ordersData.data;
+    const rawOrders: Record<string, unknown>[] = Array.isArray(d)
+      ? d
+      : ((d.orders ?? []) as Record<string, unknown>[]);
+    const enrich = (order: Record<string, unknown>) => ({
       ...order,
-      statusLabel:
-        displayStatusMap[statusLabelMap[order.status] || order.status],
-      expiresAt: order.timeRemainingSeconds
-        ? new Date(Date.now() + order.timeRemainingSeconds * 1000).toISOString()
-        : undefined,
-    }));
+      statusLabel: getListerOrderStatusLabel(order),
+      expiresAt: resolveOrderExpiresAt(order),
+    });
+    return {
+      orders: rawOrders.map(enrich),
+      summary: Array.isArray(d) ? undefined : (d.summary as ListerOrdersSummary),
+      pagination: Array.isArray(d)
+        ? ordersData.pagination
+        : (d.pagination ?? ordersData.pagination),
+    };
   }, [ordersData]);
 
   return (
@@ -88,8 +144,9 @@ const OrdersManagement: React.FC = () => {
         whitespace-nowrap
       "
           >
-            {tabs.map((tab, _tabIndex) => {
+            {TABS.map((tab) => {
               const isActive = activeTab === tab;
+              const count = tabSummaryCount(tab, summary);
 
               return (
                 <button
@@ -112,7 +169,13 @@ const OrdersManagement: React.FC = () => {
                     />
                   )}
                   <Paragraph1 className="capitalize">
-                    {displayStatusMap[tab]}
+                    {TAB_LABEL[tab]}
+                    {typeof count === "number" ? (
+                      <span className="opacity-90 font-semibold">
+                        {" "}
+                        ({count})
+                      </span>
+                    ) : null}
                   </Paragraph1>
                 </button>
               );
@@ -150,28 +213,49 @@ const OrdersManagement: React.FC = () => {
               }}
             >
               {orders.length > 0 ? (
-                orders.map((order) => (
-                  <OrderCard
-                    key={order.id}
-                    order={{
-                      id: order.id,
-                      orderNumber: order.orderNumber,
-                      date: new Date(order.createdAt).toLocaleDateString(
+                orders.map((order) => {
+                  const row = order as Record<string, unknown>;
+                  const isAvail = isListerAvailabilityRequestRow(row);
+                  const expiresAt =
+                    typeof row.expiresAt === "string"
+                      ? row.expiresAt
+                      : undefined;
+                  const pendingApproval = isListerAvailabilityPending(row);
+                  const showDeadlineUi =
+                    shouldShowListerAvailabilityDeadlineUi(
+                      row,
+                      expiresAt,
+                      pendingApproval,
+                    );
+                  const created = row.createdAt
+                    ? new Date(String(row.createdAt)).toLocaleDateString(
                         "en-US",
                         {
                           day: "2-digit",
                           month: "short",
                           year: "numeric",
                         },
-                      ),
-                      itemCount: order.itemCount,
-                      amount: `₦${order.totalAmount.toLocaleString()}`,
-                      statusLabel: order.statusLabel,
-                      expiresAt: order.expiresAt,
-                    }}
-                    isPending={activeTab === "pending_approval"}
-                  />
-                ))
+                      )
+                    : "—";
+                  const total = Number(row.totalAmount ?? 0);
+
+                  return (
+                    <OrderCard
+                      key={String(row.id)}
+                      order={{
+                        id: String(row.id),
+                        orderNumber: String(row.orderNumber ?? ""),
+                        date: created,
+                        itemCount: Number(row.itemCount ?? 0),
+                        amount: `₦${total.toLocaleString()}`,
+                        statusLabel: String(row.statusLabel ?? ""),
+                        expiresAt,
+                      }}
+                      showDeadlineUi={showDeadlineUi}
+                      isAvailabilityRequest={isAvail}
+                    />
+                  );
+                })
               ) : (
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -179,7 +263,7 @@ const OrdersManagement: React.FC = () => {
                   className="py-20 text-center border-2 border-dashed border-gray-300 rounded-2xl text-gray-400"
                 >
                   <Paragraph3>
-                    No {activeTab.toLowerCase()} orders found.
+                    No {TAB_LABEL[activeTab].toLowerCase()} items found.
                   </Paragraph3>
                 </motion.div>
               )}
@@ -187,6 +271,13 @@ const OrdersManagement: React.FC = () => {
           )}
         </AnimatePresence>
       </div>
+
+      {pagination && pagination.total > 0 ? (
+        <Paragraph1 className="text-xs text-gray-500 text-center mt-6">
+          Page {pagination.page} of {pagination.pages} · {pagination.total}{" "}
+          total
+        </Paragraph1>
+      ) : null}
     </div>
   );
 };
@@ -202,24 +293,40 @@ const OrderCard: React.FC<{
     statusLabel: string;
     expiresAt?: string;
   };
-  isPending?: boolean;
-}> = ({ order, isPending = false }) => {
+  showDeadlineUi: boolean;
+  isAvailabilityRequest: boolean;
+}> = ({
+  order,
+  showDeadlineUi,
+  isAvailabilityRequest,
+}) => {
   const [secondsRemaining, setSecondsRemaining] = useState(0);
   const [isExpired, setIsExpired] = useState(false);
 
+  const hasExpiresAt = Boolean(order.expiresAt?.trim());
+
   // Initialize countdown timer
   useEffect(() => {
-    if (!isPending || !order.expiresAt) return;
+    if (!showDeadlineUi) {
+      setIsExpired(false);
+      setSecondsRemaining(0);
+      return;
+    }
+
+    if (!hasExpiresAt) {
+      setIsExpired(true);
+      setSecondsRemaining(0);
+      return;
+    }
 
     const updateTimer = () => {
       const now = Date.now();
-      const expiresTime = order.expiresAt
-        ? new Date(order.expiresAt).getTime()
-        : 0;
+      const expiresTime = new Date(order.expiresAt!).getTime();
       const remaining = Math.max(0, Math.floor((expiresTime - now) / 1000));
 
-      if (remaining === 0) {
+      if (remaining <= 0) {
         setIsExpired(true);
+        setSecondsRemaining(0);
       } else {
         setSecondsRemaining(remaining);
         setIsExpired(false);
@@ -229,7 +336,7 @@ const OrderCard: React.FC<{
     updateTimer(); // Initial call
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [isPending, order.expiresAt]);
+  }, [showDeadlineUi, hasExpiresAt, order.expiresAt]);
 
   // Format seconds to MM:SS
   const formatTime = (seconds: number) => {
@@ -238,7 +345,24 @@ const OrderCard: React.FC<{
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const isLowTime = secondsRemaining < 300; // 5 minutes
+  const isLowTime = secondsRemaining > 0 && secondsRemaining < 300;
+
+  const statusBadgeClass = getListerOrderBadgeClassName(order.statusLabel);
+
+  const borderClass =
+    showDeadlineUi && isExpired
+      ? "border-red-300"
+      : showDeadlineUi && isLowTime
+        ? "border-orange-300"
+        : "border-gray-300";
+
+  const badgeClass = showDeadlineUi
+    ? isExpired
+      ? "bg-red-100 text-red-700"
+      : isLowTime
+        ? "bg-orange-100 text-orange-700"
+        : "bg-[#FFF9E5] text-[#D4A017]"
+    : statusBadgeClass;
 
   return (
     <motion.div
@@ -246,54 +370,49 @@ const OrderCard: React.FC<{
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0 },
       }}
-      className={`bg-white border rounded-2xl p-4 mb-4 flex flex-col space-y-4 ${
-        isPending && isExpired
-          ? "border-red-300"
-          : isPending && isLowTime
-            ? "border-orange-300"
-            : "border-gray-300"
-      }`}
+      className={`bg-white border rounded-2xl p-4 mb-4 flex flex-col space-y-4 ${borderClass}`}
     >
-      <div className="flex justify-between items-start">
-        <div className="space-y-1">
-          <Paragraph1 className="text-sm font-bold text-black uppercase tracking-tight">
+      <div className="flex justify-between items-start gap-2">
+        <div className="space-y-1 min-w-0">
+          <Paragraph1 className="text-sm font-bold text-black uppercase tracking-tight break-words">
             ORDER {order.orderNumber}
           </Paragraph1>
-          <div className="flex items-center space-x-4 text-gray-500 flex-wrap">
+          {isAvailabilityRequest ? (
+            <Paragraph1 className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
+              Pre-checkout request
+            </Paragraph1>
+          ) : null}
+          <div className="flex items-center space-x-4 text-gray-500 flex-wrap gap-y-1">
             <div className="flex items-center space-x-1">
-              <Calendar className="w-4 h-4" />
+              <Calendar className="w-4 h-4 shrink-0" />
               <span className="text-xs font-medium">{order.date}</span>
             </div>
             <div className="flex items-center space-x-1">
-              <Package className="w-4 h-4" />
+              <Package className="w-4 h-4 shrink-0" />
               <Paragraph1 className="text-xs font-medium">
                 {order.itemCount} Items
               </Paragraph1>
             </div>
             {/* Countdown Timer for Pending Approval */}
-            {isPending && (
+            {showDeadlineUi ? (
               <div
                 className={`flex items-center space-x-1 ${isExpired ? "text-red-600" : isLowTime ? "text-orange-500" : "text-gray-500"}`}
               >
-                <Clock className="w-4 h-4" />
+                <Clock className="w-4 h-4 shrink-0" />
                 <span
                   className={`text-xs font-bold ${isExpired ? "text-red-600" : isLowTime ? "text-orange-600" : ""}`}
                 >
-                  {isExpired ? "Expired" : formatTime(secondsRemaining)}
+                  {!hasExpiresAt || isExpired
+                    ? "Expired"
+                    : formatTime(secondsRemaining)}
                 </span>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
 
         <Paragraph1
-          className={`px-4 py-1.5 text-[10px] font-bold rounded-lg uppercase tracking-wider ${
-            isExpired
-              ? "bg-red-100 text-red-700"
-              : isLowTime
-                ? "bg-orange-100 text-orange-700"
-                : "bg-[#FFF9E5] text-[#D4A017]"
-          }`}
+          className={`px-4 py-1.5 text-[10px] font-bold rounded-lg uppercase tracking-wider shrink-0 ${badgeClass}`}
         >
           {order.statusLabel}
         </Paragraph1>
@@ -314,12 +433,12 @@ const OrderCard: React.FC<{
         <Link
           href={`/listers/orders/${order.id}`}
           className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 ${
-            isExpired
+            showDeadlineUi && isExpired
               ? "bg-gray-300 text-gray-600 cursor-not-allowed"
               : "bg-[#33332D] text-white hover:bg-black"
           }`}
           onClick={(e) => {
-            if (isExpired) e.preventDefault();
+            if (showDeadlineUi && isExpired) e.preventDefault();
           }}
         >
           View Details
@@ -327,7 +446,7 @@ const OrderCard: React.FC<{
       </div>
 
       {/* Low Time Warning */}
-      {isPending && isLowTime && !isExpired && (
+      {showDeadlineUi && hasExpiresAt && isLowTime && !isExpired && (
         <div className="pt-3 border-t border-orange-200 bg-orange-50 -mx-4 -mb-4 px-4 py-3 rounded-b-2xl">
           <Paragraph1 className="text-xs font-bold text-orange-700">
             ⚠ Approval deadline approaching - {formatTime(secondsRemaining)}{" "}
@@ -337,10 +456,10 @@ const OrderCard: React.FC<{
       )}
 
       {/* Expired Notice */}
-      {isExpired && (
+      {showDeadlineUi && isExpired && (
         <div className="pt-3 border-t border-red-200 bg-red-50 -mx-4 -mb-4 px-4 py-3 rounded-b-2xl">
           <Paragraph1 className="text-xs font-bold text-red-700">
-            ✕ This order's approval deadline has expired and will be
+            ✕ This order&apos;s approval deadline has expired and will be
             auto-cancelled.
           </Paragraph1>
         </div>

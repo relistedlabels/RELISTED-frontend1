@@ -2,13 +2,19 @@
 import React from "react";
 
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
-import { Header1, Header1Plus, Paragraph1 } from "@/common/ui/Text";
+import { Header1, Header1Plus } from "@/common/ui/Text";
 import CheckoutProductList from "./components/CheckoutProductList";
 import { FinalOrderSummaryCard } from "./components/FinalOrderSummaryCard";
 import { useEffect, useState } from "react";
 import { useRentalRequests } from "@/lib/queries/renters/useRentalRequests";
 import { useCartItems } from "@/lib/queries/renters/useCartItems";
 import { productApi } from "@/lib/api/product";
+import type { CartItem } from "@/lib/api/cart";
+import {
+  rentalMetaFromCartApiItem,
+  rentalMetaIndexByCartLineId,
+} from "@/lib/cart/mergeCartLineRental";
+import type { CartCheckoutLine } from "./types";
 
 export default function CartPage() {
   const path = [
@@ -17,65 +23,84 @@ export default function CartPage() {
     { label: "Your Cart", href: null },
   ];
 
-  const [page, setPage] = useState(1);
-  const [limit] = useState(20);
-
-  // Fetch cart items from GET /cart-items
   const {
     data: cartData,
     isLoading: cartIsLoading,
     error: cartError,
   } = useCartItems();
 
-  // Fetch pending rental requests for CheckoutProductList
-  const { data, isLoading, error } = useRentalRequests("all", page, limit);
-  // Fetch approved rental requests for FinalOrderSummaryCard
   const {
     data: approvedData,
     isLoading: approvedIsLoading,
     error: approvedError,
   } = useRentalRequests("approved", 1, 100);
 
-  // Debug cart data
-  useEffect(() => {
-    console.log("🛒 Cart Page - cartData:", cartData);
-    console.log("🛒 Cart Page - isLoading:", cartIsLoading);
-    console.log("🛒 Cart Page - error:", cartError);
-    if (cartData) {
-      console.log("🛒 Items count:", cartData.itemCount);
-      console.log("🛒 Items:", cartData.items);
-    }
-  }, [cartData, cartIsLoading, cartError]);
-  const [cartItemsWithProduct, setCartItemsWithProduct] = useState<Array<any>>(
-    [],
-  );
+  const { data: pendingData } = useRentalRequests("pending", 1, 100);
+
+  const [cartLines, setCartLines] = useState<CartCheckoutLine[]>([]);
 
   useEffect(() => {
-    async function fetchProductDetails() {
-      if (!data?.rentalRequests) return;
-      // Show all items (pending + approved) - approved items will show "Approved" status
-      const requests = data.rentalRequests;
+    async function buildLinesFromCart() {
+      const items = cartData?.items;
+      if (!items?.length) {
+        setCartLines([]);
+        return;
+      }
+
+      const allRentals = [
+        ...(approvedData?.rentalRequests ?? []),
+        ...(pendingData?.rentalRequests ?? []),
+      ];
+      const rentalByLineId = rentalMetaIndexByCartLineId(allRentals);
+
       const results = await Promise.all(
-        requests.map(async (item) => {
+        items.map(async (item: CartItem) => {
+          const embedded = item.product;
+          let productDetail: Record<string, unknown> | null = embedded
+            ? { ...embedded }
+            : null;
           try {
             const response = await productApi.getPublicById(item.productId);
-            return {
-              ...item,
-              productDetail: response.data,
-            };
-          } catch (err) {
-            return {
-              ...item,
-              productDetail: null,
-              productDetailError: err,
-            };
+            productDetail = {
+              ...(embedded || {}),
+              ...(response.data as object),
+            } as Record<string, unknown>;
+          } catch {
+            /* keep embedded only */
           }
+          const daily =
+            Number(
+              (productDetail as { dailyPrice?: number })?.dailyPrice ??
+                embedded?.dailyPrice,
+            ) || 0;
+          const days = item.days || 0;
+          const fromApi = rentalMetaFromCartApiItem(
+            item as CartItem & Record<string, unknown>,
+          );
+          const fromRentalList = rentalByLineId.get(item.id);
+          const rentalMeta = fromApi
+            ? { ...fromRentalList, ...fromApi }
+            : fromRentalList;
+          return {
+            lineId: item.id,
+            cartItemId: item.id,
+            productId: item.productId,
+            rentalDays: days,
+            totalPrice: daily * days,
+            deliveryFee: 0,
+            productDetail,
+            productName:
+              (productDetail as { name?: string })?.name ?? embedded?.name,
+            expiresAt: rentalMeta?.expiresAt,
+            status: rentalMeta?.status,
+            rentalRequestId: rentalMeta?.rentalRequestId,
+          } satisfies CartCheckoutLine;
         }),
       );
-      setCartItemsWithProduct(results);
+      setCartLines(results);
     }
-    fetchProductDetails();
-  }, [data]);
+    buildLinesFromCart();
+  }, [cartData, pendingData, approvedData]);
 
   // Fetch product details for approved items
   const [approvedItemsWithProduct, setApprovedItemsWithProduct] = useState<
@@ -92,11 +117,13 @@ export default function CartPage() {
             const response = await productApi.getPublicById(item.productId);
             return {
               ...item,
+              cartItemId: item.cartItemId ?? (item as { cart_item_id?: string }).cart_item_id,
               productDetail: response.data,
             };
           } catch (err) {
             return {
               ...item,
+              cartItemId: item.cartItemId ?? (item as { cart_item_id?: string }).cart_item_id,
               productDetail: null,
               productDetailError: err,
             };
@@ -108,8 +135,24 @@ export default function CartPage() {
     fetchApprovedProductDetails();
   }, [approvedData]);
 
-  // Group approved items by listerID for checkout summary
-  const groupedByLister = approvedItemsWithProduct.reduce(
+  const cartProductIds = new Set(
+    (cartData?.items ?? []).map((i: CartItem) => i.productId),
+  );
+  const cartLineIds = new Set(
+    (cartData?.items ?? []).map((i: CartItem) => String(i.id).trim()),
+  );
+  const approvedMatchingCart = approvedItemsWithProduct.filter((item) => {
+    if (!cartProductIds.has(item.productId)) return false;
+    const lineId = String(
+      item.cartItemId ??
+        (item as { cart_item_id?: string }).cart_item_id ??
+        "",
+    ).trim();
+    if (!lineId) return false;
+    return cartLineIds.has(lineId);
+  });
+
+  const groupedByLister = approvedMatchingCart.reduce(
     (acc: Map<string, any[]>, item: any) => {
       const listerId = item.listerId;
       if (!acc.has(listerId)) {
@@ -139,15 +182,9 @@ export default function CartPage() {
       <div className="grid xl:grid-cols-3 gap-4 sm:gap-16">
         <div className="col-span-2">
           <CheckoutProductList
-            cartItems={cartItemsWithProduct}
-            approvedItemIds={
-              new Set(
-                approvedData?.rentalRequests?.map((item) => item.requestId) ||
-                  [],
-              )
-            }
-            isLoading={isLoading}
-            error={error}
+            cartItems={cartLines}
+            isLoading={cartIsLoading}
+            error={cartError}
           />
         </div>
         <div className="flex flex-col gap-4">
@@ -156,35 +193,7 @@ export default function CartPage() {
             isLoading={approvedIsLoading}
             error={approvedError}
           />
-          {/* Pagination Info */}
-          {data && data.totalPages && data.totalPages > 1 && (
-            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="text-xs text-gray-600 mb-3">
-                Page {page} of {data.totalPages}
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPage(Math.max(1, page - 1))}
-                  disabled={page === 1}
-                  className="flex-1 px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() =>
-                    setPage(Math.min(data.totalPages as number, page + 1))
-                  }
-                  disabled={page === (data.totalPages as number)}
-                  className="flex-1 px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
         </div>
-
-        {/* display cart here */}
       </div>
     </div>
   );
