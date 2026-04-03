@@ -20,7 +20,7 @@ export function useOrders(
   sort: string = "-createdAt",
 ) {
   return useQuery({
-    queryKey: ["listers", "orders", status, page, limit, sort],
+    queryKey: ["listers", "orders", status ?? "all", page, limit, sort],
     queryFn: () => getOrders(status, page, limit, sort),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

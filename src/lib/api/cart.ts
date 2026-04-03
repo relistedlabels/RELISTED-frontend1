@@ -17,6 +17,13 @@ export type CartProduct = {
   [key: string]: any;
 };
 
+/** Optional rental snapshot on each cart line. */
+export type CartLineRentalSnapshot = {
+  requestId: string;
+  expiresAt?: string;
+  status?: string;
+};
+
 export type CartItem = {
   id: string;
   cartId: string;
@@ -24,6 +31,7 @@ export type CartItem = {
   days: number;
   createdAt: string;
   product: CartProduct;
+  rentalRequest?: CartLineRentalSnapshot;
 };
 
 export type CartData = {
@@ -58,6 +66,14 @@ export const addCartItemApi = (productId: string, days: number) =>
       body: JSON.stringify({ productId, days }),
     },
   );
+
+/**
+ * Remove a cart line (DELETE /cart-items/item/:id — matches POST /cart-items/item and PATCH /cart-items/item/:id).
+ */
+export const removeCartItem = (id: string) =>
+  apiFetch<{ success: boolean; message?: string }>(`/cart-items/item/${id}`, {
+    method: "DELETE",
+  });
 
 /**
  * Create an order from cart (POST /order, no body)

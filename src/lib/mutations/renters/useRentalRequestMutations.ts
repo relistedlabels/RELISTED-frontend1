@@ -1,15 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rentersApi } from "@/lib/api/renters";
-import { useCartCountStore } from "@/store/useCartCountStore";
 
 /**
  * Submit a rental request (availability check)
  */
 export const useSubmitRentalRequest = () => {
   const queryClient = useQueryClient();
-  const incrementCartCount = useCartCountStore(
-    (state) => state.incrementCartCount,
-  );
 
   return useMutation({
     mutationFn: (data: {
@@ -24,9 +20,6 @@ export const useSubmitRentalRequest = () => {
       currency: string;
     }) => rentersApi.submitRentalRequest(data),
     onSuccess: () => {
-      // Optimistically increment cart count
-      incrementCartCount(1);
-
       queryClient.invalidateQueries({
         queryKey: ["renters", "rental-requests"],
       });
@@ -34,6 +27,7 @@ export const useSubmitRentalRequest = () => {
       queryClient.invalidateQueries({
         queryKey: ["renters", "cart", "summary"],
       });
+      queryClient.invalidateQueries({ queryKey: ["cart", "items"] });
     },
   });
 };

@@ -14,27 +14,25 @@ import { AuthActions } from "./AuthActions";
 import { shouldShowNavBar } from "@/lib/navbarRoutes";
 import { useFavoriteCountStore } from "@/store/useFavoriteCountStore";
 import { useCartCountStore } from "@/store/useCartCountStore";
-import { useRentalRequests } from "@/lib/queries/renters/useRentalRequests";
+import { useCartItems } from "@/lib/queries/renters/useCartItems";
+import { useUserStore } from "@/store/useUserStore";
 
 function DesktopNavbarContent() {
   const favoriteCount = useFavoriteCountStore((state) => state.favoriteCount);
   const cartCount = useCartCountStore((state) => state.cartCount);
   const setCartCount = useCartCountStore((state) => state.setCartCount);
-
-  // Sync cart count from DB on mount (only once, no polling or refetching)
-  const { data } = useRentalRequests("pending", 1, 1, {
-    staleTime: Infinity,
-    refetchInterval: undefined,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    refetchOnMount: false,
-  });
+  const token = useUserStore((s) => s.token);
+  const { data } = useCartItems();
 
   useEffect(() => {
-    if (data?.cartSummary?.totalItems !== undefined) {
-      setCartCount(data.cartSummary.totalItems);
+    if (!token) {
+      setCartCount(0);
+      return;
     }
-  }, [data?.cartSummary?.totalItems, setCartCount]);
+    if (data?.itemCount !== undefined) {
+      setCartCount(data.itemCount);
+    }
+  }, [token, data?.itemCount, setCartCount]);
 
   return (
     <nav className="bg-black/95 backdrop-blur-md hidden xl:block text-white fixed w-full z-50">

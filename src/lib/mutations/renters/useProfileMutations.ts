@@ -27,20 +27,6 @@ export const useSubmitRentalRequest = () => {
   });
 };
 
-export const useRemoveRentalRequest = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (requestId: string) =>
-      rentersApi.removeRentalRequest(requestId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["renters", "rental-requests"],
-      });
-    },
-  });
-};
-
 export const useConfirmRentalRequest = () => {
   const queryClient = useQueryClient();
 
