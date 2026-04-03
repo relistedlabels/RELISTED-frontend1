@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Trash2, ShoppingCart } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 // import { useCart } from "@/lib/queries/renters/useCart";
-import { useRemoveRentalRequest } from "@/lib/mutations/renters/useRemoveRentalRequest";
+import { useRemoveCartItem } from "@/lib/mutations/cart/useRemoveCartItem";
 
 // --- Formatting Helper (for thousands separator) ---
 const formatCurrency = (amount: number): string => {
@@ -70,11 +70,13 @@ export default function CheckoutProductList({
   isLoading,
   error,
 }: CheckoutProductListProps) {
-  const removeRentalRequest = useRemoveRentalRequest();
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const removeCartItemMutation = useRemoveCartItem();
+  const [selectedCartItemIds, setSelectedCartItemIds] = useState<string[]>([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [modalBulk, setModalBulk] = useState(false);
-  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null);
+  const [pendingRemoveCartItemId, setPendingRemoveCartItemId] = useState<
+    string | null
+  >(null);
   const currency = "₦";
 
   if (isLoading) return <CartSkeleton />;
@@ -97,26 +99,28 @@ export default function CheckoutProductList({
     );
   }
 
-  // Toggle selection for an item
-  const toggleItemSelection = (requestId: string) => {
-    setSelectedItems((prev) =>
-      prev.includes(requestId)
-        ? prev.filter((id) => id !== requestId)
-        : [...prev, requestId],
+  // Toggle selection for an item (cart line id — matches DELETE /cart-items/:id)
+  const toggleItemSelection = (cartItemId: string) => {
+    setSelectedCartItemIds((prev) =>
+      prev.includes(cartItemId)
+        ? prev.filter((id) => id !== cartItemId)
+        : [...prev, cartItemId],
     );
   };
 
   // Select all items
   const selectAll = () => {
-    setSelectedItems(cartItems.map((item) => item.requestId));
+    setSelectedCartItemIds(
+      cartItems.map((item) => item.cartItemId).filter(Boolean),
+    );
   };
   const deselectAll = () => {
-    setSelectedItems([]);
+    setSelectedCartItemIds([]);
   };
 
   // Remove item with confirmation
-  const handleRemoveItem = (requestId: string) => {
-    setPendingRemoveId(requestId);
+  const handleRemoveItem = (cartItemId: string) => {
+    setPendingRemoveCartItemId(cartItemId);
     setShowConfirmModal(true);
     setModalBulk(false);
   };
@@ -130,20 +134,20 @@ export default function CheckoutProductList({
   // Confirm removal
   const confirmRemove = () => {
     if (modalBulk) {
-      selectedItems.forEach((id) => removeRentalRequest.mutate(id));
-      setSelectedItems([]);
-    } else if (pendingRemoveId) {
-      removeRentalRequest.mutate(pendingRemoveId);
+      selectedCartItemIds.forEach((id) => removeCartItemMutation.mutate(id));
+      setSelectedCartItemIds([]);
+    } else if (pendingRemoveCartItemId) {
+      removeCartItemMutation.mutate(pendingRemoveCartItemId);
     }
     setShowConfirmModal(false);
-    setPendingRemoveId(null);
+    setPendingRemoveCartItemId(null);
     setModalBulk(false);
   };
 
   // Cancel removal
   const cancelRemove = () => {
     setShowConfirmModal(false);
-    setPendingRemoveId(null);
+    setPendingRemoveCartItemId(null);
     setModalBulk(false);
   };
 
@@ -155,8 +159,13 @@ export default function CheckoutProductList({
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm animate-fade-in">
             <Paragraph1 className="text-lg font-semibold mb-4">
               {modalBulk
-                ? `Remove ${selectedItems.length} selected items from cart?`
-                : `Remove this item from cart?`}
+                ? `Remove ${selectedCartItemIds.length} selected items from your cart?`
+                : `Remove this item from your cart?`}
+            </Paragraph1>
+            <Paragraph1 className="text-sm text-gray-600 mb-4">
+              This will cancel the associated rental request
+              {modalBulk && selectedCartItemIds.length !== 1 ? "s" : ""} on our
+              side. You can send a new request if you change your mind.
             </Paragraph1>
             <div className="flex gap-4 justify-end mt-6">
               <button
@@ -177,7 +186,7 @@ export default function CheckoutProductList({
       )}
       {/* Bulk Actions - only show if any item is selected */}
       <AnimatePresence>
-        {selectedItems.length > 0 && (
+        {selectedCartItemIds.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -200,12 +209,12 @@ export default function CheckoutProductList({
             <button
               className="px-3 py-1 rounded bg-red-500 text-white border border-red-600 hover:bg-red-600 disabled:opacity-50"
               onClick={handleBulkRemove}
-              disabled={selectedItems.length === 0}
+              disabled={selectedCartItemIds.length === 0}
             >
               <Paragraph1>Remove Selected</Paragraph1>
             </button>
             <Paragraph1 className="text-xs text-gray-500 ml-2">
-              {selectedItems.length} selected
+              {selectedCartItemIds.length} selected
             </Paragraph1>
           </motion.div>
         )}
@@ -234,11 +243,11 @@ export default function CheckoutProductList({
       {/* List of Cart Items */}
       <div className="divide-y divide-gray-100">
         {cartItems.map((item) => {
-          const isSelected = selectedItems.includes(item.requestId);
+          const isSelected = selectedCartItemIds.includes(item.cartItemId);
           const product = item.productDetail || {};
           return (
             <div
-              key={item.requestId}
+              key={item.cartItemId || item.requestId}
               className="py-4 px-4 sm:px-0 sm:grid sm:grid-cols-12 items-start hover:bg-gray-50 transition-colors"
             >
               {/* === Product Info (Mobile/Desktop) === */}
@@ -248,7 +257,7 @@ export default function CheckoutProductList({
                   <input
                     type="checkbox"
                     checked={isSelected}
-                    onChange={() => toggleItemSelection(item.requestId)}
+                    onChange={() => toggleItemSelection(item.cartItemId)}
                     className="form-checkbox h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
                   />
                 </div>
@@ -279,8 +288,8 @@ export default function CheckoutProductList({
                     {/* Trash Icon (Visible on Mobile, positioned top-right) */}
                     <button
                       aria-label={`Remove ${product.name || item.productName}`}
-                      onClick={() => handleRemoveItem(item.requestId)}
-                      disabled={removeRentalRequest.isPending}
+                      onClick={() => handleRemoveItem(item.cartItemId)}
+                      disabled={removeCartItemMutation.isPending}
                       className="sm:hidden shrink-0 p-1 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
                     >
                       <Trash2 size={18} />
@@ -331,8 +340,8 @@ export default function CheckoutProductList({
               <div className="hidden sm:flex col-span-1 items-center justify-center">
                 <button
                   aria-label={`Remove ${product.name || item.productName}`}
-                  onClick={() => handleRemoveItem(item.requestId)}
-                  disabled={removeRentalRequest.isPending}
+                  onClick={() => handleRemoveItem(item.cartItemId)}
+                  disabled={removeCartItemMutation.isPending}
                   className="p-1 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
                 >
                   <Trash2 size={18} />

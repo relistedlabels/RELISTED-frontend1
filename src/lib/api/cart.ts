@@ -60,6 +60,14 @@ export const addCartItemApi = (productId: string, days: number) =>
   );
 
 /**
+ * Remove a cart line (DELETE /cart-items/:id). Cancels the linked rental request server-side.
+ */
+export const removeCartItem = (id: string) =>
+  apiFetch<{ success: boolean; message?: string }>(`/cart-items/${id}`, {
+    method: "DELETE",
+  });
+
+/**
  * Create an order from cart (POST /order, no body)
  */
 export const createOrderApi = () =>

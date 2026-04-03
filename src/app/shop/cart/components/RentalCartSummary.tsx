@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Trash2 } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useCart } from "@/lib/queries/renters/useCart";
-import { useRemoveRentalRequest } from "@/lib/mutations/renters/useRemoveRentalRequest";
+import { useRemoveCartItem } from "@/lib/mutations/cart/useRemoveCartItem";
 
 // --- Formatting Helper (for thousands separator) ---
 const formatCurrency = (amount: number): string => {
@@ -71,7 +71,7 @@ const RentalTimer: React.FC<{ expiresAt: string }> = ({ expiresAt }) => {
 
 export default function RentalCartSummary() {
   const { data, isLoading, error } = useCart();
-  const removeRentalRequest = useRemoveRentalRequest();
+  const removeCartItemMutation = useRemoveCartItem();
   const currency = "₦";
   const items = data?.cartItems || [];
 
@@ -100,8 +100,12 @@ export default function RentalCartSummary() {
     );
   }
 
-  const handleRemove = (requestId: string) => {
-    removeRentalRequest.mutate(requestId);
+  const handleRemove = (cartItemId: string, productName: string) => {
+    const ok = window.confirm(
+      `Remove "${productName}" from your cart? This will cancel your rental request. You can send a new request later if you change your mind.`,
+    );
+    if (!ok) return;
+    removeCartItemMutation.mutate(cartItemId);
   };
 
   return (
@@ -141,8 +145,8 @@ export default function RentalCartSummary() {
             {/* Remove Button (Trash Icon) */}
             <button
               aria-label={`Remove ${item.productName}`}
-              onClick={() => handleRemove(item.requestId)}
-              disabled={removeRentalRequest.isPending}
+              onClick={() => handleRemove(item.cartItemId, item.productName)}
+              disabled={removeCartItemMutation.isPending}
               className="shrink-0 p-1 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Trash2 size={20} />

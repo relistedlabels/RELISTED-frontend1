@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rentersApi } from "@/lib/api/renters";
+import { removeCartItem } from "@/lib/api/cart";
 
 /**
  * Add item to cart (rental request)
@@ -39,10 +40,9 @@ export const useRemoveFromCart = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (cartItemId: string) =>
-      rentersApi.removeRentalRequest(cartItemId),
+    mutationFn: (cartItemId: string) => removeCartItem(cartItemId),
     onSuccess: () => {
-      // Invalidate cart queries
+      queryClient.invalidateQueries({ queryKey: ["cart", "items"] });
       queryClient.invalidateQueries({ queryKey: ["renters", "cart"] });
       queryClient.invalidateQueries({
         queryKey: ["renters", "cart", "summary"],
