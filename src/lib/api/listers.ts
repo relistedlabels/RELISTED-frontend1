@@ -199,6 +199,24 @@ export interface OrdersListResponse {
   };
 }
 
+export interface ListerOrdersSummary {
+  pendingApprovalCount?: number;
+  ongoingCount?: number;
+  completedCount?: number;
+  cancelledCount?: number;
+}
+
+export interface ListerOrdersListPayload {
+  orders: Order[];
+  summary?: ListerOrdersSummary;
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
 export interface OrderItem {
   id: string;
   productName: string;
@@ -251,7 +269,7 @@ export interface OrderDetailsResponse {
 }
 
 export async function getOrders(
-  status?: string,
+  status?: string | null,
   page: number = 1,
   limit: number = 20,
   sort: string = "-createdAt",
@@ -260,8 +278,11 @@ export async function getOrders(
     page: page.toString(),
     limit: limit.toString(),
     sort,
-    ...(status && { status }),
   });
+  const s = status?.trim();
+  if (s && s.toLowerCase() !== "all") {
+    params.set("status", s);
+  }
   return apiFetch(`/api/listers/orders?${params}`, {
     method: "GET",
   });

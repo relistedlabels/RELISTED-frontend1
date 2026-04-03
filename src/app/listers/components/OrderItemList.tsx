@@ -7,6 +7,10 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import OrderPreview from "./OrderPreview";
+import {
+  formatListerOrderStatusLabel,
+  normalizeListerOrderStatusKey,
+} from "@/lib/listers/listerOrderStatus";
 
 // --- Types & Mock Data ---
 interface OrderedItem {
@@ -25,6 +29,9 @@ interface OrderItemListProps {
   items?: any[];
   orderData?: any;
 }
+
+const ORDER_ITEM_IMAGE_FALLBACK =
+  "https://via.placeholder.com/300?text=No+Image";
 
 const OrderItemList: React.FC<OrderItemListProps> = ({
   orderId,
@@ -52,7 +59,14 @@ const OrderItemList: React.FC<OrderItemListProps> = ({
         ) : displayItems.length === 0 ? (
           <Paragraph1>No items found for this order.</Paragraph1>
         ) : (
-          displayItems.map((item, index) => (
+          displayItems.map((item, index) => {
+            const itemSk = normalizeListerOrderStatusKey(
+              String(item.status ?? ""),
+            );
+            const statusText =
+              item.statusLabel ||
+              formatListerOrderStatusLabel(String(item.status ?? ""));
+            return (
             <motion.div
               key={item.id}
               initial={{ opacity: 0, y: 10 }}
@@ -64,9 +78,10 @@ const OrderItemList: React.FC<OrderItemListProps> = ({
                 <div className="sm:w-16 w-12 h-16 bg-gray-50 rounded-lg shrink-0 relative overflow-hidden">
                   <div className="absolute inset-0 bg-[#F6F6F6]" />
                   <Image
-                    src={item.image}
-                    alt={item.name}
+                    src={item.image || ORDER_ITEM_IMAGE_FALLBACK}
+                    alt={item.name ?? "Order item"}
                     fill
+                    sizes="(max-width: 640px) 48px, 64px"
                     className="object-contain "
                   />
                 </div>
@@ -100,20 +115,29 @@ const OrderItemList: React.FC<OrderItemListProps> = ({
                   className={`
                   px-4 py-1.5 text-[10px] font-bold rounded-lg uppercase tracking-wider
                   ${
-                    item.status === "pending_approval"
+                    itemSk === "PENDING" ||
+                    itemSk === "PENDING_APPROVAL" ||
+                    itemSk === "PENDING_LISTER_APPROVAL"
                       ? "bg-[#FFF9E5] text-[#D4A017]"
-                      : item.status === "delivered"
+                      : itemSk === "DELIVERED"
                         ? "bg-[#E8F8F0] text-[#1DB954]"
-                        : "bg-gray-200 text-gray-700"
+                        : itemSk === "ACCEPTED" || itemSk === "APPROVED" || itemSk === "ONGOING"
+                          ? "bg-[#E8F8F0] text-[#166534]"
+                          : itemSk === "REJECTED" ||
+                              itemSk === "EXPIRED" ||
+                              itemSk === "CANCELLED_BY_RENTER"
+                            ? "bg-red-50 text-red-800"
+                            : "bg-gray-200 text-gray-700"
                   }
                 `}
                 >
-                  {item.statusLabel || item.status}
+                  {statusText}
                 </Paragraph1>
                 <OrderPreview orderData={orderData} clickedItem={item} />
               </div>
             </motion.div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

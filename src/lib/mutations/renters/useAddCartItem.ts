@@ -10,11 +10,11 @@ export const useAddCartItem = () => {
     mutationFn: ({ productId, days }: { productId: string; days: number }) =>
       addCartItemApi(productId, days),
     onSuccess: () => {
-      // Invalidate cart queries so they refetch
       queryClient.invalidateQueries({ queryKey: ["renters", "cart"] });
       queryClient.invalidateQueries({
         queryKey: ["renters", "cart", "summary"],
       });
+      queryClient.invalidateQueries({ queryKey: ["cart", "items"] });
     },
   });
 };

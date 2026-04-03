@@ -108,8 +108,10 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
                 <Paragraph1 className="text-xs text-gray-600 leading-snug mt-1">
                   Duration: <strong>{item.rentalDays} Days</strong>
                 </Paragraph1>
-                <div className="w-fit px-2 py- mt-4 rounded-full bg-green-200 border border-green-800 text-green-800">
-                  <Paragraph1>Available</Paragraph1>
+                <div className="w-fit px-2 py-0.5 mt-4 rounded-full bg-green-100 border border-green-200 text-green-800">
+                  <Paragraph1 className="text-xs font-semibold">
+                    Approved
+                  </Paragraph1>
                 </div>
               </div>
 
@@ -202,7 +204,6 @@ export function FinalOrderSummaryCard({
     );
   }
 
-  // All items are already approved from the API call
   const approvedGroups = listerGroups.filter((group) => group.items.length > 0);
 
   if (approvedGroups.length === 0) {

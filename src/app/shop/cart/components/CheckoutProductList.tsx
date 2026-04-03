@@ -7,12 +7,30 @@ import { Trash2, ShoppingCart } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 // import { useCart } from "@/lib/queries/renters/useCart";
 import { useRemoveCartItem } from "@/lib/mutations/cart/useRemoveCartItem";
+import {
+  isLineRentalApproved,
+  shouldShowRentalRequestTimer,
+} from "@/lib/cart/rentalRequestUi";
+import type { CartCheckoutLine } from "../types";
 
 // --- Formatting Helper (for thousands separator) ---
 const formatCurrency = (amount: number): string => {
   if (typeof amount !== "number" || isNaN(amount)) return "0";
   return amount.toLocaleString("en-NG");
 };
+
+function isLineRentalPendingWithoutTimer(
+  status?: string,
+  expiresAt?: string,
+): boolean {
+  if (expiresAt) return false;
+  const u = (status ?? "").trim().toUpperCase();
+  return (
+    u === "PENDING" ||
+    u === "PENDING_LISTER_APPROVAL" ||
+    status === "pending_lister_approval"
+  );
+}
 
 // === Skeleton Loader ===
 const CartSkeleton = () => (
@@ -58,25 +76,24 @@ const RentalTimer: React.FC<{ expiresAt: string }> = ({ expiresAt }) => {
 };
 
 interface CheckoutProductListProps {
-  cartItems?: any[];
-  approvedItemIds?: Set<string>;
+  cartItems?: CartCheckoutLine[];
   isLoading?: boolean;
   error?: Error | null;
 }
 
 export default function CheckoutProductList({
   cartItems = [],
-  approvedItemIds = new Set(),
   isLoading,
   error,
 }: CheckoutProductListProps) {
   const removeCartItemMutation = useRemoveCartItem();
-  const [selectedCartItemIds, setSelectedCartItemIds] = useState<string[]>([]);
+  const [selectedLineIds, setSelectedLineIds] = useState<string[]>([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [modalBulk, setModalBulk] = useState(false);
-  const [pendingRemoveCartItemId, setPendingRemoveCartItemId] = useState<
-    string | null
-  >(null);
+  const [pendingRemove, setPendingRemove] = useState<{
+    cartItemId: string;
+    rentalRequestId?: string;
+  } | null>(null);
   const currency = "₦";
 
   if (isLoading) return <CartSkeleton />;
@@ -99,28 +116,26 @@ export default function CheckoutProductList({
     );
   }
 
-  // Toggle selection for an item (cart line id — matches DELETE /cart-items/:id)
-  const toggleItemSelection = (cartItemId: string) => {
-    setSelectedCartItemIds((prev) =>
-      prev.includes(cartItemId)
-        ? prev.filter((id) => id !== cartItemId)
-        : [...prev, cartItemId],
+  const toggleItemSelection = (lineId: string) => {
+    setSelectedLineIds((prev) =>
+      prev.includes(lineId)
+        ? prev.filter((id) => id !== lineId)
+        : [...prev, lineId],
     );
   };
 
-  // Select all items
   const selectAll = () => {
-    setSelectedCartItemIds(
-      cartItems.map((item) => item.cartItemId).filter(Boolean),
-    );
+    setSelectedLineIds(cartItems.map((item) => item.lineId));
   };
   const deselectAll = () => {
-    setSelectedCartItemIds([]);
+    setSelectedLineIds([]);
   };
 
-  // Remove item with confirmation
-  const handleRemoveItem = (cartItemId: string) => {
-    setPendingRemoveCartItemId(cartItemId);
+  const handleRemoveItem = (item: CartCheckoutLine) => {
+    setPendingRemove({
+      cartItemId: item.cartItemId,
+      rentalRequestId: item.rentalRequestId,
+    });
     setShowConfirmModal(true);
     setModalBulk(false);
   };
@@ -134,20 +149,28 @@ export default function CheckoutProductList({
   // Confirm removal
   const confirmRemove = () => {
     if (modalBulk) {
-      selectedCartItemIds.forEach((id) => removeCartItemMutation.mutate(id));
-      setSelectedCartItemIds([]);
-    } else if (pendingRemoveCartItemId) {
-      removeCartItemMutation.mutate(pendingRemoveCartItemId);
+      selectedLineIds.forEach((lineId) => {
+        const row = cartItems.find((i) => i.lineId === lineId);
+        if (row) {
+          removeCartItemMutation.mutate({
+            cartItemId: row.cartItemId,
+            rentalRequestId: row.rentalRequestId,
+          });
+        }
+      });
+      setSelectedLineIds([]);
+    } else if (pendingRemove) {
+      removeCartItemMutation.mutate(pendingRemove);
     }
     setShowConfirmModal(false);
-    setPendingRemoveCartItemId(null);
+    setPendingRemove(null);
     setModalBulk(false);
   };
 
   // Cancel removal
   const cancelRemove = () => {
     setShowConfirmModal(false);
-    setPendingRemoveCartItemId(null);
+    setPendingRemove(null);
     setModalBulk(false);
   };
 
@@ -159,13 +182,13 @@ export default function CheckoutProductList({
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm animate-fade-in">
             <Paragraph1 className="text-lg font-semibold mb-4">
               {modalBulk
-                ? `Remove ${selectedCartItemIds.length} selected items from your cart?`
+                ? `Remove ${selectedLineIds.length} selected items from your cart?`
                 : `Remove this item from your cart?`}
             </Paragraph1>
             <Paragraph1 className="text-sm text-gray-600 mb-4">
-              This will cancel the associated rental request
-              {modalBulk && selectedCartItemIds.length !== 1 ? "s" : ""} on our
-              side. You can send a new request if you change your mind.
+              {modalBulk && selectedLineIds.length !== 1
+                ? "This will cancel your rental requests. You can send new ones if you change your mind."
+                : "This will cancel your rental request. You can send another if you change your mind."}
             </Paragraph1>
             <div className="flex gap-4 justify-end mt-6">
               <button
@@ -186,7 +209,7 @@ export default function CheckoutProductList({
       )}
       {/* Bulk Actions - only show if any item is selected */}
       <AnimatePresence>
-        {selectedCartItemIds.length > 0 && (
+        {selectedLineIds.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -209,12 +232,12 @@ export default function CheckoutProductList({
             <button
               className="px-3 py-1 rounded bg-red-500 text-white border border-red-600 hover:bg-red-600 disabled:opacity-50"
               onClick={handleBulkRemove}
-              disabled={selectedCartItemIds.length === 0}
+              disabled={selectedLineIds.length === 0}
             >
               <Paragraph1>Remove Selected</Paragraph1>
             </button>
             <Paragraph1 className="text-xs text-gray-500 ml-2">
-              {selectedCartItemIds.length} selected
+              {selectedLineIds.length} selected
             </Paragraph1>
           </motion.div>
         )}
@@ -243,11 +266,17 @@ export default function CheckoutProductList({
       {/* List of Cart Items */}
       <div className="divide-y divide-gray-100">
         {cartItems.map((item) => {
-          const isSelected = selectedCartItemIds.includes(item.cartItemId);
-          const product = item.productDetail || {};
+          const isSelected = selectedLineIds.includes(item.lineId);
+          const product = (item.productDetail || {}) as {
+            attachments?: { uploads?: { url: string }[] };
+            name?: string;
+            dailyPrice?: number;
+            originalValue?: number;
+          };
+          const deposit = product.originalValue ?? 0;
           return (
             <div
-              key={item.cartItemId || item.requestId}
+              key={item.lineId}
               className="py-4 px-4 sm:px-0 sm:grid sm:grid-cols-12 items-start hover:bg-gray-50 transition-colors"
             >
               {/* === Product Info (Mobile/Desktop) === */}
@@ -257,7 +286,7 @@ export default function CheckoutProductList({
                   <input
                     type="checkbox"
                     checked={isSelected}
-                    onChange={() => toggleItemSelection(item.cartItemId)}
+                    onChange={() => toggleItemSelection(item.lineId)}
                     className="form-checkbox h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
                   />
                 </div>
@@ -266,7 +295,7 @@ export default function CheckoutProductList({
                   {product.attachments?.uploads?.[0]?.url && (
                     <Image
                       src={product.attachments.uploads[0].url}
-                      alt={product.name || item.productName}
+                      alt={product.name || item.productName || "Product"}
                       fill
                       className="object-cover"
                     />
@@ -279,16 +308,18 @@ export default function CheckoutProductList({
                       {product.name || item.productName}
                     </Paragraph1>
 
-                    {item.status === "pending_lister_approval" &&
-                      !item.expiresAt && (
-                        <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-200">
-                          Pending Approval
-                        </span>
-                      )}
+                    {isLineRentalPendingWithoutTimer(
+                      item.status,
+                      item.expiresAt,
+                    ) && (
+                      <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-200">
+                        Pending Approval
+                      </span>
+                    )}
                     {/* Trash Icon (Visible on Mobile, positioned top-right) */}
                     <button
                       aria-label={`Remove ${product.name || item.productName}`}
-                      onClick={() => handleRemoveItem(item.cartItemId)}
+                      onClick={() => handleRemoveItem(item)}
                       disabled={removeCartItemMutation.isPending}
                       className="sm:hidden shrink-0 p-1 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
                     >
@@ -303,19 +334,20 @@ export default function CheckoutProductList({
 
               {/* === Price Columns (Desktop View) === */}
               <div className="hidden sm:contents text-sm font-medium">
-                <div className="col-span-2 text-center text-gray-900">
-                  {approvedItemIds.has(item.requestId) ? (
+                <div className="col-span-2 text-center text-gray-900 flex flex-col items-center gap-1">
+                  {isLineRentalApproved(item.status) && (
                     <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200">
                       Approved
                     </span>
-                  ) : (
-                    item.expiresAt && <RentalTimer expiresAt={item.expiresAt} />
+                  )}
+                  {shouldShowRentalRequestTimer(item.status, item.expiresAt) && (
+                    <RentalTimer expiresAt={item.expiresAt!} />
                   )}
                 </div>
                 <div className="col-span-2 text-center text-gray-900">
                   <Paragraph1>
                     {currency}
-                    {formatCurrency(product.dailyPrice || item.dailyRate)}
+                    {formatCurrency(product.dailyPrice ?? 0)}
                   </Paragraph1>
                 </div>
 
@@ -323,7 +355,7 @@ export default function CheckoutProductList({
                 <div className="col-span-2 text-center text-gray-900">
                   <Paragraph1>
                     {currency}
-                    {formatCurrency(product.originalValue)}
+                    {formatCurrency(deposit)}
                   </Paragraph1>
                 </div>
 
@@ -340,7 +372,7 @@ export default function CheckoutProductList({
               <div className="hidden sm:flex col-span-1 items-center justify-center">
                 <button
                   aria-label={`Remove ${product.name || item.productName}`}
-                  onClick={() => handleRemoveItem(item.cartItemId)}
+                  onClick={() => handleRemoveItem(item)}
                   disabled={removeCartItemMutation.isPending}
                   className="p-1 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
                 >
@@ -357,7 +389,7 @@ export default function CheckoutProductList({
                   </Paragraph1>
                   <Paragraph1 className="text-sm font-semibold text-gray-900">
                     {currency}
-                    {formatCurrency(product.dailyPrice || item.dailyRate)}
+                    {formatCurrency(product.dailyPrice ?? 0)}
                   </Paragraph1>
                 </div>
 

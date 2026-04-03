@@ -5,7 +5,11 @@ import Image from "next/image";
 import { Trash2 } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useCart } from "@/lib/queries/renters/useCart";
-import { useRemoveCartItem } from "@/lib/mutations/cart/useRemoveCartItem";
+import {
+  cartLineIdFromRentalItem,
+  useRemoveCartItem,
+} from "@/lib/mutations/cart/useRemoveCartItem";
+import { shouldShowRentalRequestTimer } from "@/lib/cart/rentalRequestUi";
 
 // --- Formatting Helper (for thousands separator) ---
 const formatCurrency = (amount: number): string => {
@@ -100,12 +104,15 @@ export default function RentalCartSummary() {
     );
   }
 
-  const handleRemove = (cartItemId: string, productName: string) => {
+  const handleRemove = (item: (typeof items)[number], productName: string) => {
     const ok = window.confirm(
-      `Remove "${productName}" from your cart? This will cancel your rental request. You can send a new request later if you change your mind.`,
+      `Remove "${productName}" from your cart? This will cancel your rental request. You can send another if you change your mind.`,
     );
     if (!ok) return;
-    removeCartItemMutation.mutate(cartItemId);
+    removeCartItemMutation.mutate({
+      cartItemId: cartLineIdFromRentalItem(item as Record<string, unknown>),
+      rentalRequestId: item.requestId,
+    });
   };
 
   return (
@@ -139,13 +146,15 @@ export default function RentalCartSummary() {
                 {item.rentalDays} DAYS - {currency}
                 {formatCurrency(item.totalPrice)}
               </Paragraph1>
-              <RentalTimer expiresAt={item.expiresAt} />
+              {shouldShowRentalRequestTimer(item.status, item.expiresAt) && (
+                <RentalTimer expiresAt={item.expiresAt} />
+              )}
             </div>
 
             {/* Remove Button (Trash Icon) */}
             <button
               aria-label={`Remove ${item.productName}`}
-              onClick={() => handleRemove(item.cartItemId, item.productName)}
+              onClick={() => handleRemove(item, item.productName)}
               disabled={removeCartItemMutation.isPending}
               className="shrink-0 p-1 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >

@@ -1,14 +1,6 @@
 "use client";
-// ENDPOINTS:
-// - GET /api/listers/orders/:orderId (fetch single order details)
-// - POST /api/listers/orders/:orderId/approve (approve pending order)
-// - POST /api/listers/orders/:orderId/reject (reject pending order)
-//
-// INTEGRATION NOTES:
-// - Approve/Reject only work for pending_approval orders (AvailabilityRequest status)
-// - Backend expected statuses: "pending_approval", "processing", "accepted", "confirmed", "in_transit", "delivered", "active", "return_due", "completed", "rejected"
-// - timeRemainingSeconds field provided by backend for countdown timer display
-import { useMutation } from "@tanstack/react-query";
+// ENDPOINTS: GET /api/listers/orders/:orderId, POST …/approve, POST …/reject, return actions, etc.
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { approveOrder } from "@/lib/api/listers";
 import { rejectOrder } from "@/lib/api/listers";
 import { confirmReturn } from "@/lib/api/listers";
@@ -20,6 +12,11 @@ import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import BackHeader from "@/common/ui/BackHeader";
 import { div } from "framer-motion/client";
 import OrderItemList from "./OrderItemList";
+import {
+  getListerOrderStatusLabel,
+  isListerAvailabilityPending,
+  normalizeListerOrderStatusKey,
+} from "@/lib/listers/listerOrderStatus";
 
 interface OrderDetailsCardProps {
   orderId: string;
@@ -28,12 +25,15 @@ interface OrderDetailsCardProps {
 const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
   orderId: initialOrderId,
 }) => {
+  const queryClient = useQueryClient();
+
   // Approve mutation state
   const [showApproveMessage, setShowApproveMessage] = useState(false);
   const approveMutation = useMutation({
     mutationFn: () => approveOrder(orderId),
     onSuccess: () => {
       setShowApproveMessage(true);
+      queryClient.invalidateQueries({ queryKey: ["listers", "orders"] });
     },
     onError: () => {
       setShowApproveMessage(false);
@@ -46,6 +46,7 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
     mutationFn: () => rejectOrder(orderId, "Item no longer available", "full"),
     onSuccess: () => {
       setShowRejectMessage(true);
+      queryClient.invalidateQueries({ queryKey: ["listers", "orders"] });
     },
     onError: () => {
       setShowRejectMessage(false);
@@ -102,14 +103,12 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
     error?: any;
   };
 
-  // FIX: Access the correct path based on your JSON (data.data.order is OrderDetails)
   const order = data?.data?.order;
 
   // State for the timer
   const [secondsRemaining, setSecondsRemaining] = useState(0);
   const [isApprovalExpired, setIsApprovalExpired] = useState(false);
 
-  // FIX 2: Sync state when data is loaded
   useEffect(() => {
     if (order) {
       const remaining = order.timeRemainingSeconds ?? 0;
@@ -118,8 +117,7 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
     }
   }, [order]);
 
-  // Fallbacks and Mappings
-  const status = order?.status || "Pending Approval";
+  const status = getListerOrderStatusLabel(order);
   const orderNumber = order?.orderNumber || orderId;
   const dateOrdered = order
     ? new Date(order.createdAt).toLocaleDateString("en-US", {
@@ -129,15 +127,15 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
       })
     : "-";
 
-  // FIX 3: Map items count from the correct JSON fields (order.timeline)
   const itemCount = order?.itemCount ?? 0;
-  // timeline is not present, fallback to itemCount
   const itemsDelivered = 0;
   const totalItems = itemCount;
   const totalAmount = order ? `₦${order.totalAmount?.toLocaleString()}` : "-";
 
-  const isPendingApproval = order?.status === "pending_approval";
-  const isPendingReturn = order?.status === "return_due";
+  const isPendingApproval = isListerAvailabilityPending(order);
+  const isPendingReturn =
+    normalizeListerOrderStatusKey(String(order?.status ?? "")) ===
+    "RETURN_DUE";
 
   // Countdown timer effect
   useEffect(() => {
@@ -164,7 +162,7 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const isLowTime = secondsRemaining < 300;
+  const isLowTime = secondsRemaining > 0 && secondsRemaining < 300;
   const timerColor = isApprovalExpired
     ? "text-red-600"
     : isLowTime
@@ -239,7 +237,7 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
                 <Paragraph3
                   className={`text-2xl font-bold font-mono ${timerColor}`}
                 >
-                  {formatTime(secondsRemaining)}
+                  {isApprovalExpired ? "Expired" : formatTime(secondsRemaining)}
                 </Paragraph3>
                 <Paragraph1 className="text-[10px] text-gray-500 text-right mt-1">
                   {isApprovalExpired
