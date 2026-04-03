@@ -165,8 +165,15 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
       try {
         await addCartItem.mutateAsync({ productId, days: rentalDays });
       } catch (cartErr: any) {
-        console.error("❌ Error posting cart item:", cartErr);
-        toast.error(cartErr?.message || "Could not add to cart.");
+        const msg = String(cartErr?.message ?? "");
+        const alreadyInCart = /already in cart/i.test(msg);
+        if (alreadyInCart) {
+          // Item is already in cart; rental request flow can continue
+        } else {
+          console.error("❌ Error posting cart item:", cartErr);
+          toast.error(msg || "Could not add to cart.");
+          return;
+        }
       }
 
       console.log("✅ All checks passed. Proceeding with rental request...");
@@ -343,11 +350,27 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                 )}
                 {summaryData && (
                   <RentalSummaryCard
-                    rentalDays={summaryData.rentalDays}
-                    rentalFeePerPeriod={summaryData.estimatedPrice.rentalFee}
-                    securityDeposit={summaryData.estimatedPrice.collateralPrice}
-                    cleaningFee={0}
-                    shippingFee={summaryData.estimatedPrice.deliveryFee}
+                    rentalDays={summaryData.rentalDays ?? 0}
+                    rentalFeePerPeriod={
+                      summaryData.estimatedPrice?.rentalFee ??
+                      summaryData.rentalPrice ??
+                      0
+                    }
+                    securityDeposit={
+                      summaryData.estimatedPrice?.securityDeposit ??
+                      summaryData.estimatedPrice?.collateralPrice ??
+                      0
+                    }
+                    cleaningFee={
+                      summaryData.estimatedPrice?.cleaningFee ??
+                      summaryData.cleaningFee ??
+                      0
+                    }
+                    shippingFee={
+                      summaryData.estimatedPrice?.deliveryFee ??
+                      summaryData.deliveryFee ??
+                      0
+                    }
                   />
                 )}
               </div>
