@@ -1,20 +1,15 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { rentersApi } from "@/lib/api/renters";
+import { createOrderApi } from "@/lib/api/cart";
 
-/**
- * Execute checkout to create orders from cart items
- * Transfers payment from wallet and clears cart
- */
+/** @deprecated Use `usePassCart`. */
 export const useCheckout = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { requestId: string; confirmPayment?: boolean }) =>
-      rentersApi.confirmRentalRequest(data.requestId, {
-        confirmPayment: data.confirmPayment,
-      }),
+    mutationFn: () => createOrderApi(),
     onSuccess: () => {
       // Invalidate related queries after successful checkout
+      queryClient.invalidateQueries({ queryKey: ["cart", "items"] });
       queryClient.invalidateQueries({ queryKey: ["renters", "cart"] });
       queryClient.invalidateQueries({
         queryKey: ["renters", "cart", "summary"],

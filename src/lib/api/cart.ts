@@ -22,6 +22,10 @@ export type CartLineRentalSnapshot = {
   requestId: string;
   expiresAt?: string;
   status?: string;
+  rentalDays?: number;
+  startDate?: string;
+  endDate?: string;
+  createdAt?: string;
 };
 
 export type CartItem = {
@@ -32,6 +36,7 @@ export type CartItem = {
   createdAt: string;
   product: CartProduct;
   rentalRequest?: CartLineRentalSnapshot;
+  rentalRequests?: CartLineRentalSnapshot[];
 };
 
 export type CartData = {
@@ -75,15 +80,47 @@ export const removeCartItem = (id: string) =>
     method: "DELETE",
   });
 
-/**
- * Create an order from cart (POST /order, no body)
- */
+export type OrderPostResponse = {
+  success: boolean;
+  message?: string;
+  data?: {
+    ordersCreated?: number;
+    totalPaid?: number;
+    orderIds?: string[];
+    orderId?: string;
+    orders?: Array<{ orderId?: string }>;
+  };
+};
+
+export function orderIdsFromOrderPost(
+  res: OrderPostResponse | undefined,
+): string[] {
+  const d = res?.data;
+  if (!d) return [];
+  const fromList = Array.isArray(d.orderIds)
+    ? d.orderIds.filter(
+        (id): id is string => typeof id === "string" && id.trim() !== "",
+      )
+    : [];
+  if (fromList.length > 0) return fromList;
+  if (typeof d.orderId === "string" && d.orderId.trim() !== "") {
+    return [d.orderId.trim()];
+  }
+  const fromOrders = (d.orders ?? [])
+    .map((o) => o?.orderId)
+    .filter((id): id is string => typeof id === "string" && id.trim() !== "");
+  return fromOrders;
+}
+
+export function orderIdFromOrderPost(
+  res: OrderPostResponse | undefined,
+): string | undefined {
+  return orderIdsFromOrderPost(res)[0];
+}
+
+/** @deprecated Use `passCartApi` with a pricing tier. */
 export const createOrderApi = () =>
-  apiFetch<{
-    success: boolean;
-    data?: { orderId: string; [key: string]: any };
-    message?: string;
-  }>("/order", {
+  apiFetch<OrderPostResponse>("/order", {
     method: "POST",
     body: JSON.stringify({}),
   });
@@ -96,16 +133,9 @@ export const getOrderSummaryApi = () =>
     method: "GET",
   });
 
-/**
- * Pass cart with selected shipping tier (POST /order/checkout)
- * @param shippingTierName - The selected shipping tier name (e.g., "Express", "Dellyman")
- */
+/** POST /order with `{ pricingTier }` (full checkout). */
 export const passCartApi = (shippingTierName: string) =>
-  apiFetch<{
-    success: boolean;
-    data?: any;
-    message?: string;
-  }>("/order", {
+  apiFetch<OrderPostResponse>("/order", {
     method: "POST",
     body: JSON.stringify({ pricingTier: shippingTierName }),
   });

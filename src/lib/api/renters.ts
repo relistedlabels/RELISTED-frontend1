@@ -675,7 +675,7 @@ export const rentersApi = {
     requestId: string,
     data?: { confirmPayment?: boolean },
   ) =>
-    apiFetch<{ success: boolean; data: { orderId: string } }>(
+    apiFetch<{ success: boolean; data?: { orderId?: string } }>(
       `/api/renters/rental-requests/${requestId}/confirm`,
       { method: "POST", body: JSON.stringify(data || {}) },
     ),

@@ -25,27 +25,24 @@ export default function ProductCuratorDetails({
     );
   }
 
-  // Extract first item from items array
-  const firstItem = orderData.items?.[0];
-  
-  // Extract product and pricing data from order
-  const productInfo = {
-    name: firstItem?.name || "Item",
-    description: "",
-    images: firstItem?.imageUrl ? [firstItem.imageUrl] : [],
-    condition: "Good",
-  };
+  const items: Array<{
+    id?: string;
+    name?: string;
+    price?: number;
+    imageUrl?: string | null;
+    quantity?: number;
+    rentalDays?: number;
+    rentalFee?: number;
+    cleaningFee?: number;
+    collateralFee?: number;
+    rentalStartDate?: string | null;
+    rentalEndDate?: string | null;
+  }> = Array.isArray(orderData.items) ? orderData.items : [];
 
-  const pricingInfo = {
-    rentalPrice: firstItem?.rentalFee || 0,
-    cleaningFee: firstItem?.cleaningFee || 0,
-    collateralFee: firstItem?.collateralFee || 0,
-    deliveryFee: orderData.deliveryFee || 0,
-    serviceFee: orderData.serviceFee || 0,
-    totalAmount: orderData.totalAmount || 0,
-  };
+  const orderDeliveryFee = orderData.deliveryFee || 0;
+  const orderServiceFee = orderData.serviceFee || 0;
+  const orderTotalAmount = orderData.totalAmount || 0;
 
-  // Extract lister data
   const listerInfo = {
     name: orderData.lister?.businessName || "Lister",
     avatar: orderData.lister?.imageUrl || "",
@@ -53,127 +50,186 @@ export default function ProductCuratorDetails({
     totalRentals: 0,
   };
 
-  const rentalStartDate = firstItem?.rentalStartDate || orderData.rentalStartDate;
-  const rentalEndDate = firstItem?.rentalEndDate || orderData.rentalEndDate;
+  const formatRentalPeriod = (
+    start?: string | null,
+    end?: string | null,
+    rentalDays?: number,
+  ) => {
+    if (start && end) {
+      return `${new Date(start).toLocaleDateString("en-NG", { month: "short", day: "numeric" })} - ${new Date(end).toLocaleDateString("en-NG", { month: "short", day: "numeric" })}`;
+    }
+    if (typeof rentalDays === "number" && rentalDays > 0) {
+      return `${rentalDays} day${rentalDays === 1 ? "" : "s"}`;
+    }
+    return "N/A";
+  };
 
-  const returnDate = rentalEndDate
-    ? new Date(rentalEndDate).toLocaleDateString("en-NG", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      })
-    : "N/A";
+  const formatReturn = (end?: string | null) =>
+    end
+      ? new Date(end).toLocaleDateString("en-NG", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        })
+      : "N/A";
 
   return (
     <div className="space-y-4">
-      {/* --- 1. PRODUCT DETAILS CARD --- */}
-      <div className="bg-white p-4 rounded-xl border border-gray-300">
-        <div className="flex flex-col sm:flex-row gap-4">
-          {/* Product Image */}
-          <div className="w-full sm:w-1/3 shrink-0 bg-gray-100 rounded-md overflow-hidden h-32">
-            {productInfo.images?.[0] ? (
-              <img
-                src={productInfo.images[0]}
-                alt={productInfo.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400">
-                No image
-              </div>
-            )}
-          </div>
+      <Paragraph1 className="text-sm font-bold uppercase tracking-wide text-gray-500">
+        Items in this order ({items.length})
+      </Paragraph1>
 
-          {/* Product Info */}
-          <div className="grow">
-            {/* Title and Description */}
-            <Paragraph1 className="text-xl font-bold text-gray-900 leading-tight mb-1">
-              {productInfo.name}
-            </Paragraph1>
-            <Paragraph1 className="text-sm text-gray-600 mb-4">
-              {productInfo.description || `Quantity: ${firstItem?.quantity || 1}`}
-            </Paragraph1>
-
-            <hr className="mb-4 border-gray-200" />
-
-            {/* Grid Details */}
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              {/* Condition */}
-              <div>
-                <Paragraph1 className="text-xs text-gray-500 block mb-1">
-                  Condition
-                </Paragraph1>
-                <Paragraph1 className="font-semibold text-gray-800">
-                  {productInfo.condition}
-                </Paragraph1>
-              </div>
-
-              {/* Rental Period */}
-              <div>
-                <Paragraph1 className="text-xs text-gray-500 block mb-1">
-                  Rental Period
-                </Paragraph1>
-                <Paragraph1 className="font-semibold text-gray-800">
-                  {rentalStartDate && rentalEndDate
-                    ? `${new Date(rentalStartDate).toLocaleDateString("en-NG", { month: "short", day: "numeric" })} - ${new Date(rentalEndDate).toLocaleDateString("en-NG", { month: "short", day: "numeric" })}`
-                    : "N/A"}
-                </Paragraph1>
-              </div>
-
-              {/* Return Due */}
-              <div>
-                <Paragraph1 className="text-xs text-gray-500 block mb-1">
-                  Return Due
-                </Paragraph1>
-                <Paragraph1 className="font-semibold text-gray-800">
-                  {returnDate}
-                </Paragraph1>
-              </div>
-
-              {/* Rental Fee */}
-              <div>
-                <Paragraph1 className="text-xs text-gray-500 block mb-1">
-                  Rental Fee
-                </Paragraph1>
-                <Paragraph1 className="text-lg font-bold text-gray-900">
-                  {CURRENCY}
-                  {formatCurrency(pricingInfo.rentalPrice)}
-                </Paragraph1>
-              </div>
-
-              {/* Delivery Fee */}
-              <div>
-                <Paragraph1 className="text-xs text-gray-500 block mb-1">
-                  Delivery Fee
-                </Paragraph1>
-                <Paragraph1 className="text-lg font-bold text-gray-900">
-                  {CURRENCY}
-                  {formatCurrency(pricingInfo.deliveryFee)}
-                </Paragraph1>
-              </div>
-
-              {/* Service Fee */}
-              <div>
-                <Paragraph1 className="text-xs text-gray-500 block mb-1">
-                  Service Fee
-                </Paragraph1>
-                <Paragraph1 className="text-lg font-bold text-gray-900">
-                  {CURRENCY}
-                  {formatCurrency(pricingInfo.serviceFee)}
-                </Paragraph1>
-              </div>
-
-              {/* Total Amount */}
-              <div>
-                <Paragraph1 className="text-xs text-gray-500 block mb-1">
-                  Total Amount
-                </Paragraph1>
-                <Paragraph1 className="text-lg font-bold text-black">
-                  {CURRENCY}
-                  {formatCurrency(pricingInfo.totalAmount)}
-                </Paragraph1>
+      {items.length === 0 ? (
+        <div className="bg-white p-4 rounded-xl border border-gray-300">
+          <Paragraph1 className="text-sm text-gray-600">No line items</Paragraph1>
+        </div>
+      ) : (
+        items.map((line, index) => {
+          const key =
+            line.id != null ? `${String(line.id)}-${index}` : `item-${index}`;
+          const start = line.rentalStartDate ?? orderData.rentalStartDate;
+          const end = line.rentalEndDate ?? orderData.rentalEndDate;
+          return (
+            <div
+              key={key}
+              className="bg-white p-4 rounded-xl border border-gray-300"
+            >
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="w-full sm:w-1/3 shrink-0 bg-gray-100 rounded-md overflow-hidden h-32">
+                  {line.imageUrl ? (
+                    <img
+                      src={line.imageUrl}
+                      alt={line.name || "Item"}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+                      No image
+                    </div>
+                  )}
+                </div>
+                <div className="grow">
+                  <Paragraph1 className="text-xl font-bold text-gray-900 leading-tight mb-1">
+                    {line.name || "Item"}
+                  </Paragraph1>
+                  <div className="text-sm text-gray-600 mb-4 space-y-0.5">
+                    <Paragraph1>
+                      Quantity:{" "}
+                      <span className="font-semibold text-gray-800">
+                        {line.quantity ?? 1}
+                      </span>
+                    </Paragraph1>
+                    {typeof line.rentalDays === "number" && line.rentalDays > 0 ? (
+                      <Paragraph1>
+                        Rental length:{" "}
+                        <span className="font-semibold text-gray-800">
+                          {line.rentalDays} day
+                          {line.rentalDays === 1 ? "" : "s"}
+                        </span>
+                      </Paragraph1>
+                    ) : null}
+                    {typeof line.price === "number" && line.price > 0 ? (
+                      <Paragraph1>
+                        Daily rate:{" "}
+                        <span className="font-semibold text-gray-800">
+                          {CURRENCY}
+                          {formatCurrency(line.price)}
+                        </span>
+                      </Paragraph1>
+                    ) : null}
+                  </div>
+                  <hr className="mb-4 border-gray-200" />
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <Paragraph1 className="text-xs text-gray-500 block mb-1">
+                        Condition
+                      </Paragraph1>
+                      <Paragraph1 className="font-semibold text-gray-800">
+                        Good
+                      </Paragraph1>
+                    </div>
+                    <div>
+                      <Paragraph1 className="text-xs text-gray-500 block mb-1">
+                        Rental period
+                      </Paragraph1>
+                      <Paragraph1 className="font-semibold text-gray-800">
+                        {formatRentalPeriod(start, end, line.rentalDays)}
+                      </Paragraph1>
+                    </div>
+                    <div>
+                      <Paragraph1 className="text-xs text-gray-500 block mb-1">
+                        Return due
+                      </Paragraph1>
+                      <Paragraph1 className="font-semibold text-gray-800">
+                        {formatReturn(end)}
+                      </Paragraph1>
+                    </div>
+                    <div>
+                      <Paragraph1 className="text-xs text-gray-500 block mb-1">
+                        Rental fee
+                      </Paragraph1>
+                      <Paragraph1 className="text-lg font-bold text-gray-900">
+                        {CURRENCY}
+                        {formatCurrency(line.rentalFee)}
+                      </Paragraph1>
+                    </div>
+                    <div>
+                      <Paragraph1 className="text-xs text-gray-500 block mb-1">
+                        Cleaning
+                      </Paragraph1>
+                      <Paragraph1 className="font-semibold text-gray-900">
+                        {CURRENCY}
+                        {formatCurrency(line.cleaningFee)}
+                      </Paragraph1>
+                    </div>
+                    <div>
+                      <Paragraph1 className="text-xs text-gray-500 block mb-1">
+                        Collateral
+                      </Paragraph1>
+                      <Paragraph1 className="font-semibold text-gray-900">
+                        {CURRENCY}
+                        {formatCurrency(line.collateralFee)}
+                      </Paragraph1>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
+          );
+        })
+      )}
+
+      <div className="bg-white p-4 rounded-xl border border-gray-300">
+        <Paragraph1 className="text-sm font-bold text-gray-900 mb-4">
+          Order totals
+        </Paragraph1>
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <Paragraph1 className="text-xs text-gray-500 block mb-1">
+              Delivery fee
+            </Paragraph1>
+            <Paragraph1 className="text-lg font-bold text-gray-900">
+              {CURRENCY}
+              {formatCurrency(orderDeliveryFee)}
+            </Paragraph1>
+          </div>
+          <div>
+            <Paragraph1 className="text-xs text-gray-500 block mb-1">
+              Service fee
+            </Paragraph1>
+            <Paragraph1 className="text-lg font-bold text-gray-900">
+              {CURRENCY}
+              {formatCurrency(orderServiceFee)}
+            </Paragraph1>
+          </div>
+          <div className="col-span-2">
+            <Paragraph1 className="text-xs text-gray-500 block mb-1">
+              Total amount
+            </Paragraph1>
+            <Paragraph1 className="text-lg font-bold text-black">
+              {CURRENCY}
+              {formatCurrency(orderTotalAmount)}
+            </Paragraph1>
           </div>
         </div>
       </div>
