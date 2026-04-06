@@ -9,6 +9,7 @@ import { Paragraph1 } from "@/common/ui/Text";
 import { useRemoveCartItem } from "@/lib/mutations/cart/useRemoveCartItem";
 import {
   isLineRentalApproved,
+  rentalLineIsEffectivelyExpired,
   shouldShowRentalRequestTimer,
 } from "@/lib/cart/rentalRequestUi";
 import type { CartCheckoutLine } from "../types";
@@ -329,12 +330,41 @@ export default function CheckoutProductList({
                   <Paragraph1 className="text-xs text-gray-600 leading-snug mt-1">
                     Duration: <strong>{item.rentalDays} Days</strong>
                   </Paragraph1>
+                  <div className="flex flex-wrap items-center gap-2 mt-2 sm:hidden">
+                    {rentalLineIsEffectivelyExpired(
+                      item.status,
+                      item.expiresAt,
+                    ) && (
+                      <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-200">
+                        Expired
+                      </span>
+                    )}
+                    {isLineRentalApproved(item.status) && (
+                      <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200">
+                        Approved
+                      </span>
+                    )}
+                    {shouldShowRentalRequestTimer(
+                      item.status,
+                      item.expiresAt,
+                    ) && (
+                      <RentalTimer expiresAt={item.expiresAt!} />
+                    )}
+                  </div>
                 </div>
               </div>
 
               {/* === Price Columns (Desktop View) === */}
               <div className="hidden sm:contents text-sm font-medium">
                 <div className="col-span-2 text-center text-gray-900 flex flex-col items-center gap-1">
+                  {rentalLineIsEffectivelyExpired(
+                    item.status,
+                    item.expiresAt,
+                  ) && (
+                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-200">
+                      Expired
+                    </span>
+                  )}
                   {isLineRentalApproved(item.status) && (
                     <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200">
                       Approved
