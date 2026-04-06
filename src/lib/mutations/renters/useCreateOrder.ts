@@ -1,9 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createOrderApi } from "@/lib/api/cart";
 
-/**
- * Mutation hook for creating an order from cart (POST /order)
- */
+/** @deprecated Use `usePassCart`. */
 export const useCreateOrder = () => {
   const queryClient = useQueryClient();
   return useMutation({

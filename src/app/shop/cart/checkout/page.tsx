@@ -1,18 +1,17 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import React, { useEffect, useMemo, useState } from "react";
 
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import { Header1, Header1Plus } from "@/common/ui/Text";
 import CheckoutContactAndPayment from "./components/CheckoutContactAndPayment";
 import FinalOrderSummaryCard from "./components/FinalOrderSummaryCard";
 import { useRentalRequests } from "@/lib/queries/renters/useRentalRequests";
+import { useCartItems } from "@/lib/queries/renters/useCartItems";
 import { productApi } from "@/lib/api/product";
 import { getOrderSummaryApi } from "@/lib/api/cart";
+import { approvedRentalsMatchingCurrentCart } from "@/lib/cart/approvedRentalsMatchingCart";
 
 export default function CheckoutPage() {
-  const router = useRouter();
   const [shippingTiers, setShippingTiers] = useState<
     Array<{
       name: string;
@@ -30,6 +29,7 @@ export default function CheckoutPage() {
   ];
 
   const { data, isLoading, error } = useRentalRequests("approved", 1, 100);
+  const { data: cartData, isLoading: cartIsLoading } = useCartItems();
   const [cartItemsWithProduct, setCartItemsWithProduct] = useState<Array<any>>(
     [],
   );
@@ -75,25 +75,37 @@ export default function CheckoutPage() {
     fetchProductDetails();
   }, [data]);
 
-  // Group cart items by listerID
-  const groupedByLister = cartItemsWithProduct.reduce(
-    (acc: Map<string, any[]>, item: any) => {
-      const listerId = item.listerId;
-      if (!acc.has(listerId)) {
-        acc.set(listerId, []);
-      }
-      acc.get(listerId)!.push(item);
-      return acc;
-    },
-    new Map(),
+  const approvedOnCheckout = useMemo(
+    () =>
+      approvedRentalsMatchingCurrentCart(
+        cartItemsWithProduct,
+        cartData?.items,
+      ),
+    [cartItemsWithProduct, cartData?.items],
   );
 
-  // Convert map to array of grouped items
-  const listerGroups = [...groupedByLister.entries()].map(
-    ([listerId, items]) => ({
-      listerId,
-      items,
-    }),
+  const groupedByLister = useMemo(() => {
+    return approvedOnCheckout.reduce(
+      (acc: Map<string, any[]>, item: any) => {
+        const listerId =
+          (item.listerId as string | undefined)?.trim() || "unknown-lister";
+        if (!acc.has(listerId)) {
+          acc.set(listerId, []);
+        }
+        acc.get(listerId)!.push(item);
+        return acc;
+      },
+      new Map(),
+    );
+  }, [approvedOnCheckout]);
+
+  const listerGroups = useMemo(
+    () =>
+      [...groupedByLister.entries()].map(([listerId, items]) => ({
+        listerId,
+        items,
+      })),
+    [groupedByLister],
   );
 
   return (
@@ -112,7 +124,7 @@ export default function CheckoutPage() {
         <div className="flex flex-col gap-4">
           <FinalOrderSummaryCard
             listerGroups={listerGroups}
-            isLoading={isLoading}
+            isLoading={isLoading || cartIsLoading}
             error={error}
             selectedShippingTier={selectedShippingTier}
             selectedTierData={shippingTiers.find(

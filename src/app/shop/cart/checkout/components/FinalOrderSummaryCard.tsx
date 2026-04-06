@@ -4,10 +4,9 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Check, CheckCircle } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
-import { useCheckout } from "@/lib/mutations/renters/useCheckoutMutations";
 import { useProfile } from "@/lib/queries/user/useProfile";
 import { useRouter } from "next/navigation";
-import { getOrderSummaryApi } from "@/lib/api/cart";
+import { getOrderSummaryApi, orderIdsFromOrderPost } from "@/lib/api/cart";
 import { usePassCart } from "@/lib/mutations/renters/usePassCartMutation";
 import { useListerProfile } from "@/lib/queries/shop/useListerProfile";
 import { toast } from "sonner";
@@ -258,7 +257,6 @@ export default function FinalOrderSummaryCard({
   selectedTierData,
 }: FinalOrderSummaryCardProps) {
   const router = useRouter();
-  const checkoutMutation = useCheckout();
   const passCartMutation = usePassCart();
   const { data: profile } = useProfile();
   const [isAgree, setIsAgree] = useState(false);
@@ -278,7 +276,6 @@ export default function FinalOrderSummaryCard({
       setOrderSummaryLoading(true);
       try {
         const response = await getOrderSummaryApi();
-        console.log("Order Summary Response:", response);
         setOrderSummary(response);
       } catch (err) {
         console.error("Failed to fetch order summary:", err);
@@ -303,105 +300,37 @@ export default function FinalOrderSummaryCard({
       return;
     }
 
-    // Collect all request IDs from all lister groups
-    const requestIds = approvedGroups.flatMap((group) =>
-      group.items.map((item) => item.requestId),
+    const approvedItemCount = approvedGroups.reduce(
+      (n, g) => n + g.items.length,
+      0,
     );
+    if (approvedItemCount === 0) return;
 
-    if (requestIds.length === 0) return;
-
-    // First, pass cart with selected shipping tier
     passCartMutation.mutate(selectedShippingTier, {
-      onSuccess: () => {
-        toast.success("Shipping method selected");
-
-        // Then proceed with checkout
-        // For now, send the first request ID - backend may need to handle multiple
-        // TODO: Update backend to accept multiple requestIds for multi-lister checkout
-        checkoutMutation.mutate(
-          { requestId: requestIds[0] },
-          {
-            onSuccess: (response) => {
-              const res = response as {
-                success: boolean;
-                data: { orderId: string };
-              };
-              router.push(
-                `/shop/cart/checkout/success?orderId=${res.data.orderId}`,
-              );
-            },
-            onError: (err: any) => {
-              toast.error(
-                err?.message ||
-                  "Failed to complete checkout. Please try again.",
-              );
-            },
-          },
+      onSuccess: (passResponse) => {
+        const ids = orderIdsFromOrderPost(passResponse);
+        const id = ids[0];
+        if (!id) {
+          toast.error(
+            "Checkout succeeded but no order id was returned. Check My Orders or refresh your cart.",
+          );
+          return;
+        }
+        toast.success(
+          ids.length > 1 ? `${ids.length} orders placed` : "Order placed",
+        );
+        router.push(
+          `/shop/cart/checkout/success?orderId=${encodeURIComponent(id)}`,
         );
       },
-      onError: (err: any) => {
+      onError: (err: unknown) => {
         toast.error(
-          err?.message || "Failed to select shipping method. Please try again.",
+          err instanceof Error
+            ? err.message
+            : "Checkout failed. Please try again.",
         );
       },
     });
-  };
-
-  const testHandleCheckout = async () => {
-    // If order creation failed, retry it first
-    // if (orderCreationError) {
-    //   onRetryOrder?.();
-    //   return;
-    // }
-
-    // If verification is pending, check status first
-    // if (verificationSubmittedAt && countdown > 0) {
-    //   alert(
-    //     `Please wait ${formatCountdown(countdown)} before checking verification status.`,
-    //   );
-    //   return;
-    // }
-
-    // If verification was submitted but countdown expired, check status
-    // if (verificationSubmittedAt && countdown === 0) {
-    //   await checkVerificationStatus();
-    //   return;
-    // }
-
-    // Check if user is verified
-    // if (!isVerified) {
-    //   setIsVerificationModalOpen(true);
-    //   return;
-    // }
-
-    // if (!isAgree) {
-    //   alert("Please agree to the terms of service");
-    //   return;
-    // }
-
-    // Collect all request IDs from all lister groups
-    const requestIds = approvedGroups.flatMap((group) =>
-      group.items.map((item) => item.requestId),
-    );
-
-    if (requestIds.length === 0) return;
-
-    // For now, send the first request ID - backend may need to handle multiple
-    // TODO: Update backend to accept multiple requestIds for multi-lister checkout
-    checkoutMutation.mutate(
-      { requestId: requestIds[0] },
-      {
-        onSuccess: (response) => {
-          const res = response as {
-            success: boolean;
-            data: { orderId: string };
-          };
-          router.push(
-            `/shop/cart/checkout/success?orderId=${res.data.orderId}`,
-          );
-        },
-      },
-    );
   };
 
   return (
@@ -557,10 +486,10 @@ export default function FinalOrderSummaryCard({
                       </Paragraph1>
                     </div>
 
-                    {checkoutMutation.isError && (
+                    {passCartMutation.isError && (
                       <div className="p-3 bg-red-50 border border-red-200 rounded-lg mb-4">
                         <Paragraph1 className="text-xs text-red-700">
-                          {checkoutMutation.error?.message ||
+                          {passCartMutation.error?.message ||
                             "Failed to complete checkout"}
                         </Paragraph1>
                       </div>
@@ -568,16 +497,11 @@ export default function FinalOrderSummaryCard({
 
                     <button
                       onClick={handleCheckout}
-                      disabled={
-                        !isAgree ||
-                        checkoutMutation.isPending ||
-                        passCartMutation.isPending
-                      }
+                      disabled={!isAgree || passCartMutation.isPending}
                       className="w-full flex justify-center bg-black text-white font-semibold py-3 rounded-lg hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <Paragraph1>
-                        {passCartMutation.isPending ||
-                        checkoutMutation.isPending
+                        {passCartMutation.isPending
                           ? "Processing..."
                           : "Complete Order"}
                       </Paragraph1>
@@ -615,13 +539,6 @@ export default function FinalOrderSummaryCard({
                     </label>
                   </div>
                 )}
-
-                <button
-                  onClick={testHandleCheckout}
-                  className="w-full flex- - hidden justify-center bg-black text-white font-semibold py-3 rounded-lg hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <Paragraph1>Test Complete Order</Paragraph1>
-                </button>
               </>
             );
           })()}
