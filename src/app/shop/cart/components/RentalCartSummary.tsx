@@ -9,7 +9,10 @@ import {
   cartLineIdFromRentalItem,
   useRemoveCartItem,
 } from "@/lib/mutations/cart/useRemoveCartItem";
-import { shouldShowRentalRequestTimer } from "@/lib/cart/rentalRequestUi";
+import {
+  rentalLineIsEffectivelyExpired,
+  shouldShowRentalRequestTimer,
+} from "@/lib/cart/rentalRequestUi";
 
 // --- Formatting Helper (for thousands separator) ---
 const formatCurrency = (amount: number): string => {
@@ -146,6 +149,11 @@ export default function RentalCartSummary() {
                 {item.rentalDays} DAYS - {currency}
                 {formatCurrency(item.totalPrice)}
               </Paragraph1>
+              {rentalLineIsEffectivelyExpired(item.status, item.expiresAt) && (
+                <span className="inline-block mt-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-200">
+                  Expired
+                </span>
+              )}
               {shouldShowRentalRequestTimer(item.status, item.expiresAt) && (
                 <RentalTimer expiresAt={item.expiresAt} />
               )}
