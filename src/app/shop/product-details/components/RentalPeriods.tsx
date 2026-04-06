@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { toast } from "sonner";
 import {
   SlidersVertical,
@@ -26,6 +26,28 @@ import { useAddresses } from "@/lib/queries/renters/useAddresses";
 import { useProfileDetails } from "@/lib/queries/renters/useProfileDetails";
 import { useUserStore } from "@/store/useUserStore";
 import Link from "next/link";
+import { getCartItemsApi } from "@/lib/api/cart";
+import {
+  addCalendarDaysLocal,
+  formatDateOnlyLocal,
+} from "@/lib/dates/formatDateOnlyLocal";
+
+function cartLineIdFromAddCartPayload(payload: unknown): string | undefined {
+  const walk = (v: unknown): string | undefined => {
+    if (v == null || typeof v !== "object") return undefined;
+    const o = v as Record<string, unknown>;
+    for (const k of ["id", "cartItemId", "cart_item_id"] as const) {
+      const s = o[k];
+      if (typeof s === "string" && s.trim()) return s.trim();
+    }
+    for (const nested of [o.data, o.item, o.cartItem]) {
+      const found = walk(nested);
+      if (found) return found;
+    }
+    return undefined;
+  };
+  return walk(payload);
+}
 
 // Hook to get renter profile (uses GET /api/renters/profile)
 // Hook to get renter addresses (uses GET /api/renters/profile/addresses)
@@ -100,11 +122,10 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
 
   const addCartItem = useAddCartItem();
 
-  // Handler to update rental days and start date from child
-  const handleRentalDaysChange = (days: number, start?: Date) => {
+  const handleRentalDaysChange = useCallback((days: number, start?: Date) => {
     setRentalDays(days);
     if (start) setStartDate(start);
-  };
+  }, []);
 
   // Handler for Check Availability
   const handleCheckAvailability = async () => {
@@ -146,16 +167,31 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
         return;
       }
 
+      if (!Number.isFinite(startDate.getTime())) {
+        toast.error("Invalid rental start date.");
+        return;
+      }
+
       setIsChecking(true);
 
-      // --- Add to cart with only productId and days using mutation hook ---
+      let cartItemId: string | undefined;
       try {
-        await addCartItem.mutateAsync({ productId, days: rentalDays });
+        const addRes = await addCartItem.mutateAsync({
+          productId,
+          days: rentalDays,
+        });
+        cartItemId = cartLineIdFromAddCartPayload(addRes?.data ?? addRes);
       } catch (cartErr: any) {
         const msg = String(cartErr?.message ?? "");
         const alreadyInCart = /already in cart/i.test(msg);
         if (alreadyInCart) {
-          // Item is already in cart; rental request flow can continue
+          try {
+            const cart = await getCartItemsApi();
+            const line = [...(cart.items ?? [])]
+              .reverse()
+              .find((i) => i.productId === productId);
+            cartItemId = line?.id;
+          } catch {}
         } else {
           console.error("❌ Error posting cart item:", cartErr);
           toast.error(msg || "Could not add to cart.");
@@ -163,10 +199,12 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
         }
       }
 
-      const rentalStartDate = startDate.toISOString();
-      const rentalEndDate = new Date(
-        startDate.getTime() + (rentalDays - 1) * 24 * 60 * 60 * 1000,
-      ).toISOString();
+      const rentalStartDate = formatDateOnlyLocal(startDate);
+      const endDayOffset =
+        rentalDays === 1 ? 1 : Math.max(0, rentalDays - 1);
+      const rentalEndDate = formatDateOnlyLocal(
+        addCalendarDaysLocal(startDate, endDayOffset),
+      );
       const estimatedRentalPrice = dailyPrice * rentalDays;
       const currency = "NGN";
       const res = await submitRentalRequest.mutateAsync({
@@ -179,6 +217,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
         deliveryAddressId,
         autoPay,
         currency,
+        ...(cartItemId ? { cartItemId } : {}),
       });
       if (res?.success && res?.data) {
         setSummaryData(res.data);
@@ -229,14 +268,14 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="fixed inset-0 z-99 bg-black/70 backdrop--blur-sm"
+            className="z-99 fixed inset-0 bg-black/70 backdrop--blur-sm"
             onClick={onClose}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="fixed top-0 right-0 h-screen hide-scrollbar overflow-y-auto bg-white shadow-2xl px-4  flex flex-col w-full sm:w-114"
+              className="top-0 right-0 fixed flex flex-col bg-white shadow-2xl px-4 w-full sm:w-114 h-screen overflow-y-auto hide-scrollbar"
               role="dialog"
               aria-modal="true"
               aria-label="Product RentalPeriods"
@@ -248,39 +287,37 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="flex justify-between sticky top-0 items-center pb-4 border-b border-gray-100 pt-6 z-10  bg-white">
+              <div className="top-0 z-10 sticky flex justify-between items-center bg-white pt-6 pb-4 border-gray-100 border-b">
                 <button
                   onClick={onClose}
-                  className="text-gray-500 xl:hidden hover:text-black p-1 rounded-full transition"
+                  className="xl:hidden p-1 rounded-full text-gray-500 hover:text-black transition"
                   aria-label="Close RentalPeriods"
                 >
                   <ArrowLeft size={20} />
                 </button>
 
-                <Paragraph1 className=" font-bold tracking-widest text-gray-800">
+                <Paragraph1 className="font-bold text-gray-800 tracking-widest">
                   CHOOSE RENTAL PERIOD
                 </Paragraph1>
                 <button
                   onClick={onClose}
-                  className="text-gray-500  hover:text-black p-1 rounded-full transition"
+                  className="p-1 rounded-full text-gray-500 hover:text-black transition"
                   aria-label="Close RentalPeriods"
                 >
-                  <X className=" hidden xl:flex" size={20} />
+                  <X className="hidden xl:flex" size={20} />
                 </button>
               </div>
 
               {/* Content */}
-              <div className="grow pt-4 pb-20 space-y-8">
+              <div className="space-y-8 pt-4 pb-20 grow">
                 <RentalDurationSelector
                   productId={productId}
                   listerId={listerId}
                   dailyPrice={dailyPrice}
                   collateralPrice={collateralPrice}
-                  onChangeRentalDays={(days, start) =>
-                    handleRentalDaysChange(days, start)
-                  }
+                  onChangeRentalDays={handleRentalDaysChange}
                 />
-                <div className="flex- hidden items-center gap-2 mt-4">
+                <div className="hidden flex- items-center gap-2 mt-4">
                   <button
                     type="button"
                     aria-pressed={autoPay}
@@ -315,7 +352,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                   {isChecking ? (
                     <>
                       <Loader2
-                        className="h-4 w-4 animate-spin shrink-0"
+                        className="w-4 h-4 animate-spin shrink-0"
                         aria-hidden
                       />
                       Checking…
@@ -332,7 +369,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                   )}
                 </button>
                 {countdownActive && countdown !== null && (
-                  <div className="text-center mt-2 text-yellow-700 font-medium">
+                  <div className="mt-2 font-medium text-yellow-700 text-center">
                     Item has been added to cart while Waiting for Lister to
                     confirm your request...
                   </div>
@@ -365,14 +402,14 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
               </div>
 
               {/* Footer */}
-              <div className="mt-auto py-2 bg-white flex justify-between gap-4 sticky bottom-0">
-                <button className="flex-1  px-4 py-3 text-sm font-semibold border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+              <div className="bottom-0 sticky flex justify-between gap-4 bg-white mt-auto py-2">
+                <button className="flex-1 hover:bg-gray-50 px-4 py-3 border border-gray-300 rounded-lg font-semibold text-sm transition">
                   <Paragraph1>Shop More </Paragraph1>
                 </button>
 
                 <Link
                   href="/shop/cart"
-                  className="border flex-1 rounded-lg bg-black text-white px-4 items-center   justify-center  w-full py- flex gap-1 cursor-pointer  transition "
+                  className="flex flex-1 justify-center items-center gap-1 bg-black px-4 py- border rounded-lg w-full text-white transition cursor-pointer"
                 >
                   <Paragraph1> View cart</Paragraph1>
                 </Link>
@@ -388,13 +425,13 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
       <AnimatePresence>
         {isProfileSetupModalOpen && (
           <motion.div
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[101] p-4"
+            className="z-[101] fixed inset-0 flex justify-center items-center bg-black/50 p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="bg-white rounded-2xl max-w-md w-full p-8 shadow-xl"
+              className="bg-white shadow-xl p-8 rounded-2xl w-full max-w-md"
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -402,7 +439,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
             >
               {/* Icon */}
               <div className="flex justify-center mb-4">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                <div className="flex justify-center items-center bg-blue-100 rounded-full w-16 h-16">
                   <svg
                     className="w-8 h-8 text-blue-600"
                     fill="none"
@@ -420,12 +457,12 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
               </div>
 
               {/* Title */}
-              <Paragraph2 className="text-2xl font-bold text-center text-gray-900 mb-2">
+              <Paragraph2 className="mb-2 font-bold text-gray-900 text-2xl text-center">
                 Complete Your Profile
               </Paragraph2>
 
               {/* Description */}
-              <Paragraph1 className="text-center text-gray-600 mb-6 leading-relaxed">
+              <Paragraph1 className="mb-6 text-gray-600 text-center leading-relaxed">
                 To complete this action and start renting, you need to set up
                 your profile first. This will only take a few minutes!
               </Paragraph1>
@@ -435,14 +472,14 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                 <button
                   type="button"
                   onClick={handleProfileSetupProceed}
-                  className="w-full px-4 py-3 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition-colors"
+                  className="bg-black hover:bg-gray-800 px-4 py-3 rounded-lg w-full font-semibold text-white text-sm transition-colors"
                 >
                   Proceed to Setup
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsProfileSetupModalOpen(false)}
-                  className="w-full px-4 py-3 text-sm font-semibold text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="hover:bg-gray-50 px-4 py-3 border border-gray-300 rounded-lg w-full font-semibold text-gray-900 text-sm transition-colors"
                 >
                   Cancel
                 </button>
@@ -488,7 +525,7 @@ const RentalPeriods: React.FC<RentalPeriodsProps> = ({
           }
           setIsOpen(true);
         }}
-        className="border px-4 items-center rounded-lg bg-black text-white justify-center w-full py-2 flex gap-1 cursor-pointer font-semibold hover:text-black text-sm border-black hover:bg-gray-100 transition"
+        className="flex justify-center items-center gap-1 bg-black hover:bg-gray-100 px-4 py-2 border border-black rounded-lg w-full font-semibold text-white hover:text-black text-sm transition cursor-pointer"
       >
         <Paragraph1>Rent now</Paragraph1>
       </button>

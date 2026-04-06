@@ -194,16 +194,14 @@ const RentalDurationSelector = ({
     3,
   );
   const [customDays, setCustomDays] = useState<number>(3);
-  // Notify parent of rental days change
+  const [startDate, setStartDate] = useState<Date>(new Date());
+  const [showCustomInput, setShowCustomInput] = useState(false);
+
   useEffect(() => {
     const rentalDays =
       selectedDuration === "custom" ? customDays : selectedDuration;
-    if (onChangeRentalDays) {
-      onChangeRentalDays(rentalDays as number);
-    }
-  }, [selectedDuration, customDays, onChangeRentalDays]);
-  const [showCustomInput, setShowCustomInput] = useState(false);
-  const [startDate, setStartDate] = useState<Date>(new Date());
+    onChangeRentalDays?.(rentalDays as number, startDate);
+  }, [selectedDuration, customDays, startDate, onChangeRentalDays]);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<boolean>(false);
   const { error, triggerError, clearError } = useRentalError();
