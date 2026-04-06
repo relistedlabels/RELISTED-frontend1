@@ -46,7 +46,9 @@ export const useRemoveCartItem = () => {
           throw e;
         }
       }
-      if (rid) return rentersApi.removeRentalRequest(rid);
+      if (rid) {
+        return rentersApi.removeRentalRequest(rid);
+      }
       throw new Error("Missing cart or rental request id");
     },
     onSuccess: () => {

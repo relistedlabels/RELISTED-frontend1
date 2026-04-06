@@ -19,14 +19,14 @@ const formatCurrency = (amount: number): string => {
 
 // === Skeleton Loader ===
 const SummarySkeleton = () => (
-  <div className="p-4 border border-gray-200 rounded-xl space-y-4 animate-pulse">
-    <div className="h-6 bg-gray-200 rounded w-32"></div>
+  <div className="space-y-4 p-4 border border-gray-200 rounded-xl animate-pulse">
+    <div className="bg-gray-200 rounded w-32 h-6"></div>
     <div className="space-y-3">
       {[...Array(3)].map((_, i) => (
-        <div key={i} className="h-4 bg-gray-200 rounded"></div>
+        <div key={i} className="bg-gray-200 rounded h-4"></div>
       ))}
     </div>
-    <div className="h-10 bg-gray-200 rounded mt-6"></div>
+    <div className="bg-gray-200 mt-6 rounded h-10"></div>
   </div>
 );
 
@@ -65,22 +65,27 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
 
   return (
     <div className="p-4 border border-gray-200 rounded-xl">
-      <div className="flex gap-4 items-center justify-between mb-4">
-        <Paragraph1 className="text-lg font-bold text-gray-900  tracking-wide">
-          SUMMARY
-        </Paragraph1>
-        <Paragraph1 className="text-lg font-bold text-gray-500  tracking-wide">
-          From -{" "}
-          {isListerLoading ? (
-            <span className="inline-block w-24 h-5 bg-gray-200 rounded animate-pulse"></span>
-          ) : (
-            listerName
-          )}
-        </Paragraph1>
+      <div className="space-y-1 mb-4">
+        <div className="flex sm:flex-row flex-col sm:justify-between sm:items-start gap-1 sm:gap-4">
+          <div>
+            <Paragraph1 className="font-bold text-gray-900 text-lg tracking-wide">
+              SUMMARY
+            </Paragraph1>
+           
+          </div>
+          <Paragraph1 className="font-bold text-gray-600 text-sm sm:text-right tracking-wide shrink-0">
+            From{" "}
+            {isListerLoading ? (
+              <span className="inline-block bg-gray-200 rounded w-24 h-5 align-middle animate-pulse" />
+            ) : (
+              listerName
+            )}
+          </Paragraph1>
+        </div>
       </div>
 
       {/* Item List for this Lister */}
-      <div className="space-y-4 pb-6 border-b border-gray-200">
+      <div className="space-y-4 pb-6 border-gray-200 border-b">
         {group.items.map((item) => {
           const product = item.productDetail || {};
           // Try productDetail image, fallback to rental request image
@@ -89,7 +94,7 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
           return (
             <div key={item.requestId} className="flex items-start gap-4">
               {/* Product Image */}
-              <div className="shrink-0 w-16 h-20 bg-gray-200 rounded-md overflow-hidden border border-gray-100 relative">
+              <div className="relative bg-gray-200 border border-gray-100 rounded-md w-16 h-20 overflow-hidden shrink-0">
                 {productImageUrl ? (
                   <Image
                     src={productImageUrl}
@@ -102,21 +107,21 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
 
               {/* Product Details */}
               <div className="grow">
-                <Paragraph1 className="text-sm font-semibold text-gray-800 uppercase leading-snug">
+                <Paragraph1 className="font-semibold text-gray-800 text-sm uppercase leading-snug">
                   {product.name || item.productName}
                 </Paragraph1>
-                <Paragraph1 className="text-xs text-gray-600 leading-snug mt-1">
+                <Paragraph1 className="mt-1 text-gray-600 text-xs leading-snug">
                   Duration: <strong>{item.rentalDays} Days</strong>
                 </Paragraph1>
-                <div className="w-fit px-2 py-0.5 mt-4 rounded-full bg-green-100 border border-green-200 text-green-800">
-                  <Paragraph1 className="text-xs font-semibold">
+                <div className="bg-green-100 mt-4 px-2 py-0.5 border border-green-200 rounded-full w-fit text-green-800">
+                  <Paragraph1 className="font-semibold text-xs">
                     Approved
                   </Paragraph1>
                 </div>
               </div>
 
               {/* Price */}
-              <div className="shrink-0 text-sm font-bold text-gray-900 mt-1">
+              <div className="mt-1 font-bold text-gray-900 text-sm shrink-0">
                 <Paragraph1>
                   {CURRENCY}
                   {formatCurrency(item.totalPrice)}
@@ -128,7 +133,7 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
       </div>
 
       {/* Breakdown for this Lister */}
-      <div className="space-y-2 - hidden  py-4 border-b border-gray-200">
+      <div className="hidden space-y-2 border-b border-gray-200 py-4">
         <div className="flex justify-between text-sm font-medium text-gray-700">
           <Paragraph1>Rental Subtotal</Paragraph1>
           <Paragraph1>
@@ -136,14 +141,14 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
             {formatCurrency(listerSubtotal)}
           </Paragraph1>
         </div>
-        <div className="flex- hidden  justify-between text-sm font-medium text-gray-700">
+        <div className="flex justify-between text-sm font-medium text-gray-700">
           <Paragraph1>Delivery Fees:</Paragraph1>
           <Paragraph1>
             {CURRENCY}
             {formatCurrency(listerDeliveryFees)}
           </Paragraph1>
         </div>
-        <div className="flex- hidden justify-between text-sm font-medium text-gray-700">
+        <div className="flex justify-between text-sm font-medium text-gray-700">
           <Paragraph1>Cleaning Fees:</Paragraph1>
           <Paragraph1>
             {CURRENCY}
@@ -155,7 +160,7 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
             )}
           </Paragraph1>
         </div>
-        <div className="flex- hidden  justify-between text-sm font-medium text-gray-700">
+        <div className="flex justify-between text-sm font-medium text-gray-700">
           <Paragraph1>Security Deposit:</Paragraph1>
           <Paragraph1>
             {CURRENCY}
@@ -166,10 +171,10 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
 
       {/* Lister Total */}
       <div className="flex justify-between items-center pt-4">
-        <Paragraph1 className="text-sm font-bold text-gray-900">
+        <Paragraph1 className="font-bold text-gray-900 text-sm">
           Subtotal:
         </Paragraph1>
-        <Paragraph1 className="text-lg font-extrabold text-gray-900">
+        <Paragraph1 className="font-extrabold text-gray-900 text-lg">
           {CURRENCY}
           {formatCurrency(listerTotal)}
         </Paragraph1>
@@ -196,8 +201,8 @@ export function FinalOrderSummaryCard({
 
   if (error || !listerGroups) {
     return (
-      <div className="p-4 border border-yellow-200 rounded-xl bg-yellow-50">
-        <Paragraph1 className="text-sm text-yellow-800">
+      <div className="bg-yellow-50 p-4 border border-yellow-200 rounded-xl">
+        <Paragraph1 className="text-yellow-800 text-sm">
           Failed to load cart summary. Please try again.
         </Paragraph1>
       </div>
@@ -208,9 +213,13 @@ export function FinalOrderSummaryCard({
 
   if (approvedGroups.length === 0) {
     return (
-      <div className="p-4 border border-gray-200 rounded-xl bg-gray-50">
-        <Paragraph1 className="text-sm text-gray-600">
-          No approved items in cart
+      <div className="space-y-2 bg-gray-50 p-4 border border-gray-200 rounded-xl">
+        <Paragraph1 className="font-semibold text-gray-800 text-sm">
+          No approved items yet
+        </Paragraph1>
+        <Paragraph1 className="text-gray-600 text-xs leading-relaxed">
+          This panel only shows items after the lister approves. Pending
+          requests appear in your main cart list on the left.
         </Paragraph1>
       </div>
     );
@@ -233,34 +242,43 @@ export function FinalOrderSummaryCard({
 
   return (
     <div className="space-y-6">
-      {/* Per-Lister Summary Cards */}
-      {approvedGroups.map((group, index) => (
+      <div className="space-y-1 px-0.5">
+        <Paragraph1 className="font-bold text-gray-900 text-sm uppercase tracking-wide">
+          Checkout summary
+        </Paragraph1>
+        <Paragraph1 className="text-gray-600 text-xs leading-relaxed">
+          Totals and checkout apply to <strong>approved</strong> items only.
+        </Paragraph1>
+      </div>
+
+      {approvedGroups.map((group) => (
         <ListerSummaryCard key={group.listerId} group={group} />
       ))}
 
-      {/* Grand Total */}
-      <div className="p-4 border border-gray-300 rounded-xl bg-gray-50">
-        <div className="flex justify-between items-center mb-4">
-          <Paragraph1 className="text-lg font-bold text-gray-900">
-            {/* Grand */}
-            Total:
+      <div className="bg-gray-50 p-4 border border-gray-300 rounded-xl">
+        <div className="flex justify-between items-center mb-1">
+          <Paragraph1 className="font-bold text-gray-900 text-lg">
+            Approved total
           </Paragraph1>
-          <Paragraph1 className="text-2xl font-extrabold text-gray-900">
+          <Paragraph1 className="font-extrabold text-gray-900 text-2xl">
             {CURRENCY}
             {formatCurrency(grandTotal)}
           </Paragraph1>
         </div>
+        <Paragraph1 className="mb-4 text-gray-500 text-xs">
+          Sum of approved items above, before shipping or final taxes if any.
+        </Paragraph1>
 
         {/* Proceed Button */}
         <Link
           href="/shop/cart/checkout"
-          className="w-full flex justify-center bg-black text-white font-semibold py-3 rounded-lg hover:bg-gray-800 transition-colors"
+          className="flex justify-center bg-black hover:bg-gray-800 py-3 rounded-lg w-full font-semibold text-white transition-colors"
         >
           <Paragraph1>Proceed to Checkout</Paragraph1>
         </Link>
 
         {/* Security Note */}
-        <div className="flex items-start gap-2 p-3 mt-4 text-xs bg-green-50 text-green-700 rounded-md border border-green-200">
+        <div className="flex items-start gap-2 bg-green-50 mt-4 p-3 border border-green-200 rounded-md text-green-700 text-xs">
           <CheckCircle size={16} className="mt-0.5 shrink-0" />
           <Paragraph1 className="text-green-700">
             Your <strong>deposit is secure</strong> and fully refunded after

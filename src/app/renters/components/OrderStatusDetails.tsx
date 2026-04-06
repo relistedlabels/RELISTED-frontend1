@@ -29,9 +29,16 @@ export default function OrderStatusDetails({
   // Get locked amount from order
   const lockedAmount = orderData.totalAmount || 0;
 
-  // Get return date (rental end date, or N/A if not set)
-  const firstItem = orderData.items?.[0];
-  const rentalEndDate = firstItem?.rentalEndDate || orderData.rentalEndDate;
+  const items = Array.isArray(orderData.items) ? orderData.items : [];
+  const itemEnds = items
+    .map((it: { rentalEndDate?: string | null }) => it.rentalEndDate)
+    .filter(Boolean) as string[];
+  const latestItemEnd = itemEnds.reduce<string | undefined>((best, d) => {
+    if (!best) return d;
+    return new Date(d) > new Date(best) ? d : best;
+  }, undefined);
+  const rentalEndDate =
+    orderData.rentalEndDate || latestItemEnd || items[0]?.rentalEndDate;
 
   const returnDate = rentalEndDate
     ? new Date(rentalEndDate).toLocaleDateString("en-NG", {
