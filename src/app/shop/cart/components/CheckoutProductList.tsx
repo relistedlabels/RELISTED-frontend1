@@ -244,24 +244,22 @@ export default function CheckoutProductList({
         )}
       </AnimatePresence>
       {/* Table Header Row (Desktop/Tablet View - hidden on mobile) */}
-      <div className="hidden sm:grid grid-cols-12 text-xs font-medium text-gray-500 p-2 py-6 border rounded-lg border-gray-200">
-        <div className="col-span-3 pl-4 ">
+      <div className="hidden sm:grid grid-cols-12 text-xs font-medium text-gray-500 p-2 py-6 border rounded-lg border-gray-200 gap-2">
+        <div className="col-span-4 pl-4 ">
           <Paragraph1>Product Name</Paragraph1>
-        </div>
-        <div className="col-span-2 text-center">
-          <Paragraph1>Request</Paragraph1>
         </div>
         <div className="col-span-2 text-center">
           <Paragraph1>Unit Price</Paragraph1>
         </div>
-        <div className="col-span-2 text-center">
+        <div className="col-span-1 text-center">
           <Paragraph1>Deposit</Paragraph1>
         </div>
         <div className="col-span-2 text-center">
           <Paragraph1>Subtotal</Paragraph1>
         </div>
-        {/* Empty column for trash icon on desktop */}
-        <div className="col-span-1"></div>
+        <div className="col-span-3 text-start px-4">
+          <Paragraph1>Status</Paragraph1>
+        </div>
       </div>
 
       {/* List of Cart Items */}
@@ -275,13 +273,23 @@ export default function CheckoutProductList({
             originalValue?: number;
           };
           const deposit = product.originalValue ?? 0;
+          const isApproved = isLineRentalApproved(item.status);
+          const isExpired = rentalLineIsEffectivelyExpired(
+            item.status,
+            item.expiresAt,
+          );
+          const showTimer = shouldShowRentalRequestTimer(
+            item.status,
+            item.expiresAt,
+          );
+
           return (
             <div
               key={item.lineId}
-              className="py-4 px-4 sm:px-0 sm:grid sm:grid-cols-12 items-start hover:bg-gray-50 transition-colors"
+              className="py-4 px-4 sm:px-0 sm:grid sm:grid-cols-12 items-center hover:bg-gray-50 transition-colors gap-2"
             >
               {/* === Product Info (Mobile/Desktop) === */}
-              <div className="col-span-3 flex items-start gap-3 w-full">
+              <div className="col-span-4 flex items-start gap-3 w-full">
                 {/* Checkbox */}
                 <div className="shrink-0 pt-1">
                   <input
@@ -304,76 +312,58 @@ export default function CheckoutProductList({
                 </div>
                 {/* Name and Details */}
                 <div className="grow">
-                  <div className="flex justify-between items-center w-full">
-                    <Paragraph1 className="text-sm font-semibold text-gray-800 uppercase leading-snug">
-                      {product.name || item.productName}
-                    </Paragraph1>
-
-                    {isLineRentalPendingWithoutTimer(
-                      item.status,
-                      item.expiresAt,
-                    ) && (
-                      <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-200">
-                        Pending Approval
-                      </span>
-                    )}
-                    {/* Trash Icon (Visible on Mobile, positioned top-right) */}
-                    <button
-                      aria-label={`Remove ${product.name || item.productName}`}
-                      onClick={() => handleRemoveItem(item)}
-                      disabled={removeCartItemMutation.isPending}
-                      className="sm:hidden shrink-0 p-1 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
+                  <Paragraph1 className="text-sm font-semibold text-gray-800 uppercase leading-snug">
+                    {product.name || item.productName}
+                  </Paragraph1>
+                  <Paragraph1 className="text-xs text-gray-600 leading-snug mt-1">
+                    Size: <strong>S</strong> Color: <strong>Black</strong>
+                  </Paragraph1>
                   <Paragraph1 className="text-xs text-gray-600 leading-snug mt-1">
                     Duration: <strong>{item.rentalDays} Days</strong>
                   </Paragraph1>
+                  {/* Mobile Status Display */}
                   <div className="flex flex-wrap items-center gap-2 mt-2 sm:hidden">
-                    {rentalLineIsEffectivelyExpired(
-                      item.status,
-                      item.expiresAt,
-                    ) && (
-                      <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-200">
-                        Expired
+                    {isExpired && (
+                      <div className="flex items-center gap-1">
+                        <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-800 border border-orange-200">
+                          Approval expired
+                        </span>
+                        <button className="text-xs text-blue-600 hover:text-blue-800 font-semibold underline ml-1">
+                          Request approval again
+                        </button>
+                      </div>
+                    )}
+                    {isApproved && (
+                      <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200 flex items-center gap-1">
+                        <span>✓</span> Approved
                       </span>
                     )}
-                    {isLineRentalApproved(item.status) && (
-                      <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200">
-                        Approved
-                      </span>
-                    )}
-                    {shouldShowRentalRequestTimer(
-                      item.status,
-                      item.expiresAt,
-                    ) && (
-                      <RentalTimer expiresAt={item.expiresAt!} />
+                    {showTimer && (
+                      <div className="flex items-center">
+                        <span className="text-xs text-gray-500">⏱</span>
+                        <RentalTimer expiresAt={item.expiresAt!} />
+                        <span className="text-xs text-gray-500 ml-2">
+                          You'll be notified once approved
+                        </span>
+                      </div>
                     )}
                   </div>
                 </div>
+
+                {/* Trash Icon (Visible on Mobile) */}
+                <button
+                  aria-label={`Remove ${product.name || item.productName}`}
+                  onClick={() => handleRemoveItem(item)}
+                  disabled={removeCartItemMutation.isPending}
+                  className="sm:hidden shrink-0 p-1 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+                >
+                  <Trash2 size={18} />
+                </button>
               </div>
 
               {/* === Price Columns (Desktop View) === */}
               <div className="hidden sm:contents text-sm font-medium">
-                <div className="col-span-2 text-center text-gray-900 flex flex-col items-center gap-1">
-                  {rentalLineIsEffectivelyExpired(
-                    item.status,
-                    item.expiresAt,
-                  ) && (
-                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-200">
-                      Expired
-                    </span>
-                  )}
-                  {isLineRentalApproved(item.status) && (
-                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200">
-                      Approved
-                    </span>
-                  )}
-                  {shouldShowRentalRequestTimer(item.status, item.expiresAt) && (
-                    <RentalTimer expiresAt={item.expiresAt!} />
-                  )}
-                </div>
+                {/* Unit Price */}
                 <div className="col-span-2 text-center text-gray-900">
                   <Paragraph1>
                     {currency}
@@ -381,41 +371,109 @@ export default function CheckoutProductList({
                   </Paragraph1>
                 </div>
 
-                {/* Delivery Fee (Desktop) */}
-                <div className="col-span-2 text-center text-gray-900">
+                {/* Deposit */}
+                <div className="col-span-1 text-center text-gray-900">
                   <Paragraph1>
                     {currency}
                     {formatCurrency(deposit)}
                   </Paragraph1>
                 </div>
 
-                {/* Subtotal (Desktop) */}
-                <div className="col-span-2 text-center font-bold text-lg text-gray-900">
+                {/* Subtotal */}
+                <div className="col-span-2 text-center font-bold text-gray-900">
                   <Paragraph1>
                     {currency}
                     {formatCurrency(item.totalPrice)}
                   </Paragraph1>
                 </div>
+
+                {/* Status Column */}
+                <div className="col-span-3 text-center">
+                  <div className="flex flex-col items-center gap-2">
+                    {isExpired && (
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-orange-600 text-lg">⚠</span>
+                          <span className="text-xs font-semibold text-orange-700">
+                            Approval expired
+                          </span>
+                          <button
+                            aria-label={`Remove ${product.name || item.productName}`}
+                            onClick={() => handleRemoveItem(item)}
+                            disabled={removeCartItemMutation.isPending}
+                            className="p-1 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                        <button className="text-xs text-blue-600 hover:text-blue-800 font-semibold underline">
+                          Request approval again
+                        </button>
+                      </div>
+                    )}
+                    {isApproved && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-600 text-xl">✓</span>
+                        <span className="text-xs font-semibold text-green-700">
+                          Approved
+                        </span>
+                        <button
+                          aria-label={`Remove ${product.name || item.productName}`}
+                          onClick={() => handleRemoveItem(item)}
+                          disabled={removeCartItemMutation.isPending}
+                          className="p-1 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    )}
+                    {showTimer && (
+                      <div className="flex flex-col  gap-1">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-xs text-gray-500 font-semibold flex items-center gap-1">
+                            <span>⏱</span> Awaiting approval
+                          </span>
+                          <button
+                            aria-label={`Remove ${product.name || item.productName}`}
+                            onClick={() => handleRemoveItem(item)}
+                            disabled={removeCartItemMutation.isPending}
+                            className="p-1 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                        <span className="text-xs text-gray-500">
+                          You'll be notified once approved
+                        </span>
+                        <RentalTimer expiresAt={item.expiresAt!} />
+                      </div>
+                    )}
+                    {!isExpired && !isApproved && !showTimer && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500">—</span>
+                        <button
+                          aria-label={`Remove ${product.name || item.productName}`}
+                          onClick={() => handleRemoveItem(item)}
+                          disabled={removeCartItemMutation.isPending}
+                          className="p-1 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Trash Icon (Desktop) */}
-              <div className="hidden sm:flex col-span-1 items-center justify-center">
-                <button
-                  aria-label={`Remove ${product.name || item.productName}`}
-                  onClick={() => handleRemoveItem(item)}
-                  disabled={removeCartItemMutation.isPending}
-                  className="p-1 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
+              {/* Now part of Status Column, removed separate icon */}
 
               {/* === Price Row (Mobile View - below product info) === */}
               <div className="sm:hidden flex justify-between items-center w-full mt-4 text-sm font-medium">
-                {/* Rental Price (Mobile) */}
+                {/* Unit Price (Mobile) */}
                 <div className="text-left w-1/3">
                   <Paragraph1 className="text-xs text-gray-500 mb-1">
-                    Rental Price
+                    Unit Price
                   </Paragraph1>
                   <Paragraph1 className="text-sm font-semibold text-gray-900">
                     {currency}
@@ -423,21 +481,21 @@ export default function CheckoutProductList({
                   </Paragraph1>
                 </div>
 
-                {/* Delivery Fee (Mobile) */}
+                {/* Deposit (Mobile) */}
                 <div className="text-center w-1/3">
                   <Paragraph1 className="text-xs text-gray-500 mb-1">
-                    Delivery
+                    Deposit
                   </Paragraph1>
                   <Paragraph1 className="text-sm font-semibold text-gray-900">
                     {currency}
-                    {formatCurrency(item.deliveryFee)}
+                    {formatCurrency(deposit)}
                   </Paragraph1>
                 </div>
 
                 {/* Subtotal (Mobile) */}
                 <div className="text-right w-1/3">
                   <Paragraph1 className="text-xs text-gray-500 mb-1">
-                    Total
+                    Subtotal
                   </Paragraph1>
                   <Paragraph1 className="text-lg font-bold text-gray-900">
                     {currency}
@@ -448,6 +506,15 @@ export default function CheckoutProductList({
             </div>
           );
         })}
+      </div>
+
+      {/* Info Note */}
+      <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-3">
+        <span className="text-blue-600 text-lg shrink-0">ℹ</span>
+        <Paragraph1 className="text-sm text-blue-700">
+          Items require curator approval before checkout. If expired request
+          again.
+        </Paragraph1>
       </div>
     </div>
   );

@@ -108,6 +108,16 @@ export default function ProductCard({
             color={isFavorited ? "red" : "white"}
           />
         </button>
+
+        {/* Rent and Resale badges */}
+        <div className="absolute bottom-3 left-3 flex ">
+          <span className="bg-white text-black px-2.5 py-1 rounded-l-full text-[10px] border border-black font-semibold">
+            RENT
+          </span>
+          <span className="bg-black text-white px-2.5 py-1 rounded-r-full text-[10px] border border-black font-semibold">
+            RESALE
+          </span>
+        </div>
       </div>
 
       {/* product description */}
