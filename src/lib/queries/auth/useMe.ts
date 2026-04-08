@@ -13,5 +13,8 @@ export function useMe(options?: { enabled?: boolean }) {
     retry: false,
     enabled: shouldFetch,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    // Automatically refetch when component mounts if token exists
+    // This helps catch cases where server cleared the session
+    refetchOnMount: true,
   });
 }
