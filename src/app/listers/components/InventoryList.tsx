@@ -101,39 +101,6 @@ const InventoryItemCard: React.FC<InventoryItem> = ({
 
   const colors = statusColors[status] || statusColors.AVAILABLE;
 
-  // Determine type based on what fields have values
-  let type = "Unknown";
-  const hasRental = pricePerDay && !pricePerDay.includes("₦0");
-  const hasResale = itemValue && !itemValue.includes("₦0");
-
-  if (hasRental && hasResale) {
-    type = "Rental & Resale";
-  } else if (hasRental) {
-    type = "Rental";
-  } else if (hasResale) {
-    type = "Resale";
-  }
-
-  // Determine what price column layout to show based on type
-  let priceColumnLabel = "Price";
-  let priceValue = "";
-  let secondaryPrice = null;
-
-  if (type === "Resale") {
-    priceColumnLabel = "Resale Value";
-    priceValue = itemValue;
-  } else if (type === "Rental") {
-    priceColumnLabel = "Price/Day";
-    priceValue = pricePerDay + " /day";
-  } else if (type === "Rental & Resale") {
-    priceColumnLabel = "Price/Day";
-    priceValue = pricePerDay + " /day";
-    secondaryPrice = {
-      label: "Resale",
-      value: itemValue,
-    };
-  }
-
   const handleManage = (e: React.MouseEvent) => {
     e.preventDefault();
     router.push(`/listers/inventory/product-details/${id}`);
@@ -147,10 +114,10 @@ const InventoryItemCard: React.FC<InventoryItem> = ({
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.2 }}
     >
-      <div className="flex items-center gap-4 p-4 border border-gray-200 rounded-xl bg-white hover:shadow-md transition-shadow duration-150">
-        {/* Product Image & Info - Left Side */}
-        <div className="flex items-start space-x-3 min-w-[280px]">
-          <div className="w-20 h-24 bg-gray-100 rounded-lg overflow-hidden shrink-0">
+      <div className=" grid grid-cols-2 sm:grid-cols-7 items-center flex-wrap gap-4 justify-between p-4 border border-gray-200 rounded-xl bg-white hover:shadow-md transition-shadow duration-150">
+        {/* Product Image & Info */}
+        <div className="flex items-center space-x-3 col-span-2 ">
+          <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden shrink-0">
             <img
               src={imageUrl}
               alt={name}
@@ -160,71 +127,61 @@ const InventoryItemCard: React.FC<InventoryItem> = ({
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center space-x-2 mb-1">
-              <span className={`w-2.5 h-2.5 rounded-full ${colors.dot}`}></span>
+              <span className={`w-2 h-2 rounded-full ${colors.dot}`}></span>
               <Paragraph1 className={`text-xs font-semibold ${colors.text}`}>
                 {formatStatusLabel(status)}
               </Paragraph1>
+              {!isActive && (
+                <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                  Disabled
+                </span>
+              )}
             </div>
-            <Paragraph1 className="font-bold text-gray-900 truncate uppercase text-sm">
+            <Paragraph1 className="font-semibold text-gray-800 truncate">
               {name}
             </Paragraph1>
-            <Paragraph1 className="text-xs text-gray-600">
+            <Paragraph1 className="text-sm text-gray-500">
               Size: {size} | Color: {color}
             </Paragraph1>
           </div>
         </div>
 
-        {/* Type Column */}
-        <div className="flex flex-col   flex-1">
-          <Paragraph1 className="text-xs text-gray-500 mb-1">Type</Paragraph1>
-          <Paragraph1 className="font-semibold text-gray-900 text-sm">
-            {type}
+        {/* Price Per Day */}
+        <div className="text-left">
+          <Paragraph1 className="text-xs text-gray-500">Price/Day</Paragraph1>
+          <Paragraph1 className="font-semibold text-black">
+            {pricePerDay}
           </Paragraph1>
         </div>
 
-        {/* Price/Value Column */}
-        <div className="flex flex-col items-start  flex-1">
-          <Paragraph1 className="text-xs text-gray-500 mb-1">
-            {priceColumnLabel}
+        {/* Item Value */}
+        <div className="text-left">
+          <Paragraph1 className="text-xs text-gray-500">Item Value</Paragraph1>
+          <Paragraph1 className="font-semibold text-black">
+            {itemValue}
           </Paragraph1>
-          <div className="flex flex-col">
-            <Paragraph1 className="font-semibold text-gray-900 text-sm">
-              {priceValue}
-            </Paragraph1>
-            {secondaryPrice && (
-              <Paragraph1 className="text-xs text-gray-500">
-                {secondaryPrice.label} {secondaryPrice.value}
-              </Paragraph1>
-            )}
-          </div>
         </div>
 
-        {/* Listed Date Column */}
-        <div className="flex flex-col items-start text-center flex-1">
-          <Paragraph1 className="text-xs text-gray-500 mb-1">Listed</Paragraph1>
-          <Paragraph1 className="font-semibold text-gray-900 text-sm">
+        {/* Listed Date */}
+        <div className="text-left">
+          <Paragraph1 className="text-xs text-gray-500">Listed</Paragraph1>
+          <Paragraph1 className="font-semibold text-black">
             {listedDate}
           </Paragraph1>
         </div>
 
-        {/* Live Status Badge */}
+        {/* Status Badge */}
         <div
-          className={`px-3 py-1.5 rounded-lg whitespace-nowrap ${
-            isActive
-              ? "text-green-700 bg-green-100"
-              : "text-gray-700 bg-gray-100"
-          }`}
+          className={`px-3 flex justify-center item-center py-1.5 text-xs font-semibold rounded-lg ${colors.badge}`}
         >
-          <Paragraph1 className="text-xs font-semibold">
-            {isActive ? "Live" : "Inactive"}
-          </Paragraph1>
+          <Paragraph1>{formatStatusLabel(status)}</Paragraph1>
         </div>
 
         {/* Manage Button */}
         <button
           type="button"
           onClick={handleManage}
-          className="px-6 py-2 text-sm font-semibold whitespace-nowrap text-white bg-gray-800 hover:bg-black rounded-lg transition duration-150"
+          className="px-4 py-2 w-full col-span-2 sm:col-span-1 sm:colend-1  text-sm font-semibold whitespace-nowrap text-white bg-black rounded-lg hover:bg-gray-800 transition duration-150"
         >
           Manage
         </button>
