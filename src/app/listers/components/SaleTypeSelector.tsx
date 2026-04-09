@@ -60,7 +60,9 @@ export const SaleTypeSelector: React.FC = () => {
                 : "border-gray-200 bg-white text-gray-900 hover:border-gray-300"
             }`}
           >
-            <ParagraphAny className="font-semibold text-center text-[15px]">{option.title}</ParagraphAny>
+            <ParagraphAny className="font-semibold text-center text-[15px]">
+              {option.title}
+            </ParagraphAny>
             <Paragraph1
               className={`text-xs mt-1 text-center ${
                 data.saleType === option.id ? "text-gray-200" : "text-gray-500"
