@@ -8,6 +8,8 @@ import { ItemImageUploader } from "../../components/ItemImageUploader";
 import { BasicInformationForm } from "../../components/BasicInformationForm";
 import { TagSelector } from "../../components/TagSelector";
 import { ItemDescription } from "../../components/ItemDescription";
+import { SaleTypeSelector } from "../../components/SaleTypeSelector";
+import { AnimatedFormContent } from "../../components/AnimatedFormContent";
 import { useProductDraftStore } from "@/store/useProductDraftStore";
 
 export default function Page() {
@@ -30,19 +32,28 @@ export default function Page() {
       <div className="mb-4  ">
         <Breadcrumbs items={path} />
       </div>
+
       <div>
         <UploadItemHeader />
       </div>
-      <div>
-        <ItemImageUploader />
+      {/* select sales type */}
+      <div className="mb-4">
+        <SaleTypeSelector />
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-        <BasicInformationForm />
-        <div className="space-y-4">
-          <TagSelector />
-          <ItemDescription />
+      <AnimatedFormContent>
+        <div>
+          <div>
+            <ItemImageUploader />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            <BasicInformationForm />
+            <div className="space-y-4">
+              <TagSelector />
+              <ItemDescription />
+            </div>
+          </div>
         </div>
-      </div>
+      </AnimatedFormContent>
     </DashboardLayout>
   );
 }

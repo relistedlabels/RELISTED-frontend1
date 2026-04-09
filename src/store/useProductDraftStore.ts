@@ -30,6 +30,7 @@ export type ProductDraft = {
   originalValue: number;
   dailyRentalPrice: number;
   collateralPrice: number;
+  resalePrice: number;
   quantity: number;
 
   color: string;
@@ -44,6 +45,7 @@ export type ProductDraft = {
   attachments: Attachment[];
   categoryId: string;
   brandId: string;
+  saleType: "resale" | "rent" | "rent-resale";
 };
 
 type ProductDraftStore = {
@@ -69,6 +71,7 @@ const initialState: ProductDraft = {
   originalValue: 100,
   dailyRentalPrice: 10,
   collateralPrice: 80,
+  resalePrice: 100,
   quantity: 1,
 
   color: "Black",
@@ -83,6 +86,7 @@ const initialState: ProductDraft = {
   attachments: [],
   categoryId: "",
   brandId: "",
+  saleType: "rent-resale",
 };
 
 export const useProductDraftStore = create<ProductDraftStore>()(
@@ -145,6 +149,10 @@ export const useProductDraftStore = create<ProductDraftStore>()(
             originalValue: product.originalValue,
             dailyRentalPrice: product.dailyPrice,
             collateralPrice: Math.round((product.originalValue || 0) * 0.8),
+            resalePrice:
+              (product as Product & { resalePrice?: number }).resalePrice ||
+              product.originalValue ||
+              100,
             quantity: product.quantity,
             color: product.color,
             warning: product.warning,
@@ -156,6 +164,11 @@ export const useProductDraftStore = create<ProductDraftStore>()(
             attachments: mappedAttachments,
             categoryId: product.categoryId,
             brandId: product.brandId ?? "",
+            saleType: (["resale", "rent", "rent-resale"].includes(
+              (product as Product & { saleType?: string }).saleType || "",
+            )
+              ? (product as Product & { saleType?: string }).saleType
+              : "rent-resale") as "resale" | "rent" | "rent-resale",
           },
         });
       },

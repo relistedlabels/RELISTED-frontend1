@@ -193,7 +193,7 @@ export const ItemImageUploader: React.FC = () => {
           return (
             <label
               key={slot.id}
-              className={`group relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 p-2 text-center transition hover:border-gray-400 ${
+              className={`group relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed h-[200px] border-gray-300 p-2 text-center transition hover:border-gray-400 ${
                 slot.id === "video"
                   ? "col-span-2 md:col-span-1 md:h-auto h-40"
                   : ""
