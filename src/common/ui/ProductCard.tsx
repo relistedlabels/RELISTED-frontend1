@@ -20,6 +20,8 @@ interface ProductCardProps {
   name: string;
   price: string;
   dailyPrice?: number;
+  resalePrice?: number | null;
+  listingType?: "RENTAL" | "RESALE" | "RENT_OR_RESALE";
   size?: string;
   measurement?: string;
 }
@@ -31,6 +33,8 @@ export default function ProductCard({
   name,
   price,
   dailyPrice,
+  resalePrice,
+  listingType = "RENTAL",
   size,
   measurement,
 }: ProductCardProps) {
@@ -110,13 +114,29 @@ export default function ProductCard({
         </button>
 
         {/* Rent and Resale badges */}
-        <div className="absolute bottom-3 left-3 flex ">
-          <span className="bg-white text-black px-2.5 py-1 rounded-l-full text-[10px] border border-black font-semibold">
-            RENT
-          </span>
-          <span className="bg-black text-white px-2.5 py-1 rounded-r-full text-[10px] border border-black font-semibold">
-            RESALE
-          </span>
+        <div className="absolute bottom-3 left-3 flex">
+          {(listingType === "RENTAL" || listingType === "RENT_OR_RESALE") && (
+            <span
+              className={`bg-white text-black px-2.5 py-1 ${
+                listingType === "RENT_OR_RESALE"
+                  ? "rounded-l-full"
+                  : "rounded-full"
+              } text-[10px] border border-black font-semibold`}
+            >
+              RENT
+            </span>
+          )}
+          {(listingType === "RESALE" || listingType === "RENT_OR_RESALE") && (
+            <span
+              className={`bg-black text-white px-2.5 py-1 ${
+                listingType === "RENT_OR_RESALE"
+                  ? "rounded-r-full"
+                  : "rounded-full"
+              } text-[10px] border border-black font-semibold`}
+            >
+              RESALE
+            </span>
+          )}
         </div>
       </div>
 
@@ -130,12 +150,31 @@ export default function ProductCard({
             Size: {size || measurement}
           </Paragraph1>
         )}
-        <div className="flex justify-between items-start ">
-          <Paragraph1 className="text-gray-700">Rent from </Paragraph1>
-          <Paragraph1 className="text-black font-semibold">
-            ₦{dailyPrice?.toLocaleString() || "0"}
-          </Paragraph1>
-        </div>{" "}
+        {listingType === "RESALE" ? (
+          // Resale-only pricing
+          <div className="flex justify-between items-start">
+            <Paragraph1 className="text-gray-700">Price</Paragraph1>
+            <Paragraph1 className="text-black font-semibold">
+              ₦{resalePrice?.toLocaleString() || "0"}
+            </Paragraph1>
+          </div>
+        ) : listingType === "RENTAL" ? (
+          // Rental-only pricing
+          <div className="flex justify-between items-start">
+            <Paragraph1 className="text-gray-700">Rent from </Paragraph1>
+            <Paragraph1 className="text-black font-semibold">
+              ₦{dailyPrice?.toLocaleString() || "0"}
+            </Paragraph1>
+          </div>
+        ) : (
+          // Rent or Resale - show rental price as primary
+          <div className="flex justify-between items-start">
+            <Paragraph1 className="text-gray-700">Rent from </Paragraph1>
+            <Paragraph1 className="text-black font-semibold">
+              ₦{dailyPrice?.toLocaleString() || "0"}
+            </Paragraph1>
+          </div>
+        )}
         <div className="flex justify-between items-start mt-2">
           <Paragraph1 className="text-gray-600 ">RRP:</Paragraph1>
           <Paragraph1 className="text-gray-600 line-through">

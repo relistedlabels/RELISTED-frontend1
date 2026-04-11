@@ -149,6 +149,25 @@ export default function AdminAccessPrompt({
                       inputsRef.current[index - 1]?.focus();
                     }
                   }}
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    const pastedText = e.clipboardData.getData("text");
+                    const digits = pastedText
+                      .replace(/\D/g, "")
+                      .slice(0, OTP_LENGTH);
+
+                    if (digits.length > 0) {
+                      setOtp(digits);
+                      // Focus the last filled input or the next empty one
+                      const focusIndex = Math.min(
+                        digits.length,
+                        OTP_LENGTH - 1,
+                      );
+                      setTimeout(() => {
+                        inputsRef.current[focusIndex]?.focus();
+                      }, 0);
+                    }
+                  }}
                   className="w-12 h-12 text-center text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-black outline-none"
                   disabled={verifyMfa.isPending}
                 />

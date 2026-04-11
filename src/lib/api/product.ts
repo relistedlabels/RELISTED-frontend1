@@ -25,9 +25,20 @@ export type UserProduct = {
   condition: string;
   productVerified: boolean;
   dailyPrice: number;
+  resalePrice?: number | null;
+  listingType?: "RENTAL" | "RESALE" | "RENT_OR_RESALE";
   isActive: boolean;
   quantity: number;
-  status: "APPROVED" | "AVAILABLE" | "RENTED" | "MAINTENANCE" | "RESERVED";
+  status:
+    | "APPROVED"
+    | "AVAILABLE"
+    | "RENTED"
+    | "MAINTENANCE"
+    | "RESERVED"
+    | "PENDING"
+    | "REJECTED"
+    | "UNAVAILABLE"
+    | "SOLD";
   composition: string;
   measurement: string;
   originalValue: number;
@@ -65,6 +76,8 @@ export type ProductPayload = {
   measurement: string;
   originalValue: number;
   dailyPrice: number;
+  resalePrice?: number;
+  listingType?: "RENTAL" | "RESALE" | "RENT_OR_RESALE";
   quantity: number;
   color: string;
   warning: string;
