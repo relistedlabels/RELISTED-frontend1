@@ -114,7 +114,7 @@ export default function ProductCard({
         </button>
 
         {/* Rent and Resale badges */}
-        <div className="absolute bottom-3 left-3 flex">
+        <div className="absolute bottom-3 hidden left-3 flex-">
           {(listingType === "RENTAL" || listingType === "RENT_OR_RESALE") && (
             <span
               className={`bg-white text-black px-2.5 py-1 ${
@@ -153,7 +153,7 @@ export default function ProductCard({
         {listingType === "RESALE" ? (
           // Resale-only pricing
           <div className="flex justify-between items-start">
-            <Paragraph1 className="text-gray-700">Price</Paragraph1>
+            <Paragraph1 className="text-gray-700">Buy</Paragraph1>
             <Paragraph1 className="text-black font-semibold">
               ₦{resalePrice?.toLocaleString() || "0"}
             </Paragraph1>
@@ -167,12 +167,20 @@ export default function ProductCard({
             </Paragraph1>
           </div>
         ) : (
-          // Rent or Resale - show rental price as primary
-          <div className="flex justify-between items-start">
-            <Paragraph1 className="text-gray-700">Rent from </Paragraph1>
-            <Paragraph1 className="text-black font-semibold">
-              ₦{dailyPrice?.toLocaleString() || "0"}
-            </Paragraph1>
+          // Rent or Resale - show both rental and purchase prices
+          <div>
+            <div className="flex justify-between items-start">
+              <Paragraph1 className="text-gray-700">Rent from </Paragraph1>
+              <Paragraph1 className="text-black font-semibold">
+                ₦{dailyPrice?.toLocaleString() || "0"}
+              </Paragraph1>
+            </div>
+            <div className="flex justify-between items-start mt-1">
+              <Paragraph1 className="text-gray-700">Buy </Paragraph1>
+              <Paragraph1 className="text-black font-semibold">
+                ₦{resalePrice?.toLocaleString() || "0"}
+              </Paragraph1>
+            </div>
           </div>
         )}
         <div className="flex justify-between items-start mt-2">

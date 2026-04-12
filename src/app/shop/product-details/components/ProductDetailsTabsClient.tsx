@@ -35,7 +35,7 @@ const ProductDetailsTabsClient: React.FC<ProductDetailsTabsClientProps> = ({
               : "bg-transparent text-black hover:bg-gray-50"
           }`}
         >
-          Resale
+          Buy
         </button>
       </div>
 
