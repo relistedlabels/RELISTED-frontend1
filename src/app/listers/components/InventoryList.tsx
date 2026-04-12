@@ -19,7 +19,16 @@ interface InventoryItem {
   pricePerDay: string;
   itemValue: string;
   listedDate: string;
-  status: "APPROVED" | "AVAILABLE" | "RENTED" | "MAINTENANCE" | "RESERVED";
+  status:
+    | "APPROVED"
+    | "AVAILABLE"
+    | "RENTED"
+    | "MAINTENANCE"
+    | "RESERVED"
+    | "PENDING"
+    | "REJECTED"
+    | "UNAVAILABLE"
+    | "SOLD";
   isActive: boolean;
   imageUrl: string;
   curatorName: string;
@@ -33,6 +42,10 @@ const formatStatusLabel = (
     | "RENTED"
     | "MAINTENANCE"
     | "RESERVED"
+    | "PENDING"
+    | "REJECTED"
+    | "UNAVAILABLE"
+    | "SOLD"
     | "All",
 ): string => {
   if (status === "All") return "All Items";
