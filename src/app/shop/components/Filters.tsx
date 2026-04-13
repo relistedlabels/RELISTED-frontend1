@@ -65,6 +65,7 @@ const materialOptions = [
   "Linen",
   "Blend",
 ];
+const availabilityOptions = ["Rent", "Resale", "Rent & Resale"];
 
 // --------------------
 // Animation Variants
@@ -108,6 +109,9 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
     color: searchParams.get("color") || "",
     condition: searchParams.get("condition") || "",
     material: searchParams.get("material") || "",
+    availability: searchParams.get("availability")
+      ? searchParams.get("availability")!.split(",")
+      : [],
     priceRange: [
       searchParams.get("minPrice")
         ? parseInt(searchParams.get("minPrice")!)
@@ -139,6 +143,13 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
     setLocalFilters({ ...localFilters, tags: newTags });
   };
 
+  const handleAvailabilityChange = (availability: string, checked: boolean) => {
+    const newAvailability = checked
+      ? [...localFilters.availability, availability]
+      : localFilters.availability.filter((a: string) => a !== availability);
+    setLocalFilters({ ...localFilters, availability: newAvailability });
+  };
+
   const handleApplyFilters = () => {
     const params = new URLSearchParams();
     if (localFilters.search) params.set("search", localFilters.search);
@@ -150,6 +161,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
     if (localFilters.color) params.set("color", localFilters.color);
     if (localFilters.condition) params.set("condition", localFilters.condition);
     if (localFilters.material) params.set("material", localFilters.material);
+    if (localFilters.availability.length > 0)
+      params.set("availability", localFilters.availability.join(","));
     if (localFilters.priceRange[0] > 50000)
       params.set("minPrice", localFilters.priceRange[0].toString());
     if (localFilters.priceRange[1] < 200000)
@@ -223,6 +236,28 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
                   />
                 </div>
               </div>
+              {/* Availability */}
+              <section>
+                <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
+                  Availability
+                </Paragraph1>
+                {availabilityOptions.map((item) => (
+                  <label
+                    key={item}
+                    className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={localFilters.availability.includes(item)}
+                      onChange={(e) =>
+                        handleAvailabilityChange(item, e.target.checked)
+                      }
+                      className="h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
+                    />
+                    <Paragraph1>{item}</Paragraph1>
+                  </label>
+                ))}
+              </section>
 
               {/* Categories */}
               <section>
