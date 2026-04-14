@@ -42,26 +42,49 @@ export const PricingFields: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      {/* RESALE ONLY: Show only Resale Value */}
+      {/* RESALE ONLY: Show Original Value and Resale Value */}
       {isResaleOnly && (
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Paragraph1 className="text-xs font-medium text-gray-700">
-              Resale Value (₦)
-            </Paragraph1>
-            <ToolInfo content="Enter the price you want to sell this item for." />
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Paragraph1 className="text-xs font-medium text-gray-700">
+                  Original Item Value (₦)
+                </Paragraph1>
+                <ToolInfo content="Enter the original purchase price or current market value of the item." />
+              </div>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="e.g., 500,000 or 1,200,000"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black"
+                value={formatNumber(data.originalValue)}
+                onChange={(e) =>
+                  setField("originalValue", parseNumber(e.target.value))
+                }
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Paragraph1 className="text-xs font-medium text-gray-700">
+                  Resale Value (₦)
+                </Paragraph1>
+                <ToolInfo content="Enter the price you want to sell this item for." />
+              </div>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="e.g., 500,000 or 1,200,000"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black"
+                value={formatNumber(data.resalePrice)}
+                onChange={(e) =>
+                  setField("resalePrice", parseNumber(e.target.value))
+                }
+              />
+            </div>
           </div>
-          <input
-            type="text"
-            inputMode="numeric"
-            placeholder="e.g., 500,000 or 1,200,000"
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black"
-            value={formatNumber(data.resalePrice)}
-            onChange={(e) =>
-              setField("resalePrice", parseNumber(e.target.value))
-            }
-          />
-        </div>
+        </>
       )}
 
       {/* RENT ONLY: Show Original Value, Daily Rental Price, Collateral Price */}
