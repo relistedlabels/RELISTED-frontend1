@@ -33,6 +33,9 @@ export default function CheckoutPage() {
   const [cartItemsWithProduct, setCartItemsWithProduct] = useState<Array<any>>(
     [],
   );
+  const [resaleItemsWithProduct, setResaleItemsWithProduct] = useState<
+    Array<any>
+  >([]);
 
   // Fetch shipping tiers on mount
   useEffect(() => {
@@ -75,28 +78,67 @@ export default function CheckoutPage() {
     fetchProductDetails();
   }, [data]);
 
-  const approvedOnCheckout = useMemo(
-    () =>
-      approvedRentalsMatchingCurrentCart(
-        cartItemsWithProduct,
-        cartData?.items,
-      ),
-    [cartItemsWithProduct, cartData?.items],
-  );
+  useEffect(() => {
+    async function fetchResaleProductDetails() {
+      if (!cartData?.items) return;
+
+      const resaleItems = cartData.items.filter((item: any) => item.days === 0);
+      if (resaleItems.length === 0) {
+        setResaleItemsWithProduct([]);
+        return;
+      }
+
+      const results = await Promise.all(
+        resaleItems.map(async (item: any) => {
+          let pDetail: any = null;
+          try {
+            const response = await productApi.getPublicById(item.productId);
+            pDetail = response.data;
+          } catch (err) {
+            // keep null
+          }
+          return {
+            ...item,
+            cartItemId: item.id,
+            productDetail: pDetail,
+            isResale: true,
+            rentalPrice: pDetail?.resalePrice || 0,
+            securityDeposit: 0,
+            cleaningFee: 0,
+            deliveryFee: 0, // Should be addressed in order breakdown
+            rentalDays: 0,
+            listerId: pDetail?.curatorId,
+          };
+        }),
+      );
+      setResaleItemsWithProduct(results);
+    }
+    fetchResaleProductDetails();
+  }, [cartData]);
+
+  const approvedOnCheckout = useMemo(() => {
+    const fromRentals = approvedRentalsMatchingCurrentCart(
+      cartItemsWithProduct,
+      cartData?.items,
+    );
+    // Filter out resale items that already exist in rental requests to prevent duplicates
+    const rentalProductIds = new Set(fromRentals.map((item) => item.productId));
+    const uniqueResaleItems = resaleItemsWithProduct.filter(
+      (item) => !rentalProductIds.has(item.productId),
+    );
+    return [...fromRentals, ...uniqueResaleItems];
+  }, [cartItemsWithProduct, cartData?.items, resaleItemsWithProduct]);
 
   const groupedByLister = useMemo(() => {
-    return approvedOnCheckout.reduce(
-      (acc: Map<string, any[]>, item: any) => {
-        const listerId =
-          (item.listerId as string | undefined)?.trim() || "unknown-lister";
-        if (!acc.has(listerId)) {
-          acc.set(listerId, []);
-        }
-        acc.get(listerId)!.push(item);
-        return acc;
-      },
-      new Map(),
-    );
+    return approvedOnCheckout.reduce((acc: Map<string, any[]>, item: any) => {
+      const listerId =
+        (item.listerId as string | undefined)?.trim() || "unknown-lister";
+      if (!acc.has(listerId)) {
+        acc.set(listerId, []);
+      }
+      acc.get(listerId)!.push(item);
+      return acc;
+    }, new Map());
   }, [approvedOnCheckout]);
 
   const listerGroups = useMemo(
@@ -109,12 +151,12 @@ export default function CheckoutPage() {
   );
 
   return (
-    <div className="container mx-auto px-4 py-[70px] sm:py-[100px] sm:px-0">
+    <div className="mx-auto px-4 sm:px-0 py-[70px] sm:py-[100px] container">
       <div className="mb-4">
         <Breadcrumbs items={path} />
       </div>
-      <Header1Plus className="uppercase mb-8">CHECKOUT</Header1Plus>
-      <div className="grid xl:grid-cols-3 gap-4 sm:gap-16">
+      <Header1Plus className="mb-8 uppercase">CHECKOUT</Header1Plus>
+      <div className="gap-4 sm:gap-16 grid xl:grid-cols-3">
         <div className="col-span-2">
           <CheckoutContactAndPayment
             onShippingTierSelected={setSelectedShippingTier}
