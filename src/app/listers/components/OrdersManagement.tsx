@@ -16,6 +16,7 @@ import {
 } from "@/lib/listers/listerOrderStatus";
 import {
   isListerAvailabilityRequestRow,
+  isListerResaleOrder,
   shouldShowListerAvailabilityDeadlineUi,
 } from "@/lib/listers/listerOrderRow";
 import type { ListerOrdersSummary } from "@/lib/api/listers";
@@ -95,11 +96,7 @@ const OrdersManagement: React.FC = () => {
 
   const apiStatus = activeTab === "all" ? undefined : activeTab;
 
-  const { data: ordersData, isLoading } = useOrders(
-    apiStatus,
-    1,
-    20,
-  ) as {
+  const { data: ordersData, isLoading } = useOrders(apiStatus, 1, 20) as {
     data?: any;
     isLoading: boolean;
   };
@@ -125,7 +122,9 @@ const OrdersManagement: React.FC = () => {
     });
     return {
       orders: rawOrders.map(enrich),
-      summary: Array.isArray(d) ? undefined : (d.summary as ListerOrdersSummary),
+      summary: Array.isArray(d)
+        ? undefined
+        : (d.summary as ListerOrdersSummary),
       pagination: Array.isArray(d)
         ? ordersData.pagination
         : (d.pagination ?? ordersData.pagination),
@@ -136,14 +135,8 @@ const OrdersManagement: React.FC = () => {
     <div className="w-full">
       {/* 1. Tab Switcher with Motion Pill */}
       <div className="relative mb-8 w-full overflow-hidden">
-        <div className="max-w-full w-[340px] hide-scrollbar sm:w-full overflow-x-auto sm:overflow-visible scrollbar-hide">
-          <div
-            className="
-        inline-flex gap-1 p-1
-        bg-[#F9F9F7] border border-gray-300 rounded-xl
-        whitespace-nowrap
-      "
-          >
+        <div className="w-[340px] sm:w-full max-w-full sm:overflow-visible overflow-x-auto hide-scrollbar scrollbar-hide">
+          <div className="inline-flex gap-1 bg-[#F9F9F7] p-1 border border-gray-300 rounded-xl whitespace-nowrap">
             {TABS.map((tab) => {
               const isActive = activeTab === tab;
               const count = tabSummaryCount(tab, summary);
@@ -160,7 +153,7 @@ const OrdersManagement: React.FC = () => {
                   {isActive && (
                     <motion.div
                       layoutId="activeOrderTab"
-                      className="absolute inset-0 bg-[#33332D] rounded-lg z-[-1]"
+                      className="z-[-1] absolute inset-0 bg-[#33332D] rounded-lg"
                       transition={{
                         type: "spring",
                         bounce: 0.2,
@@ -192,10 +185,10 @@ const OrdersManagement: React.FC = () => {
               {Array.from({ length: 3 }).map((_, i) => (
                 <div
                   key={`skeleton-${i}`}
-                  className="bg-white border border-gray-300 rounded-2xl p-4 animate-pulse"
+                  className="bg-white p-4 border border-gray-300 rounded-2xl animate-pulse"
                 >
-                  <div className="h-4 bg-gray-200 rounded w-1/3 mb-4" />
-                  <div className="h-3 bg-gray-100 rounded w-1/2" />
+                  <div className="bg-gray-200 mb-4 rounded w-1/3 h-4" />
+                  <div className="bg-gray-100 rounded w-1/2 h-3" />
                 </div>
               ))}
             </div>
@@ -216,17 +209,17 @@ const OrdersManagement: React.FC = () => {
                 orders.map((order) => {
                   const row = order as Record<string, unknown>;
                   const isAvail = isListerAvailabilityRequestRow(row);
+                  const isResale = isListerResaleOrder(row);
                   const expiresAt =
                     typeof row.expiresAt === "string"
                       ? row.expiresAt
                       : undefined;
                   const pendingApproval = isListerAvailabilityPending(row);
-                  const showDeadlineUi =
-                    shouldShowListerAvailabilityDeadlineUi(
-                      row,
-                      expiresAt,
-                      pendingApproval,
-                    );
+                  const showDeadlineUi = shouldShowListerAvailabilityDeadlineUi(
+                    row,
+                    expiresAt,
+                    pendingApproval,
+                  );
                   const created = row.createdAt
                     ? new Date(String(row.createdAt)).toLocaleDateString(
                         "en-US",
@@ -253,6 +246,7 @@ const OrdersManagement: React.FC = () => {
                       }}
                       showDeadlineUi={showDeadlineUi}
                       isAvailabilityRequest={isAvail}
+                      isResale={isResale}
                     />
                   );
                 })
@@ -260,7 +254,7 @@ const OrdersManagement: React.FC = () => {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="py-20 text-center border-2 border-dashed border-gray-300 rounded-2xl text-gray-400"
+                  className="py-20 border-2 border-gray-300 border-dashed rounded-2xl text-gray-400 text-center"
                 >
                   <Paragraph3>
                     No {TAB_LABEL[activeTab].toLowerCase()} items found.
@@ -273,7 +267,7 @@ const OrdersManagement: React.FC = () => {
       </div>
 
       {pagination && pagination.total > 0 ? (
-        <Paragraph1 className="text-xs text-gray-500 text-center mt-6">
+        <Paragraph1 className="mt-6 text-gray-500 text-xs text-center">
           Page {pagination.page} of {pagination.pages} · {pagination.total}{" "}
           total
         </Paragraph1>
@@ -295,11 +289,8 @@ const OrderCard: React.FC<{
   };
   showDeadlineUi: boolean;
   isAvailabilityRequest: boolean;
-}> = ({
-  order,
-  showDeadlineUi,
-  isAvailabilityRequest,
-}) => {
+  isResale: boolean;
+}> = ({ order, showDeadlineUi, isAvailabilityRequest, isResale }) => {
   const [secondsRemaining, setSecondsRemaining] = useState(0);
   const [isExpired, setIsExpired] = useState(false);
 
@@ -374,22 +365,22 @@ const OrderCard: React.FC<{
     >
       <div className="flex justify-between items-start gap-2">
         <div className="space-y-1 min-w-0">
-          <Paragraph1 className="text-sm font-bold text-black uppercase tracking-tight break-words">
+          <Paragraph1 className="font-bold text-black text-sm break-words uppercase tracking-tight">
             ORDER {order.orderNumber}
           </Paragraph1>
           {isAvailabilityRequest ? (
-            <Paragraph1 className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
+            <Paragraph1 className="font-medium text-[10px] text-gray-500 uppercase tracking-wide">
               Pre-checkout request
             </Paragraph1>
           ) : null}
-          <div className="flex items-center space-x-4 text-gray-500 flex-wrap gap-y-1">
+          <div className="flex flex-wrap items-center gap-y-1 space-x-4 text-gray-500">
             <div className="flex items-center space-x-1">
               <Calendar className="w-4 h-4 shrink-0" />
-              <span className="text-xs font-medium">{order.date}</span>
+              <span className="font-medium text-xs">{order.date}</span>
             </div>
             <div className="flex items-center space-x-1">
               <Package className="w-4 h-4 shrink-0" />
-              <Paragraph1 className="text-xs font-medium">
+              <Paragraph1 className="font-medium text-xs">
                 {order.itemCount} Items
               </Paragraph1>
             </div>
@@ -418,14 +409,14 @@ const OrderCard: React.FC<{
         </Paragraph1>
       </div>
 
-      <div className="h-px bg-gray-300 w-full" />
+      <div className="bg-gray-300 w-full h-px" />
 
-      <div className="flex flex-col sm:flex-row sm:justify-between gap-4 sm:items-center">
+      <div className="flex sm:flex-row flex-col sm:justify-between sm:items-center gap-4">
         <div>
-          <Paragraph1 className="text-[10px] font-medium text-gray-400 uppercase mb-0.5">
+          <Paragraph1 className="mb-0.5 font-medium text-[10px] text-gray-400 uppercase">
             Total Amount
           </Paragraph1>
-          <Paragraph1 className="text-lg font-bold text-black">
+          <Paragraph1 className="font-bold text-black text-lg">
             {order.amount}
           </Paragraph1>
         </div>
@@ -447,8 +438,8 @@ const OrderCard: React.FC<{
 
       {/* Low Time Warning */}
       {showDeadlineUi && hasExpiresAt && isLowTime && !isExpired && (
-        <div className="pt-3 border-t border-orange-200 bg-orange-50 -mx-4 -mb-4 px-4 py-3 rounded-b-2xl">
-          <Paragraph1 className="text-xs font-bold text-orange-700">
+        <div className="bg-orange-50 -mx-4 -mb-4 px-4 py-3 pt-3 border-orange-200 border-t rounded-b-2xl">
+          <Paragraph1 className="font-bold text-orange-700 text-xs">
             ⚠ Approval deadline approaching - {formatTime(secondsRemaining)}{" "}
             remaining
           </Paragraph1>
@@ -457,8 +448,8 @@ const OrderCard: React.FC<{
 
       {/* Expired Notice */}
       {showDeadlineUi && isExpired && (
-        <div className="pt-3 border-t border-red-200 bg-red-50 -mx-4 -mb-4 px-4 py-3 rounded-b-2xl">
-          <Paragraph1 className="text-xs font-bold text-red-700">
+        <div className="bg-red-50 -mx-4 -mb-4 px-4 py-3 pt-3 border-red-200 border-t rounded-b-2xl">
+          <Paragraph1 className="font-bold text-red-700 text-xs">
             ✕ This order&apos;s approval deadline has expired and will be
             auto-cancelled.
           </Paragraph1>

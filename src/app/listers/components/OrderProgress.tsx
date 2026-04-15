@@ -12,53 +12,72 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
+import {
+  isListerResaleOrder,
+  isResaleItem,
+} from "@/lib/listers/listerOrderRow";
 
-const steps = [
+const rentalSteps = [
   { label: "Pending", icon: CheckCircle2 },
   { label: "Approved", icon: CheckCircle2 },
   { label: "In Transit", icon: Truck },
   { label: "Delivered", icon: Home },
   { label: "Return Due", icon: RotateCcw },
+  { label: "Return Transit", icon: Truck },
+  { label: "Completed", icon: Check },
+];
+
+const resaleSteps = [
+  { label: "Pending", icon: CheckCircle2 },
+  { label: "Approved", icon: CheckCircle2 },
   { label: "In Transit", icon: Truck },
+  { label: "Delivered", icon: Home },
   { label: "Completed", icon: Check },
 ];
 
 interface OrderProgressProps {
   currentStep?: number;
   orderData?: any;
+  clickedItem?: any;
 }
 
 const OrderProgress: React.FC<OrderProgressProps> = ({
   currentStep: propCurrentStep = 0,
   orderData,
+  clickedItem,
 }) => {
+  // Check if the clicked item or order is resale
+  const isResale = isResaleItem(clickedItem) || isListerResaleOrder(orderData);
+  const steps = isResale ? resaleSteps : rentalSteps;
+
   // If orderData is provided, extract the current step
   let currentStep = propCurrentStep;
   if (orderData?.timeline?.currentStep) {
     // Map the step name to index
     const stepIndex = steps.findIndex(
       (s) =>
-        s.label.toLowerCase() === orderData.timeline.currentStep.toLowerCase(),
+        s.label.toLowerCase() ===
+        (orderData.timeline.currentStep || "").toLowerCase(),
     );
     if (stepIndex !== -1) {
       currentStep = stepIndex;
     }
   }
   return (
-    <div className="w-full bg-white border border-gray-300 rounded-2xl p-4 ">
-      <Paragraph1 className="text-xl font-bold uppercase text-black mb-4">
+    <div className="bg-white p-4 border border-gray-300 rounded-2xl w-full">
+      <Paragraph1 className="mb-4 font-bold text-black text-xl uppercase">
         Order Progress
       </Paragraph1>
 
       <div className="relative flex justify-between">
         {/* Background Line */}
-        <div className="absolute top-5 left-0 w-full h-0.5 bg-gray-100 z-0" />
+        <div className="top-5 left-0 z-0 absolute bg-gray-100 w-full h-0.5" />
 
         {/* Animated Active Line */}
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
-          className="absolute top-5 left-0 h-0.5 bg-black z-0"
+          className="top-5 left-0 z-0 absolute bg-black h-0.5"
           transition={{ duration: 1, ease: "easeInOut" }}
         />
 
@@ -68,8 +87,8 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
 
           return (
             <div
-              key={step.label}
-              className="relative z- flex flex-col items-center"
+              key={`${step.label}-${index}`}
+              className="z- relative flex flex-col items-center"
             >
               <motion.div
                 initial={false}
@@ -77,7 +96,7 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
                   backgroundColor: isActive ? "#000" : "#F6F6F6",
                   color: isActive ? "#FFF" : "#A1A1A1",
                 }}
-                className="w-10 h-10 rounded-full flex items-center justify-center border-4 border-white shadow-sm"
+                className="flex justify-center items-center shadow-sm border-4 border-white rounded-full w-10 h-10"
               >
                 <Icon className="w-5 h-5" />
               </motion.div>

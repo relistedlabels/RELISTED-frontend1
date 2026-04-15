@@ -55,14 +55,14 @@ const OrderPreviewPanel: React.FC<OrderPreviewPanelProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-99 bg-black/70 backdrop--blur-sm"
+          className="z-99 fixed inset-0 bg-black/70 backdrop--blur-sm"
           onClick={onClose}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="fixed top-0 right-0 h-screen hide-scrollbar overflow-y-auto bg-white shadow-2xl px-4  flex flex-col w-full sm:w-114"
+            className="top-0 right-0 fixed flex flex-col bg-white shadow-2xl px-4 w-full sm:w-114 h-screen overflow-y-auto hide-scrollbar"
             role="dialog"
             aria-modal="true"
             aria-label="Product OrderPreview"
@@ -74,53 +74,56 @@ const OrderPreviewPanel: React.FC<OrderPreviewPanelProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex justify-between sticky top-0 items-center pb-4 border-b border-gray-100 pt-6 z-10  bg-white">
+            <div className="top-0 z-10 sticky flex justify-between items-center bg-white pt-6 pb-4 border-gray-100 border-b">
               <button
                 onClick={onClose}
-                className="text-gray-500 xl:hidden hover:text-black p-1 rounded-full transition"
+                className="xl:hidden p-1 rounded-full text-gray-500 hover:text-black transition"
                 aria-label="Close OrderPreview"
               >
                 <ArrowLeft size={20} />
               </button>
 
-              <Paragraph1 className=" uppercase font-bold tracking-widest text-gray-800">
+              <Paragraph1 className="font-bold text-gray-800 uppercase tracking-widest">
                 Order Preview
               </Paragraph1>
               <button
                 onClick={onClose}
-                className="text-gray-500  hover:text-black p-1 rounded-full transition"
+                className="p-1 rounded-full text-gray-500 hover:text-black transition"
                 aria-label="Close OrderPreview"
               >
-                <X className=" hidden xl:flex" size={20} />
+                <X className="hidden xl:flex" size={20} />
               </button>
             </div>
 
             {/* Content */}
-            <div className="grow pt-4 pb-20 space-y-4">
+            <div className="space-y-4 pt-4 pb-20 grow">
               <OrderSummaryCards
                 clickedItem={clickedItem}
                 orderData={orderData}
               />
-              <OrderProgress orderData={orderData} />
+              <OrderProgress orderData={orderData} clickedItem={clickedItem} />
 
-              <OrderSummaryEscrow orderData={orderData} />
+              <OrderSummaryEscrow
+                orderData={orderData}
+                clickedItem={clickedItem}
+              />
             </div>
 
             {/* Footer */}
-            <div className="mt-auto py-2 text-black bg-white flex flex-col gap-4 sticky bottom-0 border-t border-gray-200">
+            <div className="bottom-0 sticky flex flex-col gap-4 bg-white mt-auto py-2 border-gray-200 border-t text-black">
               {/* Approval Status Message */}
               {orderData?.approvalRequired &&
                 !orderData?.canApprove &&
                 !orderData?.canReject && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                    <Paragraph1 className="text-xs text-amber-700">
+                  <div className="bg-amber-50 p-3 border border-amber-200 rounded-lg">
+                    <Paragraph1 className="text-amber-700 text-xs">
                       ⚠️ Approval window expired on{" "}
                       {orderData?.approvalExpiredAt || "N/A"}
                     </Paragraph1>
                   </div>
                 )}
 
-              <div className="flex- hidden justify-between gap-4">
+              <div className="hidden flex- justify-between gap-4">
                 <button
                   disabled={!orderData?.canReject}
                   className={`flex-1 px-4 py-3 font-semibold border rounded-lg transition ${
@@ -171,7 +174,7 @@ const OrderPreview: React.FC<OrderPreviewProps> = ({
 
       <button
         onClick={() => setIsOpen(true)}
-        className="text-sm  font-bold text-black underline hover:text-gray-600 transition-colors"
+        className="font-bold text-black hover:text-gray-600 text-sm underline transition-colors"
       >
         <Paragraph1> View Details</Paragraph1>
       </button>
