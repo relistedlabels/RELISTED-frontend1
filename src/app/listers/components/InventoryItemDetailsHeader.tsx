@@ -19,22 +19,23 @@ const InventoryItemDetailsHeader: React.FC<InventoryItemDetailsHeaderProps> = ({
 
   if (!product) return null;
 
-  const status = "Active"; // TODO: Add status to Product type from backend
+  const status = "Active";
   const rating = product.rating || 4.9;
   const reviewCount = product.reviewCount || 0;
-  // ✅ Safe defaults for undefined values
   const dailyPrice = product.dailyPrice ?? 0;
   const originalValue = product.originalValue ?? 0;
+  const resalePrice = product.resalePrice ?? originalValue;
+  const listingType = product.listingType;
 
   return (
-    <div className="w-full max-w-2xl bg-transparent">
+    <div className="bg-transparent w-full max-w-2xl">
       {/* Title & Status */}
       <div className="flex flex-row justify-between items-start gap-2 mb-1">
         <div className="flex flex-wrap items-center gap-2">
-          <Paragraph2 className="text-2xl sm:text-3xl font-bold text-black">
+          <Paragraph2 className="font-bold text-black text-2xl sm:text-3xl">
             {product.name}
           </Paragraph2>
-          <Paragraph1 className="px-3 py-0.5 bg-gray-200 text-gray-700 text-xs font-bold rounded uppercase tracking-wider">
+          <Paragraph1 className="bg-gray-200 px-3 py-0.5 rounded font-bold text-gray-700 text-xs uppercase tracking-wider">
             {status}
           </Paragraph1>
         </div>
@@ -42,7 +43,7 @@ const InventoryItemDetailsHeader: React.FC<InventoryItemDetailsHeaderProps> = ({
       </div>
 
       {/* Description */}
-      <Paragraph1 className="text-gray-500 mb-2">{product.subText}</Paragraph1>
+      <Paragraph1 className="mb-2 text-gray-500">{product.subText}</Paragraph1>
 
       {/* Rating */}
       <div className="flex flex-wrap items-center gap-1 mb-6">
@@ -56,39 +57,71 @@ const InventoryItemDetailsHeader: React.FC<InventoryItemDetailsHeaderProps> = ({
             }`}
           />
         ))}
-        <span className="text-sm font-bold text-black ml-1">{rating}</span>
-        <span className="text-sm text-gray-500 ml-1">
+        <span className="ml-1 font-bold text-black text-sm">{rating}</span>
+        <span className="ml-1 text-gray-500 text-sm">
           ({reviewCount} Reviews)
         </span>
       </div>
 
       {/* Details Box */}
-      <div className="bg-[#F7F7F7] border border-gray-300 rounded-[10px] p-4 mb-4">
+      <div className="bg-[#F7F7F7] mb-4 p-4 border border-gray-300 rounded-[10px]">
         {/* Prices */}
-        <div className="flex flex-row justify-between gap-4 mb-2 border-b border-gray-300 pb-2">
-          <div>
-            <Paragraph1 className="text-xs font-medium text-gray-500 uppercase mb-1">
-              Daily Rental Price
-            </Paragraph1>
-            <Paragraph2 className="text-xl sm:text-2xl font-bold text-black">
-              ₦{dailyPrice.toLocaleString()}
-            </Paragraph2>
-          </div>
-
-          <div>
-            <Paragraph1 className="text-xs font-medium text-gray-500 uppercase mb-1">
-              Item Value
-            </Paragraph1>
-            <Paragraph2 className="text-xl sm:text-2xl font-bold text-black">
-              ₦{originalValue.toLocaleString()}
-            </Paragraph2>
-          </div>
+        <div className="flex flex-row justify-between gap-4 mb-2 pb-2 border-gray-300 border-b">
+          {listingType === "RESALE" ? (
+            <>
+              <div>
+                <Paragraph1 className="mb-1 font-medium text-gray-500 text-xs uppercase">
+                  Resale Price
+                </Paragraph1>
+                <Paragraph2 className="font-bold text-black text-xl sm:text-2xl">
+                  ₦{resalePrice.toLocaleString()}
+                </Paragraph2>
+              </div>
+              <div>
+                <Paragraph1 className="mb-1 font-medium text-gray-500 text-xs uppercase">
+                  Original Value
+                </Paragraph1>
+                <Paragraph2 className="font-bold text-gray-500 text-xl sm:text-2xl">
+                  ₦{originalValue.toLocaleString()}
+                </Paragraph2>
+              </div>
+            </>
+          ) : listingType === "RENTAL" ? (
+            <div className="w-full">
+              <Paragraph1 className="mb-1 font-medium text-gray-500 text-xs uppercase">
+                Daily Rental Price
+              </Paragraph1>
+              <Paragraph2 className="font-bold text-black text-xl sm:text-2xl">
+                ₦{dailyPrice.toLocaleString()}
+              </Paragraph2>
+            </div>
+          ) : (
+            // RENT_OR_RESALE or default
+            <>
+              <div>
+                <Paragraph1 className="mb-1 font-medium text-gray-500 text-xs uppercase">
+                  Daily Rental Price
+                </Paragraph1>
+                <Paragraph2 className="font-bold text-black text-xl sm:text-2xl">
+                  ₦{dailyPrice.toLocaleString()}
+                </Paragraph2>
+              </div>
+              <div>
+                <Paragraph1 className="mb-1 font-medium text-gray-500 text-xs uppercase">
+                  Resale Price
+                </Paragraph1>
+                <Paragraph2 className="font-bold text-black text-xl sm:text-2xl">
+                  ₦{resalePrice.toLocaleString()}
+                </Paragraph2>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Specs */}
-        <div className="grid grid-cols-3 sm:grid-cols-3 gap-4">
+        <div className="gap-4 grid grid-cols-3 sm:grid-cols-3">
           <div>
-            <Paragraph1 className="text-xs font-medium text-gray-500 uppercase mb-1">
+            <Paragraph1 className="mb-1 font-medium text-gray-500 text-xs uppercase">
               Size
             </Paragraph1>
             <Paragraph1 className="font-bold text-black">
@@ -96,7 +129,7 @@ const InventoryItemDetailsHeader: React.FC<InventoryItemDetailsHeaderProps> = ({
             </Paragraph1>
           </div>
           <div>
-            <Paragraph1 className="text-xs font-medium text-gray-500 uppercase mb-1">
+            <Paragraph1 className="mb-1 font-medium text-gray-500 text-xs uppercase">
               Color
             </Paragraph1>
             <Paragraph1 className="font-bold text-black">
@@ -104,7 +137,7 @@ const InventoryItemDetailsHeader: React.FC<InventoryItemDetailsHeaderProps> = ({
             </Paragraph1>
           </div>
           <div>
-            <Paragraph1 className="text-xs font-medium text-gray-500 uppercase mb-1">
+            <Paragraph1 className="mb-1 font-medium text-gray-500 text-xs uppercase">
               Condition
             </Paragraph1>
             <Paragraph1 className="font-bold text-black">
