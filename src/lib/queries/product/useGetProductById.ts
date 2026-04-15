@@ -16,6 +16,7 @@ export type Product = {
   material?: string;
   measurement: string;
   originalValue: number;
+  resalePrice?: number | null;
   dailyPrice: number;
   quantity: number;
   color: string;
@@ -30,6 +31,8 @@ export type Product = {
   brand?: { id: string; name: string } | null;
   rating?: number;
   reviewCount?: number;
+  listingType?: "RENTAL" | "RESALE" | "RENT_OR_RESALE";
+  status?: string;
 };
 
 type ProductByIdResponse = {

@@ -143,8 +143,8 @@ export const useProductDraftStore = create<ProductDraftStore>()(
             subText: product.subText,
             description: product.description,
             condition: product.condition,
-            composition: product.composition || "Cotton", // ✅ Default to Cotton if empty
-            material: product.material || "Cotton", // ✅ Default to Cotton if empty
+            composition: product.composition || "Cotton",
+            material: product.material || "Cotton",
             measurement: product.measurement,
             originalValue: product.originalValue,
             dailyRentalPrice: product.dailyPrice,
@@ -164,10 +164,14 @@ export const useProductDraftStore = create<ProductDraftStore>()(
             attachments: mappedAttachments,
             categoryId: product.categoryId,
             brandId: product.brandId ?? "",
-            saleType: (["resale", "rent", "rent-resale"].includes(
-              (product as Product & { saleType?: string }).saleType || "",
+            saleType: (["RENTAL", "RESALE", "RENT_OR_RESALE"].includes(
+              product.listingType || "",
             )
-              ? (product as Product & { saleType?: string }).saleType
+              ? (product.listingType === "RENTAL"
+                  ? "rent"
+                  : product.listingType === "RESALE"
+                    ? "resale"
+                    : "rent-resale") as "resale" | "rent" | "rent-resale"
               : "rent-resale") as "resale" | "rent" | "rent-resale",
           },
         });

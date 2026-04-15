@@ -175,6 +175,8 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
               listerId={product.curatorId}
               dailyPrice={product.dailyPrice}
               collateralPrice={collateralPrice}
+              listingType={product.listingType}
+              resalePrice={product.resalePrice}
             />
             <button
               onClick={handleFavoriteClick}

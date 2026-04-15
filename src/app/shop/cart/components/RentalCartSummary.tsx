@@ -10,6 +10,7 @@ import {
   useRemoveCartItem,
 } from "@/lib/mutations/cart/useRemoveCartItem";
 import {
+  isLineRentalApproved,
   rentalLineIsEffectivelyExpired,
   shouldShowRentalRequestTimer,
 } from "@/lib/cart/rentalRequestUi";
@@ -25,20 +26,20 @@ const CartSummarySkeleton = () => (
     {[...Array(3)].map((_, i) => (
       <div
         key={i}
-        className="flex items-start gap-4 pb-4 border-b border-gray-200"
+        className="flex items-start gap-4 pb-4 border-gray-200 border-b"
       >
-        <div className="shrink-0 w-16 h-16 bg-gray-200 rounded-md"></div>
-        <div className="grow space-y-2">
-          <div className="h-4 bg-gray-200 rounded w-40"></div>
-          <div className="h-3 bg-gray-200 rounded w-32"></div>
-          <div className="h-4 bg-gray-200 rounded w-24"></div>
+        <div className="bg-gray-200 rounded-md w-16 h-16 shrink-0"></div>
+        <div className="space-y-2 grow">
+          <div className="bg-gray-200 rounded w-40 h-4"></div>
+          <div className="bg-gray-200 rounded w-32 h-3"></div>
+          <div className="bg-gray-200 rounded w-24 h-4"></div>
         </div>
-        <div className="shrink-0 h-6 w-6 bg-gray-200 rounded"></div>
+        <div className="bg-gray-200 rounded w-6 h-6 shrink-0"></div>
       </div>
     ))}
-    <div className="flex justify-between pt-6 mt-4 border-t border-gray-300">
-      <div className="h-5 bg-gray-200 rounded w-24"></div>
-      <div className="h-6 bg-gray-200 rounded w-32"></div>
+    <div className="flex justify-between mt-4 pt-6 border-gray-300 border-t">
+      <div className="bg-gray-200 rounded w-24 h-5"></div>
+      <div className="bg-gray-200 rounded w-32 h-6"></div>
     </div>
   </div>
 );
@@ -70,7 +71,7 @@ const RentalTimer: React.FC<{ expiresAt: string }> = ({ expiresAt }) => {
   }, [expiresAt]);
 
   return (
-    <Paragraph1 className="text-xs font-medium text-orange-600">
+    <Paragraph1 className="font-medium text-orange-600 text-xs">
       Expires in: {timeLeft}
     </Paragraph1>
   );
@@ -91,8 +92,8 @@ export default function RentalCartSummary() {
 
   if (error) {
     return (
-      <div className="p-4 border border-yellow-200 rounded-lg bg-yellow-50">
-        <Paragraph1 className="text-sm text-yellow-800">
+      <div className="bg-yellow-50 p-4 border border-yellow-200 rounded-lg">
+        <Paragraph1 className="text-yellow-800 text-sm">
           Failed to load cart. Please try again.
         </Paragraph1>
       </div>
@@ -101,7 +102,7 @@ export default function RentalCartSummary() {
 
   if (items.length === 0) {
     return (
-      <div className="p-6 border border-gray-200 rounded-lg bg-gray-50 text-center">
+      <div className="bg-gray-50 p-6 border border-gray-200 rounded-lg text-center">
         <Paragraph1 className="text-gray-600">Your cart is empty</Paragraph1>
       </div>
     );
@@ -125,10 +126,10 @@ export default function RentalCartSummary() {
         {items.map((item, idx) => (
           <div
             key={item.requestId || idx}
-            className="flex items-start gap-4 pb-4 border-b border-gray-200 last:border-b-0"
+            className="flex items-start gap-4 pb-4 border-gray-200 border-b last:border-b-0"
           >
             {/* Product Image */}
-            <div className="shrink-0 w-16 h-16 bg-gray-200 rounded-md overflow-hidden border border-gray-100 relative">
+            <div className="relative bg-gray-200 border border-gray-100 rounded-md w-16 h-16 overflow-hidden shrink-0">
               {item.productImage && (
                 <Image
                   src={item.productImage}
@@ -141,22 +142,43 @@ export default function RentalCartSummary() {
 
             {/* Product Details */}
             <div className="grow">
-              <Paragraph1 className="text-sm font-semibold text-gray-800 uppercase leading-snug">
+              <Paragraph1 className="font-semibold text-gray-800 text-sm uppercase leading-snug">
                 {item.productName}
               </Paragraph1>
               {/* Lister name not available in RentalRequest type */}
-              <Paragraph1 className="text-sm font-medium text-gray-800 mt-1">
-                {item.rentalDays} DAYS - {currency}
-                {formatCurrency(item.totalPrice)}
+              <Paragraph1 className="mt-1 font-medium text-gray-800 text-sm">
+                {item.rentalDays === 0 ? (
+                  <>
+                    RESALE - {currency}
+                    {formatCurrency(item.totalPrice)}
+                  </>
+                ) : (
+                  <>
+                    {item.rentalDays} DAYS - {currency}
+                    {formatCurrency(item.totalPrice)}
+                  </>
+                )}
               </Paragraph1>
-              {rentalLineIsEffectivelyExpired(item.status, item.expiresAt) && (
-                <span className="inline-block mt-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-200">
-                  Expired
+              {item.rentalDays === 0 && isLineRentalApproved(item.status) && (
+                <span className="inline-block bg-green-100 mt-2 px-2 py-0.5 border border-green-200 rounded-full font-semibold text-green-800 text-xs">
+                  Ready to checkout
                 </span>
               )}
-              {shouldShowRentalRequestTimer(item.status, item.expiresAt) && (
-                <RentalTimer expiresAt={item.expiresAt} />
+              {item.rentalDays === 0 && !isLineRentalApproved(item.status) && (
+                <span className="inline-block bg-yellow-100 mt-2 px-2 py-0.5 border border-yellow-200 rounded-full font-semibold text-yellow-800 text-xs">
+                  Awaiting approval
+                </span>
               )}
+              {item.rentalDays > 0 &&
+                rentalLineIsEffectivelyExpired(item.status, item.expiresAt) && (
+                  <span className="inline-block bg-red-100 mt-2 px-2 py-0.5 border border-red-200 rounded-full font-semibold text-red-800 text-xs">
+                    Expired
+                  </span>
+                )}
+              {item.rentalDays > 0 &&
+                shouldShowRentalRequestTimer(item.status, item.expiresAt) && (
+                  <RentalTimer expiresAt={item.expiresAt} />
+                )}
             </div>
 
             {/* Remove Button (Trash Icon) */}
@@ -164,7 +186,7 @@ export default function RentalCartSummary() {
               aria-label={`Remove ${item.productName}`}
               onClick={() => handleRemove(item, item.productName)}
               disabled={removeCartItemMutation.isPending}
-              className="shrink-0 p-1 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="disabled:opacity-50 p-1 text-red-500 hover:text-red-700 transition-colors disabled:cursor-not-allowed shrink-0"
             >
               <Trash2 size={20} />
             </button>
@@ -173,11 +195,11 @@ export default function RentalCartSummary() {
       </div>
 
       {/* Subtotal Footer */}
-      <div className="flex justify-between items-center pt-6 mt-4 border-t border-gray-300">
-        <Paragraph1 className="text-base font-semibold text-gray-800 tracking-wider">
+      <div className="flex justify-between items-center mt-4 pt-6 border-gray-300 border-t">
+        <Paragraph1 className="font-semibold text-gray-800 text-base tracking-wider">
           SUBTOTAL:
         </Paragraph1>
-        <Paragraph1 className="text-lg font-bold text-gray-900">
+        <Paragraph1 className="font-bold text-gray-900 text-lg">
           {currency}
           {formatCurrency(subtotal)}
         </Paragraph1>

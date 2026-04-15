@@ -12,6 +12,7 @@ import { productApi } from "@/lib/api/product";
 import type { CartItem } from "@/lib/api/cart";
 import {
   isCartRentalMainListRow,
+  canShowInCartList,
   rentalMetaFromCartApiItem,
   resolveRentalMetaForCartLine,
 } from "@/lib/cart/mergeCartLineRental";
@@ -74,10 +75,20 @@ export default function CartPage() {
               (productDetail as { dailyPrice?: number })?.dailyPrice ??
                 embedded?.dailyPrice,
             ) || 0;
+          const resalePrice =
+            Number(
+              (productDetail as { resalePrice?: number })?.resalePrice ??
+                embedded?.resalePrice,
+            ) || 0;
           const productName =
             (productDetail as { name?: string })?.name ?? embedded?.name;
+          const listerId =
+            (productDetail as { listerId?: string })?.listerId ??
+            embedded?.listerId;
 
           const days = item.days || 0;
+          const isResale = days === 0;
+          const calculatedTotalPrice = isResale ? resalePrice : daily * days;
           const fromApi = rentalMetaFromCartApiItem(
             item as CartItem & Record<string, unknown>,
           );
@@ -99,15 +110,22 @@ export default function CartPage() {
                 cartItemId: item.id,
                 productId: item.productId,
                 rentalDays: days,
-                totalPrice: daily * days,
+                totalPrice: calculatedTotalPrice,
                 deliveryFee: 0,
                 productDetail,
                 productName,
+                isResale,
+                listerId: listerId as string | undefined,
               } satisfies CartCheckoutLine,
             ];
           }
 
-          if (!isCartRentalMainListRow(merged.status, merged.expiresAt)) {
+          const isExpired = merged.status?.trim().toUpperCase() === "EXPIRED";
+
+          if (
+            !isCartRentalMainListRow(merged.status, merged.expiresAt) &&
+            !isExpired
+          ) {
             return [];
           }
 
@@ -117,13 +135,15 @@ export default function CartPage() {
               cartItemId: item.id,
               productId: item.productId,
               rentalDays: days,
-              totalPrice: daily * days,
+              totalPrice: calculatedTotalPrice,
               deliveryFee: 0,
               productDetail,
               productName,
               expiresAt: merged.expiresAt,
               status: merged.status,
               rentalRequestId: merged.rentalRequestId,
+              isResale,
+              listerId: listerId as string | undefined,
             } satisfies CartCheckoutLine,
           ];
         }),
@@ -151,13 +171,17 @@ export default function CartPage() {
             const response = await productApi.getPublicById(item.productId);
             return {
               ...item,
-              cartItemId: item.cartItemId ?? (item as { cart_item_id?: string }).cart_item_id,
+              cartItemId:
+                item.cartItemId ??
+                (item as { cart_item_id?: string }).cart_item_id,
               productDetail: response.data,
             };
           } catch (err) {
             return {
               ...item,
-              cartItemId: item.cartItemId ?? (item as { cart_item_id?: string }).cart_item_id,
+              cartItemId:
+                item.cartItemId ??
+                (item as { cart_item_id?: string }).cart_item_id,
               productDetail: null,
               productDetailError: err,
             };
@@ -169,10 +193,23 @@ export default function CartPage() {
     fetchApprovedProductDetails();
   }, [approvedData]);
 
-  const approvedMatchingCart = approvedRentalsMatchingCurrentCart(
-    approvedItemsWithProduct,
-    cartData?.items,
-  );
+  const resaleLines = cartLines
+    .filter((line) => line.isResale && line.status === "APPROVED")
+    .map((line) => ({
+      ...line, // Use line properties
+      rentalPrice: line.totalPrice,
+      securityDeposit: 0,
+      cleaningFee: 0,
+      deliveryFee: line.deliveryFee,
+    }));
+
+  const approvedMatchingCart = [
+    ...approvedRentalsMatchingCurrentCart(
+      approvedItemsWithProduct,
+      cartData?.items,
+    ),
+    ...resaleLines,
+  ];
 
   const groupedByLister = approvedMatchingCart.reduce(
     (acc: Map<string, any[]>, item: any) => {

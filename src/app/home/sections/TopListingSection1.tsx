@@ -40,10 +40,10 @@ const TopListingSection = () => {
 
   if (isLoading) {
     return (
-      <section className="py-6 sm:py-12 px-4 sm:px-0 bg-white">
-        <div className="container mx-auto">
-          <div className="text-center mb-2 sm:mb-6">
-            <Header1Plus className="tracking-wide uppercase">
+      <section className="bg-white px-4 sm:px-0 py-6 sm:py-12">
+        <div className="mx-auto container">
+          <div className="mb-2 sm:mb-6 text-center">
+            <Header1Plus className="uppercase tracking-wide">
               BLACK TIE OUTFITS{" "}
             </Header1Plus>
           </div>
@@ -55,10 +55,10 @@ const TopListingSection = () => {
 
   if (error) {
     return (
-      <section className="py-6 sm:py-12 px-4 sm:px-0 bg-white">
-        <div className="container mx-auto">
-          <div className="text-center mb-2 sm:mb-6">
-            <Header1Plus className="tracking-wide uppercase">
+      <section className="bg-white px-4 sm:px-0 py-6 sm:py-12">
+        <div className="mx-auto container">
+          <div className="mb-2 sm:mb-6 text-center">
+            <Header1Plus className="uppercase tracking-wide">
               BLACK TIE OUTFITS{" "}
             </Header1Plus>
             <Paragraph1 className="text-gray-600">
@@ -77,14 +77,14 @@ const TopListingSection = () => {
   const displayProducts = products || [];
 
   return (
-    <section className="py-6 sm:py-12 px-4 sm:px-0 bg-white">
-      <div className="container mx-auto">
+    <section className="bg-white px-4 sm:px-0 py-6 sm:py-12">
+      <div className="mx-auto container">
         {/* Header */}
-        <div className="text-center flex flex-col justify-center items-center mb-2 sm:mb-6">
-          <Header1Plus className="tracking-wide uppercase">
+        <div className="flex flex-col justify-center items-center mb-2 sm:mb-6 text-center">
+          <Header1Plus className="uppercase tracking-wide">
             BLACK TIE OUTFITS{" "}
           </Header1Plus>
-          <Paragraph1 className="text-gray-600 max-w-[280px] sm:max-w-[480px]">
+          <Paragraph1 className="max-w-[280px] sm:max-w-[480px] text-gray-600">
             {" "}
             Find the perfect look for your black tie events, no matter the style
             or season.
@@ -93,7 +93,7 @@ const TopListingSection = () => {
 
         {/* Products or No Products Message */}
         {displayProducts.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="py-12 text-center">
             <Paragraph1 className="text-gray-600">
               No products here currently...
             </Paragraph1>
@@ -107,7 +107,7 @@ const TopListingSection = () => {
             style={{
               WebkitOverflowScrolling: "touch",
             }}
-            className="w-full relative overflow-x-auto hide-scrollbar overflow-y-hidden"
+            className="relative w-full overflow-x-auto overflow-y-hidden hide-scrollbar"
           >
             <div
               // keep items in a single row
@@ -129,6 +129,8 @@ const TopListingSection = () => {
                     name={product.name}
                     price={`₦${(product.originalValue || 0).toLocaleString()}`}
                     dailyPrice={product.dailyPrice}
+                    resalePrice={product.resalePrice}
+                    listingType={product.listingType}
                     size={product.measurement}
                   />
                 </div>
@@ -136,13 +138,10 @@ const TopListingSection = () => {
             </div>
           </div>
         )}
-        <div className="mt-2 flex items-center w-full justify-center">
+        <div className="flex justify-center items-center mt-2 w-full">
           <Link
             href={`/shop?tags=${encodeURIComponent("Black Tie")}&title=${encodeURIComponent("BLACK TIE OUTFITS")}`}
-            className="inline-flex items-center justify-center w-full max-w-md px-8 py-3 
-                 bg-black text-white text-sm font-medium tracking-wider  
-                 transition-colors duration-200 hover:bg-neutral-800 focus:outline-none 
-                 focus:ring-2 focus:ring-offset-2 focus:ring-black"
+            className="inline-flex justify-center items-center bg-black hover:bg-neutral-800 px-8 py-3 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 w-full max-w-md font-medium text-white text-sm tracking-wider transition-colors duration-200"
             aria-label="Browse all items"
           >
             <Paragraph1 className="text-white">Browse All</Paragraph1>

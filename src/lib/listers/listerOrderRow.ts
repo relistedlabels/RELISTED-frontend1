@@ -14,6 +14,61 @@ export function isListerAvailabilityRequestRow(
   return st === "PENDING_APPROVAL";
 }
 
+/** Check if an order is a pure resale order (listingType === 'RESALE'). */
+export function isListerResaleOrder(
+  order: Record<string, unknown> | null | undefined,
+): boolean {
+  if (!order) return false;
+  const listingType = String(
+    order.listingType ?? order.listing_type ?? "",
+  ).trim();
+  
+  // Check order-level listingType first
+  if (listingType === "RESALE") return true;
+  if (listingType === "RENTAL") return false;
+  
+  // If listingType is RENT_OR_RESALE or not set, check items
+  const items = order.items as unknown[] | undefined;
+  if (items && items.length > 0) {
+    // Check if all items are resale (days === 0)
+    return items.every((item) => {
+      const days = Number((item as Record<string, unknown>).days ?? (item as Record<string, unknown>).rentalDays ?? 0);
+      return days === 0;
+    });
+  }
+  
+  return false;
+}
+
+/** Check if an order is a mixed order (contains both rental and resale items). */
+export function isListerMixedOrder(
+  order: Record<string, unknown> | null | undefined,
+): boolean {
+  if (!order) return false;
+  const listingType = String(
+    order.listingType ?? order.listing_type ?? "",
+  ).trim();
+  return listingType === "RENT_OR_RESALE";
+}
+
+/** Check if an order item is a resale item. */
+export function isResaleItem(
+  item: Record<string, unknown> | null | undefined,
+): boolean {
+  if (!item) return false;
+  const days = Number(item.days ?? item.rentalDays ?? 0);
+  return days === 0;
+}
+
+/** Check if an order item is a rental item. */
+export function isRentalItem(
+  item: Record<string, unknown> | null | undefined,
+): boolean {
+  if (!item) return false;
+  const days = Number(item.days ?? item.rentalDays ?? 0);
+  return days > 0;
+}
+
 function pickAvailabilityOrOrderStatus(order: Record<string, unknown>): string {
   const av = String(
     order.availabilityStatus ?? order.availability_status ?? "",
@@ -47,7 +102,9 @@ export function isListerAvailabilityDeadlinePassed(
 ): boolean {
   const s = expiresAt?.trim();
   if (!s) return false;
-  return new Date(s).getTime() <= Date.now();
+  const date = new Date(s);
+  if (isNaN(date.getTime())) return false;
+  return date.getTime() <= Date.now();
 }
 
 /** CANCELLED_BY_RENTER (or matching statusLabel). */

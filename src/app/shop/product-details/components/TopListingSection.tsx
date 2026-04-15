@@ -60,10 +60,10 @@ export default function TopListingSection() {
 
   if (isLoading || error) {
     return (
-      <section className="py-12 px-4 sm:px-0 bg-white">
-        <div className="container mx-auto">
-          <div className="text-center mb-12">
-            <Header1Plus className="tracking-wide uppercase">
+      <section className="bg-white px-4 sm:px-0 py-12">
+        <div className="mx-auto container">
+          <div className="mb-12 text-center">
+            <Header1Plus className="uppercase tracking-wide">
               You might also like
             </Header1Plus>
           </div>
@@ -86,17 +86,17 @@ export default function TopListingSection() {
   };
 
   return (
-    <section className="py-12 px-4 sm:px-0 bg-white">
-      <div className="container mx-auto">
+    <section className="bg-white px-4 sm:px-0 py-12">
+      <div className="mx-auto container">
         {/* Header */}
         <div className="mb-12">
-          <Header1Plus className="tracking-wide uppercase">
+          <Header1Plus className="uppercase tracking-wide">
             You might also like
           </Header1Plus>
         </div>
 
         {/* Scrollable + Auto-moving Row */}
-        <div className="overflow-hidden w-full relative">
+        <div className="relative w-full overflow-hidden">
           <motion.div
             ref={containerRef}
             className="flex gap-4 sm:gap-6 cursor-grab active:cursor-grabbing"
@@ -118,6 +118,8 @@ export default function TopListingSection() {
                   name={item.name}
                   price={`₦${item.originalValue.toLocaleString()}`}
                   dailyPrice={item.dailyPrice}
+                  resalePrice={item.resalePrice}
+                  listingType={item.listingType}
                   size={item.measurement}
                 />
               </div>

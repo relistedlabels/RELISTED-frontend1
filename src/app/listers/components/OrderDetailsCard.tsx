@@ -134,8 +134,7 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
 
   const isPendingApproval = isListerAvailabilityPending(order);
   const isPendingReturn =
-    normalizeListerOrderStatusKey(String(order?.status ?? "")) ===
-    "RETURN_DUE";
+    normalizeListerOrderStatusKey(String(order?.status ?? "")) === "RETURN_DUE";
 
   // Countdown timer effect
   useEffect(() => {
@@ -177,7 +176,7 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
   // Loading State
   if (isLoading) {
     return (
-      <div className="w-full h-32 flex items-center justify-center">
+      <div className="flex justify-center items-center w-full h-32">
         Loading order details...
       </div>
     );
@@ -186,11 +185,11 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
   // Error/Empty State
   if (!order && !isLoading) {
     return (
-      <div className="w-full bg-white border border-red-300 rounded-2xl p-4">
-        <Paragraph1 className="text-red-700 font-bold">
+      <div className="bg-white p-4 border border-red-300 rounded-2xl w-full">
+        <Paragraph1 className="font-bold text-red-700">
           No order data found for ID: {orderId}
         </Paragraph1>
-        <pre className="text-[10px] bg-gray-100 p-2 mt-2 overflow-auto max-h-40">
+        <pre className="bg-gray-100 mt-2 p-2 max-h-40 overflow-auto text-[10px]">
           {JSON.stringify(data, null, 2)}
         </pre>
       </div>
@@ -202,19 +201,19 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
       <div className="mb-4">
         <BackHeader
           title={`Order ${orderNumber}`}
-          subtitle="View rental information"
+          subtitle="View order information"
         />
       </div>
-      <div className="w-full bg-white border border-gray-300 rounded-2xl p-4">
+      <div className="bg-white p-4 border border-gray-300 rounded-2xl w-full">
         <div className="flex justify-between items-start mb-6">
-          <Paragraph3 className="text-xl font-bold text-black uppercase tracking-tight">
+          <Paragraph3 className="font-bold text-black text-xl uppercase tracking-tight">
             ORDER {orderNumber}
           </Paragraph3>
           <div className="flex flex-col items-end space-y-1">
-            <Paragraph1 className="hidden sm:flex text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+            <Paragraph1 className="hidden sm:flex font-bold text-[10px] text-gray-400 uppercase tracking-widest">
               Order Status
             </Paragraph1>
-            <Paragraph1 className="px-4 py-1.5 text-xs font-bold rounded-lg whitespace-nowrap">
+            <Paragraph1 className="px-4 py-1.5 rounded-lg font-bold text-xs whitespace-nowrap">
               {status}
             </Paragraph1>
           </div>
@@ -224,10 +223,10 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
           <div
             className={`mb-6 p-4 rounded-lg ${timerBg} border ${isApprovalExpired ? "border-red-300" : isLowTime ? "border-orange-300" : "border-gray-200"}`}
           >
-            <div className="flex items-center justify-between">
+            <div className="flex justify-between items-center">
               <div className="flex items-center space-x-2">
                 <span className="text-lg">⏱</span>
-                <Paragraph1 className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                <Paragraph1 className="font-bold text-gray-500 text-xs uppercase tracking-widest">
                   {isApprovalExpired
                     ? "Order Approval Expired"
                     : "Time Remaining to Approve"}
@@ -239,7 +238,7 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
                 >
                   {isApprovalExpired ? "Expired" : formatTime(secondsRemaining)}
                 </Paragraph3>
-                <Paragraph1 className="text-[10px] text-gray-500 text-right mt-1">
+                <Paragraph1 className="mt-1 text-[10px] text-gray-500 text-right">
                   {isApprovalExpired
                     ? "This order will be auto-cancelled"
                     : "Approve or reject order"}
@@ -249,11 +248,11 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
           </div>
         )}
 
-        <div className="w-full h-px bg-gray-300 mb-8" />
+        <div className="bg-gray-300 mb-8 w-full h-px" />
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="gap-8 grid grid-cols-2 md:grid-cols-4">
           <div>
-            <Paragraph1 className="text-[10px] font-bold text-gray-400 uppercase mb-1">
+            <Paragraph1 className="mb-1 font-bold text-[10px] text-gray-400 uppercase">
               Date Ordered
             </Paragraph1>
             <Paragraph1 className="font-bold text-black text-sm">
@@ -261,7 +260,7 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
             </Paragraph1>
           </div>
           <div>
-            <Paragraph1 className="text-[10px] font-bold text-gray-400 uppercase mb-1">
+            <Paragraph1 className="mb-1 font-bold text-[10px] text-gray-400 uppercase">
               Number of Items
             </Paragraph1>
             <Paragraph1 className="font-bold text-black text-sm">
@@ -269,7 +268,7 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
             </Paragraph1>
           </div>
           <div>
-            <Paragraph1 className="text-[10px] font-bold text-gray-400 uppercase mb-1">
+            <Paragraph1 className="mb-1 font-bold text-[10px] text-gray-400 uppercase">
               Items Delivered
             </Paragraph1>
             <Paragraph1 className="font-bold text-black text-sm">
@@ -277,7 +276,7 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
             </Paragraph1>
           </div>
           <div className="sm:items-end">
-            <Paragraph1 className="text-[10px] font-bold text-gray-400 uppercase mb-1">
+            <Paragraph1 className="mb-1 font-bold text-[10px] text-gray-400 uppercase">
               Total Amount
             </Paragraph1>
             <Paragraph1 className="font-bold text-black text-sm">
@@ -290,16 +289,16 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
           !isApprovalExpired &&
           !showApproveMessage &&
           !showRejectMessage && (
-            <div className="flex gap-3 mt-8 pt-8 border-t border-gray-300">
+            <div className="flex gap-3 mt-8 pt-8 border-gray-300 border-t">
               <button
-                className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-black font-bold text-sm rounded-lg"
+                className="flex-1 bg-gray-100 hover:bg-gray-200 px-6 py-3 rounded-lg font-bold text-black text-sm"
                 onClick={() => rejectMutation.mutate()}
                 disabled={rejectMutation.isPending}
               >
                 {rejectMutation.isPending ? "Rejecting..." : "Reject Order"}
               </button>
               <button
-                className="flex-1 px-6 py-3 bg-black hover:bg-gray-900 text-white font-bold text-sm rounded-lg"
+                className="flex-1 bg-black hover:bg-gray-900 px-6 py-3 rounded-lg font-bold text-white text-sm"
                 onClick={() => approveMutation.mutate()}
                 disabled={approveMutation.isPending}
               >
@@ -309,24 +308,24 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
           )}
 
         {showRejectMessage && (
-          <div className="flex flex-col items-center justify-center mt-8 pt-8 border-t border-gray-300">
-            <Paragraph1 className="text-red-700 font-bold text-lg mb-2">
+          <div className="flex flex-col justify-center items-center mt-8 pt-8 border-gray-300 border-t">
+            <Paragraph1 className="mb-2 font-bold text-red-700 text-lg">
               Order rejected.
             </Paragraph1>
             <Paragraph1 className="text-gray-500 text-sm">
-              The order has been cancelled and the renter notified. No payment
+              The order has been cancelled and the customer notified. No payment
               will be charged for this order.
             </Paragraph1>
           </div>
         )}
 
         {showApproveMessage && (
-          <div className="flex flex-col items-center justify-center mt-8 pt-8 border-t border-gray-300">
-            <Paragraph1 className="text-green-700 font-bold text-lg mb-2">
+          <div className="flex flex-col justify-center items-center mt-8 pt-8 border-gray-300 border-t">
+            <Paragraph1 className="mb-2 font-bold text-green-700 text-lg">
               Waiting for renter to make payment...
             </Paragraph1>
             <Paragraph1 className="text-gray-500 text-sm">
-              The order has been approved. The renter will be notified and
+              The order has been approved. The customer will be notified and
               prompted to complete payment. You will be updated when payment is
               received and dispatch can begin.
             </Paragraph1>
@@ -334,8 +333,8 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
         )}
 
         {isApprovalExpired && isPendingApproval && (
-          <div className="mt-8 pt-8 border-t border-red-200 bg-red-50 p-4 rounded-lg">
-            <Paragraph1 className="text-xs font-bold text-red-700">
+          <div className="bg-red-50 mt-8 p-4 pt-8 border-red-200 border-t rounded-lg">
+            <Paragraph1 className="font-bold text-red-700 text-xs">
               ⚠ This order&apos;s approval deadline has expired and will be
               automatically cancelled.
             </Paragraph1>
@@ -345,9 +344,9 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
         {isPendingReturn &&
           !showConfirmReturnMessage &&
           !showRejectReturnMessage && (
-            <div className="flex gap-3 mt-8 pt-8 border-t border-gray-300">
+            <div className="flex gap-3 mt-8 pt-8 border-gray-300 border-t">
               <button
-                className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-black font-bold text-sm rounded-lg"
+                className="flex-1 bg-gray-100 hover:bg-gray-200 px-6 py-3 rounded-lg font-bold text-black text-sm"
                 onClick={() => rejectReturnMutation.mutate()}
                 disabled={rejectReturnMutation.isPending}
               >
@@ -356,7 +355,7 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
                   : "Reject Return"}
               </button>
               <button
-                className="flex-1 px-6 py-3 bg-black hover:bg-gray-900 text-white font-bold text-sm rounded-lg"
+                className="flex-1 bg-black hover:bg-gray-900 px-6 py-3 rounded-lg font-bold text-white text-sm"
                 onClick={() => confirmReturnMutation.mutate()}
                 disabled={confirmReturnMutation.isPending}
               >
@@ -368,24 +367,25 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
           )}
 
         {showConfirmReturnMessage && (
-          <div className="flex flex-col items-center justify-center mt-8 pt-8 border-t border-gray-300">
-            <Paragraph1 className="text-green-700 font-bold text-lg mb-2">
+          <div className="flex flex-col justify-center items-center mt-8 pt-8 border-gray-300 border-t">
+            <Paragraph1 className="mb-2 font-bold text-green-700 text-lg">
               Return confirmed.
             </Paragraph1>
             <Paragraph1 className="text-gray-500 text-sm">
-              The item return has been confirmed. The renter will be notified
+              The item return has been confirmed. The customer will be notified
               and payment processing will begin.
             </Paragraph1>
           </div>
         )}
 
         {showRejectReturnMessage && (
-          <div className="flex flex-col items-center justify-center mt-8 pt-8 border-t border-gray-300">
-            <Paragraph1 className="text-red-700 font-bold text-lg mb-2">
+          <div className="flex flex-col justify-center items-center mt-8 pt-8 border-gray-300 border-t">
+            <Paragraph1 className="mb-2 font-bold text-red-700 text-lg">
               Return rejected.
             </Paragraph1>
             <Paragraph1 className="text-gray-500 text-sm">
-              The returned item has been rejected. The renter has been notified.
+              The returned item has been rejected. The customer has been
+              notified.
             </Paragraph1>
           </div>
         )}

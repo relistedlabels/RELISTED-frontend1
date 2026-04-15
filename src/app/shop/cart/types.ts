@@ -12,4 +12,6 @@ export type CartCheckoutLine = {
   status?: string;
   /** Linked rental request (for DELETE fallback when /cart-items/:id is not implemented). */
   rentalRequestId?: string;
+  isResale?: boolean;
+  listerId?: string;
 };
