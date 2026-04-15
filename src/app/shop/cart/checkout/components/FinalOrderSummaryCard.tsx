@@ -10,6 +10,7 @@ import { getOrderSummaryApi, orderIdsFromOrderPost } from "@/lib/api/cart";
 import { usePassCart } from "@/lib/mutations/renters/usePassCartMutation";
 import { useListerProfile } from "@/lib/queries/shop/useListerProfile";
 import { toast } from "sonner";
+import { isResaleItem } from "@/lib/listers/listerOrderRow";
 
 const CURRENCY = "₦";
 
@@ -74,14 +75,14 @@ const ListerOrderCard: React.FC<ListerSummaryCardProps> = ({
 
   return (
     <div key={group.listerId} className="p-4 border border-gray-200 rounded-xl">
-      <div className=" flex gap-4 items-center justify-between mb-4">
-        <Paragraph1 className="text-lg font-bold text-gray-900  tracking-wide">
+      <div className="flex justify-between items-center gap-4 mb-4">
+        <Paragraph1 className="font-bold text-gray-900 text-lg tracking-wide">
           ORDER SUMMARY
         </Paragraph1>
-        <Paragraph1 className="text-lg font-bold text-gray-500  tracking-wide">
+        <Paragraph1 className="font-bold text-gray-500 text-lg tracking-wide">
           From -{" "}
           {isListerLoading ? (
-            <span className="inline-block w-24 h-5 bg-gray-200 rounded animate-pulse"></span>
+            <span className="inline-block bg-gray-200 rounded w-24 h-5 animate-pulse"></span>
           ) : (
             listerName
           )}
@@ -89,15 +90,18 @@ const ListerOrderCard: React.FC<ListerSummaryCardProps> = ({
       </div>
 
       {/* Item List for this Lister */}
-      <div className="space-y-4 pb-6 border-b border-gray-200">
+      <div className="space-y-4 pb-6 border-gray-200 border-b">
         {group.items.map((item) => {
           const product = item.productDetail || {};
           const productImageUrl =
             product.attachments?.uploads?.[0]?.url || item.productImage || "";
 
           return (
-            <div key={item.requestId} className="flex items-start gap-4">
-              <div className="shrink-0 w-16 h-20 bg-gray-200 rounded-md overflow-hidden border border-gray-100 relative">
+            <div
+              key={item.requestId || item.cartItemId || item.id}
+              className="flex items-start gap-4"
+            >
+              <div className="relative bg-gray-200 border border-gray-100 rounded-md w-16 h-20 overflow-hidden shrink-0">
                 {productImageUrl && (
                   <Image
                     src={productImageUrl}
@@ -109,15 +113,23 @@ const ListerOrderCard: React.FC<ListerSummaryCardProps> = ({
               </div>
 
               <div className="grow">
-                <Paragraph1 className="text-sm font-semibold text-gray-800 uppercase leading-snug">
+                <Paragraph1 className="font-semibold text-gray-800 text-sm uppercase leading-snug">
                   {product.name || item.productName}
                 </Paragraph1>
-                <Paragraph1 className="text-xs text-gray-600 leading-snug mt-1">
-                  Duration: <strong>{item.rentalDays} Days</strong>
+                <Paragraph1 className="mt-1 text-gray-600 text-xs leading-snug">
+                  {item.isResale || isResaleItem(item) ? (
+                    <>
+                      Type: <strong>Resale</strong>
+                    </>
+                  ) : (
+                    <>
+                      Duration: <strong>{item.rentalDays} Days</strong>
+                    </>
+                  )}
                 </Paragraph1>
               </div>
 
-              <div className="shrink-0 text-sm font-bold text-gray-900 mt-1">
+              <div className="mt-1 font-bold text-gray-900 text-sm shrink-0">
                 <Paragraph1>
                   {CURRENCY}
                   {formatCurrency(item.totalPrice || 0)}
@@ -134,30 +146,45 @@ const ListerOrderCard: React.FC<ListerSummaryCardProps> = ({
           const listerBreakdown = orderSummary.data.listerBreakdowns.find(
             (breakdown: any) => breakdown.listerId === group.listerId,
           );
+          const hasRentalItemsInGroup = group.items.some(
+            (item) => !item.isResale,
+          );
+          const hasResaleItemsInGroup = group.items.some(
+            (item) => item.isResale,
+          );
+
           return listerBreakdown ? (
-            <div className="space-y-2 py-4 border-b border-gray-200">
-              <div className="flex justify-between text-sm font-medium text-gray-700">
-                <Paragraph1>Rental Total</Paragraph1>
+            <div className="space-y-2 py-4 border-gray-200 border-b">
+              <div className="flex justify-between font-medium text-gray-700 text-sm">
+                <Paragraph1>
+                  {hasResaleItemsInGroup && !hasRentalItemsInGroup
+                    ? "Item Total"
+                    : "Rental Total"}
+                </Paragraph1>
                 <Paragraph1>
                   {CURRENCY}
                   {formatCurrency(listerBreakdown.rentalTotal)}
                 </Paragraph1>
               </div>
-              <div className="flex justify-between text-sm font-medium text-gray-700">
-                <Paragraph1>Security Deposit</Paragraph1>
-                <Paragraph1>
-                  {CURRENCY}
-                  {formatCurrency(listerBreakdown.collateralTotal)}
-                </Paragraph1>
-              </div>
-              <div className="flex justify-between text-sm font-medium text-gray-700">
-                <Paragraph1>Cleaning Fees</Paragraph1>
-                <Paragraph1>
-                  {CURRENCY}
-                  {formatCurrency(listerBreakdown.cleaningTotal)}
-                </Paragraph1>
-              </div>
-              <div className="flex justify-between text-sm font-medium text-gray-700">
+              {hasRentalItemsInGroup && (
+                <>
+                  <div className="flex justify-between font-medium text-gray-700 text-sm">
+                    <Paragraph1>Security Deposit</Paragraph1>
+                    <Paragraph1>
+                      {CURRENCY}
+                      {formatCurrency(listerBreakdown.collateralTotal)}
+                    </Paragraph1>
+                  </div>
+                  <div className="flex justify-between font-medium text-gray-700 text-sm">
+                    <Paragraph1>Cleaning Fees</Paragraph1>
+                    <Paragraph1>
+                      {CURRENCY}
+                      {formatCurrency(listerBreakdown.cleaningTotal)}
+                    </Paragraph1>
+                  </div>
+                </>
+              )}
+              <div className="flex justify-between font-medium text-gray-700 text-sm">
                 <Paragraph1>Delivery Fee</Paragraph1>
                 <Paragraph1>
                   {CURRENCY}
@@ -186,17 +213,25 @@ const ListerOrderCard: React.FC<ListerSummaryCardProps> = ({
           const listerBreakdown = orderSummary.data.listerBreakdowns.find(
             (breakdown: any) => breakdown.listerId === group.listerId,
           );
+          const hasRentalItemsInGroup = group.items.some(
+            (item) => !item.isResale,
+          );
+
           return listerBreakdown ? (
             <div className="flex justify-between items-center pt-4">
-              <Paragraph1 className="text-sm font-bold text-gray-900">
+              <Paragraph1 className="font-bold text-gray-900 text-sm">
                 Subtotal:
               </Paragraph1>
-              <Paragraph1 className="text-lg font-extrabold text-gray-900">
+              <Paragraph1 className="font-extrabold text-gray-900 text-lg">
                 {CURRENCY}
                 {formatCurrency(
                   listerBreakdown.rentalTotal +
-                    listerBreakdown.collateralTotal +
-                    listerBreakdown.cleaningTotal +
+                    (hasRentalItemsInGroup
+                      ? listerBreakdown.collateralTotal
+                      : 0) +
+                    (hasRentalItemsInGroup
+                      ? listerBreakdown.cleaningTotal
+                      : 0) +
                     listerBreakdown.pickupCost +
                     (selectedTierData
                       ? calculateListerShippingShare(
@@ -220,17 +255,17 @@ const ListerOrderCard: React.FC<ListerSummaryCardProps> = ({
 // === Skeleton Loader ===
 const CheckoutSummarySkeleton = () => (
   <div className="p-4 border border-gray-200 rounded-xl animate-pulse">
-    <div className="h-6 bg-gray-200 rounded w-32 mb-6"></div>
+    <div className="bg-gray-200 mb-6 rounded w-32 h-6"></div>
     {[...Array(2)].map((_, i) => (
       <div key={i} className="flex items-start gap-4 mb-4">
-        <div className="shrink-0 w-16 h-20 bg-gray-200 rounded-md"></div>
-        <div className="grow space-y-2">
-          <div className="h-4 bg-gray-200 rounded w-32"></div>
-          <div className="h-3 bg-gray-200 rounded w-24"></div>
+        <div className="bg-gray-200 rounded-md w-16 h-20 shrink-0"></div>
+        <div className="space-y-2 grow">
+          <div className="bg-gray-200 rounded w-32 h-4"></div>
+          <div className="bg-gray-200 rounded w-24 h-3"></div>
         </div>
       </div>
     ))}
-    <div className="h-10 bg-gray-200 rounded mt-6"></div>
+    <div className="bg-gray-200 mt-6 rounded h-10"></div>
   </div>
 );
 
@@ -338,15 +373,15 @@ export default function FinalOrderSummaryCard({
       {isLoading && <CheckoutSummarySkeleton />}
 
       {error && (
-        <div className="p-4 border border-yellow-200 rounded-xl bg-yellow-50">
-          <Paragraph1 className="text-sm text-yellow-800">
+        <div className="bg-yellow-50 p-4 border border-yellow-200 rounded-xl">
+          <Paragraph1 className="text-yellow-800 text-sm">
             Failed to load checkout summary. Please try again.
           </Paragraph1>
         </div>
       )}
 
       {!isLoading && !error && approvedGroups.length === 0 && (
-        <div className="p-4 border border-gray-200 rounded-xl bg-gray-50 text-center">
+        <div className="bg-gray-50 p-4 border border-gray-200 rounded-xl text-center">
           <Paragraph1 className="text-gray-600">
             No approved items. Add items to get started!
           </Paragraph1>
@@ -392,85 +427,105 @@ export default function FinalOrderSummaryCard({
 
                 {/* Grand Total and Checkout - From Order Summary */}
                 {orderSummary?.data?.summary && (
-                  <div className="p-4 border border-gray-300 rounded-xl bg-gray-50">
-                    <Paragraph1 className="text-lg font-bold text-gray-900 mb-4">
+                  <div className="bg-gray-50 p-4 border border-gray-300 rounded-xl">
+                    <Paragraph1 className="mb-4 font-bold text-gray-900 text-lg">
                       PAYMENT BREAKDOWN
                     </Paragraph1>
 
-                    <div className="space-y-3 py-4 border-b border-gray-200">
-                      <div className="flex justify-between text-sm font-medium text-gray-700">
-                        <Paragraph1>Rental Total</Paragraph1>
-                        <Paragraph1>
-                          {CURRENCY}
-                          {formatCurrency(
-                            orderSummary.data.summary.rentalTotal,
-                          )}
-                        </Paragraph1>
-                      </div>
-                      <div className="flex justify-between text-sm font-medium text-gray-700">
-                        <Paragraph1>Security Deposit</Paragraph1>
-                        <Paragraph1>
-                          {CURRENCY}
-                          {formatCurrency(
-                            orderSummary.data.summary.collateralTotal,
-                          )}
-                        </Paragraph1>
-                      </div>
-                      <div className="flex justify-between text-sm font-medium text-gray-700">
-                        <Paragraph1>Cleaning Fees</Paragraph1>
-                        <Paragraph1>
-                          {CURRENCY}
-                          {formatCurrency(
-                            orderSummary.data.summary.cleaningTotal,
-                          )}
-                        </Paragraph1>
-                      </div>
-                      <div className="flex justify-between text-sm font-medium text-gray-700">
-                        <Paragraph1>Pick-up Fee</Paragraph1>
-                        <Paragraph1>
-                          {CURRENCY}
-                          {formatCurrency(
-                            orderSummary.data.summary.pickupTotal,
-                          )}
-                        </Paragraph1>
-                      </div>
+                    {/* Check if there are any resale items */}
+                    {(() => {
+                      const hasResaleItems = approvedGroups.some((group) =>
+                        group.items.some((item) => item.isResale),
+                      );
+                      const hasRentalItems = approvedGroups.some((group) =>
+                        group.items.some((item) => !item.isResale),
+                      );
 
-                      <div className="flex justify-between text-sm font-medium text-gray-700">
-                        <Paragraph1>Delivery Fee</Paragraph1>
-                        <Paragraph1>
-                          {CURRENCY}
-                          {formatCurrency(
-                            selectedTierData
-                              ? selectedTierData.totalShippingCost
-                              : orderSummary.data.summary.shippingTotal,
+                      return (
+                        <div className="space-y-3 py-4 border-gray-200 border-b">
+                          <div className="flex justify-between font-medium text-gray-700 text-sm">
+                            <Paragraph1>
+                              {hasResaleItems && !hasRentalItems
+                                ? "Item Total"
+                                : "Rental Total"}
+                            </Paragraph1>
+                            <Paragraph1>
+                              {CURRENCY}
+                              {formatCurrency(
+                                orderSummary.data.summary.rentalTotal,
+                              )}
+                            </Paragraph1>
+                          </div>
+                          {hasRentalItems && (
+                            <>
+                              <div className="flex justify-between font-medium text-gray-700 text-sm">
+                                <Paragraph1>Security Deposit</Paragraph1>
+                                <Paragraph1>
+                                  {CURRENCY}
+                                  {formatCurrency(
+                                    orderSummary.data.summary.collateralTotal,
+                                  )}
+                                </Paragraph1>
+                              </div>
+                              <div className="flex justify-between font-medium text-gray-700 text-sm">
+                                <Paragraph1>Cleaning Fees</Paragraph1>
+                                <Paragraph1>
+                                  {CURRENCY}
+                                  {formatCurrency(
+                                    orderSummary.data.summary.cleaningTotal,
+                                  )}
+                                </Paragraph1>
+                              </div>
+                            </>
                           )}
-                        </Paragraph1>
-                      </div>
-                      <div className="flex justify-between text-sm font-medium text-gray-700">
-                        <Paragraph1>Service Charge</Paragraph1>
-                        <Paragraph1>
-                          {CURRENCY}
-                          {formatCurrency(
-                            orderSummary.data.summary.serviceCharge || 0,
-                          )}
-                        </Paragraph1>
-                      </div>
-                      <div className="flex justify-between text-sm font-medium text-gray-700">
-                        <Paragraph1>VAT</Paragraph1>
-                        <Paragraph1>
-                          {CURRENCY}
-                          {formatCurrency(
-                            orderSummary.data.summary.vatAmount || 0,
-                          )}
-                        </Paragraph1>
-                      </div>
-                    </div>
+                          <div className="flex justify-between font-medium text-gray-700 text-sm">
+                            <Paragraph1>Pick-up Fee</Paragraph1>
+                            <Paragraph1>
+                              {CURRENCY}
+                              {formatCurrency(
+                                orderSummary.data.summary.pickupTotal,
+                              )}
+                            </Paragraph1>
+                          </div>
 
-                    <div className="flex justify-between items-center pt-4 mb-6">
-                      <Paragraph1 className="text-lg font-bold text-gray-900">
+                          <div className="flex justify-between font-medium text-gray-700 text-sm">
+                            <Paragraph1>Delivery Fee</Paragraph1>
+                            <Paragraph1>
+                              {CURRENCY}
+                              {formatCurrency(
+                                selectedTierData
+                                  ? selectedTierData.totalShippingCost
+                                  : orderSummary.data.summary.shippingTotal,
+                              )}
+                            </Paragraph1>
+                          </div>
+                          <div className="flex justify-between font-medium text-gray-700 text-sm">
+                            <Paragraph1>Service Charge</Paragraph1>
+                            <Paragraph1>
+                              {CURRENCY}
+                              {formatCurrency(
+                                orderSummary.data.summary.serviceCharge || 0,
+                              )}
+                            </Paragraph1>
+                          </div>
+                          <div className="flex justify-between font-medium text-gray-700 text-sm">
+                            <Paragraph1>VAT</Paragraph1>
+                            <Paragraph1>
+                              {CURRENCY}
+                              {formatCurrency(
+                                orderSummary.data.summary.vatAmount || 0,
+                              )}
+                            </Paragraph1>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    <div className="flex justify-between items-center mb-6 pt-4">
+                      <Paragraph1 className="font-bold text-gray-900 text-lg">
                         Grand Total:
                       </Paragraph1>
-                      <Paragraph1 className="text-2xl font-extrabold text-gray-900">
+                      <Paragraph1 className="font-extrabold text-gray-900 text-2xl">
                         {CURRENCY}
                         {formatCurrency(
                           orderSummary.data.summary.rentalTotal +
@@ -487,8 +542,8 @@ export default function FinalOrderSummaryCard({
                     </div>
 
                     {passCartMutation.isError && (
-                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg mb-4">
-                        <Paragraph1 className="text-xs text-red-700">
+                      <div className="bg-red-50 mb-4 p-3 border border-red-200 rounded-lg">
+                        <Paragraph1 className="text-red-700 text-xs">
                           {passCartMutation.error?.message ||
                             "Failed to complete checkout"}
                         </Paragraph1>
@@ -498,7 +553,7 @@ export default function FinalOrderSummaryCard({
                     <button
                       onClick={handleCheckout}
                       disabled={!isAgree || passCartMutation.isPending}
-                      className="w-full flex justify-center bg-black text-white font-semibold py-3 rounded-lg hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="flex justify-center bg-black hover:bg-gray-900 disabled:opacity-50 py-3 rounded-lg w-full font-semibold text-white transition-colors disabled:cursor-not-allowed"
                     >
                       <Paragraph1>
                         {passCartMutation.isPending
@@ -507,7 +562,7 @@ export default function FinalOrderSummaryCard({
                       </Paragraph1>
                     </button>
 
-                    <div className="flex items-start gap-2 p-3 mt-4 text-xs bg-green-50 text-green-700 rounded-md border border-green-200">
+                    <div className="flex items-start gap-2 bg-green-50 mt-4 p-3 border border-green-200 rounded-md text-green-700 text-xs">
                       <CheckCircle size={16} className="mt-0.5 shrink-0" />
                       <Paragraph1 className="text-green-700">
                         Your <strong>deposit is secure</strong> and fully
@@ -515,7 +570,7 @@ export default function FinalOrderSummaryCard({
                       </Paragraph1>
                     </div>
 
-                    <label className="flex items-start space-x-2 cursor-pointer text-gray-700 mt-4">
+                    <label className="flex items-start space-x-2 mt-4 text-gray-700 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={isAgree}

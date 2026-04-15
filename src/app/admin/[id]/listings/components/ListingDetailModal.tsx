@@ -34,6 +34,7 @@ import { toast } from "sonner";
 
 import DeleteProductButton from "./DeleteProductButton";
 import { CategorySelector } from "@/app/listers/components/CategorySelector";
+import ItemTypeBadge from "./ItemTypeBadge";
 
 interface ListingDetailModalProps {
   isOpen: boolean;
@@ -125,7 +126,9 @@ export default function ListingDetailModal({
     const tags = Array.isArray(source?.tags) ? source.tags : [];
     const namesFromTags = tags
       .map((tag: any) => tag?.name || tag?.label || tag?.value)
-      .filter((name: any): name is string => typeof name === "string" && !!name);
+      .filter(
+        (name: any): name is string => typeof name === "string" && !!name,
+      );
 
     if (namesFromTags.length > 0) return namesFromTags;
 
@@ -219,9 +222,16 @@ export default function ListingDetailModal({
                     <Paragraph1 className="text-xs text-gray-500 mb-1">
                       {(displayProduct as any).brand?.name || "Unknown Brand"}
                     </Paragraph1>
-                    <Paragraph3 className="text-lg font-bold text-gray-900">
-                      {displayProduct.name}
-                    </Paragraph3>
+                    <div className="flex items-center gap-2">
+                      <Paragraph3 className="text-lg font-bold text-gray-900">
+                        {displayProduct.name}
+                      </Paragraph3>
+                      <ItemTypeBadge
+                        listingType={
+                          (displayProduct as any).listingType || "RENTAL"
+                        }
+                      />
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -546,14 +556,11 @@ export default function ListingDetailModal({
 
               {activeTab === "edit" && (
                 <div className="space-y-6">
-                 
-
                   <ItemImageUploader />
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <BasicInformationForm />
                     <div className="space-y-4">
-                     
                       <TagSelector />
                       <ItemDescription />
                     </div>

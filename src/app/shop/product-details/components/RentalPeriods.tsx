@@ -70,6 +70,8 @@ interface RentalPeriodsPanelProps {
   listerId: string;
   dailyPrice: number;
   collateralPrice: number;
+  listingType?: "RENTAL" | "RESALE" | "RENT_OR_RESALE";
+  resalePrice?: number | null;
 }
 
 const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
@@ -79,6 +81,8 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
   listerId,
   dailyPrice,
   collateralPrice,
+  listingType,
+  resalePrice,
 }) => {
   const minPrice = 50000;
   const maxPrice = 200000;
@@ -199,13 +203,22 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
         }
       }
 
-      const rentalStartDate = formatDateOnlyLocal(startDate);
-      const endDayOffset =
-        rentalDays === 1 ? 1 : Math.max(0, rentalDays - 1);
-      const rentalEndDate = formatDateOnlyLocal(
-        addCalendarDaysLocal(startDate, endDayOffset),
-      );
-      const estimatedRentalPrice = dailyPrice * rentalDays;
+      const isResale =
+        listingType === "RESALE" ||
+        (listingType === "RENT_OR_RESALE" && rentalDays === 0);
+
+      const rentalStartDate = isResale ? null : formatDateOnlyLocal(startDate);
+      const endDayOffset = isResale
+        ? 0
+        : rentalDays === 1
+          ? 1
+          : Math.max(0, rentalDays - 1);
+      const rentalEndDate = isResale
+        ? null
+        : formatDateOnlyLocal(addCalendarDaysLocal(startDate, endDayOffset));
+      const estimatedRentalPrice = isResale
+        ? (resalePrice ?? 0)
+        : dailyPrice * rentalDays;
       const currency = "NGN";
       const res = await submitRentalRequest.mutateAsync({
         productId,
@@ -501,6 +514,8 @@ interface RentalPeriodsProps {
   listerId: string;
   dailyPrice: number;
   collateralPrice: number;
+  listingType?: "RENTAL" | "RESALE" | "RENT_OR_RESALE";
+  resalePrice?: number | null;
 }
 
 const RentalPeriods: React.FC<RentalPeriodsProps> = ({
@@ -508,6 +523,8 @@ const RentalPeriods: React.FC<RentalPeriodsProps> = ({
   listerId,
   dailyPrice,
   collateralPrice,
+  listingType,
+  resalePrice,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { data: user } = useMe();
@@ -538,6 +555,8 @@ const RentalPeriods: React.FC<RentalPeriodsProps> = ({
         listerId={listerId}
         dailyPrice={dailyPrice}
         collateralPrice={collateralPrice}
+        listingType={listingType}
+        resalePrice={resalePrice}
       />
     </>
   );

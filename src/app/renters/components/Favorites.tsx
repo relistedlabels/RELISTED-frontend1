@@ -30,12 +30,12 @@ function useFavoriteProducts(productIds: string[]) {
 // Skeleton Loader
 const FavoriteCardSkeleton = () => (
   <div className="bg-white border border-gray-200 rounded-lg overflow-hidden animate-pulse">
-    <div className="w-full h-64 bg-gray-200"></div>
-    <div className="p-4 space-y-3">
-      <div className="h-4 bg-gray-200 rounded w-20"></div>
-      <div className="h-5 bg-gray-200 rounded w-full"></div>
-      <div className="h-4 bg-gray-200 rounded w-24"></div>
-      <div className="h-10 bg-gray-200 rounded"></div>
+    <div className="bg-gray-200 w-full h-64"></div>
+    <div className="space-y-3 p-4">
+      <div className="bg-gray-200 rounded w-20 h-4"></div>
+      <div className="bg-gray-200 rounded w-full h-5"></div>
+      <div className="bg-gray-200 rounded w-24 h-4"></div>
+      <div className="bg-gray-200 rounded h-10"></div>
     </div>
   </div>
 );
@@ -77,8 +77,8 @@ export default function Favorites() {
   if (isLoading) {
     return (
       <section className="w-full">
-        <div className="container mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="mx-auto container">
+          <div className="gap-4 grid grid-cols-1 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4">
             {[...Array(12)].map((_, i) => (
               <FavoriteCardSkeleton key={i} />
             ))}
@@ -91,8 +91,8 @@ export default function Favorites() {
   if (error) {
     return (
       <section className="w-full">
-        <div className="container mx-auto">
-          <div className="text-center py-12">
+        <div className="mx-auto container">
+          <div className="py-12 text-center">
             <Paragraph1 className="text-red-500">
               Failed to load favorites. Please try again.
             </Paragraph1>
@@ -105,9 +105,9 @@ export default function Favorites() {
   if (!favoriteProducts.length) {
     return (
       <section className="w-full">
-        <div className="container mx-auto">
-          <div className="text-center py-12">
-            <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+        <div className="mx-auto container">
+          <div className="py-12 text-center">
+            <Heart className="mx-auto mb-4 w-16 h-16 text-gray-300" />
             <Paragraph1 className="text-gray-600">
               No favorites yet. Start adding items you love!
             </Paragraph1>
@@ -119,16 +119,16 @@ export default function Favorites() {
 
   return (
     <section className="w-full">
-      <div className="container mx-auto">
+      <div className="mx-auto container">
         {/* Search and Filter Bar */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <div className="flex sm:flex-row flex-col items-start sm:items-center gap-4 mb-6">
           <div className="flex-1 w-full">
             <input
               type="text"
               placeholder="Search favorites by name or lister..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black w-full"
             />
           </div>
           <div className="flex gap-2">
@@ -146,7 +146,7 @@ export default function Favorites() {
         </div>
 
         {/* Product Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="gap-4 grid grid-cols-1 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4">
           {filteredProducts.length > 0 ? (
             filteredProducts.map((product) =>
               product ? (
@@ -158,23 +158,25 @@ export default function Favorites() {
                     name={product.name}
                     price={`₦${product?.originalValue?.toLocaleString() || "0"}`}
                     dailyPrice={product.dailyPrice}
+                    resalePrice={product.resalePrice}
+                    listingType={product.listingType}
                     size={product.measurement}
                   />
                   {/* Remove from Favorites Button */}
                   <button
                     onClick={() => handleRemoveFavorite(product.id)}
                     disabled={removeFavorite.isPending}
-                    className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-lg hover:bg-red-50 transition disabled:opacity-50"
+                    className="top-4 right-4 absolute bg-white hover:bg-red-50 disabled:opacity-50 shadow-lg p-2 rounded-full transition"
                     aria-label="Remove from favorites"
                     title="Remove from favorites"
                   >
-                    <Heart className="w-5 h-5 text-red-500 fill-red-500" />
+                    <Heart className="fill-red-500 w-5 h-5 text-red-500" />
                   </button>
                 </div>
               ) : null,
             )
           ) : (
-            <div className="col-span-full text-center py-12">
+            <div className="col-span-full py-12 text-center">
               <Paragraph1 className="text-gray-600">
                 No items match your search.
               </Paragraph1>

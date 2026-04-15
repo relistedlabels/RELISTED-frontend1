@@ -33,8 +33,8 @@ export default function NewListingsSection({
   if (error) {
     return (
       <section className="w-full">
-        <div className="container mx-auto">
-          <Paragraph1 className="text-center text-red-600 py-8">
+        <div className="mx-auto container">
+          <Paragraph1 className="py-8 text-red-600 text-center">
             Failed to load products. Please try again later.
           </Paragraph1>
         </div>
@@ -46,26 +46,26 @@ export default function NewListingsSection({
   const pagination = data?.pagination;
 
   return (
-    <section className="w-full ">
-      <div className="container mx-auto">
+    <section className="w-full">
+      <div className="mx-auto container">
         {/* Top Bar */}
-        <div className="flex items-center justify-between gap-4 mb-6">
+        <div className="flex justify-between items-center gap-4 mb-6">
           {/* Left Controls */}
           <div className="hidden sm:flex items-center gap-4">
             <Filters />
           </div>
 
           {/* Title */}
-          <Header1Plus className="sm:text-center uppercase font-light flex-1">
+          <Header1Plus className="flex-1 font-light sm:text-center uppercase">
             All Listings
           </Header1Plus>
 
-          <div className="flex sm:hidden items-center gap-4">
+          <div className="sm:hidden flex items-center gap-4">
             <Filters />
           </div>
 
           {/* Search */}
-          <div className="w-full md:w-[200px] hidden sm:flex">
+          <div className="hidden sm:flex w-full md:w-[200px]">
             <input
               type="text"
               placeholder="Search"
@@ -74,7 +74,7 @@ export default function NewListingsSection({
                 setSearch(e.target.value);
                 setPage(1); // Reset to first page on search
               }}
-              className="border w-full px-4 py-2 text-sm focus:outline-none"
+              className="px-4 py-2 border focus:outline-none w-full text-sm"
             />
           </div>
         </div>
@@ -83,12 +83,12 @@ export default function NewListingsSection({
         {isLoading ? (
           <ProductCardSkeleton count={20} />
         ) : products.length === 0 ? (
-          <Paragraph1 className="text-center text-gray-600 py-12">
+          <Paragraph1 className="py-12 text-gray-600 text-center">
             No products found
           </Paragraph1>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div className="gap-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
               {products.map((product) => (
                 <ProductCard
                   id={product.id}
@@ -97,6 +97,8 @@ export default function NewListingsSection({
                   name={product.name}
                   price={`₦${(product.originalValue || 0).toLocaleString()}`}
                   dailyPrice={product.dailyPrice}
+                  resalePrice={product.resalePrice}
+                  listingType={product.listingType}
                   size={product.measurement}
                 />
               ))}
@@ -104,15 +106,15 @@ export default function NewListingsSection({
 
             {/* Pagination */}
             {pagination && pagination.totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-8">
+              <div className="flex justify-center items-center gap-2 mt-8">
                 <button
                   onClick={() => setPage(Math.max(1, page - 1))}
                   disabled={page === 1}
-                  className="px-4 py-2 border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  className="hover:bg-gray-50 disabled:opacity-50 px-4 py-2 border border-gray-200 rounded-lg disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
-                <span className="px-4 py-2 text-sm text-gray-600">
+                <span className="px-4 py-2 text-gray-600 text-sm">
                   Page {page} of {pagination.totalPages}
                 </span>
                 <button
@@ -120,7 +122,7 @@ export default function NewListingsSection({
                     setPage(Math.min(pagination.totalPages, page + 1))
                   }
                   disabled={page === pagination.totalPages}
-                  className="px-4 py-2 border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  className="hover:bg-gray-50 disabled:opacity-50 px-4 py-2 border border-gray-200 rounded-lg disabled:cursor-not-allowed"
                 >
                   Next
                 </button>

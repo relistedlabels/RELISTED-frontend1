@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, Home, Wallet, Check, Truck } from "lucide-react";
-import { Paragraph1 } from "@/common/ui/Text";
+import { User, Home, Wallet, Check, Truck, Clock } from "lucide-react";
+import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import ChangeAddress from "./ChangeAddress";
 import FundWallet from "./FundWallet";
 import { useMe } from "@/lib/queries/auth/useMe";
@@ -31,6 +31,46 @@ const ContactSkeleton = () => (
     ))}
   </div>
 );
+
+// === Reservation Timer Component ===
+const ReservationTimer = () => {
+  const [timeLeft, setTimeLeft] = useState<string>("15:00");
+
+  useEffect(() => {
+    // Set reservation expiry to 15 minutes from now (or from when component mounts)
+    const expiryTime = new Date(Date.now() + 15 * 60 * 1000);
+
+    const updateTimer = () => {
+      const now = new Date().getTime();
+      const expiryTimeMs = expiryTime.getTime();
+      const distance = expiryTimeMs - now;
+
+      if (distance <= 0) {
+        setTimeLeft("0:00");
+        return;
+      }
+
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+      setTimeLeft(`${minutes}:${seconds.toString().padStart(2, "0")}`);
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl mb-6 flex items-center gap-3">
+      <Clock className="w-6 h-6 text-amber-700 shrink-0" />
+      <Paragraph1 className="text-amber-900 font-medium">
+        These items are reserved for{" "}
+        <span className="font-bold">{timeLeft}</span> — complete payment to
+        secure these items
+      </Paragraph1>
+    </div>
+  );
+};
 
 // === Delivery Tier Helper Function ===
 const getDeliveryTierDetails = (tierName: string) => {
@@ -139,6 +179,9 @@ export default function CheckoutContactAndPayment({
 
   return (
     <div className="bg-gray-50 space-y-6">
+      {/* paymetn expoiring timere */}
+      <ReservationTimer />
+
       {/* 1. CONTACT Section */}
       <div className="p-4 bg-white rounded-xl border border-gray-100">
         <Paragraph1 className="font-bold text-gray-800 tracking-wider mb-3">
@@ -300,23 +343,15 @@ export default function CheckoutContactAndPayment({
             <div className="space-y-2">
               <div>
                 <Paragraph1 className="text-xs text-gray-600">
-                  Total Balance
-                </Paragraph1>
-                <Paragraph1 className="font-bold text-green-700">
-                  ₦{formatCurrency(totalBalance)}
-                </Paragraph1>
-              </div>
-              <div>
-                <Paragraph1 className="text-xs text-gray-600">
                   Available Balance
                 </Paragraph1>
-                <Paragraph1
+                <Paragraph3
                   className={`font-bold ${
                     isWalletFunded ? "text-green-700" : "text-red-700"
                   }`}
                 >
                   ₦{formatCurrency(availableBalance)}
-                </Paragraph1>
+                </Paragraph3>
               </div>
             </div>
           </div>

@@ -18,6 +18,7 @@ import { TableSkeleton, StatCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import ListingDetailModal from "./components/ListingDetailModal";
 import PendingListingsTable from "./components/PendingListingsTable";
 import ActiveListingsTable from "./components/ActiveListingsTable";
+import SoldListingsTable from "./components/SoldListingsTable";
 import RejectedListingsTable from "./components/RejectedListingsTable";
 import ManagementPanel from "./components/ManagementPanel";
 import {
@@ -31,7 +32,7 @@ import {
 } from "@/lib/queries/admin/useListings";
 import { Product, ProductDetail } from "@/lib/api/admin/listings";
 
-type TabType = "Pending" | "Active" | "Rejected";
+type TabType = "Pending" | "Active" | "Sold" | "Rejected";
 
 export default function ListingsPage() {
   const queryClient = useQueryClient();
@@ -59,6 +60,7 @@ export default function ListingsPage() {
   // Pagination state for each tab
   const [pendingPage, setPendingPage] = useState(1);
   const [activePage, setActivePage] = useState(1);
+  const [soldPage, setSoldPage] = useState(1);
   const [rejectedPage, setRejectedPage] = useState(1);
 
   // Fetch all statistics from API
@@ -75,7 +77,7 @@ export default function ListingsPage() {
     console.error("Failed to load product statistics:", statsError);
   }
 
-  const TABS: TabType[] = ["Pending", "Active", "Rejected"];
+  const TABS: TabType[] = ["Pending", "Active", "Sold", "Rejected"];
 
   // Fetch products for active tab only to reduce API calls
   const { data: pendingResponse, isLoading: pendingLoading } =
@@ -93,6 +95,13 @@ export default function ListingsPage() {
     },
     activeTab === "Active",
   );
+  const { data: soldResponse, isLoading: soldLoading } = useActiveProducts(
+    {
+      page: soldPage,
+      count: 20,
+    },
+    activeTab === "Sold",
+  );
   const { data: rejectedResponse, isLoading: rejectedLoading } =
     useRejectedProducts(
       {
@@ -104,6 +113,7 @@ export default function ListingsPage() {
 
   const pendingProducts = pendingResponse?.data?.products || [];
   const activeProducts = activeResponse?.data?.products || [];
+  const soldProducts = soldResponse?.data?.products || [];
   const rejectedProducts = rejectedResponse?.data?.products || [];
 
   // Pagination data
@@ -111,6 +121,8 @@ export default function ListingsPage() {
   const pendingTotalPages = pendingResponse?.data?.totalPages || 1;
   const activeTotal = activeResponse?.data?.total || 0;
   const activeTotalPages = activeResponse?.data?.totalPages || 1;
+  const soldTotal = soldResponse?.data?.total || 0;
+  const soldTotalPages = soldResponse?.data?.totalPages || 1;
   const rejectedTotal = rejectedResponse?.data?.total || 0;
   const rejectedTotalPages = rejectedResponse?.data?.totalPages || 1;
 
@@ -592,6 +604,18 @@ export default function ListingsPage() {
                 }}
               />
             )}
+            {activeTab === "Sold" && (
+              <SoldListingsTable
+                products={soldProducts}
+                isLoading={soldLoading}
+                error={null}
+                searchQuery={searchQuery}
+                onView={(product: Product) => {
+                  setSelectedListing(product);
+                  setIsModalOpen(true);
+                }}
+              />
+            )}
             {activeTab === "Rejected" && (
               <RejectedListingsTable
                 products={rejectedProducts}
@@ -612,6 +636,7 @@ export default function ListingsPage() {
       {!statsLoading &&
         ((activeTab === "Pending" && pendingProducts.length > 0) ||
           (activeTab === "Active" && activeProducts.length > 0) ||
+          (activeTab === "Sold" && soldProducts.length > 0) ||
           (activeTab === "Rejected" && rejectedProducts.length > 0)) && (
           <div className="mt-6 flex items-center justify-between">
             <Paragraph1 className="text-sm text-gray-600">
@@ -619,6 +644,8 @@ export default function ListingsPage() {
                 `Page ${pendingPage} of ${pendingTotalPages} • ${pendingTotal} pending products`}
               {activeTab === "Active" &&
                 `Page ${activePage} of ${activeTotalPages} • ${activeTotal} active products`}
+              {activeTab === "Sold" &&
+                `Page ${soldPage} of ${soldTotalPages} • ${soldTotal} sold products`}
               {activeTab === "Rejected" &&
                 `Page ${rejectedPage} of ${rejectedTotalPages} • ${rejectedTotal} rejected products`}
             </Paragraph1>
@@ -630,12 +657,15 @@ export default function ListingsPage() {
                     setPendingPage(pendingPage - 1);
                   if (activeTab === "Active" && activePage > 1)
                     setActivePage(activePage - 1);
+                  if (activeTab === "Sold" && soldPage > 1)
+                    setSoldPage(soldPage - 1);
                   if (activeTab === "Rejected" && rejectedPage > 1)
                     setRejectedPage(rejectedPage - 1);
                 }}
                 disabled={
                   (activeTab === "Pending" && pendingPage <= 1) ||
                   (activeTab === "Active" && activePage <= 1) ||
+                  (activeTab === "Sold" && soldPage <= 1) ||
                   (activeTab === "Rejected" && rejectedPage <= 1)
                 }
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium text-sm text-gray-700 bg-white"
@@ -652,6 +682,8 @@ export default function ListingsPage() {
                     setPendingPage(pendingPage + 1);
                   if (activeTab === "Active" && activePage < activeTotalPages)
                     setActivePage(activePage + 1);
+                  if (activeTab === "Sold" && soldPage < soldTotalPages)
+                    setSoldPage(soldPage + 1);
                   if (
                     activeTab === "Rejected" &&
                     rejectedPage < rejectedTotalPages
@@ -662,6 +694,7 @@ export default function ListingsPage() {
                   (activeTab === "Pending" &&
                     pendingPage >= pendingTotalPages) ||
                   (activeTab === "Active" && activePage >= activeTotalPages) ||
+                  (activeTab === "Sold" && soldPage >= soldTotalPages) ||
                   (activeTab === "Rejected" &&
                     rejectedPage >= rejectedTotalPages)
                 }

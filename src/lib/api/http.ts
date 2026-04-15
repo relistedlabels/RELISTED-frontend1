@@ -9,6 +9,17 @@ if (!BASE_URL) {
   throw new Error("NEXT_PUBLIC_API_BASE_URL is not defined");
 }
 
+/** Custom error class for authentication failures to distinguish from other errors */
+export class AuthenticationError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number,
+  ) {
+    super(message);
+    this.name = "AuthenticationError";
+  }
+}
+
 /** Token from store, or from localStorage if store not yet rehydrated */
 export function getAuthToken(): string | null {
   const state = useUserStore.getState();
@@ -77,12 +88,10 @@ export async function apiFetch<T>(
 
   if (!res.ok) {
     let errorMessage = "Request failed";
-    let errorData: unknown = null;
 
     try {
       const error = await res.json();
       errorMessage = error?.message ?? errorMessage;
-      errorData = error;
     } catch (parseError) {
       // If response body is not JSON, try to get text
       try {
@@ -121,6 +130,12 @@ export async function apiFetch<T>(
           useSessionStore.getState().requestSignInRedirect(returnUrl);
         }
       }
+
+      // Throw a specific authentication error so React Query doesn't retry
+      throw new AuthenticationError(
+        errorMessage || "Session expired. Please login again.",
+        401,
+      );
     }
 
     throw new Error(errorMessage);

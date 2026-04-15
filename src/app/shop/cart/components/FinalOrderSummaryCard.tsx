@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { publicApi } from "@/lib/api/public";
 import { useListerProfile } from "@/lib/queries/shop/useListerProfile";
+import { isResaleItem } from "@/lib/listers/listerOrderRow";
 
 const CURRENCY = "₦";
 
@@ -71,7 +72,6 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
             <Paragraph1 className="font-bold text-gray-900 text-lg tracking-wide">
               SUMMARY
             </Paragraph1>
-           
           </div>
           <Paragraph1 className="font-bold text-gray-600 text-sm sm:text-right tracking-wide shrink-0">
             From{" "}
@@ -111,13 +111,37 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
                   {product.name || item.productName}
                 </Paragraph1>
                 <Paragraph1 className="mt-1 text-gray-600 text-xs leading-snug">
-                  Duration: <strong>{item.rentalDays} Days</strong>
+                  {item.isResale || isResaleItem(item) ? (
+                    <>
+                      Type: <strong>Resale</strong>
+                    </>
+                  ) : (
+                    <>
+                      Duration: <strong>{item.rentalDays} Days</strong>
+                    </>
+                  )}
                 </Paragraph1>
-                <div className="bg-green-100 mt-4 px-2 py-0.5 border border-green-200 rounded-full w-fit text-green-800">
-                  <Paragraph1 className="font-semibold text-xs">
-                    Approved
-                  </Paragraph1>
-                </div>
+                {item.isResale && item.status === "APPROVED" && (
+                  <div className="bg-green-100 mt-4 px-2 py-0.5 border border-green-200 rounded-full w-fit text-green-800">
+                    <Paragraph1 className="font-semibold text-xs">
+                      Ready to checkout
+                    </Paragraph1>
+                  </div>
+                )}
+                {item.isResale && item.status !== "APPROVED" && (
+                  <div className="bg-yellow-100 mt-4 px-2 py-0.5 border border-yellow-200 rounded-full w-fit text-yellow-800">
+                    <Paragraph1 className="font-semibold text-xs">
+                      Awaiting approval
+                    </Paragraph1>
+                  </div>
+                )}
+                {!item.isResale && (
+                  <div className="bg-green-100 mt-4 px-2 py-0.5 border border-green-200 rounded-full w-fit text-green-800">
+                    <Paragraph1 className="font-semibold text-xs">
+                      Approved
+                    </Paragraph1>
+                  </div>
+                )}
               </div>
 
               {/* Price */}
@@ -133,22 +157,22 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
       </div>
 
       {/* Breakdown for this Lister */}
-      <div className="hidden space-y-2 border-b border-gray-200 py-4">
-        <div className="flex justify-between text-sm font-medium text-gray-700">
+      <div className="hidden space-y-2 py-4 border-gray-200 border-b">
+        <div className="flex justify-between font-medium text-gray-700 text-sm">
           <Paragraph1>Rental Subtotal</Paragraph1>
           <Paragraph1>
             {CURRENCY}
             {formatCurrency(listerSubtotal)}
           </Paragraph1>
         </div>
-        <div className="flex justify-between text-sm font-medium text-gray-700">
+        <div className="flex justify-between font-medium text-gray-700 text-sm">
           <Paragraph1>Delivery Fees:</Paragraph1>
           <Paragraph1>
             {CURRENCY}
             {formatCurrency(listerDeliveryFees)}
           </Paragraph1>
         </div>
-        <div className="flex justify-between text-sm font-medium text-gray-700">
+        <div className="flex justify-between font-medium text-gray-700 text-sm">
           <Paragraph1>Cleaning Fees:</Paragraph1>
           <Paragraph1>
             {CURRENCY}
@@ -160,7 +184,7 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
             )}
           </Paragraph1>
         </div>
-        <div className="flex justify-between text-sm font-medium text-gray-700">
+        <div className="flex justify-between font-medium text-gray-700 text-sm">
           <Paragraph1>Security Deposit:</Paragraph1>
           <Paragraph1>
             {CURRENCY}

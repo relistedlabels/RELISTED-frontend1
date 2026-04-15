@@ -58,7 +58,25 @@ export function isCartRentalMainListRow(
 ): boolean {
   const u = (status ?? "").trim().toUpperCase();
   if (
-    u === "EXPIRED" ||
+    u === "REJECTED" ||
+    u === "DECLINED" ||
+    u === "CANCELLED" ||
+    u === "COMPLETED"
+  ) {
+    return false;
+  }
+  if (u === "APPROVED" || u === "ACCEPTED") {
+    return true;
+  }
+  return isActivePendingCartRental(status, expiresAt);
+}
+
+export function canShowInCartList(
+  status?: string,
+  expiresAt?: string,
+): boolean {
+  const u = (status ?? "").trim().toUpperCase();
+  if (
     u === "REJECTED" ||
     u === "DECLINED" ||
     u === "CANCELLED" ||
@@ -113,11 +131,7 @@ export function rentalMetaFromCartApiItem(
     return {
       rentalRequestId: flatRid,
       expiresAt: pickStr(item, ["expiresAt", "expires_at"]),
-      status: pickStr(item, [
-        "rentalStatus",
-        "rental_status",
-        "status",
-      ]),
+      status: pickStr(item, ["rentalStatus", "rental_status", "status"]),
     };
   }
 
