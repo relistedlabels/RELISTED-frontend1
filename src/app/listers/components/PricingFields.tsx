@@ -240,7 +240,7 @@ export const PricingFields: React.FC = () => {
                 }
               />
               <p className="mt-1 text-[11px] text-gray-500">
-                Suggested ≈ ₦{formatNumber(suggestedCollateralPrice)} (80% of
+                Suggested ≈ ₦{formatNumber(suggestedCollateralPrice)} (30% of
                 original value)
               </p>
             </div>

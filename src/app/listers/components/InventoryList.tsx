@@ -184,10 +184,10 @@ const InventoryItemCard: React.FC<InventoryItem> = ({
           </Paragraph1>
         </div>
       )}
-      <div className="flex items-center gap-4 bg-white hover:shadow-md p-4 border border-gray-200 rounded-xl transition-shadow duration-150">
+      <div className="flex sm:flex-row flex-col items-start sm:items-center gap-4 bg-white hover:shadow-md p-4 border border-gray-200 rounded-xl w-full transition-shadow duration-150">
         {/* Product Image & Info - Left Side */}
-        <div className="flex items-start space-x-3 min-w-[280px]">
-          <div className="bg-gray-100 rounded-lg w-20 h-24 overflow-hidden shrink-0">
+        <div className="flex items-start space-x-3 w-full sm:w-auto sm:min-w-[280px]">
+          <div className="bg-gray-100 rounded-lg w-16 sm:w-20 h-20 sm:h-24 overflow-hidden shrink-0">
             <img
               src={imageUrl}
               alt={name}
@@ -211,60 +211,73 @@ const InventoryItemCard: React.FC<InventoryItem> = ({
           </div>
         </div>
 
-        {/* Type Column */}
-        <div className="flex flex-col flex-1">
-          <Paragraph1 className="mb-1 text-gray-500 text-xs">Type</Paragraph1>
-          <Paragraph1 className="font-semibold text-gray-900 text-sm">
-            {type}
-          </Paragraph1>
-        </div>
-
-        {/* Price/Value Column */}
-        <div className="flex flex-col flex-1 items-start">
-          <Paragraph1 className="mb-1 text-gray-500 text-xs">
-            {priceColumnLabel}
-          </Paragraph1>
-          <div className="flex flex-col">
-            <Paragraph1 className="font-semibold text-gray-900 text-sm">
-              {priceValue}
-            </Paragraph1>
-            {secondaryPrice && (
-              <Paragraph1 className="text-gray-500 text-xs">
-                {secondaryPrice.label} {secondaryPrice.value}
+        {/* Details Grid - Stacks on mobile, row on desktop */}
+        <div className="flex sm:flex-row flex-col gap-3 sm:gap-6 w-full">
+          {/* Type and Price Row */}
+          <div className="flex flex-row gap-6 sm:gap-8 w-full sm:w-auto">
+            {/* Type Column */}
+            <div className="flex flex-col min-w-[80px]">
+              <Paragraph1 className="mb-1 text-gray-500 text-xs">
+                Type
               </Paragraph1>
-            )}
+              <Paragraph1 className="font-semibold text-gray-900 text-sm">
+                {type}
+              </Paragraph1>
+            </div>
+
+            {/* Price/Value Column */}
+            <div className="flex flex-col min-w-[100px]">
+              <Paragraph1 className="mb-1 text-gray-500 text-xs">
+                {priceColumnLabel}
+              </Paragraph1>
+              <div className="flex flex-col">
+                <Paragraph1 className="font-semibold text-gray-900 text-sm">
+                  {priceValue}
+                </Paragraph1>
+                {secondaryPrice && (
+                  <Paragraph1 className="text-gray-500 text-xs">
+                    {secondaryPrice.label} {secondaryPrice.value}
+                  </Paragraph1>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Listed Date Column */}
+          <div className="flex flex-col min-w-[80px]">
+            <Paragraph1 className="mb-1 text-gray-500 text-xs">
+              Listed
+            </Paragraph1>
+            <Paragraph1 className="font-semibold text-gray-900 text-sm">
+              {listedDate}
+            </Paragraph1>
           </div>
         </div>
 
-        {/* Listed Date Column */}
-        <div className="flex flex-col flex-1 items-start text-center">
-          <Paragraph1 className="mb-1 text-gray-500 text-xs">Listed</Paragraph1>
-          <Paragraph1 className="font-semibold text-gray-900 text-sm">
-            {listedDate}
-          </Paragraph1>
-        </div>
+        {/* Live Status Badge & Manage Button - Stack on mobile, row on desktop */}
+        <div className="flex flex-row sm:flex-col justify-between sm:justify-end items-center sm:items-end gap-3 sm:gap-4 ml-0 sm:ml-4 w-full sm:w-auto shrink-0">
+          {/* Live Status Badge */}
+          <div
+            className={`px-3 py-1.5 rounded-lg whitespace-nowrap ${
+              isActive
+                ? "text-green-700 bg-green-100"
+                : "text-gray-700 bg-gray-100"
+            }`}
+          >
+            <Paragraph1 className="font-semibold text-xs">
+              {isActive ? "Live" : "Inactive"}
+            </Paragraph1>
+          </div>
 
-        {/* Live Status Badge */}
-        <div
-          className={`px-3 py-1.5 rounded-lg whitespace-nowrap ${
-            isActive
-              ? "text-green-700 bg-green-100"
-              : "text-gray-700 bg-gray-100"
-          }`}
-        >
-          <Paragraph1 className="font-semibold text-xs">
-            {isActive ? "Live" : "Inactive"}
-          </Paragraph1>
+          {/* Manage Button */}
+          <button
+            type="button"
+            onClick={handleManage}
+            className="bg-gray-800 hover:bg-black px-6 py-2 rounded-lg font-semibold text-white text-sm whitespace-nowrap transition duration-150"
+          >
+            Manage
+          </button>
         </div>
-
-        {/* Manage Button */}
-        <button
-          type="button"
-          onClick={handleManage}
-          className="bg-gray-800 hover:bg-black px-6 py-2 rounded-lg font-semibold text-white text-sm whitespace-nowrap transition duration-150"
-        >
-          Manage
-        </button>
       </div>
     </motion.div>
   );
@@ -328,7 +341,7 @@ const InventoryList: React.FC = () => {
   return (
     <div className="w-full">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6 pr-2">
         <div className="flex items-center gap-2">
           <Paragraph3 className="font-semibold text-black text-2xl">
             Inventory
