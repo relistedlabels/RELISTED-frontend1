@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   ArrowLeft,
   Loader2,
+  Bell,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
@@ -121,6 +122,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
   const [isChecking, setIsChecking] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [countdownActive, setCountdownActive] = useState(false);
+  const [showNotifyMe, setShowNotifyMe] = useState(false);
   const shippingFee = 5000; // Fixed amount, can be adjusted
   const submitRentalRequest = useSubmitRentalRequest();
 
@@ -355,12 +357,14 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                 <button
                   type="button"
                   className={`mt-4 w-full py-3 px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2.5 ${
-                    isChecking || countdownActive
+                    isChecking || countdownActive || summaryData !== null
                       ? "bg-gray-400 text-white cursor-not-allowed opacity-70"
                       : "bg-black text-white hover:bg-gray-900 active:scale-95"
                   }`}
                   onClick={handleCheckAvailability}
-                  disabled={isChecking || countdownActive}
+                  disabled={
+                    isChecking || countdownActive || summaryData !== null
+                  }
                 >
                   {isChecking ? (
                     <>
@@ -377,10 +381,41 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                         .padStart(2, "0")}
                       :{(countdown % 60).toString().padStart(2, "0")} min left
                     </>
+                  ) : summaryData !== null ? (
+                    "Request Sent!"
                   ) : (
                     "Check Availability"
                   )}
                 </button>
+
+                {/* Notify Me When Available Button - Shows after successful request */}
+                {summaryData !== null && (
+                  <div className="mt-4 space-y-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowNotifyMe(!showNotifyMe)}
+                      className="w-full border-2 border-gray-800 text-gray-800 font-semibold py-3 px-4 rounded-lg hover:bg-gray-50 transition duration-150 flex items-center justify-center gap-2"
+                    >
+                      <Bell className="w-5 h-5" />
+                      Notify Me When Available
+                    </button>
+                    <AnimatePresence>
+                      {showNotifyMe && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="p-3 bg-blue-50 border border-blue-200 rounded-lg"
+                        >
+                          <Paragraph1 className="text-blue-900 text-sm leading-relaxed">
+                            We'll email you the moment this item is available to
+                            rent or buy.
+                          </Paragraph1>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
                 {countdownActive && countdown !== null && (
                   <div className="mt-2 font-medium text-yellow-700 text-center">
                     Item has been added to cart while Waiting for Lister to

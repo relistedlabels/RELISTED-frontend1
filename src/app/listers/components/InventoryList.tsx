@@ -161,6 +161,7 @@ const InventoryItemCard: React.FC<InventoryItem> = ({
       value: resalePrice,
     };
   }
+
   const handleManage = (e: React.MouseEvent) => {
     e.preventDefault();
     router.push(`/listers/inventory/product-details/${id}`);
@@ -196,15 +197,10 @@ const InventoryItemCard: React.FC<InventoryItem> = ({
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center space-x-2 mb-1">
-              <span className={`w-2 h-2 rounded-full ${colors.dot}`}></span>
+              <span className={`w-2.5 h-2.5 rounded-full ${colors.dot}`}></span>
               <Paragraph1 className={`text-xs font-semibold ${colors.text}`}>
                 {formatStatusLabel(status)}
               </Paragraph1>
-              {!isActive && (
-                <span className="bg-gray-100 px-2 py-0.5 rounded font-semibold text-gray-500 text-xs">
-                  Disabled
-                </span>
-              )}
             </div>
             <Paragraph1 className="font-bold text-gray-900 text-sm truncate uppercase">
               {name}
@@ -248,9 +244,13 @@ const InventoryItemCard: React.FC<InventoryItem> = ({
           </Paragraph1>
         </div>
 
-        {/* Status Badge */}
+        {/* Live Status Badge */}
         <div
-          className={`px-3 flex justify-center item-center py-1.5 text-xs font-semibold rounded-lg ${colors.badge}`}
+          className={`px-3 py-1.5 rounded-lg whitespace-nowrap ${
+            isActive
+              ? "text-green-700 bg-green-100"
+              : "text-gray-700 bg-gray-100"
+          }`}
         >
           <Paragraph1 className="font-semibold text-xs">
             {isActive ? "Live" : "Inactive"}
