@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { HiOutlineTag, HiOutlineHeart } from "react-icons/hi2";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
-import { Heart, Loader2 } from "lucide-react";
+import { Heart, Loader2, Bell } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, usePathname } from "next/navigation";
@@ -93,6 +93,7 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
   const [isRequesting, setIsRequesting] = useState(false);
   const [isProfileSetupModalOpen, setIsProfileSetupModalOpen] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [showNotifyMe, setShowNotifyMe] = useState(false);
 
   // Profile and addresses for availability request
   const { data: profileData, isLoading: isProfileLoading } =
@@ -248,46 +249,66 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
         {/* Action Buttons */}
         <div className="flex space-x-2 text-[14px] mb-4">
           {addedToCart ? (
-            <button
-              type="button"
-              onClick={() => router.push("/shop/cart")}
-              className="flex-1 bg-green-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-green-700 transition duration-150"
-            >
-              View Cart
-            </button>
+            <div className="w-full">
+              <button
+                type="button"
+                onClick={() => setShowNotifyMe(!showNotifyMe)}
+                className="flex-1 w-full border-2 border-gray-800 text-gray-800 font-semibold py-3 px-4 rounded-lg hover:bg-gray-50 transition duration-150 flex items-center justify-center gap-2"
+              >
+                <Bell className="w-5 h-5" />
+                Notify Me When Available
+              </button>
+            </div>
           ) : (
-            <button
-              type="button"
-              onClick={handleBuy}
-              disabled={isRequesting}
-              className="flex-1 bg-black text-white font-semibold py-3 px-4 rounded-lg hover:bg-gray-800 transition duration-150 disabled:opacity-50"
-            >
-              {isRequesting ? (
-                <>
-                  <Loader2 className="w-4 h-4 inline mr-2 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                "Add to Cart"
-              )}
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={handleBuy}
+                disabled={isRequesting}
+                className="flex-1 bg-black text-white font-semibold py-3 px-4 rounded-lg hover:bg-gray-800 transition duration-150 disabled:opacity-50"
+              >
+                {isRequesting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 inline mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  "Add to Cart"
+                )}
+              </button>
+              <button
+                onClick={handleFavoriteClick}
+                disabled={addFavorite.isPending || removeFavorite.isPending}
+                className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 disabled:opacity-50 bg-white"
+                aria-label={
+                  isFavorited ? "Remove from favorites" : "Add to favorites"
+                }
+              >
+                <Heart
+                  className="w-6 h-6"
+                  fill={isFavorited ? "red" : "none"}
+                  color={isFavorited ? "red" : "#222"}
+                />
+              </button>
+            </>
           )}
-          <button
-            onClick={handleFavoriteClick}
-            disabled={addFavorite.isPending || removeFavorite.isPending}
-            className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 disabled:opacity-50 bg-white"
-            aria-label={
-              isFavorited ? "Remove from favorites" : "Add to favorites"
-            }
-          >
-            <Heart
-              className="w-6 h-6"
-              fill={isFavorited ? "red" : "none"}
-              color={isFavorited ? "red" : "#222"}
-            />
-          </button>
         </div>
 
+        <AnimatePresence>
+          {showNotifyMe && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="my-3 p-3 bg-blue-50 border border-blue-200 rounded-lg"
+            >
+              <Paragraph1 className="text-gray-500 text-center text-sm leading-relaxed">
+                We'll email you the moment this item is available to rent or
+                buy.
+              </Paragraph1>
+            </motion.div>
+          )}
+        </AnimatePresence>
         {/* Security / Shipping Info */}
         <div className="p-3 bg-white border border-gray-200 rounded-lg flex items-start space-x-2 mb-4">
           <img src="/icons/safe1.svg" alt="secure" />
