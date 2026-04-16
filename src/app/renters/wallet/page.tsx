@@ -13,14 +13,14 @@ import ExampleAllTransactionsList from "../components/Transaction";
 function page() {
   const path = [
     { label: "Home", href: "/" },
-    { label: "Dashboard", href: "/orders" },
+    { label: "Dashboard", href: "/renters/orders" },
     { label: "Wallet", href: null }, // Current page, href is null
   ];
 
   return (
-    <div className=" container mx-auto sm:pt-[100px] pt-[70px]">
+    <div className="mx-auto pt-[70px] sm:pt-[100px] container">
       {" "}
-      <div className=" mb-4 px-4 sm:px-0 ">
+      <div className="mb-4 px-4 sm:px-0">
         <Breadcrumbs items={path} />{" "}
       </div>
       <UserDashboardLayout>
