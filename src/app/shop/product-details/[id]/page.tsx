@@ -3,7 +3,7 @@ import React from "react";
 // Always fetch fresh data on each request
 export const revalidate = 0;
 import TitleProductCard from "../components/TitleProductCard";
-import RentalDetailsCard from "../components/RentalDetailsCard";
+import ProductDetailsTabsClient from "../components/ProductDetailsTabsClient";
 import ProductAccordion from "../components/ProductAccordion";
 import ProductMediaGallery from "../components/ProductMediaGallery";
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
@@ -38,7 +38,7 @@ export default async function ProductDetailsPage({
         </div>
         <div className=" sm:py-[100px] bg-white sm:px-[100px] p-4 flex flex-col gap-4 ">
           <TitleProductCard productId={id} />
-          <RentalDetailsCard productId={id} />
+          <ProductDetailsTabsClient productId={id} />
           <ProductAccordion productId={id} />
         </div>
       </div>

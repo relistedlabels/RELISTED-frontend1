@@ -283,8 +283,11 @@ export default function CheckoutProductList({
             dailyPrice?: number;
             resalePrice?: number;
             originalValue?: number;
+            collateralPrice?: number;
           };
-          const deposit = item.isResale ? 0 : (product.originalValue ?? 0);
+          const deposit = item.isResale
+            ? 0
+            : (product.collateralPrice ?? product.originalValue ?? 0);
           const unitPrice = item.isResale
             ? (product.resalePrice ?? 0)
             : (product.dailyPrice ?? 0);
