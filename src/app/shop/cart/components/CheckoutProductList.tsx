@@ -283,8 +283,11 @@ export default function CheckoutProductList({
             dailyPrice?: number;
             resalePrice?: number;
             originalValue?: number;
+            collateralPrice?: number;
           };
-          const deposit = item.isResale ? 0 : (product.originalValue ?? 0);
+          const deposit = item.isResale
+            ? 0
+            : (product.collateralPrice ?? product.originalValue ?? 0);
           const unitPrice = item.isResale
             ? (product.resalePrice ?? 0)
             : (product.dailyPrice ?? 0);
@@ -380,7 +383,7 @@ export default function CheckoutProductList({
                           type="button"
                           onClick={() => handleReRequest(item.cartItemId)}
                           disabled={reRequestMutation.isPending}
-                          className="ml-1 font-semibold text-blue-600 hover:text-blue-800 text-xs underline disabled:opacity-50"
+                          className="disabled:opacity-50 ml-1 font-semibold text-blue-600 hover:text-blue-800 text-xs underline"
                         >
                           {reRequestMutation.isPending
                             ? "Requesting..."
@@ -391,7 +394,7 @@ export default function CheckoutProductList({
                     {item.isResale && isApproved && (
                       <div className="flex items-center gap-2">
                         <span className="text-green-600 text-xl">✓</span>
-                        <span className="text-xs font-semibold text-green-700">
+                        <span className="font-semibold text-green-700 text-xs">
                           Approved
                         </span>
                         <button
@@ -413,7 +416,7 @@ export default function CheckoutProductList({
                           type="button"
                           onClick={() => handleReRequest(item.cartItemId)}
                           disabled={reRequestMutation.isPending}
-                          className="ml-1 font-semibold text-blue-600 hover:text-blue-800 text-xs underline disabled:opacity-50"
+                          className="disabled:opacity-50 ml-1 font-semibold text-blue-600 hover:text-blue-800 text-xs underline"
                         >
                           {reRequestMutation.isPending
                             ? "Requesting..."
@@ -424,7 +427,7 @@ export default function CheckoutProductList({
                     {!item.isResale && isApproved && (
                       <div className="flex items-center gap-2">
                         <span className="text-green-600 text-xl">✓</span>
-                        <span className="text-xs font-semibold text-green-700">
+                        <span className="font-semibold text-green-700 text-xs">
                           Approved
                         </span>
                         <button
@@ -549,7 +552,7 @@ export default function CheckoutProductList({
                           type="button"
                           onClick={() => handleReRequest(item.cartItemId)}
                           disabled={reRequestMutation.isPending}
-                          className="font-semibold text-blue-600 hover:text-blue-800 text-xs underline disabled:opacity-50"
+                          className="disabled:opacity-50 font-semibold text-blue-600 hover:text-blue-800 text-xs underline"
                         >
                           {reRequestMutation.isPending
                             ? "Requesting..."
@@ -560,7 +563,7 @@ export default function CheckoutProductList({
                     {item.isResale && isApproved && (
                       <div className="flex items-center gap-2">
                         <span className="text-green-600 text-xl">✓</span>
-                        <span className="text-xs font-semibold text-green-700">
+                        <span className="font-semibold text-green-700 text-xs">
                           Approved
                         </span>
                         <button
@@ -593,7 +596,7 @@ export default function CheckoutProductList({
                           type="button"
                           onClick={() => handleReRequest(item.cartItemId)}
                           disabled={reRequestMutation.isPending}
-                          className="font-semibold text-blue-600 hover:text-blue-800 text-xs underline disabled:opacity-50"
+                          className="disabled:opacity-50 font-semibold text-blue-600 hover:text-blue-800 text-xs underline"
                         >
                           {reRequestMutation.isPending
                             ? "Requesting..."
@@ -604,7 +607,7 @@ export default function CheckoutProductList({
                     {!item.isResale && isApproved && (
                       <div className="flex items-center gap-2">
                         <span className="text-green-600 text-xl">✓</span>
-                        <span className="text-xs font-semibold text-green-700">
+                        <span className="font-semibold text-green-700 text-xs">
                           Approved
                         </span>
                         <button
