@@ -11,13 +11,14 @@ export const useSubmitRentalRequest = () => {
     mutationFn: (data: {
       productId: string;
       listerId: string;
-      rentalStartDate: string;
-      rentalEndDate: string;
+      rentalStartDate: string | null;
+      rentalEndDate: string | null;
       rentalDays: number;
       estimatedRentalPrice: number;
       deliveryAddressId: string;
       autoPay: boolean;
       currency: string;
+      cartItemId?: string;
     }) => rentersApi.submitRentalRequest(data),
     onSuccess: () => {
       queryClient.invalidateQueries({

@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { publicApi } from "@/lib/api/public";
 import { useListerProfile } from "@/lib/queries/shop/useListerProfile";
+import { isResaleItem } from "@/lib/listers/listerOrderRow";
 
 const CURRENCY = "₦";
 
@@ -47,15 +48,28 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
   let listerSubtotal = 0;
   let listerDeliveryFees = 0;
   let listerSecurityDeposit = 0;
+  let listerPurchaseTotal = 0;
 
   group.items.forEach((item) => {
-    listerSubtotal += item.rentalPrice || 0;
-    listerDeliveryFees += item.deliveryFee || 0;
-    listerSecurityDeposit += item.securityDeposit || 0;
+    const isResale =
+      item.purchaseTotal > 0 || item.isResale || isResaleItem(item);
+    if (isResale) {
+      listerPurchaseTotal += item.purchaseTotal || item.totalPrice || 0;
+    } else {
+      listerSubtotal += item.rentalPrice || 0;
+      listerDeliveryFees += item.deliveryFee || 0;
+      listerSecurityDeposit += item.securityDeposit || 0;
+    }
   });
 
+  const hasResaleItems = listerPurchaseTotal > 0;
+  const hasRentalItems =
+    listerSubtotal > 0 || listerDeliveryFees > 0 || listerSecurityDeposit > 0;
   const listerTotal =
-    listerSubtotal + listerDeliveryFees + listerSecurityDeposit;
+    listerPurchaseTotal +
+    listerSubtotal +
+    listerDeliveryFees +
+    listerSecurityDeposit;
 
   // Use fetched lister name, fallback to items data, then fallback to generic
   const listerName =
@@ -71,7 +85,6 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
             <Paragraph1 className="font-bold text-gray-900 text-lg tracking-wide">
               SUMMARY
             </Paragraph1>
-           
           </div>
           <Paragraph1 className="font-bold text-gray-600 text-sm sm:text-right tracking-wide shrink-0">
             From{" "}
@@ -111,13 +124,37 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
                   {product.name || item.productName}
                 </Paragraph1>
                 <Paragraph1 className="mt-1 text-gray-600 text-xs leading-snug">
-                  Duration: <strong>{item.rentalDays} Days</strong>
+                  {item.isResale || isResaleItem(item) ? (
+                    <>
+                      Type: <strong>Resale</strong>
+                    </>
+                  ) : (
+                    <>
+                      Duration: <strong>{item.rentalDays} Days</strong>
+                    </>
+                  )}
                 </Paragraph1>
-                <div className="bg-green-100 mt-4 px-2 py-0.5 border border-green-200 rounded-full w-fit text-green-800">
-                  <Paragraph1 className="font-semibold text-xs">
-                    Approved
-                  </Paragraph1>
-                </div>
+                {item.isResale && item.status === "APPROVED" && (
+                  <div className="bg-green-100 mt-4 px-2 py-0.5 border border-green-200 rounded-full w-fit text-green-800">
+                    <Paragraph1 className="font-semibold text-xs">
+                      Ready to checkout
+                    </Paragraph1>
+                  </div>
+                )}
+                {item.isResale && item.status !== "APPROVED" && (
+                  <div className="bg-yellow-100 mt-4 px-2 py-0.5 border border-yellow-200 rounded-full w-fit text-yellow-800">
+                    <Paragraph1 className="font-semibold text-xs">
+                      Awaiting approval
+                    </Paragraph1>
+                  </div>
+                )}
+                {!item.isResale && (
+                  <div className="bg-green-100 mt-4 px-2 py-0.5 border border-green-200 rounded-full w-fit text-green-800">
+                    <Paragraph1 className="font-semibold text-xs">
+                      Approved
+                    </Paragraph1>
+                  </div>
+                )}
               </div>
 
               {/* Price */}
@@ -133,40 +170,53 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
       </div>
 
       {/* Breakdown for this Lister */}
-      <div className="hidden space-y-2 border-b border-gray-200 py-4">
-        <div className="flex justify-between text-sm font-medium text-gray-700">
-          <Paragraph1>Rental Subtotal</Paragraph1>
-          <Paragraph1>
-            {CURRENCY}
-            {formatCurrency(listerSubtotal)}
-          </Paragraph1>
-        </div>
-        <div className="flex justify-between text-sm font-medium text-gray-700">
-          <Paragraph1>Delivery Fees:</Paragraph1>
-          <Paragraph1>
-            {CURRENCY}
-            {formatCurrency(listerDeliveryFees)}
-          </Paragraph1>
-        </div>
-        <div className="flex justify-between text-sm font-medium text-gray-700">
-          <Paragraph1>Cleaning Fees:</Paragraph1>
-          <Paragraph1>
-            {CURRENCY}
-            {formatCurrency(
-              group.items.reduce(
-                (sum, item) => sum + (item.cleaningFee || 0),
-                0,
-              ),
-            )}
-          </Paragraph1>
-        </div>
-        <div className="flex justify-between text-sm font-medium text-gray-700">
-          <Paragraph1>Security Deposit:</Paragraph1>
-          <Paragraph1>
-            {CURRENCY}
-            {formatCurrency(listerSecurityDeposit)}
-          </Paragraph1>
-        </div>
+      <div className="hidden space-y-2 py-4 border-gray-200 border-b">
+        {hasResaleItems && (
+          <div className="flex justify-between font-medium text-gray-700 text-sm">
+            <Paragraph1>Purchase Amount</Paragraph1>
+            <Paragraph1>
+              {CURRENCY}
+              {formatCurrency(listerPurchaseTotal)}
+            </Paragraph1>
+          </div>
+        )}
+        {hasRentalItems && (
+          <>
+            <div className="flex justify-between font-medium text-gray-700 text-sm">
+              <Paragraph1>Rental Amount</Paragraph1>
+              <Paragraph1>
+                {CURRENCY}
+                {formatCurrency(listerSubtotal)}
+              </Paragraph1>
+            </div>
+            <div className="flex justify-between font-medium text-gray-700 text-sm">
+              <Paragraph1>Delivery Fees:</Paragraph1>
+              <Paragraph1>
+                {CURRENCY}
+                {formatCurrency(listerDeliveryFees)}
+              </Paragraph1>
+            </div>
+            <div className="flex justify-between font-medium text-gray-700 text-sm">
+              <Paragraph1>Cleaning Fees:</Paragraph1>
+              <Paragraph1>
+                {CURRENCY}
+                {formatCurrency(
+                  group.items.reduce(
+                    (sum, item) => sum + (item.cleaningFee || 0),
+                    0,
+                  ),
+                )}
+              </Paragraph1>
+            </div>
+            <div className="flex justify-between font-medium text-gray-700 text-sm">
+              <Paragraph1>Security Deposit:</Paragraph1>
+              <Paragraph1>
+                {CURRENCY}
+                {formatCurrency(listerSecurityDeposit)}
+              </Paragraph1>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Lister Total */}
@@ -229,16 +279,30 @@ export function FinalOrderSummaryCard({
   let grandSubtotal = 0;
   let grandDeliveryFees = 0;
   let grandSecurityDeposit = 0;
+  let grandPurchaseTotal = 0;
 
   approvedGroups.forEach((group) => {
     group.items.forEach((item) => {
-      grandSubtotal += item.rentalPrice || 0;
-      grandDeliveryFees += item.deliveryFee || 0;
-      grandSecurityDeposit += item.securityDeposit || 0;
+      const isResale =
+        item.purchaseTotal > 0 || item.isResale || isResaleItem(item);
+      if (isResale) {
+        grandPurchaseTotal += item.purchaseTotal || item.totalPrice || 0;
+      } else {
+        grandSubtotal += item.rentalPrice || 0;
+        grandDeliveryFees += item.deliveryFee || 0;
+        grandSecurityDeposit += item.securityDeposit || 0;
+      }
     });
   });
 
-  const grandTotal = grandSubtotal + grandDeliveryFees + grandSecurityDeposit;
+  const hasGrandResaleItems = grandPurchaseTotal > 0;
+  const hasGrandRentalItems =
+    grandSubtotal > 0 || grandDeliveryFees > 0 || grandSecurityDeposit > 0;
+  const grandTotal =
+    grandPurchaseTotal +
+    grandSubtotal +
+    grandDeliveryFees +
+    grandSecurityDeposit;
 
   return (
     <div className="space-y-6">
@@ -266,7 +330,11 @@ export function FinalOrderSummaryCard({
           </Paragraph1>
         </div>
         <Paragraph1 className="mb-4 text-gray-500 text-xs">
-          Sum of approved items above, before shipping or final taxes if any.
+          {hasGrandResaleItems && hasGrandRentalItems
+            ? "Sum of approved resale and rental items above, before shipping or final taxes if any."
+            : hasGrandResaleItems
+              ? "Sum of approved resale items above, before shipping or final taxes if any."
+              : "Sum of approved rental items above, before shipping or final taxes if any."}
         </Paragraph1>
 
         {/* Proceed Button */}

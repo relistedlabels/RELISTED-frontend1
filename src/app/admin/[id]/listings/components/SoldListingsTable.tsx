@@ -1,21 +1,17 @@
-import React, { useState } from "react";
-import { Check, X, Eye } from "lucide-react";
+import React from "react";
+import { Eye } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { Product } from "@/lib/api/admin/listings";
 import { usePublicProductById } from "@/lib/queries/product/usePublicProductById";
 import { usePublicUserById } from "@/lib/queries/user/usePublicUserById";
-import { ApprovalConfirmationModal } from "./ApprovalConfirmationModal";
 import ItemTypeBadge from "./ItemTypeBadge";
 
-interface PendingListingsTableProps {
+interface SoldListingsTableProps {
   products: Product[];
   isLoading: boolean;
   error: unknown;
   searchQuery: string;
-  onApprove: (productId: string) => void;
-  onReject: (productId: string) => void;
   onView: (product: Product) => void;
-  approvingProductId?: string | null;
 }
 
 // Helper to get initials from name
@@ -28,7 +24,7 @@ const getInitials = (name?: string): string => {
     .slice(0, 2);
 };
 
-// Curator avatar component
+// Curator avatar component - memoized to prevent re-renders
 const CuratorAvatar = React.memo<{
   curatorId?: string;
   curatorName?: string;
@@ -54,8 +50,8 @@ const CuratorAvatar = React.memo<{
   );
 });
 
-// Product image component
-const ProductImage: React.FC<{ productId: string }> = ({ productId }) => {
+// Product image component - memoized to prevent re-renders
+const ProductImage = React.memo<{ productId: string }>(({ productId }) => {
   const { data: product, isLoading } = usePublicProductById(productId);
   const firstImageUrl = product?.attachments?.uploads?.[0]?.url;
 
@@ -77,37 +73,15 @@ const ProductImage: React.FC<{ productId: string }> = ({ productId }) => {
       }}
     />
   );
-};
+});
 
-export default function PendingListingsTable({
+function SoldListingsTable({
   products,
   isLoading,
   error,
   searchQuery,
-  onApprove,
-  onReject,
   onView,
-  approvingProductId,
-}: PendingListingsTableProps) {
-  const [confirmingProduct, setConfirmingProduct] = useState<Product | null>(
-    null,
-  );
-
-  const handleApproveClick = (product: Product) => {
-    setConfirmingProduct(product);
-  };
-
-  const handleConfirmApprove = () => {
-    if (confirmingProduct) {
-      onApprove(confirmingProduct.id);
-      setConfirmingProduct(null);
-    }
-  };
-
-  const handleCancelApprove = () => {
-    setConfirmingProduct(null);
-  };
-
+}: SoldListingsTableProps) {
   const filteredProducts = products.filter((product: Product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -118,7 +92,7 @@ export default function PendingListingsTable({
   if (isLoading) {
     return (
       <div className="p-8 text-center">
-        <p className="text-gray-500">Loading products...</p>
+        <p className="text-gray-500">Loading sold products...</p>
       </div>
     );
   }
@@ -126,7 +100,7 @@ export default function PendingListingsTable({
   if (error) {
     return (
       <div className="p-8 text-center">
-        <p className="text-red-500">Failed to load products</p>
+        <p className="text-red-500">Failed to load sold products</p>
       </div>
     );
   }
@@ -134,7 +108,7 @@ export default function PendingListingsTable({
   if (filteredProducts.length === 0) {
     return (
       <div className="p-8 text-center">
-        <p className="text-gray-500">No pending products found</p>
+        <p className="text-gray-500">No sold products found</p>
       </div>
     );
   }
@@ -155,6 +129,9 @@ export default function PendingListingsTable({
             </th>
             <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
               CURATOR
+            </th>
+            <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+              STATUS
             </th>
             <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
               PRICE
@@ -203,10 +180,10 @@ export default function PendingListingsTable({
                 </td>
                 <td className="py-4 px-6">
                   <Paragraph1 className="text-sm text-gray-900">
-                    {typeof safeProduct.category === "object" &&
-                    safeProduct.category
-                      ? (safeProduct.category as any)?.name || "N/A"
-                      : (safeProduct.category as string) || "N/A"}
+                    {typeof (safeProduct as any).category === "object" &&
+                    (safeProduct as any).category
+                      ? ((safeProduct as any).category as any)?.name || "N/A"
+                      : ((safeProduct as any).category as string) || "N/A"}
                   </Paragraph1>
                 </td>
                 <td className="py-4 px-6">
@@ -226,79 +203,31 @@ export default function PendingListingsTable({
                   </div>
                 </td>
                 <td className="py-4 px-6">
+                  <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+                    Sold
+                  </span>
+                </td>
+                <td className="py-4 px-6">
                   <Paragraph1 className="font-medium text-gray-900">
                     ₦{safeProduct.originalValue?.toLocaleString() || 0}
                   </Paragraph1>
-                  {/* Show rent/resale prices if available */}
-                  {(safeProduct as any).listingType && (
-                    <div className="mt-1 space-y-1">
-                      {[
-                        "RENTAL",
-                        "RENT_OR_RESALE",
-                        "rent",
-                        "rent-resale",
-                      ].includes((safeProduct as any).listingType) && (
-                        <Paragraph1 className="text-xs text-gray-700">
-                          Rent price: ₦
-                          {(safeProduct as any).dailyPrice?.toLocaleString() ||
-                            0}
-                        </Paragraph1>
-                      )}
-                      {[
-                        "RESALE",
-                        "RENT_OR_RESALE",
-                        "resale",
-                        "rent-resale",
-                      ].includes((safeProduct as any).listingType) && (
-                        <Paragraph1 className="text-xs text-gray-700">
-                          Resale: ₦
-                          {(safeProduct as any).resalePrice?.toLocaleString() ||
-                            0}
-                        </Paragraph1>
-                      )}
-                    </div>
-                  )}
                 </td>
                 <td className="py-4 px-6">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleApproveClick(product)}
-                      disabled={approvingProductId === product.id}
-                      className="px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition flex items-center justify-center gap-2 font-medium text-sm disabled:opacity-50"
-                    >
-                      <Check size={18} />
-                      {approvingProductId === product.id
-                        ? "Approving..."
-                        : "Approve"}
-                    </button>
-                    <button
-                      onClick={() => onReject(product.id)}
-                      className="px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-sm"
-                    >
-                      <X size={18} />
-                      Reject
-                    </button>
-                    <button
-                      onClick={() => onView(product)}
-                      className="px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-sm"
-                    >
-                      <Eye size={18} />
-                      View
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => onView(product)}
+                    className="px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-sm"
+                  >
+                    <Eye size={18} />
+                    View
+                  </button>
                 </td>
               </tr>
             );
           })}
         </tbody>
       </table>
-      <ApprovalConfirmationModal
-        isOpen={!!confirmingProduct}
-        product={confirmingProduct}
-        isLoading={approvingProductId === confirmingProduct?.id}
-        onConfirm={handleConfirmApprove}
-        onCancel={handleCancelApprove}
-      />
     </div>
   );
 }
+
+export default React.memo(SoldListingsTable);

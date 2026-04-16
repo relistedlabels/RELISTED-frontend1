@@ -60,13 +60,13 @@ export default function NewListingsSection() {
 
   if (loading) {
     return (
-      <section className="w-full px-4 md:px-10 bg-white py-4 sm:py-10">
-        <div className="container mx-auto">
-          <div className="text-center mb-2 sm:mb-6">
-            <Header1Plus className="sm:text-center font-light flex-1">
+      <section className="bg-white px-4 md:px-10 py-4 sm:py-10 w-full">
+        <div className="mx-auto container">
+          <div className="mb-2 sm:mb-6 text-center">
+            <Header1Plus className="flex-1 font-light sm:text-center">
               Available Listings
             </Header1Plus>
-            <Paragraph1 className="text-gray-600 mt-4">
+            <Paragraph1 className="mt-4 text-gray-600">
               Loading products...
             </Paragraph1>
           </div>
@@ -78,10 +78,10 @@ export default function NewListingsSection() {
 
   if (error) {
     return (
-      <section className="w-full px-4 md:px-0 bg-white py-4 sm:pb-10">
-        <div className="container mx-auto">
-          <div className="text-center mb-2 sm:mb-6">
-            <Header1Plus className="sm:text-center font-light flex-1">
+      <section className="bg-white px-4 md:px-0 py-4 sm:pb-10 w-full">
+        <div className="mx-auto container">
+          <div className="mb-2 sm:mb-6 text-center">
+            <Header1Plus className="flex-1 font-light sm:text-center">
               Available Listings
             </Header1Plus>
           </div>
@@ -92,41 +92,41 @@ export default function NewListingsSection() {
   }
 
   return (
-    <section className="w-full px-4 md:px-10 bg-white py-4 ">
-      <div className=" container mx-auto">
+    <section className="bg-white px-4 md:px-10 py-4 w-full">
+      <div className="mx-auto container">
         {/* Top Bar */}
-        <div className="flex items-center justify-between gap-4 mb-2 sm:mb-6">
+        <div className="flex justify-between items-center gap-4 mb-2 sm:mb-6">
           {/* Left Controls */}
-          <div className=" hidden sm:flex items-center gap-4">
+          <div className="hidden sm:flex items-center gap-4">
             <Filters />
           </div>
 
-          <div className="flex sm:hidden  items-center gap-4">
+          <div className="sm:hidden flex items-center gap-4">
             <Filters />
           </div>
 
           {/* Search */}
           <CheckCircle />
-          <div className="w-full md:w-[200px] hidden sm:flex-">
+          <div className="hidden sm:flex- w-full md:w-[200px]">
             <input
               type="text"
               placeholder="Search"
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="border w-full px-4 py-2  text-sm focus:outline-none"
+              className="px-4 py-2 border focus:outline-none w-full text-sm"
             />
           </div>
         </div>
 
         {/* Product Grid */}
         {visibleProducts.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="py-12 text-center">
             <Paragraph1 className="text-gray-600">
               No products found matching your criteria.
             </Paragraph1>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4">
+            <div className="gap-2 sm:gap-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
               {visibleProducts.map((product: any) => (
                 <ProductCard
                   key={product.id}
@@ -138,6 +138,8 @@ export default function NewListingsSection() {
                   name={product.name}
                   price={`₦${product.originalValue.toLocaleString()}`}
                   dailyPrice={product.dailyPrice}
+                  resalePrice={product.resalePrice}
+                  listingType={product.listingType}
                   size={product.measurement}
                 />
               ))}
@@ -145,11 +147,11 @@ export default function NewListingsSection() {
 
             {/* Pagination */}
             {pagination && pagination.totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-8">
+              <div className="flex justify-center items-center gap-2 mt-8">
                 <button
                   onClick={() => handlePageChange(pagination.page - 1)}
                   disabled={!pagination.hasPrevious}
-                  className="px-4 py-2 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  className="hover:bg-gray-50 disabled:opacity-50 px-4 py-2 border border-gray-300 rounded disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
@@ -178,7 +180,7 @@ export default function NewListingsSection() {
                 <button
                   onClick={() => handlePageChange(pagination.page + 1)}
                   disabled={!pagination.hasNext}
-                  className="px-4 py-2 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  className="hover:bg-gray-50 disabled:opacity-50 px-4 py-2 border border-gray-300 rounded disabled:cursor-not-allowed"
                 >
                   Next
                 </button>

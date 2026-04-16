@@ -186,6 +186,7 @@ export interface Order {
   status: "pending_approval" | "ongoing" | "completed" | "cancelled";
   createdAt: string;
   timeRemainingSeconds?: number;
+  listingType?: "RENTAL" | "RESALE" | "RENT_OR_RESALE";
 }
 
 export interface OrdersListResponse {
@@ -220,12 +221,21 @@ export interface ListerOrdersListPayload {
 export interface OrderItem {
   id: string;
   productName: string;
+  name?: string;
   size: string;
   color: string;
-  returnDueDate: string;
+  returnDueDate?: string;
   rentalAmount: number;
+  rentalFee?: number;
+  purchasePrice?: number;
   status: "Pending" | "Delivered" | "Return Due" | "Completed";
   productImage: string;
+  image?: string;
+  imageUrl?: string;
+  listingType?: "RENTAL" | "RESALE" | "RENT_OR_RESALE";
+  days?: number;
+  rentalDays?: number;
+  itemValue?: number;
 }
 
 export interface OrderItemsResponse {

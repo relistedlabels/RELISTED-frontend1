@@ -34,6 +34,13 @@ export const useCreateProduct = () => {
         measurement: draft.measurement,
         originalValue: draft.originalValue,
         dailyPrice: draft.dailyRentalPrice,
+        resalePrice: draft.resalePrice,
+        listingType:
+          draft.saleType === "rent"
+            ? "RENTAL"
+            : draft.saleType === "resale"
+              ? "RESALE"
+              : "RENT_OR_RESALE",
         collateralPrice: draft.collateralPrice,
         quantity: draft.quantity,
         color: draft.color,

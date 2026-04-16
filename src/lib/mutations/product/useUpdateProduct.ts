@@ -22,22 +22,29 @@ export const useUpdateProduct = (productId: string) => {
         subText: draft.subText.trim(),
         description: draft.description.trim(),
         condition: draft.condition,
-        composition: draft.composition || "Cotton", // ✅ String default
-        material: draft.material || "Cotton", // ✅ Material field
+        composition: draft.composition || "Cotton",
+        material: draft.material || "Cotton",
         measurement: draft.measurement,
         originalValue: draft.originalValue,
-        dailyPrice: draft.dailyRentalPrice, // ✅ Correct field name
-        collateralPrice: draft.collateralPrice, // ✅ Collateral amount
-        quantity: draft.quantity, // ✅ Include quantity
-        color: draft.color, // ✅ String, not array
+        dailyPrice: draft.dailyRentalPrice,
+        collateralPrice: draft.collateralPrice,
+        quantity: draft.quantity,
+        color: draft.color,
         warning: draft.warning.trim(),
         careInstruction: draft.careInstruction.trim(),
         careSteps: draft.careSteps?.trim() ?? "",
         stylingTip: draft.stylingTip.trim(),
-        attachments: attachmentIds, // ✅ Array of ID strings
+        attachments: attachmentIds,
         categoryId: draft.categoryId,
         tagids: tagIds,
         brandId: draft.brandId,
+        listingType:
+          draft.saleType === "resale"
+            ? "RESALE"
+            : draft.saleType === "rent"
+              ? "RENTAL"
+              : "RENT_OR_RESALE",
+        resalePrice: draft.resalePrice,
       };
 
       console.log("📤 Final payload being sent:", payload);

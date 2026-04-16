@@ -80,6 +80,16 @@ export const removeCartItem = (id: string) =>
     method: "DELETE",
   });
 
+/**
+ * Reactivate/Re-request availability for a cart item (POST /cart-items/:id/request).
+ * If request is EXPIRED, it reactivates it. Otherwise creates new request.
+ */
+export const reRequestAvailability = (cartItemId: string) =>
+  apiFetch<{ success: boolean; message?: string }>(
+    `/cart-items/${cartItemId}/request`,
+    { method: "POST" },
+  );
+
 export type OrderPostResponse = {
   success: boolean;
   message?: string;

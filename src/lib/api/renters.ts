@@ -304,7 +304,9 @@ export const rentersApi = {
       accountName: string;
     };
     bankAccountInfo?: RenterProfileBankAccountInfo;
-    bankAccounts?: RenterProfileBankAccountInfo | RenterProfileBankAccountInfo[];
+    bankAccounts?:
+      | RenterProfileBankAccountInfo
+      | RenterProfileBankAccountInfo[];
   }) =>
     apiFetch<{ success: boolean; message: string; data: { profile: any } }>(
       "/api/renters/profile",
@@ -646,13 +648,14 @@ export const rentersApi = {
   submitRentalRequest: (data: {
     productId: string;
     listerId: string;
-    rentalStartDate: string;
-    rentalEndDate: string;
+    rentalStartDate: string | null;
+    rentalEndDate: string | null;
     rentalDays: number;
     estimatedRentalPrice: number;
     deliveryAddressId: string;
     autoPay: boolean;
     currency: string;
+    cartItemId?: string;
   }) =>
     apiFetch<{ success: boolean; data: RentalRequest }>(
       "/api/renters/rental-requests",

@@ -28,6 +28,8 @@ export type PublicProduct = {
   category: PublicProductCategory;
   condition: string;
   dailyPrice: number;
+  resalePrice?: number | null;
+  listingType?: "RENTAL" | "RESALE" | "RENT_OR_RESALE";
   currency: string;
   image: string;
   images: string[];

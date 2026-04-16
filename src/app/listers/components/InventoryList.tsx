@@ -18,14 +18,26 @@ interface InventoryItem {
   color: string;
   pricePerDay: string;
   itemValue: string;
+  resalePrice: string;
+  listingType?: "RENTAL" | "RESALE" | "RENT_OR_RESALE";
   listedDate: string;
-  status: "APPROVED" | "AVAILABLE" | "RENTED" | "MAINTENANCE" | "RESERVED";
+  status:
+    | "APPROVED"
+    | "AVAILABLE"
+    | "RENTED"
+    | "MAINTENANCE"
+    | "RESERVED"
+    | "PENDING"
+    | "REJECTED"
+    | "UNAVAILABLE"
+    | "SOLD";
   isActive: boolean;
   imageUrl: string;
   curatorName: string;
+  depreciationPrompt?: boolean;
 }
 
-// ✅ Helper to convert ALL_CAPS status to Initial Caps for display
+// Helper to convert ALL_CAPS status to Initial Caps for display
 const formatStatusLabel = (
   status:
     | "APPROVED"
@@ -33,6 +45,10 @@ const formatStatusLabel = (
     | "RENTED"
     | "MAINTENANCE"
     | "RESERVED"
+    | "PENDING"
+    | "REJECTED"
+    | "UNAVAILABLE"
+    | "SOLD"
     | "All",
 ): string => {
   if (status === "All") return "All Items";
@@ -50,11 +66,14 @@ const InventoryItemCard: React.FC<InventoryItem> = ({
   color,
   pricePerDay,
   itemValue,
+  resalePrice,
+  listingType,
   listedDate,
   status,
   isActive,
   imageUrl,
   curatorName,
+  depreciationPrompt,
 }) => {
   const router = useRouter();
 
@@ -101,6 +120,46 @@ const InventoryItemCard: React.FC<InventoryItem> = ({
 
   const colors = statusColors[status] || statusColors.AVAILABLE;
 
+  // Determine type based on listingType from backend
+  let type = "Unknown";
+  if (listingType === "RENT_OR_RESALE") {
+    type = "Rental & Resale";
+  } else if (listingType === "RENTAL") {
+    type = "Rental";
+  } else if (listingType === "RESALE") {
+    type = "Resale";
+  } else {
+    // Fallback to inferring from price values if listingType is not set
+    const hasRental = pricePerDay && !pricePerDay.includes("₦0");
+    const hasResale = itemValue && !itemValue.includes("₦0");
+    if (hasRental && hasResale) {
+      type = "Rental & Resale";
+    } else if (hasRental) {
+      type = "Rental";
+    } else if (hasResale) {
+      type = "Resale";
+    }
+  }
+
+  // Determine what price column layout to show based on type
+  let priceColumnLabel = "Price";
+  let priceValue = "";
+  let secondaryPrice = null;
+
+  if (type === "Resale") {
+    priceColumnLabel = "Resale Value";
+    priceValue = resalePrice;
+  } else if (type === "Rental") {
+    priceColumnLabel = "Price/Day";
+    priceValue = pricePerDay + " /day";
+  } else if (type === "Rental & Resale") {
+    priceColumnLabel = "Price/Day";
+    priceValue = pricePerDay + " /day";
+    secondaryPrice = {
+      label: "Resale",
+      value: resalePrice,
+    };
+  }
   const handleManage = (e: React.MouseEvent) => {
     e.preventDefault();
     router.push(`/listers/inventory/product-details/${id}`);
@@ -114,10 +173,19 @@ const InventoryItemCard: React.FC<InventoryItem> = ({
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.2 }}
     >
-      <div className=" grid grid-cols-2 sm:grid-cols-7 items-center flex-wrap gap-4 justify-between p-4 border border-gray-200 rounded-xl bg-white hover:shadow-md transition-shadow duration-150">
-        {/* Product Image & Info */}
-        <div className="flex items-center space-x-3 col-span-2 ">
-          <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden shrink-0">
+      {/* Depreciation Warning Banner */}
+      {depreciationPrompt && (
+        <div className="bg-amber-50 mb-3 p-3 border border-amber-200 rounded-lg">
+          <Paragraph1 className="text-amber-800 text-xs">
+            ⚠️ This item has been rented 5+ times. Please review your resale
+            price and collateral value.
+          </Paragraph1>
+        </div>
+      )}
+      <div className="flex items-center gap-4 bg-white hover:shadow-md p-4 border border-gray-200 rounded-xl transition-shadow duration-150">
+        {/* Product Image & Info - Left Side */}
+        <div className="flex items-start space-x-3 min-w-[280px]">
+          <div className="bg-gray-100 rounded-lg w-20 h-24 overflow-hidden shrink-0">
             <img
               src={imageUrl}
               alt={name}
@@ -125,47 +193,56 @@ const InventoryItemCard: React.FC<InventoryItem> = ({
             />
           </div>
 
-          <div className="min-w-0 flex-1">
+          <div className="flex-1 min-w-0">
             <div className="flex items-center space-x-2 mb-1">
               <span className={`w-2 h-2 rounded-full ${colors.dot}`}></span>
               <Paragraph1 className={`text-xs font-semibold ${colors.text}`}>
                 {formatStatusLabel(status)}
               </Paragraph1>
               {!isActive && (
-                <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                <span className="bg-gray-100 px-2 py-0.5 rounded font-semibold text-gray-500 text-xs">
                   Disabled
                 </span>
               )}
             </div>
-            <Paragraph1 className="font-semibold text-gray-800 truncate">
+            <Paragraph1 className="font-bold text-gray-900 text-sm truncate uppercase">
               {name}
             </Paragraph1>
-            <Paragraph1 className="text-sm text-gray-500">
+            <Paragraph1 className="text-gray-600 text-xs">
               Size: {size} | Color: {color}
             </Paragraph1>
           </div>
         </div>
 
-        {/* Price Per Day */}
-        <div className="text-left">
-          <Paragraph1 className="text-xs text-gray-500">Price/Day</Paragraph1>
-          <Paragraph1 className="font-semibold text-black">
-            {pricePerDay}
+        {/* Type Column */}
+        <div className="flex flex-col flex-1">
+          <Paragraph1 className="mb-1 text-gray-500 text-xs">Type</Paragraph1>
+          <Paragraph1 className="font-semibold text-gray-900 text-sm">
+            {type}
           </Paragraph1>
         </div>
 
-        {/* Item Value */}
-        <div className="text-left">
-          <Paragraph1 className="text-xs text-gray-500">Item Value</Paragraph1>
-          <Paragraph1 className="font-semibold text-black">
-            {itemValue}
+        {/* Price/Value Column */}
+        <div className="flex flex-col flex-1 items-start">
+          <Paragraph1 className="mb-1 text-gray-500 text-xs">
+            {priceColumnLabel}
           </Paragraph1>
+          <div className="flex flex-col">
+            <Paragraph1 className="font-semibold text-gray-900 text-sm">
+              {priceValue}
+            </Paragraph1>
+            {secondaryPrice && (
+              <Paragraph1 className="text-gray-500 text-xs">
+                {secondaryPrice.label} {secondaryPrice.value}
+              </Paragraph1>
+            )}
+          </div>
         </div>
 
-        {/* Listed Date */}
-        <div className="text-left">
-          <Paragraph1 className="text-xs text-gray-500">Listed</Paragraph1>
-          <Paragraph1 className="font-semibold text-black">
+        {/* Listed Date Column */}
+        <div className="flex flex-col flex-1 items-start text-center">
+          <Paragraph1 className="mb-1 text-gray-500 text-xs">Listed</Paragraph1>
+          <Paragraph1 className="font-semibold text-gray-900 text-sm">
             {listedDate}
           </Paragraph1>
         </div>
@@ -174,14 +251,16 @@ const InventoryItemCard: React.FC<InventoryItem> = ({
         <div
           className={`px-3 flex justify-center item-center py-1.5 text-xs font-semibold rounded-lg ${colors.badge}`}
         >
-          <Paragraph1>{formatStatusLabel(status)}</Paragraph1>
+          <Paragraph1 className="font-semibold text-xs">
+            {isActive ? "Live" : "Inactive"}
+          </Paragraph1>
         </div>
 
         {/* Manage Button */}
         <button
           type="button"
           onClick={handleManage}
-          className="px-4 py-2 w-full col-span-2 sm:col-span-1 sm:colend-1  text-sm font-semibold whitespace-nowrap text-white bg-black rounded-lg hover:bg-gray-800 transition duration-150"
+          className="bg-gray-800 hover:bg-black px-6 py-2 rounded-lg font-semibold text-white text-sm whitespace-nowrap transition duration-150"
         >
           Manage
         </button>
@@ -198,7 +277,6 @@ const InventoryList: React.FC = () => {
 
   const { data: products, isLoading, error } = useUserProducts();
 
-  // ✅ Map backend products to frontend InventoryItem
   const mappedInventory: InventoryItem[] = (products || []).map(
     (product: UserProduct) => ({
       id: product.id,
@@ -207,6 +285,8 @@ const InventoryList: React.FC = () => {
       color: product.color,
       pricePerDay: `₦${product.dailyPrice.toLocaleString()}`,
       itemValue: `₦${product.originalValue.toLocaleString()}`,
+      resalePrice: `₦${(product.resalePrice ?? product.originalValue).toLocaleString()}`,
+      listingType: product.listingType,
       listedDate: new Date(product.createdAt).toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
@@ -217,10 +297,10 @@ const InventoryList: React.FC = () => {
       imageUrl:
         product.attachments?.uploads?.[0]?.url ?? "/images/placeholder.png",
       curatorName: product.curator?.name ?? "",
+      depreciationPrompt: product.depreciationPrompt,
     }),
   );
 
-  // ✅ Filter by status
   const filteredInventory =
     activeTab === "All"
       ? mappedInventory
@@ -228,7 +308,7 @@ const InventoryList: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
+      <div className="flex justify-center items-center p-8">
         <Paragraph1 className="text-gray-500">Loading inventory...</Paragraph1>
       </div>
     );
@@ -236,7 +316,7 @@ const InventoryList: React.FC = () => {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center p-8 bg-red-50 rounded-lg border border-red-200">
+      <div className="flex justify-center items-center bg-red-50 p-8 border border-red-200 rounded-lg">
         <Paragraph1 className="text-red-600">
           Failed to load inventory. Please try again.
         </Paragraph1>
@@ -249,7 +329,7 @@ const InventoryList: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-2">
-          <Paragraph3 className="text-2xl font-semibold text-black">
+          <Paragraph3 className="font-semibold text-black text-2xl">
             Inventory
           </Paragraph3>
           <ToolInfo content="Lists all items in your inventory, including availability, rental frequency, and pricing." />
@@ -257,7 +337,7 @@ const InventoryList: React.FC = () => {
 
         <Link
           href="/listers/inventory/product-upload"
-          className="flex items-center space-x-2 px-4 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition duration-150"
+          className="flex items-center space-x-2 bg-black hover:bg-gray-800 px-4 py-2 rounded-lg font-semibold text-white text-sm transition duration-150"
         >
           <Plus className="w-4 h-4" />
           <Paragraph1>Add New Item</Paragraph1>
@@ -265,8 +345,8 @@ const InventoryList: React.FC = () => {
       </div>
 
       {/* Tab Switcher - Scrollable on mobile, wrapping on desktop */}
-      <div className="mb-6 overflow-x-auto  w-[330px]  sm:w-fit">
-        <div className="p-1 bg-white rounded-xl shadow-sm inline-flex border border-gray-200 relative gap-1 min-w-max">
+      <div className="mb-6 w-[330px] sm:w-fit overflow-x-auto">
+        <div className="inline-flex relative gap-1 bg-white shadow-sm p-1 border border-gray-200 rounded-xl min-w-max">
           {(
             ["All", "AVAILABLE", "RENTED", "MAINTENANCE", "RESERVED"] as const
           ).map((tab) => (
@@ -282,7 +362,7 @@ const InventoryList: React.FC = () => {
               {activeTab === tab && (
                 <motion.div
                   layoutId="activeTab"
-                  className="absolute inset-0 bg-black rounded-lg -z-10"
+                  className="-z-10 absolute inset-0 bg-black rounded-lg"
                   transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
                 />
               )}
@@ -306,7 +386,7 @@ const InventoryList: React.FC = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="p-8 text-center text-gray-500 bg-white rounded-xl border border-gray-200"
+              className="bg-white p-8 border border-gray-200 rounded-xl text-gray-500 text-center"
             >
               <Paragraph1>
                 No{" "}

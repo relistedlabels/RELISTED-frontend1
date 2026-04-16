@@ -30,6 +30,7 @@ export type ProductDraft = {
   originalValue: number;
   dailyRentalPrice: number;
   collateralPrice: number;
+  resalePrice: number;
   quantity: number;
 
   color: string;
@@ -44,6 +45,7 @@ export type ProductDraft = {
   attachments: Attachment[];
   categoryId: string;
   brandId: string;
+  saleType: "resale" | "rent" | "rent-resale";
 };
 
 type ProductDraftStore = {
@@ -69,6 +71,7 @@ const initialState: ProductDraft = {
   originalValue: 100,
   dailyRentalPrice: 10,
   collateralPrice: 80,
+  resalePrice: 100,
   quantity: 1,
 
   color: "Black",
@@ -83,6 +86,7 @@ const initialState: ProductDraft = {
   attachments: [],
   categoryId: "",
   brandId: "",
+  saleType: "rent-resale",
 };
 
 export const useProductDraftStore = create<ProductDraftStore>()(
@@ -139,12 +143,16 @@ export const useProductDraftStore = create<ProductDraftStore>()(
             subText: product.subText,
             description: product.description,
             condition: product.condition,
-            composition: product.composition || "Cotton", // ✅ Default to Cotton if empty
-            material: product.material || "Cotton", // ✅ Default to Cotton if empty
+            composition: product.composition || "Cotton",
+            material: product.material || "Cotton",
             measurement: product.measurement,
             originalValue: product.originalValue,
             dailyRentalPrice: product.dailyPrice,
             collateralPrice: Math.round((product.originalValue || 0) * 0.8),
+            resalePrice:
+              (product as Product & { resalePrice?: number }).resalePrice ||
+              product.originalValue ||
+              100,
             quantity: product.quantity,
             color: product.color,
             warning: product.warning,
@@ -156,6 +164,15 @@ export const useProductDraftStore = create<ProductDraftStore>()(
             attachments: mappedAttachments,
             categoryId: product.categoryId,
             brandId: product.brandId ?? "",
+            saleType: (["RENTAL", "RESALE", "RENT_OR_RESALE"].includes(
+              product.listingType || "",
+            )
+              ? (product.listingType === "RENTAL"
+                  ? "rent"
+                  : product.listingType === "RESALE"
+                    ? "resale"
+                    : "rent-resale") as "resale" | "rent" | "rent-resale"
+              : "rent-resale") as "resale" | "rent" | "rent-resale",
           },
         });
       },

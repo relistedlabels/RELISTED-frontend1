@@ -4,22 +4,47 @@
 import React from "react";
 import { Lock } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
+import {
+  isListerResaleOrder,
+  isResaleItem,
+} from "@/lib/listers/listerOrderRow";
 
 interface OrderSummaryEscrowProps {
   rentalFeeTotal?: string;
   escrowValueHeld?: string;
   orderData?: any;
+  clickedItem?: any;
 }
 
 const OrderSummaryEscrow: React.FC<OrderSummaryEscrowProps> = ({
-  rentalFeeTotal: propRentalFeeTotal = "₦50,000",
-  escrowValueHeld: propEscrowValueHeld = "₦200,000",
+  rentalFeeTotal: propRentalFeeTotal,
+  escrowValueHeld: propEscrowValueHeld,
   orderData,
+  clickedItem,
 }) => {
-  // Extract from orderData if available
-  const rentalFeeTotal =
-    orderData?.escrow?.rentalFeeTotal || propRentalFeeTotal;
-  const escrowValueHeld = orderData?.escrow?.totalHeld || propEscrowValueHeld;
+  // Use item-level data if clickedItem is provided, otherwise order-level
+  const isResale = isResaleItem(clickedItem) || isListerResaleOrder(orderData);
+
+  // Extract from clickedItem if available, otherwise from orderData
+  const rentalFeeTotal = isResale
+    ? clickedItem?.purchasePrice ||
+      orderData?.escrow?.purchasePrice ||
+      orderData?.totalAmount ||
+      propRentalFeeTotal
+    : clickedItem?.rentalFee ||
+      orderData?.escrow?.rentalFeeTotal ||
+      orderData?.totalAmount ||
+      propRentalFeeTotal;
+  const escrowValueHeld = isResale
+    ? clickedItem?.purchasePrice ||
+      orderData?.escrow?.purchasePrice ||
+      orderData?.totalAmount ||
+      propEscrowValueHeld
+    : clickedItem?.itemValue ||
+      clickedItem?.itemValueHeld ||
+      orderData?.escrow?.totalHeld ||
+      orderData?.totalAmount ||
+      propEscrowValueHeld;
   const releaseCondition =
     orderData?.escrow?.releaseCondition || "return confirmation";
 
@@ -29,55 +54,55 @@ const OrderSummaryEscrow: React.FC<OrderSummaryEscrowProps> = ({
     if (typeof value === "number") {
       return `₦${value.toLocaleString()}`;
     }
-    return propRentalFeeTotal;
+    return "₦0";
   };
   return (
-    <div className="w-full  bg-white border border-gray-300 rounded-2xl p-4 ">
-      <Paragraph1 className="text-xl font-bold uppercase text-black mb-4">
-        Order Summary
+    <div className="bg-white p-4 border border-gray-300 rounded-2xl w-full">
+      <Paragraph1 className="mb-4 font-bold text-black text-xl uppercase">
+        {clickedItem ? "Item Summary" : "Order Summary"}
       </Paragraph1>
 
       {/* Financial Totals */}
       <div className="space-y-4 mb-4">
         <div className="flex justify-between items-center">
-          <Paragraph1 className="text-lg font-bold text-black">
-            Rental Fee Total:
+          <Paragraph1 className="font-bold text-black text-lg">
+            {isResale ? "Price Total:" : "Rental Fee Total:"}
           </Paragraph1>
-          <Paragraph1 className="text-2xl font-bold text-black">
+          <Paragraph1 className="font-bold text-black text-2xl">
             {formatCurrency(rentalFeeTotal)}
           </Paragraph1>
         </div>
 
         <div className="flex justify-between items-center">
-          <Paragraph1 className="text-lg font-bold text-black">
+          <Paragraph1 className="font-bold text-black text-lg">
             Escrow Value Held:
           </Paragraph1>
-          <Paragraph1 className="text-2xl font-bold text-black">
+          <Paragraph1 className="font-bold text-black text-2xl">
             {formatCurrency(escrowValueHeld)}
           </Paragraph1>
         </div>
       </div>
 
       {/* Escrow Informational Box */}
-      <div className="bg-[#FFFCEB] border border-[#FFEB82] rounded-xl p-4 flex items-start space-x-4">
+      <div className="flex items-start space-x-4 bg-[#FFFCEB] p-4 border border-[#FFEB82] rounded-xl">
         <div className="mt-1 shrink-0">
           <div className="bg-[#FFD700] p-1.5 rounded-md">
-            <Lock className="w-4 h-4 text-white fill-current" />
+            <Lock className="fill-current w-4 h-4 text-white" />
           </div>
         </div>
 
         <div className="flex flex-col space-y-1">
           <div className="flex items-center space-x-2">
-            <span className="text-base font-bold text-black">
+            <span className="font-bold text-black text-base">
               {formatCurrency(escrowValueHeld)}
             </span>
-            <span className="text-base font-medium text-black">
+            <span className="font-medium text-black text-base">
               locked in escrow
             </span>
           </div>
-          <Paragraph1 className="text-sm text-gray-700 leading-relaxed">
+          <Paragraph1 className="text-gray-700 text-sm leading-relaxed">
             Funds will be released to the renters wallet after{" "}
-            {releaseCondition}
+            {isResale ? "delivery confirmation" : releaseCondition}
           </Paragraph1>
         </div>
       </div>

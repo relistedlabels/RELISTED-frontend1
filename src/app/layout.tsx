@@ -3,6 +3,7 @@ import "./globals.css";
 import Script from "next/script";
 import { Toaster } from "sonner";
 import ApiTestComponent from "@/common/debug/ApiTestComponent";
+import { AuthStateMonitorProvider } from "@/common/layer/AuthStateMonitorProvider";
 import DesktopNavbar from "@/common/layer/DesktopNavbar";
 import DevGuard from "@/common/layer/DevGuard";
 import { FavoritesInitializer } from "@/common/layer/FavoritesInitializer";
@@ -71,18 +72,20 @@ export default function RootLayout({
       <body className=" ">
         {/* <DevGuard> */}
         <QueryProvider>
-          <UnauthorizedSignInRedirect />
-          <FavoritesInitializer />
-          <UploaderProvider>
-            <DesktopNavbar />
-            <MobileNavbar />
+          <AuthStateMonitorProvider>
+            <UnauthorizedSignInRedirect />
+            <FavoritesInitializer />
+            <UploaderProvider>
+              <DesktopNavbar />
+              <MobileNavbar />
 
-            {/* <Header /> */}
-            {children}
-            <Toaster position="top-right" />
-            <Footer />
-            {/* <ApiTestComponent /> */}
-          </UploaderProvider>
+              {/* <Header /> */}
+              {children}
+              <Toaster position="top-right" />
+              <Footer />
+              {/* <ApiTestComponent /> */}
+            </UploaderProvider>
+          </AuthStateMonitorProvider>
         </QueryProvider>
         {/* </DevGuard> */}
       </body>
