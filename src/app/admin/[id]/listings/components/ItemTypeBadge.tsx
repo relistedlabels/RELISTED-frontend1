@@ -39,7 +39,7 @@ export const ItemTypeBadge: React.FC<ItemTypeBadgeProps> = ({
     normalizedType === "both"
   ) {
     return (
-      <div className={`flex gap-1 ${className}`}>
+      <div className={`flex gap-0 ${className}`}>
         <span className="bg-white text-black border border-black px-2.5 py-1 rounded-l-full text-[10px] font-semibold">
           RENT
         </span>

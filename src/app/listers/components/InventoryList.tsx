@@ -52,6 +52,7 @@ const formatStatusLabel = (
     | "All",
 ): string => {
   if (status === "All") return "All Items";
+  if (status === "PENDING") return "Pending approval";
   return status
     .split("_")
     .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
