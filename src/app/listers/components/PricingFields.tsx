@@ -20,7 +20,7 @@ export const PricingFields: React.FC = () => {
   );
 
   const suggestedCollateralPrice = useMemo(
-    () => Math.round((data.originalValue || 0) * 0.8),
+    () => Math.round((data.originalValue || 0) * 0.3),
     [data.originalValue],
   );
 
@@ -45,10 +45,10 @@ export const PricingFields: React.FC = () => {
       {/* RESALE ONLY: Show Original Value and Resale Value */}
       {isResaleOnly && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="gap-4 grid grid-cols-1 sm:grid-cols-2">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Paragraph1 className="text-xs font-medium text-gray-700">
+                <Paragraph1 className="font-medium text-gray-700 text-xs">
                   Original Item Value (₦)
                 </Paragraph1>
                 <ToolInfo content="Enter the original purchase price or current market value of the item." />
@@ -57,7 +57,7 @@ export const PricingFields: React.FC = () => {
                 type="text"
                 inputMode="numeric"
                 placeholder="e.g., 500,000 or 1,200,000"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black"
+                className="px-3 py-2 border border-gray-200 focus:border-black rounded-lg outline-none w-full text-sm"
                 value={formatNumber(data.originalValue)}
                 onChange={(e) =>
                   setField("originalValue", parseNumber(e.target.value))
@@ -67,7 +67,7 @@ export const PricingFields: React.FC = () => {
 
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Paragraph1 className="text-xs font-medium text-gray-700">
+                <Paragraph1 className="font-medium text-gray-700 text-xs">
                   Resale Value (₦)
                 </Paragraph1>
                 <ToolInfo content="Enter the price you want to sell this item for." />
@@ -76,7 +76,7 @@ export const PricingFields: React.FC = () => {
                 type="text"
                 inputMode="numeric"
                 placeholder="e.g., 500,000 or 1,200,000"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black"
+                className="px-3 py-2 border border-gray-200 focus:border-black rounded-lg outline-none w-full text-sm"
                 value={formatNumber(data.resalePrice)}
                 onChange={(e) =>
                   setField("resalePrice", parseNumber(e.target.value))
@@ -90,10 +90,10 @@ export const PricingFields: React.FC = () => {
       {/* RENT ONLY: Show Original Value, Daily Rental Price, Collateral Price */}
       {isRentOnly && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="gap-4 grid grid-cols-1 sm:grid-cols-2">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Paragraph1 className="text-xs font-medium text-gray-700">
+                <Paragraph1 className="font-medium text-gray-700 text-xs">
                   Original Item Value (₦)
                 </Paragraph1>
                 <ToolInfo content="Enter the original purchase price or current market value of the item." />
@@ -102,7 +102,7 @@ export const PricingFields: React.FC = () => {
                 type="text"
                 inputMode="numeric"
                 placeholder="e.g., 500,000 or 1,200,000"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black"
+                className="px-3 py-2 border border-gray-200 focus:border-black rounded-lg outline-none w-full text-sm"
                 value={formatNumber(data.originalValue)}
                 onChange={(e) =>
                   setField("originalValue", parseNumber(e.target.value))
@@ -112,7 +112,7 @@ export const PricingFields: React.FC = () => {
 
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Paragraph1 className="text-xs font-medium text-gray-700">
+                <Paragraph1 className="font-medium text-gray-700 text-xs">
                   Daily Rental Price (₦)
                 </Paragraph1>
                 <ToolInfo content="Set your daily rental rate. Suggested is 10% of the item value, but you can adjust based on demand." />
@@ -120,7 +120,7 @@ export const PricingFields: React.FC = () => {
               <input
                 type="text"
                 placeholder="e.g., 50,000 or 100,000"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black"
+                className="px-3 py-2 border border-gray-200 focus:border-black rounded-lg outline-none w-full text-sm"
                 value={formatNumber(data.dailyRentalPrice)}
                 onChange={(e) =>
                   setField("dailyRentalPrice", parseNumber(e.target.value))
@@ -134,7 +134,7 @@ export const PricingFields: React.FC = () => {
 
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Paragraph1 className="text-xs font-medium text-gray-700">
+              <Paragraph1 className="font-medium text-gray-700 text-xs">
                 Collateral Price (₦)
               </Paragraph1>
               <ToolInfo content="The amount that will be locked in the system as collateral when a renter books this item. This protects you against damage or loss." />
@@ -143,14 +143,14 @@ export const PricingFields: React.FC = () => {
               type="text"
               inputMode="numeric"
               placeholder="e.g., 400,000 or 960,000"
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black"
+              className="px-3 py-2 border border-gray-200 focus:border-black rounded-lg outline-none w-full text-sm"
               value={formatNumber(data.collateralPrice)}
               onChange={(e) =>
                 setField("collateralPrice", parseNumber(e.target.value))
               }
             />
             <p className="mt-1 text-[11px] text-gray-500">
-              Suggested ≈ ₦{formatNumber(suggestedCollateralPrice)} (80% of
+              Suggested ≈ ₦{formatNumber(suggestedCollateralPrice)} (30% of
               original value)
             </p>
           </div>
@@ -160,10 +160,10 @@ export const PricingFields: React.FC = () => {
       {/* RENT AND RESALE: Show all fields */}
       {isRentAndResale && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="gap-4 grid grid-cols-1 sm:grid-cols-2">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Paragraph1 className="text-xs font-medium text-gray-700">
+                <Paragraph1 className="font-medium text-gray-700 text-xs">
                   Original Item Value (₦)
                 </Paragraph1>
                 <ToolInfo content="Enter the original purchase price or current market value of the item." />
@@ -172,7 +172,7 @@ export const PricingFields: React.FC = () => {
                 type="text"
                 inputMode="numeric"
                 placeholder="e.g., 500,000 or 1,200,000"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black"
+                className="px-3 py-2 border border-gray-200 focus:border-black rounded-lg outline-none w-full text-sm"
                 value={formatNumber(data.originalValue)}
                 onChange={(e) =>
                   setField("originalValue", parseNumber(e.target.value))
@@ -182,7 +182,7 @@ export const PricingFields: React.FC = () => {
 
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Paragraph1 className="text-xs font-medium text-gray-700">
+                <Paragraph1 className="font-medium text-gray-700 text-xs">
                   Resale Value (₦)
                 </Paragraph1>
                 <ToolInfo content="Enter the price you want to sell this item for." />
@@ -191,7 +191,7 @@ export const PricingFields: React.FC = () => {
                 type="text"
                 inputMode="numeric"
                 placeholder="e.g., 500,000 or 1,200,000"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black"
+                className="px-3 py-2 border border-gray-200 focus:border-black rounded-lg outline-none w-full text-sm"
                 value={formatNumber(data.resalePrice)}
                 onChange={(e) =>
                   setField("resalePrice", parseNumber(e.target.value))
@@ -200,10 +200,10 @@ export const PricingFields: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="gap-4 grid grid-cols-1 sm:grid-cols-2">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Paragraph1 className="text-xs font-medium text-gray-700">
+                <Paragraph1 className="font-medium text-gray-700 text-xs">
                   Daily Rental Price (₦)
                 </Paragraph1>
                 <ToolInfo content="Set your daily rental rate. Suggested is 10% of the item value, but you can adjust based on demand." />
@@ -211,7 +211,7 @@ export const PricingFields: React.FC = () => {
               <input
                 type="text"
                 placeholder="e.g., 50,000 or 100,000"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black"
+                className="px-3 py-2 border border-gray-200 focus:border-black rounded-lg outline-none w-full text-sm"
                 value={formatNumber(data.dailyRentalPrice)}
                 onChange={(e) =>
                   setField("dailyRentalPrice", parseNumber(e.target.value))
@@ -224,7 +224,7 @@ export const PricingFields: React.FC = () => {
 
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Paragraph1 className="text-xs font-medium text-gray-700">
+                <Paragraph1 className="font-medium text-gray-700 text-xs">
                   Collateral Price (₦)
                 </Paragraph1>
                 <ToolInfo content="The amount that will be locked in the system as collateral when a renter books this item. This protects you against damage or loss." />
@@ -233,7 +233,7 @@ export const PricingFields: React.FC = () => {
                 type="text"
                 inputMode="numeric"
                 placeholder="e.g., 400,000 or 960,000"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black"
+                className="px-3 py-2 border border-gray-200 focus:border-black rounded-lg outline-none w-full text-sm"
                 value={formatNumber(data.collateralPrice)}
                 onChange={(e) =>
                   setField("collateralPrice", parseNumber(e.target.value))

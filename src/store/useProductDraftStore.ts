@@ -148,7 +148,7 @@ export const useProductDraftStore = create<ProductDraftStore>()(
             measurement: product.measurement,
             originalValue: product.originalValue,
             dailyRentalPrice: product.dailyPrice,
-            collateralPrice: Math.round((product.originalValue || 0) * 0.8),
+            collateralPrice: Math.round((product.originalValue || 0) * 0.3),
             resalePrice:
               (product as Product & { resalePrice?: number }).resalePrice ||
               product.originalValue ||
