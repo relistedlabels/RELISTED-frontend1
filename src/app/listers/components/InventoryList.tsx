@@ -35,6 +35,7 @@ interface InventoryItem {
   imageUrl: string;
   curatorName: string;
   depreciationPrompt?: boolean;
+  rejectionComment?: string | null;
 }
 
 // Helper to convert ALL_CAPS status to Initial Caps for display
@@ -75,6 +76,7 @@ const InventoryItemCard: React.FC<InventoryItem> = ({
   imageUrl,
   curatorName,
   depreciationPrompt,
+  rejectionComment,
 }) => {
   const router = useRouter();
 
@@ -254,6 +256,18 @@ const InventoryItemCard: React.FC<InventoryItem> = ({
           </div>
         </div>
 
+        {/* Rejection Reason Banner - Full width at bottom */}
+        {status === "REJECTED" && rejectionComment && (
+          <div className="sm:col-span-2 bg-red-50 p-3 border border-red-200 rounded-lg w-full">
+            <Paragraph1 className="mb-1 font-semibold text-red-800 text-xs">
+              Rejection Reason:
+            </Paragraph1>
+            <Paragraph1 className="text-red-700 text-xs">
+              {rejectionComment}
+            </Paragraph1>
+          </div>
+        )}
+
         {/* Live Status Badge & Manage Button - Stack on mobile, row on desktop */}
         <div className="flex flex-row sm:flex-col justify-between sm:justify-end items-center sm:items-end gap-3 sm:gap-4 ml-0 sm:ml-4 w-full sm:w-auto shrink-0">
           {/* Live Status Badge */}
@@ -312,6 +326,7 @@ const InventoryList: React.FC = () => {
         product.attachments?.uploads?.[0]?.url ?? "/images/placeholder.png",
       curatorName: product.curator?.name ?? "",
       depreciationPrompt: product.depreciationPrompt,
+      rejectionComment: product.rejectionComment,
     }),
   );
 

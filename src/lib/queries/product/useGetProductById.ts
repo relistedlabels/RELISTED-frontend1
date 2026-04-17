@@ -33,6 +33,7 @@ export type Product = {
   reviewCount?: number;
   listingType?: "RENTAL" | "RESALE" | "RENT_OR_RESALE";
   status?: string;
+  rejectionComment?: string | null;
 };
 
 type ProductByIdResponse = {

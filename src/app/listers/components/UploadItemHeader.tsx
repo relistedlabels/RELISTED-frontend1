@@ -56,6 +56,37 @@ const UploadItemHeader: React.FC<UploadItemHeaderProps> = ({
 
     setErrorMessage("");
 
+    // Validation: Check for minimum 2 images
+    const imageAttachments = data.attachments.filter(
+      (att) => att.type === "image" || (!att.type && att.slotId !== "video"),
+    );
+    if (imageAttachments.length < 2) {
+      setErrorMessage("Please upload at least 2 images of your item.");
+      toast.error("Please upload at least 2 images of your item.");
+      return;
+    }
+
+    // Validation: Check for price
+    if (!data.dailyRentalPrice || data.dailyRentalPrice <= 0) {
+      setErrorMessage("Please set a valid rental price for your item.");
+      toast.error("Please set a valid rental price for your item.");
+      return;
+    }
+
+    // Validation: Check for brand
+    if (!data.brandId || data.brandId === "") {
+      setErrorMessage("Please select a brand for your item.");
+      toast.error("Please select a brand for your item.");
+      return;
+    }
+
+    // Validation: Check for size
+    if (!data.measurement || data.measurement === "") {
+      setErrorMessage("Please select a size for your item.");
+      toast.error("Please select a size for your item.");
+      return;
+    }
+
     mutation.mutate(data, {
       onSuccess: () => {
         reset();
@@ -85,7 +116,7 @@ const UploadItemHeader: React.FC<UploadItemHeaderProps> = ({
 
   const isPending = mutation.isPending;
   return (
-    <div className="mb-4 flex w-full flex-col gap-4 bg-transparent sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex sm:flex-row flex-col sm:justify-between sm:items-center gap-4 bg-transparent mb-4 w-full">
       <BackHeader
         title={isEditing ? "Edit Item" : title}
         subtitle={isEditing ? `Updating product` : subtitle}
@@ -93,7 +124,7 @@ const UploadItemHeader: React.FC<UploadItemHeaderProps> = ({
 
       <div className="flex flex-col items-end gap-2">
         {errorMessage && (
-          <p className="text-xs text-red-600 font-medium">{errorMessage}</p>
+          <p className="font-medium text-red-600 text-xs">{errorMessage}</p>
         )}
 
         <button

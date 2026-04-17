@@ -19,7 +19,7 @@ const InventoryItemDetailsHeader: React.FC<InventoryItemDetailsHeaderProps> = ({
 
   if (!product) return null;
 
-  const status = "Active";
+  const status = product.status === "REJECTED" ? "Rejected" : "Active";
   const rating = product.rating || 4.9;
   const reviewCount = product.reviewCount || 0;
   const dailyPrice = product.dailyPrice ?? 0;
