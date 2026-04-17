@@ -256,15 +256,22 @@ const InventoryItemCard: React.FC<InventoryItem> = ({
           </div>
         </div>
 
-        {/* Rejection Reason Banner - Full width at bottom */}
+        {/* Rejection Reason Banner */}
         {status === "REJECTED" && rejectionComment && (
-          <div className="sm:col-span-2 bg-red-50 p-3 border border-red-200 rounded-lg w-full">
-            <Paragraph1 className="mb-1 font-semibold text-red-800 text-xs">
-              Rejection Reason:
-            </Paragraph1>
-            <Paragraph1 className="text-red-700 text-xs">
-              {rejectionComment}
-            </Paragraph1>
+          <div className="bg-red-50 p-3 border border-red-200 rounded-lg w-full sm:w-64">
+            <div className="flex items-start gap-2">
+              <div className="flex flex-shrink-0 justify-center items-center bg-red-100 rounded-full w-6 h-6">
+                <span className="font-semibold text-red-600 text-xs">!</span>
+              </div>
+              <div className="flex-1">
+                <Paragraph1 className="mb-0.5 font-semibold text-red-800 text-xs">
+                  Rejection Reason
+                </Paragraph1>
+                <Paragraph1 className="text-red-700 text-xs leading-relaxed">
+                  {rejectionComment}
+                </Paragraph1>
+              </div>
+            </div>
           </div>
         )}
 

@@ -20,6 +20,7 @@ const InventoryItemDetailsHeader: React.FC<InventoryItemDetailsHeaderProps> = ({
   if (!product) return null;
 
   const status = product.status === "REJECTED" ? "Rejected" : "Active";
+  const rejectionComment = product.rejectionComment;
   const rating = product.rating || 4.9;
   const reviewCount = product.reviewCount || 0;
   const dailyPrice = product.dailyPrice ?? 0;
@@ -44,6 +45,25 @@ const InventoryItemDetailsHeader: React.FC<InventoryItemDetailsHeaderProps> = ({
 
       {/* Description */}
       <Paragraph1 className="mb-2 text-gray-500">{product.subText}</Paragraph1>
+
+      {/* Rejection Reason Banner */}
+      {product.status === "REJECTED" && rejectionComment && (
+        <div className="bg-red-50 mb-4 p-4 border border-red-200 rounded-lg">
+          <div className="flex items-start gap-3">
+            <div className="flex flex-shrink-0 justify-center items-center bg-red-100 rounded-full w-8 h-8">
+              <span className="font-semibold text-red-600 text-sm">!</span>
+            </div>
+            <div className="flex-1">
+              <Paragraph1 className="mb-1 font-semibold text-red-800 text-sm">
+                Rejection Reason
+              </Paragraph1>
+              <Paragraph1 className="text-red-700 text-sm leading-relaxed">
+                {rejectionComment}
+              </Paragraph1>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Rating */}
       <div className="flex flex-wrap items-center gap-1 mb-6">
