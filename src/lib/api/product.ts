@@ -66,6 +66,7 @@ export type UserProduct = {
   curator: ProductCurator;
   collateralPrice: number;
   depreciationPrompt?: boolean;
+  rejectionComment?: string | null;
 };
 
 export type ProductPayload = {

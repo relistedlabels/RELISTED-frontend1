@@ -66,7 +66,7 @@ const initialState: ProductDraft = {
   condition: "Like New",
   composition: "Cotton",
   material: "Cotton",
-  measurement: "M",
+  measurement: "",
 
   originalValue: 100,
   dailyRentalPrice: 10,
