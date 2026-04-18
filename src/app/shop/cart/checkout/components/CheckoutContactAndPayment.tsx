@@ -264,15 +264,11 @@ export default function CheckoutContactAndPayment({
         ) : localShippingTiers.length > 0 ? (
           <div className="space-y-3">
             {[...localShippingTiers]
-              .sort((a, b) => {
-                const aIsExpress =
-                  a.name.toLowerCase().includes("dhl") ||
-                  a.name.toLowerCase().includes("express");
-                const bIsExpress =
-                  b.name.toLowerCase().includes("dhl") ||
-                  b.name.toLowerCase().includes("express");
-                if (aIsExpress === bIsExpress) return 0;
-                return aIsExpress ? 1 : -1;
+              .filter((tier) => {
+                const isExpress =
+                  tier.name.toLowerCase().includes("dhl") ||
+                  tier.name.toLowerCase().includes("express");
+                return !isExpress;
               })
               .map((tier) => {
                 const tierDetails = getDeliveryTierDetails(tier.name);
