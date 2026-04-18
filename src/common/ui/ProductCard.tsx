@@ -183,7 +183,7 @@ export default function ProductCard({
             </div>
           </div>
         )}
-        <div className="flex justify-between items-start mt-2">
+        <div className="flex justify-between items-start mt-1">
           <Paragraph1 className="text-gray-600 ">RRP:</Paragraph1>
           <Paragraph1 className="text-gray-600 line-through">
             {price}

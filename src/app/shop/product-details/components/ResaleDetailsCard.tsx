@@ -310,10 +310,10 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
           )}
         </AnimatePresence>
         {/* Security / Shipping Info */}
-        <div className="p-3 bg-white border border-gray-200 rounded-lg flex items-start space-x-2 mb-4">
+        <div className="p-3 bg-white border border-gray-200 rounded-lg flex items-center space-x-2 mb-4">
           <img src="/icons/safe1.svg" alt="secure" />
           <Paragraph1 className=" text-gray-700 leading-snug">
-            Secure checkout. Item ships within 2-3 business days.
+            Secure checkout. Item ships within 1-3 business days.
           </Paragraph1>
         </div>
       </div>
