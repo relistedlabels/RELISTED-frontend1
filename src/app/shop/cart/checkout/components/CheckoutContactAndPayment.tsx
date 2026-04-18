@@ -263,64 +263,75 @@ export default function CheckoutContactAndPayment({
           </div>
         ) : localShippingTiers.length > 0 ? (
           <div className="space-y-3">
-            {localShippingTiers.map((tier) => {
-              const tierDetails = getDeliveryTierDetails(tier.name);
-              return (
-                <label
-                  key={tier.name}
-                  className="flex items-center p-3 border-2 rounded-lg cursor-pointer transition-colors"
-                  style={{
-                    borderColor:
-                      selectedShippingTier === tier.name ? "#000" : "#e5e7eb",
-                    backgroundColor:
-                      selectedShippingTier === tier.name
-                        ? "#f9fafb"
-                        : "#ffffff",
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="shippingTier"
-                    value={tier.name}
-                    checked={selectedShippingTier === tier.name}
-                    onChange={() => handleShippingTierChange(tier.name)}
-                    className="hidden"
-                  />
-                  <span
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                      selectedShippingTier === tier.name
-                        ? "bg-black border-black"
-                        : "bg-white border-gray-400"
-                    }`}
+            {[...localShippingTiers]
+              .sort((a, b) => {
+                const aIsExpress =
+                  a.name.toLowerCase().includes("dhl") ||
+                  a.name.toLowerCase().includes("express");
+                const bIsExpress =
+                  b.name.toLowerCase().includes("dhl") ||
+                  b.name.toLowerCase().includes("express");
+                if (aIsExpress === bIsExpress) return 0;
+                return aIsExpress ? 1 : -1;
+              })
+              .map((tier) => {
+                const tierDetails = getDeliveryTierDetails(tier.name);
+                return (
+                  <label
+                    key={tier.name}
+                    className="flex items-center p-3 border-2 rounded-lg cursor-pointer transition-colors"
+                    style={{
+                      borderColor:
+                        selectedShippingTier === tier.name ? "#000" : "#e5e7eb",
+                      backgroundColor:
+                        selectedShippingTier === tier.name
+                          ? "#f9fafb"
+                          : "#ffffff",
+                    }}
                   >
-                    {selectedShippingTier === tier.name && (
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    )}
-                  </span>
-                  <div className="ml-3 flex-1">
-                    <div className="flex items-center gap-2">
-                      <Truck size={18} className="text-gray-700" />
-                      <div>
-                        <Paragraph1 className="font-semibold text-gray-900">
-                          {tierDetails.type}
+                    <input
+                      type="radio"
+                      name="shippingTier"
+                      value={tier.name}
+                      checked={selectedShippingTier === tier.name}
+                      onChange={() => handleShippingTierChange(tier.name)}
+                      className="hidden"
+                    />
+                    <span
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                        selectedShippingTier === tier.name
+                          ? "bg-black border-black"
+                          : "bg-white border-gray-400"
+                      }`}
+                    >
+                      {selectedShippingTier === tier.name && (
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                      )}
+                    </span>
+                    <div className="ml-3 flex-1">
+                      <div className="flex items-center gap-2">
+                        <Truck size={18} className="text-gray-700" />
+                        <div>
+                          <Paragraph1 className="font-semibold text-gray-900">
+                            {tierDetails.type}
+                          </Paragraph1>
+                          <Paragraph1 className="text-xs text-gray-600">
+                            {tierDetails.description} • {tier.name}
+                          </Paragraph1>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center mt-2">
+                        <Paragraph1 className="text-xs text-gray-600 ml-6">
+                          Shipping cost:
                         </Paragraph1>
-                        <Paragraph1 className="text-xs text-gray-600">
-                          {tierDetails.description} • {tier.name}
+                        <Paragraph1 className="text-sm font-bold text-gray-900">
+                          ₦{formatCurrency(tier.totalShippingCost)}
                         </Paragraph1>
                       </div>
                     </div>
-                    <div className="flex justify-between items-center mt-2">
-                      <Paragraph1 className="text-xs text-gray-600 ml-6">
-                        Shipping cost:
-                      </Paragraph1>
-                      <Paragraph1 className="text-sm font-bold text-gray-900">
-                        ₦{formatCurrency(tier.totalShippingCost)}
-                      </Paragraph1>
-                    </div>
-                  </div>
-                </label>
-              );
-            })}
+                  </label>
+                );
+              })}
           </div>
         ) : (
           <Paragraph1 className="text-gray-600 text-sm">
