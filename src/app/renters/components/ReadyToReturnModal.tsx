@@ -7,6 +7,7 @@ import { X, Upload, CheckCircle2, AlertCircle, Star } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { useUpload } from "@/lib/queries/renters/useUpload";
 import { useAddresses, Address } from "@/lib/queries/renters/useAddresses";
+import { toast } from "sonner";
 
 interface ReadyToReturnModalProps {
   isOpen: boolean;
@@ -129,7 +130,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
     } catch (error) {
       console.error("Error confirming return:", error);
       if (isMountedRef.current) {
-        alert("Failed to confirm return. Please try again.");
+        toast.error("Failed to confirm return. Please try again.");
       }
     } finally {
       if (isMountedRef.current) {

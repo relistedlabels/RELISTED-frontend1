@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, CheckCircle2, Upload, X as XIcon } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { useUpload } from "@/lib/queries/renters/useUpload";
+import { toast } from "sonner";
 
 interface ConfirmReturnReceiptModalProps {
   isOpen: boolean;
@@ -117,11 +118,11 @@ const ConfirmReturnReceiptModal: React.FC<ConfirmReturnReceiptModalProps> = ({
       await onConfirm(actualCondition, damageNotes, imageUuids);
       setCurrentStep("success");
     } catch (error) {
-      console.error("Error confirming return receipt:", error);
       const message =
         error instanceof Error
           ? error.message
           : "Failed to confirm return receipt. Please try again.";
+      toast.error(message);
       setErrorMessage(message);
     } finally {
       setIsLoading(false);
