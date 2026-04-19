@@ -28,8 +28,9 @@ interface MobileAuthActionsProps {
 
 export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
   const { data: user, isLoading } = useMe();
-  const { data: listerProfileData } = useListerProfile();
-  const { data: renterProfileData } = useRenterProfile();
+  const isLister = user?.role?.toLowerCase() === "lister";
+  const { data: listerProfileData } = useListerProfile(isLister);
+  const { data: renterProfileData } = useRenterProfile(!isLister);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { clearUser } = useUserStore();
@@ -122,10 +123,10 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
       <div className="flex flex-col gap-4">
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="flex items-center justify-between gap-3  "
+          className="flex justify-between items-center gap-3"
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center overflow-hidden">
+            <div className="flex justify-center items-center bg-gradient-to-br from-gray-600 to-gray-800 rounded-full w-10 h-10 overflow-hidden">
               {userAvatar ? (
                 <img
                   src={userAvatar}
@@ -140,7 +141,7 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
               <Paragraph1 className="font-semibold text-white text-sm">
                 {user.name}
               </Paragraph1>
-              <Paragraph1 className="text-xs text-gray-400 capitalize">
+              <Paragraph1 className="text-gray-400 text-xs capitalize">
                 {user.role}
               </Paragraph1>
             </div>
@@ -158,36 +159,36 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
           <div className="flex flex-col gap-2 px-2">
             {user.role === "LISTER" && (
               <Link href="/listers/dashboard" onClick={handleLinkClick}>
-                <button className="w-full flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-900 transition-colors text-left">
+                <button className="flex items-center gap-3 hover:bg-gray-900 px-4 py-2 rounded-lg w-full text-left transition-colors">
                   <LayoutDashboard size={18} className="text-gray-400" />
-                  <Paragraph1 className="text-sm text-white">
+                  <Paragraph1 className="text-white text-sm">
                     Lister Dashboard
                   </Paragraph1>
                 </button>
               </Link>
             )}{" "}
             <Link href={getSettingsRoute()} onClick={handleLinkClick}>
-              <button className="w-full flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-900 transition-colors text-left">
+              <button className="flex items-center gap-3 hover:bg-gray-900 px-4 py-2 rounded-lg w-full text-left transition-colors">
                 <Settings size={18} className="text-gray-400" />
-                <Paragraph1 className="text-sm text-white">Settings</Paragraph1>
+                <Paragraph1 className="text-white text-sm">Settings</Paragraph1>
               </button>
             </Link>
             <Link href={getWalletRoute()} onClick={handleLinkClick}>
-              <button className="w-full flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-900 transition-colors text-left">
+              <button className="flex items-center gap-3 hover:bg-gray-900 px-4 py-2 rounded-lg w-full text-left transition-colors">
                 <Wallet size={18} className="text-gray-400" />
-                <Paragraph1 className="text-sm text-white">Wallet</Paragraph1>
+                <Paragraph1 className="text-white text-sm">Wallet</Paragraph1>
               </button>
             </Link>
             <Link href={getOrdersRoute()} onClick={handleLinkClick}>
-              <button className="w-full flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-900 transition-colors text-left">
+              <button className="flex items-center gap-3 hover:bg-gray-900 px-4 py-2 rounded-lg w-full text-left transition-colors">
                 <ShoppingBag size={18} className="text-gray-400" />
-                <Paragraph1 className="text-sm text-white">Orders</Paragraph1>
+                <Paragraph1 className="text-white text-sm">Orders</Paragraph1>
               </button>
             </Link>
             <Link href={getDisputeRoute()} onClick={handleLinkClick}>
-              <button className="w-full flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-900 transition-colors text-left">
+              <button className="flex items-center gap-3 hover:bg-gray-900 px-4 py-2 rounded-lg w-full text-left transition-colors">
                 <AlertCircle size={18} className="text-gray-400" />
-                <Paragraph1 className="text-sm text-white">Disputes</Paragraph1>
+                <Paragraph1 className="text-white text-sm">Disputes</Paragraph1>
               </button>
             </Link>
             <button
@@ -196,10 +197,10 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
                 setShowLogoutConfirm(true);
               }}
               disabled={logout.isPending}
-              className="w-full flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-900 transition-colors text-left disabled:opacity-50"
+              className="flex items-center gap-3 hover:bg-gray-900 disabled:opacity-50 px-4 py-2 rounded-lg w-full text-left transition-colors"
             >
               <LogOut size={18} className="text-red-500" />
-              <Paragraph1 className="text-sm text-red-500">
+              <Paragraph1 className="text-red-500 text-sm">
                 {logout.isPending ? "Logging out..." : "Logout"}
               </Paragraph1>
             </button>
@@ -225,12 +226,12 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
         href={`/auth/sign-in?redirect=${encodeURIComponent(redirectUrl)}`}
         onClick={handleLinkClick}
       >
-        <button className="w-full px-4 py-2 border border-white text-white rounded-lg hover:bg-gray-900 transition-colors font-medium text-sm">
+        <button className="hover:bg-gray-900 px-4 py-2 border border-white rounded-lg w-full font-medium text-white text-sm transition-colors">
           Sign In
         </button>
       </Link>
       <Link href={`/auth/create-account`} onClick={handleLinkClick}>
-        <button className="w-full px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors font-medium text-sm">
+        <button className="bg-white hover:bg-gray-100 px-4 py-2 rounded-lg w-full font-medium text-black text-sm transition-colors">
           Sign Up
         </button>
       </Link>

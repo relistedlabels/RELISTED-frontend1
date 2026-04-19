@@ -30,13 +30,9 @@ export default function BecomeCurator() {
       return;
     }
 
-    // If user is not already a LISTER, set them as LISTER for profile setup
-    if (role !== "LISTER") {
-      setUser({ role: "LISTER" });
-    }
-
-    // Navigate to profile setup (will show lister flow since role is now LISTER)
-    window.location.href = "/auth/profile-setup";
+    // Navigate to profile-setup with returnUrl to indicate upgrade intent
+    // The backend will handle role validation and upgrade if needed
+    window.location.href = "/auth/profile-setup?upgrade=lister";
   };
 
   return (
@@ -60,7 +56,7 @@ export default function BecomeCurator() {
 
       {/* Center Content */}
       <motion.div
-        className="absolute inset-0 flex flex-col items-center justify-center text-center text-white px-6"
+        className="absolute inset-0 flex flex-col justify-center items-center px-6 text-white text-center"
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1.1, ease: "easeOut" }}
@@ -85,19 +81,19 @@ export default function BecomeCurator() {
             }}
             transition={{ duration: 0.8 }}
           >
-            <Header1 className=" mb-[16px] sm:mb-12">Become a Lister</Header1>
+            <Header1 className="mb-[16px] sm:mb-12">Become a Lister</Header1>
           </motion.div>
 
           {/* Sub Text */}
           <motion.div
-            className=" mb-[24px] sm:mb-8"
+            className="mb-[24px] sm:mb-8"
             variants={{
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0 },
             }}
             transition={{ duration: 0.9 }}
           >
-            <Paragraph1 className=" max-w-[282px] sm:max-w-full">
+            <Paragraph1 className="max-w-[282px] sm:max-w-full">
               Turn your wardrobe into a new source of opportunity & earn
               effortlessly{" "}
             </Paragraph1>
@@ -105,7 +101,7 @@ export default function BecomeCurator() {
 
           {/* Buttons */}
           <motion.div
-            className="flex gap-4 justify-center"
+            className="flex justify-center gap-4"
             variants={{
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0 },

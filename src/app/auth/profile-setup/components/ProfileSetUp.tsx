@@ -12,7 +12,13 @@ function ProfileSetUp() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnUrl = searchParams.get("returnUrl");
+  const upgrade = searchParams.get("upgrade");
   const role = useUserStore((s) => s.role);
+
+  // If upgrade=lister is set, show lister form regardless of current store role
+  // The actual role upgrade happens in StepTwoBusinessDetails via backend
+  const shouldShowListerFlow =
+    upgrade === "lister" || role === "LISTER" || role === "ADMIN";
 
   // useEffect(() => {
   //   if (!role) {
@@ -23,9 +29,9 @@ function ProfileSetUp() {
   // if (!role) return null;
 
   return (
-    <div className="relative w-full bg-gray-100 bg-cover bg-center">
+    <div className="relative bg-gray-100 bg-cover bg-center w-full">
       <motion.div
-        className="relative flex flex-col sm:items-center sm:justify-center sm:px-6 sm:py-20"
+        className="relative flex flex-col sm:justify-center sm:items-center sm:px-6 sm:py-20"
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1.1, ease: "easeOut" }}
@@ -40,11 +46,10 @@ function ProfileSetUp() {
             },
           }}
         >
-          {role === "RENTER" && <CompleteProfileFlow returnUrl={returnUrl} />}
-          {role === "LISTER" && (
-            <CompleteBusinessProfileFlow returnUrl={returnUrl} />
+          {!shouldShowListerFlow && (
+            <CompleteProfileFlow returnUrl={returnUrl} />
           )}
-          {role === "ADMIN" && (
+          {shouldShowListerFlow && (
             <CompleteBusinessProfileFlow returnUrl={returnUrl} />
           )}
         </motion.div>

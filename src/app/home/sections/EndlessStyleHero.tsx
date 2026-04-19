@@ -30,17 +30,13 @@ export default function EndlessStyleHero() {
       return;
     }
 
-    // If user is not already a LISTER, set them as LISTER for profile setup
-    if (role !== "LISTER") {
-      setUser({ role: "LISTER" });
-    }
-
-    // Navigate to profile setup (will show lister flow since role is now LISTER)
-    window.location.href = "/auth/profile-setup";
+    // Navigate to profile-setup with returnUrl to indicate upgrade intent
+    // The backend will handle role validation and upgrade if needed
+    window.location.href = "/auth/profile-setup?upgrade=lister";
   };
-  
+
   return (
-    <section className="relative w-full h-screen overflow-hidden bg-black">
+    <section className="relative bg-black w-full h-screen overflow-hidden">
       {/* Background Video */}
       <HeroVideo />
 
@@ -54,7 +50,7 @@ export default function EndlessStyleHero() {
 
       {/* Center Content */}
       <motion.div
-        className="absolute inset-0 pt-10 flex flex-col items-center justify-center text-center text-white px-6"
+        className="absolute inset-0 flex flex-col justify-center items-center px-6 pt-10 text-white text-center"
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1.1, ease: "easeOut" }}
@@ -80,7 +76,7 @@ export default function EndlessStyleHero() {
 
           {/* Sub Text */}
           <motion.div
-            className="text-[58px] md:text-[58px] italic -mt-2 sm:-mt-1 mb-4"
+            className="-mt-2 sm:-mt-1 mb-4 text-[58px] md:text-[58px] italic"
             variants={{
               hidden: { opacity: 0, y: 20, scale: 0.8 },
               visible: { opacity: 1, y: 0, scale: 1 },
@@ -92,7 +88,7 @@ export default function EndlessStyleHero() {
 
           {/* Buttons */}
           <motion.div
-            className="flex flex-col sm:flex-row gap-4 items-center justify-center"
+            className="flex sm:flex-row flex-col justify-center items-center gap-4"
             variants={{
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0 },
