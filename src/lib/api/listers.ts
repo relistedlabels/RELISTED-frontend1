@@ -271,6 +271,15 @@ export interface OrderDetails extends Order {
     status: string;
     timeRemainingSeconds?: number;
   };
+  returnRequest?: {
+    id: string;
+    orderId: string;
+    itemCondition: string;
+    damageNotes: string;
+    imageUrls: string[];
+    status: string;
+    createdAt: string;
+  };
 }
 
 export interface OrderDetailsResponse {
@@ -365,6 +374,38 @@ export async function confirmReturn(
 ): Promise<{ success: boolean; message: string; data: Order }> {
   return apiFetch(`/api/listers/orders/${orderId}/return/confirm`, {
     method: "PATCH",
+  });
+}
+
+export async function confirmReturnReceipt(
+  orderId: string,
+  data: {
+    actualCondition: "GOOD" | "FAIR" | "POOR";
+    damageNotes?: string;
+    images?: string[];
+  },
+): Promise<{
+  success: boolean;
+  message: string;
+  data: {
+    returnRequest: {
+      id: string;
+      status: string;
+      deliveredAt: string;
+      listerCondition: string;
+      listerDamageNotes: string;
+      listerConfirmationImages: string[];
+    };
+    collateralReleased: number;
+    order: {
+      orderId: string;
+      status: string;
+    };
+  };
+}> {
+  return apiFetch(`/api/listers/orders/${orderId}/confirm-return-receipt`, {
+    method: "POST",
+    body: JSON.stringify(data),
   });
 }
 
@@ -1431,10 +1472,8 @@ export interface UpgradeListerResponse {
   };
 }
 
-export async function upgradeLister(
-  profileId: string,
-): Promise<UpgradeListerResponse> {
-  return apiFetch(`/profile/${profileId}/upgrade-lister`, {
-    method: "POST",
+export async function upgradeLister(): Promise<UpgradeListerResponse> {
+  return apiFetch("/profile/upgrade-lister", {
+    method: "PATCH",
   });
 }
