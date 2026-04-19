@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { rentersApi } from "@/lib/api/renters";
 
-export const useProfile = () =>
+export const useProfile = (enabled: boolean = true) =>
   useQuery({
     queryKey: ["renters", "profile"],
     queryFn: async () => {
@@ -15,4 +15,5 @@ export const useProfile = () =>
     },
     staleTime: 10 * 60 * 1000,
     retry: 1,
+    enabled,
   });
