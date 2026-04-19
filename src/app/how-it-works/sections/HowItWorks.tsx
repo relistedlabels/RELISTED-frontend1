@@ -41,13 +41,9 @@ export default function HowItWorks() {
       return;
     }
 
-    // If user is not already a LISTER, set them as LISTER for profile setup
-    if (role !== "LISTER") {
-      setUser({ role: "LISTER" });
-    }
-
-    // Navigate to profile setup (will show lister flow since role is now LISTER)
-    window.location.href = "/auth/profile-setup";
+    // Navigate to profile-setup with returnUrl to indicate upgrade intent
+    // The backend will handle role validation and upgrade if needed
+    window.location.href = "/auth/profile-setup?upgrade=lister";
   };
   return (
     <motion.section
@@ -55,11 +51,11 @@ export default function HowItWorks() {
       whileInView="visible"
       viewport={{ once: true }}
       variants={containerVariants}
-      className="pt-[85px] sm:pt-[100px] px-4 md:px-0 py-12 bg-white"
+      className="bg-white px-4 md:px-0 py-12 pt-[85px] sm:pt-[100px]"
     >
-      <div className="container mx-auto grid grid-cols-1 md:grid-cols-2 items-center">
+      <div className="items-center grid grid-cols-1 md:grid-cols-2 mx-auto container">
         {/* Floating Image */}
-        <div className="order-2 hidden md:flex md:order-1 w-full">
+        <div className="hidden md:flex order-2 md:order-1 w-full">
           <motion.div
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 6, repeat: Infinity }}
@@ -69,7 +65,7 @@ export default function HowItWorks() {
               src="/images/bagbg.jpg"
               alt="About Us"
               fill
-              className="object-cover "
+              className="object-cover"
             />
           </motion.div>
         </div>
@@ -77,20 +73,20 @@ export default function HowItWorks() {
         {/* Text Content */}
         <motion.div
           variants={containerVariants}
-          className="order-1 md:order-2 w-full pb-8 sm:pb-0 md:pl-12"
+          className="order-1 md:order-2 pb-8 sm:pb-0 md:pl-12 w-full"
         >
           <motion.div
-            className=" border-b border-gray-200 mb-2 "
+            className="mb-2 border-gray-200 border-b"
             variants={fadeUp}
             transition={{ duration: 0.8 }}
           >
-            <Paragraph1 className="text-sm text-gray-500 mb-2">
+            <Paragraph1 className="mb-2 text-gray-500 text-sm">
               HOW IT WORKS
             </Paragraph1>
           </motion.div>
 
           <motion.div variants={fadeUp} transition={{ duration: 0.8 }}>
-            <Header1 className="text-3xl md:text-4xl font-semibold mb-6">
+            <Header1 className="mb-6 font-semibold text-3xl md:text-4xl">
               ACCESS. EARN. ELEVATE.
             </Header1>
           </motion.div>
@@ -108,7 +104,7 @@ export default function HowItWorks() {
           <motion.div
             variants={fadeUp}
             transition={{ duration: 0.8 }}
-            className="flex gap-4 sm:justify-center- md:justify-start"
+            className="flex sm:justify-center- md:justify-start gap-4"
           >
             <motion.div>
               <Button

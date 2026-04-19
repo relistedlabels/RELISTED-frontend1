@@ -5,7 +5,7 @@ export function useUpgradeLister() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (profileId: string) => upgradeLister(profileId),
+    mutationFn: () => upgradeLister(),
     onSuccess: () => {
       // Invalidate relevant queries after upgrade
       queryClient.invalidateQueries({

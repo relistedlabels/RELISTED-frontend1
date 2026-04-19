@@ -12,6 +12,7 @@ import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import BackHeader from "@/common/ui/BackHeader";
 import { div } from "framer-motion/client";
 import OrderItemList from "./OrderItemList";
+import ConfirmReturnReceiptSection from "./ConfirmReturnReceiptSection";
 import {
   getListerOrderStatusLabel,
   isListerAvailabilityPending,
@@ -398,6 +399,24 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
           orderData={order}
         />
       </div>
+
+      {/* Confirm Return Receipt Section */}
+      {isPendingReturn && (
+        <div className="mt-6">
+          <ConfirmReturnReceiptSection
+            orderId={orderId}
+            renterInfo={{
+              name: order?.renterName || "",
+              phone: order?.renterPhone,
+              email: order?.renterEmail,
+              address: order?.renterAddress,
+            }}
+            itemCondition={order?.returnRequest?.itemCondition}
+            renterDamageNotes={order?.returnRequest?.damageNotes}
+            imageUrls={order?.returnRequest?.imageUrls}
+          />
+        </div>
+      )}
     </div>
   );
 };

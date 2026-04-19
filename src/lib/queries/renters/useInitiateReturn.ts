@@ -1,41 +1,30 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rentersApi } from "@/lib/api/renters";
 
-interface ReadyToReturnParams {
+interface ReturnWithShippingParams {
   orderId: string;
-  conditionImages: File[];
+  images: string[];
   damageNotes?: string;
-  itemCondition?: "good" | "fair" | "poor";
+  itemCondition: "GOOD" | "FAIR" | "POOR";
 }
 
 export const useInitiateReturn = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: ReadyToReturnParams) => {
+    mutationFn: async (params: ReturnWithShippingParams) => {
       const {
         orderId,
-        conditionImages,
+        images,
         damageNotes = "",
-        itemCondition = "good",
+        itemCondition = "GOOD",
       } = params;
 
-      // Create FormData with all images and condition data
-      const formData = new FormData();
-
-      // Append all image files
-      conditionImages.forEach((file) => {
-        formData.append("images", file);
+      const response = await rentersApi.returnWithShipping(orderId, {
+        itemCondition,
+        damageNotes,
+        images,
       });
-
-      // Append condition and notes
-      formData.append("itemCondition", itemCondition);
-      if (damageNotes) {
-        formData.append("damageNotes", damageNotes);
-      }
-
-      // Send everything in one request to the unified endpoint
-      const response = await rentersApi.readyToReturn(orderId, formData);
 
       return response.data;
     },

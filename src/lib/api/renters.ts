@@ -500,6 +500,72 @@ export const rentersApi = {
       body: formData,
     }),
 
+  // Return Shipping Endpoints (for future implementation)
+  getReturnShippingRates: (orderId: string) =>
+    apiFetch<{
+      success: boolean;
+      data: {
+        orderId: string;
+        shippingRates: Array<{
+          name: string;
+          pricingTier: string;
+          totalShippingCost: number;
+          estimatedDeliveryDays: number;
+        }>;
+      };
+    }>(`/api/renters/orders/${orderId}/return-shipping-rates`, {
+      method: "GET",
+    }),
+
+  returnWithShipping: (
+    orderId: string,
+    data: {
+      itemCondition: "GOOD" | "FAIR" | "POOR";
+      damageNotes?: string;
+      images?: string[];
+    },
+  ) =>
+    apiFetch<{
+      success: boolean;
+      message: string;
+      data: {
+        returnRequest: {
+          id: string;
+          orderId: string;
+          itemCondition: string;
+          damageNotes: string;
+          imageUrls: string[];
+          status: string;
+          createdAt: string;
+        };
+        order: {
+          orderId: string;
+          status: string;
+        };
+      };
+    }>(`/api/renters/orders/${orderId}/return-with-shipping`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  getReturnTracking: (orderId: string) =>
+    apiFetch<{
+      success: boolean;
+      data: {
+        trackingId: string;
+        status: string;
+        currentLocation: string;
+        estimatedDelivery: string;
+        trackingHistory: Array<{
+          status: string;
+          location: string;
+          timestamp: string;
+        }>;
+      };
+    }>(`/api/renters/returns/${orderId}/tracking`, {
+      method: "GET",
+    }),
+
   // Wallet
   getWallet: () =>
     apiFetch<{ success: boolean; data: { wallet: WalletInfo } }>(

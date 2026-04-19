@@ -9,8 +9,9 @@ import { usePathname } from "next/navigation";
 
 export function AuthActions() {
   const { data: user, isLoading } = useMe();
-  const { data: listerProfileData } = useListerProfile();
-  const { data: renterProfileData } = useRenterProfile();
+  const isLister = user?.role?.toLowerCase() === "lister";
+  const { data: listerProfileData } = useListerProfile(isLister);
+  const { data: renterProfileData } = useRenterProfile(!isLister);
   const pathname = usePathname();
 
   // Avoid flicker while auth state is resolving
@@ -39,7 +40,7 @@ export function AuthActions() {
   // ❌ Not logged in → show Sign In / Sign Up
   const redirectUrl = `${pathname}${typeof window !== "undefined" ? window.location.search : ""}`;
   return (
-    <div className="flex gap-[9px] items-center">
+    <div className="flex items-center gap-[9px]">
       <Button
         text="Sign In"
         isLink={true}

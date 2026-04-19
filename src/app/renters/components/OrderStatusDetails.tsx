@@ -3,6 +3,7 @@
 import React from "react";
 import { Lock, ShoppingBag, AlertCircle } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
+import { getRenterOrderStatusLabel } from "@/lib/renters/renterOrderStatus";
 
 const CURRENCY = "₦";
 
@@ -20,7 +21,7 @@ export default function OrderStatusDetails({
 }: OrderStatusDetailsProps) {
   if (!orderData) {
     return (
-      <div className="text-center py-8 text-red-500">
+      <div className="py-8 text-red-500 text-center">
         <Paragraph1>No order data available</Paragraph1>
       </div>
     );
@@ -51,10 +52,8 @@ export default function OrderStatusDetails({
   // Get current status
   const status = orderData.status || "PROCESSING";
 
-  // Format status for display
-  const formatStatus = (status: string) => {
-    return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
-  };
+  // Format status for display using proper status mapping
+  const statusLabel = getRenterOrderStatusLabel(status);
 
   // Get order date
   const orderDate = orderData.createdAt
@@ -69,15 +68,15 @@ export default function OrderStatusDetails({
     <div className="space-y-6">
       {/* --- 1. MONEY LOCKED NOTICE --- */}
       {status !== "completed" && lockedAmount > 0 && (
-        <div className="p-4 bg-yellow-50 rounded-xl border-l-4 border-yellow-400 shadow-sm">
+        <div className="bg-yellow-50 shadow-sm p-4 border-yellow-400 border-l-4 rounded-xl">
           <div className="flex items-start gap-4">
-            <Lock size={24} className="shrink-0 mt-1 text-yellow-600" />
+            <Lock size={24} className="mt-1 text-yellow-600 shrink-0" />
             <div>
-              <Paragraph1 className="text-sm font-bold text-gray-900 mb-1">
+              <Paragraph1 className="mb-1 font-bold text-gray-900 text-sm">
                 {CURRENCY}
                 {formatCurrency(lockedAmount)} is currently locked
               </Paragraph1>
-              <Paragraph1 className="text-sm text-gray-700">
+              <Paragraph1 className="text-gray-700 text-sm">
                 Money from your wallet is locked until you return the item and
                 it's approved by the lister. This protects both you and the
                 lister.
@@ -89,27 +88,27 @@ export default function OrderStatusDetails({
 
       {/* --- 2. ORDER STATUS --- */}
       <div>
-        <Paragraph1 className="text-base font-bold text-gray-900 mb-3">
+        <Paragraph1 className="mb-3 font-bold text-gray-900 text-base">
           Order Status
         </Paragraph1>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="gap-3 grid grid-cols-1 sm:grid-cols-2">
           {/* Status Badge */}
-          <div className="p-4 bg-white rounded-xl border border-gray-300">
-            <Paragraph1 className="text-xs text-gray-500 block mb-2">
+          <div className="bg-white p-4 border border-gray-300 rounded-xl">
+            <Paragraph1 className="block mb-2 text-gray-500 text-xs">
               Current Status
             </Paragraph1>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+              <div className="bg-blue-500 rounded-full w-3 h-3"></div>
               <Paragraph1 className="font-semibold text-gray-900">
-                {formatStatus(status)}
+                {statusLabel}
               </Paragraph1>
             </div>
           </div>
 
           {/* Order Date */}
-          <div className="p-4 bg-white rounded-xl border border-gray-300">
-            <Paragraph1 className="text-xs text-gray-500 block mb-2">
+          <div className="bg-white p-4 border border-gray-300 rounded-xl">
+            <Paragraph1 className="block mb-2 text-gray-500 text-xs">
               Order Date
             </Paragraph1>
             <Paragraph1 className="font-semibold text-gray-900">
@@ -121,21 +120,21 @@ export default function OrderStatusDetails({
 
       {/* --- 3. RETURN STATUS --- */}
       <div>
-        <Paragraph1 className="text-base font-bold text-gray-900 mb-3">
+        <Paragraph1 className="mb-3 font-bold text-gray-900 text-base">
           Return Information
         </Paragraph1>
 
-        <div className="p-4 bg-white rounded-xl border border-gray-300">
+        <div className="bg-white p-4 border border-gray-300 rounded-xl">
           <div className="flex items-start gap-4">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
+            <div className="flex justify-center items-center bg-blue-100 rounded-full w-8 h-8 shrink-0">
               <ShoppingBag size={16} className="text-blue-600" />
             </div>
 
             <div className="flex-1">
-              <Paragraph1 className="text-sm font-bold text-gray-900 mb-1">
+              <Paragraph1 className="mb-1 font-bold text-gray-900 text-sm">
                 Return Due Date
               </Paragraph1>
-              <Paragraph1 className="text-sm text-gray-700 mb-3">
+              <Paragraph1 className="mb-3 text-gray-700 text-sm">
                 Please return the item by{" "}
                 <span className="font-semibold text-gray-900">
                   {returnDate}
@@ -143,24 +142,24 @@ export default function OrderStatusDetails({
               </Paragraph1>
 
               {orderData.canReturn === false && (
-                <div className="flex items-start gap-2 mt-3 p-3 bg-orange-50 rounded border border-orange-200">
+                <div className="flex items-start gap-2 bg-orange-50 mt-3 p-3 border border-orange-200 rounded">
                   <AlertCircle
                     size={16}
-                    className="text-orange-600 flex-shrink-0 mt-0.5"
+                    className="flex-shrink-0 mt-0.5 text-orange-600"
                   />
-                  <Paragraph1 className="text-xs text-orange-700">
+                  <Paragraph1 className="text-orange-700 text-xs">
                     You can start the return process once the rental period ends
                   </Paragraph1>
                 </div>
               )}
 
               {orderData.canReturn === true && (
-                <div className="flex items-start gap-2 mt-3 p-3 bg-green-50 rounded border border-green-200">
+                <div className="flex items-start gap-2 bg-green-50 mt-3 p-3 border border-green-200 rounded">
                   <AlertCircle
                     size={16}
-                    className="text-green-600 flex-shrink-0 mt-0.5"
+                    className="flex-shrink-0 mt-0.5 text-green-600"
                   />
-                  <Paragraph1 className="text-xs text-green-700">
+                  <Paragraph1 className="text-green-700 text-xs">
                     You can now start the return process
                   </Paragraph1>
                 </div>
@@ -173,13 +172,13 @@ export default function OrderStatusDetails({
       {/* --- 4. TRACKING STATUS --- */}
       {orderData.tracking && (
         <div>
-          <Paragraph1 className="text-base font-bold text-gray-900 mb-3">
+          <Paragraph1 className="mb-3 font-bold text-gray-900 text-base">
             Tracking Status
           </Paragraph1>
 
-          <div className="p-4 bg-white rounded-xl border border-gray-300 space-y-3">
+          <div className="space-y-3 bg-white p-4 border border-gray-300 rounded-xl">
             <div>
-              <Paragraph1 className="text-xs text-gray-500 block mb-1">
+              <Paragraph1 className="block mb-1 text-gray-500 text-xs">
                 Current Status
               </Paragraph1>
               <Paragraph1 className="font-semibold text-blue-600">
@@ -190,7 +189,7 @@ export default function OrderStatusDetails({
             {orderData.tracking.updates &&
               orderData.tracking.updates.length > 0 && (
                 <div>
-                  <Paragraph1 className="text-xs text-gray-500 block mb-2">
+                  <Paragraph1 className="block mb-2 text-gray-500 text-xs">
                     Updates
                   </Paragraph1>
                   <div className="space-y-1">
@@ -198,7 +197,7 @@ export default function OrderStatusDetails({
                       (update: any, index: number) => (
                         <Paragraph1
                           key={index}
-                          className="text-sm text-gray-700"
+                          className="text-gray-700 text-sm"
                         >
                           {update}
                         </Paragraph1>
@@ -214,20 +213,20 @@ export default function OrderStatusDetails({
       {/* --- 5. SHIPPING ADDRESS --- */}
       {orderData.shippingAddress && (
         <div>
-          <Paragraph1 className="text-base font-bold text-gray-900 mb-3">
+          <Paragraph1 className="mb-3 font-bold text-gray-900 text-base">
             Shipping Address
           </Paragraph1>
 
-          <div className="p-4 bg-white rounded-xl border border-gray-300">
-            <Paragraph1 className="text-sm text-gray-700 mb-2">
+          <div className="bg-white p-4 border border-gray-300 rounded-xl">
+            <Paragraph1 className="mb-2 text-gray-700 text-sm">
               {orderData.shippingAddress.street}
             </Paragraph1>
-            <Paragraph1 className="text-sm text-gray-700">
+            <Paragraph1 className="text-gray-700 text-sm">
               {orderData.shippingAddress.city},{" "}
               {orderData.shippingAddress.state}{" "}
               {orderData.shippingAddress.zipCode}
             </Paragraph1>
-            <Paragraph1 className="text-sm text-gray-700">
+            <Paragraph1 className="text-gray-700 text-sm">
               {orderData.shippingAddress.country}
             </Paragraph1>
           </div>

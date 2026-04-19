@@ -20,9 +20,9 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
   const initiateReturnMutation = useInitiateReturn();
 
   const handleReturnConfirm = async (
-    images: File[],
-    condition: string,
-    notes: string,
+    images: string[],
+    itemCondition: "GOOD" | "FAIR" | "POOR",
+    damageNotes: string,
   ): Promise<void> => {
     if (!orderId) {
       setErrorMessage("Order ID not found");
@@ -33,9 +33,9 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
       setErrorMessage(null);
       await initiateReturnMutation.mutateAsync({
         orderId,
-        conditionImages: images,
-        itemCondition: condition as "good" | "fair" | "poor",
-        damageNotes: notes,
+        images,
+        itemCondition,
+        damageNotes,
       });
     } catch (error) {
       const message =
@@ -58,17 +58,17 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
           <Paragraph1 className="font-bold text-gray-900">
             Ready to Return?
           </Paragraph1>
-          <Paragraph1 className="text-gray-600 mt-1">
+          <Paragraph1 className="mt-1 text-gray-600">
             Return your item when you're finished with the rental
           </Paragraph1>
         </div>
 
         {/* Error Message */}
         {errorMessage && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
+          <div className="flex items-start gap-2 bg-red-50 p-3 border border-red-200 rounded-lg">
             <AlertCircle
               size={16}
-              className="text-red-600 flex-shrink-0 mt-0.5"
+              className="flex-shrink-0 mt-0.5 text-red-600"
             />
             <Paragraph1 className="text-red-700 text-sm">
               {errorMessage}
@@ -77,18 +77,18 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
         )}
 
         {/* Info Cards */}
-        <div className="grid grid-cols-1 gap-3">
+        <div className="gap-3 grid grid-cols-1">
           {/* Card 1: Easy Pickup */}
-          <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
-            <div className="flex gap-3 items-start">
-              <div className="bg-blue-50 p-2 rounded-lg flex-shrink-0">
+          <div className="hover:shadow-md p-4 border border-gray-200 rounded-lg transition">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 bg-blue-50 p-2 rounded-lg">
                 <Truck className="text-blue-600" size={20} />
               </div>
               <div>
                 <Paragraph1 className="font-semibold text-gray-900 text-sm">
                   Easy Pickup
                 </Paragraph1>
-                <Paragraph1 className="text-gray-600 text-xs mt-0.5">
+                <Paragraph1 className="mt-0.5 text-gray-600 text-xs">
                   Schedule your pickup in seconds
                 </Paragraph1>
               </div>
@@ -96,16 +96,16 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
           </div>
 
           {/* Card 2: Return on Time */}
-          <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
-            <div className="flex gap-3 items-start">
-              <div className="bg-amber-50 p-2 rounded-lg flex-shrink-0">
+          <div className="hover:shadow-md p-4 border border-gray-200 rounded-lg transition">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 bg-amber-50 p-2 rounded-lg">
                 <Clock className="text-amber-600" size={20} />
               </div>
               <div>
                 <Paragraph1 className="font-semibold text-gray-900 text-sm">
                   Return on Time
                 </Paragraph1>
-                <Paragraph1 className="text-gray-600 text-xs mt-0.5">
+                <Paragraph1 className="mt-0.5 text-gray-600 text-xs">
                   Late returns attract extra rental charges
                 </Paragraph1>
               </div>
@@ -119,7 +119,7 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           disabled={initiateReturnMutation.isPending}
-          className="w-full px-4 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-900 transition disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="flex justify-center items-center gap-2 bg-black hover:bg-gray-900 disabled:bg-gray-400 px-4 py-3 rounded-lg w-full font-semibold text-white transition disabled:cursor-not-allowed"
         >
           <Truck size={18} />
           {initiateReturnMutation.isPending
