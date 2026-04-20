@@ -30,13 +30,13 @@ const EditProductHeader: React.FC<EditProductHeaderProps> = ({
 
     updateProduct.mutate(data, {
       onSuccess: () => {
-        // ✅ Show success toast
-        toast.success("Product updated successfully! 🎉", {
+        // Show success toast
+        toast.success("Product updated successfully!", {
           description: "Your changes have been saved.",
           duration: 3000,
         });
 
-        // ✅ Route back to inventory after brief delay
+        // Route back to inventory after brief delay
         setTimeout(() => {
           router.push("/listers/inventory");
         }, 1500);

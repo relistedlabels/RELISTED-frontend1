@@ -68,10 +68,10 @@ export async function apiFetch<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  // console.log("🌐 [apiFetch] REQUEST START:", {
-  //   path,
-  //   method: options.method || "GET",
-  // });
+  console.log("[apiFetch] REQUEST START:", {
+    path,
+    method: options.method || "GET",
+  });
 
   const token = getAuthToken();
   const isFormData = options.body instanceof FormData;
@@ -102,12 +102,11 @@ export async function apiFetch<T>(
       }
     }
 
-    // console.error("🌐 [apiFetch] ERROR:", {
-    //   path,
-    //   status: res.status,
-    //   message: errorMessage,
-    //   data: errorData,
-    // });
+    console.error("[apiFetch] ERROR:", {
+      path,
+      status: res.status,
+      message: errorMessage,
+    });
 
     // Handle 401 Unauthorized - Session Expired
     if (res.status === 401) {
@@ -142,6 +141,6 @@ export async function apiFetch<T>(
   }
 
   const data = await res.json();
-  // console.log("🌐 [apiFetch] RESPONSE SUCCESS:", { path, data });
+  console.log("[apiFetch] RESPONSE SUCCESS:", { path, data });
   return data;
 }

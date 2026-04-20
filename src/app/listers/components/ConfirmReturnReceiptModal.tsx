@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, CheckCircle2, Upload, X as XIcon } from "lucide-react";
-import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { Paragraph1 } from "@/common/ui/Text";
 import { useUpload } from "@/lib/queries/renters/useUpload";
 import { toast } from "sonner";
 
@@ -16,6 +16,7 @@ interface ConfirmReturnReceiptModalProps {
     damageNotes: string,
     images: string[],
   ) => Promise<void>;
+  onReject?: () => Promise<void>;
   isLoading?: boolean;
   renterInfo?: {
     name: string;
@@ -34,6 +35,7 @@ const ConfirmReturnReceiptModal: React.FC<ConfirmReturnReceiptModalProps> = ({
   isOpen,
   onClose,
   onConfirm,
+  onReject,
   isLoading: externalIsLoading = false,
   renterInfo,
   itemCondition,
@@ -129,12 +131,32 @@ const ConfirmReturnReceiptModal: React.FC<ConfirmReturnReceiptModalProps> = ({
     }
   };
 
+  const handleReject = async () => {
+    if (onReject) {
+      setIsLoading(true);
+      setErrorMessage(null);
+      try {
+        await onReject();
+        onClose();
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to reject return. Please try again.";
+        toast.error(message);
+        setErrorMessage(message);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
   if (!isOpen) return null;
 
   return createPortal(
     <AnimatePresence>
       <motion.div
-        className="z-[100] fixed inset-0 flex justify-center items-center bg-black/50 backdrop-blur-sm p-4"
+        className="z-100 fixed inset-0 flex justify-center items-center bg-black/50 backdrop-blur-sm p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -166,74 +188,84 @@ const ConfirmReturnReceiptModal: React.FC<ConfirmReturnReceiptModalProps> = ({
           <div className="space-y-4 p-4">
             {currentStep === "confirmation" && (
               <>
-                {/* Renter Info */}
-                {renterInfo && renterInfo.name && (
-                  <div className="space-y-2 bg-gray-50 p-3 rounded-lg">
-                    <Paragraph1 className="font-semibold text-gray-900">
-                      Renter Information
-                    </Paragraph1>
-                    <Paragraph1 className="text-gray-700 text-sm">
-                      <span className="font-semibold">Name:</span>{" "}
-                      {renterInfo.name}
-                    </Paragraph1>
-                    {renterInfo.phone && (
-                      <Paragraph1 className="text-gray-700 text-sm">
-                        <span className="font-semibold">Phone:</span>{" "}
-                        {renterInfo.phone}
+                {/* Renter Info & Condition */}
+                <div className="gap-3 grid grid-cols-1">
+                  {renterInfo && renterInfo.name && (
+                    <div className="space-y-2 bg-gray-50 p-4 border border-gray-100 rounded-xl">
+                      <Paragraph1 className="font-bold text-gray-900 text-xs uppercase tracking-wider">
+                        Renter Details
                       </Paragraph1>
-                    )}
-                    {renterInfo.email && (
-                      <Paragraph1 className="text-gray-700 text-sm">
-                        <span className="font-semibold">Email:</span>{" "}
-                        {renterInfo.email}
-                      </Paragraph1>
-                    )}
-                    {renterInfo.address && (
-                      <Paragraph1 className="text-gray-700 text-sm">
-                        <span className="font-semibold">Address:</span>{" "}
-                        {renterInfo.address}
-                      </Paragraph1>
-                    )}
-                  </div>
-                )}
+                      <div className="space-y-1">
+                        <Paragraph1 className="text-gray-700 text-sm">
+                          <span className="font-medium text-gray-500">
+                            Name:
+                          </span>{" "}
+                          {renterInfo.name}
+                        </Paragraph1>
+                        {renterInfo.phone && (
+                          <Paragraph1 className="text-gray-700 text-sm">
+                            <span className="font-medium text-gray-500">
+                              Phone:
+                            </span>{" "}
+                            {renterInfo.phone}
+                          </Paragraph1>
+                        )}
+                        {renterInfo.email && (
+                          <Paragraph1 className="text-gray-700 text-sm truncate">
+                            <span className="font-medium text-gray-500">
+                              Email:
+                            </span>{" "}
+                            {renterInfo.email}
+                          </Paragraph1>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
-                {/* Renter Reported Condition */}
-                {itemCondition && (
-                  <div className="space-y-2 bg-blue-50 p-3 rounded-lg">
-                    <Paragraph1 className="font-semibold text-blue-900">
-                      Renter Reported Condition
-                    </Paragraph1>
-                    <Paragraph1 className="text-blue-700 text-sm">
-                      <span className="font-semibold">Condition:</span>{" "}
-                      {itemCondition}
-                    </Paragraph1>
-                    {renterDamageNotes && (
-                      <Paragraph1 className="text-blue-700 text-sm">
-                        <span className="font-semibold">Notes:</span>{" "}
-                        {renterDamageNotes}
+                  {itemCondition && (
+                    <div className="space-y-2 bg-blue-50 p-4 border border-blue-100 rounded-xl">
+                      <Paragraph1 className="font-bold text-blue-900 text-xs uppercase tracking-wider">
+                        Renter Reported Condition
                       </Paragraph1>
-                    )}
-                  </div>
-                )}
+                      <div className="space-y-1">
+                        <Paragraph1 className="text-blue-700 text-sm">
+                          <span className="font-medium text-blue-500">
+                            Condition:
+                          </span>{" "}
+                          {itemCondition}
+                        </Paragraph1>
+                        {renterDamageNotes && (
+                          <Paragraph1 className="text-blue-700 text-sm">
+                            <span className="font-medium text-blue-500">
+                              Notes:
+                            </span>{" "}
+                            {renterDamageNotes}
+                          </Paragraph1>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Renter's Condition Images */}
                 {imageUrls && imageUrls.length > 0 && (
-                  <div className="space-y-2">
-                    <Paragraph1 className="font-semibold text-gray-900">
+                  <div className="space-y-3">
+                    <label className="block font-bold text-gray-900 text-sm">
                       Renter's Condition Photos
-                    </Paragraph1>
-                    <div className="gap-2 grid grid-cols-3">
+                    </label>
+                    <div className="gap-3 grid grid-cols-3">
                       {imageUrls.map((url, index) => (
                         <div
                           key={index}
-                          className="border border-gray-200 rounded-lg aspect-square overflow-hidden"
+                          className="group relative shadow-sm border border-gray-200 rounded-xl hover:ring-2 hover:ring-blue-500 aspect-square overflow-hidden transition-all cursor-pointer"
+                          onClick={() => window.open(url, "_blank")}
                         >
                           <img
                             src={url}
                             alt={`Renter's condition photo ${index + 1}`}
-                            className="w-full h-full object-cover cursor-pointer"
-                            onClick={() => window.open(url, "_blank")}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                           />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
                         </div>
                       ))}
                     </div>
@@ -241,16 +273,18 @@ const ConfirmReturnReceiptModal: React.FC<ConfirmReturnReceiptModalProps> = ({
                 )}
 
                 {/* Lister's Image Upload */}
-                <div className="space-y-2">
-                  <Paragraph1 className="font-semibold text-gray-900">
-                    Your Condition Photos (Optional)
-                  </Paragraph1>
-                  <Paragraph1 className="text-gray-600 text-sm">
-                    Add photos of the item condition upon receipt
-                  </Paragraph1>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <label className="block font-bold text-gray-900 text-sm">
+                      Your Condition Photos (Optional)
+                    </label>
+                    <Paragraph1 className="text-gray-500 text-xs">
+                      Add photos of the item condition upon receipt
+                    </Paragraph1>
+                  </div>
 
                   {/* Upload Button */}
-                  <label className="block">
+                  <label className="group block">
                     <input
                       type="file"
                       accept="image/*"
@@ -259,10 +293,13 @@ const ConfirmReturnReceiptModal: React.FC<ConfirmReturnReceiptModalProps> = ({
                       className="hidden"
                       id="lister-image-upload"
                     />
-                    <div className="p-4 border-2 border-gray-300 hover:border-gray-400 border-dashed rounded-lg transition cursor-pointer">
+                    <div className="bg-gray-50/50 hover:bg-white p-6 border-2 border-gray-200 hover:border-black border-dashed rounded-xl transition-all cursor-pointer">
                       <div className="flex flex-col items-center gap-2">
-                        <Upload size={24} className="text-gray-400" />
-                        <Paragraph1 className="text-gray-600 text-sm text-center">
+                        <Upload
+                          size={20}
+                          className="text-gray-400 group-hover:text-black transition-colors"
+                        />
+                        <Paragraph1 className="font-medium text-gray-500 group-hover:text-black text-xs text-center transition-colors">
                           Click to upload condition photos
                         </Paragraph1>
                       </div>
@@ -271,11 +308,11 @@ const ConfirmReturnReceiptModal: React.FC<ConfirmReturnReceiptModalProps> = ({
 
                   {/* Image Previews */}
                   {previewUrls.length > 0 && (
-                    <div className="gap-2 grid grid-cols-3">
+                    <div className="gap-3 grid grid-cols-3">
                       {previewUrls.map((url, index) => (
                         <div
                           key={index}
-                          className="relative border border-gray-200 rounded-lg aspect-square overflow-hidden"
+                          className="relative shadow-sm border border-gray-200 rounded-xl aspect-square overflow-hidden"
                         >
                           <img
                             src={url}
@@ -284,9 +321,9 @@ const ConfirmReturnReceiptModal: React.FC<ConfirmReturnReceiptModalProps> = ({
                           />
                           <button
                             onClick={() => handleRemoveImage(index)}
-                            className="top-1 right-1 absolute bg-black/70 hover:bg-black/80 p-1 rounded-full text-white transition"
+                            className="top-1 right-1 absolute bg-black/70 hover:bg-black/80 p-1.5 rounded-full text-white hover:scale-110 transition-all"
                           >
-                            <XIcon size={14} />
+                            <XIcon size={12} />
                           </button>
                         </div>
                       ))}
@@ -295,82 +332,109 @@ const ConfirmReturnReceiptModal: React.FC<ConfirmReturnReceiptModalProps> = ({
                 </div>
 
                 {/* Condition Assessment */}
-                <div className="space-y-2">
-                  <Paragraph1 className="font-semibold text-gray-900">
-                    Assess Item Condition{" "}
-                    <span className="text-red-500">*</span>
-                  </Paragraph1>
-                  <select
-                    value={actualCondition}
-                    onChange={(e) =>
-                      setActualCondition(
-                        e.target.value as "GOOD" | "FAIR" | "POOR",
-                      )
-                    }
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black w-full text-gray-900"
-                  >
-                    <option value="GOOD">
-                      Good - Item in expected condition
-                    </option>
-                    <option value="FAIR">
-                      Fair - Minor wear/tear beyond expected
-                    </option>
-                    <option value="POOR">
-                      Poor - Significant damage or issues
-                    </option>
-                  </select>
-                </div>
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-2">
+                    <label className="block font-bold text-gray-900 text-sm">
+                      Assess Item Condition <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={actualCondition}
+                        onChange={(e) =>
+                          setActualCondition(
+                            e.target.value as "GOOD" | "FAIR" | "POOR",
+                          )
+                        }
+                        className="bg-white px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black w-full text-gray-900 text-sm transition-all appearance-none"
+                      >
+                        <option value="GOOD">Good - In expected condition</option>
+                        <option value="FAIR">Fair - Minor wear/tear</option>
+                        <option value="POOR">Poor - Significant damage</option>
+                      </select>
+                      <div className="top-1/2 right-4 absolute -translate-y-1/2 pointer-events-none">
+                        <svg
+                          className="w-4 h-4 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
 
-                {/* Damage Notes */}
-                <div className="space-y-2">
-                  <Paragraph1 className="font-semibold text-gray-900">
-                    Damage Notes (Optional)
-                  </Paragraph1>
-                  <textarea
-                    value={damageNotes}
-                    onChange={(e) => setDamageNotes(e.target.value)}
-                    placeholder="Describe any damage or condition notes..."
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black w-full text-gray-900 resize-none placeholder-gray-400"
-                    rows={3}
-                  />
+                  <div className="space-y-2">
+                    <label className="block font-bold text-gray-900 text-sm">
+                      Condition Notes (Optional)
+                    </label>
+                    <textarea
+                      value={damageNotes}
+                      onChange={(e) => setDamageNotes(e.target.value)}
+                      placeholder="Describe any damage or specific condition notes..."
+                      className="px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black w-full text-gray-900 text-sm transition-all resize-none placeholder-gray-400"
+                      rows={3}
+                    />
+                  </div>
                 </div>
 
                 {/* Info Box */}
-                <div className="space-y-2 bg-yellow-50 p-3 border border-yellow-200 rounded-lg">
-                  <Paragraph1 className="font-semibold text-yellow-900">
-                    Important
-                  </Paragraph1>
-                  <Paragraph1 className="text-yellow-700 text-sm leading-relaxed">
-                    Confirming receipt will release the collateral to the
-                    renter. Make sure you have received and inspected the item
-                    before confirming.
-                  </Paragraph1>
+                <div className="flex gap-3 bg-amber-50 p-4 border border-amber-100 rounded-xl">
+                  <div className="space-y-1">
+                    <Paragraph1 className="font-bold text-amber-900 text-sm">
+                      Important Notice
+                    </Paragraph1>
+                    <Paragraph1 className="text-amber-800 text-xs leading-relaxed">
+                      Confirming receipt will release the collateral to the
+                      renter. Ensure you have received and inspected the item
+                      before proceeding.
+                    </Paragraph1>
+                  </div>
                 </div>
 
                 {/* Error Message */}
                 {errorMessage && (
-                  <div className="bg-red-50 px-3 py-2 border border-red-200 rounded text-red-700 text-sm">
+                  <div className="bg-red-50 px-4 py-3 border border-red-100 rounded-xl font-medium text-red-700 text-xs">
                     {errorMessage}
                   </div>
                 )}
 
                 {/* Buttons */}
-                <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={handleClose}
-                    className="flex-1 hover:bg-gray-50 px-4 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 text-sm transition"
-                  >
-                    Cancel
-                  </button>
+                <div className="flex flex-col gap-3 pt-4 border-gray-100 border-t">
                   <button
                     onClick={handleConfirm}
                     disabled={isLoading || externalIsLoading}
-                    className="flex-1 bg-black hover:bg-gray-900 disabled:bg-gray-400 px-4 py-3 rounded-lg font-semibold text-white text-sm transition disabled:cursor-not-allowed"
+                    className="bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300 shadow-sm py-3.5 rounded-lg w-full font-bold text-white text-sm active:scale-[0.98] transition-all duration-200 disabled:cursor-not-allowed"
                   >
                     {isLoading || externalIsLoading
                       ? "Confirming..."
                       : "Confirm Receipt"}
                   </button>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleClose}
+                      className="flex-1 bg-white hover:bg-gray-50 py-3 border border-gray-200 rounded-lg font-semibold text-gray-700 text-xs transition-all duration-200"
+                    >
+                      Cancel
+                    </button>
+                    {onReject && (
+                      <button
+                        onClick={handleReject}
+                        disabled={isLoading || externalIsLoading}
+                        className="flex-1 bg-red-50 hover:bg-red-100 py-3 border border-red-100 hover:border-red-200 rounded-lg font-semibold text-red-600 text-xs transition-all duration-200 disabled:cursor-not-allowed"
+                      >
+                        {isLoading || externalIsLoading
+                          ? "Rejecting..."
+                          : "Reject Return"}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </>
             )}

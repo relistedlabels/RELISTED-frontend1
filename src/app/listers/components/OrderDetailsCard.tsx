@@ -3,7 +3,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { approveOrder } from "@/lib/api/listers";
 import { rejectOrder } from "@/lib/api/listers";
-import { confirmReturn } from "@/lib/api/listers";
 import { rejectReturn } from "@/lib/api/listers";
 
 import React, { useState, useEffect } from "react";
@@ -51,19 +50,6 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
     },
     onError: () => {
       setShowRejectMessage(false);
-    },
-  });
-
-  // Return confirmation mutation state
-  const [showConfirmReturnMessage, setShowConfirmReturnMessage] =
-    useState(false);
-  const confirmReturnMutation = useMutation({
-    mutationFn: () => confirmReturn(orderId),
-    onSuccess: () => {
-      setShowConfirmReturnMessage(true);
-    },
-    onError: () => {
-      setShowConfirmReturnMessage(false);
     },
   });
 
@@ -226,7 +212,6 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
           >
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-2">
-                <span className="text-lg">⏱</span>
                 <Paragraph1 className="font-bold text-gray-500 text-xs uppercase tracking-widest">
                   {isApprovalExpired
                     ? "Order Approval Expired"
@@ -336,45 +321,8 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
         {isApprovalExpired && isPendingApproval && (
           <div className="bg-red-50 mt-8 p-4 pt-8 border-red-200 border-t rounded-lg">
             <Paragraph1 className="font-bold text-red-700 text-xs">
-              ⚠ This order&apos;s approval deadline has expired and will be
+              This order&apos;s approval deadline has expired and will be
               automatically cancelled.
-            </Paragraph1>
-          </div>
-        )}
-
-        {isPendingReturn &&
-          !showConfirmReturnMessage &&
-          !showRejectReturnMessage && (
-            <div className="flex gap-3 mt-8 pt-8 border-gray-300 border-t">
-              <button
-                className="flex-1 bg-gray-100 hover:bg-gray-200 px-6 py-3 rounded-lg font-bold text-black text-sm"
-                onClick={() => rejectReturnMutation.mutate()}
-                disabled={rejectReturnMutation.isPending}
-              >
-                {rejectReturnMutation.isPending
-                  ? "Rejecting..."
-                  : "Reject Return"}
-              </button>
-              <button
-                className="flex-1 bg-black hover:bg-gray-900 px-6 py-3 rounded-lg font-bold text-white text-sm"
-                onClick={() => confirmReturnMutation.mutate()}
-                disabled={confirmReturnMutation.isPending}
-              >
-                {confirmReturnMutation.isPending
-                  ? "Confirming..."
-                  : "Confirm Return"}
-              </button>
-            </div>
-          )}
-
-        {showConfirmReturnMessage && (
-          <div className="flex flex-col justify-center items-center mt-8 pt-8 border-gray-300 border-t">
-            <Paragraph1 className="mb-2 font-bold text-green-700 text-lg">
-              Return confirmed.
-            </Paragraph1>
-            <Paragraph1 className="text-gray-500 text-sm">
-              The item return has been confirmed. The customer will be notified
-              and payment processing will begin.
             </Paragraph1>
           </div>
         )}
@@ -405,6 +353,9 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
         <div className="mt-6">
           <ConfirmReturnReceiptSection
             orderId={orderId}
+            onReject={async () => {
+              await rejectReturnMutation.mutateAsync();
+            }}
             renterInfo={{
               name: order?.renterName || "",
               phone: order?.renterPhone,

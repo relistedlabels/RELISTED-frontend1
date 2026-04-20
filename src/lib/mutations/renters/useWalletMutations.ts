@@ -26,13 +26,19 @@ export const useWithdrawFunds = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { amount: number; bankAccountId: string }) =>
-      rentersApi.withdrawFunds(data),
-    onSuccess: () => {
+    mutationFn: (data: { amount: number; bankAccountId: string }) => {
+      console.log("[RENTER WITHDRAWAL MUTATION] Calling rentersApi.withdrawFunds:", data);
+      return rentersApi.withdrawFunds(data);
+    },
+    onSuccess: (response) => {
+      console.log("[RENTER WITHDRAWAL MUTATION] API call successful:", response);
       queryClient.invalidateQueries({ queryKey: ["renters", "wallet"] });
       queryClient.invalidateQueries({
         queryKey: ["renters", "wallet", "transactions"],
       });
+    },
+    onError: (error) => {
+      console.error("[RENTER WITHDRAWAL MUTATION] API call failed:", error);
     },
   });
 };

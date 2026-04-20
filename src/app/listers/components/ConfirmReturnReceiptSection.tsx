@@ -9,6 +9,7 @@ import { useConfirmReturnReceipt } from "@/lib/queries/listers/useConfirmReturnR
 
 interface ConfirmReturnReceiptSectionProps {
   orderId?: string;
+  onReject?: () => Promise<void>;
   renterInfo?: {
     name: string;
     phone?: string;
@@ -22,7 +23,14 @@ interface ConfirmReturnReceiptSectionProps {
 
 const ConfirmReturnReceiptSection: React.FC<
   ConfirmReturnReceiptSectionProps
-> = ({ orderId, renterInfo, itemCondition, renterDamageNotes, imageUrls }) => {
+> = ({
+  orderId,
+  onReject,
+  renterInfo,
+  itemCondition,
+  renterDamageNotes,
+  imageUrls,
+}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -85,10 +93,10 @@ const ConfirmReturnReceiptSection: React.FC<
 
             <motion.button
               onClick={() => setIsModalOpen(true)}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
               disabled={confirmReturnMutation.isPending}
-              className="flex justify-center items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 px-4 py-3 rounded-lg w-full font-semibold text-white transition disabled:cursor-not-allowed"
+              className="flex justify-center items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 px-4 py-3.5 rounded-xl w-full font-bold text-white text-sm transition-all shadow-sm hover:shadow-md disabled:cursor-not-allowed"
             >
               <Package size={18} />
               {confirmReturnMutation.isPending
@@ -104,6 +112,7 @@ const ConfirmReturnReceiptSection: React.FC<
         isOpen={isModalOpen}
         onClose={handleModalClose}
         onConfirm={handleConfirmReceipt}
+        onReject={onReject}
         isLoading={confirmReturnMutation.isPending}
         renterInfo={renterInfo}
         itemCondition={itemCondition}
