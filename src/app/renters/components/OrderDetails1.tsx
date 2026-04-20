@@ -110,7 +110,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
                   <ProductCuratorDetails orderData={orderData} />
                   <OrderProgressTimeline orderData={orderData} />
                   <OrderStatusDetails orderData={orderData} />
-                  <ReadyToReturnSection orderId={orderId} orderData={orderData} />
+                  <ReadyToReturnSection orderId={orderId} />
                 </>
               )}
             </div>

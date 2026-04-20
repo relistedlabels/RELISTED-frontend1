@@ -9,65 +9,15 @@ import { useInitiateReturn } from "@/lib/queries/renters/useInitiateReturn";
 
 interface ReadyToReturnSectionProps {
   orderId?: string;
-  orderData?: any;
 }
 
 const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
   orderId,
-  orderData,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const initiateReturnMutation = useInitiateReturn();
-
-  const isUuid = (value: string) =>
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      value,
-    );
-
-  const findRentalUuid = (
-    value: unknown,
-    pathHasRental: boolean,
-  ): string | undefined => {
-    if (!value || typeof value !== "object") return undefined;
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        const found = findRentalUuid(item, pathHasRental);
-        if (found) return found;
-      }
-      return undefined;
-    }
-
-    for (const [key, val] of Object.entries(value)) {
-      const lowerKey = key.toLowerCase();
-      const nextPathHasRental = pathHasRental || lowerKey.includes("rental");
-
-      if (typeof val === "string" && isUuid(val)) {
-        if (lowerKey.includes("rental") || (nextPathHasRental && lowerKey === "id")) {
-          return val;
-        }
-      }
-
-      const found = findRentalUuid(val, nextPathHasRental);
-      if (found) return found;
-    }
-
-    return undefined;
-  };
-
-  const rentalId =
-    (typeof orderData?.rentalId === "string" && isUuid(orderData.rentalId)
-      ? orderData.rentalId
-      : typeof orderData?.rental?.id === "string" && isUuid(orderData.rental.id)
-        ? orderData.rental.id
-        : typeof orderData?.id === "string" && isUuid(orderData.id)
-          ? orderData.id
-          : typeof orderData?.orderId === "string" && isUuid(orderData.orderId)
-            ? orderData.orderId
-            : undefined) ??
-    findRentalUuid(orderData, false) ??
-    (typeof orderId === "string" && isUuid(orderId) ? orderId : undefined);
 
   const handleReturnConfirm = async (
     images: string[],
@@ -185,7 +135,6 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
         onConfirm={handleReturnConfirm}
         isLoading={initiateReturnMutation.isPending}
         orderId={orderId}
-        rentalId={rentalId}
       />
     </>
   );

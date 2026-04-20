@@ -20,7 +20,6 @@ interface ReadyToReturnModalProps {
   ) => Promise<void>;
   isLoading?: boolean;
   orderId?: string;
-  rentalId?: string;
 }
 
 type ModalStep = "confirmation" | "upload" | "success" | "review" | "review-success";
@@ -31,7 +30,6 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
   onConfirm,
   isLoading: externalIsLoading = false,
   orderId,
-  rentalId,
 }) => {
   const [currentStep, setCurrentStep] = useState<ModalStep>("confirmation");
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
@@ -50,11 +48,6 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
   const isMountedRef = useRef(true);
 
   const uploadMutation = useUpload();
-
-  const isUuid = (value: string) =>
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      value,
-    );
 
   // Fetch renter's addresses
   const { data: addresses } = useAddresses();
@@ -182,9 +175,6 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
   };
 
   const handleSubmitReview = async () => {
-    const resolvedRentalId =
-      rentalId ?? (orderId && isUuid(orderId) ? orderId : undefined);
-
     if (rating < 1 || rating > 5) {
       toast.error("Please select a rating between 1 and 5.");
       return;
@@ -193,7 +183,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
     setIsSubmittingReview(true);
     try {
       await rentersApi.submitReview({
-        ...(resolvedRentalId ? { rentalId: resolvedRentalId } : { orderId: orderId }),
+        orderId,
         rating,
         comment: reviewComment,
       });
