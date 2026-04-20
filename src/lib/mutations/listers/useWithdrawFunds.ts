@@ -9,8 +9,12 @@ export function useWithdrawFunds() {
       amount: number;
       bankAccountId: string;
       notes?: string;
-    }) => withdrawFunds(data),
-    onSuccess: () => {
+    }) => {
+      console.log("[WITHDRAWAL MUTATION] Calling withdrawFunds API:", data);
+      return withdrawFunds(data);
+    },
+    onSuccess: (response) => {
+      console.log("[WITHDRAWAL MUTATION] API call successful:", response);
       // Invalidate wallet balance
       queryClient.invalidateQueries({
         queryKey: ["listers", "wallet", "balance"],
@@ -19,6 +23,9 @@ export function useWithdrawFunds() {
       queryClient.invalidateQueries({
         queryKey: ["listers", "wallet", "transactions"],
       });
+    },
+    onError: (error) => {
+      console.error("[WITHDRAWAL MUTATION] API call failed:", error);
     },
   });
 }

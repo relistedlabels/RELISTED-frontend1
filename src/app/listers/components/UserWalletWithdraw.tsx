@@ -19,6 +19,7 @@ import {
   type RenterBankOption,
 } from "@/lib/renters/renterBankOptions";
 import { useNgBankOptions } from "@/lib/queries/useNgBankOptions";
+import { toast } from "sonner";
 
 const ExampleWithdrawalForm: React.FC = () => {
   const [amount, setAmount] = useState<string>("");
@@ -67,11 +68,9 @@ const ExampleWithdrawalForm: React.FC = () => {
   })}`;
 
   const walletBankRows = walletBankPayload?.bankAccounts ?? [];
-  const profileBankRows =
-    profileResponse?.data?.profile?.bankAccounts ?? [];
+  const profileBankRows = profileResponse?.data?.profile?.bankAccounts ?? [];
   /** Prefer wallet API rows (real BankAccount ids for withdraw); fallback to profile. */
-  const accounts =
-    walletBankRows.length > 0 ? walletBankRows : profileBankRows;
+  const accounts = walletBankRows.length > 0 ? walletBankRows : profileBankRows;
 
   const handleSelectAccount = (account: any) => {
     setSelectedBankAccount(account);
@@ -135,14 +134,22 @@ const ExampleWithdrawalForm: React.FC = () => {
           accountNumber: profileFormData.accountNumber.trim(),
           accountName: profileFormData.accountName.trim(),
         },
-        bankAccount: {
+        bankAccounts: {
           bankName: bankEntry.bankName,
+          bankCode: bankEntry.bankCode,
           accountNumber: profileFormData.accountNumber.trim(),
           accountName: profileFormData.accountName.trim(),
         },
+        bankAccount: {
+            bankName: bankEntry.bankName,
+            bankCode: bankEntry.bankCode,
+            accountNumber: profileFormData.accountNumber.trim(),
+            accountName: profileFormData.accountName.trim(),
+          },
       },
       {
         onSuccess: () => {
+          toast.success("Bank account updated successfully!");
           setIsUpdateProfileOpen(false);
           setProfileFormData({
             bankName: "",
@@ -151,100 +158,146 @@ const ExampleWithdrawalForm: React.FC = () => {
           });
         },
         onError: () => {
-          setProfileError("Failed to update bank account. Please try again.");
+          const errorMessage = "Failed to update bank account. Please try again.";
+          setProfileError(errorMessage);
+          toast.error(errorMessage);
         },
       },
     );
   };
 
   const handleWithdraw = async () => {
+    console.log("[WITHDRAWAL] Starting withdrawal process", {
+      amount,
+      selectedBankAccount: selectedBankAccount?.id,
+      availableBalance,
+      notes,
+    });
+
     // Validation
-    if (!amount || parseFloat(amount) <= 0) {
+    const parsedAmount = parseFloat(amount.replace(/,/g, ""));
+    console.log("[WITHDRAWAL] Validating amount:", { amount, parsedAmount });
+    if (!amount || parsedAmount <= 0 || isNaN(parsedAmount)) {
+      console.error("[WITHDRAWAL] Invalid amount validation failed", {
+        amount,
+        parsedAmount,
+      });
       setError("Please enter a valid amount");
       return;
     }
 
     if (!selectedBankAccount) {
+      console.error("[WITHDRAWAL] No bank account selected");
       setError("Please select a bank account");
       return;
     }
 
-    const withdrawAmount = parseFloat(amount);
+    const withdrawAmount = parsedAmount;
+    console.log("[WITHDRAWAL] Checking minimum amount", {
+      withdrawAmount,
+      minimum: 10000,
+    });
     if (withdrawAmount < 10000) {
+      console.error("[WITHDRAWAL] Minimum amount validation failed", {
+        withdrawAmount,
+        minimum: 10000,
+      });
       setError("Minimum withdrawal amount is ₦10,000");
       return;
     }
 
+    console.log("[WITHDRAWAL] Checking balance", {
+      withdrawAmount,
+      availableBalance,
+    });
     if (withdrawAmount > availableBalance) {
+      console.error("[WITHDRAWAL] Insufficient balance", {
+        withdrawAmount,
+        availableBalance,
+      });
       setError("Insufficient balance");
       return;
     }
 
+    console.log(
+      " [WITHDRAWAL] All validations passed, submitting withdrawal",
+    );
     setError("");
 
     // Submit withdrawal
-    withdrawMutation.mutate(
-      {
-        amount: withdrawAmount,
-        bankAccountId: selectedBankAccount.id,
-        notes: notes || undefined,
-      },
-      {
-        onSuccess: (data: any) => {
-          // Generate/set withdrawal reference
-          const ref =
-            data?.data?.id ||
-            `WD-${Date.now().toString().slice(-8).toUpperCase()}`;
-          setWithdrawalReference(ref);
-          setShowWithdrawalStatus(true);
-          // Reset form
-          setAmount("");
-          setNotes("");
-          setSelectedBankAccount(null);
-        },
-      },
+    const withdrawalData = {
+      amount: withdrawAmount,
+      bankAccountId: selectedBankAccount.id,
+      notes: notes || undefined,
+    };
+    console.log(
+      " [WITHDRAWAL] Submitting withdrawal request:",
+      withdrawalData,
     );
+
+    withdrawMutation.mutate(withdrawalData, {
+      onSuccess: (data: any) => {
+        console.log("[WITHDRAWAL] Withdrawal successful:", data);
+        toast.success("Withdrawal request submitted successfully!");
+        // Generate/set withdrawal reference
+        const ref =
+          data?.data?.id ||
+          `WD-${Date.now().toString().slice(-8).toUpperCase()}`;
+        setWithdrawalReference(ref);
+        setShowWithdrawalStatus(true);
+        // Reset form
+        setAmount("");
+        setNotes("");
+        setSelectedBankAccount(null);
+      },
+      onError: (error: any) => {
+        console.error("[WITHDRAWAL] Withdrawal failed:", error);
+        const errorMessage = error?.message || "Withdrawal failed. Please try again.";
+        setError(errorMessage);
+        toast.error(errorMessage);
+      },
+    });
   };
 
   return (
-    <div className="font-sans bg-white text-gray-900">
+    <div className="bg-white font-sans text-gray-900">
       {/* Available Balance Display */}
-      <div className="p-4 bg-gray-100 rounded-xl mb-6">
-        <Paragraph1 className="text-sm text-gray-500 mb-1">
+      <div className="bg-gray-100 mb-6 p-4 rounded-xl">
+        <Paragraph1 className="mb-1 text-gray-500 text-sm">
           Available Balance
         </Paragraph1>
         {isLoadingWallet ? (
-          <div className="h-8 bg-gray-200 rounded animate-pulse" />
+          <div className="bg-gray-200 rounded h-8 animate-pulse" />
         ) : (
           <div className="flex items-center space-x-2">
-            <img src="/icons/lock2.png" className="h-[41px] w-auto" />
-            <Paragraph1 className="text-xl font-bold text-gray-900">
+            <img src="/icons/lock2.png" className="w-auto h-[41px]" />
+            <Paragraph1 className="font-bold text-gray-900 text-xl">
               {displayBalance}
             </Paragraph1>
           </div>
         )}
-        <Paragraph1 className="text-xs text-gray-500 mt-1">
+        <Paragraph1 className="mt-1 text-gray-500 text-xs">
           Make only 5 withdrawals per month
         </Paragraph1>
       </div>
 
       {/* Profile Account Details - Step 0 */}
-      <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+      <div className="bg-amber-50 mb-6 p-4 border border-amber-200 rounded-lg">
         <div className="flex justify-between items-center">
           <div>
-            <Paragraph1 className="text-sm font-medium text-gray-900 mb-1">
+            <Paragraph1 className="mb-1 font-medium text-gray-900 text-sm">
               Account Details
             </Paragraph1>
             {walletBankLoading && accounts.length === 0 ? (
-              <Paragraph1 className="text-xs text-gray-500">
+              <Paragraph1 className="text-gray-500 text-xs">
                 Loading linked accounts…
               </Paragraph1>
             ) : accounts && accounts.length > 0 ? (
               <div>
-                <Paragraph1 className="text-xs text-gray-600">
+                <Paragraph1 className="text-gray-600 text-xs">
                   {accounts[0].accountName} • {accounts[0].bankName}
                 </Paragraph1>
-                <Paragraph1 className="text-xs text-gray-500 mt-1">
+                <Paragraph1 className="mt-1 text-gray-500 text-xs">
                   {(accounts[0].accountNumber || "")
                     .slice(-4)
                     .padStart(
@@ -254,7 +307,7 @@ const ExampleWithdrawalForm: React.FC = () => {
                 </Paragraph1>
                 {(accounts[0] as { verificationStatus?: string })
                   .verificationStatus ? (
-                  <Paragraph1 className="text-xs text-amber-800 bg-amber-100/80 rounded px-2 py-1 mt-2 inline-block">
+                  <Paragraph1 className="inline-block bg-amber-100/80 mt-2 px-2 py-1 rounded text-amber-800 text-xs">
                     Bank verification:{" "}
                     {
                       (accounts[0] as { verificationStatus?: string })
@@ -264,7 +317,7 @@ const ExampleWithdrawalForm: React.FC = () => {
                 ) : null}
               </div>
             ) : (
-              <Paragraph1 className="text-xs text-amber-700">
+              <Paragraph1 className="text-amber-700 text-xs">
                 No account details added yet
               </Paragraph1>
             )}
@@ -285,7 +338,7 @@ const ExampleWithdrawalForm: React.FC = () => {
             }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="flex items-center space-x-1 px-3 py-2 text-xs font-medium bg-black text-white rounded-lg hover:bg-gray-800 transition"
+            className="flex items-center space-x-1 bg-black hover:bg-gray-800 px-3 py-2 rounded-lg font-medium text-white text-xs transition"
           >
             <HiOutlinePencil size={16} />
             <span>{accounts && accounts.length > 0 ? "Change" : "Add"}</span>
@@ -295,17 +348,17 @@ const ExampleWithdrawalForm: React.FC = () => {
 
       {/* Bank Account Selection - Step 1 */}
       <div className="mb-6">
-        <Paragraph1 className="text-sm font-medium text-gray-900 mb-3">
+        <Paragraph1 className="mb-3 font-medium text-gray-900 text-sm">
           Select Account to Withdraw To
         </Paragraph1>
 
         {walletBankLoading && accounts.length === 0 ? (
-          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="h-10 bg-gray-200 rounded animate-pulse" />
+          <div className="bg-gray-50 p-4 border border-gray-200 rounded-lg">
+            <div className="bg-gray-200 rounded h-10 animate-pulse" />
           </div>
         ) : accounts.length === 0 ? (
-          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 text-center">
-            <Paragraph1 className="text-sm text-gray-500">
+          <div className="bg-gray-50 p-4 border border-gray-200 rounded-lg text-center">
+            <Paragraph1 className="text-gray-500 text-sm">
               No accounts available. Add bank details below (saved via your
               profile) or wait for the wallet list to refresh.
             </Paragraph1>
@@ -315,8 +368,7 @@ const ExampleWithdrawalForm: React.FC = () => {
             {accounts.map((account) => (
               <motion.div
                 key={
-                  account.id ||
-                  `${account.bankName}-${account.accountNumber}`
+                  account.id || `${account.bankName}-${account.accountNumber}`
                 }
                 className={`w-full text-left p-4 rounded-lg border-2 transition duration-200 relative overflow-hidden ${
                   selectedBankAccount?.id === account.id
@@ -324,7 +376,7 @@ const ExampleWithdrawalForm: React.FC = () => {
                     : "border-gray-200 bg-white hover:border-gray-300"
                 }`}
               >
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex justify-between items-start gap-2">
                   <motion.button
                     onClick={() => handleSelectAccount(account)}
                     whileHover={{ scale: 1.02 }}
@@ -333,7 +385,7 @@ const ExampleWithdrawalForm: React.FC = () => {
                   >
                     {/* Checkmark indicator */}
                     {selectedBankAccount?.id === account.id && (
-                      <div className="absolute top-3 left-full transform -translate-x-12 text-black">
+                      <div className="top-3 left-full absolute text-black -translate-x-12 transform">
                         <HiOutlineCheckCircle
                           size={20}
                           className="fill-black"
@@ -341,10 +393,10 @@ const ExampleWithdrawalForm: React.FC = () => {
                       </div>
                     )}
 
-                    <Paragraph1 className="text-sm font-semibold text-gray-900 leading-tight">
+                    <Paragraph1 className="font-semibold text-gray-900 text-sm leading-tight">
                       {account.bankName}
                     </Paragraph1>
-                    <Paragraph1 className="text-xs text-gray-600 mt-1">
+                    <Paragraph1 className="mt-1 text-gray-600 text-xs">
                       Account:{" "}
                       {(account.accountNumber || "")
                         .slice(-4)
@@ -353,7 +405,7 @@ const ExampleWithdrawalForm: React.FC = () => {
                           "*",
                         )}
                     </Paragraph1>
-                    <Paragraph1 className="text-xs text-gray-500 mt-2 font-medium">
+                    <Paragraph1 className="mt-2 font-medium text-gray-500 text-xs">
                       {account.accountName}
                     </Paragraph1>
                   </motion.button>
@@ -363,7 +415,7 @@ const ExampleWithdrawalForm: React.FC = () => {
                     onClick={() => handleEditAccount(account)}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
-                    className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition shrink-0"
+                    className="hover:bg-gray-100 p-2 rounded-lg text-gray-500 hover:text-gray-900 transition shrink-0"
                   >
                     <HiOutlinePencil size={18} />
                   </motion.button>
@@ -384,21 +436,40 @@ const ExampleWithdrawalForm: React.FC = () => {
             transition={{ duration: 0.3 }}
             className="mb-4"
           >
-            <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
-              Withdrawal Amount
-            </Paragraph1>
+            <div className="flex items-center gap-2 mb-2">
+              <Paragraph1 className="font-medium text-gray-900 text-sm">
+                Withdrawal Amount
+              </Paragraph1>
+              <span
+                className="text-gray-500 text-xs"
+                title="Type numbers without commas. They will be formatted automatically."
+              >
+                💡 Type numbers without commas
+              </span>
+            </div>
             <div className="relative">
               <input
-                type="number"
+                type="text"
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => {
-                  setAmount(e.target.value);
+                  // Only allow numbers and remove existing commas
+                  let value = e.target.value.replace(/[^\d]/g, "");
+
+                  // Add commas as thousands separator
+                  if (value) {
+                    const num = parseInt(value);
+                    if (!isNaN(num)) {
+                      value = num.toLocaleString();
+                    }
+                  }
+
+                  setAmount(value);
                   setError("");
                 }}
-                className="w-full p-3 pl-8 text-lg text-gray-900 bg-white border border-gray-300 rounded-lg placeholder:text-gray-400 focus:ring-2 focus:ring-black focus:border-black outline-none transition duration-150"
+                className="bg-white p-3 pl-8 border border-gray-300 focus:border-black rounded-lg outline-none focus:ring-2 focus:ring-black w-full text-gray-900 placeholder:text-gray-400 text-lg transition duration-150"
               />
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-lg text-gray-500 font-bold">
+              <span className="top-1/2 left-3 absolute font-bold text-gray-500 text-lg -translate-y-1/2 transform">
                 ₦
               </span>
             </div>
@@ -416,14 +487,14 @@ const ExampleWithdrawalForm: React.FC = () => {
             transition={{ duration: 0.3 }}
             className="mb-4"
           >
-            <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
+            <Paragraph1 className="mb-2 font-medium text-gray-900 text-sm">
               Notes (Optional)
             </Paragraph1>
             <textarea
               placeholder="Add any notes for this withdrawal..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full p-3 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg placeholder:text-gray-400 focus:ring-2 focus:ring-black focus:border-black outline-none transition duration-150 resize-none"
+              className="bg-white p-3 border border-gray-300 focus:border-black rounded-lg outline-none focus:ring-2 focus:ring-black w-full text-gray-900 placeholder:text-gray-400 text-sm transition duration-150 resize-none"
               rows={3}
             />
           </motion.div>
@@ -437,16 +508,16 @@ const ExampleWithdrawalForm: React.FC = () => {
           animate={{ opacity: 1, height: "auto" }}
           exit={{ opacity: 0, height: 0 }}
           transition={{ duration: 0.2 }}
-          className="p-3 bg-red-50 border border-red-200 rounded-lg mb-6"
+          className="bg-red-50 mb-6 p-3 border border-red-200 rounded-lg"
         >
-          <Paragraph1 className="text-xs text-red-700">{error}</Paragraph1>
+          <Paragraph1 className="text-red-700 text-xs">{error}</Paragraph1>
         </motion.div>
       )}
 
       {/* Information Notice */}
-      <div className="p-3 bg-blue-50/50 border border-blue-200 rounded-lg flex items-start space-x-2 mb-6">
-        <HiOutlineInformationCircle className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
-        <Paragraph1 className="text-xs text-gray-700 leading-snug">
+      <div className="flex items-start space-x-2 bg-blue-50/50 mb-6 p-3 border border-blue-200 rounded-lg">
+        <HiOutlineInformationCircle className="mt-0.5 w-5 h-5 text-blue-600 shrink-0" />
+        <Paragraph1 className="text-gray-700 text-xs leading-snug">
           Withdrawals typically process within 24-48 hours. A confirmation email
           will be sent once processed.
         </Paragraph1>
@@ -468,7 +539,7 @@ const ExampleWithdrawalForm: React.FC = () => {
               ? 0.98
               : 1,
         }}
-        className="w-full px-4 py-3 font-semibold bg-black text-white rounded-lg hover:bg-gray-900 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+        className="bg-black hover:bg-gray-900 disabled:bg-gray-400 px-4 py-3 rounded-lg w-full font-semibold text-white transition disabled:cursor-not-allowed"
       >
         <Paragraph1>
           {withdrawMutation.isPending ? "Processing..." : "Request Withdrawal"}
@@ -481,31 +552,31 @@ const ExampleWithdrawalForm: React.FC = () => {
           animate={{ opacity: 1, height: "auto" }}
           exit={{ opacity: 0, height: 0 }}
           transition={{ duration: 0.3 }}
-          className="p-4 bg-green-50 border border-green-200 rounded-lg mt-4 space-y-3"
+          className="space-y-3 bg-green-50 mt-4 p-4 border border-green-200 rounded-lg"
         >
-          <Paragraph1 className="text-sm font-semibold text-green-900">
+          <Paragraph1 className="font-semibold text-green-900 text-sm">
             ✓ Withdrawal Request Submitted
           </Paragraph1>
-          <Paragraph1 className="text-xs text-gray-700">
+          <Paragraph1 className="text-gray-700 text-xs">
             Your withdrawal request has been submitted and is pending admin
             approval. The funds will be transferred to your selected account
             once processed.
           </Paragraph1>
 
           {/* Withdrawal Reference Number */}
-          <div className="bg-white rounded-lg p-3 border border-green-100">
-            <Paragraph1 className="text-xs text-gray-600 mb-1">
+          <div className="bg-white p-3 border border-green-100 rounded-lg">
+            <Paragraph1 className="mb-1 text-gray-600 text-xs">
               Reference Number
             </Paragraph1>
-            <div className="flex items-center justify-between gap-2">
-              <Paragraph1 className="text-sm font-mono font-bold text-gray-900">
+            <div className="flex justify-between items-center gap-2">
+              <Paragraph1 className="font-mono font-bold text-gray-900 text-sm">
                 {withdrawalReference}
               </Paragraph1>
               <motion.button
                 onClick={() => {
                   navigator.clipboard.writeText(withdrawalReference);
                 }}
-                className="px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded hover:bg-green-200 transition"
+                className="bg-green-100 hover:bg-green-200 px-2 py-1 rounded font-medium text-green-700 text-xs transition"
               >
                 Copy
               </motion.button>
@@ -513,8 +584,8 @@ const ExampleWithdrawalForm: React.FC = () => {
           </div>
 
           {/* Withdrawal Status Section */}
-          <div className="bg-white rounded-lg p-3 border border-green-100 space-y-2">
-            <Paragraph1 className="text-xs font-medium text-gray-900">
+          <div className="space-y-2 bg-white p-3 border border-green-100 rounded-lg">
+            <Paragraph1 className="font-medium text-gray-900 text-xs">
               Withdrawal Details
             </Paragraph1>
             <div className="space-y-1">
@@ -532,7 +603,7 @@ const ExampleWithdrawalForm: React.FC = () => {
               </div>
               <div className="flex justify-between text-xs">
                 <span className="text-gray-600">Status:</span>
-                <span className="inline-block px-2 py-1 bg-amber-100 text-amber-800 text-xs font-semibold rounded">
+                <span className="inline-block bg-amber-100 px-2 py-1 rounded font-semibold text-amber-800 text-xs">
                   Pending Admin Approval
                 </span>
               </div>
@@ -546,7 +617,7 @@ const ExampleWithdrawalForm: React.FC = () => {
               setShowWithdrawalStatus(false);
               setWithdrawalReference("");
             }}
-            className="w-full px-3 py-2 text-xs font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+            className="bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg w-full font-medium text-white text-xs transition"
           >
             Make Another Withdrawal
           </motion.button>
@@ -559,9 +630,9 @@ const ExampleWithdrawalForm: React.FC = () => {
           animate={{ opacity: 1, height: "auto" }}
           exit={{ opacity: 0, height: 0 }}
           transition={{ duration: 0.3 }}
-          className="p-3 bg-red-50 border border-red-200 rounded-lg mt-4"
+          className="bg-red-50 mt-4 p-3 border border-red-200 rounded-lg"
         >
-          <Paragraph1 className="text-xs text-red-700">
+          <Paragraph1 className="text-red-700 text-xs">
             {withdrawMutation.error?.message ||
               "Failed to process withdrawal. Please try again."}
           </Paragraph1>
@@ -579,17 +650,17 @@ const ExampleWithdrawalForm: React.FC = () => {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="mt-4 p-4 bg-white border border-gray-200 rounded-lg space-y-4"
+            className="space-y-4 bg-white mt-4 p-4 border border-gray-200 rounded-lg"
           >
             <div>
-              <Paragraph1 className="text-sm font-semibold text-gray-900 mb-3">
+              <Paragraph1 className="mb-3 font-semibold text-gray-900 text-sm">
                 {accounts && accounts.length > 0 ? "Update" : "Add"} Bank
                 Account
               </Paragraph1>
 
               {profileError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg mb-4">
-                  <Paragraph1 className="text-xs text-red-700">
+                <div className="bg-red-50 mb-4 p-3 border border-red-200 rounded-lg">
+                  <Paragraph1 className="text-red-700 text-xs">
                     {profileError}
                   </Paragraph1>
                 </div>
@@ -598,13 +669,13 @@ const ExampleWithdrawalForm: React.FC = () => {
 
             <div className="space-y-4 mb-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block mb-2 font-medium text-gray-700 text-sm">
                   Bank Name
                 </label>
                 <div className="relative">
                   <motion.button
                     onClick={() => setIsBankDropdownOpen(!isBankDropdownOpen)}
-                    className="w-full p-3 border border-gray-300 rounded-lg text-left bg-white text-gray-900 hover:border-gray-400 transition flex items-center justify-between"
+                    className="flex justify-between items-center bg-white p-3 border border-gray-300 hover:border-gray-400 rounded-lg w-full text-gray-900 text-left transition"
                   >
                     <span
                       className={
@@ -639,16 +710,16 @@ const ExampleWithdrawalForm: React.FC = () => {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg z-50"
+                        className="top-full right-0 left-0 z-50 absolute bg-white shadow-lg mt-2 border border-gray-300 rounded-lg"
                       >
                         {/* Search Input */}
-                        <div className="p-3 border-b border-gray-200">
+                        <div className="p-3 border-gray-200 border-b">
                           <input
                             type="text"
                             placeholder="Search banks..."
                             value={bankSearch}
                             onChange={(e) => setBankSearch(e.target.value)}
-                            className="w-full p-2 text-gray-900 bg-white border border-gray-300 rounded-lg text-sm placeholder:text-gray-400 focus:ring-2 focus:ring-black focus:border-black outline-none"
+                            className="bg-white p-2 border border-gray-300 focus:border-black rounded-lg outline-none focus:ring-2 focus:ring-black w-full text-gray-900 placeholder:text-gray-400 text-sm"
                             autoFocus
                           />
                         </div>
@@ -671,7 +742,7 @@ const ExampleWithdrawalForm: React.FC = () => {
                               </motion.button>
                             ))
                           ) : (
-                            <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                            <div className="px-4 py-3 text-gray-500 text-sm text-center">
                               No banks found
                             </div>
                           )}
@@ -682,7 +753,7 @@ const ExampleWithdrawalForm: React.FC = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block mb-2 font-medium text-gray-700 text-sm">
                   Account Number
                 </label>
                 <input
@@ -694,12 +765,12 @@ const ExampleWithdrawalForm: React.FC = () => {
                       accountNumber: e.target.value,
                     })
                   }
-                  className="w-full p-3 text-gray-900 bg-white border border-gray-300 rounded-lg placeholder:text-gray-400 focus:ring-2 focus:ring-black focus:border-black outline-none"
+                  className="bg-white p-3 border border-gray-300 focus:border-black rounded-lg outline-none focus:ring-2 focus:ring-black w-full text-gray-900 placeholder:text-gray-400"
                   placeholder="Enter 10-digit account number"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block mb-2 font-medium text-gray-700 text-sm">
                   Account Name
                 </label>
                 <input
@@ -711,7 +782,7 @@ const ExampleWithdrawalForm: React.FC = () => {
                       accountName: e.target.value,
                     })
                   }
-                  className="w-full p-3 text-gray-900 bg-white border border-gray-300 rounded-lg placeholder:text-gray-400 focus:ring-2 focus:ring-black focus:border-black outline-none"
+                  className="bg-white p-3 border border-gray-300 focus:border-black rounded-lg outline-none focus:ring-2 focus:ring-black w-full text-gray-900 placeholder:text-gray-400"
                   placeholder="Name on account"
                 />
               </div>
@@ -720,7 +791,7 @@ const ExampleWithdrawalForm: React.FC = () => {
             <div className="flex gap-3">
               <motion.button
                 onClick={() => setIsUpdateProfileOpen(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
+                className="flex-1 hover:bg-gray-50 px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 transition"
               >
                 Cancel
               </motion.button>
@@ -730,7 +801,7 @@ const ExampleWithdrawalForm: React.FC = () => {
                   updateProfileMutation.isPending ||
                   !profileFormData.bankName?.trim()
                 }
-                className="flex-1 px-4 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-900 disabled:bg-gray-400 transition"
+                className="flex-1 bg-black hover:bg-gray-900 disabled:bg-gray-400 px-4 py-2 rounded-lg font-medium text-white transition"
               >
                 {updateProfileMutation.isPending ? "Saving..." : "Save"}
               </motion.button>
@@ -749,4 +820,5 @@ const ExampleWithdrawalForm: React.FC = () => {
   );
 };
 
+export const WithdrawalForm = ExampleWithdrawalForm;
 export default ExampleWithdrawalForm;
