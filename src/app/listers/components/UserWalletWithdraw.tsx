@@ -134,18 +134,6 @@ const ExampleWithdrawalForm: React.FC = () => {
           accountNumber: profileFormData.accountNumber.trim(),
           accountName: profileFormData.accountName.trim(),
         },
-        bankAccounts: {
-          bankName: bankEntry.bankName,
-          bankCode: bankEntry.bankCode,
-          accountNumber: profileFormData.accountNumber.trim(),
-          accountName: profileFormData.accountName.trim(),
-        },
-        bankAccount: {
-            bankName: bankEntry.bankName,
-            bankCode: bankEntry.bankCode,
-            accountNumber: profileFormData.accountNumber.trim(),
-            accountName: profileFormData.accountName.trim(),
-          },
       },
       {
         onSuccess: () => {
