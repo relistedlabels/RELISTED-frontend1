@@ -7,6 +7,7 @@ import { X, Upload, CheckCircle2, AlertCircle, Star } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { useUpload } from "@/lib/queries/renters/useUpload";
 import { useAddresses, Address } from "@/lib/queries/renters/useAddresses";
+import { rentersApi } from "@/lib/api/renters";
 import { toast } from "sonner";
 
 interface ReadyToReturnModalProps {
@@ -19,9 +20,10 @@ interface ReadyToReturnModalProps {
   ) => Promise<void>;
   isLoading?: boolean;
   orderId?: string;
+  rentalId?: string;
 }
 
-type ModalStep = "confirmation" | "upload" | "success" | "review";
+type ModalStep = "confirmation" | "upload" | "success" | "review" | "review-success";
 
 const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
   isOpen,
@@ -29,6 +31,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
   onConfirm,
   isLoading: externalIsLoading = false,
   orderId,
+  rentalId,
 }) => {
   const [currentStep, setCurrentStep] = useState<ModalStep>("confirmation");
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
@@ -38,6 +41,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
   );
   const [damageNotes, setDamageNotes] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [rating, setRating] = useState<number>(0);
   const [reviewComment, setReviewComment] = useState<string>("");
   const [hoverRating, setHoverRating] = useState<number>(0);
@@ -46,6 +50,11 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
   const isMountedRef = useRef(true);
 
   const uploadMutation = useUpload();
+
+  const isUuid = (value: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      value,
+    );
 
   // Fetch renter's addresses
   const { data: addresses } = useAddresses();
@@ -140,7 +149,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
   };
 
   const handleClose = () => {
-    if (currentStep === "success") {
+    if (currentStep === "success" || currentStep === "review-success") {
       setCurrentStep("confirmation");
       setUploadedImages([]);
       setPreviewUrls([]);
@@ -172,13 +181,31 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
     onClose();
   };
 
-  const handleSubmitReview = () => {
-    // TODO: Submit review to API
-    console.log("Review submitted:", {
-      rating,
-      comment: reviewComment,
-    });
-    setCurrentStep("success");
+  const handleSubmitReview = async () => {
+    const resolvedRentalId =
+      rentalId ?? (orderId && isUuid(orderId) ? orderId : undefined);
+
+    if (rating < 1 || rating > 5) {
+      toast.error("Please select a rating between 1 and 5.");
+      return;
+    }
+
+    setIsSubmittingReview(true);
+    try {
+      await rentersApi.submitReview({
+        ...(resolvedRentalId ? { rentalId: resolvedRentalId } : { orderId: orderId }),
+        rating,
+        comment: reviewComment,
+      });
+      toast.success("Review submitted successfully!");
+      setCurrentStep("review-success");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to submit review";
+      toast.error(message);
+    } finally {
+      setIsSubmittingReview(false);
+    }
   };
 
   if (!mounted) return null;
@@ -570,12 +597,52 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                   </button> */}
                     <button
                       onClick={handleSubmitReview}
-                      disabled={rating === 0}
+                      disabled={rating === 0 || isSubmittingReview}
                       className="flex justify-center bg-black hover:bg-gray-900 disabled:bg-gray-400 px-4 py-3 rounded-lg w-full font-semibold text-white text-sm transition disabled:cursor-not-allowed"
                     >
-                      Submit Review
+                      {isSubmittingReview ? "Submitting..." : "Submit Review"}
                     </button>
                   </div>
+                </motion.div>
+              )}
+
+              {currentStep === "review-success" && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="space-y-4 py-4 text-center"
+                >
+                  <div className="flex justify-center mb-4">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 200,
+                        damping: 15,
+                      }}
+                      className="bg-green-50 p-4 rounded-full"
+                    >
+                      <CheckCircle2 className="text-green-600" size={48} />
+                    </motion.div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Paragraph1 className="font-bold text-gray-900">
+                      Thank You!
+                    </Paragraph1>
+                    <Paragraph1 className="text-gray-600">
+                      Your review has been submitted. We appreciate your
+                      feedback!
+                    </Paragraph1>
+                  </div>
+
+                  <button
+                    onClick={handleSuccessClose}
+                    className="bg-black hover:bg-gray-900 px-4 py-3 rounded-lg w-full font-semibold text-white text-sm transition"
+                  >
+                    Done
+                  </button>
                 </motion.div>
               )}
             </div>

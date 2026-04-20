@@ -470,6 +470,12 @@ export const rentersApi = {
       };
     }>(`/api/renters/orders/${orderId}/progress`, { method: "GET" }),
 
+  submitReview: (data: { rentalId?: string; orderId?: string; rating: number; comment: string }) =>
+    apiFetch<{ success: boolean; message?: string; data?: any }>("/review", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
   initiateReturn: (
     orderId: string,
     data: { returnMethod: "pickup" | "dropoff"; damageNotes?: string },
