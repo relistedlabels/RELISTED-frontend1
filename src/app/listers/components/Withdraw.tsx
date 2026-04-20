@@ -296,18 +296,6 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
           accountNumber: accountNumber.trim(),
           accountName: accountName.trim(),
         },
-        bankAccounts: {
-          bankName: bankEntry.bankName,
-          bankCode: bankEntry.bankCode,
-          accountNumber: accountNumber.trim(),
-          accountName: accountName.trim(),
-        },
-        bankAccount: {
-          bankName: bankEntry.bankName,
-          bankCode: bankEntry.bankCode,
-          accountNumber: accountNumber.trim(),
-          accountName: accountName.trim(),
-        },
       },
       {
         onSuccess: () => {
