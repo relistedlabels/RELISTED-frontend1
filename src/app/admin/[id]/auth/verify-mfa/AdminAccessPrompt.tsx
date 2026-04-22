@@ -50,12 +50,16 @@ export default function AdminAccessPrompt({
     }
   }, [isMfaVerified, token, isMeLoading, user]);
 
-  // Redirect after role is confirmed - remove delay and route immediately
+  // Redirect after role is confirmed - add 12 second loader delay
   useEffect(() => {
     if (!isRoleConfirmed) return;
 
-    // Route immediately since we've already waited for the data to load
-    router.push(`/admin/${adminId}/dashboard`);
+    // Add 12 second delay for loader animation before routing
+    const timer = setTimeout(() => {
+      router.push(`/admin/${adminId}/dashboard`);
+    }, 12000);
+
+    return () => clearTimeout(timer);
   }, [isRoleConfirmed, adminId, router]);
 
   if (!sessionToken && !isMfaVerified) return null;
