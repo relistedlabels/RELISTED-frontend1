@@ -16,12 +16,12 @@ export default function Home() {
       <BrandLogosCarousel />
       <PopularCategorySection />
       <br />
-      <TopListingSection2 />
 
       <HowItWorks />
-      <TopCuratorsSection />
+      {/* <TopCuratorsSection /> */}
+      <TopListingSection2 />
 
-      {/* <TopListingSection1 /> */}
+      <TopListingSection1 />
       <div className=" px-4 sm:px-0">
         <BecomeCurator />
       </div>
