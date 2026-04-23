@@ -16,13 +16,15 @@ export default function Home() {
       <BrandLogosCarousel />
       <PopularCategorySection />
       <br />
-      <HowItWorks />
       <TopListingSection2 />
-      <TopListingSection1 />
+
+      <HowItWorks />
+      <TopCuratorsSection />
+
+      {/* <TopListingSection1 /> */}
       <div className=" px-4 sm:px-0">
         <BecomeCurator />
       </div>
-      {/* <TopCuratorsSection /> */}
       {/* <br /> */}
       <br className=" flex sm:hidden" />
       {/* <ReviewCarousel /> */}

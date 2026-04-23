@@ -115,7 +115,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
   // const [rentalDays, setRentalDays] = useState(1);
 
   // State for rental days
-  const [rentalDays, setRentalDays] = useState(3);
+  const [rentalDays, setRentalDays] = useState(1);
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [autoPay, setAutoPay] = useState(false); // Default OFF
   const [summaryData, setSummaryData] = useState<any>(null);

@@ -29,7 +29,7 @@ import { useRentalRequests } from "@/lib/queries/renters/useRentalRequests";
 // ============================================================================
 
 // --- Data for predefined durations ---
-const rentalDayOptions = [3, 6, 9];
+const rentalDayOptions = [1, 2, 3];
 
 // --- Helper Functions for Date Logic ---
 
@@ -265,7 +265,7 @@ const RentalDurationSelector = ({
 
         {/* Duration Buttons */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 mb-8">
-          {rentalDayOptions.map((days) => (
+          {rentalDayOptions.map((days, idx) => (
             <button
               key={days}
               onClick={() => {
@@ -283,7 +283,8 @@ const RentalDurationSelector = ({
               `}
             >
               <Paragraph1>
-                {days} Days <br /> ₦{(days * dailyPrice).toLocaleString()}
+                {days === 1 ? "1 Day" : `${days} Days`} <br /> ₦
+                {(days * dailyPrice).toLocaleString()}
               </Paragraph1>
             </button>
           ))}
@@ -306,21 +307,20 @@ const RentalDurationSelector = ({
               Custom <br />
               {customDays
                 ? `₦${(customDays * dailyPrice).toLocaleString()}`
-                : "Set days"}
+                : "Set any days"}
             </Paragraph1>
           </button>
         </div>
         {/* Custom Days Dropdown */}
         {showCustomInput && (
           <div className="mb-4 flex items-center gap-2">
-            <Paragraph1>Enter days:</Paragraph1>
+            <Paragraph1>Enter any number of days:</Paragraph1>
             <input
               type="number"
               min={1}
               max={30}
               value={customDays}
               onChange={(e) => {
-                // Enforce min 2, max 12
                 let val = Number(e.target.value);
                 if (isNaN(val)) val = 1;
                 val = Math.max(1, Math.min(30, val));
@@ -335,14 +335,10 @@ const RentalDurationSelector = ({
         <Calendar
           selectedDuration={
             selectedDuration === "custom"
-              ? Math.max(2, Math.min(12, customDays))
-              : Math.max(2, Math.min(12, selectedDuration as number))
+              ? customDays
+              : (selectedDuration as number)
           }
-          customDays={
-            selectedDuration === "custom"
-              ? Math.max(2, Math.min(12, customDays))
-              : 0
-          }
+          customDays={selectedDuration === "custom" ? customDays : 0}
           startDate={startDate}
           setStartDate={setStartDate}
           unavailableDays={[]}
