@@ -203,19 +203,18 @@ export type RentalRequest = {
 };
 
 export type Dispute = {
-  id: string;
   disputeId: string;
-  orderId: string;
-  itemName: string;
-  listerName: string;
-  category: string;
-  status: "pending" | "in_review" | "resolved";
-  description: string;
-  rentalPrice: number;
-  amountDisputed: number;
+  orderId: string | null;
+  itemName: string | null;
+  listerName?: string | null;
+  issueCategory?: string | null;
+  category?: string | null;
+  status: string;
+  description?: string | null;
+  rentalPrice?: number | null;
+  amountDisputed?: number | null;
   raisedDate: string;
-  lastUpdated: string;
-  issueCategory?: string;
+  lastUpdated?: string;
 };
 
 export type DisputeStats = {
@@ -651,7 +650,7 @@ export const rentersApi = {
   getDisputeStats: () =>
     apiFetch<{
       success: boolean;
-      data: DisputeStats;
+      data: { disputeStats: DisputeStats };
     }>("/api/renters/disputes/stats", { method: "GET" }),
 
   getDisputes: (params?: {
@@ -662,13 +661,102 @@ export const rentersApi = {
   }) =>
     apiFetch<{
       success: boolean;
-      data: { disputes: Dispute[]; total: number };
+      data: {
+        disputes: Dispute[];
+        totalDisputes: number;
+        page: number;
+        totalPages: number;
+      };
     }>("/api/renters/disputes", { method: "GET", ...(params && { params }) }),
 
   getDisputeDetails: (disputeId: string) =>
-    apiFetch<{ success: boolean; data: Dispute }>(
+    apiFetch<{ success: boolean; data: { dispute: Dispute } }>(
       `/api/renters/disputes/${disputeId}`,
       { method: "GET" },
+    ),
+
+  getDisputeOverview: (disputeId: string) =>
+    apiFetch<{
+      success: boolean;
+      data: {
+        overview: {
+          itemName: string;
+          curator: string;
+          orderID: string | null;
+          category: string;
+          dateSubmitted: string;
+          preferredResolution: string | null;
+          description: string;
+        };
+      };
+    }>(`/api/renters/disputes/${disputeId}/overview`, { method: "GET" }),
+
+  getDisputeEvidence: (disputeId: string) =>
+    apiFetch<{
+      success: boolean;
+      data: {
+        evidence: {
+          files: Array<{
+            fileId: string;
+            fileName: string;
+            fileType: string;
+            fileUrl: string;
+            uploadedDate: string;
+          }>;
+        };
+      };
+    }>(`/api/renters/disputes/${disputeId}/evidence`, { method: "GET" }),
+
+  getDisputeTimeline: (disputeId: string) =>
+    apiFetch<{
+      success: boolean;
+      data: {
+        timeline: {
+          events: Array<{
+            status: string;
+            date: string;
+            description: string;
+          }>;
+        };
+      };
+    }>(`/api/renters/disputes/${disputeId}/timeline`, { method: "GET" }),
+
+  getDisputeResolution: (disputeId: string) =>
+    apiFetch<{
+      success: boolean;
+      data: {
+        resolution: {
+          status: string;
+          resolutionDetails: string | null;
+          refundAmount: number | null;
+          refundDate: string | null;
+        };
+      };
+    }>(`/api/renters/disputes/${disputeId}/resolution`, { method: "GET" }),
+
+  getDisputeMessages: (disputeId: string) =>
+    apiFetch<{
+      success: boolean;
+      data: {
+        messages: Array<{
+          id: string;
+          type: "user" | "admin" | "status";
+          content: string;
+          timestamp: string;
+        }>;
+      };
+    }>(`/api/renters/disputes/${disputeId}/messages`, { method: "GET" }),
+
+  sendDisputeMessage: (
+    disputeId: string,
+    data: { message: string; attachmentUrls?: string[] },
+  ) =>
+    apiFetch<{ success: boolean; message: string; data: any }>(
+      `/api/renters/disputes/${disputeId}/messages`,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
     ),
 
   raiseDispute: (data: {
@@ -676,9 +764,11 @@ export const rentersApi = {
     itemId: string;
     issueCategory: string;
     description: string;
-    amountDisputed?: number;
+    amountDisputed: number;
+    preferredResolution?: string;
+    evidenceFiles?: string[];
   }) =>
-    apiFetch<{ success: boolean; data: Dispute }>("/api/renters/disputes", {
+    apiFetch<{ success: boolean; data: any }>("/api/renters/disputes", {
       method: "POST",
       body: JSON.stringify(data),
     }),

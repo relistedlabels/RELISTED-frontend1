@@ -20,18 +20,18 @@ interface DisputeTimelineContentProps {
 // Sub-component for a single timeline event
 const TimelineItem: React.FC<{ event: TimelineEvent }> = ({ event }) => {
   return (
-    <div className="flex relative pb-8 last:pb-0">
+    <div className="relative flex pb-8 last:pb-0">
       {/* Vertical Line and Dot */}
-      <div className="absolute top-0 left-2 w-0.5 h-full bg-gray-200"></div>
-      <div className="w-4 h-4 rounded-full bg-yellow-600 absolute left-0 z-10"></div>
+      <div className="top-0 left-2 absolute bg-gray-200 w-0.5 h-full"></div>
+      <div className="left-0 z-10 absolute bg-yellow-600 rounded-full w-4 h-4"></div>
 
       {/* Content */}
       <div className="ml-8 pt-0.5">
-        <Paragraph1 className="text-sm font-semibold text-gray-900 mb-1">
+        <Paragraph1 className="mb-1 font-semibold text-gray-900 text-sm">
           {event.status}{" "}
-          <span className="text-gray-700 font-normal">{event.date}</span>
+          <span className="font-normal text-gray-700">{event.date}</span>
         </Paragraph1>
-        <Paragraph1 className="text-sm text-gray-600">
+        <Paragraph1 className="text-gray-600 text-sm">
           {event.description}
         </Paragraph1>
       </div>
@@ -43,8 +43,8 @@ const DisputeTimelineContent: React.FC<DisputeTimelineContentProps> = ({
   events,
 }) => {
   return (
-    <div className="font-sans p-4 bg-white border border-gray-200 rounded-xl ">
-      <Paragraph1 className="text-sm font-bold text-gray-900 uppercase mb-6">
+    <div className="bg-white p-4 border border-gray-200 rounded-xl font-sans">
+      <Paragraph1 className="mb-6 font-bold text-gray-900 text-sm uppercase">
         DISPUTE TIMELINE
       </Paragraph1>
 
@@ -57,24 +57,4 @@ const DisputeTimelineContent: React.FC<DisputeTimelineContentProps> = ({
   );
 };
 
-// --- Example Usage matching the provided image content ---
-
-const ExampleDisputeTimeline: React.FC = () => {
-  const sampleEvents: TimelineEvent[] = [
-    {
-      status: "Submitted",
-      date: "28 Oct 2025",
-      description: "Dispute created and submitted for review.",
-    },
-    {
-      status: "In Review",
-      date: "29 Oct 2025",
-      description: "Our team is reviewing your case and evidence.",
-    },
-    // Add more potential future events here (e.g., Investigation Complete, Resolution Proposed, Resolved)
-  ];
-
-  return <DisputeTimelineContent events={sampleEvents} />;
-};
-
-export default ExampleDisputeTimeline;
+export default DisputeTimelineContent;

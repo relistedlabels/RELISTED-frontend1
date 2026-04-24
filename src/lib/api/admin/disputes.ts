@@ -1,23 +1,44 @@
 import { apiFetch } from "../http";
 
+export type DisputeStatus =
+  | "PENDING"
+  | "IN_REVIEW"
+  | "WITHDRAW"
+  | "RESOLVED"
+  | "REJECTED";
+
+export type DisputesListStatus =
+  | "pending"
+  | "in_review"
+  | "under-review"
+  | "withdraw"
+  | "resolved"
+  | "rejected"
+  | "all";
+
+export type DisputeParty = {
+  id?: string;
+  name?: string;
+  role?: "Dresser" | "Curator" | string;
+  avatar?: string | null;
+} | null;
+
 export interface Dispute {
   id: string;
-  raisedBy: {
-    id: string;
-    name: string;
-    role: "Dresser" | "Curator";
-    avatar: string;
-  };
-  category: string;
-  orderId: string;
-  priority: "High" | "Medium" | "Low";
-  dateCreated: string;
-  status: "pending" | "under-review" | "resolved";
+  orderId?: string | null;
+  orderDbId?: string | null;
+  raisedBy?: DisputeParty;
+  lister?: DisputeParty;
+  renter?: DisputeParty;
+  category?: string | null;
+  preferredResolution?: string | null;
+  createdAt?: string | null;
+  status: string;
   assignedTo: {
     id: string;
     name: string;
   } | null;
-  description: string;
+  description?: string | null;
 }
 
 export interface DisputeDetail extends Dispute {
@@ -25,33 +46,41 @@ export interface DisputeDetail extends Dispute {
     id: string;
     name: string;
     role: string;
-    email: string;
-    phone: string;
-    avatar: string;
+    email?: string;
+    phone?: string;
+    avatar?: string | null;
   };
-  evidence: Array<{
-    type: string;
-    url: string;
-    uploadedAt: string;
-  }>;
-  messages: Array<{
-    id: string;
-    from: string;
-    text: string;
-    timestamp: string;
-  }>;
   orderDetails: {
     id: string;
-    item: string;
-    rentalPrice: number;
-    rentalDates: {
-      startDate: string;
-      endDate: string;
-      returnDate: string;
-    };
+    dbId?: string | null;
+    totalAmountPaid?: number | null;
+    escrow?: {
+      status?: "LOCKED" | "PARTIALLY_RELEASED" | "RELEASED" | string;
+      collateralAmount?: number | null;
+      rentalAmount?: number | null;
+      cleaningFee?: number | null;
+      resaleAmount?: number | null;
+      releasedAt?: string | null;
+    } | null;
+  } | null;
+  evidence: {
+    uploads: Array<{
+      id?: string;
+      fileName?: string;
+      fileType?: string;
+      url: string;
+      uploadedAt?: string;
+    }>;
   };
-  resolution: any | null;
-  notes: string;
+  messages: Array<{
+    id: string;
+    from?: string;
+    content?: string;
+    createdAt?: string;
+    timestamp?: string;
+    type?: string;
+  }>;
+  notes?: string | null;
 }
 
 export interface DisputeStats {
@@ -61,7 +90,7 @@ export interface DisputeStats {
 }
 
 interface DisputesListParams {
-  status?: string;
+  status?: DisputesListStatus;
   search?: string;
   page?: number;
   limit?: number;
@@ -101,29 +130,28 @@ export const disputesApi = {
       `/api/admin/disputes/${disputeId}`,
     ),
 
-  assignDispute: (disputeId: string, adminId: string) =>
-    apiFetch(`/api/admin/disputes/${disputeId}/assign`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ adminId }),
-    }),
-
-  updateDisputeStatus: (disputeId: string, status: string) =>
+  updateDisputeStatus: (
+    disputeId: string,
+    status: DisputeStatus,
+    note?: string,
+  ) =>
     apiFetch(`/api/admin/disputes/${disputeId}/status`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, note }),
     }),
 
   resolveDispute: (
     disputeId: string,
-    resolution: string,
-    notes: string,
-    actions?: any[],
+    data: {
+      resolutionDetails: string;
+      refundAmount?: number;
+      collateralWithheldToLister?: number;
+    },
   ) =>
     apiFetch(`/api/admin/disputes/${disputeId}/resolve`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resolution, notes, actions }),
+      body: JSON.stringify(data),
     }),
 };

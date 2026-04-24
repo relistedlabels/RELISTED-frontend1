@@ -1,11 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  ordersApi,
-  disputesApi,
-  walletsApi,
-  settingsApi,
-  usersApi,
-} from "@/lib/api/admin/";
+import { disputesApi, ordersApi, settingsApi, usersApi, walletsApi } from "@/lib/api/admin/";
+import type { DisputeStatus } from "@/lib/api/admin/disputes";
 
 // Orders mutations
 export const useUpdateOrderStatus = () => {
@@ -47,35 +42,18 @@ export const useCancelOrder = () => {
 };
 
 // Disputes mutations
-export const useAssignDispute = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      disputeId,
-      adminId,
-    }: {
-      disputeId: string;
-      adminId: string;
-    }) => disputesApi.assignDispute(disputeId, adminId),
-    onSuccess: (_, { disputeId }) => {
-      queryClient.invalidateQueries({
-        queryKey: ["admin", "disputes", disputeId],
-      });
-      queryClient.invalidateQueries({ queryKey: ["admin", "disputes"] });
-    },
-  });
-};
-
 export const useUpdateDisputeStatus = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
       disputeId,
       status,
+      note,
     }: {
       disputeId: string;
-      status: string;
-    }) => disputesApi.updateDisputeStatus(disputeId, status),
+      status: DisputeStatus;
+      note?: string;
+    }) => disputesApi.updateDisputeStatus(disputeId, status, note),
     onSuccess: (_, { disputeId }) => {
       queryClient.invalidateQueries({
         queryKey: ["admin", "disputes", disputeId],
@@ -90,15 +68,20 @@ export const useResolveDispute = () => {
   return useMutation({
     mutationFn: ({
       disputeId,
-      resolution,
-      notes,
-      actions,
+      resolutionDetails,
+      refundAmount,
+      collateralWithheldToLister,
     }: {
       disputeId: string;
-      resolution: string;
-      notes: string;
-      actions?: any[];
-    }) => disputesApi.resolveDispute(disputeId, resolution, notes, actions),
+      resolutionDetails: string;
+      refundAmount?: number;
+      collateralWithheldToLister?: number;
+    }) =>
+      disputesApi.resolveDispute(disputeId, {
+        resolutionDetails,
+        refundAmount,
+        collateralWithheldToLister,
+      }),
     onSuccess: (_, { disputeId }) => {
       queryClient.invalidateQueries({
         queryKey: ["admin", "disputes", disputeId],

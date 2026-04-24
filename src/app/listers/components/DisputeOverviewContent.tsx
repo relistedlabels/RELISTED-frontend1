@@ -28,7 +28,7 @@ const DetailRow: React.FC<DetailRowProps> = ({
   valueClass = "text-gray-900",
 }) => (
   <div className="flex justify-between items-start mb-2">
-    <Paragraph1 className="text-sm text-gray-700">{label}:</Paragraph1>
+    <Paragraph1 className="text-gray-700 text-sm">{label}:</Paragraph1>
     <Paragraph1 className={`text-sm font-semibold text-right ${valueClass}`}>
       {value}
     </Paragraph1>
@@ -45,15 +45,15 @@ const DisputeOverviewContent: React.FC<DisputeOverviewContentProps> = ({
   description,
 }) => {
   return (
-    <div className="font-sans space-y-6">
+    <div className="space-y-6 font-sans">
       {/* 1. ITEM INFORMATION Card */}
-      <div className="p-4 bg-white border border-gray-200 rounded-xl ">
-        <Paragraph1 className="text-sm font-bold text-gray-900 uppercase mb-4 pb-2 border-b border-gray-100">
+      <div className="bg-white p-4 border border-gray-200 rounded-xl">
+        <Paragraph1 className="mb-4 pb-2 border-gray-100 border-b font-bold text-gray-900 text-sm uppercase">
           ITEM INFORMATION
         </Paragraph1>
 
         <DetailRow label="Item Name" value={itemName} />
-        <DetailRow label="Curator" value={curator} />
+        <DetailRow label="Lister" value={curator} />
         <DetailRow
           label="Order ID"
           value={orderID}
@@ -62,8 +62,8 @@ const DisputeOverviewContent: React.FC<DisputeOverviewContentProps> = ({
       </div>
 
       {/* 2. DISPUTE DETAILS Card */}
-      <div className="p-4 bg-white border border-gray-200 rounded-xl ">
-        <Paragraph1 className="text-sm font-bold text-gray-900 uppercase mb-4 pb-2 border-b border-gray-100">
+      <div className="bg-white p-4 border border-gray-200 rounded-xl">
+        <Paragraph1 className="mb-4 pb-2 border-gray-100 border-b font-bold text-gray-900 text-sm uppercase">
           DISPUTE DETAILS
         </Paragraph1>
 
@@ -80,10 +80,10 @@ const DisputeOverviewContent: React.FC<DisputeOverviewContentProps> = ({
 
         {/* Description Section */}
         <div className="mt-4">
-          <Paragraph1 className="text-sm font-semibold text-gray-900 mb-2">
+          <Paragraph1 className="mb-2 font-semibold text-gray-900 text-sm">
             Description:
           </Paragraph1>
-          <Paragraph1 className="text-sm text-gray-700 leading-snug p-3 bg-gray-50 border border-gray-100 rounded-lg italic">
+          <Paragraph1 className="bg-gray-50 p-3 border border-gray-100 rounded-lg text-gray-700 text-sm italic leading-snug">
             {description}
           </Paragraph1>
         </div>

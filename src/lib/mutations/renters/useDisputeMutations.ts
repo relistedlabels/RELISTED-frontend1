@@ -11,11 +11,29 @@ export const useRaiseDispute = () => {
       issueCategory: string;
       description: string;
       amountDisputed?: number;
-    }) => rentersApi.raiseDispute(data),
+      preferredResolution?: string;
+      evidenceFiles?: string[];
+    }) =>
+      rentersApi.raiseDispute({
+        ...data,
+        amountDisputed: data.amountDisputed ?? 0,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["renters", "disputes"] });
+      queryClient.invalidateQueries({ queryKey: ["renters", "disputes", "stats"] });
+    },
+  });
+};
+
+export const useSendDisputeMessage = (disputeId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { message: string; attachmentUrls?: string[] }) =>
+      rentersApi.sendDisputeMessage(disputeId, data),
+    onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["renters", "disputes", "stats"],
+        queryKey: ["renters", "disputes", disputeId, "messages"],
       });
     },
   });
