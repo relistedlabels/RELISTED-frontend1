@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { User, Home, Wallet, Check, Truck, Clock } from "lucide-react";
+import { Check, Clock, Home, Truck, User, Wallet } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { getOrderSummaryApi } from "@/lib/api/cart";
+import { useMe } from "@/lib/queries/auth/useMe";
+import { useWallet } from "@/lib/queries/renters/useWallet";
+import { useProfile } from "@/lib/queries/user/useProfile";
 import ChangeAddress from "./ChangeAddress";
 import FundWallet from "./FundWallet";
-import { useMe } from "@/lib/queries/auth/useMe";
-import { useProfile } from "@/lib/queries/user/useProfile";
-import { useWallet } from "@/lib/queries/renters/useWallet";
-import { getOrderSummaryApi } from "@/lib/api/cart";
 
 interface CheckoutContactAndPaymentProps {
   onShippingTierSelected?: (tierName: string) => void;
@@ -19,14 +19,30 @@ interface CheckoutContactAndPaymentProps {
   }>;
 }
 
+const CONTACT_SKELETON_KEYS = [
+  "contact-1",
+  "contact-2",
+  "contact-3",
+  "contact-4",
+];
+const SHIPPING_SKELETON_KEYS = ["shipping-1", "shipping-2", "shipping-3"];
+const SAME_DAY_TIER_KEYWORDS = ["chowdeck", "errandlr", "dellyman", "glovo"];
+const SAME_DAY_CUTOFF_DISCLAIMER =
+  "Orders placed after 11:00am WAT (Lagos time) may be delivered the next day.";
+
+const isSameDayShippingTierName = (tierName: string) => {
+  const normalized = tierName.toLowerCase();
+  return SAME_DAY_TIER_KEYWORDS.some((keyword) => normalized.includes(keyword));
+};
+
 // === Skeleton Loader ===
 const ContactSkeleton = () => (
-  <div className="bg-gray-50 space-y-6 animate-pulse">
-    {[...Array(4)].map((_, i) => (
-      <div key={i} className="p-4 bg-white rounded-xl border border-gray-100">
-        <div className="h-5 bg-gray-200 rounded w-32 mb-3"></div>
+  <div className="space-y-6 bg-gray-50 animate-pulse">
+    {CONTACT_SKELETON_KEYS.map((key) => (
+      <div key={key} className="bg-white p-4 border border-gray-100 rounded-xl">
+        <div className="bg-gray-200 mb-3 rounded w-32 h-5"></div>
         <hr className="mb-3" />
-        <div className="h-4 bg-gray-200 rounded w-48"></div>
+        <div className="bg-gray-200 rounded w-48 h-4"></div>
       </div>
     ))}
   </div>
@@ -40,7 +56,7 @@ const ReservationTimer = () => {
     const expiryTime = new Date(Date.now() + 15 * 60 * 1000);
 
     const updateTimer = () => {
-      const now = new Date().getTime();
+      const now = Date.now();
       const expiryTimeMs = expiryTime.getTime();
       const distance = expiryTimeMs - now;
 
@@ -60,9 +76,9 @@ const ReservationTimer = () => {
   }, []);
 
   return (
-    <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl mb-6 flex items-center gap-3">
+    <div className="flex items-center gap-3 bg-amber-50 mb-6 p-4 border border-amber-200 rounded-xl">
       <Clock className="w-6 h-6 text-amber-700 shrink-0" />
-      <Paragraph1 className="text-amber-900 font-medium">
+      <Paragraph1 className="font-medium text-amber-900">
         These items are reserved for{" "}
         <span className="font-bold">{timeLeft}</span> — complete payment to
         secure these items
@@ -73,40 +89,9 @@ const ReservationTimer = () => {
 
 // === Delivery Tier Helper Function ===
 const getDeliveryTierDetails = (tierName: string) => {
-  const name = tierName.toLowerCase();
-
-  // Same-Day Delivery - Chowdeck & Glovo
-  if (name.includes("chowdeck") || name.includes("glovo")) {
-    return {
-      type: "Same-Day Delivery",
-      description: "Get your items today",
-      deliveryTime: "Same Day",
-    };
-  }
-
-  // 48-Hour Delivery - Dellyman & Errandlr
-  if (name.includes("dellyman") || name.includes("errandlr")) {
-    return {
-      type: "48-Hour Delivery",
-      description: "Delivery within 48 hours",
-      deliveryTime: "48 Hours",
-    };
-  }
-
-  // 3-5 Working Days - DHL
-  if (name.includes("dhl") || name.includes("express")) {
-    return {
-      type: "3-5 Working Days (Express)",
-      description: "Express delivery service",
-      deliveryTime: "3-5 Working Days",
-    };
-  }
-
-  // Default fallback
   return {
     type: tierName,
-    description: "Standard delivery",
-    deliveryTime: "Variable",
+    description: "Shipping partner",
   };
 };
 
@@ -168,7 +153,6 @@ export default function CheckoutContactAndPayment({
     : "No address set";
 
   const walletData = walletResponse?.wallet?.balance;
-  const totalBalance = walletData?.totalBalance || 0;
   const availableBalance = walletData?.availableBalance || 0;
   const isWalletFunded = availableBalance > 0;
 
@@ -177,27 +161,27 @@ export default function CheckoutContactAndPayment({
   };
 
   return (
-    <div className="bg-gray-50 space-y-6">
+    <div className="space-y-6 bg-gray-50">
       {/* Payment expiring timer */}
       <ReservationTimer />
 
       {/* 1. CONTACT Section */}
-      <div className="p-4 bg-white rounded-xl border border-gray-100">
-        <Paragraph1 className="font-bold text-gray-800 tracking-wider mb-3">
+      <div className="bg-white p-4 border border-gray-100 rounded-xl">
+        <Paragraph1 className="mb-3 font-bold text-gray-800 tracking-wider">
           CONTACT
         </Paragraph1>
 
         <hr className="mb-3 text-gray-300" />
         <div className="flex items-start gap-3">
-          <User size={30} className="shrink-0 mt-0.5 text-gray-700" />
+          <User size={30} className="mt-0.5 text-gray-700 shrink-0" />
           <div>
             <Paragraph1 className="font-medium text-gray-900 leading-snug">
               {user.name}
             </Paragraph1>
-            <Paragraph1 className="text-xs text-gray-600 leading-snug">
+            <Paragraph1 className="text-gray-600 text-xs leading-snug">
               {user.email}
             </Paragraph1>
-            <Paragraph1 className="text-xs text-gray-600 leading-snug">
+            <Paragraph1 className="text-gray-600 text-xs leading-snug">
               {profile?.phoneNumber || "No phone number"}
             </Paragraph1>
           </div>
@@ -205,8 +189,8 @@ export default function CheckoutContactAndPayment({
       </div>
 
       {/* 2. DELIVERY ADDRESS Section */}
-      <div className="p-4 bg-white rounded-xl border border-gray-100">
-        <Paragraph1 className="font-bold text-gray-800 tracking-wider mb-4">
+      <div className="bg-white p-4 border border-gray-100 rounded-xl">
+        <Paragraph1 className="mb-4 font-bold text-gray-800 tracking-wider">
           DELIVERY ADDRESS
         </Paragraph1>
         <hr className="mb-3 text-gray-300" />
@@ -214,8 +198,8 @@ export default function CheckoutContactAndPayment({
         {/* Address Row */}
         <div className="flex justify-between items-start mb-4">
           <div className="flex items-start gap-3">
-            <Home size={30} className="shrink-0 mt-0.5 text-gray-700" />
-            <Paragraph1 className="text-gray-900 leading-snug max-w-[70%]">
+            <Home size={30} className="mt-0.5 text-gray-700 shrink-0" />
+            <Paragraph1 className="max-w-[70%] text-gray-900 leading-snug">
               {deliveryAddress}
             </Paragraph1>
           </div>
@@ -224,7 +208,7 @@ export default function CheckoutContactAndPayment({
         <hr className="mb-3 text-gray-300" />
 
         {/* Same as Billing Checkbox */}
-        <label className="flex items-center space-x-2 cursor-pointer text-gray-700 mt-2">
+        <label className="flex items-center space-x-2 mt-2 text-gray-700 cursor-pointer">
           <input
             type="checkbox"
             checked={isSameAsBilling}
@@ -245,18 +229,18 @@ export default function CheckoutContactAndPayment({
       </div>
 
       {/* 3. SHIPPING METHOD Section */}
-      <div className="p-4 bg-white rounded-xl border border-gray-100">
-        <Paragraph1 className="font-bold text-gray-800 tracking-wider mb-4">
+      <div className="bg-white p-4 border border-gray-100 rounded-xl">
+        <Paragraph1 className="mb-4 font-bold text-gray-800 tracking-wider">
           SHIPPING METHOD
         </Paragraph1>
         <hr className="mb-4 text-gray-300" />
 
         {isLoadingShipping ? (
           <div className="space-y-2">
-            {[...Array(3)].map((_, i) => (
+            {SHIPPING_SKELETON_KEYS.map((key) => (
               <div
-                key={i}
-                className="h-16 bg-gray-200 rounded-lg animate-pulse"
+                key={key}
+                className="bg-gray-200 rounded-lg h-16 animate-pulse"
               ></div>
             ))}
           </div>
@@ -271,10 +255,11 @@ export default function CheckoutContactAndPayment({
               })
               .map((tier) => {
                 const tierDetails = getDeliveryTierDetails(tier.name);
+                const isSameDay = isSameDayShippingTierName(tier.name);
                 return (
                   <label
                     key={tier.name}
-                    className="flex items-center p-3 border-2 rounded-lg cursor-pointer transition-colors"
+                    className="flex items-center p-3 border-2 rounded-lg transition-colors cursor-pointer"
                     style={{
                       borderColor:
                         selectedShippingTier === tier.name ? "#000" : "#e5e7eb",
@@ -300,26 +285,31 @@ export default function CheckoutContactAndPayment({
                       }`}
                     >
                       {selectedShippingTier === tier.name && (
-                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                        <div className="bg-white rounded-full w-2 h-2"></div>
                       )}
                     </span>
-                    <div className="ml-3 flex-1">
+                    <div className="flex-1 ml-3">
                       <div className="flex items-center gap-2">
                         <Truck size={18} className="text-gray-700" />
                         <div>
                           <Paragraph1 className="font-semibold text-gray-900">
                             {tierDetails.type}
                           </Paragraph1>
-                          <Paragraph1 className="text-xs text-gray-600">
-                            {tierDetails.description} • {tier.name}
+                          <Paragraph1 className="text-gray-600 text-xs">
+                            {tierDetails.description}
                           </Paragraph1>
+                          {isSameDay && (
+                            <Paragraph1 className="mt-1 text-amber-700 text-xs">
+                              {SAME_DAY_CUTOFF_DISCLAIMER}
+                            </Paragraph1>
+                          )}
                         </div>
                       </div>
                       <div className="flex justify-between items-center mt-2">
-                        <Paragraph1 className="text-xs text-gray-600 ml-6">
+                        <Paragraph1 className="ml-6 text-gray-600 text-xs">
                           Shipping cost:
                         </Paragraph1>
-                        <Paragraph1 className="text-sm font-bold text-gray-900">
+                        <Paragraph1 className="font-bold text-gray-900 text-sm">
                           ₦{formatCurrency(tier.totalShippingCost)}
                         </Paragraph1>
                       </div>
@@ -336,19 +326,19 @@ export default function CheckoutContactAndPayment({
       </div>
 
       {/* 4. PAYMENT Section */}
-      <div className="p-4 bg-white rounded-xl border border-gray-100">
-        <Paragraph1 className="font-bold text-gray-800 tracking-wider mb-4">
+      <div className="bg-white p-4 border border-gray-100 rounded-xl">
+        <Paragraph1 className="mb-4 font-bold text-gray-800 tracking-wider">
           PAYMENT
         </Paragraph1>
         <hr className="mb-3 text-gray-300" />
 
         {/* Wallet Balance Row */}
         <div className="flex justify-between items-start gap-4">
-          <div className="flex items-start gap-3 flex-1">
-            <Wallet size={30} className="shrink-0 mt-0.5 text-gray-700" />
+          <div className="flex flex-1 items-start gap-3">
+            <Wallet size={30} className="mt-0.5 text-gray-700 shrink-0" />
             <div className="space-y-2">
               <div>
-                <Paragraph1 className="text-xs text-gray-600">
+                <Paragraph1 className="text-gray-600 text-xs">
                   Available Balance
                 </Paragraph1>
                 <Paragraph3
@@ -367,7 +357,7 @@ export default function CheckoutContactAndPayment({
 
       {/* Footer Note */}
       {!isWalletFunded && (
-        <div className="flex items-center text-xs text-gray-500 mt-4">
+        <div className="flex items-center mt-4 text-gray-500 text-xs">
           <span className="mr-1 text-base">ⓘ</span>
           <Paragraph1 className="text-gray-500">
             Fund your wallet to complete this order
