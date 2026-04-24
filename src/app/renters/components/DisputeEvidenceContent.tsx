@@ -27,9 +27,9 @@ const EvidenceFileCard: React.FC<EvidenceFile> = ({
   const isImage = fileType === "image";
 
   return (
-    <div className="w-full bg-white border border-gray-200 rounded-xl overflow-hidden  flex flex-col cursor-pointer hover:shadow-md transition duration-150">
+    <div className="flex flex-col bg-white hover:shadow-md border border-gray-200 rounded-xl w-full overflow-hidden transition duration-150 cursor-pointer">
       {/* File Preview/Placeholder Area */}
-      <div className="grow h-40 flex items-center justify-center bg-gray-50">
+      <div className="flex justify-center items-center bg-gray-50 h-40 grow">
         {fileUrl && isImage ? (
           <img
             src={fileUrl}
@@ -44,8 +44,8 @@ const EvidenceFileCard: React.FC<EvidenceFile> = ({
       </div>
 
       {/* File Name Footer */}
-      <div className="bg-black text-white p-2">
-        <Paragraph1 className="text-xs truncate text-center">
+      <div className="bg-black p-2 text-white">
+        <Paragraph1 className="text-xs text-center truncate">
           {fileName}
         </Paragraph1>
       </div>
@@ -58,18 +58,18 @@ const DisputeEvidenceContent: React.FC<DisputeEvidenceContentProps> = ({
 }) => {
   return (
     <div className="font-sans">
-      <Paragraph1 className="text-sm font-bold text-gray-900 uppercase mb-4">
+      <Paragraph1 className="mb-4 font-bold text-gray-900 text-sm uppercase">
         UPLOADED EVIDENCE
       </Paragraph1>
 
       {files.length === 0 ? (
-        <div className="p-4 bg-white border border-gray-200 rounded-xl">
-          <Paragraph1 className="text-sm text-gray-600">
+        <div className="bg-white p-4 border border-gray-200 rounded-xl">
+          <Paragraph1 className="text-gray-600 text-sm">
             No evidence files have been uploaded for this dispute yet.
           </Paragraph1>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-2  gap-4">
+        <div className="gap-4 grid grid-cols-2 sm:grid-cols-2">
           {files.map((file, index) => (
             <EvidenceFileCard key={index} {...file} />
           ))}
@@ -79,27 +79,4 @@ const DisputeEvidenceContent: React.FC<DisputeEvidenceContentProps> = ({
   );
 };
 
-// --- Example Usage matching the provided image content ---
-
-const ExampleDisputeEvidence: React.FC = () => {
-  const sampleFiles: EvidenceFile[] = [
-    {
-      fileName: "damage_photo_1.jpg",
-      fileType: "image",
-      // fileUrl: "url/to/image_1.jpg",
-    },
-    {
-      fileName: "damage_photo_2.jpg",
-      fileType: "image",
-      // fileUrl: "url/to/image_2.jpg",
-    },
-    {
-      fileName: "receipt_01.pdf",
-      fileType: "document",
-    },
-  ];
-
-  return <DisputeEvidenceContent files={sampleFiles} />;
-};
-
-export default ExampleDisputeEvidence;
+export default DisputeEvidenceContent;

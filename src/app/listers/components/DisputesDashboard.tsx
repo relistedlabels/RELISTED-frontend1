@@ -16,8 +16,8 @@ const DisputeSummaryCard: React.FC<DisputeSummaryCardProps> = ({
   count,
   colorClass,
 }) => (
-  <div className="p-5 bg-white rounded-lg border border-gray-200 flex flex-col justify-between h-24">
-    <Paragraph1 className="text-sm text-gray-700">{label}</Paragraph1>
+  <div className="flex flex-col justify-between bg-white p-5 border border-gray-200 rounded-lg h-24">
+    <Paragraph1 className="text-gray-700 text-sm">{label}</Paragraph1>
     <Paragraph2 className={`text-3xl font-bold mt-2 ${colorClass}`}>
       {count}
     </Paragraph2>
@@ -31,27 +31,27 @@ const DisputesDashboard: React.FC = () => {
     isError,
   } = useDisputeStats("month");
 
-  const stats = disputeStatsData?.data;
+  const stats = disputeStatsData?.data.disputeStats;
   const totalDisputes = stats?.totalDisputes ?? 0;
-  const pendingDisputes = stats?.pending ?? 0;
-  const inReviewDisputes = stats?.inReview ?? 0;
-  const resolvedDisputes = stats?.resolved ?? 0;
+  const pendingDisputes = stats?.pendingDisputes ?? 0;
+  const inReviewDisputes = stats?.inReviewDisputes ?? 0;
+  const resolvedDisputes = stats?.resolvedDisputes ?? 0;
 
   if (isLoading || isError) {
     return (
-      <div className="font-sans space-y-6">
+      <div className="space-y-6 font-sans">
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/2 mb-2" />
-          <div className="h-3 bg-gray-100 rounded w-3/4" />
+          <div className="bg-gray-200 mb-2 rounded w-1/2 h-4" />
+          <div className="bg-gray-100 rounded w-3/4 h-3" />
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="gap-4 grid grid-cols-2 md:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="p-5 bg-white rounded-lg border border-gray-200 animate-pulse"
+              className="bg-white p-5 border border-gray-200 rounded-lg animate-pulse"
             >
-              <div className="h-4 bg-gray-200 rounded mb-2" />
-              <div className="h-6 bg-gray-100 rounded" />
+              <div className="bg-gray-200 mb-2 rounded h-4" />
+              <div className="bg-gray-100 rounded h-6" />
             </div>
           ))}
         </div>
@@ -62,9 +62,9 @@ const DisputesDashboard: React.FC = () => {
   return (
     <div className="font-sans">
       {/* Header and Action Button */}
-      <div className="flex flex-wrap gap-4 justify-between items-start mb-6">
+      <div className="flex flex-wrap justify-between items-start gap-4 mb-6">
         <div>
-          <Paragraph1 className="text-sm text-gray-600 mt-1">
+          <Paragraph1 className="mt-1 text-gray-600 text-sm">
             Track and manage disputes you've raised.
           </Paragraph1>
         </div>
@@ -74,7 +74,7 @@ const DisputesDashboard: React.FC = () => {
       </div>
 
       {/* Summary Cards Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="gap-4 grid grid-cols-2 md:grid-cols-4">
         <DisputeSummaryCard
           label="Total Disputes"
           count={totalDisputes}

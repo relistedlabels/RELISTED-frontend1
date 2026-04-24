@@ -680,35 +680,41 @@ export async function getLockedBalances(): Promise<LockedBalancesResponse> {
 
 export interface DisputeStats {
   totalDisputes: number;
-  pending: number;
-  inReview: number;
-  resolved: number;
+  pendingDisputes: number;
+  inReviewDisputes: number;
+  resolvedDisputes: number;
+  rejectedDisputes: number;
+  averageResolutionTime?: string;
+  litiousChargeRate?: string;
 }
 
 export interface DisputeStatsResponse {
   success: boolean;
-  data: DisputeStats;
+  data: { disputeStats: DisputeStats; generatedAt: string };
 }
 
 export interface Dispute {
-  id: string;
   disputeId: string;
   itemName: string;
-  curatorName: string;
+  curator: string;
+  orderNumber?: string;
   status: "pending_review" | "in_review" | "resolved" | "rejected";
   dateSubmitted: string;
   amount?: number;
-  orderId: string;
+  category?: string;
+  currency?: string;
 }
 
 export interface DisputesResponse {
   success: boolean;
-  data: Dispute[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    pages: number;
+  data: {
+    disputes: Dispute[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
   };
 }
 
@@ -744,7 +750,7 @@ export interface DisputeOverviewDetails {
   curator: string;
   category: string;
   dateSubmitted: string;
-  preferredResolution: string;
+  preferredResolution: string | null;
   description: string;
 }
 
@@ -841,7 +847,7 @@ export interface DisputeOverviewResponse {
       disputeDetails: {
         category: string;
         dateSubmitted: string;
-        preferredResolution: string;
+        preferredResolution: string | null;
         description: string;
       };
     };
@@ -972,9 +978,10 @@ export async function withdrawDispute(
 
 export interface CreateDisputePayload {
   orderId: string;
-  issueCategory: string;
+  category: string;
   description: string;
-  evidenceFileIds?: string[];
+  preferredResolution?: string;
+  evidenceFiles?: string[];
 }
 
 export interface CreateDisputeResponse {
