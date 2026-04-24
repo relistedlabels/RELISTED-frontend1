@@ -73,16 +73,21 @@ export async function apiFetch<T>(
     method: options.method || "GET",
   });
 
-  const token = getAuthToken();
+  let authTokenUsed = getAuthToken();
   const isFormData = options.body instanceof FormData;
 
-  let res = await doFetch(path, options, token, isFormData);
+  let res = await doFetch(path, options, authTokenUsed, isFormData);
 
   // Retry once with token from localStorage if 401 (to handle rehydration race)
-  if (res.status === 401 && token === null && typeof window !== "undefined") {
+  if (
+    res.status === 401 &&
+    authTokenUsed === null &&
+    typeof window !== "undefined"
+  ) {
     const retryToken = getAuthToken();
     if (retryToken) {
-      res = await doFetch(path, options, retryToken, isFormData);
+      authTokenUsed = retryToken;
+      res = await doFetch(path, options, authTokenUsed, isFormData);
     }
   }
 
@@ -108,15 +113,25 @@ export async function apiFetch<T>(
       message: errorMessage,
     });
 
-    // Handle 401 Unauthorized - Session Expired
+    // Handle 401 Unauthorized — only treat as global session loss when the
+    // credential sent on this request is still the active one. Otherwise a
+    // stale response (e.g. old sessionToken after MFA upgraded to access token)
+    // would clear the brand-new session and show SessionExpiredModal.
     if (res.status === 401) {
       const currentState = useUserStore.getState();
+      const tokenNow = getAuthToken();
+      const sameCredentialAsRequest =
+        authTokenUsed !== null && authTokenUsed === tokenNow;
+
       const hadClientCredentials =
         currentState.token !== null ||
         currentState.sessionToken !== null ||
         currentState.userId !== null;
 
-      if (hadClientCredentials) {
+      const shouldExpireGlobalSession =
+        hadClientCredentials && sameCredentialAsRequest;
+
+      if (shouldExpireGlobalSession) {
         currentState.clearUser();
         useSessionStore.getState().setSessionExpired(true);
       }
@@ -124,8 +139,10 @@ export async function apiFetch<T>(
       if (typeof window !== "undefined") {
         const pathname = window.location.pathname;
         const returnUrl = pathname + window.location.search;
-        // Only queue sign-in redirect when we cleared a session
-        if (hadClientCredentials && !shouldSuppressSignInRedirect(pathname)) {
+        if (
+          shouldExpireGlobalSession &&
+          !shouldSuppressSignInRedirect(pathname)
+        ) {
           useSessionStore.getState().requestSignInRedirect(returnUrl);
         }
       }

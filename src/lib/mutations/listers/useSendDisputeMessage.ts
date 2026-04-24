@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  sendDisputeMessage,
   type SendDisputeMessagePayload,
+  sendDisputeMessage,
 } from "@/lib/api/listers";
 
 export function useSendDisputeMessage(disputeId: string) {
@@ -13,6 +13,9 @@ export function useSendDisputeMessage(disputeId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["listers", "disputes", "messages", disputeId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["listers", "disputes", "evidence", disputeId],
       });
     },
   });

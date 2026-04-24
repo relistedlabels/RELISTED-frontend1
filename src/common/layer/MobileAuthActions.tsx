@@ -1,26 +1,25 @@
 "use client";
 
+import {
+  AlertCircle,
+  ChevronDown,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  ShoppingBag,
+  User,
+  Wallet,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import { useLogout } from "@/lib/mutations";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useListerProfile } from "@/lib/queries/listers/useListerProfile";
 import { useProfile as useRenterProfile } from "@/lib/queries/renters/useProfile";
-import { useLogout } from "@/lib/mutations";
-import { useState } from "react";
-import {
-  ChevronDown,
-  LogOut,
-  Settings,
-  User,
-  Wallet,
-  ShoppingBag,
-  AlertCircle,
-  LayoutDashboard,
-} from "lucide-react";
-import { useUserStore } from "@/store/useUserStore";
-import Link from "next/link";
+import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { Paragraph1 } from "../ui/Text";
-import { usePathname } from "next/navigation";
 import LogoutConfirmModal from "./LogoutConfirmModal";
-import { useRouter } from "next/navigation";
 
 interface MobileAuthActionsProps {
   onClose?: () => void;
@@ -29,11 +28,14 @@ interface MobileAuthActionsProps {
 export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
   const { data: user, isLoading } = useMe();
   const isLister = user?.role?.toLowerCase() === "lister";
+  const isAdmin = user?.role?.toUpperCase() === "ADMIN";
   const { data: listerProfileData } = useListerProfile(isLister);
-  const { data: renterProfileData } = useRenterProfile(!isLister);
+  const { data: renterProfileData } = useRenterProfile(
+    Boolean(user) && !isLister && !isAdmin,
+  );
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const { clearUser } = useUserStore();
+  const adminId = useAdminIdStore((s) => s.adminId);
   const pathname = usePathname();
   const router = useRouter();
   const logout = useLogout();
@@ -62,7 +64,7 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
       case "LISTER":
         return "/renters/account";
       case "ADMIN":
-        return "/admin/dashboard";
+        return adminId ? `/admin/${adminId}/settings` : "/auth/sign-in";
       case "DRESSER":
       default:
         return "/renters/account";
@@ -75,7 +77,7 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
       case "LISTER":
         return "/renters/wallet";
       case "ADMIN":
-        return "/admin/dashboard";
+        return adminId ? `/admin/${adminId}/wallets` : "/auth/sign-in";
       case "DRESSER":
       default:
         return "/renters/wallet";
@@ -88,7 +90,7 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
       case "LISTER":
         return "/renters/orders";
       case "ADMIN":
-        return "/admin/orders";
+        return adminId ? `/admin/${adminId}/orders` : "/auth/sign-in";
       case "DRESSER":
       default:
         return "/renters/orders";
@@ -101,7 +103,7 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
       case "LISTER":
         return "/renters/dispute";
       case "ADMIN":
-        return "/admin/disputes";
+        return adminId ? `/admin/${adminId}/disputes` : "/auth/sign-in";
       case "DRESSER":
       default:
         return "/renters/dispute";
@@ -122,6 +124,7 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
     return (
       <div className="flex flex-col gap-4">
         <button
+          type="button"
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           className="flex justify-between items-center gap-3"
         >
@@ -159,7 +162,10 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
           <div className="flex flex-col gap-2 px-2">
             {user.role === "LISTER" && (
               <Link href="/listers/dashboard" onClick={handleLinkClick}>
-                <button className="flex items-center gap-3 hover:bg-gray-900 px-4 py-2 rounded-lg w-full text-left transition-colors">
+                <button
+                  type="button"
+                  className="flex items-center gap-3 hover:bg-gray-900 px-4 py-2 rounded-lg w-full text-left transition-colors"
+                >
                   <LayoutDashboard size={18} className="text-gray-400" />
                   <Paragraph1 className="text-white text-sm">
                     Lister Dashboard
@@ -168,30 +174,43 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
               </Link>
             )}{" "}
             <Link href={getSettingsRoute()} onClick={handleLinkClick}>
-              <button className="flex items-center gap-3 hover:bg-gray-900 px-4 py-2 rounded-lg w-full text-left transition-colors">
+              <button
+                type="button"
+                className="flex items-center gap-3 hover:bg-gray-900 px-4 py-2 rounded-lg w-full text-left transition-colors"
+              >
                 <Settings size={18} className="text-gray-400" />
                 <Paragraph1 className="text-white text-sm">Settings</Paragraph1>
               </button>
             </Link>
             <Link href={getWalletRoute()} onClick={handleLinkClick}>
-              <button className="flex items-center gap-3 hover:bg-gray-900 px-4 py-2 rounded-lg w-full text-left transition-colors">
+              <button
+                type="button"
+                className="flex items-center gap-3 hover:bg-gray-900 px-4 py-2 rounded-lg w-full text-left transition-colors"
+              >
                 <Wallet size={18} className="text-gray-400" />
                 <Paragraph1 className="text-white text-sm">Wallet</Paragraph1>
               </button>
             </Link>
             <Link href={getOrdersRoute()} onClick={handleLinkClick}>
-              <button className="flex items-center gap-3 hover:bg-gray-900 px-4 py-2 rounded-lg w-full text-left transition-colors">
+              <button
+                type="button"
+                className="flex items-center gap-3 hover:bg-gray-900 px-4 py-2 rounded-lg w-full text-left transition-colors"
+              >
                 <ShoppingBag size={18} className="text-gray-400" />
                 <Paragraph1 className="text-white text-sm">Orders</Paragraph1>
               </button>
             </Link>
             <Link href={getDisputeRoute()} onClick={handleLinkClick}>
-              <button className="flex items-center gap-3 hover:bg-gray-900 px-4 py-2 rounded-lg w-full text-left transition-colors">
+              <button
+                type="button"
+                className="flex items-center gap-3 hover:bg-gray-900 px-4 py-2 rounded-lg w-full text-left transition-colors"
+              >
                 <AlertCircle size={18} className="text-gray-400" />
                 <Paragraph1 className="text-white text-sm">Disputes</Paragraph1>
               </button>
             </Link>
             <button
+              type="button"
               onClick={() => {
                 setIsDropdownOpen(false);
                 setShowLogoutConfirm(true);
@@ -226,12 +245,18 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
         href={`/auth/sign-in?redirect=${encodeURIComponent(redirectUrl)}`}
         onClick={handleLinkClick}
       >
-        <button className="hover:bg-gray-900 px-4 py-2 border border-white rounded-lg w-full font-medium text-white text-sm transition-colors">
+        <button
+          type="button"
+          className="hover:bg-gray-900 px-4 py-2 border border-white rounded-lg w-full font-medium text-white text-sm transition-colors"
+        >
           Sign In
         </button>
       </Link>
       <Link href={`/auth/create-account`} onClick={handleLinkClick}>
-        <button className="bg-white hover:bg-gray-100 px-4 py-2 rounded-lg w-full font-medium text-black text-sm transition-colors">
+        <button
+          type="button"
+          className="bg-white hover:bg-gray-100 px-4 py-2 rounded-lg w-full font-medium text-black text-sm transition-colors"
+        >
           Sign Up
         </button>
       </Link>

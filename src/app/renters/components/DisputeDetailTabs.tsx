@@ -2,14 +2,9 @@
 
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { Paragraph1 } from "@/common/ui/Text";
 import { CheckCircle, Clock, FileText, XCircle } from "lucide-react";
-import DisputeOverviewContent from "./DisputeOverviewContent";
-import DisputeEvidenceContent from "./DisputeEvidenceContent";
-import DisputeTimelineContent from "./DisputeTimelineContent";
-import DisputeResolutionContent from "./DisputeResolutionContent";
-import DisputeConversationLog from "./DisputeConversationLog";
+import React, { useEffect, useRef, useState } from "react";
+import { Paragraph1 } from "@/common/ui/Text";
 import {
   useDisputeDetails,
   useDisputeEvidence,
@@ -18,6 +13,11 @@ import {
   useDisputeTimeline,
 } from "@/lib/queries/renters/useDisputes";
 import { useOrders } from "@/lib/queries/renters/useOrders";
+import DisputeConversationLog from "./DisputeConversationLog";
+import DisputeEvidenceContent from "./DisputeEvidenceContent";
+import DisputeOverviewContent from "./DisputeOverviewContent";
+import DisputeResolutionContent from "./DisputeResolutionContent";
+import DisputeTimelineContent from "./DisputeTimelineContent";
 
 type TabKey = "overview" | "evidence" | "timeline" | "messages" | "resolution";
 
@@ -46,6 +46,18 @@ const DisputeDetailTabs: React.FC<{ disputeId: string }> = ({ disputeId }) => {
   const { data: timeline } = useDisputeTimeline(disputeId);
   const { data: resolution } = useDisputeResolution(disputeId);
   const { data: ordersData } = useOrders(undefined, 1, 100, "newest");
+
+  const disputeStatusKey = String(dispute?.status ?? "")
+    .trim()
+    .replaceAll("-", "_")
+    .toUpperCase();
+
+  const canUploadEvidence = ![
+    "RESOLVED",
+    "REJECTED",
+    "WITHDRAW",
+    "WITHDRAWN",
+  ].includes(disputeStatusKey);
 
   const ordersByOrderId = React.useMemo(() => {
     const orders = (ordersData as any)?.orders ?? [];
@@ -112,7 +124,12 @@ const DisputeDetailTabs: React.FC<{ disputeId: string }> = ({ disputeId }) => {
       />
     ),
     timeline: <DisputeTimelineContent events={timeline?.events ?? []} />,
-    messages: <DisputeConversationLog disputeId={disputeId} />,
+    messages: (
+      <DisputeConversationLog
+        disputeId={disputeId}
+        canUpload={canUploadEvidence}
+      />
+    ),
     resolution: (
       <DisputeResolutionContent
         resolution={{
@@ -146,6 +163,7 @@ const DisputeDetailTabs: React.FC<{ disputeId: string }> = ({ disputeId }) => {
 
           return (
             <button
+              type="button"
               key={tab.key}
               ref={(el) => {
                 tabRefs.current[index] = el;
@@ -179,13 +197,29 @@ const DisputeDetail: React.FC<{ disputeId: string }> = ({ disputeId }) => {
 
   const badge =
     statusKey === "IN_REVIEW" || statusKey === "UNDER_REVIEW"
-      ? { label: "In Review", className: "bg-blue-100 text-blue-800", Icon: FileText }
+      ? {
+          label: "In Review",
+          className: "bg-blue-100 text-blue-800",
+          Icon: FileText,
+        }
       : statusKey === "PENDING" || statusKey === "PENDING_REVIEW"
-        ? { label: "Pending Review", className: "bg-yellow-100 text-yellow-800", Icon: Clock }
+        ? {
+            label: "Pending Review",
+            className: "bg-yellow-100 text-yellow-800",
+            Icon: Clock,
+          }
         : statusKey === "RESOLVED" || statusKey === "RESELOVED"
-          ? { label: "Resolved", className: "bg-green-100 text-green-800", Icon: CheckCircle }
+          ? {
+              label: "Resolved",
+              className: "bg-green-100 text-green-800",
+              Icon: CheckCircle,
+            }
           : statusKey === "REJECTED"
-            ? { label: "Rejected", className: "bg-red-100 text-red-800", Icon: XCircle }
+            ? {
+                label: "Rejected",
+                className: "bg-red-100 text-red-800",
+                Icon: XCircle,
+              }
             : statusKey === "WITHDRAW" || statusKey === "WITHDRAWN"
               ? {
                   label: "Withdrawn",
@@ -193,7 +227,9 @@ const DisputeDetail: React.FC<{ disputeId: string }> = ({ disputeId }) => {
                   Icon: XCircle,
                 }
               : {
-                  label: dispute?.status?.trim?.() ? String(dispute?.status) : "Pending Review",
+                  label: dispute?.status?.trim?.()
+                    ? String(dispute?.status)
+                    : "Pending Review",
                   className: "bg-gray-100 text-gray-800",
                   Icon: FileText,
                 };

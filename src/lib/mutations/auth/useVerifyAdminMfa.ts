@@ -1,8 +1,7 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { verifyAdminMfa } from "@/lib/api/auth";
-import { useUserStore } from "@/store/useUserStore";
 import { useSessionStore } from "@/store/useSessionStore";
-import { useQueryClient } from "@tanstack/react-query";
+import { useUserStore } from "@/store/useUserStore";
 
 export function useVerifyAdminMfa() {
   const queryClient = useQueryClient();
@@ -16,16 +15,9 @@ export function useVerifyAdminMfa() {
       // Clear any session expired flag since we just authenticated
       setSessionExpired(false);
 
-      // Store in Zustand + localStorage
-      setAuth({
-        token: data.token,
-        userId: data.user.id,
-        email: data.user.email,
-        role: data.user.role,
-        name: data.user.name,
-      });
-
-      // Set token in httpOnly cookie for middleware
+      // Set httpOnly cookie before Zustand so any immediate navigation
+      // (e.g. verify-mfa page effect → dashboard) does not hit middleware
+      // without a token.
       try {
         await fetch("/api/auth/set-token", {
           method: "POST",
@@ -38,6 +30,14 @@ export function useVerifyAdminMfa() {
       } catch (err) {
         console.error("Failed to set token cookie:", err);
       }
+
+      setAuth({
+        token: data.token,
+        userId: data.user.id,
+        email: data.user.email,
+        role: data.user.role,
+        name: data.user.name,
+      });
 
       // Invalidate useMe query so it refetches with new token
       queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
