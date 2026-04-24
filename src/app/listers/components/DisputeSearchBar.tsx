@@ -14,6 +14,7 @@ const STATUS_OPTIONS = [
   "In Review",
   "Resolved",
   "Rejected",
+  "Withdrawn",
 ];
 
 interface DisputeSearchBarProps {

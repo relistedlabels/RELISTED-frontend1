@@ -13,7 +13,7 @@ interface Dispute {
   disputeId: string;
   itemName: string;
   curator: string;
-  status: "In Review" | "Pending Review" | "Resolved" | "Rejected";
+  status: "In Review" | "Pending Review" | "Resolved" | "Rejected" | "Withdrawn";
   dateSubmitted: string;
 }
 
@@ -21,20 +21,29 @@ interface DisputeTableProps {
   disputes: Dispute[];
 }
 
-const mapApiStatusToLabel = (
-  status: ApiDispute["status"],
-): Dispute["status"] => {
-  switch (status) {
-    case "pending_review":
-      return "Pending Review";
-    case "in_review":
-      return "In Review";
-    case "resolved":
-      return "Resolved";
-    case "rejected":
-      return "Rejected";
+const mapApiStatusToLabel = (status: ApiDispute["status"] | string) => {
+  const key = String(status ?? "")
+    .trim()
+    .replaceAll("-", "_")
+    .toUpperCase();
+
+  switch (key) {
+    case "PENDING_REVIEW":
+    case "PENDING":
+      return "Pending Review" as const;
+    case "IN_REVIEW":
+    case "UNDER_REVIEW":
+      return "In Review" as const;
+    case "RESOLVED":
+    case "RESELOVED":
+      return "Resolved" as const;
+    case "REJECTED":
+      return "Rejected" as const;
+    case "WITHDRAW":
+    case "WITHDRAWN":
+      return "Withdrawn" as const;
     default:
-      return "Pending Review";
+      return "Pending Review" as const;
   }
 };
 
@@ -71,6 +80,10 @@ const getStatusBadge = (status: Dispute["status"]) => {
       colorClass = "bg-red-100 text-red-800";
       IconComponent = XCircle;
       break;
+    case "Withdrawn":
+      colorClass = "bg-gray-100 text-gray-800";
+      IconComponent = XCircle;
+      break;
     default:
       colorClass = "bg-gray-100 text-gray-800";
       IconComponent = null;
@@ -81,7 +94,7 @@ const getStatusBadge = (status: Dispute["status"]) => {
       className={`inline-flex items-center px-3 py-2 rounded-full text-xs font-medium ${colorClass} whitespace-nowrap`}
     >
       {/* Render Icon if available */}
-      {IconComponent && <IconComponent className="w-4 h-4 mr-1" />}
+      {IconComponent && <IconComponent className="mr-1 w-4 h-4" />}
       {/* Removed surrounding Paragraph1 here, as the badge text is short and should inherit text size */}
       {status}
     </span>
@@ -92,14 +105,14 @@ const DisputeTable: React.FC<DisputeTableProps> = ({ disputes }) => {
   return (
     // On small screens, prevent initial overflow-x-auto unless needed.
     // We will let the desktop layout handle horizontal scrolling if necessary.
-    <div className="font-sans mb-8 bg-white rounded-lg border border-gray-200  sm:overflow-x-auto">
+    <div className="bg-white mb-8 border border-gray-200 rounded-lg sm:overflow-x-auto font-sans">
       {/* This main div now only controls the table content */}
       <div className="sm:min-w-full">
         {/* Header Row: Hidden on mobile (default) but visible on small screens (sm:grid) and up. */}
-        <div className="hidden sm:grid grid-cols-12 gap-4 text-xs font-semibold text-gray-700 uppercase px-6 py-4 border-b border-gray-200 bg-gray-200">
+        <div className="hidden gap-4 sm:grid grid-cols-12 bg-gray-200 px-6 py-4 border-gray-200 border-b font-semibold text-gray-700 text-xs uppercase">
           <span className="col-span-2">Dispute ID</span>
           <span className="col-span-3">Item Name</span>
-          <span className="col-span-2">Curator</span>
+          <span className="col-span-2">Lister</span>
           <span className="col-span-2">Status</span>
           <span className="col-span-2">Date Submitted</span>
           <span className="col-span-1 text-right">Action</span>
@@ -116,38 +129,38 @@ const DisputeTable: React.FC<DisputeTableProps> = ({ disputes }) => {
             }`}
           >
             {/* Dispute ID - Full width on mobile, col-span-2 on desktop */}
-            <div className="flex justify-between items-center sm:block sm:col-span-2">
-              <span className="sm:hidden text-xs font-semibold text-gray-500 uppercase">
+            <div className="sm:block flex justify-between items-center sm:col-span-2">
+              <span className="sm:hidden font-semibold text-gray-500 text-xs uppercase">
                 ID:
               </span>
-              <Paragraph1 className="text-sm text-gray-700 font-medium sm:font-normal">
+              <Paragraph1 className="sm:font-normal font-medium text-gray-700 text-sm">
                 {dispute.disputeId}
               </Paragraph1>
             </div>
 
             {/* Item Name - Full width on mobile, col-span-3 on desktop */}
-            <div className="flex justify-between items-center sm:block sm:col-span-3">
-              <span className="sm:hidden text-xs font-semibold text-gray-500 uppercase">
+            <div className="sm:block flex justify-between items-center sm:col-span-3">
+              <span className="sm:hidden font-semibold text-gray-500 text-xs uppercase">
                 Item:
               </span>
-              <Paragraph1 className="text-sm font-medium text-gray-900">
+              <Paragraph1 className="font-medium text-gray-900 text-sm">
                 {dispute.itemName}
               </Paragraph1>
             </div>
 
-            {/* Curator - Full width on mobile, col-span-2 on desktop */}
-            <div className="flex justify-between items-center sm:block sm:col-span-2">
-              <span className="sm:hidden text-xs font-semibold text-gray-500 uppercase">
-                Curator:
+            {/* Lister - Full width on mobile, col-span-2 on desktop */}
+            <div className="sm:block flex justify-between items-center sm:col-span-2">
+              <span className="sm:hidden font-semibold text-gray-500 text-xs uppercase">
+                Lister:
               </span>
-              <Paragraph1 className="text-sm text-gray-700">
+              <Paragraph1 className="text-gray-700 text-sm">
                 {dispute.curator}
               </Paragraph1>
             </div>
 
             {/* Status - Full width on mobile, col-span-2 on desktop */}
-            <div className="flex justify-between items-center sm:block sm:col-span-2">
-              <span className="sm:hidden text-xs font-semibold text-gray-500 uppercase">
+            <div className="sm:block flex justify-between items-center sm:col-span-2">
+              <span className="sm:hidden font-semibold text-gray-500 text-xs uppercase">
                 Status:
               </span>
               <div className="mt-1 sm:mt-0">
@@ -156,17 +169,17 @@ const DisputeTable: React.FC<DisputeTableProps> = ({ disputes }) => {
             </div>
 
             {/* Date Submitted - Full width on mobile, col-span-2 on desktop */}
-            <div className="flex justify-between items-center sm:block sm:col-span-2">
-              <span className="sm:hidden text-xs font-semibold text-gray-500 uppercase">
+            <div className="sm:block flex justify-between items-center sm:col-span-2">
+              <span className="sm:hidden font-semibold text-gray-500 text-xs uppercase">
                 Date:
               </span>
-              <Paragraph1 className="text-sm text-gray-700">
+              <Paragraph1 className="text-gray-700 text-sm">
                 {dispute.dateSubmitted}
               </Paragraph1>
             </div>
 
             {/* Action - Full width on mobile, col-span-1 on desktop, placed at the end of the mobile stack */}
-            <div className="flex justify-end sm:col-span-1 sm:items-center pt-2 sm:pt-0 border-t border-gray-100 sm:border-t-0">
+            <div className="flex justify-end sm:items-center sm:col-span-1 pt-2 sm:pt-0 border-gray-100 border-t sm:border-t-0">
               <DisputeDetails disputeId={dispute.disputeId} />{" "}
             </div>
           </div>
@@ -188,6 +201,7 @@ const ExampleDisputesList: React.FC = () => {
     if (statusLabel === "In Review") return "in_review";
     if (statusLabel === "Resolved") return "resolved";
     if (statusLabel === "Rejected") return "rejected";
+    if (statusLabel === "Withdrawn") return "withdraw";
     return "all";
   }, [statusLabel]);
 
@@ -197,11 +211,11 @@ const ExampleDisputesList: React.FC = () => {
     isError,
   } = useDisputes(1, 10, statusParam, searchValue || undefined);
 
-  const mappedDisputes: Dispute[] = Array.isArray(disputesResponse?.data)
-    ? disputesResponse.data.map((dispute) => ({
+  const mappedDisputes: Dispute[] = disputesResponse?.data.disputes
+    ? disputesResponse.data.disputes.map((dispute) => ({
         disputeId: dispute.disputeId,
         itemName: dispute.itemName,
-        curator: dispute.curatorName,
+        curator: dispute.curator,
         status: mapApiStatusToLabel(dispute.status),
         dateSubmitted: formatDate(dispute.dateSubmitted),
       }))
@@ -210,27 +224,27 @@ const ExampleDisputesList: React.FC = () => {
   const showSkeleton = isLoading || isError;
 
   return (
-    <div className="mt-8 bg-gray-50">
+    <div className="bg-gray-50 mt-8">
       <DisputeSearchBar
         onStatusChange={setStatusLabel}
         onSearchChange={setSearchValue}
       />
 
       {showSkeleton ? (
-        <div className="font-sans mb-8 bg-white rounded-lg border border-gray-200">
+        <div className="bg-white mb-8 border border-gray-200 rounded-lg font-sans">
           <div className="sm:min-w-full">
             {Array.from({ length: 4 }).map((_, index) => (
               <div
                 // eslint-disable-next-line react/no-array-index-key
                 key={`dispute-skeleton-${index}`}
-                className="flex flex-col sm:grid sm:grid-cols-12 gap-2 sm:gap-4 px-4 py-4 sm:px-6 sm:py-4 border-b border-gray-100 animate-pulse"
+                className="flex flex-col gap-2 sm:gap-4 sm:grid sm:grid-cols-12 px-4 sm:px-6 py-4 sm:py-4 border-gray-100 border-b animate-pulse"
               >
-                <div className="h-4 bg-gray-200 rounded w-24 sm:col-span-2" />
-                <div className="h-4 bg-gray-200 rounded w-40 sm:col-span-3" />
-                <div className="h-4 bg-gray-200 rounded w-32 sm:col-span-2" />
-                <div className="h-4 bg-gray-200 rounded w-28 sm:col-span-2" />
-                <div className="h-4 bg-gray-200 rounded w-24 sm:col-span-2" />
-                <div className="h-4 bg-gray-200 rounded w-8 sm:col-span-1" />
+                <div className="sm:col-span-2 bg-gray-200 rounded w-24 h-4" />
+                <div className="sm:col-span-3 bg-gray-200 rounded w-40 h-4" />
+                <div className="sm:col-span-2 bg-gray-200 rounded w-32 h-4" />
+                <div className="sm:col-span-2 bg-gray-200 rounded w-28 h-4" />
+                <div className="sm:col-span-2 bg-gray-200 rounded w-24 h-4" />
+                <div className="sm:col-span-1 bg-gray-200 rounded w-8 h-4" />
               </div>
             ))}
           </div>
