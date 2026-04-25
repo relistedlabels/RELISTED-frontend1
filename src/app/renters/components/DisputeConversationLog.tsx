@@ -40,6 +40,7 @@ interface Message {
   type: DisputeMessageType;
   content: string;
   timestamp?: string;
+  displayName?: string;
   createdBy?: string;
   senderId?: string;
   sender?: MessageSender;
@@ -62,6 +63,7 @@ const normalizeMessageType = (value: unknown): DisputeMessageType => {
 };
 
 const getSenderName = (message: Message): string => {
+  if (message.displayName) return message.displayName;
   if (message.sender?.name) return message.sender.name;
   if (message.sender?.role) return message.sender.role.toLowerCase();
   if (message.createdBy) return message.createdBy;
@@ -290,7 +292,8 @@ const ChatMessage: React.FC<{
 const DisputeConversationLog: React.FC<{
   disputeId: string;
   canUpload?: boolean;
-}> = ({ disputeId, canUpload = true }) => {
+  otherPartyName?: string;
+}> = ({ disputeId, canUpload = true, otherPartyName }) => {
   const [inputValue, setInputValue] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
@@ -319,11 +322,19 @@ const DisputeConversationLog: React.FC<{
       type: normalizeMessageType(m.type),
       content: m.content,
       timestamp: m.timestamp,
+      displayName:
+        m.createdBy === "lister"
+          ? String(otherPartyName ?? "").trim() || "Lister"
+          : m.createdBy === "admin"
+            ? "Admin"
+            : m.createdBy === "renter"
+              ? String(me?.name ?? "").trim() || undefined
+              : undefined,
       createdBy: String(m.createdBy ?? ""),
       senderId: String(m.senderId ?? ""),
       attachments: extractAttachments(m),
     }));
-  }, [data]);
+  }, [data, me?.name, otherPartyName]);
 
   const groupedMessageEntries = useMemo(() => {
     const grouped = new Map<string, Message[]>();

@@ -38,6 +38,7 @@ interface Message {
   type: DisputeMessageType;
   content: string;
   timestamp?: string; // Only for user/admin messages
+  displayName?: string;
   createdBy?: string;
   senderId?: string;
   sender?: MessageSender;
@@ -92,6 +93,7 @@ const formatMessageDate = (value: unknown) => {
 };
 
 const getSenderName = (message: Message): string => {
+  if (message.displayName) return message.displayName;
   if (message.sender?.name) return message.sender.name;
   if (message.sender?.role) return message.sender.role.toLowerCase();
   if (message.createdBy) return message.createdBy;
@@ -176,6 +178,9 @@ const ChatMessage: React.FC<{
           Boolean(value),
         );
       const hasContent = Boolean(message.content.trim());
+      const senderName = getSenderName(message);
+      const senderAvatar = getSenderAvatar(message);
+      const timestamp = formatTimestamp(message.timestamp);
 
       return isMine ? (
         <div className="flex justify-end my-3">
@@ -206,43 +211,67 @@ const ChatMessage: React.FC<{
                 </div>
               ) : null}
             </div>
-            <Paragraph1 className="mt-1 text-gray-500 text-xs text-right">
-              {formatTimestamp(message.timestamp)}
-            </Paragraph1>
+            {timestamp ? (
+              <Paragraph1 className="mt-1 text-gray-500 text-xs text-right">
+                {timestamp}
+              </Paragraph1>
+            ) : null}
           </div>
         </div>
       ) : (
         <div className="flex justify-start my-3">
-          <div className="max-w-[80%]">
-            <div className="inline-block bg-black shadow-md p-3 rounded-t-xl rounded-r-xl text-white">
-              {hasContent ? (
-                <Paragraph1 className="text-sm">{message.content}</Paragraph1>
-              ) : null}
-              {attachments.length > 0 ? (
-                <div className="gap-2 grid grid-cols-3 mt-2">
-                  {attachments.map(({ fullUrl, thumbUrl }) => (
-                    <button
-                      key={fullUrl}
-                      type="button"
-                      onClick={() => onOpenImage(fullUrl)}
-                      className="relative border border-gray-800 rounded-lg w-24 h-24 overflow-hidden"
-                    >
-                      <Image
-                        src={thumbUrl}
-                        alt="Attachment"
-                        fill
-                        sizes="96px"
-                        unoptimized
-                        className="object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
+          <div className="flex items-end gap-2 max-w-[80%]">
+            {senderAvatar ? (
+              <div className="relative rounded-full w-6 h-6 overflow-hidden shrink-0">
+                <Image
+                  src={senderAvatar}
+                  alt={senderName}
+                  fill
+                  sizes="24px"
+                  unoptimized
+                  className="object-cover"
+                />
+              </div>
+            ) : (
+              <div className="flex justify-center items-center bg-gray-900 rounded-full w-6 h-6 overflow-hidden shrink-0">
+                <span className="font-medium text-[10px] text-white">
+                  {getInitials(senderName)}
+                </span>
+              </div>
+            )}
+            <div className="max-w-[80%]">
+              <div className="inline-block bg-black shadow-md p-3 rounded-t-xl rounded-r-xl text-white">
+                {hasContent ? (
+                  <Paragraph1 className="text-sm">{message.content}</Paragraph1>
+                ) : null}
+                {attachments.length > 0 ? (
+                  <div className="gap-2 grid grid-cols-3 mt-2">
+                    {attachments.map(({ fullUrl, thumbUrl }) => (
+                      <button
+                        key={fullUrl}
+                        type="button"
+                        onClick={() => onOpenImage(fullUrl)}
+                        className="relative border border-gray-800 rounded-lg w-24 h-24 overflow-hidden"
+                      >
+                        <Image
+                          src={thumbUrl}
+                          alt="Attachment"
+                          fill
+                          sizes="96px"
+                          unoptimized
+                          className="object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+              {timestamp ? (
+                <Paragraph1 className="mt-1 text-gray-500 text-xs text-left">
+                  {timestamp}
+                </Paragraph1>
               ) : null}
             </div>
-            <Paragraph1 className="mt-1 text-gray-500 text-xs text-left">
-              {formatTimestamp(message.timestamp)}
-            </Paragraph1>
           </div>
         </div>
       );
@@ -256,7 +285,8 @@ const ChatMessage: React.FC<{
 const DisputeConversationLog: React.FC<{
   disputeId: string;
   canUpload?: boolean;
-}> = ({ disputeId, canUpload = true }) => {
+  otherPartyName?: string;
+}> = ({ disputeId, canUpload = true, otherPartyName }) => {
   const [inputValue, setInputValue] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
@@ -284,12 +314,34 @@ const DisputeConversationLog: React.FC<{
       id: Number.isNaN(Number(m.messageId)) ? Date.now() : Number(m.messageId),
       type: normalizeMessageType(m.type),
       content: m.content,
-      timestamp: m.displayTimestamp,
+      timestamp: (() => {
+        const maybe = m as unknown as Record<string, unknown>;
+        const raw = String(
+          maybe.createdAt ??
+            maybe.created_at ??
+            maybe.timestamp ??
+            maybe.displayTimestamp ??
+            "",
+        ).trim();
+        return raw || undefined;
+      })(),
+      displayName:
+        m.createdBy === "renter"
+          ? String(otherPartyName ?? "").trim() || "Renter"
+          : m.createdBy === "admin"
+            ? String(m.adminName ?? "").trim() || "Admin"
+            : m.createdBy === "lister"
+              ? String(me?.name ?? "").trim() || undefined
+              : undefined,
       createdBy: String(m.createdBy ?? "").trim(),
       senderId: String(m.senderId ?? "").trim(),
+      sender: {
+        name: m.adminName ?? null,
+        role: String(m.createdBy ?? "").trim(),
+      },
       attachments: extractAttachments(m),
     }));
-  }, [data]);
+  }, [data, me?.name, otherPartyName]);
 
   const groupedMessageEntries = useMemo(() => {
     const grouped = new Map<string, Message[]>();
