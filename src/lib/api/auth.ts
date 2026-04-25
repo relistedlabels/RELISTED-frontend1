@@ -1,5 +1,12 @@
 import { apiFetch } from "./http";
 
+function unwrapResponse<T>(raw: unknown): T {
+  if (raw && typeof raw === "object" && "response" in raw) {
+    return (raw as { response: T }).response;
+  }
+  return raw as T;
+}
+
 export const signup = (data: {
   name: string;
   email: string;
@@ -17,8 +24,6 @@ export const verifyOtp = (data: { code: string }) =>
     body: JSON.stringify(data),
   });
 
-// lib/api/auth.ts
-// lib/api/auth.ts
 export const login = (data: {
   email: string;
   password: string;
@@ -38,6 +43,16 @@ export const login = (data: {
   apiFetch("/auth/login", {
     method: "POST",
     body: JSON.stringify(data),
+  }).then((raw) => {
+    const payload = unwrapResponse<{
+      success?: boolean;
+      token?: string;
+      user?: { id: string; email: string; role: string; name: string };
+      requiresMfa?: boolean;
+      sessionToken?: string;
+      message?: string;
+    }>(raw);
+    return payload;
   });
 
 export const verifyAdminMfa = (data: {
@@ -56,6 +71,13 @@ export const verifyAdminMfa = (data: {
   apiFetch("/auth/verify-admin-mfa", {
     method: "POST",
     body: JSON.stringify(data),
+  }).then((raw) => {
+    const payload = unwrapResponse<{
+      token: string;
+      user: { id: string; email: string; role: string; name: string };
+      message?: string;
+    }>(raw);
+    return payload;
   });
 
 export const checkDashboardSelection = (): Promise<{
@@ -69,7 +91,7 @@ export const checkDashboardSelection = (): Promise<{
 }> =>
   apiFetch("/auth/check-dashboard-selection", {
     method: "GET",
-  });
+  }).then((raw) => unwrapResponse(raw));
 
 export const forgotPassword = (data: { email: string }) =>
   apiFetch("/auth/forgot-password", {
@@ -88,16 +110,34 @@ export const resetPassword = (data: {
   });
 
 export const getMe = () =>
-  apiFetch<{
-    id: string;
-    email: string;
-    name: string;
-    role: string;
-    profile: { id: string };
-  }>("/auth/user");
+  apiFetch("/auth/user").then((raw) => {
+    const payload = unwrapResponse<{
+      id?: string;
+      email?: string;
+      name?: string;
+      role?: string;
+      profile?: { id: string };
+      user?: {
+        id: string;
+        email: string;
+        name: string;
+        role: string;
+        profile?: { id: string };
+      };
+    }>(raw);
+
+    const user = payload.user ?? payload;
+    return user as {
+      id: string;
+      email: string;
+      name: string;
+      role: string;
+      profile: { id: string };
+    };
+  });
 
 export const resendOtp = (data: { email: string }) =>
   apiFetch("/auth/resend-otp", {
     method: "POST",
     body: JSON.stringify(data),
-  });
+  }).then((raw) => unwrapResponse(raw));

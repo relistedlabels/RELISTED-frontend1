@@ -23,14 +23,6 @@ export function useLogin() {
       }
       // If MFA is not required (regular user)
       else if (data.token && data.user) {
-        setAuth({
-          token: data.token,
-          userId: data.user.id,
-          email: data.user.email,
-          role: data.user.role,
-          name: data.user.name,
-        });
-
         // Set token in httpOnly cookie for middleware
         try {
           await fetch("/api/auth/set-token", {
@@ -44,6 +36,14 @@ export function useLogin() {
         } catch (err) {
           console.error("Failed to set token cookie:", err);
         }
+
+        setAuth({
+          token: data.token,
+          userId: data.user.id,
+          email: data.user.email,
+          role: data.user.role,
+          name: data.user.name,
+        });
       }
     },
   });
