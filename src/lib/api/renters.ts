@@ -99,7 +99,7 @@ export type RentalOrder = {
     totalAmount: number;
     currency: string;
   };
-  status: "active" | "completed" | "cancelled" | "disputed";
+  status: "active" | "completed" | "cancelled" | "disputed" | "in_dispute";
   deliveryTracking: {
     trackingId: string;
     carrier: string;

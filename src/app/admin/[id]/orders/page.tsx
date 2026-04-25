@@ -33,6 +33,35 @@ const getDefaultAvatar = (name?: string): string => {
   return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || "user")}`;
 };
 
+const getOrderStatusLabel = (raw: unknown): string => {
+  const s = String(raw ?? "").trim();
+  if (!s) return "—";
+  const k = s
+    .toUpperCase()
+    .replace(/-/g, "_")
+    .replace(/\s+/g, "_");
+
+  switch (k) {
+    case "PREPARING":
+      return "Preparing";
+    case "IN_TRANSIT":
+      return "In Transit";
+    case "DELIVERED":
+      return "Delivered";
+    case "RETURN_DUE":
+      return "Return Due";
+    case "RETURN_PICKUP":
+      return "Return Pickup";
+    case "IN_DISPUTE":
+    case "DISPUTED":
+      return "Disputed";
+    case "COMPLETED":
+      return "Completed";
+    default:
+      return s;
+  }
+};
+
 const getStatusColor = (status: string) => {
   switch (status) {
     case "Preparing":
@@ -141,10 +170,10 @@ export default function OrdersPage() {
 
   return (
     <>
-      <div className="min-h-screen ">
+      <div className="min-h-screen">
         {/* Header */}
         <div className="mb-6">
-          <Paragraph2 className="text-2xl font-extrabold text-gray-900 tracking-tight mb-1">
+          <Paragraph2 className="mb-1 font-extrabold text-gray-900 text-2xl tracking-tight">
             Orders
           </Paragraph2>
           <Paragraph1 className="text-gray-600">
@@ -153,9 +182,9 @@ export default function OrdersPage() {
         </div>
 
         {/* Search and Filter Bar */}
-        <div className="bg-white rounded-lg p-4 mb-6 border border-gray-200">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div className="flex-1 min-w-64 flex items-center gap-2  rounded-lg px-4 py-2 border border-gray-200">
+        <div className="bg-white mb-6 p-4 border border-gray-200 rounded-lg">
+          <div className="flex flex-wrap justify-between items-center gap-4">
+            <div className="flex flex-1 items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg min-w-64">
               <svg
                 className="w-4 h-4 text-gray-400"
                 fill="none"
@@ -174,19 +203,19 @@ export default function OrdersPage() {
                 placeholder="Search orders, dressers, curators..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-transparent text-sm text-gray-900 placeholder-gray-500 outline-none flex-1"
+                className="flex-1 bg-transparent outline-none text-gray-900 text-sm placeholder-gray-500"
               />
             </div>
 
-            <div className="flex- hidden items-center gap-2">
-              <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
+            <div className="hidden flex- items-center gap-2">
+              <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 border border-gray-200 rounded-lg">
                 <Calendar size={16} className="text-gray-600" />
-                <select className="bg-transparent text-sm font-medium text-gray-900 outline-none">
+                <select className="bg-transparent outline-none font-medium text-gray-900 text-sm">
                   <option>All Time</option>
                 </select>
               </div>
 
-              <button className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition font-medium text-sm">
+              <button className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 px-4 py-2 rounded-lg font-medium text-white text-sm transition">
                 <Download size={16} />
                 Export
               </button>
@@ -195,7 +224,7 @@ export default function OrdersPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <div className="gap-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 mb-6">
           {statsLoading ? (
             <>
               {[...Array(5)].map((_, index) => (
@@ -206,7 +235,7 @@ export default function OrdersPage() {
             statCards.map((card, index) => (
               <div
                 key={index}
-                className="bg-white rounded-lg p-4 border border-gray-200"
+                className="bg-white p-4 border border-gray-200 rounded-lg"
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -215,10 +244,10 @@ export default function OrdersPage() {
                     <card.icon size={20} className="text-gray-700" />
                   </div>
                   <div className="flex-1">
-                    <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    <Paragraph1 className="font-semibold text-gray-500 text-xs uppercase tracking-wide">
                       {card.label}
                     </Paragraph1>
-                    <Paragraph3 className="text-xl font-bold text-gray-900 mt-0.5">
+                    <Paragraph3 className="mt-0.5 font-bold text-gray-900 text-xl">
                       {card.value}
                     </Paragraph3>
                   </div>
@@ -229,7 +258,7 @@ export default function OrdersPage() {
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-t-lg border-b border-gray-200 mb-0">
+        <div className="bg-white mb-0 border-gray-200 border-b rounded-t-lg">
           <div className="flex items-center gap-8 px-6">
             {[
               { id: "active", label: "Active", count: 4 },
@@ -253,8 +282,8 @@ export default function OrdersPage() {
         </div>
 
         {/* Status Filter Tabs */}
-        <div className="bg-white px-6 py-4 border-b border-gray-200 mb-6">
-          <div className="flex items-center gap-4 overflow-x-auto pb-2">
+        <div className="bg-white mb-6 px-6 py-4 border-gray-200 border-b">
+          <div className="flex items-center gap-4 pb-2 overflow-x-auto">
             {[
               "All",
               "Preparing",
@@ -285,55 +314,55 @@ export default function OrdersPage() {
           <TableSkeleton rows={5} columns={9} />
         ) : (
           <>
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50">
+                    <tr className="bg-gray-50 border-gray-200 border-b">
                       {statusFilter === "Returns" ? (
                         <>
                           <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                               Return ID
                             </Paragraph1>
                           </th>
                           <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                               Order ID
                             </Paragraph1>
                           </th>
                           <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                               Item Name
                             </Paragraph1>
                           </th>
                           <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                               Lister
                             </Paragraph1>
                           </th>
                           <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                               Renter
                             </Paragraph1>
                           </th>
                           <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                               Condition
                             </Paragraph1>
                           </th>
                           <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                               Damage Notes
                             </Paragraph1>
                           </th>
                           <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                               Status
                             </Paragraph1>
                           </th>
                           <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                               Date
                             </Paragraph1>
                           </th>
@@ -341,42 +370,42 @@ export default function OrdersPage() {
                       ) : (
                         <>
                           <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                               Order ID
                             </Paragraph1>
                           </th>
                           <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                               Date
                             </Paragraph1>
                           </th>
                           <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                               Lister
                             </Paragraph1>
                           </th>
                           <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                               Renter
                             </Paragraph1>
                           </th>
                           <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                               Items
                             </Paragraph1>
                           </th>
                           <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                               Total
                             </Paragraph1>
                           </th>
                           <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                               Status
                             </Paragraph1>
                           </th>
                           <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                               Return Due
                             </Paragraph1>
                           </th>
@@ -407,17 +436,17 @@ export default function OrdersPage() {
                         {statusFilter === "Returns" ? (
                           <>
                             <td className="px-6 py-4">
-                              <Paragraph1 className="text-sm font-medium text-gray-900">
+                              <Paragraph1 className="font-medium text-gray-900 text-sm">
                                 {item.id}
                               </Paragraph1>
                             </td>
                             <td className="px-6 py-4">
-                              <Paragraph1 className="text-sm text-gray-700">
+                              <Paragraph1 className="text-gray-700 text-sm">
                                 {item.orderId}
                               </Paragraph1>
                             </td>
                             <td className="px-6 py-4">
-                              <Paragraph1 className="text-sm text-gray-900">
+                              <Paragraph1 className="text-gray-900 text-sm">
                                 {item.itemName}
                               </Paragraph1>
                             </td>
@@ -429,9 +458,9 @@ export default function OrdersPage() {
                                     getDefaultAvatar(item.lister.name)
                                   }
                                   alt={item.lister.name}
-                                  className="w-8 h-8 rounded-full object-cover"
+                                  className="rounded-full w-8 h-8 object-cover"
                                 />
-                                <Paragraph1 className="text-sm text-gray-900">
+                                <Paragraph1 className="text-gray-900 text-sm">
                                   {item.lister.name}
                                 </Paragraph1>
                               </div>
@@ -444,20 +473,20 @@ export default function OrdersPage() {
                                     getDefaultAvatar(item.renter.name)
                                   }
                                   alt={item.renter.name}
-                                  className="w-8 h-8 rounded-full object-cover"
+                                  className="rounded-full w-8 h-8 object-cover"
                                 />
-                                <Paragraph1 className="text-sm text-gray-900">
+                                <Paragraph1 className="text-gray-900 text-sm">
                                   {item.renter.name}
                                 </Paragraph1>
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                              <span className="inline-block bg-blue-100 px-3 py-1 rounded-full font-semibold text-blue-700 text-xs">
                                 {item.itemCondition}
                               </span>
                             </td>
                             <td className="px-6 py-4">
-                              <Paragraph1 className="text-sm text-gray-700">
+                              <Paragraph1 className="text-gray-700 text-sm">
                                 {item.damageNotes || "-"}
                               </Paragraph1>
                             </td>
@@ -475,89 +504,96 @@ export default function OrdersPage() {
                               </span>
                             </td>
                             <td className="px-6 py-4">
-                              <Paragraph1 className="text-sm text-gray-700">
+                              <Paragraph1 className="text-gray-700 text-sm">
                                 {new Date(item.createdAt).toLocaleDateString()}
                               </Paragraph1>
                             </td>
                           </>
                         ) : (
                           <>
-                            <td className="px-6 py-4">
-                              <Paragraph1 className="text-sm font-medium text-gray-900">
-                                {item.id}
-                              </Paragraph1>
-                            </td>
-                            <td className="px-6 py-4">
-                              <Paragraph1 className="text-sm text-gray-700">
-                                {item.date}
-                              </Paragraph1>
-                            </td>
-                            <td className="px-6 py-4">
-                              {item.curator ? (
-                                <div className="flex items-center gap-2">
-                                  <img
-                                    src={
-                                      item.curator.avatar ||
-                                      getDefaultAvatar(item.curator.name)
-                                    }
-                                    alt={item.curator.name}
-                                    className="w-8 h-8 rounded-full object-cover"
-                                  />
-                                  <Paragraph1 className="text-sm text-gray-900">
-                                    {item.curator.name}
-                                  </Paragraph1>
-                                </div>
-                              ) : (
-                                <Paragraph1 className="text-sm text-gray-500">
-                                  N/A
-                                </Paragraph1>
-                              )}
-                            </td>
-                            <td className="px-6 py-4">
-                              {item.dresser ? (
-                                <div className="flex items-center gap-2">
-                                  <img
-                                    src={
-                                      item.dresser.avatar ||
-                                      getDefaultAvatar(item.dresser.name)
-                                    }
-                                    alt={item.dresser.name}
-                                    className="w-8 h-8 rounded-full object-cover"
-                                  />
-                                  <Paragraph1 className="text-sm text-gray-900">
-                                    {item.dresser.name}
-                                  </Paragraph1>
-                                </div>
-                              ) : (
-                                <Paragraph1 className="text-sm text-gray-500">
-                                  N/A
-                                </Paragraph1>
-                              )}
-                            </td>
-                            <td className="px-6 py-4">
-                              <Paragraph1 className="text-sm text-gray-700">
-                                {item.items} items
-                              </Paragraph1>
-                            </td>
-                            <td className="px-6 py-4">
-                              <Paragraph1 className="text-sm font-medium text-gray-900">
-                                {formatCurrency(item.total)}
-                              </Paragraph1>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span
-                                className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                                  item.status,
-                                )}`}
-                              >
-                                {item.status}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <Paragraph1 className="text-sm text-gray-700">
-                                {item.returnDue}
-                              </Paragraph1>
-                            </td>
+                            {(() => {
+                              const statusLabel = getOrderStatusLabel(item.status);
+                              return (
+                                <>
+                                  <td className="px-6 py-4">
+                                    <Paragraph1 className="font-medium text-gray-900 text-sm">
+                                      {item.id}
+                                    </Paragraph1>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <Paragraph1 className="text-gray-700 text-sm">
+                                      {item.date}
+                                    </Paragraph1>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    {item.curator ? (
+                                      <div className="flex items-center gap-2">
+                                        <img
+                                          src={
+                                            item.curator.avatar ||
+                                            getDefaultAvatar(item.curator.name)
+                                          }
+                                          alt={item.curator.name}
+                                          className="rounded-full w-8 h-8 object-cover"
+                                        />
+                                        <Paragraph1 className="text-gray-900 text-sm">
+                                          {item.curator.name}
+                                        </Paragraph1>
+                                      </div>
+                                    ) : (
+                                      <Paragraph1 className="text-gray-500 text-sm">
+                                        N/A
+                                      </Paragraph1>
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    {item.dresser ? (
+                                      <div className="flex items-center gap-2">
+                                        <img
+                                          src={
+                                            item.dresser.avatar ||
+                                            getDefaultAvatar(item.dresser.name)
+                                          }
+                                          alt={item.dresser.name}
+                                          className="rounded-full w-8 h-8 object-cover"
+                                        />
+                                        <Paragraph1 className="text-gray-900 text-sm">
+                                          {item.dresser.name}
+                                        </Paragraph1>
+                                      </div>
+                                    ) : (
+                                      <Paragraph1 className="text-gray-500 text-sm">
+                                        N/A
+                                      </Paragraph1>
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <Paragraph1 className="text-gray-700 text-sm">
+                                      {item.items} items
+                                    </Paragraph1>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <Paragraph1 className="font-medium text-gray-900 text-sm">
+                                      {formatCurrency(item.total)}
+                                    </Paragraph1>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <span
+                                      className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
+                                        statusLabel,
+                                      )}`}
+                                    >
+                                      {statusLabel}
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <Paragraph1 className="text-gray-700 text-sm">
+                                      {item.returnDue}
+                                    </Paragraph1>
+                                  </td>
+                                </>
+                              );
+                            })()}
                           </>
                         )}
                       </tr>
@@ -569,8 +605,8 @@ export default function OrdersPage() {
 
             {/* Pagination */}
             {pagination.pages > 1 && (
-              <div className="flex items-center justify-between mt-6 px-6 py-4 bg-white rounded-lg border border-gray-200">
-                <Paragraph1 className="text-sm text-gray-600">
+              <div className="flex justify-between items-center bg-white mt-6 px-6 py-4 border border-gray-200 rounded-lg">
+                <Paragraph1 className="text-gray-600 text-sm">
                   Showing {(currentPage - 1) * pagination.limit + 1} to{" "}
                   {Math.min(currentPage * pagination.limit, pagination.total)}{" "}
                   of {pagination.total} results
@@ -579,7 +615,7 @@ export default function OrdersPage() {
                   <button
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    className="flex items-center gap-1 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm font-medium"
+                    className="flex items-center gap-1 hover:bg-gray-50 disabled:opacity-50 px-3 py-2 border border-gray-300 rounded-lg font-medium text-sm transition disabled:cursor-not-allowed"
                   >
                     <ChevronLeft size={16} />
                     Previous
@@ -607,7 +643,7 @@ export default function OrdersPage() {
                       setCurrentPage((p) => Math.min(pagination.pages, p + 1))
                     }
                     disabled={currentPage === pagination.pages}
-                    className="flex items-center gap-1 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm font-medium"
+                    className="flex items-center gap-1 hover:bg-gray-50 disabled:opacity-50 px-3 py-2 border border-gray-300 rounded-lg font-medium text-sm transition disabled:cursor-not-allowed"
                   >
                     Next
                     <ChevronRight size={16} />
