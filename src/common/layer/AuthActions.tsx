@@ -1,17 +1,20 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useListerProfile } from "@/lib/queries/listers/useListerProfile";
 import { useProfile as useRenterProfile } from "@/lib/queries/renters/useProfile";
 import Button from "../ui/Button";
 import UserProfileDropdown from "./UserProfileDropdown";
-import { usePathname } from "next/navigation";
 
 export function AuthActions() {
   const { data: user, isLoading } = useMe();
   const isLister = user?.role?.toLowerCase() === "lister";
+  const isAdmin = user?.role?.toUpperCase() === "ADMIN";
   const { data: listerProfileData } = useListerProfile(isLister);
-  const { data: renterProfileData } = useRenterProfile(!isLister);
+  const { data: renterProfileData } = useRenterProfile(
+    Boolean(user) && !isLister && !isAdmin,
+  );
   const pathname = usePathname();
 
   // Avoid flicker while auth state is resolving

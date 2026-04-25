@@ -1,23 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useAdminIdStore } from "@/store/useAdminIdStore";
-import { useMe } from "@/lib/queries/auth/useMe";
-import { useProfile } from "@/lib/queries/user/useProfile";
-import { Paragraph1 } from "@/common/ui/Text";
-import {
-  HiOutlineHome,
-  HiOutlineUsers,
-  HiOutlineCube,
-  HiOutlineShoppingCart,
-  HiOutlineCreditCard,
-  HiOutlineFolder,
-  HiOutlineCog6Tooth,
-  HiOutlineArrowRightOnRectangle,
-} from "react-icons/hi2";
 import { Menu, X } from "lucide-react";
+import Link from "next/link";
+import { useParams, usePathname } from "next/navigation";
+import type React from "react";
+import { useState } from "react";
+import {
+  HiOutlineArrowRightOnRectangle,
+  HiOutlineCog6Tooth,
+  HiOutlineCreditCard,
+  HiOutlineCube,
+  HiOutlineFolder,
+  HiOutlineHome,
+  HiOutlineShoppingCart,
+  HiOutlineUsers,
+} from "react-icons/hi2";
+import { Paragraph1 } from "@/common/ui/Text";
+import { useMe } from "@/lib/queries/auth/useMe";
+import { useAdminIdStore } from "@/store/useAdminIdStore";
 
 interface NavItem {
   id: string;
@@ -26,7 +26,7 @@ interface NavItem {
   getHref: (adminId: string) => string;
 }
 
-const getNavItems = (adminId: string): NavItem[] => [
+const getNavItems = (): NavItem[] => [
   {
     id: "overview",
     label: "Overview",
@@ -102,12 +102,14 @@ const getAvatarBgColor = (name: string): string => {
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
   const { data: user } = useMe();
-  const { data: profile } = useProfile();
   const pathname = usePathname();
+  const params = useParams();
   const adminId = useAdminIdStore((state) => state.adminId);
+  const paramAdminId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const resolvedAdminId = paramAdminId ?? adminId ?? "";
   const [isMobileExpanded, setIsMobileExpanded] = useState(false);
 
-  const navItems = getNavItems(adminId || "");
+  const navItems = getNavItems();
 
   const linkBaseClasses =
     "flex items-center w-full p-3 mb-2 rounded-xl transition-colors duration-200 group";
@@ -126,17 +128,18 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
         }`}
     >
       {/* Mobile toggle */}
-      <div className="px-4 mb-4 lg:hidden flex justify-center">
+      <div className="lg:hidden flex justify-center mb-4 px-4">
         <button
+          type="button"
           onClick={() => setIsMobileExpanded(!isMobileExpanded)}
-          className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
+          className="hover:bg-gray-100 p-2 rounded-lg text-gray-500"
         >
           {isMobileExpanded ? <X /> : <Menu />}
         </button>
       </div>
 
       {/* User */}
-      <div className="px-4 mb-6">
+      <div className="mb-6 px-4">
         <div
           className={`flex items-center gap-4 ${
             !isMobileExpanded ? "justify-center lg:justify-start" : ""
@@ -151,7 +154,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
           </div>
 
           <div className={`${!isMobileExpanded ? "hidden lg:block" : "block"}`}>
-            <Paragraph1 className="text-sm font-bold truncate">
+            <Paragraph1 className="font-bold text-sm truncate">
               {user?.name || "Loading..."}
             </Paragraph1>
             <Paragraph1 className="text-[10px] text-gray-500 uppercase">
@@ -162,10 +165,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1-  px-4 overflow-y-auto-  hide-scrollbar-">
+      <nav className="flex-1- px-4 overflow-y-auto- hide-scrollbar-">
         <ul>
           {navItems.map((item) => {
-            const href = item.getHref(adminId || "");
+            const href = item.getHref(resolvedAdminId);
             const isActive =
               pathname === href || pathname.startsWith(href + "/");
 
@@ -201,8 +204,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
       </nav>
 
       {/* Logout */}
-      <div className="px-4 mb-4">
+      <div className="mb-4 px-4">
         <button
+          type="button"
           onClick={onLogout}
           className={`${linkBaseClasses} ${inactiveLinkClasses} hover:bg-red-50 hover:text-red-600 ${
             !isMobileExpanded ? "justify-center lg:justify-start" : ""

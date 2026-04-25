@@ -1,8 +1,7 @@
 "use client";
 
-import React from "react";
-import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import { ListItemSkeleton } from "@/common/ui/SkeletonLoaders";
+import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import { useTopCurators } from "@/lib/queries/admin/useAnalytics";
 
 interface TopCuratorsProps {
@@ -12,24 +11,40 @@ interface TopCuratorsProps {
 export default function TopCurators({ limit = 5 }: TopCuratorsProps) {
   const { data, isPending, error } = useTopCurators(limit);
 
-  if (error) {
-    console.log("TopCurators error:", error);
+  const rawList =
+    data?.data?.topCurators ??
+    (Array.isArray(data?.data) ? data.data : undefined) ??
+    [];
+
+  const curators = rawList.map((item) => ({
+    id: item.id,
+    name: item.name,
+    avatar: item.avatar,
+    totalRentals: item.totalRentals ?? item.rentals ?? 0,
+    totalProducts: item.totalProducts ?? 0,
+    revenue: item.revenue ?? 0,
+  }));
+
+  if (isPending) {
+    return <ListItemSkeleton count={limit} />;
   }
 
-  // Map API response to expected format
-  const curators = Array.isArray(data?.data)
-    ? data.data.map((item) => ({
-        id: item.id,
-        name: item.name,
-        avatar: item.avatar,
-        totalRentals: item.totalRentals,
-        totalProducts: item.totalProducts,
-        revenue: item.revenue,
-      }))
-    : [];
-
-  if (isPending || error) {
-    return <ListItemSkeleton count={limit} />;
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg p-6 border border-gray-200">
+        <Paragraph3 className="text-xl font-semibold mb-2 text-gray-900">
+          Top Listers
+        </Paragraph3>
+        <Paragraph2 className="text-gray-600 text-sm">
+          Unable to load this chart. The server returned an error (check the API
+          logs for{" "}
+          <span className="font-mono text-xs">
+            GET /api/admin/analytics/top-curators
+          </span>
+          ).
+        </Paragraph2>
+      </div>
+    );
   }
 
   return (

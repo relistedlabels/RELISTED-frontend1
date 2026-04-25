@@ -1,28 +1,24 @@
 "use client";
 
-import { ReactNode, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { ReactNode, useEffect } from "react";
+import FullPageLoader from "@/common/ui/FullPageLoader";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useListerProfile } from "@/lib/queries/listers/useListerProfile";
 import { useUserStore } from "@/store/useUserStore";
-import FullPageLoader from "@/common/ui/FullPageLoader";
-import ProfileFromStore from "@/common/ui/ProfileFromStore";
 
 export default function CuratorsLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { sessionToken, requiresMfa, token } = useUserStore();
 
-  const { data: user, isLoading: userLoading, isError: userError } = useMe();
-  const {
-    data: listerProfile,
-    isLoading: listerProfileLoading,
-    isError: listerProfileError,
-  } = useListerProfile();
+  const { data: user, isLoading: userLoading } = useMe();
+  const { data: listerProfile, isLoading: listerProfileLoading } =
+    useListerProfile();
 
   useEffect(() => {
     // If user is in MFA state, redirect to verify MFA
     if (sessionToken && requiresMfa) {
-      router.replace("/auth/verify-mfa");
+      router.replace("/auth/OTP");
       return;
     }
 

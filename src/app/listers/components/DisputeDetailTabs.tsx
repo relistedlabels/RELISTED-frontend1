@@ -1,24 +1,24 @@
 // ENDPOINTS: GET /api/listers/disputes/:disputeId (full details with all tabs)
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { Paragraph1 } from "@/common/ui/Text";
 import { CheckCircle, Clock, FileText, XCircle } from "lucide-react";
-import { DisputeOverviewContent } from "./DisputeOverviewContent";
+import React, { useEffect, useRef, useState } from "react";
+import { Paragraph1 } from "@/common/ui/Text";
+import {
+  useDisputeDetail,
+  useDisputeEvidence,
+  useDisputeOverview,
+  useDisputeResolution,
+  useDisputeTimeline,
+} from "@/lib/queries/listers";
+import DisputeConversationLog from "./DisputeConversationLog";
 import { DisputeEvidenceContent } from "./DisputeEvidenceContent";
-import { DisputeTimelineContent } from "./DisputeTimelineContent";
+import { DisputeOverviewContent } from "./DisputeOverviewContent";
 import {
   DisputeResolutionContent,
   type Resolution,
 } from "./DisputeResolutionContent";
-import DisputeConversationLog from "./DisputeConversationLog";
-import {
-  useDisputeDetail,
-  useDisputeOverview,
-  useDisputeEvidence,
-  useDisputeTimeline,
-  useDisputeResolution,
-} from "@/lib/queries/listers";
+import { DisputeTimelineContent } from "./DisputeTimelineContent";
 
 type TabKey = "overview" | "evidence" | "timeline" | "resolution";
 
@@ -37,6 +37,7 @@ const DISPUTE_TABS: Tab[] = [
 
 interface DisputeDetailTabsProps {
   disputeId: string;
+  canUploadEvidence?: boolean;
 }
 
 const statusBadgeConfig = (status: string | undefined) => {
@@ -45,7 +46,11 @@ const statusBadgeConfig = (status: string | undefined) => {
     .replaceAll("-", "_")
     .toUpperCase();
 
-  if (key === "IN_REVIEW" || key === "UNDER_REVIEW" || key === "IN_REVIEW_DISPUTES") {
+  if (
+    key === "IN_REVIEW" ||
+    key === "UNDER_REVIEW" ||
+    key === "IN_REVIEW_DISPUTES"
+  ) {
     return {
       label: "In Review",
       className: "bg-blue-100 text-blue-800",
@@ -92,7 +97,10 @@ const statusBadgeConfig = (status: string | undefined) => {
   };
 };
 
-const DisputeDetailTabs: React.FC<DisputeDetailTabsProps> = ({ disputeId }) => {
+const DisputeDetailTabs: React.FC<DisputeDetailTabsProps> = ({
+  disputeId,
+  canUploadEvidence,
+}) => {
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [indicatorStyle, setIndicatorStyle] = useState({});
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -141,11 +149,16 @@ const DisputeDetailTabs: React.FC<DisputeDetailTabsProps> = ({ disputeId }) => {
           orderID={overview.itemInformation.orderId}
           category={overview.disputeDetails.category}
           dateSubmitted={overview.disputeDetails.dateSubmitted}
-          preferredResolution={overview.disputeDetails.preferredResolution ?? "—"}
+          preferredResolution={
+            overview.disputeDetails.preferredResolution ?? "—"
+          }
           description={overview.disputeDetails.description}
         />
         <div className="mt-6">
-          <DisputeConversationLog disputeId={disputeId} />
+          <DisputeConversationLog
+            disputeId={disputeId}
+            canUpload={canUploadEvidence}
+          />
         </div>
       </>
     ),
@@ -187,6 +200,7 @@ const DisputeDetailTabs: React.FC<DisputeDetailTabsProps> = ({ disputeId }) => {
 
           return (
             <button
+              type="button"
               key={tab.key}
               ref={(el) => {
                 tabRefs.current[index] = el;
@@ -216,8 +230,23 @@ const ExampleDisputeDetail: React.FC<{ disputeId: string }> = ({
 }) => {
   const { data: disputeDetail } = useDisputeDetail(disputeId);
   const badge = statusBadgeConfig(
-    disputeDetail?.data.dispute.status ?? disputeDetail?.data.dispute.statusLabel,
+    disputeDetail?.data.dispute.status ??
+      disputeDetail?.data.dispute.statusLabel,
   );
+  const disputeStatusKey = String(
+    disputeDetail?.data.dispute.status ??
+      disputeDetail?.data.dispute.statusLabel ??
+      "",
+  )
+    .trim()
+    .replaceAll("-", "_")
+    .toUpperCase();
+  const canUploadEvidence = ![
+    "RESOLVED",
+    "REJECTED",
+    "WITHDRAW",
+    "WITHDRAWN",
+  ].includes(disputeStatusKey);
   const Icon = badge.Icon;
 
   return (
@@ -228,7 +257,10 @@ const ExampleDisputeDetail: React.FC<{ disputeId: string }> = ({
         <Icon className="mr-2 w-4 h-4" />
         <Paragraph1>{badge.label}</Paragraph1>
       </div>
-      <DisputeDetailTabs disputeId={disputeId} />
+      <DisputeDetailTabs
+        disputeId={disputeId}
+        canUploadEvidence={canUploadEvidence}
+      />
     </div>
   );
 };

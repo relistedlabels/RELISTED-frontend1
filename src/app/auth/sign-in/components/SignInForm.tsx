@@ -1,21 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
-import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
-import {
-  HiOutlineEnvelope,
-  HiOutlineLockClosed,
-  HiOutlineEye,
-  HiEyeSlash,
-} from "react-icons/hi2";
-import SocialSignInOptions from "./SocialSignInOptions";
+import { ErrorMessage, Field, Form, Formik } from "formik";
 import Link from "next/link";
-import { Formik, Form, Field, ErrorMessage } from "formik";
-import * as Yup from "yup";
-import { useLogin, useResendOtp } from "@/lib/mutations";
 import { useRouter } from "next/navigation";
-import { useAuthRedirect } from "@/hooks/useAuthRedirect";
+import React, { useState } from "react";
+import {
+  HiEyeSlash,
+  HiOutlineEnvelope,
+  HiOutlineEye,
+  HiOutlineLockClosed,
+} from "react-icons/hi2";
+import * as Yup from "yup";
+import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { useLogin, useResendOtp } from "@/lib/mutations";
 import { useUserStore } from "@/store/useUserStore";
+import SocialSignInOptions from "./SocialSignInOptions";
 
 const LoginSchema = Yup.object({
   email: Yup.string().email("Invalid email").required("Email is required"),
@@ -28,21 +27,20 @@ const SignInForm: React.FC = () => {
   const login = useLogin();
   const resendOtp = useResendOtp();
   const router = useRouter();
-  const authRedirect = useAuthRedirect();
 
   const isVerificationError = (msg: string) =>
     /verify|verification|inbox/i.test(msg);
 
   return (
     <div className="font-sans-">
-      <div className="max- sm:w-[500px] h-screen sm:h-fit w-full bg-white p-4 md:p-8 pb-[100px] sm:pb-0 sm:rounded-3xl text-gray-600">
+      <div className="bg-white p-4 md:p-8 pb-[100px] sm:pb-0 sm:rounded-3xl w-full sm:w-[500px] h-screen sm:h-fit text-gray-600 max-">
         {/* Header */}
-        <div className="mb-8 text-center flex-col items-center flex justify-center">
-          <img src="/images/logo1.svg" alt="" className="h-10 w-10 mb-4" />
-          <Paragraph3 className="text-2xl font-bold text-black mb-1">
+        <div className="flex flex-col justify-center items-center mb-8 text-center">
+          <img src="/images/logo1.svg" alt="" className="mb-4 w-10 h-10" />
+          <Paragraph3 className="mb-1 font-bold text-black text-2xl">
             Welcome Back
           </Paragraph3>
-          <Paragraph1 className="text-sm text-gray-600 max-w-[350px] leading-relaxed">
+          <Paragraph1 className="max-w-[350px] text-gray-600 text-sm leading-relaxed">
             Explore fashion at your fingertips — rent unique pieces or manage
             your listings with ease.
           </Paragraph1>
@@ -62,7 +60,7 @@ const SignInForm: React.FC = () => {
                 const state = useUserStore.getState();
 
                 if (state.requiresMfa) {
-                  router.push("/auth/verify-mfa");
+                  router.push("/auth/OTP");
                 } else {
                   const params = new URLSearchParams(window.location.search);
                   const redirectUrl = params.get("redirect");
@@ -82,47 +80,47 @@ const SignInForm: React.FC = () => {
             <Form className="space-y-5">
               {/* Email */}
               <div>
-                <Paragraph1 className="text-sm font-medium mb-2">
+                <Paragraph1 className="mb-2 font-medium text-sm">
                   Email Address
                 </Paragraph1>
 
                 <div className="relative">
-                  <HiOutlineEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <HiOutlineEnvelope className="top-1/2 left-4 absolute w-5 h-5 text-gray-400 -translate-y-1/2" />
                   <Field
                     name="email"
                     type="email"
                     placeholder="Enter your email"
-                    className="w-full p-4 pl-12 border border-gray-300 rounded-lg"
+                    className="p-4 pl-12 border border-gray-300 rounded-lg w-full"
                   />
                 </div>
 
                 <ErrorMessage
                   name="email"
                   component="p"
-                  className="text-sm text-red-500 mt-1"
+                  className="mt-1 text-red-500 text-sm"
                 />
               </div>
 
               {/* Password */}
               <div>
-                <Paragraph1 className="text-sm font-medium mb-2">
+                <Paragraph1 className="mb-2 font-medium text-sm">
                   Password
                 </Paragraph1>
 
                 <div className="relative">
-                  <HiOutlineLockClosed className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <HiOutlineLockClosed className="top-1/2 left-4 absolute w-5 h-5 text-gray-400 -translate-y-1/2" />
 
                   <Field
                     name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
-                    className="w-full p-4 pl-12 pr-12 border border-gray-300 rounded-lg"
+                    className="p-4 pr-12 pl-12 border border-gray-300 rounded-lg w-full"
                   />
 
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2"
+                    className="top-1/2 right-4 absolute -translate-y-1/2"
                   >
                     {showPassword ? (
                       <HiEyeSlash className="w-5 h-5" />
@@ -135,13 +133,13 @@ const SignInForm: React.FC = () => {
                 <ErrorMessage
                   name="password"
                   component="p"
-                  className="text-sm text-red-500 mt-1"
+                  className="mt-1 text-red-500 text-sm"
                 />
 
                 <div className="flex justify-end mt-2">
                   <Link
                     href="/auth/forgot-password"
-                    className="text-sm font-medium"
+                    className="font-medium text-sm"
                   >
                     Forgot password?
                   </Link>
@@ -152,14 +150,14 @@ const SignInForm: React.FC = () => {
               <button
                 type="submit"
                 disabled={login.isPending}
-                className="w-full py-4 font-semibold text-white bg-black rounded-lg disabled:opacity-50"
+                className="bg-black disabled:opacity-50 py-4 rounded-lg w-full font-semibold text-white"
               >
                 {login.isPending ? "Signing in..." : "Sign in"}
               </button>
 
               {login.error && (
                 <div className="space-y-2">
-                  <p className="text-sm text-red-500">
+                  <p className="text-red-500 text-sm">
                     {(login.error as Error).message}
                   </p>
                   {isVerificationError((login.error as Error).message) &&
@@ -170,7 +168,7 @@ const SignInForm: React.FC = () => {
                           resendOtp.mutate({ email: emailForResend })
                         }
                         disabled={resendOtp.isPending}
-                        className="text-sm font-medium text-black underline hover:no-underline disabled:opacity-50"
+                        className="disabled:opacity-50 font-medium text-black text-sm underline hover:no-underline"
                       >
                         {resendOtp.isPending
                           ? "Sending…"
@@ -178,7 +176,7 @@ const SignInForm: React.FC = () => {
                       </button>
                     )}
                   {resendOtp.isSuccess && (
-                    <p className="text-sm text-green-600">
+                    <p className="text-green-600 text-sm">
                       A new link has been sent. Check your inbox.
                     </p>
                   )}

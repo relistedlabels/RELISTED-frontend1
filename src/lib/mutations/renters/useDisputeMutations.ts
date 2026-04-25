@@ -20,7 +20,9 @@ export const useRaiseDispute = () => {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["renters", "disputes"] });
-      queryClient.invalidateQueries({ queryKey: ["renters", "disputes", "stats"] });
+      queryClient.invalidateQueries({
+        queryKey: ["renters", "disputes", "stats"],
+      });
     },
   });
 };
@@ -29,11 +31,14 @@ export const useSendDisputeMessage = (disputeId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { message: string; attachmentUrls?: string[] }) =>
+    mutationFn: (data: { content: string; uploadIds?: string[] }) =>
       rentersApi.sendDisputeMessage(disputeId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["renters", "disputes", disputeId, "messages"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["renters", "disputes", disputeId, "evidence"],
       });
     },
   });

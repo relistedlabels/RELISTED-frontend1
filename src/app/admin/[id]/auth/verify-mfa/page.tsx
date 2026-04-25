@@ -1,17 +1,18 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { useUserStore } from "@/store/useUserStore";
-import { motion } from "framer-motion";
 import AdminAccessPrompt from "./AdminAccessPrompt";
 
 export default function AdminVerifyMfaPage() {
   const router = useRouter();
   const params = useParams();
   const storeAdminId = useAdminIdStore((state) => state.adminId);
-  const adminId = (storeAdminId || (params?.id as string | undefined)) ?? null;
+  const paramAdminId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const adminId = paramAdminId ?? storeAdminId ?? null;
   const { sessionToken, requiresMfa, token } = useUserStore();
   const initialRenderRef = useRef(true);
 
@@ -38,7 +39,7 @@ export default function AdminVerifyMfaPage() {
 
   return (
     <div
-      className="relative w-full h-full min-h-screen bg-black bg-cover bg-center"
+      className="relative bg-black bg-cover bg-center w-full h-full min-h-screen"
       style={{ backgroundImage: "url('/images/authbg.jpg')" }}
     >
       {/* Dark Overlay */}
@@ -51,7 +52,7 @@ export default function AdminVerifyMfaPage() {
 
       {/* Center Content */}
       <motion.div
-        className="relative flex flex-col sm:items-center justify-center px-0 sm:px-6 sm:py-20 min-h-screen"
+        className="relative flex flex-col justify-center sm:items-center px-0 sm:px-6 sm:py-20 min-h-screen"
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1.1, ease: "easeOut" }}

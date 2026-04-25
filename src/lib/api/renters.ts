@@ -469,7 +469,12 @@ export const rentersApi = {
       };
     }>(`/api/renters/orders/${orderId}/progress`, { method: "GET" }),
 
-  submitReview: (data: { rentalId?: string; orderId?: string; rating: number; comment: string }) =>
+  submitReview: (data: {
+    rentalId?: string;
+    orderId?: string;
+    rating: number;
+    comment: string;
+  }) =>
     apiFetch<{ success: boolean; message?: string; data?: any }>("/review", {
       method: "POST",
       body: JSON.stringify(data),
@@ -740,16 +745,43 @@ export const rentersApi = {
       data: {
         messages: Array<{
           id: string;
-          type: "user" | "admin" | "status";
+          type: "user" | "admin" | "status" | string;
+          createdBy?: "renter" | "lister" | "admin" | string;
+          senderId?: string;
           content: string;
           timestamp: string;
+          attachments?: Array<{
+            id: string;
+            url: string;
+            thumbnailUrl?: string;
+            name?: string;
+            type?: string;
+            size?: number;
+          }>;
         }>;
       };
     }>(`/api/renters/disputes/${disputeId}/messages`, { method: "GET" }),
 
+  uploadDisputeFile: (disputeId: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    return apiFetch<{
+      id: string;
+      url: string;
+      thumbnailUrl?: string;
+      name?: string;
+      type?: string;
+      size?: number;
+    }>(`/api/renters/disputes/${disputeId}/uploads`, {
+      method: "POST",
+      body: formData,
+    });
+  },
+
   sendDisputeMessage: (
     disputeId: string,
-    data: { message: string; attachmentUrls?: string[] },
+    data: { content: string; uploadIds?: string[] },
   ) =>
     apiFetch<{ success: boolean; message: string; data: any }>(
       `/api/renters/disputes/${disputeId}/messages`,

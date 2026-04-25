@@ -1,14 +1,18 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
-import { useRouter } from "next/navigation";
-import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { useVerifyAdminMfa } from "@/lib/mutations";
-import { useUserStore } from "@/store/useUserStore";
 import { useMe } from "@/lib/queries/auth/useMe";
+import { useAdminIdStore } from "@/store/useAdminIdStore";
+import { useUserStore } from "@/store/useUserStore";
 
 const OTP_LENGTH = 6;
+const OTP_FIELDS = Array.from({ length: OTP_LENGTH }).map((_, index) => ({
+  key: `otp-${index}`,
+  index,
+}));
 
 export default function AdminAccessPrompt({
   autoShow = true,
@@ -17,9 +21,12 @@ export default function AdminAccessPrompt({
 }) {
   const inputsRef = useRef<HTMLInputElement[]>([]);
   const router = useRouter();
+  const params = useParams();
   const adminId = useAdminIdStore((state) => state.adminId);
+  const paramAdminId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const resolvedAdminId = paramAdminId ?? adminId;
   const verifyMfa = useVerifyAdminMfa();
-  const { sessionToken, requiresMfa, name, role, token } = useUserStore();
+  const { sessionToken, requiresMfa, name, token } = useUserStore();
   // Only fetch user data after MFA is verified and we have a real token
   const { data: user, isLoading: isMeLoading } = useMe();
 
@@ -53,14 +60,15 @@ export default function AdminAccessPrompt({
   // Redirect after role is confirmed - add 12 second loader delay
   useEffect(() => {
     if (!isRoleConfirmed) return;
+    if (!resolvedAdminId) return;
 
     // Add 12 second delay for loader animation before routing
     const timer = setTimeout(() => {
-      router.push(`/admin/${adminId}/dashboard`);
+      router.push(`/admin/${resolvedAdminId}/dashboard`);
     }, 12000);
 
     return () => clearTimeout(timer);
-  }, [isRoleConfirmed, adminId, router]);
+  }, [isRoleConfirmed, resolvedAdminId, router]);
 
   if (!sessionToken && !isMfaVerified) return null;
   if (!requiresMfa && !isMfaVerified) return null;
@@ -82,15 +90,15 @@ export default function AdminAccessPrompt({
   };
 
   return (
-    <div className="font-sans flex items-center justify-center min-h-screen p-4">
-      <div className="max-w-xl w-full bg-white py-8 p-4 sm:p-8 sm:rounded-3xl text-gray-600 shadow-md min-h-fit">
+    <div className="flex justify-center items-center p-4 min-h-screen font-sans">
+      <div className="bg-white shadow-md p-4 sm:p-8 py-8 sm:rounded-3xl w-full max-w-xl min-h-fit text-gray-600">
         {/* Header */}
-        <div className="mb-8 text-center flex flex-col items-center">
-          <img src="/images/logo1.svg" alt="Logo" className="h-10 w-10 mb-4" />
-          <Paragraph3 className="text-2xl font-bold text-black mb-1">
+        <div className="flex flex-col items-center mb-8 text-center">
+          <img src="/images/logo1.svg" alt="Logo" className="mb-4 w-10 h-10" />
+          <Paragraph3 className="mb-1 font-bold text-black text-2xl">
             Welcome, {name || "Admin"}
           </Paragraph3>
-          <Paragraph1 className="text-sm text-gray-600 max-w-[350px]">
+          <Paragraph1 className="max-w-[350px] text-gray-600 text-sm">
             {isMfaVerified
               ? "Confirming admin access..."
               : "Enter your verification code to continue"}
@@ -99,22 +107,22 @@ export default function AdminAccessPrompt({
 
         {isMfaVerified ? (
           /* Loading State - Waiting for role confirmation */
-          <div className="flex flex-col items-center justify-center w-full py-16">
-            <div className="w-12 h-12 border-4 border-gray-200 border-t-black rounded-full animate-spin mb-6"></div>
-            <div className="text-center w-full">
-              <Paragraph3 className="text-lg font-semibold text-black mb-2">
+          <div className="flex flex-col justify-center items-center py-16 w-full">
+            <div className="mb-6 border-4 border-gray-200 border-t-black rounded-full w-12 h-12 animate-spin"></div>
+            <div className="w-full text-center">
+              <Paragraph3 className="mb-2 font-semibold text-black text-lg">
                 {isRoleConfirmed
                   ? "Access confirmed, loading dashboard..."
                   : "Verifying admin credentials..."}
               </Paragraph3>
               <div className="flex justify-center gap-1">
-                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
+                <span className="bg-gray-400 rounded-full w-2 h-2 animate-bounce"></span>
                 <span
-                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  className="bg-gray-400 rounded-full w-2 h-2 animate-bounce"
                   style={{ animationDelay: "0.2s" }}
                 ></span>
                 <span
-                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  className="bg-gray-400 rounded-full w-2 h-2 animate-bounce"
                   style={{ animationDelay: "0.4s" }}
                 ></span>
               </div>
@@ -125,9 +133,9 @@ export default function AdminAccessPrompt({
           <div className="space-y-5">
             {/* OTP Inputs */}
             <div className="flex justify-between gap-3">
-              {Array.from({ length: OTP_LENGTH }).map((_, index) => (
+              {OTP_FIELDS.map(({ key, index }) => (
                 <input
-                  key={index}
+                  key={key}
                   ref={(el) => {
                     if (el) inputsRef.current[index] = el;
                   }}
@@ -172,24 +180,28 @@ export default function AdminAccessPrompt({
                       }, 0);
                     }
                   }}
-                  className="w-12 h-12 text-center text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-black outline-none"
+                  className="border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-black w-12 h-12 text-lg text-center"
                   disabled={verifyMfa.isPending}
                 />
               ))}
             </div>
 
             {verifyMfa.isError && (
-              <p className="text-sm text-red-500 text-center">
-                {(verifyMfa.error as any)?.message ||
-                  (verifyMfa.error as Error)?.message ||
-                  "Invalid code. Please try again."}
+              <p className="text-red-500 text-sm text-center">
+                {verifyMfa.error instanceof Error
+                  ? verifyMfa.error.message
+                  : typeof (verifyMfa.error as { message?: unknown } | null)
+                        ?.message === "string"
+                    ? (verifyMfa.error as { message: string }).message
+                    : "Invalid code. Please try again."}
               </p>
             )}
 
             <button
+              type="button"
               onClick={handleVerifyOtp}
               disabled={otp.length !== 6 || verifyMfa.isPending}
-              className="w-full py-3 font-semibold text-white bg-black rounded-lg hover:bg-black/90 disabled:opacity-50 transition"
+              className="bg-black hover:bg-black/90 disabled:opacity-50 py-3 rounded-lg w-full font-semibold text-white transition"
             >
               {verifyMfa.isPending ? "Verifying..." : "Verify"}
             </button>

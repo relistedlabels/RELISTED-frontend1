@@ -1,8 +1,7 @@
 "use client";
 
-import React from "react";
-import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import { CardGridSkeleton } from "@/common/ui/SkeletonLoaders";
+import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import { useTopItems } from "@/lib/queries/admin/useAnalytics";
 
 interface TopItemsProps {
@@ -12,24 +11,39 @@ interface TopItemsProps {
 export default function TopItems({ limit = 5 }: TopItemsProps) {
   const { data, isPending, error } = useTopItems(limit);
 
-  if (error) {
-    console.log("TopItems error:", error);
+  const rawList =
+    data?.data?.topItems ??
+    (Array.isArray(data?.data) ? data.data : undefined) ??
+    [];
+
+  const items = rawList.map((item) => ({
+    id: item.id,
+    name: item.name,
+    brand: item.brand ?? null,
+    rentalsCount: item.rentalsCount ?? 0,
+    dailyPrice: item.dailyPrice ?? 0,
+    earnings: (item.rentalsCount ?? 0) * (item.dailyPrice ?? 0),
+  }));
+
+  if (isPending) {
+    return <CardGridSkeleton count={limit} />;
   }
 
-  // Map API response to expected format
-  const items = Array.isArray(data?.data)
-    ? data.data.map((item) => ({
-        id: item.id,
-        name: item.name,
-        brand: item.brand ?? null,
-        rentalsCount: item.rentalsCount ?? 0,
-        dailyPrice: item.dailyPrice ?? 0,
-        earnings: (item.rentalsCount ?? 0) * (item.dailyPrice ?? 0),
-      }))
-    : [];
-
-  if (isPending || error) {
-    return <CardGridSkeleton count={limit} />;
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg p-6 border border-gray-200">
+        <Paragraph3 className="text-xl font-semibold mb-2 text-gray-900">
+          Top Items
+        </Paragraph3>
+        <Paragraph2 className="text-gray-600 text-sm">
+          Unable to load this chart. Check the API logs for{" "}
+          <span className="font-mono text-xs">
+            GET /api/admin/analytics/top-items
+          </span>
+          .
+        </Paragraph2>
+      </div>
+    );
   }
 
   return (

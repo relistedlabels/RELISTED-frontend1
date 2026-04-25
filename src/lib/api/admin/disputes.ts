@@ -69,6 +69,7 @@ export interface DisputeDetail extends Dispute {
       fileName?: string;
       fileType?: string;
       url: string;
+      thumbnailUrl?: string;
       uploadedAt?: string;
     }>;
   };
@@ -79,6 +80,24 @@ export interface DisputeDetail extends Dispute {
     createdAt?: string;
     timestamp?: string;
     type?: string;
+    createdBy?: "renter" | "lister" | "admin" | string;
+    senderId?: string;
+    adminName?: string;
+    displayTimestamp?: string;
+    sender?: {
+      id?: string;
+      name?: string | null;
+      avatarUrl?: string | null;
+      role?: "renter" | "lister" | "admin" | string;
+    };
+    attachments?: Array<{
+      id?: string;
+      url?: string;
+      thumbnailUrl?: string;
+      name?: string;
+      type?: string;
+      size?: number;
+    }>;
   }>;
   notes?: string | null;
 }

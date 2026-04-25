@@ -523,9 +523,7 @@ export interface BankAccount {
 
 export interface BankAccountsResponse {
   success: boolean;
-  data:
-    | BankAccount[]
-    | { bankAccounts: BankAccount[]; totalAccounts?: number };
+  data: BankAccount[] | { bankAccounts: BankAccount[]; totalAccounts?: number };
 }
 
 export interface Bank {
@@ -610,10 +608,9 @@ export async function getBankAccounts(
     params.set("verified", String(verified));
   }
   const q = params.toString();
-  return apiFetch(
-    `/api/listers/wallet/bank-accounts${q ? `?${q}` : ""}`,
-    { method: "GET" },
-  );
+  return apiFetch(`/api/listers/wallet/bank-accounts${q ? `?${q}` : ""}`, {
+    method: "GET",
+  });
 }
 
 export async function addBankAccount(data: {
@@ -792,9 +789,18 @@ export interface DisputeMessage {
   type: "user" | "admin" | "status" | string;
   content: string;
   createdAt: string;
-  createdBy: string;
+  createdBy: "renter" | "lister" | "admin" | string;
+  senderId?: string;
   adminName?: string;
   displayTimestamp?: string;
+  attachments?: Array<{
+    id: string;
+    url: string;
+    thumbnailUrl?: string;
+    name?: string;
+    type?: string;
+    size?: number;
+  }>;
 }
 
 export interface DisputeDetailResponse {
@@ -944,13 +950,33 @@ export async function getDisputeMessages(
 
 export interface SendDisputeMessagePayload {
   content: string;
-  mediaIds?: string[];
+  uploadIds?: string[];
 }
 
 export interface SendDisputeMessageResponse {
   success: boolean;
   message: string;
   data: DisputeMessage;
+}
+
+export async function uploadDisputeFile(
+  disputeId: string,
+  file: File,
+): Promise<{
+  id: string;
+  url: string;
+  thumbnailUrl?: string;
+  name?: string;
+  type?: string;
+  size?: number;
+}> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return apiFetch(`/api/listers/disputes/${disputeId}/uploads`, {
+    method: "POST",
+    body: formData,
+  });
 }
 
 export async function sendDisputeMessage(

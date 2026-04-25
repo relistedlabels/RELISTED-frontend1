@@ -1,16 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, AlertCircle, Loader2 } from "lucide-react";
-import { Paragraph1 } from "@/common/ui/Text";
-import { useUserStore } from "@/store/useUserStore";
-import { useMe } from "@/lib/queries/auth/useMe";
-import LoginModal from "@/common/modals/LoginModal";
-import { RentalCheckSkeleton } from "@/common/ui/SkeletonAuth";
+import { AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useRentalError } from "@/common/components/RentalErrorBoundary";
+import { RentalCheckSkeleton } from "@/common/ui/SkeletonAuth";
+import { Paragraph1 } from "@/common/ui/Text";
 import { useSubmitRentalRequest } from "@/lib/mutations/renters/useRentalRequestMutations";
-import { useRentalRequests } from "@/lib/queries/renters/useRentalRequests";
+import { useMe } from "@/lib/queries/auth/useMe";
+import { useUserStore } from "@/store/useUserStore";
 
 // ============================================================================
 // API ENDPOINTS USED:
@@ -64,10 +61,47 @@ const Calendar = ({
   unavailableDays?: number[];
 }) => {
   const [currentDate, setCurrentDate] = useState(startDate);
+  const [didAutoSelectTomorrow, setDidAutoSelectTomorrow] = useState(false);
+  const today = new Date();
+  const todayYear = today.getFullYear();
+  const todayMonth = today.getMonth();
+  const todayDay = today.getDate();
+  const computedTomorrow = new Date(todayYear, todayMonth, todayDay + 1);
+  const tomorrowYear = computedTomorrow.getFullYear();
+  const tomorrowMonth = computedTomorrow.getMonth();
+
+  const lagosHour = Number(
+    new Intl.DateTimeFormat("en-NG", {
+      timeZone: "Africa/Lagos",
+      hour: "2-digit",
+      hour12: false,
+    }).format(today),
+  );
+  const isPastNoonLagos = lagosHour >= 12;
 
   useEffect(() => {
     setCurrentDate(startDate);
   }, [startDate]);
+
+  useEffect(() => {
+    const isStartDateToday =
+      startDate.getFullYear() === todayYear &&
+      startDate.getMonth() === todayMonth &&
+      startDate.getDate() === todayDay;
+
+    if (isPastNoonLagos && isStartDateToday && !didAutoSelectTomorrow) {
+      setStartDate(new Date(todayYear, todayMonth, todayDay + 1));
+      setDidAutoSelectTomorrow(true);
+    }
+  }, [
+    didAutoSelectTomorrow,
+    isPastNoonLagos,
+    setStartDate,
+    startDate,
+    todayDay,
+    todayMonth,
+    todayYear,
+  ]);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -79,16 +113,36 @@ const Calendar = ({
   const totalDays = [...paddingArray, ...daysArray];
 
   // Logic for navigating months
+  const isMonthToday = year === todayYear && month === todayMonth;
+  const isMonthTomorrow = year === tomorrowYear && month === tomorrowMonth;
+  const canGoPrevMonth = isMonthTomorrow && !isMonthToday;
+  const canGoNextMonth = isMonthToday && !isMonthTomorrow;
+
   const handlePrevMonth = () => {
+    if (!canGoPrevMonth) return;
     setCurrentDate(new Date(year, month - 1, 1));
   };
   const handleNextMonth = () => {
+    if (!canGoNextMonth) return;
     setCurrentDate(new Date(year, month + 1, 1));
   };
 
   // Function to determine if a day is "unavailable"
   const isUnavailable = (day: number) =>
     typeof day === "number" && unavailableDays.includes(day);
+
+  const isSelectableDay = (day: number) => {
+    const isToday =
+      year === todayYear && month === todayMonth && day === todayDay;
+    const isTomorrow =
+      year === tomorrowYear &&
+      month === tomorrowMonth &&
+      day === computedTomorrow.getDate();
+    return isToday || isTomorrow;
+  };
+
+  const isClickDisabledDay = (day: number) =>
+    typeof day === "number" && (!isSelectableDay(day) || isUnavailable(day));
 
   // Function to determine if a day is part of the selected range
   const isSelectedRange = (day: number) => {
@@ -104,34 +158,59 @@ const Calendar = ({
 
   // Handle selecting a new start date
   const handleDayClick = (day: number) => {
-    if (typeof day === "number" && !isUnavailable(day)) {
+    if (
+      typeof day === "number" &&
+      isSelectableDay(day) &&
+      !isUnavailable(day)
+    ) {
       setStartDate(new Date(year, month, day));
     }
   };
 
   return (
-    <div className="bg-white p-4 rounded-xl  border border-gray-100">
+    <div className="bg-white p-4 border border-gray-100 rounded-xl">
+      {isPastNoonLagos && (
+        <div className="flex items-start gap-3 bg-amber-50 mb-4 p-3 border border-amber-200 rounded-lg">
+          <AlertCircle size={20} className="text-amber-700 shrink-0" />
+          <Paragraph1 className="text-amber-900 text-sm leading-relaxed">
+            It’s past 12 noon (Lagos time) — we recommend selecting tomorrow to
+            avoid delays.
+          </Paragraph1>
+        </div>
+      )}
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <button
+          type="button"
           onClick={handlePrevMonth}
-          className="p-1 rounded-full hover:bg-gray-100"
+          disabled={!canGoPrevMonth}
+          className={`p-1 rounded-full ${
+            canGoPrevMonth
+              ? "hover:bg-gray-50 cursor-pointer"
+              : "opacity-50 cursor-not-allowed"
+          }`}
         >
           <ChevronLeft size={20} />
         </button>
-        <div className="text-lg font-semibold text-gray-800">
+        <div className="font-semibold text-gray-800 text-lg">
           {getMonthName(month)} {year}
         </div>
         <button
+          type="button"
           onClick={handleNextMonth}
-          className="p-1 rounded-full hover:bg-gray-100"
+          disabled={!canGoNextMonth}
+          className={`p-1 rounded-full ${
+            canGoNextMonth
+              ? "hover:bg-gray-50 cursor-pointer"
+              : "opacity-50 cursor-not-allowed"
+          }`}
         >
           <ChevronRight size={20} />
         </button>
       </div>
 
       {/* Days of the Week */}
-      <div className="grid grid-cols-7 text-center text-sm font-medium text-gray-500 mb-2">
+      <div className="grid grid-cols-7 mb-2 font-medium text-gray-500 text-sm text-center">
         {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((day) => (
           <div key={day} className="py-2">
             <Paragraph1> {day}</Paragraph1>
@@ -140,12 +219,17 @@ const Calendar = ({
       </div>
 
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-y-1 text-center">
+      <div className="gap-y-1 grid grid-cols-7 text-center">
         {totalDays.map((day, index) => {
+          const cellKey =
+            day === null
+              ? `pad-${year}-${month}-${index}`
+              : `day-${year}-${month}-${day}`;
           if (day === null) {
-            return <div key={index} className="h-10"></div>; // Placeholder padding
+            return <div key={cellKey} className="h-10"></div>;
           }
           const isUnavailableDay = isUnavailable(day);
+          const isClickDisabled = isClickDisabledDay(day);
           const isSelectedDay = isSelectedRange(day);
           let dayClasses =
             "flex items-center justify-center h-10 w-full rounded-md text-gray-900 font-medium";
@@ -153,14 +237,17 @@ const Calendar = ({
             dayClasses += " text-gray-400 bg-gray-100 cursor-not-allowed";
           } else if (isSelectedDay) {
             dayClasses += " bg-yellow-400 text-white shadow-md";
+          } else if (isClickDisabled) {
+            dayClasses += " text-gray-400 cursor-not-allowed";
           } else {
             dayClasses += " hover:bg-gray-50 cursor-pointer";
           }
           return (
-            <div key={index} className="flex justify-center items-center">
+            <div key={cellKey} className="flex justify-center items-center">
               <button
+                type="button"
                 className={dayClasses}
-                disabled={isUnavailableDay}
+                disabled={isClickDisabled}
                 onClick={() => handleDayClick(day as number)}
               >
                 <Paragraph1> {typeof day === "number" ? day : ""}</Paragraph1>
@@ -169,6 +256,10 @@ const Calendar = ({
           );
         })}
       </div>
+      <Paragraph1 className="mt-4 text-gray-600 text-xs">
+        For now, delivery is limited to same-day or next-day. Scheduled delivery
+        is coming soon.
+      </Paragraph1>
     </div>
   );
 };
@@ -202,23 +293,23 @@ const RentalDurationSelector = ({
       selectedDuration === "custom" ? customDays : selectedDuration;
     onChangeRentalDays?.(rentalDays as number, startDate);
   }, [selectedDuration, customDays, startDate, onChangeRentalDays]);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<boolean>(false);
+  const [_isLoginModalOpen, _setIsLoginModalOpen] = useState(false);
+  const [_pendingAction, _setPendingAction] = useState<boolean>(false);
   const { error, triggerError, clearError } = useRentalError();
 
   // Get user from store
-  const token = useUserStore((state) => state.token);
-  const userId = useUserStore((state) => state.userId);
+  const _token = useUserStore((state) => state.token);
+  const _userId = useUserStore((state) => state.userId);
 
   // Check auth status
   const { isLoading: isCheckingAuth, isError: authError } = useMe();
-  const submitRentalRequest = useSubmitRentalRequest();
+  const _submitRentalRequest = useSubmitRentalRequest();
 
   // Show loading state while checking auth
   if (isCheckingAuth) {
     return (
       <div className="py-6">
-        <Paragraph1 className="text-xl font-bold text-gray-800 mb-4 tracking-wider">
+        <Paragraph1 className="mb-4 font-bold text-gray-800 text-xl tracking-wider">
           RENTAL DURATION
         </Paragraph1>
         <RentalCheckSkeleton />
@@ -227,53 +318,54 @@ const RentalDurationSelector = ({
   }
 
   return (
-    <>
-      <div className="py-6 ">
-        <Paragraph1 className="text-xl font-bold text-gray-800 mb-4 tracking-wider">
-          RENTAL DURATION
-        </Paragraph1>
+    <div className="py-6">
+      <Paragraph1 className="mb-4 font-bold text-gray-800 text-xl tracking-wider">
+        RENTAL DURATION
+      </Paragraph1>
 
-        {/* Auth Error Alert */}
-        {authError && (
-          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex gap-3">
-            <AlertCircle size={20} className="text-yellow-600 flex-shrink-0" />
-            <div>
-              <Paragraph1 className="text-sm text-yellow-800">
-                Having trouble verifying your session. Please refresh the page.
-              </Paragraph1>
-            </div>
+      {/* Auth Error Alert */}
+      {authError && (
+        <div className="flex gap-3 bg-yellow-50 mb-4 p-3 border border-yellow-200 rounded-lg">
+          <AlertCircle size={20} className="flex-shrink-0 text-yellow-600" />
+          <div>
+            <Paragraph1 className="text-yellow-800 text-sm">
+              Having trouble verifying your session. Please refresh the page.
+            </Paragraph1>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Request Error Alert */}
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex gap-3">
-            <AlertCircle size={20} className="text-red-600 flex-shrink-0" />
-            <div className="flex-1">
-              <Paragraph1 className="text-sm text-red-800 font-medium">
-                {error.message}
-              </Paragraph1>
-            </div>
-            <button
-              onClick={clearError}
-              className="text-red-600 hover:text-red-800"
-            >
-              ✕
-            </button>
+      {/* Request Error Alert */}
+      {error && (
+        <div className="flex gap-3 bg-red-50 mb-4 p-3 border border-red-200 rounded-lg">
+          <AlertCircle size={20} className="flex-shrink-0 text-red-600" />
+          <div className="flex-1">
+            <Paragraph1 className="font-medium text-red-800 text-sm">
+              {error.message}
+            </Paragraph1>
           </div>
-        )}
+          <button
+            type="button"
+            onClick={clearError}
+            className="text-red-600 hover:text-red-800"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
-        {/* Duration Buttons */}
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 mb-8">
-          {rentalDayOptions.map((days, idx) => (
-            <button
-              key={days}
-              onClick={() => {
-                setSelectedDuration(days);
-                setShowCustomInput(false);
-                setCustomDays(days);
-              }}
-              className={`
+      {/* Duration Buttons */}
+      <div className="gap-2 grid grid-cols-2 xl:grid-cols-4 mb-8">
+        {rentalDayOptions.map((days, _idx) => (
+          <button
+            type="button"
+            key={days}
+            onClick={() => {
+              setSelectedDuration(days);
+              setShowCustomInput(false);
+              setCustomDays(days);
+            }}
+            className={`
                 p-3 px-5 rounded-lg border text-sm font-semibold transition-colors
                 ${
                   selectedDuration === days && !showCustomInput
@@ -281,20 +373,21 @@ const RentalDurationSelector = ({
                     : "bg-white text-gray-800 border-gray-300 hover:border-gray-500"
                 }
               `}
-            >
-              <Paragraph1>
-                {days === 1 ? "1 Day" : `${days} Days`} <br /> ₦
-                {(days * dailyPrice).toLocaleString()}
-              </Paragraph1>
-            </button>
-          ))}
-          {/* Custom Button */}
-          <button
-            onClick={() => {
-              setSelectedDuration("custom");
-              setShowCustomInput(true);
-            }}
-            className={`
+          >
+            <Paragraph1>
+              {days === 1 ? "1 Day" : `${days} Days`} <br /> ₦
+              {(days * dailyPrice).toLocaleString()}
+            </Paragraph1>
+          </button>
+        ))}
+        {/* Custom Button */}
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedDuration("custom");
+            setShowCustomInput(true);
+          }}
+          className={`
               p-3 px-5 rounded-lg border text-sm font-semibold transition-colors
               ${
                 selectedDuration === "custom" || showCustomInput
@@ -302,61 +395,60 @@ const RentalDurationSelector = ({
                   : "bg-white text-gray-800 border-gray-300 hover:border-gray-500"
               }
             `}
-          >
-            <Paragraph1>
-              Custom <br />
-              {customDays
-                ? `₦${(customDays * dailyPrice).toLocaleString()}`
-                : "Set any days"}
-            </Paragraph1>
-          </button>
+        >
+          <Paragraph1>
+            Custom <br />
+            {customDays
+              ? `₦${(customDays * dailyPrice).toLocaleString()}`
+              : "Set any days"}
+          </Paragraph1>
+        </button>
+      </div>
+      {/* Custom Days Dropdown */}
+      {showCustomInput && (
+        <div className="flex items-center gap-2 mb-4">
+          <Paragraph1>Enter any number of days:</Paragraph1>
+          <input
+            type="number"
+            min={1}
+            max={30}
+            value={customDays}
+            onChange={(e) => {
+              let val = Number(e.target.value);
+              if (Number.isNaN(val)) val = 1;
+              val = Math.max(1, Math.min(30, val));
+              setCustomDays(val);
+            }}
+            className="px-2 py-1 border rounded w-20 text-center"
+          />
         </div>
-        {/* Custom Days Dropdown */}
-        {showCustomInput && (
-          <div className="mb-4 flex items-center gap-2">
-            <Paragraph1>Enter any number of days:</Paragraph1>
-            <input
-              type="number"
-              min={1}
-              max={30}
-              value={customDays}
-              onChange={(e) => {
-                let val = Number(e.target.value);
-                if (isNaN(val)) val = 1;
-                val = Math.max(1, Math.min(30, val));
-                setCustomDays(val);
-              }}
-              className="border rounded px-2 py-1 w-20 text-center"
-            />
-          </div>
-        )}
+      )}
 
-        {/* Calendar Section */}
-        <Calendar
-          selectedDuration={
-            selectedDuration === "custom"
-              ? customDays
-              : (selectedDuration as number)
-          }
-          customDays={selectedDuration === "custom" ? customDays : 0}
-          startDate={startDate}
-          setStartDate={setStartDate}
-          unavailableDays={[]}
-        />
+      {/* Calendar Section */}
+      <Calendar
+        selectedDuration={
+          selectedDuration === "custom"
+            ? customDays
+            : (selectedDuration as number)
+        }
+        customDays={selectedDuration === "custom" ? customDays : 0}
+        startDate={startDate}
+        setStartDate={setStartDate}
+        unavailableDays={[]}
+      />
 
-        {/* Legends */}
-        <div className="flex justify-center gap-6 mt-6 text-sm text-gray-600">
-          <div className="flex items-center gap-2">
-            <span className="w-4 h-4 bg-yellow-400 rounded"></span>
-            <Paragraph1>Selected range</Paragraph1>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-4 h-4 bg-gray-300 rounded"></span>
-            <Paragraph1>Unavailable</Paragraph1>
-          </div>
+      {/* Legends */}
+      <div className="flex justify-center gap-6 mt-6 text-gray-600 text-sm">
+        <div className="flex items-center gap-2">
+          <span className="bg-yellow-400 rounded w-4 h-4"></span>
+          <Paragraph1>Selected range</Paragraph1>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="bg-gray-300 rounded w-4 h-4"></span>
+          <Paragraph1>Unavailable</Paragraph1>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 export default RentalDurationSelector;

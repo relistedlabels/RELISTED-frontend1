@@ -3,6 +3,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Paragraph1 } from "@/common/ui/Text";
@@ -71,6 +72,238 @@ function formatMoney(value: number | null | undefined): string {
   });
 }
 
+type DisputeMessageType = "user" | "admin" | "status";
+
+type MessageAttachment = {
+  id?: string;
+  url?: string;
+  thumbnailUrl?: string;
+  name?: string;
+  type?: string;
+  size?: number;
+};
+
+type MessageSender = {
+  id?: string;
+  name?: string | null;
+  avatarUrl?: string | null;
+  role?: string;
+};
+
+const isProbablyUrl = (value: string) =>
+  value.startsWith("http://") ||
+  value.startsWith("https://") ||
+  value.startsWith("data:") ||
+  value.startsWith("blob:");
+
+const isImageUrl = (value: string) =>
+  /^data:image\//i.test(value) || /\.(png|jpe?g|webp|gif)(\?|#|$)/i.test(value);
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+const toAbsoluteUrl = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (isProbablyUrl(trimmed)) return trimmed;
+  if (trimmed.startsWith("//")) return `https:${trimmed}`;
+  if (!API_BASE_URL) return trimmed;
+  if (trimmed.startsWith("/")) return `${API_BASE_URL}${trimmed}`;
+  return `${API_BASE_URL}/${trimmed}`;
+};
+
+const normalizeMessageType = (value: unknown): DisputeMessageType => {
+  const normalized = String(value ?? "")
+    .trim()
+    .toLowerCase();
+  if (normalized === "status") return "status";
+  if (normalized === "admin") return "admin";
+  return "user";
+};
+
+const formatTimestamp = (value: unknown) => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "—";
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return raw;
+  return parsed.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
+const formatMessageDate = (value: unknown) => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return null;
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (parsed.toDateString() === today.toDateString()) return "Today";
+  if (parsed.toDateString() === yesterday.toDateString()) return "Yesterday";
+  return parsed.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year:
+      parsed.getFullYear() !== today.getFullYear()
+        ? "numeric"
+        : undefined,
+  });
+};
+
+const getMessageDateKey = (value: unknown) => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? "" : parsed.toDateString();
+};
+
+const getInitials = (name: string) => {
+  const safe = String(name ?? "").trim();
+  if (!safe) return "U";
+  return safe
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase()
+    .substring(0, 2);
+};
+
+const getSender = (
+  message: Record<string, unknown>,
+): MessageSender | undefined =>
+  typeof message.sender === "object" && message.sender
+    ? (message.sender as MessageSender)
+    : {
+        ...(typeof message.senderId === "string" && message.senderId.trim()
+          ? { id: message.senderId.trim() }
+          : {}),
+        ...(typeof message.senderRole === "string" && message.senderRole.trim()
+          ? { role: message.senderRole.trim() }
+          : {}),
+        ...(typeof message.senderName === "string" && message.senderName.trim()
+          ? { name: message.senderName.trim() }
+          : {}),
+        ...(typeof message.sender === "string" && message.sender.trim()
+          ? { name: message.sender.trim() }
+          : {}),
+      };
+
+const extractAttachments = (raw: unknown): MessageAttachment[] => {
+  if (!raw || typeof raw !== "object") return [];
+  const r = raw as Record<string, unknown>;
+  const possible =
+    r.uploads ??
+    r.attachmentUrls ??
+    r.attachments ??
+    r.mediaUrls ??
+    r.media ??
+    r.mediaIds;
+  if (!Array.isArray(possible)) return [];
+  return possible
+    .map((value: unknown) => {
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (!trimmed) return null;
+        return isProbablyUrl(trimmed) ? { url: trimmed } : { id: trimmed };
+      }
+      if (value && typeof value === "object") {
+        const v = value as Record<string, unknown>;
+        const id = String(
+          v.id ?? v.uploadId ?? v.mediaId ?? v.media_id ?? "",
+        ).trim();
+        const url = String(
+          v.url ?? v.fileUrl ?? v.secure_url ?? v.src ?? "",
+        ).trim();
+        const thumbnailUrl = String(
+          v.thumbnailUrl ?? v.thumbnail_url ?? v.thumbUrl ?? v.thumb_url ?? "",
+        ).trim();
+        const name = String(v.name ?? v.fileName ?? v.filename ?? "").trim();
+        const type = String(v.type ?? v.fileType ?? "").trim();
+        const size = toNumberOrNull(v.size ?? v.fileSize ?? "");
+        if (!id && !url) return null;
+        return {
+          ...(id ? { id } : {}),
+          ...(url ? { url } : {}),
+          ...(thumbnailUrl ? { thumbnailUrl } : {}),
+          ...(name ? { name } : {}),
+          ...(type ? { type } : {}),
+          ...(size !== null ? { size } : {}),
+        };
+      }
+      return null;
+    })
+    .filter((value): value is MessageAttachment => Boolean(value));
+};
+
+const resolveAttachment = (
+  attachment: MessageAttachment,
+  uploadsById?: Map<string, { url: string; thumbnailUrl?: string }>,
+) => {
+  const directUrl = String(attachment.url ?? "").trim();
+  const directThumb = String(attachment.thumbnailUrl ?? "").trim();
+  const id = String(attachment.id ?? "").trim();
+  const upload = id ? uploadsById?.get(id) : undefined;
+  const resolvedUrl =
+    directUrl || (id && isProbablyUrl(id) ? id : "") || upload?.url || "";
+  const fullUrl = toAbsoluteUrl(resolvedUrl);
+  if (!fullUrl) return undefined;
+  return {
+    fullUrl,
+    thumbUrl:
+      toAbsoluteUrl(directThumb || upload?.thumbnailUrl || upload?.url || "") ||
+      fullUrl,
+    name: attachment.name,
+    type: attachment.type,
+  };
+};
+
+const inferMessageParty = (
+  message: Record<string, unknown>,
+  disputeDetail: Record<string, unknown> | undefined,
+): "renter" | "lister" | "admin" | "unknown" => {
+  const senderRoleField = String(
+    (message as any)?.senderRole ?? (message as any)?.sender_role ?? "",
+  )
+    .trim()
+    .toLowerCase();
+  if (senderRoleField === "renter") return "renter";
+  if (senderRoleField === "lister") return "lister";
+  if (senderRoleField === "admin") return "admin";
+
+  const senderRole = String(getSender(message)?.role ?? "")
+    .trim()
+    .toLowerCase();
+  if (senderRole === "renter") return "renter";
+  if (senderRole === "lister") return "lister";
+  if (senderRole === "admin") return "admin";
+
+  const createdBy = String(message.createdBy ?? "")
+    .trim()
+    .toLowerCase();
+  if (createdBy === "renter") return "renter";
+
+  const from = String(message.from ?? "")
+    .trim()
+    .toLowerCase();
+  if (from.includes("admin")) return "admin";
+
+  const renter = (disputeDetail as any)?.renter;
+  const lister = (disputeDetail as any)?.lister;
+  const renterName = String(displayName(renter) ?? "")
+    .trim()
+    .toLowerCase();
+  const listerName = String(displayName(lister) ?? "")
+    .trim()
+    .toLowerCase();
+
+  if (renterName && from.includes(renterName)) return "renter";
+  if (listerName && from.includes(listerName)) return "lister";
+  if (from.includes("dresser") || from.includes("renter")) return "renter";
+  if (from.includes("curator") || from.includes("lister")) return "lister";
+  return "unknown";
+};
+
 // Transform Dispute API response to display format
 function transformDisputeData(dispute: Dispute): ResolvedDisputeData {
   const raisedBy = dispute.raisedBy as any;
@@ -82,8 +315,7 @@ function transformDisputeData(dispute: Dispute): ResolvedDisputeData {
       ? String(raisedBy)
       : undefined) ??
     "—";
-  const raisedByRole =
-    raisedBy?.role ?? (dispute as any).raisedByRole ?? "—";
+  const raisedByRole = raisedBy?.role ?? (dispute as any).raisedByRole ?? "—";
   const raisedByAvatar =
     typeof raisedBy?.avatar === "string"
       ? raisedBy.avatar
@@ -91,7 +323,8 @@ function transformDisputeData(dispute: Dispute): ResolvedDisputeData {
         ? (dispute as any).raisedByAvatar
         : null;
 
-  const dateCreatedRaw = (dispute as any).createdAt ?? (dispute as any).dateCreated;
+  const dateCreatedRaw =
+    (dispute as any).createdAt ?? (dispute as any).dateCreated;
   const dateCreatedStr = dateCreatedRaw
     ? new Date(dateCreatedRaw).toLocaleDateString("en-US", {
         month: "short",
@@ -163,6 +396,23 @@ export default function ResolvedTable({
   }, [searchQuery, displayData]);
 
   const disputeDetail = disputeDetailResponse?.data;
+  const uploadsById = useMemo(() => {
+    const map = new Map<string, { url: string; thumbnailUrl?: string }>();
+    const uploads = (disputeDetail as any)?.evidence?.uploads ?? [];
+    if (Array.isArray(uploads)) {
+      for (const u of uploads) {
+        const id = String(u?.id ?? "").trim();
+        const url = String(u?.url ?? "").trim();
+        const thumbnailUrl = String(u?.thumbnailUrl ?? "").trim();
+        if (!id || !url) continue;
+        map.set(id, {
+          url,
+          ...(thumbnailUrl ? { thumbnailUrl } : {}),
+        });
+      }
+    }
+    return map;
+  }, [disputeDetail]);
   const raisedByParty =
     (disputeDetail as any)?.raisedBy ??
     (disputeDetail as any)?.createdBy ??
@@ -397,7 +647,7 @@ export default function ResolvedTable({
                   <button
                     type="button"
                     onClick={() => setSelectedDisputeId(null)}
-                    className="flex-shrink-0 -ml-1 p-1 text-gray-400 hover:text-gray-600 transition"
+                    className="-ml-1 p-1 text-gray-400 hover:text-gray-600 transition shrink-0"
                   >
                     <X size={20} />
                   </button>
@@ -461,7 +711,11 @@ export default function ResolvedTable({
                             Order ID
                           </Paragraph1>
                           <Paragraph1 className="font-semibold text-gray-900">
-                            {String((disputeDetail as any)?.orderDetails?.id ?? (disputeDetail as any)?.orderId ?? "—")}
+                            {String(
+                              (disputeDetail as any)?.orderDetails?.id ??
+                                (disputeDetail as any)?.orderId ??
+                                "—",
+                            )}
                           </Paragraph1>
                         </div>
                         <div>
@@ -469,7 +723,9 @@ export default function ResolvedTable({
                             Order DB ID
                           </Paragraph1>
                           <Paragraph1 className="font-semibold text-gray-900">
-                            {String((disputeDetail as any)?.orderDetails?.dbId ?? "—")}
+                            {String(
+                              (disputeDetail as any)?.orderDetails?.dbId ?? "—",
+                            )}
                           </Paragraph1>
                         </div>
                         <div>
@@ -485,7 +741,10 @@ export default function ResolvedTable({
                             Preferred Resolution
                           </Paragraph1>
                           <Paragraph1 className="font-semibold text-gray-900">
-                            {String((disputeDetail as any)?.preferredResolution ?? "—")}
+                            {String(
+                              (disputeDetail as any)?.preferredResolution ??
+                                "—",
+                            )}
                           </Paragraph1>
                         </div>
                       </div>
@@ -571,9 +830,9 @@ export default function ResolvedTable({
                           </Paragraph1>
                           <Paragraph1 className="font-semibold text-gray-900">
                             {escrow?.releasedAt
-                              ? new Date(String(escrow.releasedAt)).toLocaleString(
-                                  "en-US",
-                                )
+                              ? new Date(
+                                  String(escrow.releasedAt),
+                                ).toLocaleString("en-US")
                               : "—"}
                           </Paragraph1>
                         </div>
@@ -584,35 +843,65 @@ export default function ResolvedTable({
                       <Paragraph1 className="mb-2 text-gray-500 text-xs">
                         EVIDENCE
                       </Paragraph1>
-                      {(disputeDetail as any)?.evidence?.uploads?.length ? (
-                        <div className="space-y-2">
-                          {(disputeDetail as any).evidence.uploads.map(
-                            (upload: any) => (
+                      {disputeDetail?.evidence?.uploads?.length ? (
+                        <div className="space-y-3">
+                          <div className="gap-2 grid grid-cols-3">
+                            {disputeDetail.evidence.uploads
+                              .filter((upload) => {
+                                const url = String(upload.url ?? "").trim();
+                                const fileType = String(
+                                  upload.fileType ?? "",
+                                ).toLowerCase();
+                                const fileName = String(
+                                  upload.fileName ?? "",
+                                ).toLowerCase();
+                                if (!url) return false;
+                                if (fileType.includes("image")) return true;
+                                return /\.(png|jpe?g|webp|gif)$/i.test(
+                                  fileName,
+                                );
+                              })
+                              .map((upload) => (
+                                <a
+                                  key={String(upload.id ?? upload.url)}
+                                  href={toAbsoluteUrl(String(upload.url ?? ""))}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="relative border border-gray-200 rounded-lg w-full aspect-square overflow-hidden"
+                                >
+                                  <Image
+                                    src={toAbsoluteUrl(
+                                      String(upload.thumbnailUrl ?? upload.url),
+                                    )}
+                                    alt={String(upload.fileName ?? "Evidence")}
+                                    fill
+                                    sizes="120px"
+                                    unoptimized
+                                    className="object-cover"
+                                  />
+                                </a>
+                              ))}
+                          </div>
+                          <div className="space-y-2">
+                            {disputeDetail.evidence.uploads.map((upload) => (
                               <div
-                                key={String(upload.id ?? upload.url)}
+                                key={`file-${String(upload.id ?? upload.url)}`}
                                 className="flex justify-between items-center gap-3"
                               >
                                 <Paragraph1 className="text-gray-900 text-sm">
-                                  {String(
-                                    upload.fileName ??
-                                      upload.name ??
-                                      upload.url ??
-                                      "—",
-                                  )}
+                                  {String(upload.fileName ?? upload.url ?? "—")}
                                 </Paragraph1>
-                                {upload.url ? (
-                                  <a
-                                    className="text-gray-700 text-sm underline"
-                                    href={String(upload.url)}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                  >
-                                    Open
-                                  </a>
-                                ) : null}
+                                <a
+                                  className="text-gray-700 text-sm underline"
+                                  href={toAbsoluteUrl(String(upload.url ?? ""))}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  Open
+                                </a>
                               </div>
-                            ),
-                          )}
+                            ))}
+                          </div>
                         </div>
                       ) : (
                         <Paragraph1 className="text-gray-600 text-sm">
@@ -625,40 +914,255 @@ export default function ResolvedTable({
                       <Paragraph1 className="mb-2 text-gray-500 text-xs">
                         MESSAGES
                       </Paragraph1>
-                      {(disputeDetail as any)?.messages?.length ? (
-                        <div className="space-y-3">
-                          {(disputeDetail as any).messages.map(
-                            (message: any) => (
-                              <div
-                                key={String(
-                                  message.id ??
-                                    message.createdAt ??
-                                    message.timestamp,
-                                )}
-                                className="bg-white p-3 border border-gray-200 rounded-lg"
-                              >
-                                <div className="flex justify-between items-center gap-3">
-                                  <Paragraph1 className="font-medium text-gray-900 text-sm">
-                                    {String(
-                                      message.from ?? message.sender ?? "—",
-                                    )}
-                                  </Paragraph1>
-                                  <Paragraph1 className="text-gray-500 text-xs">
-                                    {String(
-                                      message.createdAt ??
-                                        message.timestamp ??
-                                        "—",
-                                    )}
-                                  </Paragraph1>
+                      {disputeDetail?.messages?.length ? (
+                        <div className="space-y-4">
+                          {(() => {
+                            const grouped: Record<
+                              string,
+                              typeof disputeDetail.messages
+                            > = {};
+
+                            for (const msg of disputeDetail.messages) {
+                              const key = getMessageDateKey(
+                                msg.displayTimestamp ??
+                                  msg.createdAt ??
+                                  msg.timestamp,
+                              );
+                              if (!key) continue;
+                              if (!grouped[key]) grouped[key] = [];
+                              grouped[key].push(msg);
+                            }
+
+                            return Object.entries(grouped).map(
+                              ([dateKey, messages]) => (
+                                <div key={dateKey}>
+                                  <div className="flex justify-center my-2">
+                                    <span className="bg-gray-100 px-2 py-1 rounded text-gray-500 text-xs">
+                                      {formatMessageDate(
+                                        messages[0]?.displayTimestamp ??
+                                          messages[0]?.createdAt ??
+                                          messages[0]?.timestamp,
+                                      )}
+                                    </span>
+                                  </div>
+
+                                  <div className="space-y-3">
+                                    {messages.map((message) => {
+                                      const type = normalizeMessageType(
+                                        message.type,
+                                      );
+                                      const sender = getSender(
+                                        message as unknown as Record<
+                                          string,
+                                          unknown
+                                        >,
+                                      );
+                                      const getSenderNameDisplay = () => {
+                                        const name = String(sender?.name ?? "").trim();
+                                        if (name) return name;
+                                        const created = String(message.createdBy ?? "").trim();
+                                        if (created === "renter") return "Renter";
+                                        if (created === "lister") return "Lister";
+                                        if (created === "admin") return "Admin";
+                                        return "User";
+                                      };
+                                      const senderName = getSenderNameDisplay();
+                                      const senderAvatarUrl = String(
+                                        sender?.avatarUrl ?? "",
+                                      ).trim();
+
+                                      const party = inferMessageParty(
+                                        message as unknown as Record<
+                                          string,
+                                          unknown
+                                        >,
+                                        disputeDetail as unknown as Record<
+                                          string,
+                                          unknown
+                                        >,
+                                      );
+                                      const align =
+                                        party === "renter"
+                                          ? "justify-end"
+                                          : party === "admin"
+                                            ? "justify-center"
+                                            : "justify-start";
+                                      const rowDirection =
+                                        party === "renter"
+                                          ? "flex-row-reverse"
+                                          : "flex-row";
+
+                                      if (type === "status") {
+                                        return (
+                                          <div
+                                            key={String(message.id)}
+                                            className="flex justify-center"
+                                          >
+                                            <div className="bg-gray-200 px-3 py-1 rounded-full text-gray-700 text-xs">
+                                              {String(message.content ?? "—")}
+                                            </div>
+                                          </div>
+                                        );
+                                      }
+
+                                      const attachments =
+                                        extractAttachments(message)
+                                          .map((attachment) =>
+                                            resolveAttachment(
+                                              attachment,
+                                              uploadsById,
+                                            ),
+                                          )
+                                          .filter(
+                                            (
+                                              value,
+                                            ): value is NonNullable<
+                                              ReturnType<
+                                                typeof resolveAttachment
+                                              >
+                                            > => Boolean(value),
+                                          );
+
+                                      const senderLabel =
+                                        party === "renter"
+                                          ? `Renter · ${senderName}`
+                                          : party === "lister"
+                                            ? `Lister · ${senderName}`
+                                            : party === "admin"
+                                              ? `Admin · ${senderName}`
+                                              : senderName;
+
+                                      const timestamp = formatTimestamp(
+                                        message.displayTimestamp ??
+                                          message.createdAt ??
+                                          message.timestamp,
+                                      );
+                                      const metaAlignClass =
+                                        party === "renter"
+                                          ? "text-right"
+                                          : party === "admin"
+                                            ? "text-center"
+                                            : "text-left";
+
+                                      return (
+                                        <div
+                                          key={String(message.id)}
+                                          className={`flex ${align}`}
+                                        >
+                                          <div
+                                            className={`flex items-start gap-2 ${rowDirection}`}
+                                          >
+                                            {party === "admin" ? null : (
+                                              <div className="relative flex justify-center items-center bg-gray-200 rounded-full w-7 h-7 overflow-hidden font-semibold text-[10px] text-gray-600 shrink-0">
+                                                <span className="absolute inset-0 flex justify-center items-center">
+                                                  {getInitials(senderName)}
+                                                </span>
+                                                {senderAvatarUrl ? (
+                                                  <img
+                                                    src={senderAvatarUrl}
+                                                    alt={`${senderName} avatar`}
+                                                    className="absolute inset-0 w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                      e.currentTarget.style.display =
+                                                        "none";
+                                                    }}
+                                                  />
+                                                ) : null}
+                                              </div>
+                                            )}
+
+                                            <div className="max-w-[80%]">
+                                              <Paragraph1
+                                                className={`mb-1 text-gray-700 text-xs ${metaAlignClass}`}
+                                              >
+                                                {senderLabel}
+                                              </Paragraph1>
+                                              <div
+                                                className={
+                                                  party === "renter"
+                                                    ? "bg-black p-3 rounded-lg text-white"
+                                                    : party === "lister"
+                                                      ? "bg-white p-3 border border-gray-200 rounded-lg text-gray-900"
+                                                      : "bg-gray-100 p-3 border border-gray-200 rounded-lg text-gray-900"
+                                                }
+                                              >
+                                                {message.content ? (
+                                                  <Paragraph1
+                                                    className={
+                                                      party === "renter"
+                                                        ? "text-xs text-white"
+                                                        : "text-gray-800 text-xs"
+                                                    }
+                                                  >
+                                                    {String(message.content)}
+                                                  </Paragraph1>
+                                                ) : null}
+
+                                                {attachments.length > 0 ? (
+                                                  <div className="gap-2 grid grid-cols-3 mt-2">
+                                                    {attachments.map(
+                                                      ({
+                                                        fullUrl,
+                                                        thumbUrl,
+                                                        type,
+                                                      }) => {
+                                                        const isImage =
+                                                          String(type ?? "")
+                                                            .toLowerCase()
+                                                            .startsWith(
+                                                              "image/",
+                                                            ) ||
+                                                          isImageUrl(fullUrl);
+                                                        return isImage ? (
+                                                          <a
+                                                            key={fullUrl}
+                                                            href={fullUrl}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="relative border border-gray-200 rounded-lg w-24 h-24 overflow-hidden"
+                                                          >
+                                                            <Image
+                                                              src={thumbUrl}
+                                                              alt="Attachment"
+                                                              fill
+                                                              sizes="96px"
+                                                              unoptimized
+                                                              className="object-cover"
+                                                            />
+                                                          </a>
+                                                        ) : (
+                                                          <a
+                                                            key={fullUrl}
+                                                            href={fullUrl}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="text-sm underline"
+                                                          >
+                                                            Open file
+                                                          </a>
+                                                        );
+                                                      },
+                                                    )}
+                                                  </div>
+                                                ) : null}
+                                              </div>
+                                              {timestamp ? (
+                                                <Paragraph1
+                                                  className={`mt-1 text-gray-500 text-xs ${metaAlignClass}`}
+                                                >
+                                                  {timestamp}
+                                                </Paragraph1>
+                                              ) : null}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
                                 </div>
-                                <Paragraph1 className="mt-2 text-gray-800 text-sm">
-                                  {String(
-                                    message.content ?? message.message ?? "—",
-                                  )}
-                                </Paragraph1>
-                              </div>
-                            ),
-                          )}
+                              ),
+                            );
+                          })()}
                         </div>
                       ) : (
                         <Paragraph1 className="text-gray-600 text-sm">

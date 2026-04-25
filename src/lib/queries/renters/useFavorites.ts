@@ -12,7 +12,9 @@ export const useFavorites = (
     (state) => state.setFavoriteCount,
   );
   const token = useUserStore((s) => s.token);
-  const shouldFetch = token !== null;
+  const role = useUserStore((s) => s.role);
+  const shouldFetch =
+    token !== null && role !== null && role.toUpperCase() !== "ADMIN";
 
   return useQuery({
     queryKey: ["renters", "favorites", page, limit, sort],
