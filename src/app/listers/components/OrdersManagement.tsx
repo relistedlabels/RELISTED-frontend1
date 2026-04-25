@@ -48,7 +48,7 @@ function tabSummaryCount(
     case "pending":
       return summary.pendingApprovalCount;
     case "ongoing":
-      return summary.ongoingCount;
+      return (summary.ongoingCount ?? 0) + (summary.inDisputeCount ?? 0);
     case "completed":
       return summary.completedCount;
     case "cancelled":
@@ -56,9 +56,10 @@ function tabSummaryCount(
     case "all": {
       const a = summary.pendingApprovalCount ?? 0;
       const b = summary.ongoingCount ?? 0;
+      const e = summary.inDisputeCount ?? 0;
       const c = summary.completedCount ?? 0;
       const d = summary.cancelledCount ?? 0;
-      return a + b + c + d;
+      return a + b + c + d + e;
     }
     default:
       return undefined;

@@ -22,6 +22,7 @@ export interface Order {
     | "Return Due"
     | "Return Pickup"
     | "Disputed"
+    | "IN_DISPUTE"
     | "Completed";
   returnDue: string;
   paymentReference: string;

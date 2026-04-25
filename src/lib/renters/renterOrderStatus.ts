@@ -14,6 +14,8 @@ export function getRenterOrderStatusLabel(status: string): string {
     CANCELLED: "Cancelled",
     RETURNED: "Returned",
     RETURN_DUE: "Return Due",
+    DISPUTED: "In Dispute",
+    IN_DISPUTE: "In Dispute",
   };
   if (!k) return "Unknown";
   return (
@@ -29,6 +31,7 @@ export function getRenterOrderBadgeTone(statusLabel: string): RenterOrderBadgeTo
   
   const lower = t.toLowerCase();
   if (lower.includes("cancel")) return "danger";
+  if (lower.includes("dispute")) return "warning";
   if (lower.includes("return due")) return "warning";
   if (lower.includes("active") || lower.includes("processing")) return "success";
   if (lower.includes("completed") || lower.includes("returned")) return "success";

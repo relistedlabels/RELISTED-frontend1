@@ -10,6 +10,7 @@ import {
   useDisputeOverview,
   useDisputeResolution,
   useDisputeTimeline,
+  useOrderDetails,
 } from "@/lib/queries/listers";
 import DisputeConversationLog from "./DisputeConversationLog";
 import { DisputeEvidenceContent } from "./DisputeEvidenceContent";
@@ -122,11 +123,26 @@ const DisputeDetailTabs: React.FC<DisputeDetailTabsProps> = ({
   const { data: evidenceData } = useDisputeEvidence(disputeId);
   const { data: timelineData } = useDisputeTimeline(disputeId);
   const { data: resolutionData } = useDisputeResolution(disputeId);
+  const { data: detailData } = useDisputeDetail(disputeId);
 
   const overview = overviewData?.data.overview;
   const evidence = evidenceData?.data.evidence;
   const timeline = timelineData?.data.timeline;
   const resolutionApi = resolutionData?.data.resolution;
+  const dispute = detailData?.data.dispute;
+
+  const orderIdForRenterName =
+    String(dispute?.orderNumber ?? "").trim() ||
+    String(overview?.itemInformation.orderId ?? "").trim() ||
+    "";
+  const { data: orderDetailsData } = useOrderDetails(orderIdForRenterName);
+  const orderDetails =
+    (orderDetailsData as unknown as { data?: { order?: Record<string, unknown> } })
+      ?.data?.order ??
+    (orderDetailsData as unknown as { data?: Record<string, unknown> })?.data ??
+    null;
+  const otherPartyName =
+    String((orderDetails as any)?.renterName ?? "").trim() || undefined;
 
   const resolution: Resolution | undefined = resolutionApi
     ? {
@@ -158,6 +174,7 @@ const DisputeDetailTabs: React.FC<DisputeDetailTabsProps> = ({
           <DisputeConversationLog
             disputeId={disputeId}
             canUpload={canUploadEvidence}
+            otherPartyName={otherPartyName}
           />
         </div>
       </>

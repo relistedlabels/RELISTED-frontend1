@@ -572,7 +572,7 @@ const DisputeConversationLog: React.FC<{
       {lightboxUrl
         ? createPortal(
             <div
-              className="z-[10000] fixed inset-0 flex justify-center items-center bg-black/70 p-4 sm:pr-[28.5rem]"
+              className="z-10000 fixed inset-0 flex justify-center items-center bg-black/70 p-4 sm:pr-[28.5rem]"
               onClick={(e) => {
                 if (e.target === e.currentTarget) setLightboxUrl(null);
               }}

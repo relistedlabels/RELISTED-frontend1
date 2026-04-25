@@ -75,6 +75,9 @@ const DisputeDetailTabs: React.FC<{ disputeId: string }> = ({ disputeId }) => {
     return order?.listerName || null;
   }, [dispute?.orderId, ordersByOrderId, overview?.orderID]);
 
+  const otherPartyName =
+    listerNameFromOrders || dispute?.listerName || overview?.curator || null;
+
   // Effect to calculate and set the indicator position (simulating Framer Motion layout)
   useEffect(() => {
     const activeIndex = DISPUTE_TABS.findIndex((tab) => tab.key === activeTab);
@@ -128,6 +131,7 @@ const DisputeDetailTabs: React.FC<{ disputeId: string }> = ({ disputeId }) => {
       <DisputeConversationLog
         disputeId={disputeId}
         canUpload={canUploadEvidence}
+        otherPartyName={otherPartyName ?? undefined}
       />
     ),
     resolution: (
