@@ -341,6 +341,13 @@ export const rentersApi = {
       data: { avatarUrl: string };
     }>("/api/renters/profile/avatar", { method: "GET" }),
 
+  // GET /api/renters/wallet  // Wallet balance
+  getWalletBalance: () =>
+    apiFetch<{
+      success: boolean;
+      data: { wallet: WalletInfo };
+    }>("/api/renters/wallet", { method: "GET" }),
+
   // --- Verification Endpoints ---
   // GET /api/renters/profile/verifications/status
   getVerificationsStatus: () =>
@@ -889,10 +896,4 @@ export const rentersApi = {
       { method: "GET" },
     ),
 
-  // Wallet balance from Wema
-  getWalletBalance: () =>
-    apiFetch<{
-      success: boolean;
-      data: { balance: number; currency: string };
-    }>("/wallet/wema/balance", { method: "GET" }),
 };

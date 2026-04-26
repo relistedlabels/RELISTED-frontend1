@@ -36,6 +36,35 @@ interface OrderDetailModalProps {
   order?: Order;
 }
 
+const getOrderStatusLabel = (raw: unknown): string => {
+  const s = String(raw ?? "").trim();
+  if (!s) return "—";
+  const k = s
+    .toUpperCase()
+    .replace(/-/g, "_")
+    .replace(/\s+/g, "_");
+
+  switch (k) {
+    case "PREPARING":
+      return "Preparing";
+    case "IN_TRANSIT":
+      return "In Transit";
+    case "DELIVERED":
+      return "Delivered";
+    case "RETURN_DUE":
+      return "Return Due";
+    case "RETURN_PICKUP":
+      return "Return Pickup";
+    case "IN_DISPUTE":
+    case "DISPUTED":
+      return "Disputed";
+    case "COMPLETED":
+      return "Completed";
+    default:
+      return s;
+  }
+};
+
 const getStatusColor = (status: string) => {
   switch (status) {
     case "Preparing":
@@ -61,6 +90,7 @@ export default function OrderDetailModal({
   order,
 }: OrderDetailModalProps) {
   if (!order) return null;
+  const statusLabel = getOrderStatusLabel(order.status);
   return (
     <AnimatePresence>
       {isOpen && (
@@ -71,7 +101,7 @@ export default function OrderDetailModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 z-40"
+            className="z-40 fixed inset-0 bg-black/50"
           />
 
           {/* Modal */}
@@ -80,39 +110,39 @@ export default function OrderDetailModal({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="fixed right-0 top-0 bottom-0 w-full md:w-3/4 bg-white z-50 overflow-y-auto shadow-lg"
+            className="top-0 right-0 bottom-0 z-50 fixed bg-white shadow-lg w-full md:w-3/4 overflow-y-auto"
           >
             {/* Header */}
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-6">
-              <div className="flex items-start justify-between gap-4">
+            <div className="top-0 sticky bg-white p-6 border-gray-200 border-b">
+              <div className="flex justify-between items-start gap-4">
                 <button
                   onClick={onClose}
-                  className="text-gray-400 hover:text-gray-600 transition p-1 -ml-1 flex-shrink-0"
+                  className="flex-shrink-0 -ml-1 p-1 text-gray-400 hover:text-gray-600 transition"
                 >
                   <X size={20} />
                 </button>
 
                 <div className="flex-1">
-                  <Paragraph3 className="text-lg font-bold text-gray-900 mb-1">
+                  <Paragraph3 className="mb-1 font-bold text-gray-900 text-lg">
                     Order Details
                   </Paragraph3>
-                  <Paragraph1 className="text-xs text-gray-500">
+                  <Paragraph1 className="text-gray-500 text-xs">
                     {order.id} • {order.date}
                   </Paragraph1>
                 </div>
 
                 <span
                   className={`inline-block px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${getStatusColor(
-                    order.status,
+                    statusLabel,
                   )}`}
                 >
-                  {order.status}
+                  {statusLabel}
                 </span>
               </div>
             </div>
 
             {/* Content - 4 Sections */}
-            <div className="p-6 space-y-6">
+            <div className="space-y-6 p-6">
               {/* Section 2: Order Details with Curator & Dresser */}
               <OrderSection2
                 returnDue={order.returnDue || "N/A"}
