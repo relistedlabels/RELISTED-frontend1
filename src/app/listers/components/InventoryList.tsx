@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -186,9 +186,9 @@ const InventoryItemCard: React.FC<InventoryItem> = ({
           </Paragraph1>
         </div>
       )}
-      <div className="flex sm:flex-row flex-col items-start sm:items-center gap-4 bg-white hover:shadow-md p-4 border border-gray-200 rounded-xl w-full transition-shadow duration-150">
-        {/* Product Image & Info - Left Side */}
-        <div className="flex items-start space-x-3 w-full sm:w-auto sm:min-w-[280px]">
+      <div className="flex flex-col sm:grid sm:grid-cols-[3fr_1fr_1fr_1fr_1fr_1fr] items-center gap-4 bg-white hover:shadow-md p-4 border border-gray-200 rounded-xl w-full transition-shadow duration-150">
+        {/* Product Image & Info - Col 1 (3 units) */}
+        <div className="flex items-center space-x-3 w-full">
           <div className="bg-gray-100 rounded-lg w-16 sm:w-20 h-20 sm:h-24 overflow-hidden shrink-0">
             <img
               src={imageUrl}
@@ -213,52 +213,64 @@ const InventoryItemCard: React.FC<InventoryItem> = ({
           </div>
         </div>
 
-        {/* Details Grid - Stacks on mobile, row on desktop */}
-        <div className="flex sm:flex-row flex-col gap-3 sm:gap-6 w-full">
-          {/* Type and Price Row */}
-          <div className="flex flex-row gap-6 sm:gap-8 w-full sm:w-auto">
-            {/* Type Column */}
-            <div className="flex flex-col min-w-[80px]">
-              <Paragraph1 className="mb-1 text-gray-500 text-xs">
-                Type
-              </Paragraph1>
-              <Paragraph1 className="font-semibold text-gray-900 text-sm">
-                {type}
-              </Paragraph1>
-            </div>
+        {/* Type Column - Col 2 (2 units) */}
+        <div className="flex flex-col">
+          <Paragraph1 className="mb-1 text-gray-500 text-xs">Type</Paragraph1>
+          <Paragraph1 className="font-semibold text-gray-900 text-sm">
+            {type}
+          </Paragraph1>
+        </div>
 
-            {/* Price/Value Column */}
-            <div className="flex flex-col min-w-[100px]">
-              <Paragraph1 className="mb-1 text-gray-500 text-xs">
-                {priceColumnLabel}
-              </Paragraph1>
-              <div className="flex flex-col">
-                <Paragraph1 className="font-semibold text-gray-900 text-sm">
-                  {priceValue}
-                </Paragraph1>
-                {secondaryPrice && (
-                  <Paragraph1 className="text-gray-500 text-xs">
-                    {secondaryPrice.label} {secondaryPrice.value}
-                  </Paragraph1>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Listed Date Column */}
-          <div className="flex flex-col min-w-[80px]">
-            <Paragraph1 className="mb-1 text-gray-500 text-xs">
-              Listed
-            </Paragraph1>
+        {/* Price/Value Column - Col 3 (1 unit) */}
+        <div className="flex flex-col">
+          <Paragraph1 className="mb-1 text-gray-500 text-xs">
+            {priceColumnLabel}
+          </Paragraph1>
+          <div className="flex flex-col">
             <Paragraph1 className="font-semibold text-gray-900 text-sm">
-              {listedDate}
+              {priceValue}
             </Paragraph1>
+            {secondaryPrice && (
+              <Paragraph1 className="text-gray-500 text-xs">
+                {secondaryPrice.label} {secondaryPrice.value}
+              </Paragraph1>
+            )}
           </div>
         </div>
 
-        {/* Rejection Reason Banner */}
+        {/* Listed Date Column - Col 4 (1 unit) */}
+        <div className="flex flex-col">
+          <Paragraph1 className="mb-1 text-gray-500 text-xs">Listed</Paragraph1>
+          <Paragraph1 className="font-semibold text-gray-900 text-sm">
+            {listedDate}
+          </Paragraph1>
+        </div>
+
+        {/* Live Status Badge - Col 5 (1 unit) */}
+        <div
+          className={`px-3 py-1.5 flex w-full justify-center rounded-lg whitespace-nowrap ${
+            isActive
+              ? "text-green-700 bg-green-100"
+              : "text-gray-700 bg-gray-100"
+          }`}
+        >
+          <Paragraph1 className="font-semibold text-xs">
+            {isActive ? "Live" : "Inactive"}
+          </Paragraph1>
+        </div>
+
+        {/* Manage Button - Col 6 (1 unit) */}
+        <button
+          type="button"
+          onClick={handleManage}
+          className="bg-gray-800 hover:bg-black px-6 py-2 rounded-lg font-semibold text-white text-sm whitespace-nowrap transition duration-150"
+        >
+          Manage
+        </button>
+
+        {/* Rejection Reason Banner - Spans full width below */}
         {status === "REJECTED" && rejectionComment && (
-          <div className="bg-red-50 p-3 border border-red-200 rounded-lg w-full sm:w-64">
+          <div className="col-span-full bg-red-50 p-3 border border-red-200 rounded-lg">
             <div className="flex items-start gap-2">
               <div className="flex flex-shrink-0 justify-center items-center bg-red-100 rounded-full w-6 h-6">
                 <span className="font-semibold text-red-600 text-xs">!</span>
@@ -274,41 +286,32 @@ const InventoryItemCard: React.FC<InventoryItem> = ({
             </div>
           </div>
         )}
-
-        {/* Live Status Badge & Manage Button - Stack on mobile, row on desktop */}
-        <div className="flex flex-row sm:flex-col justify-between sm:justify-end items-center sm:items-end gap-3 sm:gap-4 ml-0 sm:ml-4 w-full sm:w-auto shrink-0">
-          {/* Live Status Badge */}
-          <div
-            className={`px-3 py-1.5 rounded-lg whitespace-nowrap ${
-              isActive
-                ? "text-green-700 bg-green-100"
-                : "text-gray-700 bg-gray-100"
-            }`}
-          >
-            <Paragraph1 className="font-semibold text-xs">
-              {isActive ? "Live" : "Inactive"}
-            </Paragraph1>
-          </div>
-
-          {/* Manage Button */}
-          <button
-            type="button"
-            onClick={handleManage}
-            className="bg-gray-800 hover:bg-black px-6 py-2 rounded-lg font-semibold text-white text-sm whitespace-nowrap transition duration-150"
-          >
-            Manage
-          </button>
-        </div>
       </div>
     </motion.div>
   );
 };
 
 // --- Main Inventory List Component ---
-const InventoryList: React.FC = () => {
+interface SelectedCloset {
+  id: string;
+  name: string;
+  itemCount: number;
+  avatar?: string;
+}
+
+const InventoryList: React.FC<{
+  selectedClosetId?: string;
+  selectedCloset?: SelectedCloset;
+}> = ({ selectedClosetId, selectedCloset }) => {
   const [activeTab, setActiveTab] = useState<
     "AVAILABLE" | "RENTED" | "MAINTENANCE" | "RESERVED" | "All"
   >("All");
+
+  // Log selected closet for debugging
+  console.log(
+    "InventoryList - Selected Closet ID:",
+    selectedClosetId || "empty (regular lister)",
+  );
 
   const { data: products, isLoading, error } = useUserProducts();
 
@@ -360,25 +363,179 @@ const InventoryList: React.FC = () => {
     );
   }
 
+  // Calculate stats from products
+  const availableCount = mappedInventory.filter(
+    (item) => item.status === "AVAILABLE",
+  ).length;
+  const totalRentals = mappedInventory.filter(
+    (item) => item.status === "RENTED",
+  ).length;
+
+  // Helper to get initials for closet avatar fallback
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((word) => word[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  // Helper to create closet slug for URL
+  const getClosetSlug = (name: string) => {
+    return name.toLowerCase().replace(/\s+/g, "-");
+  };
+
+  const BG_COLORS = [
+    "bg-purple-500",
+    "bg-blue-500",
+    "bg-pink-500",
+    "bg-green-500",
+    "bg-yellow-500",
+    "bg-red-500",
+  ];
+
+  const getRandomBgColor = (name: string) => {
+    const charCode = name.charCodeAt(0);
+    return BG_COLORS[charCode % BG_COLORS.length];
+  };
+
   return (
     <div className="w-full">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6 pr-2">
-        <div className="flex items-center gap-2">
-          <Paragraph3 className="font-semibold text-black text-2xl">
-            Inventory
-          </Paragraph3>
-          <ToolInfo content="Lists all items in your inventory, including availability, rental frequency, and pricing." />
-        </div>
+      {/* Header with Closet Info (for inhouse managers) */}
+      {selectedCloset && (
+        <>
+          {/* Inventory Title and Buttons */}
+          <div className="flex justify-between items-center mb-4">
+            <Paragraph3 className="font-semibold text-black text-2xl">
+              Inventory
+            </Paragraph3>
+            <div className="flex items-center gap-3">
+              <button className="px-4 py-2 rounded-lg border border-gray-300 font-semibold text-gray-900 text-sm hover:bg-gray-50 transition duration-150">
+                Edit Closet
+              </button>
+              <Link
+                href="/listers/inventory/product-upload"
+                className="flex items-center space-x-2 bg-black hover:bg-gray-800 px-4 py-2 rounded-lg font-semibold text-white text-sm transition duration-150"
+              >
+                <Plus className="w-4 h-4" />
+                <Paragraph1>Add New Item</Paragraph1>
+              </Link>
+            </div>
+          </div>
 
-        <Link
-          href="/listers/inventory/product-upload"
-          className="flex items-center space-x-2 bg-black hover:bg-gray-800 px-4 py-2 rounded-lg font-semibold text-white text-sm transition duration-150"
-        >
-          <Plus className="w-4 h-4" />
-          <Paragraph1>Add New Item</Paragraph1>
-        </Link>
-      </div>
+          {/* Closet Info Card */}
+          <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+            <div className="grid sm:grid-cols-2 grid-cols-1  items-center justify-between gap-6">
+              {/* Left Section: Avatar + Closet Details */}
+              <div className="flex items-center gap-4 flex-1">
+                {/* Avatar */}
+                {selectedCloset.avatar ? (
+                  <img
+                    src={selectedCloset.avatar}
+                    alt={selectedCloset.name}
+                    className="w-20 h-20 rounded-full object-cover shrink-0"
+                  />
+                ) : (
+                  <div
+                    className={`w-20 h-20 rounded-full ${getRandomBgColor(selectedCloset.name)} flex items-center justify-center text-white font-bold text-2xl shrink-0`}
+                  >
+                    {getInitials(selectedCloset.name)}
+                  </div>
+                )}
+
+                {/* Closet Details */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Paragraph3 className="font-bold text-black truncate">
+                      {selectedCloset.name}
+                    </Paragraph3>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                    <span>{selectedCloset.itemCount} items</span>
+                    {selectedCloset.id === "managed" && (
+                      <>
+                        <span>·</span>
+                        <span className="text-gray-400">
+                          Managed by Relisted
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <span className="truncate">
+                      relisted.com/closets/{getClosetSlug(selectedCloset.name)}
+                    </span>
+                    <button className="p-1 hover:bg-gray-100 rounded transition duration-150 shrink-0">
+                      <svg
+                        className="w-4 h-4 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Section: Stats */}
+              <div className="grid grid-cols-3 items-center gap-8 shrink-0">
+                <div className="text-center ">
+                  <Paragraph2 className="font-bold text-black">
+                    {selectedCloset.itemCount}
+                  </Paragraph2>{" "}
+                  <Paragraph1 className="text-gray-500 text-xs mb-1">
+                    Total Items
+                  </Paragraph1>
+                </div>
+                <div className="text-center border-l border-gray-400">
+                  <Paragraph2 className="font-bold text-black">
+                    {availableCount}
+                  </Paragraph2>
+                  <Paragraph1 className="text-gray-500 text-xs mb-1">
+                    Available Now
+                  </Paragraph1>
+                </div>
+                <div className="text-center border-l border-gray-400">
+                  <Paragraph2 className="font-bold text-black">
+                    {totalRentals}
+                  </Paragraph2>{" "}
+                  <Paragraph1 className="text-gray-500 text-xs mb-1">
+                    Total Rentals
+                  </Paragraph1>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Simple Header (for regular listers) */}
+      {!selectedCloset && (
+        <div className="flex justify-between items-center mb-6 pr-2">
+          <div className="flex items-center gap-2">
+            <Paragraph3 className="font-semibold text-black text-2xl">
+              Inventory
+            </Paragraph3>
+            <ToolInfo content="Lists all items in your inventory, including availability, rental frequency, and pricing." />
+          </div>
+
+          <Link
+            href="/listers/inventory/product-upload"
+            className="flex items-center space-x-2 bg-black hover:bg-gray-800 px-4 py-2 rounded-lg font-semibold text-white text-sm transition duration-150"
+          >
+            <Plus className="w-4 h-4" />
+            <Paragraph1>Add New Item</Paragraph1>
+          </Link>
+        </div>
+      )}
 
       {/* Tab Switcher - Scrollable on mobile, wrapping on desktop */}
       <div className="mb-6 w-[330px] sm:w-fit overflow-x-auto">
