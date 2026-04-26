@@ -24,11 +24,17 @@ export default async function ListerProfilePage({
 
   return (
     <div>
-      <div className="container px-4 sm:px-0 mx-auto py-[70px] sm:py-[100px]">
-        <Breadcrumbs items={path} />
+      <div className=" py-[70px] sm:py-[100px]">
+        <div className=" container px-4 sm:px-0 mx-auto">
+          {" "}
+          <Breadcrumbs items={path} />
+        </div>
         <CuratorProfileCard userId={id} />
         <br />
-        <ProfileTabs userId={id} />
+        <div className=" container px-4 sm:px-0 mx-auto">
+          {" "}
+          <ProfileTabs userId={id} />
+        </div>
       </div>
     </div>
   );

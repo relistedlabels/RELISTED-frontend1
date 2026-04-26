@@ -24,6 +24,8 @@ interface ProductCardProps {
   listingType?: "RENTAL" | "RESALE" | "RENT_OR_RESALE";
   size?: string;
   measurement?: string;
+  closetOwner?: string;
+  closetImage?: string;
 }
 
 export default function ProductCard({
@@ -37,6 +39,8 @@ export default function ProductCard({
   listingType = "RENTAL",
   size,
   measurement,
+  closetOwner = "Amanda Daniels",
+  closetImage = "/images/user2.png",
 }: ProductCardProps) {
   const router = useRouter();
   const addViewed = useBrowseStore((state) => state.addViewed);
@@ -145,6 +149,25 @@ export default function ProductCard({
         <Paragraph1 className="text-xs font-semibold tracking-wide">
           {brand ? `${brand} ${name}` : name}
         </Paragraph1>
+        {closetOwner && (
+          <div className="flex items-center  justify-between gap-2 mt-3 mb-1">
+            <Paragraph1 className="text-gray-700 text-xs">Closet:</Paragraph1>
+            <div className=" flex items-center gap-1">
+              {" "}
+              <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
+                <Image
+                  src={closetImage}
+                  alt={closetOwner}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <Paragraph1 className="text-gray-700 text-xs font-medium">
+                {closetOwner}
+              </Paragraph1>
+            </div>
+          </div>
+        )}{" "}
         {(size || measurement) && (
           <Paragraph1 className="text-gray-700 mt-1">
             Size: {size || measurement}

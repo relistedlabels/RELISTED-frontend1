@@ -8,6 +8,7 @@ import ReviewCarousel from "./home/sections/ReviewCarousel";
 import TopCuratorsSection from "./home/sections/TopCuratorsSection";
 import TopListingSection1 from "./home/sections/TopListingSection1";
 import TopListingSection2 from "./home/sections/TopListingSection2";
+import TopListingSection3 from "./home/sections/TopListingSection3";
 
 export default function Home() {
   return (
@@ -16,12 +17,14 @@ export default function Home() {
       <BrandLogosCarousel />
       <PopularCategorySection />
       <br />
-
-      <HowItWorks />
-      {/* <TopCuratorsSection /> */}
       <TopListingSection2 />
 
+      <HowItWorks />
+
+      <TopListingSection3 />
+      <TopCuratorsSection />
       <TopListingSection1 />
+
       <div className=" px-4 sm:px-0">
         <BecomeCurator />
       </div>

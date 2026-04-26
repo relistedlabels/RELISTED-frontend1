@@ -6,9 +6,9 @@ import { useState } from "react";
 import ProductCard from "@/common/ui/ProductCard";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import { SlidersVertical } from "lucide-react";
-import Filters from "./Filters";
 import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import { usePublicUserProducts } from "@/lib/queries/user/usePublicUserProducts";
+import Filters from "@/app/shop/components/Filters";
 
 interface NewListingsSectionProps {
   userId: string;
