@@ -210,13 +210,11 @@ export const settingsApi = {
   getAuditLogs: (
     page: number = 1,
     limit: number = 20,
-    adminId?: string,
     actionType?: string,
   ) => {
     const params = new URLSearchParams();
     params.append("page", page.toString());
     params.append("limit", limit.toString());
-    if (adminId) params.append("adminId", adminId);
     if (actionType) params.append("actionType", actionType);
     return apiFetch<{
       success: true;
@@ -236,11 +234,10 @@ export const settingsApi = {
     format: "csv",
     dateFrom?: string,
     dateTo?: string,
-    adminId?: string,
   ) =>
     apiFetch(`/api/admin/settings/audit-logs/export`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ format, dateFrom, dateTo, adminId }),
+      body: JSON.stringify({ format, dateFrom, dateTo }),
     }),
 };

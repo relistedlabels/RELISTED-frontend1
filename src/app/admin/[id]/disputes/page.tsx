@@ -6,7 +6,7 @@ import { AlertCircle, CheckCircle, Clock, Search } from "lucide-react";
 import { useState } from "react";
 import { StatCardSkeleton, TableSkeleton } from "@/common/ui/SkeletonLoaders";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
-import type { DisputesListStatus } from "@/lib/api/admin/disputes";
+import type { Dispute, DisputesListStatus } from "@/lib/api/admin/disputes";
 import { useDisputeStats, useDisputes } from "@/lib/queries/admin/useDisputes";
 import PendingTable from "./components/PendingTable";
 import ResolvedTable from "./components/ResolvedTable";
@@ -36,6 +36,27 @@ function readStatNumber(stats: unknown, keys: string[]): number | undefined {
   return undefined;
 }
 
+function mergeDisputeLists(a?: Dispute[], b?: Dispute[], c?: Dispute[]): Dispute[] {
+  const out: Dispute[] = [];
+  const seen = new Set<string>();
+
+  const pushAll = (list?: Dispute[]) => {
+    if (!Array.isArray(list)) return;
+    for (const d of list) {
+      const id = String(d?.id ?? (d as any)?.disputeId ?? "").trim();
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      out.push(d);
+    }
+  };
+
+  pushAll(a);
+  pushAll(b);
+  pushAll(c);
+
+  return out;
+}
+
 export default function DisputesPage() {
   const [activeTab, setActiveTab] = useState<TabType>("pending");
   const [searchQuery, setSearchQuery] = useState("");
@@ -61,6 +82,29 @@ export default function DisputesPage() {
     page: 1,
     limit: 20,
   });
+
+  const {
+    data: inDisputeSnakeData,
+    isLoading: inDisputeSnakeLoading,
+    error: inDisputeSnakeError,
+  } = useDisputes({
+    status: "in_dispute",
+    search: searchQuery,
+    page: 1,
+    limit: 20,
+  });
+
+  const {
+    data: inDisputeKebabData,
+    isLoading: inDisputeKebabLoading,
+    error: inDisputeKebabError,
+  } = useDisputes({
+    status: "in-dispute",
+    search: searchQuery,
+    page: 1,
+    limit: 20,
+  });
+
   const { data: pendingCountData } = useDisputes({
     status: "pending",
     page: 1,
@@ -71,10 +115,24 @@ export default function DisputesPage() {
     page: 1,
     limit: 1,
   });
+  const { data: inDisputeSnakeCountData } = useDisputes({
+    status: "in_dispute",
+    page: 1,
+    limit: 1,
+  });
+  const { data: inDisputeKebabCountData } = useDisputes({
+    status: "in-dispute",
+    page: 1,
+    limit: 1,
+  });
 
   // Log errors to console only
   if (statsError) console.error("Disputes stats error:", statsError);
   if (disputesError) console.error("Disputes error:", disputesError);
+  if (inDisputeSnakeError)
+    console.error("Disputes (in_dispute) error:", inDisputeSnakeError);
+  if (inDisputeKebabError)
+    console.error("Disputes (in-dispute) error:", inDisputeKebabError);
 
   const statsPayloadRaw =
     (statsData as any)?.data ?? (statsData as unknown as any) ?? undefined;
@@ -88,6 +146,7 @@ export default function DisputesPage() {
       "inReviewCount",
       "under_review_count",
       "in_review_count",
+      "in_dispute_count",
       "underReview",
       "inReview",
     ]) ?? 0;
@@ -103,6 +162,20 @@ export default function DisputesPage() {
     pendingCountData?.data?.pagination?.total ??
     pendingCountData?.data?.disputes?.length ??
     0;
+  const inDisputeTotalFromList = Math.max(
+    inDisputeSnakeCountData?.data?.pagination?.total ??
+      inDisputeSnakeCountData?.data?.disputes?.length ??
+      0,
+    inDisputeKebabCountData?.data?.pagination?.total ??
+      inDisputeKebabCountData?.data?.disputes?.length ??
+      0,
+  );
+
+  const combinedUnderReviewList = mergeDisputeLists(
+    disputesData?.data?.disputes,
+    inDisputeSnakeData?.data?.disputes,
+    inDisputeKebabData?.data?.disputes,
+  );
   const underReviewTotalFromList =
     underReviewCountData?.data?.pagination?.total ??
     underReviewCountData?.data?.disputes?.length ??
@@ -114,7 +187,18 @@ export default function DisputesPage() {
   const underReviewCountDisplay = Math.max(
     underReviewCount,
     underReviewTotalFromList,
+    inDisputeTotalFromList,
+    combinedUnderReviewList.length,
   );
+
+  const tableLoading =
+    disputesLoading ||
+    (activeTab === "under-review" &&
+      (inDisputeSnakeLoading || inDisputeKebabLoading));
+  const tableError =
+    disputesError ||
+    (activeTab === "under-review" &&
+      (inDisputeSnakeError || inDisputeKebabError));
 
   const statuses: StatusData[] = [
     {
@@ -210,7 +294,7 @@ export default function DisputesPage() {
 
         {/* Table Content */}
         <div className="py-6">
-          {disputesLoading || disputesError ? (
+          {tableLoading || tableError ? (
             <TableSkeleton />
           ) : (
             <>
@@ -223,7 +307,7 @@ export default function DisputesPage() {
               {activeTab === "under-review" && (
                 <UnderReviewTable
                   searchQuery={searchQuery}
-                  disputes={disputesData?.data.disputes}
+                  disputes={combinedUnderReviewList}
                 />
               )}
               {activeTab === "resolved" && (

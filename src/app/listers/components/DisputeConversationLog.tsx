@@ -575,7 +575,7 @@ const DisputeConversationLog: React.FC<{
 
       {lightboxUrl ? (
         <div
-          className="z-[10000] fixed inset-0 flex justify-center items-center bg-black/70 p-4"
+          className="z-10000 fixed inset-0 flex justify-center items-center bg-black/70 p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) setLightboxUrl(null);
           }}

@@ -7,7 +7,11 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Paragraph1 } from "@/common/ui/Text";
-import type { Dispute, DisputeStatus } from "@/lib/api/admin/disputes";
+import {
+  normalizeAdminDisputeStatus,
+  type Dispute,
+  type DisputeStatus,
+} from "@/lib/api/admin/disputes";
 import {
   useResolveDispute,
   useUpdateDisputeStatus,
@@ -443,9 +447,9 @@ export default function ResolvedTable({
   const [refundAmount, setRefundAmount] = useState("");
   const [collateralWithheldToLister, setCollateralWithheldToLister] =
     useState("");
-  const currentStatus = String((disputeDetail as any)?.status ?? "") as
-    | DisputeStatus
-    | "";
+  const currentStatus = normalizeAdminDisputeStatus(
+    (disputeDetail as any)?.status,
+  );
   const effectiveStatus = (nextStatus || currentStatus) as DisputeStatus | "";
   const escrow = (disputeDetail as any)?.orderDetails?.escrow;
   const escrowStatus = String(escrow?.status ?? "");
@@ -1192,6 +1196,7 @@ export default function ResolvedTable({
                               <option value="">Select status</option>
                               <option value="PENDING">Pending</option>
                               <option value="IN_REVIEW">In Review</option>
+                              <option value="IN_DISPUTE">In Dispute</option>
                               <option value="RESOLVED">Resolved</option>
                               <option value="REJECTED">Rejected</option>
                               <option value="WITHDRAW">Withdrawn</option>

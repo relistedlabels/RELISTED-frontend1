@@ -11,6 +11,8 @@ import { useLogout } from "@/lib/mutations";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
 import MobileDesktopRecommendation from "@/common/ui/MobileDesktopRecommendation";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import { useCheckDashboardSelection } from "@/lib/queries/auth/useCheckDashboardSelection";
+import { useEffect } from "react";
 
 interface AdminLayoutWrapperProps {
   children: ReactNode;
@@ -27,6 +29,19 @@ export default function AdminLayoutWrapper({
 
   // Check if we're on an auth route
   const isAuthRoute = pathname.includes("/auth");
+
+  const { data: dashboardSelection, isLoading, error } = useCheckDashboardSelection({
+    enabled: !isAuthRoute,
+  });
+
+  useEffect(() => {
+    if (!isAuthRoute && !isLoading) {
+      if (error || (dashboardSelection && !dashboardSelection.isAdmin)) {
+        // Block access
+        router.push(adminId ? `/admin/${adminId}/auth/login` : "/auth/sign-in");
+      }
+    }
+  }, [isAuthRoute, isLoading, error, dashboardSelection, router, adminId]);
 
   const handleLogout = () => {
     setShowLogoutModal(true);
@@ -48,6 +63,19 @@ export default function AdminLayoutWrapper({
   // For auth routes, just show the children without navbar/sidebar
   if (isAuthRoute) {
     return <>{children}</>;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-100">
+        <div className="w-8 h-8 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  // If we made it here but aren't admin, we'll be redirected shortly
+  if (!dashboardSelection?.isAdmin) {
+    return null;
   }
 
   return (

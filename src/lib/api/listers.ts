@@ -183,7 +183,12 @@ export interface Order {
   orderDate: string;
   itemCount: number;
   totalAmount: number;
-  status: "pending_approval" | "ongoing" | "completed" | "cancelled";
+  status:
+    | "pending_approval"
+    | "ongoing"
+    | "in_dispute"
+    | "completed"
+    | "cancelled";
   createdAt: string;
   timeRemainingSeconds?: number;
   listingType?: "RENTAL" | "RESALE" | "RENT_OR_RESALE";
@@ -203,6 +208,7 @@ export interface OrdersListResponse {
 export interface ListerOrdersSummary {
   pendingApprovalCount?: number;
   ongoingCount?: number;
+  inDisputeCount?: number;
   completedCount?: number;
   cancelledCount?: number;
 }

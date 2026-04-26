@@ -3,14 +3,39 @@ import { apiFetch } from "../http";
 export type DisputeStatus =
   | "PENDING"
   | "IN_REVIEW"
+  | "IN_DISPUTE"
   | "WITHDRAW"
   | "RESOLVED"
   | "REJECTED";
+
+export function normalizeAdminDisputeStatus(raw: unknown): DisputeStatus | "" {
+  const s = String(raw ?? "").trim();
+  if (!s) return "";
+
+  const k = s.toUpperCase().replace(/-/g, "_");
+  if (k === "UNDER_REVIEW") return "IN_REVIEW";
+  if (k === "DISPUTED") return "IN_DISPUTE";
+
+  if (
+    k === "PENDING" ||
+    k === "IN_REVIEW" ||
+    k === "IN_DISPUTE" ||
+    k === "WITHDRAW" ||
+    k === "RESOLVED" ||
+    k === "REJECTED"
+  ) {
+    return k;
+  }
+
+  return "";
+}
 
 export type DisputesListStatus =
   | "pending"
   | "in_review"
   | "under-review"
+  | "in_dispute"
+  | "in-dispute"
   | "withdraw"
   | "resolved"
   | "rejected"

@@ -47,6 +47,7 @@ export function formatListerOrderStatusLabel(raw: string): string {
     PENDING_APPROVAL: "Pending Approval",
     PENDING_LISTER_APPROVAL: "Pending Approval",
     ONGOING: "Approved",
+    IN_DISPUTE: "In Dispute",
     APPROVED: "Approved",
     IN_PROGRESS: "In Progress",
     COMPLETED: "Completed",
@@ -103,6 +104,7 @@ export function getListerOrderBadgeToneFromLabel(
   const t = statusLabel.trim();
   if (BADGE_GREEN_LABELS.has(t)) return "success";
   if (BADGE_RED_LABELS.has(t)) return "danger";
+  if (t === "In Dispute") return "warning";
   if (t === "Pending Approval" || t === "Return Due") return "warning";
 
   const lower = t.toLowerCase();
@@ -113,7 +115,11 @@ export function getListerOrderBadgeToneFromLabel(
   ) {
     return "danger";
   }
-  if (lower.includes("pending") || lower.includes("return due")) {
+  if (
+    lower.includes("pending") ||
+    lower.includes("return due") ||
+    lower.includes("dispute")
+  ) {
     return "warning";
   }
   if (

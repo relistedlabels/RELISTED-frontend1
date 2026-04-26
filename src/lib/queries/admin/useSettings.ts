@@ -36,7 +36,6 @@ export const useAdmins = (page: number = 1, limit: number = 20) =>
 export const useAuditLogs = (
   page: number = 1,
   limit: number = 20,
-  adminId?: string,
   actionType?: string,
 ) =>
   useQuery({
@@ -46,10 +45,9 @@ export const useAuditLogs = (
       "audit-logs",
       page,
       limit,
-      adminId,
       actionType,
     ],
-    queryFn: () => settingsApi.getAuditLogs(page, limit, adminId, actionType),
+    queryFn: () => settingsApi.getAuditLogs(page, limit, actionType),
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
