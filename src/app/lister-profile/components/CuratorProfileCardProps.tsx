@@ -11,6 +11,7 @@ import BackButton from "@/common/ui/BackButton";
 import { usePublicUserById } from "@/lib/queries/user/usePublicUserById";
 import { ProfileCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import { div } from "framer-motion/client";
+import { isInhouseManager } from "@/lib/inhouseManager";
 
 interface CuratorProfileCardProps {
   userId: string;
@@ -154,9 +155,11 @@ const CuratorProfileCard: React.FC<CuratorProfileCardProps> = ({ userId }) => {
                   <Paragraph1 className="text-2xl sm:text-3xl font-bold text-white">
                     {user.name}
                   </Paragraph1>
-                  <Paragraph1 className="text-sm text-gray-400 ">
-                    - Managed by Relisted
-                  </Paragraph1>
+                  {isInhouseManager(userId) && (
+                    <Paragraph1 className="text-sm text-gray-400 ">
+                      - Managed by Relisted
+                    </Paragraph1>
+                  )}
                   {user.isVerified && (
                     <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium bg-gradient-to-r from-green-100 to-green-200 text-green-800">
                       <TiTick className="w-4 h-4 mr-1" />

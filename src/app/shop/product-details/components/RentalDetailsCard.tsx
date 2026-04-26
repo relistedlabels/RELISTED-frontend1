@@ -19,6 +19,7 @@ import RentalPeriods from "./RentalPeriods";
 import { usePublicProductById } from "@/lib/queries/product/usePublicProductById";
 import { usePublicUserById } from "@/lib/queries/user/usePublicUserById";
 import { DetailPanelSkeleton } from "@/common/ui/SkeletonLoaders";
+import { isInhouseManager } from "@/lib/inhouseManager";
 
 // ============================================================================
 // API ENDPOINTS USED:
@@ -55,7 +56,10 @@ const UserProfile: React.FC<UserProfileProps> = ({
       </div>
       <div>
         <Paragraph1 className="text-sm font-semibold text-gray-900">
-          {name.toUpperCase()}
+          {name.toUpperCase()}{" "}
+          {isInhouseManager(userId) && (
+            <span className=" text-gray-500">- Managed by Relisted</span>
+          )}
         </Paragraph1>
         <div className="flex items-center  text-yellow-500">
           <span aria-label={`${rating} star rating`}>
