@@ -2,7 +2,8 @@
 // This file manages inhouse-specific configurations and state
 
 export const INHOUSE_MANAGER_CONFIG = {
-  userId: "7d172d18-daad-46cd-ab6d-8d8af28c0b16",
+  // userId: "7d172d18-daad-46cd-ab6d-8d8af28c0b16",
+  userId: "c5adb7b9-86bd-4292-90e9-57bbbf3b8083",
 } as const;
 
 // Export the userId for easy access in components

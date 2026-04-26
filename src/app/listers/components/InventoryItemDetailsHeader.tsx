@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import { Star } from "lucide-react";
 import Calendar from "./Calendar";
@@ -10,6 +11,14 @@ interface InventoryItemDetailsHeaderProps {
   onEdit?: () => void;
   onDisable?: () => void;
 }
+
+// Demo closet data
+const DEMO_CLOSET = {
+  id: "count",
+  name: "Amanda Daniels",
+  itemCount: 24,
+  avatar: "https://randomuser.me/api/portraits/women/69.jpg",
+};
 
 const InventoryItemDetailsHeader: React.FC<InventoryItemDetailsHeaderProps> = ({
   onEdit,
@@ -28,6 +37,10 @@ const InventoryItemDetailsHeader: React.FC<InventoryItemDetailsHeaderProps> = ({
   const resalePrice = product.resalePrice ?? originalValue;
   const listingType = product.listingType;
 
+  // Closet data
+  const closetImage = DEMO_CLOSET.avatar;
+  const closetOwner = DEMO_CLOSET.name;
+
   return (
     <div className="bg-transparent w-full max-w-2xl">
       {/* Title & Status */}
@@ -45,7 +58,23 @@ const InventoryItemDetailsHeader: React.FC<InventoryItemDetailsHeaderProps> = ({
 
       {/* Description */}
       <Paragraph1 className="mb-2 text-gray-500">{product.subText}</Paragraph1>
-
+      <div className="flex items-center gap-2 mt-3 mb-1">
+        <Paragraph1 className="text-gray-700 text-xs">Closet:</Paragraph1>
+        <div className=" flex items-center gap-1">
+          {" "}
+          <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
+            <Image
+              src={closetImage}
+              alt={closetOwner}
+              fill
+              className="object-cover"
+            />
+          </div>
+          <Paragraph1 className="text-gray-700 text-xs font-medium">
+            {closetOwner}
+          </Paragraph1>
+        </div>
+      </div>
       {/* Rejection Reason Banner */}
       {product.status === "REJECTED" && rejectionComment && (
         <div className="bg-red-50 mb-4 p-4 border border-red-200 rounded-lg">

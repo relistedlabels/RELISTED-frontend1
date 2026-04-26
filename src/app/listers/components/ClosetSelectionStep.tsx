@@ -79,7 +79,7 @@ const ClosetSelectionStep: React.FC<ClosetSelectionStepProps> = ({
       </div>
 
       {/* Closet Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
         {closets.map((closet) => {
           const bgColor = closet.bgColor || getRandomBgColor(closet.name);
           const initials = getInitials(closet.name);
