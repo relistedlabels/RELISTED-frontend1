@@ -22,7 +22,7 @@ export default function Home() {
       <HowItWorks />
 
       <TopListingSection3 />
-      <TopCuratorsSection />
+      {/* <TopCuratorsSection /> */}
       <TopListingSection1 />
 
       <div className=" px-4 sm:px-0">
