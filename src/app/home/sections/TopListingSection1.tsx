@@ -89,7 +89,7 @@ const TopListingSection = () => {
             or season.
           </Paragraph1>
           <Link
-            href={`/shop?tags=${encodeURIComponent("Black Tie")}&title=${encodeURIComponent("BLACK TIE OUTFITS")}`}
+            href={`/shop?tags=${encodeURIComponent("Black Tie")}&title=${encodeURIComponent("BLACK TIE OUTFITS")}&description=${encodeURIComponent("Find the perfect look for your black tie events, no matter the style or season.")}`}
             className="mt-4 text-sm font-bold border-b hover:opacity-70 transition-opacity"
           >
             Browse All →

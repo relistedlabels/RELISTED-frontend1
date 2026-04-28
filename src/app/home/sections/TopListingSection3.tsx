@@ -44,7 +44,7 @@ const TopListingSection = () => {
         <div className="mx-auto container">
           <div className="mb-2 sm:mb-6 text-center">
             <Header1Plus className="uppercase tracking-wide">
-              YOURS TO KEEP
+              Closet Drops
             </Header1Plus>
           </div>
           <ProductCardSkeleton count={4} />
@@ -59,12 +59,12 @@ const TopListingSection = () => {
         <div className="mx-auto container">
           <div className="mb-2 sm:mb-6 text-center">
             <Header1Plus className="uppercase tracking-wide">
-              YOURS TO KEEP{" "}
+              Closet Drops
             </Header1Plus>
             <Paragraph1 className="text-gray-600">
               {" "}
-              Selected pieces from verified listers, available to purchase
-              outright and ready to ship.{" "}
+              Celebrity wardrobes. Limited drops. Shop it before it
+              disappears.{" "}
             </Paragraph1>
           </div>
           <ProductCardSkeleton count={6} />
@@ -82,7 +82,7 @@ const TopListingSection = () => {
         <div className="flex flex-col justify-center items-center mb-2 sm:mb-6 text-center">
           <div className=" flex items-center gap-4">
             <Header1Plus className="uppercase tracking-wide">
-              YOURS TO KEEP{" "}
+              Closet Drops{" "}
             </Header1Plus>
 
             <div className=" bg-black rounded-full sm:block hidden text-white text-[12px] px-4 py-1">
@@ -92,11 +92,11 @@ const TopListingSection = () => {
 
           <Paragraph1 className="max-w-[280px] sm:max-w-[480px] text-gray-600">
             {" "}
-            Selected pieces from verified listers, available to purchase
-            outright and ready to ship.{" "}
+            Celebrity wardrobes. Limited drops. Shop it before it
+            disappears.{" "}
           </Paragraph1>
           <Link
-            href={`/shop?tags=${encodeURIComponent("Vacation")}&title=${encodeURIComponent("YOURS TO KEEP")}`}
+            href={`/shop?tags=${encodeURIComponent("Vacation")}&title=${encodeURIComponent("Closet Drops")}&description=${encodeURIComponent("Celebrity wardrobes. Limited drops. Shop it before it disappears.")}`}
             className="mt-4 text-sm font-bold border-b hover:opacity-70 transition-opacity"
           >
             Browse All →

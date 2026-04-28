@@ -84,7 +84,7 @@ const TopListingSection = () => {
             and short trips
           </Paragraph1>
           <Link
-            href={`/shop?tags=${encodeURIComponent("Vacation")}&title=${encodeURIComponent("VACATION OUTFITS")}`}
+            href={`/shop?tags=${encodeURIComponent("Vacation")}&title=${encodeURIComponent("VACATION OUTFITS")}&description=${encodeURIComponent("Explore amazing outfits that elevate your looks for your vacation and short trips")}`}
             className="mt-4 text-sm font-bold border-b hover:opacity-70 transition-opacity"
           >
             Browse All →
