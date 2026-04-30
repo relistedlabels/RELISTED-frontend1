@@ -5,11 +5,11 @@
 import ProductCard from "@/common/ui/ProductCard";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import Filters from "../components/Filters";
+import CelebritySelector from "@/app/shop/components/CelebritySelector";
 import { useProductsQuery } from "@/lib/queries/product/useProductsQuery";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
-import { CheckCircle } from "lucide-react";
 
 export default function NewListingsSection() {
   useEffect(() => {
@@ -96,6 +96,13 @@ export default function NewListingsSection() {
       <div className="mx-auto container">
         {/* Top Bar */}
         <div className="flex justify-between items-center gap-4 mb-2 sm:mb-6">
+          {/* Celebrity Selector */}
+          <CelebritySelector
+            onSelect={(celebrity) => {
+              console.log("Selected:", celebrity);
+            }}
+            placeholder="Select Celebrity"
+          />
           {/* Left Controls */}
           <div className="hidden sm:flex items-center gap-4">
             <Filters />
@@ -103,17 +110,6 @@ export default function NewListingsSection() {
 
           <div className="sm:hidden flex items-center gap-4">
             <Filters />
-          </div>
-
-          {/* Search */}
-          <CheckCircle />
-          <div className="hidden sm:flex- w-full md:w-[200px]">
-            <input
-              type="text"
-              placeholder="Search"
-              onChange={(e) => handleSearchChange(e.target.value)}
-              className="px-4 py-2 border focus:outline-none w-full text-sm"
-            />
           </div>
         </div>
 
