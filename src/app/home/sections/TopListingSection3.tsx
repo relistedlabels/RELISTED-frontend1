@@ -150,6 +150,16 @@ const TopListingSection = () => {
             </div>
           </div>
         )}
+
+        <div className="flex justify-center items-center mt-2 w-full">
+          <Link
+            href={`/shop?tags=${encodeURIComponent("Vacation")}&title=${encodeURIComponent("Closet Drops")}&description=${encodeURIComponent("Celebrity wardrobes. Limited drops. Shop it before it disappears.")}`}
+            className="inline-flex justify-center items-center bg-black hover:bg-neutral-800 px-8 py-3 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 w-full max-w-md font-medium text-white text-sm tracking-wider transition-colors duration-200"
+            aria-label="Browse all items"
+          >
+            <Paragraph1 className="text-white">Browse All</Paragraph1>
+          </Link>
+        </div>
       </div>
     </section>
   );
