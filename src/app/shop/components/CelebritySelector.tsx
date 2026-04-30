@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
+import { Paragraph1 } from "@/common/ui/Text";
 
 const NIGERIAN_CELEBRITIES = [
   {
@@ -77,10 +78,11 @@ export default function CelebritySelector({
                 alt={selected.name}
                 className="w-6 h-6 rounded-full object-cover"
               />
-              <span>{selected.name}</span>
+
+              <Paragraph1>{selected.name}</Paragraph1>
             </>
           ) : (
-            <span className="text-gray-500">{placeholder}</span>
+            <Paragraph1 className="text-gray-500">{placeholder}</Paragraph1>
           )}
         </span>
         <ChevronDown
