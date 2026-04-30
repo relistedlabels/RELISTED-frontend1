@@ -104,11 +104,10 @@ export default function CelebritySelector({
                 <img
                   src={celebrity.image}
                   alt={celebrity.name}
-                  className="w-6 h-6 rounded-full object-cover"
+                  className="w-8 h-8 rounded-full object-cover"
                 />
-                <span className="text-[12px] font-medium">
-                  {celebrity.name}
-                </span>
+                
+                <Paragraph1>{celebrity.name}</Paragraph1>
               </button>
             ))}
           </div>
