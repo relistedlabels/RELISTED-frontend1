@@ -44,10 +44,10 @@ const TopListingSection = () => {
         <div className="mx-auto container">
           <div className="mb-2 sm:mb-6 text-center">
             <Header1Plus className="uppercase tracking-wide">
-              BLACK TIE OUTFITS{" "}
+              Closet Drops
             </Header1Plus>
           </div>
-          <ProductCardSkeleton count={6} />
+          <ProductCardSkeleton count={4} />
         </div>
       </section>
     );
@@ -59,12 +59,12 @@ const TopListingSection = () => {
         <div className="mx-auto container">
           <div className="mb-2 sm:mb-6 text-center">
             <Header1Plus className="uppercase tracking-wide">
-              BLACK TIE OUTFITS{" "}
+              Closet Drops
             </Header1Plus>
             <Paragraph1 className="text-gray-600">
               {" "}
-              Find the perfect look for your black tie events, no matter the
-              style or season. Discover popular looks this week.{" "}
+              Celebrity wardrobes. Limited drops. Shop it before it
+              disappears.{" "}
             </Paragraph1>
           </div>
           <ProductCardSkeleton count={6} />
@@ -80,17 +80,24 @@ const TopListingSection = () => {
       <div className="mx-auto container">
         {/* Header */}
         <div className="flex flex-col justify-center items-center mb-2 sm:mb-6 text-center">
-          <Header1Plus className="uppercase tracking-wide">
-            BLACK TIE OUTFITS{" "}
-          </Header1Plus>
+          <div className=" flex items-center gap-4">
+            <Header1Plus className="uppercase tracking-wide">
+              Closet Drops{" "}
+            </Header1Plus>
+
+            <div className=" bg-black rounded-full sm:block hidden text-white text-[12px] px-4 py-1">
+              New
+            </div>
+          </div>
+
           <Paragraph1 className="max-w-[280px] sm:max-w-[480px] text-gray-600">
             {" "}
-            Find the perfect look for your black tie events, no matter the style
-            or season.
+            Celebrity wardrobes. Limited drops. Shop it before it
+            disappears.{" "}
           </Paragraph1>
           <Link
-            href={`/shop?tags=${encodeURIComponent("Black Tie")}&title=${encodeURIComponent("BLACK TIE OUTFITS")}&description=${encodeURIComponent("Find the perfect look for your black tie events, no matter the style or season.")}`}
-            className="mt-4 hidden text-sm font-bold border-b hover:opacity-70 transition-opacity"
+            href={`/shop?tags=${encodeURIComponent("Vacation")}&title=${encodeURIComponent("Closet Drops")}&description=${encodeURIComponent("Celebrity wardrobes. Limited drops. Shop it before it disappears.")}`}
+            className="mt-4 text-sm font-bold border-b hover:opacity-70 transition-opacity"
           >
             Browse All →
           </Link>
@@ -143,9 +150,10 @@ const TopListingSection = () => {
             </div>
           </div>
         )}
+
         <div className="flex justify-center items-center mt-2 w-full">
           <Link
-            href={`/shop?tags=${encodeURIComponent("Black Tie")}&title=${encodeURIComponent("BLACK TIE OUTFITS")}`}
+            href={`/shop?tags=${encodeURIComponent("Vacation")}&title=${encodeURIComponent("Closet Drops")}&description=${encodeURIComponent("Celebrity wardrobes. Limited drops. Shop it before it disappears.")}`}
             className="inline-flex justify-center items-center bg-black hover:bg-neutral-800 px-8 py-3 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 w-full max-w-md font-medium text-white text-sm tracking-wider transition-colors duration-200"
             aria-label="Browse all items"
           >
