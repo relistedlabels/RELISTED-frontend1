@@ -47,7 +47,7 @@ export default function NewListingsSection() {
       params.set("page", "1");
     } else {
       params.delete("search");
-      params.set("page", "1");
+      params.set("paxge", "1");
     }
     router.push(`?${params.toString()}`);
   };
@@ -101,7 +101,7 @@ export default function NewListingsSection() {
             onSelect={(celebrity) => {
               console.log("Selected:", celebrity);
             }}
-            placeholder="Select Celebrity"
+            placeholder="Select closet"
           />
           {/* Left Controls */}
           <div className="hidden sm:flex items-center gap-4">
