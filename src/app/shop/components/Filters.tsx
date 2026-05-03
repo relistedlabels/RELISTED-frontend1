@@ -80,7 +80,7 @@ function mergePreservedShopParams(
   target: URLSearchParams,
   from: URLSearchParams,
 ) {
-  for (const key of ["closetId", "title", "description"] as const) {
+  for (const key of ["closetId", "title", "description", "onlyWithCloset"] as const) {
     const v = from.get(key);
     if (v) target.set(key, v);
   }

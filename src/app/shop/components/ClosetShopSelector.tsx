@@ -51,6 +51,8 @@ export default function ClosetShopSelector() {
     setIsOpen(false);
     pushParams((p) => {
       p.set("closetId", closet.id);
+      // Specific closet: filter by closetId only; do not combine with closet-wide catalog flag.
+      p.delete("onlyWithCloset");
     });
   };
 
@@ -58,6 +60,8 @@ export default function ClosetShopSelector() {
     setIsOpen(false);
     pushParams((p) => {
       p.delete("closetId");
+      // "All closets" = full shop; drop stale onlyWithCloset or old links would keep hiding non-closet products.
+      p.delete("onlyWithCloset");
     });
   };
 
