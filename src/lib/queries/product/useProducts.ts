@@ -25,9 +25,9 @@ type ProductFilters = {
   material?: string;
   minPrice?: number;
   maxPrice?: number;
-  /** Filter to a single closet’s inventory (public API). */
+  /** Filter to a single closet’s inventory (public API). Mutually exclusive with onlyWithCloset for API calls. */
   closetId?: string;
-  /** When true and no closetId, only products assigned to a closet (public shop parity). */
+  /** When true and closetId is unset: only products with any closet (closet drops). Ignored if closetId is set. */
   onlyWithCloset?: boolean;
 };
 

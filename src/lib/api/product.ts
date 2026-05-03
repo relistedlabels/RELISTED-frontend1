@@ -172,8 +172,9 @@ export const productApi = {
   }) => {
     const params = new URLSearchParams();
     if (filters?.closetId) params.append("closetId", filters.closetId);
-    if (filters?.onlyWithCloset === true)
+    if (filters?.onlyWithCloset === true && !filters?.closetId) {
       params.append("onlyWithCloset", "true");
+    }
     if (filters?.search) params.append("search", filters.search);
     if (filters?.category?.length)
       params.append("category", filters.category.join(","));
