@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { HiOutlineTag, HiOutlineHeart } from "react-icons/hi2";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import { Heart, Loader2, Bell } from "lucide-react";
@@ -23,6 +23,18 @@ import { useProfileDetails } from "@/lib/queries/renters/useProfileDetails";
 import { useAddresses } from "@/lib/queries/renters/useAddresses";
 import { getCartItemsApi } from "@/lib/api/cart";
 import { DetailPanelSkeleton } from "@/common/ui/SkeletonLoaders";
+import DispatchWindowsScheduler from "@/app/shop/cart/checkout/components/DispatchWindowsScheduler";
+import type {
+  DispatchWindowContext,
+  DispatchWindowSelection,
+  DispatchWindowSelectionMap,
+  DispatchWindowsPayload,
+  ShipmentDispatchType,
+} from "@/lib/checkout/dispatchWindows";
+import {
+  buildDispatchWindowContexts,
+  getTodayInLagos,
+} from "@/lib/checkout/dispatchWindows";
 
 interface UserProfileProps {
   name: string;
@@ -37,32 +49,32 @@ const UserProfile: React.FC<UserProfileProps> = ({
   avatar,
   userId,
 }) => (
-  <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200  mt-4">
+  <div className="flex justify-between items-center bg-white mt-4 p-4 border border-gray-200 rounded-xl">
     <div className="flex items-center space-x-3">
       {/* Placeholder for User Image */}
-      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+      <div className="flex justify-center items-center bg-gray-200 rounded-full w-10 h-10 overflow-hidden">
         {avatar ? (
           <img src={avatar} alt={name} className="w-full h-full object-cover" />
         ) : (
-          <span className="text-xl text-gray-500">👤</span>
+          <span className="text-gray-500 text-xl">👤</span>
         )}
       </div>
       <div>
-        <Paragraph1 className="text-sm font-semibold text-gray-900">
+        <Paragraph1 className="font-semibold text-gray-900 text-sm">
           {name.toUpperCase()}
         </Paragraph1>
-        <div className="flex items-center  text-yellow-500">
+        <div className="flex items-center text-yellow-500">
           <span aria-label={`${rating} star rating`}>
             {"★".repeat(Math.floor(rating))}
             {"☆".repeat(5 - Math.floor(rating))}
           </span>
-          <span className="text-gray-600 ml-1 text-[10px]">{rating}</span>
+          <span className="ml-1 text-[10px] text-gray-600">{rating}</span>
         </div>
       </div>
     </div>
     <a
       href={`/lister-profile/${userId}`}
-      className=" font-semibold text-gray-900 hover:text-gray-700"
+      className="font-semibold text-gray-900 hover:text-gray-700"
     >
       VIEW PROFILE
     </a>
@@ -94,6 +106,8 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
   const [isProfileSetupModalOpen, setIsProfileSetupModalOpen] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
   const [showNotifyMe, setShowNotifyMe] = useState(false);
+  const [dispatchSelections, setDispatchSelections] =
+    useState<DispatchWindowSelectionMap>({});
 
   // Profile and addresses for availability request
   const { data: profileData, isLoading: isProfileLoading } =
@@ -108,6 +122,87 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
       setIsFavorited(isFav);
     }
   }, [favoritesData, product]);
+
+  const dispatchContexts = useMemo<DispatchWindowContext[]>(() => {
+    if (!product) return [];
+    return buildDispatchWindowContexts([
+      {
+        type: "RESALE",
+        baseDate: new Date(),
+        allowDateChange: true,
+        minDate: getTodayInLagos(),
+        allowRollForward: true,
+      },
+    ]);
+  }, [product]);
+
+  useEffect(() => {
+    if (dispatchContexts.length === 0) {
+      setDispatchSelections({});
+      return;
+    }
+    setDispatchSelections((prev) => {
+      const next = { ...prev } as DispatchWindowSelectionMap;
+      let changed = false;
+
+      dispatchContexts.forEach((ctx) => {
+        if (!next[ctx.type]) {
+          next[ctx.type] = {
+            type: ctx.type,
+            window: ctx.suggested.window,
+            mode: "DEFAULT",
+            baseDate: ctx.suggested.baseDate,
+            scheduledDate: ctx.suggested.scheduledDate,
+            rolledForwardDays: ctx.suggested.rolledForwardDays,
+          } satisfies DispatchWindowSelection;
+          changed = true;
+        }
+      });
+
+      (Object.keys(next) as ShipmentDispatchType[]).forEach((type) => {
+        if (!dispatchContexts.some((ctx) => ctx.type === type)) {
+          delete next[type];
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [dispatchContexts]);
+
+  const handleDispatchSelectionChange = useCallback(
+    (
+      type: ShipmentDispatchType,
+      selection: DispatchWindowSelection | undefined,
+    ) => {
+      setDispatchSelections((prev) => {
+        const next = { ...prev } as DispatchWindowSelectionMap;
+        if (!selection) {
+          delete next[type];
+        } else {
+          next[type] = selection;
+        }
+        return next;
+      });
+    },
+    [],
+  );
+
+  const dispatchWindowsPayload = useMemo<
+    DispatchWindowsPayload | undefined
+  >(() => {
+    if (dispatchContexts.length === 0) {
+      return undefined;
+    }
+    const payload: DispatchWindowsPayload = {};
+    dispatchContexts.forEach((ctx) => {
+      const selection = dispatchSelections[ctx.type];
+      if (selection?.window) {
+        payload[ctx.type] = selection.window;
+      }
+    });
+    return Object.keys(payload).length > 0 ? payload : undefined;
+  }, [dispatchContexts, dispatchSelections]);
 
   const handleFavoriteClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -155,6 +250,11 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
       return;
     }
 
+    if (dispatchContexts.length > 0 && !dispatchWindowsPayload) {
+      toast.error("Please confirm a delivery window before proceeding.");
+      return;
+    }
+
     setIsRequesting(true);
 
     try {
@@ -197,6 +297,9 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
         autoPay: false,
         currency: "NGN",
         ...(cartItemId ? { cartItemId } : {}),
+        ...(dispatchWindowsPayload
+          ? { dispatchWindows: dispatchWindowsPayload }
+          : {}),
       });
 
       toast.success("Request sent! Awaiting lister approval.");
@@ -229,31 +332,31 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
 
   return (
     <div className="font-sans">
-      <div className=" p-4 py-6 border border-gray-200 bg-[#FBFBFB] rounded-xl ">
+      <div className="bg-[#FBFBFB] p-4 py-6 border border-gray-200 rounded-xl">
         {/* Resale Value Section */}
         <div className="space-y-4 mb-6">
           {/* Resale Value */}
-          <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg">
+          <div className="flex justify-between items-center bg-white p-4 border border-gray-200 rounded-lg">
             <div className="flex items-center space-x-2 text-gray-700">
               <HiOutlineTag className="w-5 h-5" />
-              <Paragraph1 className="text-sm font-medium">
+              <Paragraph1 className="font-medium text-sm">
                 Resale Value
               </Paragraph1>
             </div>
-            <Paragraph1 className="text-lg font-bold text-gray-900">
+            <Paragraph1 className="font-bold text-gray-900 text-lg">
               ₦{resalePrice.toLocaleString()}
             </Paragraph1>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex space-x-2 text-[14px] mb-4">
+        <div className="flex space-x-2 mb-4 text-[14px]">
           {addedToCart ? (
             <div className="w-full">
               <button
                 type="button"
                 onClick={() => setShowNotifyMe(!showNotifyMe)}
-                className="flex-1 w-full border-2 border-gray-800 text-gray-800 font-semibold py-3 px-4 rounded-lg hover:bg-gray-50 transition duration-150 flex items-center justify-center gap-2"
+                className="flex flex-1 justify-center items-center gap-2 hover:bg-gray-50 px-4 py-3 border-2 border-gray-800 rounded-lg w-full font-semibold text-gray-800 transition duration-150"
               >
                 <Bell className="w-5 h-5" />
                 Notify Me When Available
@@ -265,11 +368,11 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
                 type="button"
                 onClick={handleBuy}
                 disabled={isRequesting}
-                className="flex-1 bg-black text-white font-semibold py-3 px-4 rounded-lg hover:bg-gray-800 transition duration-150 disabled:opacity-50"
+                className="flex-1 bg-black hover:bg-gray-800 disabled:opacity-50 px-4 py-3 rounded-lg font-semibold text-white transition duration-150"
               >
                 {isRequesting ? (
                   <>
-                    <Loader2 className="w-4 h-4 inline mr-2 animate-spin" />
+                    <Loader2 className="inline mr-2 w-4 h-4 animate-spin" />
                     Processing...
                   </>
                 ) : (
@@ -279,7 +382,7 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
               <button
                 onClick={handleFavoriteClick}
                 disabled={addFavorite.isPending || removeFavorite.isPending}
-                className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 disabled:opacity-50 bg-white"
+                className="bg-white hover:bg-gray-50 disabled:opacity-50 p-3 border border-gray-300 rounded-lg transition duration-150"
                 aria-label={
                   isFavorited ? "Remove from favorites" : "Add to favorites"
                 }
@@ -294,15 +397,32 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
           )}
         </div>
 
+        {!addedToCart && dispatchContexts.length > 0 && (
+          <div className="space-y-3 mb-6">
+            <Paragraph1 className="font-bold text-gray-800 text-sm uppercase tracking-wide">
+              Delivery window
+            </Paragraph1>
+            <Paragraph1 className="text-gray-600 text-xs">
+              Choose when to receive this purchase so our courier can lock in
+              the right slot.
+            </Paragraph1>
+            <DispatchWindowsScheduler
+              contexts={dispatchContexts}
+              selections={dispatchSelections}
+              onSelectionChange={handleDispatchSelectionChange}
+            />
+          </div>
+        )}
+
         <AnimatePresence>
           {showNotifyMe && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="my-3 p-3 bg-blue-50 border border-blue-200 rounded-lg"
+              className="bg-blue-50 my-3 p-3 border border-blue-200 rounded-lg"
             >
-              <Paragraph1 className="text-gray-500 text-center text-sm leading-relaxed">
+              <Paragraph1 className="text-gray-500 text-sm text-center leading-relaxed">
                 We'll email you the moment this item is available to rent or
                 buy.
               </Paragraph1>
@@ -310,9 +430,9 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
           )}
         </AnimatePresence>
         {/* Security / Shipping Info */}
-        <div className="p-3 bg-white border border-gray-200 rounded-lg flex items-center space-x-2 mb-4">
+        <div className="flex items-center space-x-2 bg-white mb-4 p-3 border border-gray-200 rounded-lg">
           <img src="/icons/safe1.svg" alt="secure" />
-          <Paragraph1 className=" text-gray-700 leading-snug">
+          <Paragraph1 className="text-gray-700 leading-snug">
             Secure checkout. Item ships within 1-3 business days.
           </Paragraph1>
         </div>
