@@ -61,7 +61,9 @@ export function isCartRentalMainListRow(
     u === "REJECTED" ||
     u === "DECLINED" ||
     u === "CANCELLED" ||
-    u === "COMPLETED"
+    u === "COMPLETED" ||
+    u === "ORDERED" ||
+    u === "PROCESSING"
   ) {
     return false;
   }
@@ -80,7 +82,9 @@ export function canShowInCartList(
     u === "REJECTED" ||
     u === "DECLINED" ||
     u === "CANCELLED" ||
-    u === "COMPLETED"
+    u === "COMPLETED" ||
+    u === "ORDERED" ||
+    u === "PROCESSING"
   ) {
     return false;
   }

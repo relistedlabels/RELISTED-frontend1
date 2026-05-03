@@ -35,16 +35,16 @@ const OrderSummaryEscrow: React.FC<OrderSummaryEscrowProps> = ({
       orderData?.escrow?.rentalFeeTotal ||
       orderData?.totalAmount ||
       propRentalFeeTotal;
+  /** For rentals, escrow held = collateral deposit only (not full item value / order total). */
   const escrowValueHeld = isResale
     ? clickedItem?.purchasePrice ||
       orderData?.escrow?.purchasePrice ||
       orderData?.totalAmount ||
       propEscrowValueHeld
-    : clickedItem?.itemValue ||
-      clickedItem?.itemValueHeld ||
-      orderData?.escrow?.totalHeld ||
-      orderData?.totalAmount ||
-      propEscrowValueHeld;
+    : clickedItem?.itemValueHeld ??
+      orderData?.escrow?.itemValueHeld ??
+      propEscrowValueHeld ??
+      0;
   const releaseCondition =
     orderData?.escrow?.releaseCondition || "return confirmation";
 
@@ -101,8 +101,9 @@ const OrderSummaryEscrow: React.FC<OrderSummaryEscrowProps> = ({
             </span>
           </div>
           <Paragraph1 className="text-gray-700 text-sm leading-relaxed">
-            Funds will be released to the renters wallet after{" "}
+            Funds move to your wallet after{" "}
             {isResale ? "delivery confirmation" : releaseCondition}
+            , per escrow rules for this order.
           </Paragraph1>
         </div>
       </div>

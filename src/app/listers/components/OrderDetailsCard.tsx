@@ -12,6 +12,8 @@ import BackHeader from "@/common/ui/BackHeader";
 import { div } from "framer-motion/client";
 import OrderItemList from "./OrderItemList";
 import ConfirmReturnReceiptSection from "./ConfirmReturnReceiptSection";
+import DispatchWindowsDisplay from "./DispatchWindowsDisplay";
+import RejectOrderModal from "./RejectOrderModal";
 import {
   getListerOrderStatusLabel,
   isListerAvailabilityPending,
@@ -42,13 +44,17 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
 
   // Reject mutation state
   const [showRejectMessage, setShowRejectMessage] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
   const rejectMutation = useMutation({
-    mutationFn: () => rejectOrder(orderId, "Item no longer available", "full"),
+    mutationFn: ({ reason, notes }: { reason: string; notes?: string }) =>
+      rejectOrder(orderId, reason, "full", notes),
     onSuccess: () => {
+      setShowRejectModal(false);
       setShowRejectMessage(true);
       queryClient.invalidateQueries({ queryKey: ["listers", "orders"] });
     },
     onError: () => {
+      setShowRejectModal(false);
       setShowRejectMessage(false);
     },
   });
@@ -271,6 +277,11 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
           </div>
         </div>
 
+        <DispatchWindowsDisplay
+          dispatchWindows={order?.dispatchWindows}
+          orderData={order}
+        />
+
         {isPendingApproval &&
           !isApprovalExpired &&
           !showApproveMessage &&
@@ -278,10 +289,10 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
             <div className="flex gap-3 mt-8 pt-8 border-gray-300 border-t">
               <button
                 className="flex-1 bg-gray-100 hover:bg-gray-200 px-6 py-3 rounded-lg font-bold text-black text-sm"
-                onClick={() => rejectMutation.mutate()}
+                onClick={() => setShowRejectModal(true)}
                 disabled={rejectMutation.isPending}
               >
-                {rejectMutation.isPending ? "Rejecting..." : "Reject Order"}
+                Reject Order
               </button>
               <button
                 className="flex-1 bg-black hover:bg-gray-900 px-6 py-3 rounded-lg font-bold text-white text-sm"
@@ -368,6 +379,13 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
           />
         </div>
       )}
+
+      <RejectOrderModal
+        isOpen={showRejectModal}
+        onClose={() => setShowRejectModal(false)}
+        onConfirm={(data) => rejectMutation.mutate(data)}
+        isRejecting={rejectMutation.isPending}
+      />
     </div>
   );
 };
