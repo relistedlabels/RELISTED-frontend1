@@ -47,12 +47,15 @@ const getInitials = (name: string) => {
 
 interface ClosetSelectionStepProps {
   closets: Closet[];
+  /** When false, show guidance for listers who have not created a closet yet */
+  hasRealClosets?: boolean;
   onSelectCloset: (closetId: string) => void;
   isLoading?: boolean;
 }
 
 const ClosetSelectionStep: React.FC<ClosetSelectionStepProps> = ({
   closets,
+  hasRealClosets = true,
   onSelectCloset,
   isLoading = false,
 }) => {
@@ -66,6 +69,12 @@ const ClosetSelectionStep: React.FC<ClosetSelectionStepProps> = ({
           <Paragraph1 className="text-gray-500">
             Manage all inventory and closets
           </Paragraph1>
+          {!hasRealClosets ? (
+            <Paragraph1 className="mt-2 max-w-md text-sm text-gray-600">
+              Create one or more closets to organize listings. You can add more
+              anytime from inventory.
+            </Paragraph1>
+          ) : null}
         </div>
         <button
           onClick={() => setIsCreateModalOpen(true)}

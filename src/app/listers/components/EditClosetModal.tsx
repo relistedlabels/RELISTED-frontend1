@@ -3,85 +3,96 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { motion } from "framer-motion";
-import { X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
+import { useUpdateCloset } from "@/lib/mutations/closet/useUpdateCloset";
+import {
+  CLOSET_AVATAR_SLOT_EDIT,
+  useClosetImageUpload,
+} from "@/hooks/useClosetImageUpload";
 
 interface EditClosetModalProps {
   isOpen: boolean;
   onClose: () => void;
+  closetId: string;
   closetName: string;
   closetDescription?: string;
   closetImage?: string;
+  isActive?: boolean;
 }
 
 const EditClosetModal: React.FC<EditClosetModalProps> = ({
   isOpen,
   onClose,
+  closetId,
   closetName: initialName,
   closetDescription: initialDescription = "",
   closetImage: initialImage,
+  isActive: initialIsActive = true,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(
-    initialImage || null,
-  );
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [closetName, setClosetName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription);
-  const [isDisabled, setIsDisabled] = useState(false);
+  /** When true, closet is hidden from public marketing routes */
+  const [hiddenFromPublic, setHiddenFromPublic] = useState(!initialIsActive);
+  const updateCloset = useUpdateCloset(closetId);
 
-  // Reset form when modal opens/closes
+  const baselineImageUrl = initialImage ?? null;
+
+  const {
+    previewSrc,
+    savedUrl,
+    isUploading,
+    progress,
+    uploadStatus,
+    handleFile,
+    remove,
+  } = useClosetImageUpload({
+    slotId: CLOSET_AVATAR_SLOT_EDIT,
+    enabled: isOpen,
+    initialImageUrl: baselineImageUrl,
+  });
+
   useEffect(() => {
     if (isOpen) {
       setClosetName(initialName);
       setDescription(initialDescription || "");
-      setImagePreview(initialImage || null);
-      setSelectedFile(null);
-      setIsDisabled(false);
+      setHiddenFromPublic(!initialIsActive);
     }
-  }, [isOpen, initialName, initialDescription, initialImage]);
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validate file size (max 2MB)
-      if (file.size > 2 * 1024 * 1024) {
-        alert("File size must be less than 2MB");
-        return;
-      }
-
-      // Validate file type
-      if (!["image/jpeg", "image/png"].includes(file.type)) {
-        alert("Only JPG or PNG files are allowed");
-        return;
-      }
-
-      setSelectedFile(file);
-
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleUploadAreaClick = () => {
-    fileInputRef.current?.click();
-  };
+  }, [isOpen, initialName, initialDescription, initialIsActive]);
 
   const handleSaveUpdate = () => {
-    console.log("Save Closet Update:", {
-      closetName,
-      description,
-      image: selectedFile,
-      imagePreview,
-      isDisabled,
-    });
+    const name = closetName.trim();
+    if (!name) {
+      toast.error("Closet name is required.");
+      return;
+    }
 
-    // Here you would call your API to update the closet
-    onClose();
+    if (isUploading) {
+      toast.error("Wait for the photo upload to finish.");
+      return;
+    }
+
+    const imageChanged = savedUrl !== baselineImageUrl;
+
+    updateCloset.mutate(
+      {
+        name,
+        description: description.trim() || undefined,
+        isActive: !hiddenFromPublic,
+        ...(imageChanged ? { imageUrl: savedUrl ?? "" } : {}),
+      },
+      {
+        onSuccess: () => {
+          toast.success("Closet updated");
+          onClose();
+        },
+        onError: (err: Error) => {
+          toast.error(err.message || "Could not update closet");
+        },
+      },
+    );
   };
 
   return (
@@ -102,7 +113,6 @@ const EditClosetModal: React.FC<EditClosetModalProps> = ({
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
             <div className="flex justify-between items-center py-6 border-b border-gray-200 sticky top-0 bg-white z-10">
               <div>
                 <Paragraph1 className="font-bold text-lg text-gray-900">
@@ -121,44 +131,98 @@ const EditClosetModal: React.FC<EditClosetModalProps> = ({
               </button>
             </div>
 
-            {/* Content */}
             <div className="flex-1 py-6 space-y-6">
-              {/* Photo Upload */}
               <div className="flex flex-col items-center">
                 <div
-                  onClick={handleUploadAreaClick}
-                  className="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 mb-3 cursor-pointer hover:bg-gray-100 transition overflow-hidden"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => !isUploading && fileInputRef.current?.click()}
+                  onKeyDown={(e) => {
+                    if (
+                      !isUploading &&
+                      (e.key === "Enter" || e.key === " ")
+                    ) {
+                      e.preventDefault();
+                      fileInputRef.current?.click();
+                    }
+                  }}
+                  className="group relative flex h-24 w-24 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-gray-300 bg-gray-50 mb-3 transition hover:bg-gray-100"
                 >
-                  {imagePreview ? (
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                    />
+                  {previewSrc ? (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={previewSrc}
+                        alt="Closet photo preview"
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = "/placeholder-image.png";
+                        }}
+                      />
+                      {isUploading && (
+                        <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
+                          <span className="text-xs font-bold text-white">
+                            {progress}%
+                          </span>
+                        </div>
+                      )}
+                      {!isUploading && (
+                        <button
+                          type="button"
+                          className="absolute right-1 top-1 z-10 rounded-full bg-red-500 p-1 text-white opacity-0 transition-opacity hover:bg-red-600 group-hover:opacity-100"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            remove();
+                            if (fileInputRef.current)
+                              fileInputRef.current.value = "";
+                          }}
+                          aria-label="Remove photo"
+                        >
+                          <X size={12} />
+                        </button>
+                      )}
+                    </>
                   ) : (
-                    <span className="text-gray-400 text-2xl">+</span>
+                    <>
+                      <Upload className="h-6 w-6 text-gray-500" />
+                      {uploadStatus ? (
+                        <span className="absolute bottom-1 left-0 right-0 px-1 text-center text-[10px] text-gray-600">
+                          {uploadStatus}
+                        </span>
+                      ) : null}
+                    </>
                   )}
                 </div>
-
-                {/* Hidden File Input */}
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/jpeg,image/png"
-                  onChange={handleImageChange}
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFile(file);
+                    e.target.value = "";
+                  }}
                   className="hidden"
+                  disabled={isUploading}
                   aria-label="Upload closet photo"
                 />
-
                 <Paragraph1 className="text-sm text-gray-500 text-center">
-                  Upload profile photo
+                  Profile photo — same upload as item photos (max 7MB)
                 </Paragraph1>
-                <Paragraph1 className="text-xs text-gray-400">
-                  JPG or PNG, max 2MB
-                </Paragraph1>
+                {uploadStatus ? (
+                  <Paragraph1
+                    className={`mt-1 text-center text-xs ${
+                      uploadStatus.startsWith("error")
+                        ? "text-red-600"
+                        : "text-gray-600"
+                    }`}
+                  >
+                    {uploadStatus}
+                  </Paragraph1>
+                ) : null}
               </div>
 
-              {/* Closet Name */}
               <div>
                 <Paragraph1 className="font-semibold text-gray-900 mb-2">
                   Closet Name
@@ -172,7 +236,6 @@ const EditClosetModal: React.FC<EditClosetModalProps> = ({
                 />
               </div>
 
-              {/* Description */}
               <div>
                 <Paragraph1 className="font-semibold text-gray-900 mb-2">
                   Description (Optional)
@@ -185,32 +248,31 @@ const EditClosetModal: React.FC<EditClosetModalProps> = ({
                 />
               </div>
 
-              {/* Disable Closet Toggle */}
               <div className="flex items-center justify-between pt-4">
                 <div>
                   <Paragraph1 className="font-semibold text-gray-900">
-                    Disable Closet
+                    Hide from public
                   </Paragraph1>
                   <Paragraph1 className="text-sm text-gray-500">
-                    Turn off visibility for this closet
+                    Turn off the public closet landing page
                   </Paragraph1>
                 </div>
                 <button
-                  onClick={() => setIsDisabled(!isDisabled)}
+                  type="button"
+                  onClick={() => setHiddenFromPublic(!hiddenFromPublic)}
                   className={`relative w-12 h-6 rounded-full transition-colors ${
-                    isDisabled ? "bg-gray-900" : "bg-gray-300"
+                    hiddenFromPublic ? "bg-gray-900" : "bg-gray-300"
                   }`}
                 >
                   <motion.div
                     className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white"
-                    animate={{ x: isDisabled ? 24 : 0 }}
+                    animate={{ x: hiddenFromPublic ? 24 : 0 }}
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   />
                 </button>
               </div>
             </div>
 
-            {/* Footer */}
             <div className="flex gap-4 py-6 border-t border-gray-200 sticky bottom-0 bg-white">
               <button
                 onClick={onClose}
@@ -220,9 +282,10 @@ const EditClosetModal: React.FC<EditClosetModalProps> = ({
               </button>
               <button
                 onClick={handleSaveUpdate}
-                className="flex-1 px-4 py-3 text-sm font-semibold bg-gray-900 hover:bg-black text-white rounded-lg transition"
+                disabled={updateCloset.isPending || isUploading}
+                className="flex-1 px-4 py-3 text-sm font-semibold bg-gray-900 hover:bg-black text-white rounded-lg transition disabled:opacity-50"
               >
-                Save Update
+                {updateCloset.isPending ? "Saving…" : "Save Update"}
               </button>
             </div>
           </motion.div>

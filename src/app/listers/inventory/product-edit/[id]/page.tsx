@@ -3,7 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
-import { useGetProductById } from "@/lib/queries/product/useGetProductById";
+import { useListerProductById } from "@/lib/queries/product/useGetProductById";
 import { useProductDraftStore } from "@/store/useProductDraftStore";
 import DashboardLayout from "@/app/listers/components/DashboardLayout";
 import EditProductHeader from "@/app/listers/components/EditProductHeader";
@@ -20,7 +20,7 @@ export default function Page() {
   const router = useRouter();
   const productId = params.id as string;
 
-  const { data: product, isPending, isError } = useGetProductById(productId);
+  const { data: product, isPending, isError } = useListerProductById(productId);
 
   const populateFromProduct = useProductDraftStore(
     (state) => state.populateFromProduct,

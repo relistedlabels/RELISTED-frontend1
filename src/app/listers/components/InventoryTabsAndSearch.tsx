@@ -4,8 +4,6 @@ import React, { useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import { useMe } from "@/lib/queries/auth/useMe";
-import { isInhouseManager } from "@/lib/inhouseManager";
 
 interface InventoryTabsAndSearchProps {
   activeTab: "AVAILABLE" | "RENTED" | "MAINTENANCE" | "RESERVED" | "All";
@@ -43,43 +41,17 @@ const InventoryTabsAndSearch: React.FC<InventoryTabsAndSearchProps> = ({
   setActiveTab,
   searchQuery,
   setSearchQuery,
-  selectedClosetId,
+  selectedClosetId: _selectedClosetId,
 }) => {
-  const { data: user } = useMe();
-  const isInhouse = user ? isInhouseManager(user.id) : false;
-  const isClosetSelected = selectedClosetId && selectedClosetId !== "all";
   const [showFilter, setShowFilter] = useState(false);
-  const [showClosetDropdown, setShowClosetDropdown] = useState(false);
   const [selectedType, setSelectedType] = useState("All");
-  const [selectedCloset, setSelectedCloset] = useState(
-    "Managed by Relisted (Default)",
-  );
 
   const typeOptions = ["All", "Rental", "Resale", "Rent & Resale"];
-  const closetOptions = [
-    "Managed by Relisted (Default)",
-    "All Inventories",
-    "Amanda Daniels",
-    "Influencer X",
-  ];
 
   const handleClearAll = () => {
     setSelectedType("All");
-    setSelectedCloset("Managed by Relisted (Default)");
     setSearchQuery("");
   };
-
-  const handleSelectCloset = (closet: string) => {
-    setSelectedCloset(closet);
-    setShowClosetDropdown(false);
-  };
-
-  // Close closet dropdown when filter modal closes
-  React.useEffect(() => {
-    if (!showFilter) {
-      setShowClosetDropdown(false);
-    }
-  }, [showFilter]);
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6 relative">
@@ -166,62 +138,6 @@ const InventoryTabsAndSearch: React.FC<InventoryTabsAndSearchProps> = ({
                       ))}
                     </div>
                   </div>
-
-                  <div className="border-t border-gray-200 my-4" />
-
-                  {/* Closet Filter - Only shown for inhouse managers when no closet is selected */}
-                  {isInhouse && !isClosetSelected && (
-                    <div className="mb-6">
-                      <Paragraph1 className="text-gray-500 text-xs mb-3">
-                        Closet
-                      </Paragraph1>
-                      <div className="relative">
-                        <button
-                          onClick={() =>
-                            setShowClosetDropdown(!showClosetDropdown)
-                          }
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-left bg-white focus:outline-none focus:ring-2 focus:ring-black flex items-center justify-between"
-                        >
-                          <span>{selectedCloset}</span>
-                          <ChevronDown
-                            className={`w-4 h-4 transition-transform duration-200 ${
-                              showClosetDropdown ? "rotate-180" : ""
-                            }`}
-                          />
-                        </button>
-
-                        {/* Custom Dropdown with Animation */}
-                        <AnimatePresence>
-                          {showClosetDropdown && (
-                            <motion.div
-                              initial={{ opacity: 0, y: -8 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -8 }}
-                              transition={{ duration: 0.15 }}
-                              className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-md z-50"
-                            >
-                              {closetOptions.map((closet, index) => (
-                                <motion.button
-                                  key={closet}
-                                  initial={{ opacity: 0, x: -8 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  transition={{ delay: index * 0.05 }}
-                                  onClick={() => handleSelectCloset(closet)}
-                                  className={`w-full px-4 py-2.5 text-left text-sm font-medium transition duration-150 ${
-                                    selectedCloset === closet
-                                      ? "bg-gray-900 text-white"
-                                      : "text-gray-900 hover:bg-gray-50"
-                                  } ${index !== closetOptions.length - 1 ? "border-b border-gray-200" : ""}`}
-                                >
-                                  {closet}
-                                </motion.button>
-                              ))}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    </div>
-                  )}
 
                   <div className="border-t border-gray-200 my-4" />
 

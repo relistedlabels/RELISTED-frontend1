@@ -1,69 +1,98 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import DashboardLayout from "../components/DashboardLayout";
 import InventoryList from "../components/InventoryList";
 import ClosetSelectionStep from "../components/ClosetSelectionStep";
+import { isClosetInventoryLister } from "@/lib/closetInventoryAccess";
 import { useMe } from "@/lib/queries/auth/useMe";
-import { isInhouseManager } from "@/lib/inhouseManager";
+import { useMyClosets } from "@/lib/queries/closet/useMyClosets";
 import { useUserProducts } from "@/lib/queries/product/useUserProducts";
+
+export type InventoryClosetCard = {
+  id: string;
+  name: string;
+  itemCount: number;
+  avatar?: string;
+  slug?: string;
+  description?: string;
+  isActive?: boolean;
+};
 
 export default function Page() {
   const { data: user } = useMe();
-  const { data: products } = useUserProducts();
-  const [selectedClosetId, setSelectedClosetId] = useState<string | null>(null);
-  const [showClosetSelection, setShowClosetSelection] = useState(false);
+  const closetInventoryEnabled = isClosetInventoryLister(user?.id);
 
-  // Check if user is inhouse manager and set up closet selection
-  useEffect(() => {
-    if (user?.id) {
-      setShowClosetSelection(isInhouseManager(user.id));
-      // If not inhouse manager, skip step 1 and show inventory directly
-      if (!isInhouseManager(user.id)) {
-        setSelectedClosetId("inventory");
-      }
+  const { data: apiClosets = [], isLoading: closetsLoading } = useMyClosets({
+    enabled: !!user?.id && closetInventoryEnabled,
+  });
+  const [pickedClosetId, setPickedClosetId] = useState<string | null>(null);
+
+  const hasClosets = apiClosets.length > 0;
+
+  /** Fetch product counts for "All inventories" / "No closet" while the picker is open (including zero real closets). */
+  const selectionActive =
+    !!user?.id &&
+    closetInventoryEnabled &&
+    pickedClosetId === null &&
+    !closetsLoading;
+
+  const { data: allProducts } = useUserProducts(undefined, {
+    enabled: selectionActive,
+  });
+
+  const closetCards: InventoryClosetCard[] = useMemo(() => {
+    const rows: InventoryClosetCard[] = [
+      {
+        id: "all",
+        name: "All inventories",
+        itemCount: allProducts?.length ?? 0,
+      },
+      {
+        id: "uncategorized",
+        name: "No closet",
+        itemCount: allProducts?.filter((p) => !p.closetId).length ?? 0,
+      },
+    ];
+    for (const c of apiClosets) {
+      rows.push({
+        id: c.id,
+        name: c.name,
+        itemCount: c.productCount ?? 0,
+        avatar: c.imageUrl ?? undefined,
+        slug: c.slug,
+        description: c.description ?? undefined,
+        isActive: c.isActive,
+      });
     }
-  }, [user]);
+    return rows;
+  }, [apiClosets, allProducts]);
 
-  // Inhouse manager closet options
-  const inhouseClosets = [
-    {
-      id: "all",
-      name: "All Inventories",
-      itemCount: products?.length || 0,
-    },
-    {
-      id: "managed",
-      name: "Managed by Relisted (Default)",
-      itemCount: products?.length || 0,
-    },
-    {
-      id: "curator-1",
-      name: "Amanda Daniels",
-      itemCount: 24,
-      avatar: "https://randomuser.me/api/portraits/women/69.jpg",
-    },
-    {
-      id: "curator-2",
-      name: "Influencer X",
-      itemCount: 18,
-      avatar: "https://randomuser.me/api/portraits/men/69.jpg",
-    },
-  ];
-
-  const handleSelectCloset = (closetId: string) => {
-    setSelectedClosetId(closetId);
-  };
-
-  // Find the selected closet object for passing to InventoryList
-  const selectedCloset = inhouseClosets.find((c) => c.id === selectedClosetId);
+  const selectedCloset = pickedClosetId
+    ? closetCards.find((c) => c.id === pickedClosetId)
+    : undefined;
 
   const path = [
     { label: "Dashboard", href: "#" },
     { label: "Inventory", href: "/listers/inventory" },
-    ...(selectedCloset ? [{ label: selectedCloset.name, href: null }] : []),
+    ...(selectedCloset && selectedCloset.id !== "all"
+      ? [{ label: selectedCloset.name, href: null }]
+      : []),
   ];
+
+  const showLoadingGate =
+    !!user?.id && closetInventoryEnabled && closetsLoading;
+
+  const showInventoryList =
+    !!user?.id &&
+    !showLoadingGate &&
+    (!closetInventoryEnabled || pickedClosetId !== null);
+
+  const inventoryListClosetId =
+    closetInventoryEnabled && pickedClosetId !== null
+      ? pickedClosetId
+      : "all";
 
   return (
     <DashboardLayout>
@@ -71,19 +100,36 @@ export default function Page() {
         <Breadcrumbs items={path} />
       </div>
 
-      {/* Show closet selection for inhouse managers */}
-      {showClosetSelection && !selectedClosetId && (
-        <ClosetSelectionStep
-          closets={inhouseClosets}
-          onSelectCloset={handleSelectCloset}
-        />
+      {showLoadingGate && (
+        <div className="flex justify-center items-center p-12">
+          <p className="text-gray-500 text-sm">Loading inventory…</p>
+        </div>
       )}
 
-      {/* Show inventory list after closet is selected or for regular listers */}
-      {selectedClosetId && (
+      {!showLoadingGate &&
+        closetInventoryEnabled &&
+        !!user?.id &&
+        pickedClosetId === null &&
+        !closetsLoading && (
+          <ClosetSelectionStep
+            closets={closetCards}
+            hasRealClosets={hasClosets}
+            onSelectCloset={(id) => setPickedClosetId(id)}
+            isLoading={selectionActive && !allProducts}
+          />
+        )}
+
+      {showInventoryList && (
         <InventoryList
-          selectedClosetId={selectedClosetId}
-          selectedCloset={selectedCloset}
+          selectedClosetId={inventoryListClosetId}
+          selectedCloset={
+            closetInventoryEnabled ? selectedCloset : undefined
+          }
+          onOpenClosetPicker={
+            closetInventoryEnabled
+              ? () => setPickedClosetId(null)
+              : undefined
+          }
         />
       )}
     </DashboardLayout>

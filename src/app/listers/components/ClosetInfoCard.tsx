@@ -9,12 +9,17 @@ interface SelectedCloset {
   name: string;
   itemCount: number;
   avatar?: string;
+  slug?: string;
+  description?: string;
+  isActive?: boolean;
 }
 
 interface ClosetInfoCardProps {
   selectedCloset: SelectedCloset;
   availableCount: number;
   totalRentals: number;
+  onBrowseClosets?: () => void;
+  onCreateCloset?: () => void;
 }
 
 const BG_COLORS = [
@@ -35,10 +40,6 @@ const getInitials = (name: string) => {
     .slice(0, 2);
 };
 
-const getClosetSlug = (name: string) => {
-  return name.toLowerCase().replace(/\s+/g, "-");
-};
-
 const getRandomBgColor = (name: string) => {
   const charCode = name.charCodeAt(0);
   return BG_COLORS[charCode % BG_COLORS.length];
@@ -48,15 +49,39 @@ const ClosetInfoCard: React.FC<ClosetInfoCardProps> = ({
   selectedCloset,
   availableCount,
   totalRentals,
+  onBrowseClosets,
+  onCreateCloset,
 }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const slugSegment = selectedCloset.slug ?? "";
+
   return (
     <>
-      {/* Inventory Title and Buttons */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="font-semibold text-black text-2xl">Inventory</h2>
-        <div className="flex items-center gap-3">
+      <div className="flex justify-between items-center mb-4 flex-wrap gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          {onBrowseClosets ? (
+            <button
+              type="button"
+              onClick={onBrowseClosets}
+              className="shrink-0 text-sm font-semibold text-gray-600 hover:text-black transition-colors"
+            >
+              ← All closets
+            </button>
+          ) : null}
+          <h2 className="font-semibold text-black text-2xl">Inventory</h2>
+        </div>
+        <div className="flex items-center gap-3 flex-wrap">
+          {onCreateCloset ? (
+            <button
+              type="button"
+              onClick={onCreateCloset}
+              className="px-4 py-2 rounded-lg border border-gray-300 font-semibold text-gray-900 text-sm hover:bg-gray-50 transition duration-150"
+            >
+              Create closet
+            </button>
+          ) : null}
           <button
+            type="button"
             onClick={() => setIsEditModalOpen(true)}
             className="px-4 py-2 rounded-lg border border-gray-300 font-semibold text-gray-900 text-sm hover:bg-gray-50 transition duration-150"
           >
@@ -72,13 +97,11 @@ const ClosetInfoCard: React.FC<ClosetInfoCardProps> = ({
         </div>
       </div>
 
-      {/* Closet Info Card */}
       <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
         <div className="grid sm:grid-cols-2 grid-cols-1 items-center justify-between gap-6">
-          {/* Left Section: Avatar + Closet Details */}
           <div className="flex items-center gap-4 flex-1">
-            {/* Avatar */}
             {selectedCloset.avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={selectedCloset.avatar}
                 alt={selectedCloset.name}
@@ -92,46 +115,33 @@ const ClosetInfoCard: React.FC<ClosetInfoCardProps> = ({
               </div>
             )}
 
-            {/* Closet Details */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <Paragraph2 className="font-bold text-black truncate">
                   {selectedCloset.name}
                 </Paragraph2>
+                {selectedCloset.isActive === false && (
+                  <span className="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded">
+                    Hidden
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                 <span>{selectedCloset.itemCount} items</span>
-                {selectedCloset.id === "managed" && (
-                  <>
-                    <span>·</span>
-                    <span className="text-gray-400">Managed by Relisted</span>
-                  </>
-                )}
               </div>
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <span className="truncate">
-                  relisted.com/closets/{getClosetSlug(selectedCloset.name)}
-                </span>
-                <button className="p-1 hover:bg-gray-100 rounded transition duration-150 shrink-0">
-                  <svg
-                    className="w-4 h-4 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+              {slugSegment ? (
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <Link
+                    href={`/closets/${encodeURIComponent(slugSegment)}`}
+                    className="truncate underline hover:text-gray-800"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                    />
-                  </svg>
-                </button>
-              </div>
+                    /closets/{slugSegment}
+                  </Link>
+                </div>
+              ) : null}
             </div>
           </div>
 
-          {/* Right Section: Stats */}
           <div className="grid grid-cols-3 items-center gap-8 shrink-0">
             <div className="text-center">
               <Paragraph2 className="font-bold text-black">
@@ -161,12 +171,14 @@ const ClosetInfoCard: React.FC<ClosetInfoCardProps> = ({
         </div>
       </div>
 
-      {/* Edit Closet Modal */}
       <EditClosetModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
+        closetId={selectedCloset.id}
         closetName={selectedCloset.name}
+        closetDescription={selectedCloset.description}
         closetImage={selectedCloset.avatar}
+        isActive={selectedCloset.isActive ?? true}
       />
     </>
   );

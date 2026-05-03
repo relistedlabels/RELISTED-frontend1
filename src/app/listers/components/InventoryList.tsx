@@ -1,18 +1,21 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { useUserProducts } from "@/lib/queries/product/useUserProducts";
+import {
+  useUserProducts,
+  type UserProductsFilters,
+} from "@/lib/queries/product/useUserProducts";
 import { ToolInfo } from "@/common/ui/ToolInfo";
 import ClosetInfoCard from "./ClosetInfoCard";
+import CreateClosetModal from "./CreateClosetModal";
 import InventoryItemCard, { InventoryItem } from "./InventoryItemCard";
 import InventoryTabsAndSearch from "./InventoryTabsAndSearch";
 import type { UserProduct } from "@/lib/api/product";
 
-// Helper to convert ALL_CAPS status to Initial Caps for display
 const formatStatusLabel = (
   status:
     | "APPROVED"
@@ -34,30 +37,45 @@ const formatStatusLabel = (
     .join(" ");
 };
 
-// --- Main Inventory List Component ---
 interface SelectedCloset {
   id: string;
   name: string;
   itemCount: number;
   avatar?: string;
+  slug?: string;
+  description?: string;
+  isActive?: boolean;
+}
+
+function filtersForClosetSelection(id: string): UserProductsFilters | undefined {
+  if (id === "all") return undefined;
+  if (id === "uncategorized") return { uncategorized: true };
+  return { closetId: id };
 }
 
 const InventoryList: React.FC<{
   selectedClosetId?: string;
   selectedCloset?: SelectedCloset;
-}> = ({ selectedClosetId, selectedCloset }) => {
+  /** Return to the closet grid (create/switch closets) */
+  onOpenClosetPicker?: () => void;
+}> = ({ selectedClosetId, selectedCloset, onOpenClosetPicker }) => {
+  const [createClosetOpen, setCreateClosetOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "AVAILABLE" | "RENTED" | "MAINTENANCE" | "RESERVED" | "All"
   >("All");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Log selected closet for debugging
-  console.log(
-    "InventoryList - Selected Closet ID:",
-    selectedClosetId || "empty (regular lister)",
+  const listFilters = useMemo(
+    () =>
+      selectedClosetId
+        ? filtersForClosetSelection(selectedClosetId)
+        : undefined,
+    [selectedClosetId],
   );
 
-  const { data: products, isLoading, error } = useUserProducts();
+  const { data: products, isLoading, error } = useUserProducts(listFilters, {
+    enabled: !!selectedClosetId,
+  });
 
   const mappedInventory: InventoryItem[] = (products || []).map(
     (product: UserProduct) => ({
@@ -89,7 +107,6 @@ const InventoryList: React.FC<{
       ? mappedInventory
       : mappedInventory.filter((item) => item.status === activeTab);
 
-  // Apply search filter
   if (searchQuery.trim()) {
     filteredInventory = filteredInventory.filter((item) => {
       const query = searchQuery.toLowerCase();
@@ -119,7 +136,6 @@ const InventoryList: React.FC<{
     );
   }
 
-  // Calculate stats from products
   const availableCount = mappedInventory.filter(
     (item) => item.status === "AVAILABLE",
   ).length;
@@ -127,38 +143,67 @@ const InventoryList: React.FC<{
     (item) => item.status === "RENTED",
   ).length;
 
+  const showClosetHeader =
+    selectedCloset &&
+    selectedCloset.id !== "all" &&
+    selectedCloset.id !== "uncategorized";
+
+  const showSimpleHeader =
+    !selectedCloset ||
+    selectedCloset.id === "all" ||
+    selectedCloset.id === "uncategorized";
+
   return (
     <div className="w-full">
-      {/* Header with Closet Info (for inhouse managers) - Only show if specific closet is selected, not "All" */}
-      {selectedCloset && selectedCloset.id !== "all" && (
+      {showClosetHeader && (
         <ClosetInfoCard
           selectedCloset={selectedCloset}
           availableCount={availableCount}
           totalRentals={totalRentals}
+          onBrowseClosets={onOpenClosetPicker}
+          onCreateCloset={() => setCreateClosetOpen(true)}
         />
       )}
 
-      {/* Simple Header (for regular listers or when "All" is selected) */}
-      {(!selectedCloset || selectedCloset?.id === "all") && (
-        <div className="flex justify-between items-center mb-6 pr-2">
-          <div className="flex items-center gap-2">
-            <Paragraph3 className="font-semibold text-black text-2xl">
-              Inventory
-            </Paragraph3>
-            <ToolInfo content="Lists all items in your inventory, including availability, rental frequency, and pricing." />
+      {showSimpleHeader && (
+        <div className="flex justify-between items-center mb-6 pr-2 flex-wrap gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            {onOpenClosetPicker ? (
+              <button
+                type="button"
+                onClick={onOpenClosetPicker}
+                className="shrink-0 text-sm font-semibold text-gray-600 hover:text-black transition-colors"
+              >
+                ← All closets
+              </button>
+            ) : null}
+            <div className="flex items-center gap-2">
+              <Paragraph3 className="font-semibold text-black text-2xl">
+                Inventory
+              </Paragraph3>
+              <ToolInfo content="Lists all items in your inventory, including availability, rental frequency, and pricing." />
+            </div>
           </div>
 
-          <Link
-            href="/listers/inventory/product-upload"
-            className="flex items-center space-x-2 bg-black hover:bg-gray-800 px-4 py-2 rounded-lg font-semibold text-white text-sm transition duration-150"
-          >
-            <Plus className="w-4 h-4" />
-            <Paragraph1>Add New Item</Paragraph1>
-          </Link>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setCreateClosetOpen(true)}
+              className="px-4 py-2 rounded-lg border border-gray-300 font-semibold text-gray-900 text-sm hover:bg-gray-50 transition duration-150"
+            >
+              Create closet
+            </button>
+            <Link
+              href="/listers/inventory/product-upload"
+              className="flex items-center space-x-2 bg-black hover:bg-gray-800 px-4 py-2 rounded-lg font-semibold text-white text-sm transition duration-150"
+            >
+              <Plus className="w-4 h-4" />
+              <Paragraph1>Add New Item</Paragraph1>
+            </Link>
+          </div>
         </div>
       )}
 
-      {/* Tab Switcher with Search and Filter */}
       <InventoryTabsAndSearch
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -167,7 +212,6 @@ const InventoryList: React.FC<{
         selectedClosetId={selectedClosetId}
       />
 
-      {/* Inventory List */}
       <motion.div layout className="space-y-3">
         <AnimatePresence mode="popLayout">
           {filteredInventory.length > 0 ? (
@@ -192,6 +236,11 @@ const InventoryList: React.FC<{
           )}
         </AnimatePresence>
       </motion.div>
+
+      <CreateClosetModal
+        isOpen={createClosetOpen}
+        onClose={() => setCreateClosetOpen(false)}
+      />
     </div>
   );
 };

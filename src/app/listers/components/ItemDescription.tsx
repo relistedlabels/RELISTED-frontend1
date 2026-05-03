@@ -4,29 +4,20 @@ import React, { useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { ToolInfo } from "@/common/ui/ToolInfo";
 import { useProductDraftStore } from "@/store/useProductDraftStore";
-import { useMe } from "@/lib/queries/auth/useMe";
-import { isInhouseManager } from "@/lib/inhouseManager";
+import { useMyClosets } from "@/lib/queries/closet/useMyClosets";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 
 export const ItemDescription: React.FC = () => {
   const { data, setField } = useProductDraftStore();
-  const { data: user } = useMe();
-  const isInhouse = user ? isInhouseManager(user.id) : false;
+  const { data: closets = [], isLoading } = useMyClosets();
+  const activeClosets = closets.filter((c) => c.isActive);
+  const showClosetPicker = activeClosets.length > 0;
+
   const [showClosetDropdown, setShowClosetDropdown] = useState(false);
-  const [selectedCloset, setSelectedCloset] = useState(data.closet || "");
 
-  const closetOptions = [
-    { id: "managed", name: "Managed by Relisted (Default)" },
-    { id: "amanda", name: "Amanda Daniels" },
-    { id: "influencer", name: "Influencer X" },
-  ];
-
-  const handleSelectCloset = (closet: (typeof closetOptions)[0]) => {
-    setSelectedCloset(closet.name);
-    setField("closet", closet.name);
-    setShowClosetDropdown(false);
-  };
+  const selected =
+    activeClosets.find((c) => c.id === data.closetId) ?? null;
 
   return (
     <div className="w-full rounded-xl border border-gray-200 p-4 space-y-4">
@@ -60,21 +51,6 @@ export const ItemDescription: React.FC = () => {
         />
       </div>
 
-      {/* <div>
-        <div className="flex items-center gap-2 mb-2">
-          <Paragraph1 className="text-xs font-medium text-gray-700">
-            Care Steps
-          </Paragraph1>
-          <ToolInfo content="List step-by-step instructions for caring for or cleaning this item." />
-        </div>
-        <textarea
-          value={typeof data.careSteps === "string" ? data.careSteps : ""}
-          onChange={handleCareStepsChange}
-          placeholder="Step-by-step care instructions..."
-          className="w-full h-24 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black resize-none"
-        />
-      </div> */}
-
       <div>
         <div className="flex items-center gap-2 mb-2">
           <Paragraph1 className="text-xs font-medium text-gray-700">
@@ -90,21 +66,28 @@ export const ItemDescription: React.FC = () => {
         />
       </div>
 
-      {/* Closet Selection - Only for inhouse managers */}
-      {isInhouse && (
+      {showClosetPicker && (
         <div className="relative">
           <div className="flex items-center gap-2 mb-2">
             <Paragraph1 className="text-xs font-medium text-gray-700">
               Closet
             </Paragraph1>
-            <ToolInfo content="Select which closet this item belongs to." />
+            <ToolInfo content="Group this listing under one of your closets (optional)." />
           </div>
           <button
+            type="button"
             onClick={() => setShowClosetDropdown(!showClosetDropdown)}
-            className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium text-left bg-white focus:outline-none focus:ring-2 focus:ring-black flex items-center justify-between hover:border-gray-300 transition"
+            disabled={isLoading}
+            className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium text-left bg-white focus:outline-none focus:ring-2 focus:ring-black flex items-center justify-between hover:border-gray-300 transition disabled:opacity-50"
           >
             <span className="text-gray-700">
-              {selectedCloset || "Select a closet"}
+              {isLoading
+                ? "Loading closets…"
+                : selected
+                  ? selected.name
+                  : data.closetId
+                    ? "Closet no longer available — pick again"
+                    : "No closet"}
             </span>
             <ChevronDown
               className={`w-4 h-4 transition-transform duration-200 ${
@@ -113,7 +96,6 @@ export const ItemDescription: React.FC = () => {
             />
           </button>
 
-          {/* Animated Dropdown */}
           <AnimatePresence>
             {showClosetDropdown && (
               <motion.div
@@ -121,21 +103,39 @@ export const ItemDescription: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.15 }}
-                className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+                className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-56 overflow-y-auto"
               >
-                {closetOptions.map((closet, index) => (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setField("closetId", "");
+                    setShowClosetDropdown(false);
+                  }}
+                  className={`w-full px-4 py-3 text-left text-sm font-medium border-b border-gray-200 ${
+                    !data.closetId
+                      ? "bg-gray-900 text-white"
+                      : "text-gray-900 hover:bg-gray-50"
+                  }`}
+                >
+                  No closet
+                </button>
+                {activeClosets.map((closet, index) => (
                   <motion.button
                     key={closet.id}
+                    type="button"
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    onClick={() => handleSelectCloset(closet)}
+                    transition={{ delay: index * 0.03 }}
+                    onClick={() => {
+                      setField("closetId", closet.id);
+                      setShowClosetDropdown(false);
+                    }}
                     className={`w-full px-4 py-3 text-left text-sm font-medium transition duration-150 ${
-                      selectedCloset === closet.name
+                      data.closetId === closet.id
                         ? "bg-gray-900 text-white"
                         : "text-gray-900 hover:bg-gray-50"
                     } ${
-                      index !== closetOptions.length - 1
+                      index !== activeClosets.length - 1
                         ? "border-b border-gray-200"
                         : ""
                     }`}
@@ -151,4 +151,3 @@ export const ItemDescription: React.FC = () => {
     </div>
   );
 };
-// 3DD6DFAF

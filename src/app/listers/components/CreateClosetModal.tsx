@@ -3,8 +3,14 @@
 import React, { useRef, useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { motion } from "framer-motion";
-import { X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
+import { useCreateCloset } from "@/lib/mutations/closet/useCreateCloset";
+import {
+  CLOSET_AVATAR_SLOT_CREATE,
+  useClosetImageUpload,
+} from "@/hooks/useClosetImageUpload";
 
 interface CreateClosetModalProps {
   isOpen: boolean;
@@ -16,59 +22,63 @@ const CreateClosetModal: React.FC<CreateClosetModalProps> = ({
   onClose,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [closetName, setClosetName] = useState("");
   const [description, setDescription] = useState("");
+  const createCloset = useCreateCloset();
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validate file size (max 2MB)
-      if (file.size > 2 * 1024 * 1024) {
-        alert("File size must be less than 2MB");
-        return;
-      }
+  const {
+    previewSrc,
+    savedUrl,
+    isUploading,
+    progress,
+    uploadStatus,
+    handleFile,
+    remove,
+  } = useClosetImageUpload({
+    slotId: CLOSET_AVATAR_SLOT_CREATE,
+    enabled: isOpen,
+    initialImageUrl: undefined,
+  });
 
-      // Validate file type
-      if (!["image/jpeg", "image/png"].includes(file.type)) {
-        alert("Only JPG or PNG files are allowed");
-        return;
-      }
-
-      setSelectedFile(file);
-
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleUploadAreaClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleSaveCloset = () => {
-    console.log("Save Closet Data:", {
-      image: selectedFile,
-      imagePreview,
-      closetName,
-      description,
-    });
-
-    // Reset form
-    setImagePreview(null);
-    setSelectedFile(null);
+  const resetForm = () => {
     setClosetName("");
     setDescription("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-    onClose();
   };
+
+  const handleSaveCloset = () => {
+    const name = closetName.trim();
+    if (!name) {
+      toast.error("Please enter a closet name.");
+      return;
+    }
+
+    if (isUploading) {
+      toast.error("Wait for the photo upload to finish.");
+      return;
+    }
+
+    createCloset.mutate(
+      {
+        name,
+        description: description.trim() || undefined,
+        ...(savedUrl ? { imageUrl: savedUrl } : {}),
+      },
+      {
+        onSuccess: () => {
+          toast.success("Closet created");
+          resetForm();
+          onClose();
+        },
+        onError: (err: Error) => {
+          toast.error(err.message || "Could not create closet");
+        },
+      },
+    );
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -87,7 +97,6 @@ const CreateClosetModal: React.FC<CreateClosetModalProps> = ({
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
             <div className="flex justify-between items-center py-6 border-b border-gray-200 sticky top-0 bg-white z-10">
               <div>
                 <Paragraph1 className="font-bold text-lg text-gray-900">
@@ -106,44 +115,98 @@ const CreateClosetModal: React.FC<CreateClosetModalProps> = ({
               </button>
             </div>
 
-            {/* Content */}
             <div className="flex-1 py-6 space-y-6">
-              {/* Photo Upload */}
               <div className="flex flex-col items-center">
                 <div
-                  onClick={handleUploadAreaClick}
-                  className="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 mb-3 cursor-pointer hover:bg-gray-100 transition overflow-hidden"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => !isUploading && fileInputRef.current?.click()}
+                  onKeyDown={(e) => {
+                    if (
+                      !isUploading &&
+                      (e.key === "Enter" || e.key === " ")
+                    ) {
+                      e.preventDefault();
+                      fileInputRef.current?.click();
+                    }
+                  }}
+                  className="group relative flex h-24 w-24 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-gray-300 bg-gray-50 mb-3 transition hover:bg-gray-100"
                 >
-                  {imagePreview ? (
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                    />
+                  {previewSrc ? (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={previewSrc}
+                        alt="Closet photo preview"
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = "/placeholder-image.png";
+                        }}
+                      />
+                      {isUploading && (
+                        <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
+                          <span className="text-xs font-bold text-white">
+                            {progress}%
+                          </span>
+                        </div>
+                      )}
+                      {!isUploading && (
+                        <button
+                          type="button"
+                          className="absolute right-1 top-1 z-10 rounded-full bg-red-500 p-1 text-white opacity-0 transition-opacity hover:bg-red-600 group-hover:opacity-100"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            remove();
+                            if (fileInputRef.current)
+                              fileInputRef.current.value = "";
+                          }}
+                          aria-label="Remove photo"
+                        >
+                          <X size={12} />
+                        </button>
+                      )}
+                    </>
                   ) : (
-                    <span className="text-gray-400 text-2xl">+</span>
+                    <>
+                      <Upload className="h-6 w-6 text-gray-500" />
+                      {uploadStatus ? (
+                        <span className="absolute bottom-1 left-0 right-0 px-1 text-center text-[10px] text-gray-600">
+                          {uploadStatus}
+                        </span>
+                      ) : null}
+                    </>
                   )}
                 </div>
-
-                {/* Hidden File Input */}
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/jpeg,image/png"
-                  onChange={handleImageChange}
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFile(file);
+                    e.target.value = "";
+                  }}
                   className="hidden"
+                  disabled={isUploading}
                   aria-label="Upload closet photo"
                 />
-
                 <Paragraph1 className="text-sm text-gray-500 text-center">
-                  Upload profile photo
+                  Profile photo (optional) — same upload as item photos (max 7MB)
                 </Paragraph1>
-                <Paragraph1 className="text-xs text-gray-400">
-                  JPG or PNG, max 2MB
-                </Paragraph1>
+                {uploadStatus ? (
+                  <Paragraph1
+                    className={`mt-1 text-center text-xs ${
+                      uploadStatus.startsWith("error")
+                        ? "text-red-600"
+                        : "text-gray-600"
+                    }`}
+                  >
+                    {uploadStatus}
+                  </Paragraph1>
+                ) : null}
               </div>
 
-              {/* Closet Name */}
               <div>
                 <Paragraph1 className="font-semibold text-gray-900 mb-2">
                   Closet Name
@@ -157,7 +220,6 @@ const CreateClosetModal: React.FC<CreateClosetModalProps> = ({
                 />
               </div>
 
-              {/* Description */}
               <div>
                 <Paragraph1 className="font-semibold text-gray-900 mb-2">
                   Description (Optional)
@@ -171,7 +233,6 @@ const CreateClosetModal: React.FC<CreateClosetModalProps> = ({
               </div>
             </div>
 
-            {/* Footer */}
             <div className="flex gap-4 py-6 border-t border-gray-200 sticky bottom-0 bg-white">
               <button
                 onClick={onClose}
@@ -181,9 +242,10 @@ const CreateClosetModal: React.FC<CreateClosetModalProps> = ({
               </button>
               <button
                 onClick={handleSaveCloset}
-                className="flex-1 px-4 py-3 text-sm font-semibold bg-gray-700 hover:bg-gray-800 text-white rounded-lg transition"
+                disabled={createCloset.isPending || isUploading}
+                className="flex-1 px-4 py-3 text-sm font-semibold bg-gray-700 hover:bg-gray-800 text-white rounded-lg transition disabled:opacity-50"
               >
-                Save Closet
+                {createCloset.isPending ? "Saving…" : "Save Closet"}
               </button>
             </div>
           </motion.div>
