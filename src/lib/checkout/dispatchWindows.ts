@@ -295,12 +295,12 @@ export const deriveDefaultDispatchWindow = (
   baseDateIso: string | Date,
   options?: {
     durationMinutes?: number;
+    /** Ignored: we always roll to the next day when no slot fits on the current day. */
     allowRollForward?: boolean;
     minLeadMinutes?: number;
   },
 ): DerivedDispatchWindow => {
   const duration = clampDuration(options?.durationMinutes ?? 60);
-  const allowRollForward = options?.allowRollForward ?? true;
   const minLeadMinutes = options?.minLeadMinutes ?? MIN_DISPATCH_WINDOW_MINUTES;
   const baseParts = getLagosDateTimeParts(baseDateIso);
   const nowParts = getLagosDateTimeParts(new Date());
@@ -326,14 +326,13 @@ export const deriveDefaultDispatchWindow = (
 
     const lastAllowedStart = dayEnd - duration;
 
+    // No room left on this calendar day (or same-day lead pushed us past last start) → next day.
+    // Do not clamp to lastAllowedStart: that can yield a window that is already over or impossible.
     if (candidateStart > lastAllowedStart) {
-      if (allowRollForward) {
-        dateCursor = addDaysToDateString(dateCursor, 1);
-        preferredStart = dayStart;
-        rolled += 1;
-        continue;
-      }
-      candidateStart = lastAllowedStart;
+      dateCursor = addDaysToDateString(dateCursor, 1);
+      preferredStart = dayStart;
+      rolled += 1;
+      continue;
     }
 
     const startIso = buildIsoFromDateAndMinutes(dateCursor, candidateStart);
@@ -412,8 +411,19 @@ export const buildDispatchWindowFromForm = (
   }
 
   const today = getLagosDateString(new Date());
-  if (params.date === today && startMinutes < roundToSlot(getLagosDateTimeParts(new Date()).minutesFromMidnight + MIN_DISPATCH_WINDOW_MINUTES)) {
-    errors.push("Same-day windows need at least 1 hour notice");
+  if (params.date === today) {
+    const minStartToday = roundToSlot(
+      getLagosDateTimeParts(new Date()).minutesFromMidnight +
+        MIN_DISPATCH_WINDOW_MINUTES,
+    );
+    const lastStart = dayEnd - duration;
+    if (minStartToday > lastStart) {
+      errors.push(
+        "No dispatch windows left today. Pick tomorrow or a later date.",
+      );
+    } else if (startMinutes < minStartToday) {
+      errors.push("Same-day windows need at least 1 hour notice");
+    }
   }
 
   if (errors.length > 0) {
@@ -427,6 +437,42 @@ export const buildDispatchWindowFromForm = (
     },
     errors,
   };
+};
+
+/** A slot starting at `slotStartMinutes` (minutes from midnight, Lagos) is valid on `dateStr`. */
+export const isDispatchSlotStartValidOnLagosDate = (
+  dateStr: string,
+  slotStartMinutes: number,
+  durationMinutes: number = MIN_DISPATCH_WINDOW_MINUTES,
+): boolean => {
+  const dayStart = DISPATCH_WINDOW_START_HOUR * 60;
+  const dayEnd = DISPATCH_WINDOW_END_HOUR * 60;
+  const duration = clampDuration(durationMinutes);
+  const lastStart = dayEnd - duration;
+  if (slotStartMinutes < dayStart || slotStartMinutes > lastStart) return false;
+  const today = getLagosDateString(new Date());
+  if (dateStr !== today) return true;
+  const nowParts = getLagosDateTimeParts(new Date());
+  const minStart = roundToSlot(
+    nowParts.minutesFromMidnight + MIN_DISPATCH_WINDOW_MINUTES,
+  );
+  return slotStartMinutes >= minStart;
+};
+
+/** True if at least one dispatch slot exists on this Lagos calendar day (8am–2pm window, 1h lead same-day). */
+export const dayHasDispatchSlotOnLagosDate = (
+  dateStr: string,
+  durationMinutes: number = MIN_DISPATCH_WINDOW_MINUTES,
+  slotStepMinutes: number = 60,
+): boolean => {
+  const dayStart = DISPATCH_WINDOW_START_HOUR * 60;
+  const dayEnd = DISPATCH_WINDOW_END_HOUR * 60;
+  const duration = clampDuration(durationMinutes);
+  const lastStart = dayEnd - duration;
+  for (let m = dayStart; m <= lastStart; m += slotStepMinutes) {
+    if (isDispatchSlotStartValidOnLagosDate(dateStr, m, duration)) return true;
+  }
+  return false;
 };
 
 export const isImmediateDispatch = (

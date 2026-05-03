@@ -31,10 +31,7 @@ import type {
   DispatchWindowsPayload,
   ShipmentDispatchType,
 } from "@/lib/checkout/dispatchWindows";
-import {
-  buildDispatchWindowContexts,
-  getTodayInLagos,
-} from "@/lib/checkout/dispatchWindows";
+import { buildDispatchWindowContexts } from "@/lib/checkout/dispatchWindows";
 
 interface UserProfileProps {
   name: string;
@@ -130,7 +127,6 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
         type: "RESALE",
         baseDate: new Date(),
         allowDateChange: true,
-        minDate: getTodayInLagos(),
         allowRollForward: true,
       },
     ]);

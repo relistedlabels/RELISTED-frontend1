@@ -12,13 +12,16 @@ import type {
 } from "@/lib/checkout/dispatchWindows";
 import {
   buildDispatchWindowFromForm,
+  dayHasDispatchSlotOnLagosDate,
   differenceInDays,
   formatLagosDate,
   formatLagosTime,
   formatWindowRange,
   getLagosDateString,
   getLagosDateTimeParts,
+  isDispatchSlotStartValidOnLagosDate,
   isImmediateDispatch,
+  parseTimeToMinutes,
   DISPATCH_WINDOW_START_HOUR,
   DISPATCH_WINDOW_END_HOUR,
 } from "@/lib/checkout/dispatchWindows";
@@ -62,18 +65,6 @@ const toTime = (minutes: number) => {
     .padStart(2, "0");
   const mins = (minutes % 60).toString().padStart(2, "0");
   return `${hrs}:${mins}`;
-};
-
-const isSlotAvailable = (
-  selectedDate: string,
-  slotEndMinutes: number,
-): boolean => {
-  const today = getLagosDateString(new Date());
-  if (selectedDate !== today) return true;
-
-  const nowParts = getLagosDateTimeParts(new Date());
-  const nowMinutes = nowParts.minutesFromMidnight;
-  return nowMinutes < slotEndMinutes;
 };
 
 const buildFormState = (
@@ -233,11 +224,39 @@ export default function DispatchWindowsScheduler({
   ) => {
     const current = forms[ctx.type];
     if (!current) return;
-    const nextState: FormState = {
+    let nextState: FormState = {
       ...current,
       [field]: value,
       errors: [],
     };
+
+    if (field === "date" && nextState.mode === "CUSTOM") {
+      if (!dayHasDispatchSlotOnLagosDate(value, FIXED_DURATION)) {
+        nextState = {
+          ...nextState,
+          startTime: "",
+          errors: [
+            "No dispatch windows remain on this date. Choose the next day or later.",
+          ],
+        };
+      } else {
+        const first = slotOptions.find((sm) =>
+          isDispatchSlotStartValidOnLagosDate(value, sm, FIXED_DURATION),
+        );
+        const curMin = parseTimeToMinutes(nextState.startTime);
+        const currentStillValid =
+          curMin !== null &&
+          slotOptions.some(
+            (sm) =>
+              sm === curMin &&
+              isDispatchSlotStartValidOnLagosDate(value, sm, FIXED_DURATION),
+          );
+        if (!currentStillValid && first !== undefined) {
+          nextState = { ...nextState, startTime: toTime(first) };
+        }
+      }
+    }
+
     setForms((prev) => ({ ...prev, [ctx.type]: nextState }));
     if (nextState.mode === "CUSTOM") {
       applyCustomSelection(ctx, nextState);
@@ -307,7 +326,13 @@ export default function DispatchWindowsScheduler({
           </Paragraph1>
           <div className="gap-2 grid grid-cols-3">
             {slotOptions
-              .filter((startMin) => isSlotAvailable(form.date, startMin + 60))
+              .filter((startMin) =>
+                isDispatchSlotStartValidOnLagosDate(
+                  form.date,
+                  startMin,
+                  FIXED_DURATION,
+                ),
+              )
               .map((startMin) => {
                 const endMin = startMin + 60;
                 const slotKey = toTime(startMin);
@@ -328,6 +353,19 @@ export default function DispatchWindowsScheduler({
                   </button>
                 );
               })}
+            {slotOptions.every(
+              (startMin) =>
+                !isDispatchSlotStartValidOnLagosDate(
+                  form.date,
+                  startMin,
+                  FIXED_DURATION,
+                ),
+            ) && (
+              <Paragraph1 className="col-span-3 text-[12px] text-gray-500">
+                No pickup windows left on this date. Move to the next day or
+                switch back to default.
+              </Paragraph1>
+            )}
           </div>
         </div>
 

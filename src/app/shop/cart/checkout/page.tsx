@@ -22,7 +22,6 @@ import {
   deriveDefaultDispatchWindow,
   formatLagosDate,
   formatWindowRange,
-  getTodayInLagos,
   getLagosDateString,
   addDaysToDateString,
   type ShipmentDispatchType,
@@ -284,7 +283,7 @@ export default function CheckoutPage() {
         helperText: "",
         suggested,
         allowDateChange: true,
-        minDate: getTodayInLagos(),
+        minDate: suggested.scheduledDate,
         defaultSummary: formatWindowRange(suggested.window),
       });
     }
