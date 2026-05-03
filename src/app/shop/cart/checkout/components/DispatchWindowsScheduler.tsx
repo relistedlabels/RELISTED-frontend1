@@ -49,7 +49,7 @@ const LAST_START_MINUTES = DISPATCH_WINDOW_END_HOUR * 60 - FIXED_DURATION;
 const TYPE_LABELS: Record<ShipmentDispatchType, string> = {
   OUTBOUND: "Rental start",
   RETURN: "Return pickup",
-  RESALE: "Delivery",
+  RESALE: "Delivery window",
 };
 
 const slotOptions = Array.from({
@@ -369,7 +369,7 @@ export default function DispatchWindowsScheduler({
                 )}
               </div>
 
-              <div className="flex gap-2 mt-3">
+              <div className="flex flex-wrap gap-2 mt-3">
                 <button
                   type="button"
                   onClick={() => handleModeChange(ctx, "DEFAULT")}
@@ -379,7 +379,7 @@ export default function DispatchWindowsScheduler({
                       : "border-gray-300 bg-white text-gray-700 hover:border-gray-900"
                   }`}
                 >
-                  Use our slot
+                  Default window
                 </button>
                 <button
                   type="button"
@@ -390,7 +390,7 @@ export default function DispatchWindowsScheduler({
                       : "border-gray-300 bg-white text-gray-700 hover:border-gray-900"
                   }`}
                 >
-                  Pick my own
+                  Custom window
                 </button>
               </div>
 
