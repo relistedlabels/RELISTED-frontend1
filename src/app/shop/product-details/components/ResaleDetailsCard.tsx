@@ -226,6 +226,11 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
   };
 
   const handleBuy = async () => {
+    if (product?.status === "SOLD") {
+      toast.error("This item has been sold.");
+      return;
+    }
+
     if (!user) {
       const currentUrl = encodeURIComponent(window.location.href);
       window.location.href = `/auth/sign-in?redirect=${currentUrl}`;
@@ -329,6 +334,7 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
 
   // Use resalePrice from product, fallback to originalValue if not available
   const resalePrice = product.resalePrice ?? product.originalValue;
+  const soldOut = product.status === "SOLD";
 
   return (
     <div className="font-sans">
@@ -351,7 +357,32 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
 
         {/* Action Buttons */}
         <div className="flex space-x-2 mb-4 text-[14px]">
-          {addedToCart ? (
+          {soldOut ? (
+            <div className="flex gap-2 w-full">
+              <button
+                type="button"
+                disabled
+                className="flex-1 px-4 py-3 rounded-lg font-semibold text-center bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300"
+              >
+                Sold out
+              </button>
+              <button
+                type="button"
+                onClick={handleFavoriteClick}
+                disabled={addFavorite.isPending || removeFavorite.isPending}
+                className="bg-white hover:bg-gray-50 disabled:opacity-50 p-3 border border-gray-300 rounded-lg transition duration-150 shrink-0"
+                aria-label={
+                  isFavorited ? "Remove from favorites" : "Add to favorites"
+                }
+              >
+                <Heart
+                  className="w-6 h-6"
+                  fill={isFavorited ? "red" : "none"}
+                  color={isFavorited ? "red" : "#222"}
+                />
+              </button>
+            </div>
+          ) : addedToCart ? (
             <div className="w-full">
               <button
                 type="button"
@@ -397,7 +428,7 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
           )}
         </div>
 
-        {!addedToCart && dispatchContexts.length > 0 && (
+        {!soldOut && !addedToCart && dispatchContexts.length > 0 && (
           <div className="space-y-3 mb-6">
             <Paragraph1 className="font-bold text-gray-800 text-sm uppercase tracking-wide">
               Delivery window
