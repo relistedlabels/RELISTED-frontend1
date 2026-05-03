@@ -47,7 +47,9 @@ import { formatLagosTime } from "@/lib/checkout/dispatchWindows";
 import {
   buildDispatchWindowContexts,
   formatWindowRange,
+  getSuggestedRentalCalendarStartYmd,
 } from "@/lib/checkout/dispatchWindows";
+import { useDispatchScheduleClock } from "@/lib/checkout/useDispatchScheduleClock";
 
 function cartLineIdFromAddCartPayload(payload: unknown): string | undefined {
   const walk = (v: unknown): string | undefined => {
@@ -172,6 +174,12 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
     useState<DispatchWindowSelectionMap>({});
   const [isDispatchModalOpen, setIsDispatchModalOpen] = useState(false);
   const [dispatchModalStep, setDispatchModalStep] = useState(0);
+  const dispatchScheduleClock = useDispatchScheduleClock();
+
+  const suggestedRentalCalendarStartYmd = useMemo(() => {
+    void dispatchScheduleClock;
+    return getSuggestedRentalCalendarStartYmd(DISPATCH_SLOT_MINUTES);
+  }, [dispatchScheduleClock]);
 
   const rentalStartDateIso = useMemo(
     () => formatDateOnlyLocal(startDate),
@@ -212,6 +220,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
     rentalDays,
     rentalStartDateIso,
     rentalEndDateIso,
+    dispatchScheduleClock,
   ]);
 
   useEffect(() => {
@@ -533,6 +542,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                   dailyPrice={dailyPrice}
                   collateralPrice={collateralPrice}
                   onChangeRentalDays={handleRentalDaysChange}
+                  suggestedStartLagosYmd={suggestedRentalCalendarStartYmd}
                 />
                 {dispatchContexts.length > 0 && (
                   <div className="space-y-3">

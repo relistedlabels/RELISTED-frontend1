@@ -49,39 +49,61 @@ export const getLagosDateString = (input: string | Date): string =>
 
 export const getTodayInLagos = () => getLagosDateString(new Date());
 
-export const getLagosDateTimeParts = (
-  input: string | Date,
+const lagosWallClockPartsFromDate = (
+  d: Date,
 ): { date: string; hour: number; minute: number; minutesFromMidnight: number } => {
-  const ensureDateObj = (inp: string | Date): Date => {
-    if (typeof inp === "string") {
-      const parts = inp.split(/[-T:]/);
-      if (parts.length >= 3) {
-        const y = parseInt(parts[0], 10);
-        const m = parseInt(parts[1], 10) - 1;
-        const d = parseInt(parts[2], 10);
-        const h = parts.length > 3 ? parseInt(parts[3], 10) : 0;
-        const min = parts.length > 4 ? parseInt(parts[4], 10) : 0;
-        return new Date(Date.UTC(y, m, d, h, min));
-      }
-      const parsed = new Date(inp);
-      if (!isNaN(parsed.getTime())) return parsed;
-      return new Date();
-    }
-    return inp;
-  };
-  const date = ensureDateObj(input);
-  const year = date.getUTCFullYear();
-  const month = (date.getUTCMonth() + 1).toString().padStart(2, "0");
-  const day = date.getUTCDate().toString().padStart(2, "0");
-  const dateStr = `${year}-${month}-${day}`;
-  const hour = date.getUTCHours();
-  const minute = date.getUTCMinutes();
+  const map: Partial<Record<Intl.DateTimeFormatPartTypes, string>> = {};
+  for (const p of isoDateTimeFormatter.formatToParts(d)) {
+    if (p.type !== "literal") map[p.type] = p.value;
+  }
+  const year = map.year ?? "1970";
+  const month = map.month ?? "01";
+  const day = map.day ?? "01";
+  const hour = Number.parseInt(map.hour ?? "0", 10);
+  const minute = Number.parseInt(map.minute ?? "0", 10);
   return {
-    date: dateStr,
+    date: `${year}-${month}-${day}`,
     hour,
     minute,
     minutesFromMidnight: hour * 60 + minute,
   };
+};
+
+/** Calendar date and clock time in Africa/Lagos for this instant (not UTC). */
+export const getLagosDateTimeParts = (
+  input: string | Date,
+): { date: string; hour: number; minute: number; minutesFromMidnight: number } => {
+  if (typeof input !== "string") {
+    return lagosWallClockPartsFromDate(ensureDate(input));
+  }
+
+  const trimmed = input.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const d = new Date(`${trimmed}T00:00:00${LAGOS_OFFSET}`);
+    return lagosWallClockPartsFromDate(d);
+  }
+
+  const parsed = new Date(trimmed);
+  if (!Number.isNaN(parsed.getTime())) {
+    return lagosWallClockPartsFromDate(parsed);
+  }
+
+  const parts = trimmed.split(/[-T:]/);
+  if (parts.length >= 3) {
+    const y = Number.parseInt(parts[0] ?? "", 10);
+    const mo = Number.parseInt(parts[1] ?? "", 10);
+    const dayNum = Number.parseInt(parts[2] ?? "", 10);
+    const h = parts.length > 3 ? Number.parseInt(parts[3] ?? "0", 10) : 0;
+    const min = parts.length > 4 ? Number.parseInt(parts[4] ?? "0", 10) : 0;
+    if (![y, mo, dayNum].some((n) => Number.isNaN(n))) {
+      const d = new Date(
+        `${pad(y)}-${pad(mo)}-${pad(dayNum)}T${pad(h)}:${pad(min)}:00${LAGOS_OFFSET}`,
+      );
+      if (!Number.isNaN(d.getTime())) return lagosWallClockPartsFromDate(d);
+    }
+  }
+
+  return lagosWallClockPartsFromDate(new Date());
 };
 
 const buildIsoFromDateAndMinutes = (
@@ -96,28 +118,21 @@ const buildIsoFromDateAndMinutes = (
 const roundToSlot = (minutes: number) =>
   Math.ceil(minutes / SLOT_INTERVAL_MINUTES) * SLOT_INTERVAL_MINUTES;
 
+/** Lexicographic max for YYYY-MM-DD Lagos calendar strings. */
+const lagosCalendarMax = (a: string, b: string): string => (a < b ? b : a);
+
 export const addDaysToDateString = (dateString: string, days: number): string => {
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) {
-    const parts = dateString.split("-");
-    if (parts.length === 3) {
-      const y = parseInt(parts[0], 10);
-      const m = parseInt(parts[1], 10) - 1;
-      const d = parseInt(parts[2], 10);
-      const newDate = new Date(Date.UTC(y, m, d));
-      newDate.setUTCDate(newDate.getUTCDate() + days);
-      const year = newDate.getUTCFullYear();
-      const month = (newDate.getUTCMonth() + 1).toString().padStart(2, "0");
-      const day = newDate.getUTCDate().toString().padStart(2, "0");
-      return `${year}-${month}-${day}`;
-    }
-    return dateString;
+  const trimmed = dateString.trim();
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
+  if (m) {
+    const d = new Date(`${m[1]}-${m[2]}-${m[3]}T00:00:00${LAGOS_OFFSET}`);
+    d.setTime(d.getTime() + days * 86400000);
+    return getLagosDateString(d);
   }
-  date.setUTCDate(date.getUTCDate() + days);
-  const year = date.getUTCFullYear();
-  const month = (date.getUTCMonth() + 1).toString().padStart(2, "0");
-  const day = date.getUTCDate().toString().padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  const parsed = new Date(trimmed);
+  if (Number.isNaN(parsed.getTime())) return dateString;
+  parsed.setTime(parsed.getTime() + days * 86400000);
+  return getLagosDateString(parsed);
 };
 
 export const differenceInDays = (start: string, end: string): number => {
@@ -308,9 +323,14 @@ export const deriveDefaultDispatchWindow = (
   const dayStart = DISPATCH_WINDOW_START_HOUR * 60;
   const dayEnd = DISPATCH_WINDOW_END_HOUR * 60;
 
-  let preferredStart = Math.max(baseParts.minutesFromMidnight, dayStart);
-  let dateCursor = baseParts.date;
-  let rolled = 0;
+  // Never schedule on a Lagos calendar day before "today" (fixes local rental date vs Lagos midnight).
+  const initialCursor = lagosCalendarMax(baseParts.date, nowParts.date);
+  let rolled = differenceInDays(baseParts.date, initialCursor);
+  let dateCursor = initialCursor;
+  let preferredStart =
+    dateCursor === baseParts.date
+      ? Math.max(baseParts.minutesFromMidnight, dayStart)
+      : dayStart;
 
   for (let i = 0; i < 7; i += 1) {
     const isSameDay = dateCursor === nowParts.date;
@@ -473,6 +493,19 @@ export const dayHasDispatchSlotOnLagosDate = (
     if (isDispatchSlotStartValidOnLagosDate(dateStr, m, duration)) return true;
   }
   return false;
+};
+
+/**
+ * Lagos YYYY-MM-DD to use as the default rental-start highlight on the calendar.
+ * Lighter than a full “min selectable date” scan: only checks whether **today**
+ * (Lagos) still has at least one valid dispatch slot; if not, suggests tomorrow.
+ */
+export const getSuggestedRentalCalendarStartYmd = (
+  durationMinutes: number = MIN_DISPATCH_WINDOW_MINUTES,
+): string => {
+  const today = getTodayInLagos();
+  if (dayHasDispatchSlotOnLagosDate(today, durationMinutes)) return today;
+  return addDaysToDateString(today, 1);
 };
 
 export const isImmediateDispatch = (

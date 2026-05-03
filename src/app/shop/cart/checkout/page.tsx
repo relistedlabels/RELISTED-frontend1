@@ -27,6 +27,7 @@ import {
   type ShipmentDispatchType,
 } from "@/lib/checkout/dispatchWindows";
 import type { DispatchWindowContext } from "@/lib/checkout/dispatchWindows";
+import { useDispatchScheduleClock } from "@/lib/checkout/useDispatchScheduleClock";
 
 export default function CheckoutPage() {
   const [shippingTiers, setShippingTiers] = useState<
@@ -45,6 +46,7 @@ export default function CheckoutPage() {
     { label: "Checkout", href: null },
   ];
 
+  const dispatchScheduleClock = useDispatchScheduleClock();
   const { data, isLoading, error } = useRentalRequests("approved", 1, 100);
   const { data: cartData, isLoading: cartIsLoading } = useCartItems();
   const [cartItemsWithProduct, setCartItemsWithProduct] = useState<Array<any>>(
@@ -289,7 +291,13 @@ export default function CheckoutPage() {
     }
 
     return contexts;
-  }, [outboundBaseDate, returnBaseDate, resaleItems.length, rentalItems]);
+  }, [
+    outboundBaseDate,
+    returnBaseDate,
+    resaleItems.length,
+    rentalItems,
+    dispatchScheduleClock,
+  ]);
 
   useEffect(() => {
     if (dispatchContexts.length === 0) {
@@ -300,7 +308,25 @@ export default function CheckoutPage() {
       const next: DispatchWindowSelectionMap = { ...prev };
       let changed = false;
       dispatchContexts.forEach((ctx) => {
-        if (!next[ctx.type]) {
+        const existing = next[ctx.type];
+        if (!existing) {
+          next[ctx.type] = {
+            type: ctx.type,
+            window: ctx.suggested.window,
+            mode: "DEFAULT",
+            baseDate: ctx.suggested.baseDate,
+            scheduledDate: ctx.suggested.scheduledDate,
+            rolledForwardDays: ctx.suggested.rolledForwardDays,
+          } satisfies DispatchWindowSelection;
+          changed = true;
+          return;
+        }
+        if (
+          existing.mode === "DEFAULT" &&
+          (existing.window.start !== ctx.suggested.window.start ||
+            existing.scheduledDate !== ctx.suggested.scheduledDate ||
+            existing.rolledForwardDays !== ctx.suggested.rolledForwardDays)
+        ) {
           next[ctx.type] = {
             type: ctx.type,
             window: ctx.suggested.window,

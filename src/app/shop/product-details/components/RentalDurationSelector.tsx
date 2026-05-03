@@ -7,6 +7,7 @@ import { RentalCheckSkeleton } from "@/common/ui/SkeletonAuth";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useSubmitRentalRequest } from "@/lib/mutations/renters/useRentalRequestMutations";
 import { useMe } from "@/lib/queries/auth/useMe";
+import { getLagosDateString, getTodayInLagos } from "@/lib/checkout/dispatchWindows";
 import { useUserStore } from "@/store/useUserStore";
 
 // ============================================================================
@@ -196,6 +197,8 @@ interface RentalDurationSelectorProps {
   dailyPrice: number;
   collateralPrice: number;
   onChangeRentalDays?: (days: number, startDate?: Date) => void;
+  /** Lagos YYYY-MM-DD: when the current pick is before this, snap highlight forward (no greyed-out grid). */
+  suggestedStartLagosYmd?: string;
 }
 
 const RentalDurationSelector = ({
@@ -204,6 +207,7 @@ const RentalDurationSelector = ({
   dailyPrice,
   collateralPrice,
   onChangeRentalDays,
+  suggestedStartLagosYmd,
 }: RentalDurationSelectorProps) => {
   const [selectedDuration, setSelectedDuration] = useState<number | "custom">(
     3,
@@ -211,6 +215,20 @@ const RentalDurationSelector = ({
   const [customDays, setCustomDays] = useState<number>(3);
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [showCustomInput, setShowCustomInput] = useState(false);
+
+  useEffect(() => {
+    if (!suggestedStartLagosYmd) return;
+    const curLagos = getLagosDateString(startDate);
+    const todayLagos = getTodayInLagos();
+    const behindLagosCalendar = curLagos < todayLagos;
+    const stuckOnExhaustedToday =
+      curLagos === todayLagos && curLagos < suggestedStartLagosYmd;
+    if (!behindLagosCalendar && !stuckOnExhaustedToday) return;
+    const parts = suggestedStartLagosYmd.split("-").map(Number);
+    const [y, mo, d] = parts;
+    if (parts.length !== 3 || [y, mo, d].some((n) => Number.isNaN(n))) return;
+    setStartDate(new Date(y, mo - 1, d));
+  }, [suggestedStartLagosYmd, startDate]);
 
   useEffect(() => {
     const rentalDays =
