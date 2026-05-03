@@ -1,17 +1,32 @@
 "use client";
 
-import React, { useState, memo } from "react";
+import React, { useState, memo, useMemo, useEffect } from "react";
 import Image from "next/image";
-import { Check, CheckCircle } from "lucide-react";
+import { Check, CheckCircle, MapPin, Zap, Compass } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useProfile } from "@/lib/queries/user/useProfile";
 import { useRouter } from "next/navigation";
-import { getOrderSummaryApi, orderIdsFromOrderPost } from "@/lib/api/cart";
+import {
+  getOrderSummaryApi,
+  orderIdsFromOrderPost,
+  type ReturnPickupAddressPayload,
+} from "@/lib/api/cart";
 import { usePassCart } from "@/lib/mutations/renters/usePassCartMutation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useListerProfile } from "@/lib/queries/shop/useListerProfile";
 import { toast } from "sonner";
 import { isResaleItem } from "@/lib/listers/listerOrderRow";
 import { useQuery } from "@tanstack/react-query";
+import type {
+  DispatchWindowSelectionMap,
+  DispatchWindowsPayload,
+  ShipmentDispatchType,
+} from "@/lib/checkout/dispatchWindows";
+import {
+  formatWindowRange,
+  isImmediateDispatch,
+} from "@/lib/checkout/dispatchWindows";
+import type { DispatchWindowContext } from "@/lib/checkout/dispatchWindows";
 
 const CURRENCY = "₦";
 
@@ -186,30 +201,39 @@ const ListerOrderCard = memo(
                   </>
                 )}
                 <div className="flex justify-between font-medium text-gray-700 text-sm">
-                  <Paragraph1>Pick-up Fee</Paragraph1>
-                  <Paragraph1>
-                    {CURRENCY}
-                    {formatCurrency(listerBreakdown.pickupCost)}
-                  </Paragraph1>
-                </div>
-                <div className="flex justify-between font-medium text-gray-700 text-sm">
-                  <Paragraph1>Delivery Fee</Paragraph1>
-                  <Paragraph1>
-                    {CURRENCY}
-                    {formatCurrency(
-                      selectedTierData
-                        ? calculateListerShippingShare(
-                            selectedTierData.totalShippingCost,
-                            listerBreakdown.itemsCount || 1,
-                            approvedGroups.reduce(
-                              (sum, g) => sum + g.items.length,
-                              0,
-                            ),
-                          )
-                        : listerBreakdown.shippingCost,
+                      <Paragraph1>Outbound Pick-up Fee</Paragraph1>
+                      <Paragraph1>
+                        {CURRENCY}
+                        {formatCurrency(listerBreakdown.outboundPickupCost || 0)}
+                      </Paragraph1>
+                    </div>
+                    {hasRentalItems && (
+                      <div className="flex justify-between font-medium text-gray-700 text-sm">
+                        <Paragraph1>Return Pick-up Fee</Paragraph1>
+                        <Paragraph1>
+                          {CURRENCY}
+                          {formatCurrency(listerBreakdown.returnPickupCost || 0)}
+                        </Paragraph1>
+                      </div>
                     )}
-                  </Paragraph1>
-                </div>
+                    <div className="flex justify-between font-medium text-gray-700 text-sm">
+                      <Paragraph1>Outbound Shipping</Paragraph1>
+                      <Paragraph1>
+                        {CURRENCY}
+                        {formatCurrency(listerBreakdown.outboundShippingCost || 0)}
+                      </Paragraph1>
+                    </div>
+                    {hasRentalItems && (
+                      <div className="flex justify-between font-medium text-gray-700 text-sm">
+                        <Paragraph1>Return Shipping</Paragraph1>
+                        <Paragraph1>
+                          {CURRENCY}
+                          {formatCurrency(
+                            listerBreakdown.returnShippingCost || 0,
+                          )}
+                        </Paragraph1>
+                      </div>
+                    )}
               </div>
             ) : null;
           })()}
@@ -235,17 +259,10 @@ const ListerOrderCard = memo(
                       (hasRentalItems ? listerBreakdown.rentalTotal : 0) +
                       (hasRentalItems ? listerBreakdown.collateralTotal : 0) +
                       (hasRentalItems ? listerBreakdown.cleaningTotal : 0) +
-                      listerBreakdown.pickupCost +
-                      (selectedTierData
-                        ? calculateListerShippingShare(
-                            selectedTierData.totalShippingCost,
-                            listerBreakdown.itemsCount || 1,
-                            approvedGroups.reduce(
-                              (sum, g) => sum + g.items.length,
-                              0,
-                            ),
-                          )
-                        : listerBreakdown.shippingCost),
+                      listerBreakdown.outboundPickupCost +
+                      listerBreakdown.returnPickupCost +
+                      listerBreakdown.outboundShippingCost +
+                      listerBreakdown.returnShippingCost,
                   )}
                 </Paragraph1>
               </div>
@@ -288,6 +305,9 @@ interface FinalOrderSummaryCardProps {
     totalShippingCost: number;
     grandTotal: number;
   };
+  dispatchSelections?: DispatchWindowSelectionMap;
+  dispatchContexts?: DispatchWindowContext[];
+  returnPickupAddress?: ReturnPickupAddressPayload;
 }
 
 export default function FinalOrderSummaryCard({
@@ -296,19 +316,50 @@ export default function FinalOrderSummaryCard({
   error,
   selectedShippingTier = "",
   selectedTierData,
+  dispatchSelections = {},
+  dispatchContexts = [],
+  returnPickupAddress,
 }: FinalOrderSummaryCardProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const passCartMutation = usePassCart();
   const { data: profile } = useProfile();
   const [isAgree, setIsAgree] = useState(false);
 
-  // Use React Query for order summary - better caching and performance
-  const { data: orderSummary, isLoading: orderSummaryLoading } = useQuery({
-    queryKey: ["orderSummary"],
-    queryFn: getOrderSummaryApi,
-    staleTime: 30000, // 30 seconds
+  // Use React Query for order summary - refetch when return pickup address changes
+  const { data: orderSummary, isLoading: orderSummaryLoading, refetch } = useQuery({
+    queryKey: ["orderSummary", returnPickupAddress?.city, returnPickupAddress?.street],
+    queryFn: () => getOrderSummaryApi({
+      returnStreet: returnPickupAddress?.street,
+      returnCity: returnPickupAddress?.city,
+      returnState: returnPickupAddress?.state,
+      returnLandmark: returnPickupAddress?.instructions,
+    }),
+    staleTime: 30000,
     retry: 1,
   });
+
+  // Refetch when return pickup address changes
+  useEffect(() => {
+    if (returnPickupAddress?.city && returnPickupAddress?.street) {
+      refetch();
+    }
+  }, [returnPickupAddress?.city, returnPickupAddress?.street, refetch]);
+
+  const dispatchWindowsPayload = useMemo<
+    DispatchWindowsPayload | undefined
+  >(() => {
+    const payload: DispatchWindowsPayload = {};
+    (Object.keys(dispatchSelections) as ShipmentDispatchType[]).forEach(
+      (type) => {
+        const selection = dispatchSelections[type];
+        if (selection?.window) {
+          payload[type] = selection.window;
+        }
+      },
+    );
+    return Object.keys(payload).length > 0 ? payload : undefined;
+  }, [dispatchSelections]);
 
   // All items are already approved from the API
   const approvedGroups = listerGroups.filter((group) => group.items.length > 0);
@@ -330,31 +381,47 @@ export default function FinalOrderSummaryCard({
     );
     if (approvedItemCount === 0) return;
 
-    passCartMutation.mutate(selectedShippingTier, {
-      onSuccess: (passResponse) => {
-        const ids = orderIdsFromOrderPost(passResponse);
-        const id = ids[0];
-        if (!id) {
-          toast.error(
-            "Checkout succeeded but no order id was returned. Check My Orders or refresh your cart.",
+    passCartMutation.mutate(
+      {
+        tierName: selectedShippingTier,
+        dispatchWindows: dispatchWindowsPayload,
+        returnPickupAddress,
+      },
+      {
+        onSuccess: (passResponse) => {
+          const ids = orderIdsFromOrderPost(passResponse);
+          const id = ids[0];
+          const shipmentIds = passResponse?.data?.shipmentIds || [];
+
+          // Force refetch cart items
+          queryClient.invalidateQueries({ queryKey: ["cart", "items"] });
+          queryClient.invalidateQueries({ queryKey: ["renters", "rental-requests"] });
+
+          if (!id) {
+            toast.error(
+              "Checkout succeeded but no order id was returned. Check My Orders or refresh your cart.",
+            );
+            return;
+          }
+          toast.success(
+            ids.length > 1 ? `${ids.length} orders placed` : "Order placed",
           );
-          return;
-        }
-        toast.success(
-          ids.length > 1 ? `${ids.length} orders placed` : "Order placed",
-        );
-        router.push(
-          `/shop/cart/checkout/success?orderId=${encodeURIComponent(id)}`,
-        );
+          // Force clear cart cache before navigation
+          queryClient.invalidateQueries({ queryKey: ["cart", "items"] });
+          queryClient.invalidateQueries({ queryKey: ["renters", "rental-requests"] });
+          router.push(
+            `/shop/cart/checkout/success?orderId=${encodeURIComponent(id)}`,
+          );
+        },
+        onError: (err: unknown) => {
+          toast.error(
+            err instanceof Error
+              ? err.message
+              : "Checkout failed. Please try again.",
+          );
+        },
       },
-      onError: (err: unknown) => {
-        toast.error(
-          err instanceof Error
-            ? err.message
-            : "Checkout failed. Please try again.",
-        );
-      },
-    });
+    );
   };
 
   return (
@@ -369,11 +436,63 @@ export default function FinalOrderSummaryCard({
         </div>
       )}
 
+      <div className="bg-white p-4 border border-gray-200 rounded-xl">
+        <Paragraph1 className="mb-4 font-bold text-gray-900 text-lg">
+          Return pickup details
+        </Paragraph1>
+        <div className="flex items-start gap-3">
+          <div className="bg-gray-100 p-2 rounded-full">
+            <MapPin size={18} className="text-gray-700" />
+          </div>
+          <div>
+            <Paragraph1 className="font-semibold text-gray-900 text-sm">
+              {returnPickupAddress
+                ? `${returnPickupAddress.street}, ${returnPickupAddress.city}`
+                : "Using your delivery address"}
+            </Paragraph1>
+            <Paragraph1 className="text-gray-600 text-xs">
+              {returnPickupAddress
+                ? `${returnPickupAddress.contactName} • ${returnPickupAddress.phoneNumber}`
+                : "Courier collects from the same location as your drop-off."}
+            </Paragraph1>
+            {returnPickupAddress?.instructions && (
+              <Paragraph1 className="mt-1 text-gray-500 text-xs">
+                {returnPickupAddress.instructions}
+              </Paragraph1>
+            )}
+          </div>
+        </div>
+      </div>
+
       {!isLoading && !error && approvedGroups.length === 0 && (
         <div className="bg-gray-50 p-4 border border-gray-200 rounded-xl text-center">
           <Paragraph1 className="text-gray-600">
             No approved items. Add items to get started!
           </Paragraph1>
+        </div>
+      )}
+
+      {dispatchContexts.length > 0 && (
+        <div className="bg-white p-4 border border-gray-200 rounded-xl">
+          <Paragraph1 className="mb-4 font-bold text-gray-900 text-lg">
+            Dispatch windows
+          </Paragraph1>
+          <div className="bg-gray-50 p-3 border border-gray-200 rounded-lg">
+            <div className="space-y-3">
+              {dispatchContexts
+                .filter((ctx) => ctx.type === "OUTBOUND" || ctx.type === "RETURN")
+                .map((ctx) => (
+                  <div key={ctx.type}>
+                    <Paragraph1 className="font-semibold text-[11px] text-gray-400 uppercase tracking-[0.2em]">
+                      {ctx.type === "OUTBOUND" ? "Delivery" : "Return pickup"}
+                    </Paragraph1>
+                    <Paragraph1 className="font-semibold text-gray-900 text-sm">
+                      {formatWindowRange(ctx.suggested.window)}
+                    </Paragraph1>
+                  </div>
+                ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -454,27 +573,51 @@ export default function FinalOrderSummaryCard({
                               </div>
                             </>
                           )}
-                          <div className="flex justify-between font-medium text-gray-700 text-sm">
-                            <Paragraph1>Pick-up Fee</Paragraph1>
+<div className="flex justify-between font-medium text-gray-700 text-sm">
+                            <Paragraph1>Outbound Pick-up Fee</Paragraph1>
                             <Paragraph1>
                               {CURRENCY}
                               {formatCurrency(
-                                orderSummary.data.summary.pickupTotal,
+                                orderSummary.data.summary.outboundPickupTotal || 0,
                               )}
                             </Paragraph1>
                           </div>
 
+                          {hasRentalItems && (
+                            <div className="flex justify-between font-medium text-gray-700 text-sm">
+                              <Paragraph1>Return Pick-up Fee</Paragraph1>
+                              <Paragraph1>
+                                {CURRENCY}
+                                {formatCurrency(
+                                  orderSummary.data.summary.returnPickupTotal ||
+                                    0,
+                                )}
+                              </Paragraph1>
+                            </div>
+                          )}
+
                           <div className="flex justify-between font-medium text-gray-700 text-sm">
-                            <Paragraph1>Delivery Fee</Paragraph1>
+                            <Paragraph1>Outbound Shipping</Paragraph1>
                             <Paragraph1>
                               {CURRENCY}
                               {formatCurrency(
-                                selectedTierData
-                                  ? selectedTierData.totalShippingCost
-                                  : orderSummary.data.summary.shippingTotal,
+                                orderSummary.data.summary.outboundShippingTotal || 0,
                               )}
                             </Paragraph1>
                           </div>
+
+                          {hasRentalItems && (
+                            <div className="flex justify-between font-medium text-gray-700 text-sm">
+                              <Paragraph1>Return Shipping</Paragraph1>
+                              <Paragraph1>
+                                {CURRENCY}
+                                {formatCurrency(
+                                  orderSummary.data.summary.returnShippingTotal ||
+                                    0,
+                                )}
+                              </Paragraph1>
+                            </div>
+                          )}
                           <div className="flex justify-between font-medium text-gray-700 text-sm">
                             <Paragraph1>Service Charge</Paragraph1>
                             <Paragraph1>
@@ -508,10 +651,10 @@ export default function FinalOrderSummaryCard({
                             orderSummary.data.summary.rentalTotal +
                             orderSummary.data.summary.collateralTotal +
                             orderSummary.data.summary.cleaningTotal +
-                            orderSummary.data.summary.pickupTotal +
-                            (selectedTierData
-                              ? selectedTierData.totalShippingCost
-                              : orderSummary.data.summary.shippingTotal) +
+                            orderSummary.data.summary.outboundPickupTotal +
+                            orderSummary.data.summary.returnPickupTotal +
+                            orderSummary.data.summary.outboundShippingTotal +
+                            orderSummary.data.summary.returnShippingTotal +
                             (orderSummary.data.summary.serviceCharge || 0) +
                             (orderSummary.data.summary.vatAmount || 0),
                         )}

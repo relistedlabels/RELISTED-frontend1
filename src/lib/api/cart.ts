@@ -1,4 +1,5 @@
 import { apiFetch } from "./http";
+import type { DispatchWindowsPayload } from "@/lib/checkout/dispatchWindows";
 
 export type CartProduct = {
   id: string;
@@ -26,6 +27,16 @@ export type CartLineRentalSnapshot = {
   startDate?: string;
   endDate?: string;
   createdAt?: string;
+  selectedWindows?: {
+    outboundDeliveryWindow: {
+      start: string;
+      end: string;
+    };
+    returnPickupWindow: {
+      start: string;
+      end: string;
+    };
+  };
 };
 
 export type CartItem = {
@@ -99,6 +110,7 @@ export type OrderPostResponse = {
     orderIds?: string[];
     orderId?: string;
     orders?: Array<{ orderId?: string }>;
+    shipmentIds?: string[];
   };
 };
 
@@ -137,15 +149,52 @@ export const createOrderApi = () =>
 
 /**
  * Get order summary (GET /order/summary)
+ * @param returnAddress - Optional return pickup address to recalculate shipping
  */
-export const getOrderSummaryApi = () =>
-  apiFetch<any>("/order/summary", {
+export const getOrderSummaryApi = (returnAddress?: {
+  returnStreet?: string;
+  returnCity?: string;
+  returnState?: string;
+  returnCountry?: string;
+  returnPostalCode?: string;
+  returnLandmark?: string;
+  returnInstructions?: string;
+}) => {
+  const params = new URLSearchParams();
+  if (returnAddress?.returnStreet) params.append("returnStreet", returnAddress.returnStreet);
+  if (returnAddress?.returnCity) params.append("returnCity", returnAddress.returnCity);
+  if (returnAddress?.returnState) params.append("returnState", returnAddress.returnState);
+  if (returnAddress?.returnCountry) params.append("returnCountry", returnAddress.returnCountry);
+  if (returnAddress?.returnPostalCode) params.append("returnPostalCode", returnAddress.returnPostalCode);
+  if (returnAddress?.returnLandmark) params.append("returnLandmark", returnAddress.returnLandmark);
+  if (returnAddress?.returnInstructions) params.append("returnInstructions", returnAddress.returnInstructions);
+  
+  const queryString = params.toString();
+  const url = `/order/summary${queryString ? `?${queryString}` : ""}`;
+  
+  return apiFetch<any>(url, {
     method: "GET",
   });
+};
 
-/** POST /order with `{ pricingTier }` (full checkout). */
-export const passCartApi = (shippingTierName: string) =>
+export interface ReturnPickupAddressPayload {
+  contactName: string;
+  phoneNumber: string;
+  street: string;
+  city: string;
+  state: string;
+  instructions?: string;
+}
+
+export interface PassCartPayload {
+  pricingTier: string;
+  dispatchWindows?: DispatchWindowsPayload;
+  returnPickupAddress?: ReturnPickupAddressPayload;
+}
+
+/** POST /order with `{ pricingTier, dispatchWindows? }` (full checkout). */
+export const passCartApi = (payload: PassCartPayload) =>
   apiFetch<OrderPostResponse>("/order", {
     method: "POST",
-    body: JSON.stringify({ pricingTier: shippingTierName }),
+    body: JSON.stringify(payload),
   });
