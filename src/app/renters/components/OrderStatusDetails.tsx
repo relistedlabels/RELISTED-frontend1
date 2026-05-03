@@ -1,15 +1,30 @@
 "use client";
 
 import React from "react";
-import { Lock, ShoppingBag, AlertCircle } from "lucide-react";
+import {
+  Lock,
+  ShoppingBag,
+  AlertCircle,
+  ExternalLink,
+  Copy,
+} from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
-import { getRenterOrderStatusLabel } from "@/lib/renters/renterOrderStatus";
+import {
+  getRenterOrderStatusLabel,
+  normalizeRenterOrderStatusKey,
+} from "@/lib/renters/renterOrderStatus";
+import { toast } from "sonner";
 
 const CURRENCY = "₦";
 
 const formatCurrency = (amount: number | undefined): string => {
   if (!amount) return "0";
   return amount.toLocaleString("en-NG");
+};
+
+const copyToClipboard = (text: string) => {
+  navigator.clipboard.writeText(text);
+  toast.success("Tracking ID copied to clipboard");
 };
 
 interface OrderStatusDetailsProps {
@@ -54,6 +69,15 @@ export default function OrderStatusDetails({
 
   // Format status for display using proper status mapping
   const statusLabel = getRenterOrderStatusLabel(status);
+  const statusKey = normalizeRenterOrderStatusKey(String(status));
+  const terminalOrderStatuses = new Set([
+    "COMPLETED",
+    "RETURNED",
+    "CANCELLED",
+    "REJECTED",
+  ]);
+  const showLockedFundsNotice =
+    !terminalOrderStatuses.has(statusKey) && lockedAmount > 0;
 
   // Get order date
   const orderDate = orderData.createdAt
@@ -67,7 +91,7 @@ export default function OrderStatusDetails({
   return (
     <div className="space-y-6">
       {/* --- 1. MONEY LOCKED NOTICE --- */}
-      {status !== "completed" && lockedAmount > 0 && (
+      {showLockedFundsNotice && (
         <div className="bg-yellow-50 shadow-sm p-4 border-yellow-400 border-l-4 rounded-xl">
           <div className="flex items-start gap-4">
             <Lock size={24} className="mt-1 text-yellow-600 shrink-0" />
@@ -169,24 +193,141 @@ export default function OrderStatusDetails({
         </div>
       </div>
 
+      {/* --- 3b. RETURN PICKUP (Topship / return request) --- */}
+      {(orderData.returnPickup || orderData.returnLeg) && (
+        <div>
+          <Paragraph1 className="mb-3 font-bold text-gray-900 text-base">
+            Return pickup & carrier
+          </Paragraph1>
+          <div className="space-y-3 bg-white p-4 border border-gray-300 rounded-xl">
+            {orderData.returnPickup?.pickupWindowSummary ? (
+              <div>
+                <Paragraph1 className="block mb-1 text-gray-500 text-xs">
+                  Scheduled pickup window
+                </Paragraph1>
+                <Paragraph1 className="font-semibold text-gray-900">
+                  {orderData.returnPickup.pickupWindowSummary}
+                </Paragraph1>
+                <Paragraph1 className="mt-2 text-gray-600 text-xs">
+                  This is when the carrier plans to collect the return — it is
+                  not the same as the package already being on the way to the
+                  lister.
+                </Paragraph1>
+              </div>
+            ) : null}
+            {orderData.returnPickup?.trackingNumber ? (
+              <div>
+                <Paragraph1 className="block mb-1 text-gray-500 text-xs">
+                  Return tracking
+                </Paragraph1>
+                <div className="flex items-center gap-2">
+                  <Paragraph1 className="font-mono font-semibold text-gray-900">
+                    {orderData.returnPickup.trackingNumber}
+                  </Paragraph1>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      copyToClipboard(orderData.returnPickup.trackingNumber)
+                    }
+                    className="p-1 text-gray-500 hover:text-gray-700 transition"
+                    title="Copy tracking"
+                  >
+                    <Copy size={16} />
+                  </button>
+                </div>
+              </div>
+            ) : null}
+            {orderData.returnLeg?.label ? (
+              <div>
+                <Paragraph1 className="block mb-1 text-gray-500 text-xs">
+                  Return shipment (platform leg)
+                </Paragraph1>
+                <Paragraph1 className="font-semibold text-indigo-700">
+                  {orderData.returnLeg.label}
+                </Paragraph1>
+                {orderData.returnLeg.trackingId ? (
+                  <Paragraph1 className="mt-1 font-mono text-sm text-gray-800">
+                    {orderData.returnLeg.trackingId}
+                  </Paragraph1>
+                ) : null}
+                {orderData.returnLeg.providerTrackingUrl ? (
+                  <a
+                    href={orderData.returnLeg.providerTrackingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 mt-2 font-semibold text-blue-600 hover:text-blue-800 text-sm"
+                  >
+                    <ExternalLink size={14} />
+                    Carrier tracking
+                  </a>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
+
       {/* --- 4. TRACKING STATUS --- */}
-      {orderData.tracking && (
+      {(orderData.tracking || orderData.trackingId) && (
         <div>
           <Paragraph1 className="mb-3 font-bold text-gray-900 text-base">
             Tracking Status
           </Paragraph1>
 
           <div className="space-y-3 bg-white p-4 border border-gray-300 rounded-xl">
-            <div>
-              <Paragraph1 className="block mb-1 text-gray-500 text-xs">
-                Current Status
+            {orderData.tracking && (
+              <div>
+                <Paragraph1 className="block mb-1 text-gray-500 text-xs">
+                  Current Status
+                </Paragraph1>
+                <Paragraph1 className="font-semibold text-blue-600">
+                  {orderData.tracking.status}
+                </Paragraph1>
+              </div>
+            )}
+
+            {orderData.trackingId && (
+              <div>
+                <Paragraph1 className="block mb-1 text-gray-500 text-xs">
+                  Tracking ID
+                </Paragraph1>
+                <div className="flex items-center gap-2">
+                  <Paragraph1 className="font-mono font-semibold text-gray-900">
+                    {orderData.trackingId}
+                  </Paragraph1>
+                  <button
+                    onClick={() => copyToClipboard(orderData.trackingId)}
+                    className="p-1 text-gray-500 hover:text-gray-700 transition"
+                    title="Copy tracking ID"
+                  >
+                    <Copy size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-blue-50 p-3 border border-blue-200 rounded-lg">
+              <Paragraph1 className="mb-2 text-blue-900 text-sm">
+                <strong>Track your shipment:</strong>
               </Paragraph1>
-              <Paragraph1 className="font-semibold text-blue-600">
-                {orderData.tracking.status}
+              <Paragraph1 className="mb-2 text-blue-800 text-sm">
+                1. Copy your tracking number above
               </Paragraph1>
+              <Paragraph1 className="mb-2 text-blue-800 text-sm">
+                2. Visit the Topship tracking page
+              </Paragraph1>
+              <a
+                href="https://ship.topship.africa/tracking"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-semibold text-blue-600 hover:text-blue-800 text-sm"
+              >
+                <ExternalLink size={14} />
+                ship.topship.africa/tracking
+              </a>
             </div>
 
-            {orderData.tracking.updates &&
+            {orderData.tracking?.updates &&
               orderData.tracking.updates.length > 0 && (
                 <div>
                   <Paragraph1 className="block mb-2 text-gray-500 text-xs">
