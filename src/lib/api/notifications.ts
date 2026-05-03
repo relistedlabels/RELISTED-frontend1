@@ -1,9 +1,31 @@
 import { apiFetch } from "./http";
 
+export type NotificationType =
+  | "ORDER_CONFIRMED"
+  | "SHIPMENT_DISPATCHED"
+  | "RETURN_DISPATCHED"
+  | "RETURN_PICKUP_SCHEDULED"
+  | "SHIPMENT_IN_TRANSIT"
+  | "RETURN_IN_TRANSIT"
+  | "SHIPMENT_DELIVERED"
+  | "RETURN_CONFIRMED"
+  | "RENTAL_REQUEST"
+  | "RENTAL_APPROVED"
+  | "RENTAL_REJECTED"
+  | "PAYMENT_RECEIVED"
+  | "DISPUTE_OPENED"
+  | "DISPUTE_RESOLVED"
+  | "RETURN_INITIATED"
+  | "SYSTEM";
+
 export interface NotificationMetadata {
   status?: string;
   productId?: string;
   requestId?: string;
+  orderId?: string;
+  shipmentId?: string;
+  trackingId?: string;
+  trackingUrl?: string;
   [key: string]: any;
 }
 
@@ -12,7 +34,7 @@ export interface Notification {
   userId: string;
   title: string;
   message: string;
-  type: string;
+  type: NotificationType;
   metadata: NotificationMetadata;
   isRead: boolean;
   createdAt: string;
