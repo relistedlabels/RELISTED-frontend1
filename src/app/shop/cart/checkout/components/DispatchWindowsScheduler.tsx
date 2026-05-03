@@ -315,7 +315,7 @@ export default function DispatchWindowsScheduler({
               value={form.date}
               min={ctx.minDate}
               onChange={(e) => handleFieldChange(ctx, "date", e.target.value)}
-              className="px-3 py-[7px] border border-gray-300 focus:border-gray-900 rounded-[4px] focus:outline-none w-full text-[13px]"
+              className="px-3 py-[7px] border border-gray-300 focus:border-gray-900 rounded-lg focus:outline-none w-full text-[13px]"
             />
           </div>
         )}
@@ -343,7 +343,7 @@ export default function DispatchWindowsScheduler({
                     key={slotKey}
                     type="button"
                     onClick={() => handleFieldChange(ctx, "startTime", slotKey)}
-                    className={`rounded-[4px] border px-2 py-[7px] text-[12px] font-semibold transition-colors ${
+                    className={`rounded-lg border px-2 py-[7px] text-[12px] font-semibold transition-colors ${
                       isSelected
                         ? "border-black bg-black text-white"
                         : "border-gray-300 bg-white text-gray-700 hover:border-gray-900"
@@ -370,7 +370,7 @@ export default function DispatchWindowsScheduler({
         </div>
 
         {form.errors.length > 0 && (
-          <div className="bg-red-50 px-3 py-2 border border-red-200 rounded-[4px] text-[13px] text-red-700">
+          <div className="bg-red-50 px-3 py-2 border border-red-200 rounded-lg text-[13px] text-red-700">
             {form.errors.map((error) => (
               <p key={error}>{error}</p>
             ))}
@@ -411,7 +411,7 @@ export default function DispatchWindowsScheduler({
                 <button
                   type="button"
                   onClick={() => handleModeChange(ctx, "DEFAULT")}
-                  className={`relative overflow-hidden rounded-[4px] border px-[17px] py-[7px] text-[13px] font-semibold transition-colors ${
+                  className={`relative overflow-hidden rounded-lg border px-[17px] py-[7px] text-[13px] font-semibold transition-colors ${
                     form.mode === "DEFAULT"
                       ? "border-black bg-black text-white"
                       : "border-gray-300 bg-white text-gray-700 hover:border-gray-900"
@@ -422,7 +422,7 @@ export default function DispatchWindowsScheduler({
                 <button
                   type="button"
                   onClick={() => handleModeChange(ctx, "CUSTOM")}
-                  className={`relative overflow-hidden rounded-[4px] border px-[17px] py-[7px] text-[13px] font-semibold transition-colors ${
+                  className={`relative overflow-hidden rounded-lg border px-[17px] py-[7px] text-[13px] font-semibold transition-colors ${
                     form.mode === "CUSTOM"
                       ? "border-black bg-black text-white"
                       : "border-gray-300 bg-white text-gray-700 hover:border-gray-900"

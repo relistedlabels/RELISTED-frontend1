@@ -779,7 +779,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                 <button
                   type="button"
                   onClick={handleCloseDispatchModal}
-                  className="bg-gray-100 p-1.5 border border-gray-200 rounded-[4px] text-gray-500 hover:text-black"
+                  className="bg-gray-100 p-1.5 border border-gray-200 rounded-lg text-gray-500 hover:text-black"
                   aria-label="Close dispatch modal"
                 >
                   <X size={18} />
@@ -820,7 +820,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                   type="button"
                   onClick={handlePrevDispatchModal}
                   disabled={dispatchModalStep === 0}
-                  className={`relative overflow-hidden rounded-[4px] border px-[17px] py-[7px] text-[13px] font-semibold transition ${
+                  className={`relative overflow-hidden rounded-lg border px-[17px] py-[7px] text-[13px] font-semibold transition ${
                     dispatchModalStep === 0
                       ? "cursor-not-allowed border-gray-200 text-gray-300"
                       : "border-gray-300 bg-white text-gray-900 hover:border-gray-900"
@@ -831,7 +831,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                 <button
                   type="button"
                   onClick={handleNextDispatchModal}
-                  className="relative bg-black hover:bg-gray-900 px-[17px] py-[7px] border border-black rounded-[4px] overflow-hidden font-semibold text-[13px] text-white transition"
+                  className="relative bg-black hover:bg-gray-900 px-[17px] py-[7px] border border-black rounded-lg overflow-hidden font-semibold text-[13px] text-white transition"
                 >
                   {dispatchModalStep === totalDispatchSteps - 1
                     ? "Save pickup windows"
