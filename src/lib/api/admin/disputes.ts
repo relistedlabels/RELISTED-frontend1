@@ -15,6 +15,7 @@ export function normalizeAdminDisputeStatus(raw: unknown): DisputeStatus | "" {
   const k = s.toUpperCase().replace(/-/g, "_");
   if (k === "UNDER_REVIEW") return "IN_REVIEW";
   if (k === "DISPUTED") return "IN_DISPUTE";
+  if (k === "RESELOVED") return "RESOLVED";
 
   if (
     k === "PENDING" ||
@@ -66,7 +67,18 @@ export interface Dispute {
   description?: string | null;
 }
 
+/** From `GET /api/admin/disputes/:id` — caps match `resolveDisputeAndSettle` validation. */
+export interface DisputeResolutionContext {
+  initiator: "renter" | "lister" | "unknown";
+  /** Max `refundAmount` allowed on resolve (locked payout pool). */
+  refundAmountMax: number;
+  /** Max `collateralWithheldToLister` allowed on resolve. */
+  collateralWithheldToListerMax: number;
+  escrowStatus: string | null;
+}
+
 export interface DisputeDetail extends Dispute {
+  resolutionContext?: DisputeResolutionContext | null;
   otherParty: {
     id: string;
     name: string;
@@ -79,6 +91,8 @@ export interface DisputeDetail extends Dispute {
     id: string;
     dbId?: string | null;
     totalAmountPaid?: number | null;
+    renter?: { id?: string; name?: string; avatar?: string | null };
+    lister?: { id?: string; name?: string; avatar?: string | null };
     escrow?: {
       status?: "LOCKED" | "PARTIALLY_RELEASED" | "RELEASED" | string;
       collateralAmount?: number | null;

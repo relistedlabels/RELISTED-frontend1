@@ -21,13 +21,13 @@ export default function OrderSuccessfulScreen() {
 
   if (!orderId) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center p-8">
+      <div className="flex flex-col justify-center items-center p-8 min-h-screen text-center">
         <Paragraph1 className="text-red-600 text-lg">
           Order ID not found. Please contact support.
         </Paragraph1>
         <Link
           href="/renters/orders"
-          className="mt-4 px-8 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-900 transition-colors"
+          className="bg-black hover:bg-gray-900 mt-4 px-8 py-3 rounded-lg font-semibold text-white transition-colors"
         >
           <Paragraph1>View My Orders</Paragraph1>
         </Link>
@@ -37,10 +37,10 @@ export default function OrderSuccessfulScreen() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen animate-pulse">
-        <div className="w-28 h-28 bg-gray-300 rounded-full mb-8"></div>
-        <div className="h-6 bg-gray-300 rounded w-48 mb-4"></div>
-        <div className="h-4 bg-gray-300 rounded w-64"></div>
+      <div className="flex flex-col justify-center items-center min-h-screen animate-pulse">
+        <div className="bg-gray-300 mb-8 rounded-full w-28 h-28"></div>
+        <div className="bg-gray-300 mb-4 rounded w-48 h-6"></div>
+        <div className="bg-gray-300 rounded w-64 h-4"></div>
       </div>
     );
   }
@@ -53,9 +53,9 @@ export default function OrderSuccessfulScreen() {
   });
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen text-center p-8">
+    <div className="flex flex-col justify-center items-center p-8 min-h-screen text-center">
       {/* Success Icon */}
-      <div className="w-28 h-28 rounded-full flex items-center justify-center mb-8 animate-bounce">
+      <div className="flex justify-center items-center mb-8 rounded-full w-28 h-28 animate-bounce">
         <img
           src="/icons/sbox.svg"
           alt="Success"
@@ -64,57 +64,57 @@ export default function OrderSuccessfulScreen() {
       </div>
 
       {/* Title */}
-      <Paragraph3 className="text-xl sm:text-[24px] font-extrabold text-black mb-4 uppercase tracking-wider">
+      <Paragraph3 className="mb-4 font-extrabold text-black sm:text-[24px] text-xl uppercase tracking-wider">
         Order Successful!
       </Paragraph3>
 
       {/* Description */}
-      <Paragraph1 className="text-base text-gray-700 max-w-sm mb-8">
+      <Paragraph1 className="mb-8 max-w-sm text-gray-700 text-base">
         Thank you for your order. Your rental items are being prepared for
         delivery.
       </Paragraph1>
 
       {/* Order Details */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 max-w-md mb-8 w-full">
+      <div className="bg-gray-50 mb-8 p-6 border border-gray-200 rounded-lg w-full max-w-md">
         <div className="space-y-4">
           {/* Order ID */}
           <div>
-            <Paragraph1 className="text-xs text-gray-600 mb-1">
+            <Paragraph1 className="mb-1 text-gray-600 text-xs">
               ORDER ID
             </Paragraph1>
-            <Paragraph1 className="text-lg font-bold text-gray-900 font-mono">
+            <Paragraph1 className="font-mono font-bold text-gray-900 text-lg">
               {orderId}
             </Paragraph1>
           </div>
 
           {/* Order Date */}
           {/* <div>
-            <Paragraph1 className="text-xs text-gray-600 mb-1">
+            <Paragraph1 className="mb-1 text-gray-600 text-xs">
               ORDER DATE
             </Paragraph1>
-            <Paragraph1 className="text-base text-gray-900">
+            <Paragraph1 className="text-gray-900 text-base">
               {formattedDate}
             </Paragraph1>
           </div> */}
 
           {/* Order Status */}
           {/* <div>
-            <Paragraph1 className="text-xs text-gray-600 mb-1">
+            <Paragraph1 className="mb-1 text-gray-600 text-xs">
               STATUS
             </Paragraph1>
-            <Paragraph1 className="text-base font-semibold text-green-700">
+            <Paragraph1 className="font-semibold text-green-700 text-base">
               {order?.status || "Processing"}
             </Paragraph1>
           </div> */}
 
           {/* Total Amount */}
           {/* {order && (
-            <div className="border-t border-gray-300 pt-4">
+            <div className="pt-4 border-gray-300 border-t">
               <div className="flex justify-between items-center">
-                <Paragraph1 className="text-gray-700 font-medium">
+                <Paragraph1 className="font-medium text-gray-700">
                   Total Amount:
                 </Paragraph1>
-                <Paragraph1 className="text-lg font-bold text-gray-900">
+                <Paragraph1 className="font-bold text-gray-900 text-lg">
                   ₦{(order.totalAmount || 0).toLocaleString("en-NG")}
                 </Paragraph1>
               </div>
@@ -124,12 +124,13 @@ export default function OrderSuccessfulScreen() {
       </div>
 
       {/* Next Steps */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mb-8 w-full">
-        <Paragraph1 className="text-sm text-blue-900">
+      <div className="bg-blue-50 mb-8 p-4 border border-blue-200 rounded-lg w-full max-w-md">
+        <Paragraph1 className="text-blue-900 text-sm">
           <strong>What's Next?</strong>
           <br />
-          You'll receive a tracking link and delivery instructions via email
-          shortly. Check your inbox for updates on your rental items.
+          Your tracking link will be sent on your rental start date. You'll
+          receive delivery instructions via email. Check your inbox for updates
+          on your rental items.
         </Paragraph1>
       </div>
 
@@ -137,14 +138,14 @@ export default function OrderSuccessfulScreen() {
       <div className="flex flex-col gap-3 w-full max-w-md">
         <Link
           href="/renters/orders"
-          className="px-8 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-900 transition-colors shadow-lg"
+          className="bg-black hover:bg-gray-900 shadow-lg px-8 py-3 rounded-lg font-semibold text-white transition-colors"
         >
           <Paragraph1>View My Orders</Paragraph1>
         </Link>
 
         <Link
           href="/shop"
-          className="px-8 py-3 border border-black text-black font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+          className="hover:bg-gray-50 px-8 py-3 border border-black rounded-lg font-semibold text-black transition-colors"
         >
           <Paragraph1>Continue Shopping</Paragraph1>
         </Link>

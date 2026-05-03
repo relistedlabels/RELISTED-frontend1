@@ -11,10 +11,9 @@ interface InventoryItemDetailsHeaderProps {
   onDisable?: () => void;
 }
 
-const InventoryItemDetailsHeader: React.FC<InventoryItemDetailsHeaderProps> = ({
-  onEdit,
-  onDisable,
-}) => {
+const InventoryItemDetailsHeader: React.FC<
+  InventoryItemDetailsHeaderProps
+> = () => {
   const product = useProductDetailsStore((state) => state.product);
 
   if (!product) return null;
@@ -28,9 +27,12 @@ const InventoryItemDetailsHeader: React.FC<InventoryItemDetailsHeaderProps> = ({
   const resalePrice = product.resalePrice ?? originalValue;
   const listingType = product.listingType;
 
+  const closet = product.closet;
+  const closetOwner = closet?.name ?? "—";
+  const closetImage = closet?.imageUrl;
+
   return (
     <div className="bg-transparent w-full max-w-2xl">
-      {/* Title & Status */}
       <div className="flex flex-row justify-between items-start gap-2 mb-1">
         <div className="flex flex-wrap items-center gap-2">
           <Paragraph2 className="font-bold text-black text-2xl sm:text-3xl">
@@ -43,10 +45,25 @@ const InventoryItemDetailsHeader: React.FC<InventoryItemDetailsHeaderProps> = ({
         <Calendar />
       </div>
 
-      {/* Description */}
       <Paragraph1 className="mb-2 text-gray-500">{product.subText}</Paragraph1>
 
-      {/* Rejection Reason Banner */}
+      <div className="flex items-center gap-2 mt-3 mb-1">
+        <Paragraph1 className="text-gray-700 text-xs">Closet:</Paragraph1>
+        <div className="flex items-center gap-1">
+          {closetImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={closetImage}
+              alt=""
+              className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+            />
+          ) : null}
+          <Paragraph1 className="text-gray-700 text-xs font-medium">
+            {closetOwner}
+          </Paragraph1>
+        </div>
+      </div>
+
       {product.status === "REJECTED" && rejectionComment && (
         <div className="bg-red-50 mb-4 p-4 border border-red-200 rounded-lg">
           <div className="flex items-start gap-3">
@@ -65,7 +82,6 @@ const InventoryItemDetailsHeader: React.FC<InventoryItemDetailsHeaderProps> = ({
         </div>
       )}
 
-      {/* Rating */}
       <div className="flex flex-wrap items-center gap-1 mb-6">
         {[...Array(5)].map((_, i) => (
           <Star
@@ -83,9 +99,7 @@ const InventoryItemDetailsHeader: React.FC<InventoryItemDetailsHeaderProps> = ({
         </span>
       </div>
 
-      {/* Details Box */}
       <div className="bg-[#F7F7F7] mb-4 p-4 border border-gray-300 rounded-[10px]">
-        {/* Prices */}
         <div className="flex flex-row justify-between gap-4 mb-2 pb-2 border-gray-300 border-b">
           {listingType === "RESALE" ? (
             <>
@@ -116,7 +130,6 @@ const InventoryItemDetailsHeader: React.FC<InventoryItemDetailsHeaderProps> = ({
               </Paragraph2>
             </div>
           ) : (
-            // RENT_OR_RESALE or default
             <>
               <div>
                 <Paragraph1 className="mb-1 font-medium text-gray-500 text-xs uppercase">
@@ -138,7 +151,6 @@ const InventoryItemDetailsHeader: React.FC<InventoryItemDetailsHeaderProps> = ({
           )}
         </div>
 
-        {/* Specs */}
         <div className="gap-4 grid grid-cols-3 sm:grid-cols-3">
           <div>
             <Paragraph1 className="mb-1 font-medium text-gray-500 text-xs uppercase">

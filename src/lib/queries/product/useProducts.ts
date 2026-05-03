@@ -25,6 +25,10 @@ type ProductFilters = {
   material?: string;
   minPrice?: number;
   maxPrice?: number;
+  /** Filter to a single closet’s inventory (public API). */
+  closetId?: string;
+  /** When true and no closetId, only products assigned to a closet (public shop parity). */
+  onlyWithCloset?: boolean;
 };
 
 export const useProducts = (filters?: ProductFilters) =>
@@ -32,11 +36,22 @@ export const useProducts = (filters?: ProductFilters) =>
     queryKey: ["products", filters],
     queryFn: async () => {
       const response = await productApi.getAll(filters);
-      // Filter products with status "APPROVED" or "AVAILABLE"
-      const filteredProducts = response.data.products.filter(
-        (product) =>
-          product.status === "APPROVED" || product.status === "AVAILABLE",
+      const closetScope = Boolean(
+        filters?.closetId || filters?.onlyWithCloset,
       );
+      const filteredProducts = response.data.products.filter((product) => {
+        if (closetScope) {
+          return (
+            product.status === "APPROVED" ||
+            product.status === "AVAILABLE" ||
+            product.status === "RENTED" ||
+            product.status === "SOLD"
+          );
+        }
+        return (
+          product.status === "APPROVED" || product.status === "AVAILABLE"
+        );
+      });
       return filteredProducts;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes

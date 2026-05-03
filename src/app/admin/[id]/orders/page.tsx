@@ -19,6 +19,8 @@ import OrderDetailModal from "./components/OrderDetailModal";
 import ReturnDetailModal from "./components/ReturnDetailModal";
 import { useOrders, useOrderStats } from "@/lib/queries/admin/useOrders";
 import type { Order, Return } from "@/lib/api/admin/orders";
+import { getAdminOrderStatusLabel } from "@/lib/orders/shipmentAndOrderLabels";
+import { adminOrderListStatusToApiParam } from "@/lib/orders/adminOrderListFilters";
 
 const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat("en-NG", {
@@ -33,48 +35,29 @@ const getDefaultAvatar = (name?: string): string => {
   return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || "user")}`;
 };
 
-const getOrderStatusLabel = (raw: unknown): string => {
-  const s = String(raw ?? "").trim();
-  if (!s) return "—";
-  const k = s
-    .toUpperCase()
-    .replace(/-/g, "_")
-    .replace(/\s+/g, "_");
-
-  switch (k) {
-    case "PREPARING":
-      return "Preparing";
-    case "IN_TRANSIT":
-      return "In Transit";
-    case "DELIVERED":
-      return "Delivered";
-    case "RETURN_DUE":
-      return "Return Due";
-    case "RETURN_PICKUP":
-      return "Return Pickup";
-    case "IN_DISPUTE":
-    case "DISPUTED":
-      return "Disputed";
-    case "COMPLETED":
-      return "Completed";
-    default:
-      return s;
-  }
-};
-
-const getStatusColor = (status: string) => {
-  switch (status) {
+const getStatusColor = (statusLabel: string) => {
+  switch (statusLabel) {
+    case "Processing":
+    case "Accepted":
+    case "Confirmed":
     case "Preparing":
       return "bg-gray-100 text-gray-700";
-    case "In Transit":
+    case "In transit":
       return "bg-blue-100 text-blue-700";
     case "Delivered":
+    case "Active (rental)":
       return "bg-green-100 text-green-700";
-    case "Return Due":
+    case "Return due":
+    case "Return pickup":
       return "bg-yellow-100 text-yellow-700";
-    case "Return Pickup":
-      return "bg-purple-100 text-purple-700";
-    case "Disputed":
+    case "Returned":
+      return "bg-indigo-100 text-indigo-800";
+    case "Completed":
+      return "bg-emerald-100 text-emerald-800";
+    case "Cancelled":
+    case "Rejected":
+      return "bg-red-100 text-red-700";
+    case "In dispute":
       return "bg-red-100 text-red-700";
     default:
       return "bg-gray-100 text-gray-700";
@@ -102,7 +85,7 @@ export default function OrdersPage() {
     isError: ordersError,
   } = useOrders({
     tab: activeTab,
-    status: statusFilter !== "All" ? statusFilter : undefined,
+    status: adminOrderListStatusToApiParam(statusFilter),
     search: searchQuery || undefined,
   }) as any;
 
@@ -512,7 +495,7 @@ export default function OrdersPage() {
                         ) : (
                           <>
                             {(() => {
-                              const statusLabel = getOrderStatusLabel(item.status);
+                              const statusLabel = getAdminOrderStatusLabel(item.status);
                               return (
                                 <>
                                   <td className="px-6 py-4">

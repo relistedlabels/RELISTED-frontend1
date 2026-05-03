@@ -61,10 +61,6 @@ const OrderSummaryCards: React.FC<OrderSummaryCardsProps> = ({
                 <Paragraph3 className="font-bold text-black text-lg">
                   {product.name || "Item"}
                 </Paragraph3>
-                <button className="flex items-center text-gray-400 hover:text-black transition-colors">
-                  <Calendar className="mr-1 w-3 h-3" />
-                  <Paragraph1>Calendar </Paragraph1>
-                </button>
               </div>
               {product.color && (
                 <Paragraph1 className="mb-2 text-gray-400 text-xs">
@@ -108,6 +104,22 @@ const OrderSummaryCards: React.FC<OrderSummaryCardsProps> = ({
                     ₦{itemValue?.toLocaleString() || "0"}
                   </Paragraph1>
                 </div>
+                {!isResale &&
+                  Number(
+                    (product as { cleaningFee?: number }).cleaningFee ?? 0,
+                  ) > 0 && (
+                    <div className="col-span-2">
+                      <Paragraph1 className="block text-[10px] text-gray-400">
+                        Cleaning fee (this item)
+                      </Paragraph1>
+                      <Paragraph1 className="font-bold text-black text-sm">
+                        ₦
+                        {Number(
+                          (product as { cleaningFee?: number }).cleaningFee,
+                        ).toLocaleString()}
+                      </Paragraph1>
+                    </div>
+                  )}
               </div>
             </div>
           </div>
@@ -134,8 +146,9 @@ const OrderSummaryCards: React.FC<OrderSummaryCardsProps> = ({
           <div className="flex justify-between items-start">
             <div className="space-y-2">
               <Paragraph1 className="font-bold text-black text-base">
-                {product.rentalStartDate && product.rentalEndDate
-                  ? `${product.rentalStartDate} - ${product.rentalEndDate}`
+                {(product as { rentalStartDate?: string }).rentalStartDate &&
+                (product as { rentalEndDate?: string }).rentalEndDate
+                  ? `${(product as { rentalStartDate: string }).rentalStartDate} to ${(product as { rentalEndDate: string }).rentalEndDate}`
                   : "Dates pending"}
               </Paragraph1>
               <div className="flex items-center space-x-2 text-gray-400">
@@ -143,8 +156,21 @@ const OrderSummaryCards: React.FC<OrderSummaryCardsProps> = ({
                   <Calendar className="w-4 h-4 text-black" />
                 </div>
                 <Paragraph1 className="font-medium text-xs">
-                  {product.rentalDays || 0} day
-                  {product.rentalDays !== 1 ? "s" : ""}
+                  {Number(
+                    (product as { rentalDays?: number; days?: number })
+                      .rentalDays ??
+                      (product as { days?: number }).days ??
+                      0,
+                  )}{" "}
+                  day
+                  {Number(
+                    (product as { rentalDays?: number; days?: number })
+                      .rentalDays ??
+                      (product as { days?: number }).days ??
+                      0,
+                  ) !== 1
+                    ? "s"
+                    : ""}
                 </Paragraph1>
               </div>
             </div>

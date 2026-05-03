@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rentersApi } from "@/lib/api/renters";
+import type { DispatchWindowsPayload } from "@/lib/checkout/dispatchWindows";
 
 /**
  * Submit a rental request (availability check)
@@ -19,6 +20,7 @@ export const useSubmitRentalRequest = () => {
       autoPay: boolean;
       currency: string;
       cartItemId?: string;
+      dispatchWindows?: DispatchWindowsPayload;
     }) => rentersApi.submitRentalRequest(data),
     onSuccess: () => {
       queryClient.invalidateQueries({

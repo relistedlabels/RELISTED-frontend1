@@ -7,6 +7,10 @@ import { Calendar, Package } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import OrderDetails from "./OrderDetails1";
 import { useOrders } from "@/lib/queries/renters/useOrders";
+import {
+  getRenterOrderBadgeClassName,
+  getRenterOrderStatusLabel,
+} from "@/lib/renters/renterOrderStatus";
 
 export default function DashboardOrderList() {
   const [orderView, setOrderView] = useState<"active" | "completed">("active");
@@ -22,14 +26,17 @@ export default function DashboardOrderList() {
 
   // Filter orders based on view - remove PROCESSING/ACTIVE from completed view
   const filteredOrders = orders.filter((order) => {
-    if (orderView === "completed") {
-      return (
-        order.status?.toUpperCase() !== "PROCESSING" &&
-        order.status?.toUpperCase() !== "ACTIVE" &&
-        order.status?.toUpperCase() !== "PENDING"
-      );
-    }
-    return true;
+    const s = String(order.status ?? "")
+      .toUpperCase()
+      .replace(/-/g, "_");
+    const terminal = new Set([
+      "RETURNED",
+      "COMPLETED",
+      "CANCELLED",
+      "REJECTED",
+    ]);
+    if (orderView === "active") return !terminal.has(s);
+    return terminal.has(s);
   });
   const currency = "₦";
 
@@ -39,27 +46,14 @@ export default function DashboardOrderList() {
   };
 
   const getStatusBadge = (status: string) => {
-    let classes = "px-4 py-1 font-bold rounded-sm";
-
-    switch (status?.toUpperCase()) {
-      case "PROCESSING":
-      case "ACTIVE":
-        classes += " bg-yellow-100 text-yellow-800";
-        break;
-      case "COMPLETED":
-        classes += " bg-green-100 text-green-800";
-        break;
-      case "RETURNED":
-        classes += " bg-blue-100 text-blue-800";
-        break;
-      case "CANCELLED":
-        classes += " bg-red-100 text-red-800";
-        break;
-      default:
-        classes += " bg-gray-100 text-gray-800";
-    }
-
-    return <span className={classes}>{status}</span>;
+    const label = getRenterOrderStatusLabel(status);
+    return (
+      <span
+        className={`px-4 py-1 font-bold rounded-sm text-xs ${getRenterOrderBadgeClassName(label)}`}
+      >
+        {label}
+      </span>
+    );
   };
 
   if (isLoading) {

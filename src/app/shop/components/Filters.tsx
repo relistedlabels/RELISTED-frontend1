@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Search, SlidersVertical, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useBrands } from "@/lib/queries/brand/useBrands";
 import { useCategories } from "@/lib/queries/category/useCategories";
@@ -75,6 +75,17 @@ const variants = {
   visible: { x: 0 },
 };
 
+/** Keep shop marketing + closet scope when applying or clearing facet filters. */
+function mergePreservedShopParams(
+  target: URLSearchParams,
+  from: URLSearchParams,
+) {
+  for (const key of ["closetId", "title", "description"] as const) {
+    const v = from.get(key);
+    if (v) target.set(key, v);
+  }
+}
+
 interface FilterPanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -122,6 +133,33 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
     ] as [number, number],
   });
 
+  const searchParamsKey = searchParams.toString();
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setLocalFilters({
+      search: searchParams.get("search") || "",
+      category: searchParams.getAll("category"),
+      tags: searchParams.get("tags") ? searchParams.get("tags")!.split(",") : [],
+      brand: searchParams.getAll("brand"),
+      size: searchParams.get("size") || "",
+      color: searchParams.get("color") || "",
+      condition: searchParams.get("condition") || "",
+      material: searchParams.get("material") || "",
+      availability: searchParams.get("availability")
+        ? searchParams.get("availability")!.split(",")
+        : [],
+      priceRange: [
+        searchParams.get("minPrice")
+          ? parseInt(searchParams.get("minPrice")!, 10)
+          : 50000,
+        searchParams.get("maxPrice")
+          ? parseInt(searchParams.get("maxPrice")!, 10)
+          : 200000,
+      ] as [number, number],
+    });
+  }, [isOpen, searchParamsKey]);
+
   const handleCategoryChange = (categoryId: string, checked: boolean) => {
     const newCategories = checked
       ? [...localFilters.category, categoryId]
@@ -168,12 +206,18 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, onClose }) => {
     if (localFilters.priceRange[1] < 200000)
       params.set("maxPrice", localFilters.priceRange[1].toString());
 
+    mergePreservedShopParams(params, searchParams);
+    params.set("page", "1");
+
     router.push(`?${params.toString()}`);
     onClose();
   };
 
   const handleClearFilters = () => {
-    router.push("/shop");
+    const params = new URLSearchParams();
+    mergePreservedShopParams(params, searchParams);
+    const qs = params.toString();
+    router.push(qs ? `/shop?${qs}` : "/shop");
     onClose();
   };
 

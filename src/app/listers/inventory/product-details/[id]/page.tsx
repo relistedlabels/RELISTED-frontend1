@@ -9,14 +9,14 @@ import InventoryItemDetailsHeader from "@/app/listers/components/InventoryItemDe
 import ProductInfoTabs from "@/app/listers/components/ProductInfoTabs";
 import RentalsHistory from "@/app/listers/components/RentalsHistory";
 import ManageItemHeader from "@/app/listers/components/ManageItemHeader";
-import { useGetProductById } from "@/lib/queries/product/useGetProductById";
+import { useListerProductById } from "@/lib/queries/product/useGetProductById";
 import { useProductDetailsStore } from "@/store/useProductDetailsStore";
 
 export default function Page() {
   const params = useParams();
   const productId = params.id as string;
 
-  const { data: product, isPending, isError } = useGetProductById(productId);
+  const { data: product, isPending, isError } = useListerProductById(productId);
   const setProduct = useProductDetailsStore((state) => state.setProduct);
 
   useEffect(() => {

@@ -1,4 +1,5 @@
 import { apiFetch } from "./http";
+import type { DispatchWindowsPayload } from "@/lib/checkout/dispatchWindows";
 
 /**
  * Body fields that drive `BankAccount` create/update in renters `updateProfile`
@@ -115,6 +116,24 @@ export type RentalOrder = {
   damageAssessment: any;
   canRaiseDispute: boolean;
   canReturn: boolean;
+  /** Present on GET order detail when a return was booked (Topship / return request). */
+  returnPickup?: {
+    requestStatus: string;
+    trackingNumber: string | null;
+    carrierShipmentId: string | null;
+    pickupWindowStart: string | null;
+    pickupWindowEnd: string | null;
+    pickupScheduledAt: string | null;
+    pickupWindowSummary: string | null;
+  } | null;
+  /** Latest RETURN shipment leg from order creation / dispatch flow. */
+  returnLeg?: {
+    status: string;
+    label: string;
+    trackingId: string | null;
+    providerTrackingUrl: string | null;
+    windowSummary: string | null;
+  } | null;
 };
 
 export type WalletInfo = {
@@ -200,6 +219,16 @@ export type RentalRequest = {
   expiresAt: string;
   timeRemainingSeconds: number;
   timeRemainingMinutes: number;
+  selectedWindows?: {
+    outboundDeliveryWindow: {
+      start: string;
+      end: string;
+    };
+    returnPickupWindow: {
+      start: string;
+      end: string;
+    };
+  };
 };
 
 export type Dispute = {
@@ -442,6 +471,13 @@ export const rentersApi = {
       method: "DELETE",
     }),
 
+  /** Subscribe to email when a RENTED product is available to rent again */
+  subscribeProductNotifyWhenAvailable: (productId: string) =>
+    apiFetch<{ success: boolean; message: string }>(
+      `/api/renters/products/${productId}/notify-when-available`,
+      { method: "POST" },
+    ),
+
   // Orders/Rentals
   getOrders: (params?: {
     status?: "active" | "completed" | "returned" | "cancelled";
@@ -467,12 +503,27 @@ export const rentersApi = {
         timeline: Array<{
           milestone: string;
           label: string;
-          timestamp?: string;
+          timestamp?: string | null;
           status: "completed" | "current" | "pending";
           description: string;
         }>;
         currentMilestone: string;
         percentComplete: number;
+        returnScheduling: {
+          requestStatus: string;
+          trackingNumber: string | null;
+          pickupWindowStart: string | null;
+          pickupWindowEnd: string | null;
+          pickupScheduledAt: string | null;
+          summary: string | null;
+        } | null;
+        returnLeg: {
+          status: string;
+          label: string;
+          trackingId: string | null;
+          providerTrackingUrl: string | null;
+          windowSummary: string | null;
+        } | null;
       };
     }>(`/api/renters/orders/${orderId}/progress`, { method: "GET" }),
 
@@ -857,6 +908,7 @@ export const rentersApi = {
     autoPay: boolean;
     currency: string;
     cartItemId?: string;
+    dispatchWindows?: DispatchWindowsPayload;
   }) =>
     apiFetch<{ success: boolean; data: RentalRequest }>(
       "/api/renters/rental-requests",

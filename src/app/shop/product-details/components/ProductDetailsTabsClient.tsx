@@ -42,8 +42,34 @@ const ProductDetailsTabsClient: React.FC<ProductDetailsTabsClientProps> = ({
     return <DetailPanelSkeleton />;
   }
 
+  const isSold = product?.status === "SOLD";
+  const isRentedOut = product?.status === "RENTED";
+
+  if (isSold && product) {
+    const showRentalCard =
+      product.listingType === "RENTAL" || !product.listingType;
+    return (
+      <div>
+        <div className="bg-gray-50 mb-4 px-4 py-3 border border-gray-200 rounded-xl">
+          <p className="font-semibold text-gray-900">Sold out</p>
+          <p className="mt-1 text-gray-600 text-sm leading-relaxed">
+            This item is no longer available to rent or buy. Details below are
+            for reference only.
+          </p>
+        </div>
+        {showRentalCard ? (
+          <RentalDetailsCard productId={productId} />
+        ) : (
+          <ResaleDetailsCard productId={productId} />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div>
+
+
       {/* Tab Buttons - only show if both tabs are available */}
       {hasRent && hasResale && (
         <div className="flex gap-2 bg-white mb-2 p-1 border border-gray-300 rounded-xl text-[14px]">

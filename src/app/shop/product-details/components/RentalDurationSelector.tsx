@@ -61,47 +61,10 @@ const Calendar = ({
   unavailableDays?: number[];
 }) => {
   const [currentDate, setCurrentDate] = useState(startDate);
-  const [didAutoSelectTomorrow, setDidAutoSelectTomorrow] = useState(false);
-  const today = new Date();
-  const todayYear = today.getFullYear();
-  const todayMonth = today.getMonth();
-  const todayDay = today.getDate();
-  const computedTomorrow = new Date(todayYear, todayMonth, todayDay + 1);
-  const tomorrowYear = computedTomorrow.getFullYear();
-  const tomorrowMonth = computedTomorrow.getMonth();
-
-  const lagosHour = Number(
-    new Intl.DateTimeFormat("en-NG", {
-      timeZone: "Africa/Lagos",
-      hour: "2-digit",
-      hour12: false,
-    }).format(today),
-  );
-  const isPastNoonLagos = lagosHour >= 12;
 
   useEffect(() => {
     setCurrentDate(startDate);
   }, [startDate]);
-
-  useEffect(() => {
-    const isStartDateToday =
-      startDate.getFullYear() === todayYear &&
-      startDate.getMonth() === todayMonth &&
-      startDate.getDate() === todayDay;
-
-    if (isPastNoonLagos && isStartDateToday && !didAutoSelectTomorrow) {
-      setStartDate(new Date(todayYear, todayMonth, todayDay + 1));
-      setDidAutoSelectTomorrow(true);
-    }
-  }, [
-    didAutoSelectTomorrow,
-    isPastNoonLagos,
-    setStartDate,
-    startDate,
-    todayDay,
-    todayMonth,
-    todayYear,
-  ]);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -112,18 +75,10 @@ const Calendar = ({
   const paddingArray = Array.from({ length: startingDay }, () => null);
   const totalDays = [...paddingArray, ...daysArray];
 
-  // Logic for navigating months
-  const isMonthToday = year === todayYear && month === todayMonth;
-  const isMonthTomorrow = year === tomorrowYear && month === tomorrowMonth;
-  const canGoPrevMonth = isMonthTomorrow && !isMonthToday;
-  const canGoNextMonth = isMonthToday && !isMonthTomorrow;
-
   const handlePrevMonth = () => {
-    if (!canGoPrevMonth) return;
     setCurrentDate(new Date(year, month - 1, 1));
   };
   const handleNextMonth = () => {
-    if (!canGoNextMonth) return;
     setCurrentDate(new Date(year, month + 1, 1));
   };
 
@@ -131,64 +86,42 @@ const Calendar = ({
   const isUnavailable = (day: number) =>
     typeof day === "number" && unavailableDays.includes(day);
 
-  const isSelectableDay = (day: number) => {
-    const isToday =
-      year === todayYear && month === todayMonth && day === todayDay;
-    const isTomorrow =
-      year === tomorrowYear &&
-      month === tomorrowMonth &&
-      day === computedTomorrow.getDate();
-    return isToday || isTomorrow;
-  };
-
   const isClickDisabledDay = (day: number) =>
-    typeof day === "number" && (!isSelectableDay(day) || isUnavailable(day));
+    typeof day === "number" && isUnavailable(day);
 
   // Function to determine if a day is part of the selected range
   const isSelectedRange = (day: number) => {
     if (typeof day !== "number") return false;
-    const start =
-      currentDate.getFullYear() === startDate.getFullYear() &&
-      currentDate.getMonth() === startDate.getMonth()
-        ? startDate.getDate()
-        : 1;
     const duration = customDays || selectedDuration;
-    return day >= start && day < start + duration && !isUnavailable(day);
+
+    const cellDate = new Date(year, month, day);
+    cellDate.setHours(0, 0, 0, 0);
+
+    const rangeStart = new Date(startDate);
+    rangeStart.setHours(0, 0, 0, 0);
+
+    const rangeEnd = new Date(rangeStart);
+    rangeEnd.setDate(rangeEnd.getDate() + duration);
+    rangeEnd.setHours(0, 0, 0, 0);
+
+    return cellDate >= rangeStart && cellDate < rangeEnd && !isUnavailable(day);
   };
 
   // Handle selecting a new start date
   const handleDayClick = (day: number) => {
-    if (
-      typeof day === "number" &&
-      isSelectableDay(day) &&
-      !isUnavailable(day)
-    ) {
+    if (typeof day === "number" && !isUnavailable(day)) {
       setStartDate(new Date(year, month, day));
     }
   };
 
   return (
     <div className="bg-white p-4 border border-gray-100 rounded-xl">
-      {isPastNoonLagos && (
-        <div className="flex items-start gap-3 bg-amber-50 mb-4 p-3 border border-amber-200 rounded-lg">
-          <AlertCircle size={20} className="text-amber-700 shrink-0" />
-          <Paragraph1 className="text-amber-900 text-sm leading-relaxed">
-            It’s past 12 noon (Lagos time) — we recommend selecting tomorrow to
-            avoid delays.
-          </Paragraph1>
-        </div>
-      )}
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <button
           type="button"
           onClick={handlePrevMonth}
-          disabled={!canGoPrevMonth}
-          className={`p-1 rounded-full ${
-            canGoPrevMonth
-              ? "hover:bg-gray-50 cursor-pointer"
-              : "opacity-50 cursor-not-allowed"
-          }`}
+          className="hover:bg-gray-50 p-1 rounded-full cursor-pointer"
         >
           <ChevronLeft size={20} />
         </button>
@@ -198,12 +131,7 @@ const Calendar = ({
         <button
           type="button"
           onClick={handleNextMonth}
-          disabled={!canGoNextMonth}
-          className={`p-1 rounded-full ${
-            canGoNextMonth
-              ? "hover:bg-gray-50 cursor-pointer"
-              : "opacity-50 cursor-not-allowed"
-          }`}
+          className="hover:bg-gray-50 p-1 rounded-full cursor-pointer"
         >
           <ChevronRight size={20} />
         </button>
@@ -256,10 +184,6 @@ const Calendar = ({
           );
         })}
       </div>
-      <Paragraph1 className="mt-4 text-gray-600 text-xs">
-        For now, delivery is limited to same-day or next-day. Scheduled delivery
-        is coming soon.
-      </Paragraph1>
     </div>
   );
 };

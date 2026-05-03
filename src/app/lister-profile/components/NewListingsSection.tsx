@@ -6,9 +6,9 @@ import { useState } from "react";
 import ProductCard from "@/common/ui/ProductCard";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import { SlidersVertical } from "lucide-react";
-import Filters from "./Filters";
 import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import { usePublicUserProducts } from "@/lib/queries/user/usePublicUserProducts";
+import Filters from "@/app/shop/components/Filters";
 
 interface NewListingsSectionProps {
   userId: string;
@@ -89,7 +89,9 @@ export default function NewListingsSection({
         ) : (
           <>
             <div className="gap-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
-              {products.map((product) => (
+              {products.map((product) => {
+                const status = (product as { status?: string }).status;
+                return (
                 <ProductCard
                   id={product.id}
                   image={product.image}
@@ -100,8 +102,11 @@ export default function NewListingsSection({
                   resalePrice={product.resalePrice}
                   listingType={product.listingType}
                   size={product.measurement}
+                  isSold={status === "SOLD"}
+                  isRentedOut={status === "RENTED"}
                 />
-              ))}
+              );
+              })}
             </div>
 
             {/* Pagination */}
