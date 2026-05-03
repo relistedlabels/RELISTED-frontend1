@@ -34,6 +34,35 @@ export type Product = {
   listingType?: "RENTAL" | "RESALE" | "RENT_OR_RESALE";
   status?: string;
   rejectionComment?: string | null;
+  closetId?: string | null;
+  closet?: {
+    id: string;
+    name: string;
+    slug: string;
+    imageUrl: string | null;
+  } | null;
+};
+
+/** Authenticated lister/owner view (includes closet, full fields). */
+export type ListerProduct = Product;
+
+export const fetchListerProductById = async (
+  productId: string,
+): Promise<ListerProduct> => {
+  const res = await apiFetch<{
+    success: boolean;
+    data: ListerProduct;
+  }>(`/product/${productId}`);
+  return res.data;
+};
+
+export const useListerProductById = (productId: string) => {
+  return useQuery({
+    queryKey: ["product", "lister", productId],
+    queryFn: () => fetchListerProductById(productId),
+    enabled: !!productId,
+    staleTime: 5 * 60 * 1000,
+  });
 };
 
 type ProductByIdResponse = {

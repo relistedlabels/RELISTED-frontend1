@@ -9,6 +9,8 @@ export const useProductsQuery = () => {
   const search = searchParams.get("search") || undefined;
   const category = searchParams.getAll("category");
   const tags = searchParams.get("tags") || undefined;
+  const closetId = searchParams.get("closetId") || undefined;
+  const onlyWithCloset = !closetId;
   const brand = searchParams.getAll("brand");
   const size = searchParams.get("size") || undefined;
   const minPrice = searchParams.get("minPrice")
@@ -31,6 +33,8 @@ export const useProductsQuery = () => {
         search,
         category,
         tags,
+        closetId,
+        onlyWithCloset,
         brand,
         size,
         minPrice,
@@ -46,6 +50,8 @@ export const useProductsQuery = () => {
         search,
         category: category.length > 0 ? category : undefined,
         tags,
+        closetId,
+        onlyWithCloset,
         brand: brand.length > 0 ? brand : undefined,
         size,
         minPrice,
@@ -57,11 +63,20 @@ export const useProductsQuery = () => {
         limit: 15,
       });
 
-      // Filter products with status "APPROVED" or "AVAILABLE"
-      const filteredProducts = response.data.products.filter(
-        (product) =>
-          product.status === "APPROVED" || product.status === "AVAILABLE",
-      );
+      const closetScope = Boolean(closetId || onlyWithCloset);
+      const filteredProducts = response.data.products.filter((product) => {
+        if (closetScope) {
+          return (
+            product.status === "APPROVED" ||
+            product.status === "AVAILABLE" ||
+            product.status === "RENTED" ||
+            product.status === "SOLD"
+          );
+        }
+        return (
+          product.status === "APPROVED" || product.status === "AVAILABLE"
+        );
+      });
 
       return {
         products: filteredProducts,

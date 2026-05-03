@@ -161,6 +161,8 @@ export default function Favorites() {
                     resalePrice={product.resalePrice}
                     listingType={product.listingType}
                     size={product.measurement}
+                    isSold={product.status === "SOLD"}
+                    isRentedOut={product.status === "RENTED"}
                   />
                   {/* Remove from Favorites Button */}
                   <button

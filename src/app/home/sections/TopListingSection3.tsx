@@ -1,4 +1,4 @@
-// ENDPOINTS: GET /api/public/products
+// ENDPOINTS: GET /api/public/products (closet inventory for home strip)
 
 "use client";
 
@@ -8,32 +8,36 @@ import { useRef } from "react";
 import { useProducts } from "@/lib/queries/product/useProducts";
 import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import Link from "next/link";
+import { primaryProductHeroImage } from "@/lib/product/primaryProductHeroImage";
+
+const browseShopHref =
+  "/shop?title=" +
+  encodeURIComponent("Closet Drops") +
+  "&description=" +
+  encodeURIComponent(
+    "Celebrity wardrobes. Limited drops. Shop it before it disappears.",
+  );
 
 const TopListingSection = () => {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
-  // const { data: products, isLoading, error } = useProducts();
   const {
     data: products,
     isLoading,
     error,
   } = useProducts({
     sort: "newest",
-    tags: "Black Tie",
+    onlyWithCloset: true,
     limit: 7,
   });
-  // Convert vertical wheel to horizontal scroll for mouse users
+
   const onWheel = (e: React.WheelEvent) => {
     const el = scrollerRef.current;
     if (!el) return;
 
-    // If the user is actually scrolling horizontally (deltaX present) allow it,
-    // otherwise convert vertical wheel to horizontal.
     if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-      // let native horizontal wheel happen
       return;
     }
 
-    // convert vertical scroll into horizontal scroll
     el.scrollLeft += e.deltaY;
     e.preventDefault();
   };
@@ -62,9 +66,7 @@ const TopListingSection = () => {
               Closet Drops
             </Header1Plus>
             <Paragraph1 className="text-gray-600">
-              {" "}
-              Celebrity wardrobes. Limited drops. Shop it before it
-              disappears.{" "}
+              Celebrity wardrobes. Limited drops. Shop it before it disappears.
             </Paragraph1>
           </div>
           <ProductCardSkeleton count={6} />
@@ -78,7 +80,6 @@ const TopListingSection = () => {
   return (
     <section className="bg-white px-4 sm:px-0 py-6 sm:py-12">
       <div className="mx-auto container">
-        {/* Header */}
         <div className="flex flex-col justify-center items-center mb-2 sm:mb-6 text-center">
           <div className=" flex items-center gap-4">
             <Header1Plus className="uppercase tracking-wide">
@@ -91,19 +92,16 @@ const TopListingSection = () => {
           </div>
 
           <Paragraph1 className="max-w-[280px] sm:max-w-[480px] text-gray-600">
-            {" "}
-            Celebrity wardrobes. Limited drops. Shop it before it
-            disappears.{" "}
+            Celebrity wardrobes. Limited drops. Shop it before it disappears.
           </Paragraph1>
           <Link
-            href={`/shop?tags=${encodeURIComponent("Vacation")}&title=${encodeURIComponent("Closet Drops")}&description=${encodeURIComponent("Celebrity wardrobes. Limited drops. Shop it before it disappears.")}`}
+            href={browseShopHref}
             className="mt-4 text-sm font-bold border-b hover:opacity-70 transition-opacity"
           >
             Browse All →
           </Link>
         </div>
 
-        {/* Products or No Products Message */}
         {displayProducts.length === 0 ? (
           <div className="py-12 text-center">
             <Paragraph1 className="text-gray-600">
@@ -111,21 +109,15 @@ const TopListingSection = () => {
             </Paragraph1>
           </div>
         ) : (
-          /* Native horizontal scroll — gestures will work */
           <div
             ref={scrollerRef}
             onWheel={onWheel}
-            // styles: horizontal scroll, hide vertical overflow, enable momentum scrolling on iOS
             style={{
               WebkitOverflowScrolling: "touch",
             }}
             className="relative w-full overflow-x-auto overflow-y-hidden hide-scrollbar"
           >
-            <div
-              // keep items in a single row
-              className="flex gap-2 sm:gap-4 px-2"
-              // prefer native touch behavior (don't intercept pointer events)
-            >
+            <div className="flex gap-2 sm:gap-4 px-2">
               {displayProducts.map((product, index) => (
                 <div
                   key={`${product.id}-${index}`}
@@ -133,10 +125,7 @@ const TopListingSection = () => {
                 >
                   <ProductCard
                     id={product.id}
-                    image={
-                      product.attachments?.uploads?.[0]?.url ||
-                      "/placeholder.jpg"
-                    }
+                    image={primaryProductHeroImage(product)}
                     brand={product.brand?.name || "BRAND"}
                     name={product.name}
                     price={`₦${(product.originalValue || 0).toLocaleString()}`}
@@ -144,6 +133,10 @@ const TopListingSection = () => {
                     resalePrice={product.resalePrice}
                     listingType={product.listingType}
                     size={product.measurement}
+                    closetOwner={product.closet?.name}
+                    closetImage={product.closet?.imageUrl ?? undefined}
+                    isSold={product.status === "SOLD"}
+                    isRentedOut={product.status === "RENTED"}
                   />
                 </div>
               ))}
@@ -153,7 +146,7 @@ const TopListingSection = () => {
 
         <div className="flex justify-center items-center mt-2 w-full">
           <Link
-            href={`/shop?tags=${encodeURIComponent("Vacation")}&title=${encodeURIComponent("Closet Drops")}&description=${encodeURIComponent("Celebrity wardrobes. Limited drops. Shop it before it disappears.")}`}
+            href={browseShopHref}
             className="inline-flex justify-center items-center bg-black hover:bg-neutral-800 px-8 py-3 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 w-full max-w-md font-medium text-white text-sm tracking-wider transition-colors duration-200"
             aria-label="Browse all items"
           >

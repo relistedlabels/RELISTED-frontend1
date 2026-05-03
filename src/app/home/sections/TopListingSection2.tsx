@@ -132,6 +132,8 @@ const TopListingSection = () => {
                     resalePrice={product.resalePrice}
                     listingType={product.listingType}
                     size={product.measurement}
+                    isSold={product.status === "SOLD"}
+                    isRentedOut={product.status === "RENTED"}
                   />
                 </div>
               ))}

@@ -45,6 +45,9 @@ export const useUpdateProduct = (productId: string) => {
               ? "RENTAL"
               : "RENT_OR_RESALE",
         resalePrice: draft.resalePrice,
+        ...(typeof draft.closetId === "string"
+          ? { closetId: draft.closetId === "" ? null : draft.closetId }
+          : {}),
       };
 
       console.log("📤 Final payload being sent:", payload);
@@ -63,6 +66,8 @@ export const useUpdateProduct = (productId: string) => {
       });
       queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "listings"] });
+      queryClient.invalidateQueries({ queryKey: ["user-products"] });
+      queryClient.invalidateQueries({ queryKey: ["closets", "mine"] });
       reset();
     },
     onError: (error: any) => {

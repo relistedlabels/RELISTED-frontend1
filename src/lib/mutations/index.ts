@@ -8,6 +8,8 @@ export * from "./auth/useForgotPassword";
 export * from "./auth/useResetPassword";
 export * from "./product/useCreateProduct";
 export * from "./product/useUpdateProduct";
+export * from "./closet/useCreateCloset";
+export * from "./closet/useUpdateCloset";
 export * from "./product/useDeleteProduct";
 export * from "./product/useProductApproval";
 export * from "./product/useToggleAvailability";

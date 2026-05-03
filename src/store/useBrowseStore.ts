@@ -9,6 +9,8 @@ type ProductCardData = {
   price: string;
   dailyPrice?: number;
   measurement?: string;
+  isSold?: boolean;
+  isRentedOut?: boolean;
 };
 
 type BrowseStore = {

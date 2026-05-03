@@ -21,22 +21,9 @@ export default function AllListersPage() {
   const users = data?.users || [];
   const pagination = data?.pagination;
 
-  // Check if running on localhost
-  const isLocalhost =
-    typeof window !== "undefined" &&
-    (window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1" ||
-      window.location.hostname.startsWith("localhost:"));
-
-  // Filter out test user on production
   const HIDDEN_USER_ID = "7d172d18-daad-46cd-ab6d-8d8af28c0b16";
   const visibleUsers =
-    users?.filter((user) => {
-      if (!isLocalhost && user.id === HIDDEN_USER_ID) {
-        return false;
-      }
-      return true;
-    }) || [];
+    users?.filter((user) => user.id !== HIDDEN_USER_ID) || [];
 
   // ✅ Filter and sort: show users with avatars first, then the rest
   const filteredUsers = visibleUsers

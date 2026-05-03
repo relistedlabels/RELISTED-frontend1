@@ -471,6 +471,13 @@ export const rentersApi = {
       method: "DELETE",
     }),
 
+  /** Subscribe to email when a RENTED product is available to rent again */
+  subscribeProductNotifyWhenAvailable: (productId: string) =>
+    apiFetch<{ success: boolean; message: string }>(
+      `/api/renters/products/${productId}/notify-when-available`,
+      { method: "POST" },
+    ),
+
   // Orders/Rentals
   getOrders: (params?: {
     status?: "active" | "completed" | "returned" | "cancelled";

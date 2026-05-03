@@ -17,11 +17,14 @@ const ProductMediaGallery: React.FC<ProductMediaGalleryProps> = ({
   const [activeIndex, setActiveIndex] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
 
-  // Extract images from product attachments
-  const productImages =
-    product?.attachments?.uploads?.map((upload: any) => upload.url) || [];
+  // Product photos only — do not treat the closet cover as item media when it
+  // appears as a duplicate upload URL (common when the same asset is reused).
+  const closetCoverUrl = product?.closet?.imageUrl?.trim() || null;
+  const productImages = (product?.attachments?.uploads ?? [])
+    .map((upload: { url?: string }) => upload.url?.trim())
+    .filter((url): url is string => Boolean(url))
+    .filter((url) => !closetCoverUrl || url !== closetCoverUrl);
 
-  // Use product images or fallback to empty array
   const media =
     productImages.length > 0
       ? productImages.map((src: string) => ({ type: "image" as const, src }))
