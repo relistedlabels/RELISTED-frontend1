@@ -17,6 +17,7 @@ import {
 import DispatchWindowsDisplay, {
   type DispatchWindow,
 } from "@/app/listers/components/DispatchWindowsDisplay";
+import { isListerResaleOrder } from "@/lib/listers/listerOrderRow";
 
 type RenterOrderProgressPayload = ComponentProps<
   typeof OrderProgressTimeline
@@ -45,6 +46,10 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
     hidden: { x: "100%" },
     visible: { x: 0 },
   };
+
+  const resaleOnlyOrder = orderData
+    ? isListerResaleOrder(orderData as Record<string, unknown>)
+    : false;
 
   return (
     <AnimatePresence>
@@ -126,7 +131,9 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
                     </Paragraph1>
                   ) : null}
                   <OrderStatusDetails orderData={orderData} />
-                  <ReadyToReturnSection orderId={orderId} />
+                  {!resaleOnlyOrder ? (
+                    <ReadyToReturnSection orderId={orderId} />
+                  ) : null}
                 </>
               )}
             </div>

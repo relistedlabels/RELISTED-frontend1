@@ -3,6 +3,7 @@
 import React from "react";
 import { Package, Star } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
+import { isListerResaleOrder } from "@/lib/listers/listerOrderRow";
 
 const formatCurrency = (amount: number | undefined): string => {
   if (amount === undefined || amount === null) return "0";
@@ -107,10 +108,10 @@ export default function ProductCuratorDetails({
     return formatSingleDate(next.toISOString());
   };
 
-  const collateralSum = items.reduce(
-    (s, l) => s + Number(l.collateralFee ?? 0),
-    0,
-  );
+  const collateralSum = items.reduce((s, l) => {
+    if (isResaleLine(l)) return s;
+    return s + Number(l.collateralFee ?? 0);
+  }, 0);
 
   const itemsSubtotalFromLines = items.reduce(
     (s, l) =>
@@ -147,6 +148,8 @@ export default function ProductCuratorDetails({
     serviceFeeDisplay +
     orderVatAmount;
   const otherAdjust = orderTotalAmount - sumFinal;
+
+  const resaleOnlyOrder = isListerResaleOrder(orderData);
 
   return (
     <div className="space-y-4">
@@ -288,7 +291,7 @@ export default function ProductCuratorDetails({
             </div>
           ) : null}
           <div className="flex justify-between gap-4 text-gray-600">
-            <span>Delivery & return</span>
+            <span>{resaleOnlyOrder ? "Delivery" : "Delivery & return"}</span>
             <span className="font-semibold text-gray-900 tabular-nums">
               {CURRENCY}
               {formatCurrency(orderDeliveryFee)}

@@ -13,6 +13,7 @@ import {
   getRenterOrderStatusLabel,
   normalizeRenterOrderStatusKey,
 } from "@/lib/renters/renterOrderStatus";
+import { isListerResaleOrder } from "@/lib/listers/listerOrderRow";
 import { toast } from "sonner";
 
 const CURRENCY = "₦";
@@ -76,8 +77,11 @@ export default function OrderStatusDetails({
     "CANCELLED",
     "REJECTED",
   ]);
+  const resaleOnlyOrder = isListerResaleOrder(orderData);
   const showLockedFundsNotice =
-    !terminalOrderStatuses.has(statusKey) && lockedAmount > 0;
+    !resaleOnlyOrder &&
+    !terminalOrderStatuses.has(statusKey) &&
+    lockedAmount > 0;
 
   // Get order date
   const orderDate = orderData.createdAt
@@ -152,59 +156,62 @@ export default function OrderStatusDetails({
         </div>
       </div>
 
-      {/* --- 3. RETURN STATUS --- */}
-      <div>
-        <Paragraph1 className="mb-3 font-bold text-gray-900 text-base">
-          Return Information
-        </Paragraph1>
+      {/* --- 3. RETURN STATUS (rentals only) --- */}
+      {!resaleOnlyOrder && (
+        <div>
+          <Paragraph1 className="mb-3 font-bold text-gray-900 text-base">
+            Return Information
+          </Paragraph1>
 
-        <div className="bg-white p-4 border border-gray-300 rounded-xl">
-          <div className="flex items-start gap-4">
-            <div className="flex justify-center items-center bg-blue-100 rounded-full w-8 h-8 shrink-0">
-              <ShoppingBag size={16} className="text-blue-600" />
-            </div>
+          <div className="bg-white p-4 border border-gray-300 rounded-xl">
+            <div className="flex items-start gap-4">
+              <div className="flex justify-center items-center bg-blue-100 rounded-full w-8 h-8 shrink-0">
+                <ShoppingBag size={16} className="text-blue-600" />
+              </div>
 
-            <div className="flex-1">
-              <Paragraph1 className="mb-1 font-bold text-gray-900 text-sm">
-                Return Due Date
-              </Paragraph1>
-              <Paragraph1 className="mb-3 text-gray-700 text-sm">
-                Please return the item by{" "}
-                <span className="font-semibold text-gray-900">
-                  {returnDate}
-                </span>
-              </Paragraph1>
+              <div className="flex-1">
+                <Paragraph1 className="mb-1 font-bold text-gray-900 text-sm">
+                  Return Due Date
+                </Paragraph1>
+                <Paragraph1 className="mb-3 text-gray-700 text-sm">
+                  Please return the item by{" "}
+                  <span className="font-semibold text-gray-900">
+                    {returnDate}
+                  </span>
+                </Paragraph1>
 
-              {orderData.canReturn === false && (
-                <div className="flex items-start gap-2 bg-orange-50 mt-3 p-3 border border-orange-200 rounded">
-                  <AlertCircle
-                    size={16}
-                    className="flex-shrink-0 mt-0.5 text-orange-600"
-                  />
-                  <Paragraph1 className="text-orange-700 text-xs">
-                    You can start the return process once the rental period ends
-                  </Paragraph1>
-                </div>
-              )}
+                {orderData.canReturn === false && (
+                  <div className="flex items-start gap-2 bg-orange-50 mt-3 p-3 border border-orange-200 rounded">
+                    <AlertCircle
+                      size={16}
+                      className="flex-shrink-0 mt-0.5 text-orange-600"
+                    />
+                    <Paragraph1 className="text-orange-700 text-xs">
+                      You can start the return process once the rental period
+                      ends
+                    </Paragraph1>
+                  </div>
+                )}
 
-              {orderData.canReturn === true && (
-                <div className="flex items-start gap-2 bg-green-50 mt-3 p-3 border border-green-200 rounded">
-                  <AlertCircle
-                    size={16}
-                    className="flex-shrink-0 mt-0.5 text-green-600"
-                  />
-                  <Paragraph1 className="text-green-700 text-xs">
-                    You can now start the return process
-                  </Paragraph1>
-                </div>
-              )}
+                {orderData.canReturn === true && (
+                  <div className="flex items-start gap-2 bg-green-50 mt-3 p-3 border border-green-200 rounded">
+                    <AlertCircle
+                      size={16}
+                      className="flex-shrink-0 mt-0.5 text-green-600"
+                    />
+                    <Paragraph1 className="text-green-700 text-xs">
+                      You can now start the return process
+                    </Paragraph1>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* --- 3b. RETURN PICKUP (only when we have a window, tracking, or link) --- */}
-      {hasReturnDetails && (
+      {!resaleOnlyOrder && hasReturnDetails && (
         <div>
           <Paragraph1 className="mb-3 font-bold text-gray-900 text-base">
             Your return
