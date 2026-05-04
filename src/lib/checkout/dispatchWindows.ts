@@ -359,6 +359,13 @@ export const deriveDefaultDispatchWindow = (
 
     const lastAllowedStart = dayEnd - duration;
 
+    // If rounding pushed us past the last allowed start, round down instead
+    if (candidateStart > lastAllowedStart && currentHourMinutes >= 30) {
+      // Try rounding down instead of up
+      candidateStart = preferredStart - currentHourMinutes;
+      candidateStart = Math.max(candidateStart, dayStart);
+    }
+
     // No room left on this calendar day (or same-day lead pushed us past last start) → next day.
     // Do not clamp to lastAllowedStart: that can yield a window that is already over or impossible.
     if (candidateStart > lastAllowedStart) {
