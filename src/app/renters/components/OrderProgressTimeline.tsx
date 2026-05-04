@@ -72,7 +72,7 @@ function rentalOrderStatusToStageId(statusRaw: string | undefined): number {
   const k = normalizeRenterOrderStatusKey(String(statusRaw ?? ""));
   const map: Record<string, number> = {
     PROCESSING: 1,
-    ACCEPTED: 2,
+    ACCEPTED: 1,
     CONFIRMED: 2,
     IN_TRANSIT: 3,
     DELIVERED: 4,
@@ -149,38 +149,40 @@ export default function OrderProgressTimeline({
     return [
       {
         id: 1,
-        label: "Order Placed",
-        description: "Your order has been placed and is being processed.",
-        icon: Package,
-      },
-      {
-        id: 2,
-        label: "Confirmed",
-        description: "Lister confirmed and is preparing the item.",
+        label: "Lister accepted",
+        description: "The lister approved your rental dates.",
         icon: CheckCircle,
       },
       {
+        id: 2,
+        label: "Rental confirmed",
+        description: "Your payment went through and your booking is confirmed.",
+        icon: Package,
+      },
+      {
         id: 3,
-        label: "In Transit",
-        description: "Item is on the way via delivery partner.",
+        label: "In transit",
+        description: "Your item is on the way to you.",
         icon: Truck,
       },
       {
         id: 4,
         label: "With you",
-        description: "Rental is active — item is with you.",
+        description: "Rental period is active — enjoy your rental.",
         icon: Home,
       },
       {
         id: 5,
         label: "Return",
-        description: "Return window or return shipment.",
+        description:
+          "Return the item by the due date. Start a return in the app when you are ready to schedule pickup if needed.",
         icon: RefreshCw,
       },
       {
         id: 6,
         label: "Returned",
-        description: "Item is back with the lister.",
+        description:
+          "The item is back with the lister (delivered or confirmed by them).",
         icon: CheckCircle,
       },
     ];
@@ -203,6 +205,12 @@ export default function OrderProgressTimeline({
   const percentComplete = useApi
     ? Math.min(100, Math.max(0, progress!.percentComplete))
     : fallbackPercent;
+
+  const showReturnSupplement =
+    useApi &&
+    (Boolean(progress?.returnScheduling?.summary?.trim()) ||
+      Boolean(progress?.returnLeg?.trackingId?.trim()) ||
+      Boolean(progress?.returnLeg?.providerTrackingUrl?.trim()));
 
   if (!orderData) {
     return (
@@ -290,35 +298,31 @@ export default function OrderProgressTimeline({
               );
             })}
 
-            {(progress!.returnScheduling?.summary ||
-              progress!.returnLeg?.label) && (
+            {showReturnSupplement && (
               <div className="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
                 <Paragraph1 className="text-xs font-bold text-slate-700 uppercase tracking-wide">
-                  Return shipment
+                  Your return
                 </Paragraph1>
-                {progress!.returnScheduling?.summary ? (
+                {progress?.returnScheduling?.summary?.trim() ? (
                   <Paragraph1 className="text-sm text-slate-800">
-                    <span className="font-semibold">Your pickup window: </span>
-                    {progress!.returnScheduling.summary}
+                    <span className="font-semibold">Pickup window: </span>
+                    {progress.returnScheduling.summary.trim()}
                   </Paragraph1>
                 ) : null}
-                {progress!.returnLeg?.label ? (
+                {progress?.returnLeg?.trackingId?.trim() ? (
                   <Paragraph1 className="text-sm text-slate-800">
-                    <span className="font-semibold">Carrier leg: </span>
-                    {progress!.returnLeg.label}
-                    {progress!.returnLeg.trackingId
-                      ? ` · ${progress!.returnLeg.trackingId}`
-                      : ""}
+                    <span className="font-semibold">Tracking: </span>
+                    {progress.returnLeg.trackingId.trim()}
                   </Paragraph1>
                 ) : null}
-                {progress!.returnLeg?.providerTrackingUrl ? (
+                {progress?.returnLeg?.providerTrackingUrl?.trim() ? (
                   <a
-                    href={progress!.returnLeg.providerTrackingUrl}
+                    href={progress.returnLeg.providerTrackingUrl.trim()}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-blue-700 underline"
                   >
-                    Open tracking link
+                    Track return shipment
                   </a>
                 ) : null}
               </div>

@@ -201,39 +201,37 @@ const ListerOrderCard = memo(
                   </>
                 )}
                 <div className="flex justify-between font-medium text-gray-700 text-sm">
-                      <Paragraph1>Outbound Pick-up Fee</Paragraph1>
-                      <Paragraph1>
-                        {CURRENCY}
-                        {formatCurrency(listerBreakdown.outboundPickupCost || 0)}
-                      </Paragraph1>
-                    </div>
-                    {hasRentalItems && (
-                      <div className="flex justify-between font-medium text-gray-700 text-sm">
-                        <Paragraph1>Return Pick-up Fee</Paragraph1>
-                        <Paragraph1>
-                          {CURRENCY}
-                          {formatCurrency(listerBreakdown.returnPickupCost || 0)}
-                        </Paragraph1>
-                      </div>
-                    )}
-                    <div className="flex justify-between font-medium text-gray-700 text-sm">
-                      <Paragraph1>Outbound Shipping</Paragraph1>
-                      <Paragraph1>
-                        {CURRENCY}
-                        {formatCurrency(listerBreakdown.outboundShippingCost || 0)}
-                      </Paragraph1>
-                    </div>
-                    {hasRentalItems && (
-                      <div className="flex justify-between font-medium text-gray-700 text-sm">
-                        <Paragraph1>Return Shipping</Paragraph1>
-                        <Paragraph1>
-                          {CURRENCY}
-                          {formatCurrency(
-                            listerBreakdown.returnShippingCost || 0,
-                          )}
-                        </Paragraph1>
-                      </div>
-                    )}
+                  <Paragraph1>Outbound Pick-up Fee</Paragraph1>
+                  <Paragraph1>
+                    {CURRENCY}
+                    {formatCurrency(listerBreakdown.outboundPickupCost || 0)}
+                  </Paragraph1>
+                </div>
+                {hasRentalItems && (
+                  <div className="flex justify-between font-medium text-gray-700 text-sm">
+                    <Paragraph1>Return Pick-up Fee</Paragraph1>
+                    <Paragraph1>
+                      {CURRENCY}
+                      {formatCurrency(listerBreakdown.returnPickupCost || 0)}
+                    </Paragraph1>
+                  </div>
+                )}
+                <div className="flex justify-between font-medium text-gray-700 text-sm">
+                  <Paragraph1>Outbound Shipping</Paragraph1>
+                  <Paragraph1>
+                    {CURRENCY}
+                    {formatCurrency(listerBreakdown.outboundShippingCost || 0)}
+                  </Paragraph1>
+                </div>
+                {hasRentalItems && (
+                  <div className="flex justify-between font-medium text-gray-700 text-sm">
+                    <Paragraph1>Return Shipping</Paragraph1>
+                    <Paragraph1>
+                      {CURRENCY}
+                      {formatCurrency(listerBreakdown.returnShippingCost || 0)}
+                    </Paragraph1>
+                  </div>
+                )}
               </div>
             ) : null;
           })()}
@@ -327,14 +325,23 @@ export default function FinalOrderSummaryCard({
   const [isAgree, setIsAgree] = useState(false);
 
   // Use React Query for order summary - refetch when return pickup address changes
-  const { data: orderSummary, isLoading: orderSummaryLoading, refetch } = useQuery({
-    queryKey: ["orderSummary", returnPickupAddress?.city, returnPickupAddress?.street],
-    queryFn: () => getOrderSummaryApi({
-      returnStreet: returnPickupAddress?.street,
-      returnCity: returnPickupAddress?.city,
-      returnState: returnPickupAddress?.state,
-      returnLandmark: returnPickupAddress?.instructions,
-    }),
+  const {
+    data: orderSummary,
+    isLoading: orderSummaryLoading,
+    refetch,
+  } = useQuery({
+    queryKey: [
+      "orderSummary",
+      returnPickupAddress?.city,
+      returnPickupAddress?.street,
+    ],
+    queryFn: () =>
+      getOrderSummaryApi({
+        returnStreet: returnPickupAddress?.street,
+        returnCity: returnPickupAddress?.city,
+        returnState: returnPickupAddress?.state,
+        returnLandmark: returnPickupAddress?.instructions,
+      }),
     staleTime: 30000,
     retry: 1,
   });
@@ -395,7 +402,9 @@ export default function FinalOrderSummaryCard({
 
           // Force refetch cart items
           queryClient.invalidateQueries({ queryKey: ["cart", "items"] });
-          queryClient.invalidateQueries({ queryKey: ["renters", "rental-requests"] });
+          queryClient.invalidateQueries({
+            queryKey: ["renters", "rental-requests"],
+          });
 
           if (!id) {
             toast.error(
@@ -408,7 +417,9 @@ export default function FinalOrderSummaryCard({
           );
           // Force clear cart cache before navigation
           queryClient.invalidateQueries({ queryKey: ["cart", "items"] });
-          queryClient.invalidateQueries({ queryKey: ["renters", "rental-requests"] });
+          queryClient.invalidateQueries({
+            queryKey: ["renters", "rental-requests"],
+          });
           router.push(
             `/shop/cart/checkout/success?orderId=${encodeURIComponent(id)}`,
           );
@@ -436,33 +447,35 @@ export default function FinalOrderSummaryCard({
         </div>
       )}
 
-      <div className="bg-white p-4 border border-gray-200 rounded-xl">
-        <Paragraph1 className="mb-4 font-bold text-gray-900 text-lg">
-          Return pickup details
-        </Paragraph1>
-        <div className="flex items-start gap-3">
-          <div className="bg-gray-100 p-2 rounded-full">
-            <MapPin size={18} className="text-gray-700" />
-          </div>
-          <div>
-            <Paragraph1 className="font-semibold text-gray-900 text-sm">
-              {returnPickupAddress
-                ? `${returnPickupAddress.street}, ${returnPickupAddress.city}`
-                : "Using your delivery address"}
-            </Paragraph1>
-            <Paragraph1 className="text-gray-600 text-xs">
-              {returnPickupAddress
-                ? `${returnPickupAddress.contactName} • ${returnPickupAddress.phoneNumber}`
-                : "Courier collects from the same location as your drop-off."}
-            </Paragraph1>
-            {returnPickupAddress?.instructions && (
-              <Paragraph1 className="mt-1 text-gray-500 text-xs">
-                {returnPickupAddress.instructions}
+      {orderSummary?.data?.summary?.rentalTotal > 0 && (
+        <div className="bg-white p-4 border border-gray-200 rounded-xl">
+          <Paragraph1 className="mb-4 font-bold text-gray-900 text-lg">
+            Return pickup details
+          </Paragraph1>
+          <div className="flex items-start gap-3">
+            <div className="bg-gray-100 p-2 rounded-full">
+              <MapPin size={18} className="text-gray-700" />
+            </div>
+            <div>
+              <Paragraph1 className="font-semibold text-gray-900 text-sm">
+                {returnPickupAddress
+                  ? `${returnPickupAddress.street}, ${returnPickupAddress.city}`
+                  : "Using your delivery address"}
               </Paragraph1>
-            )}
+              <Paragraph1 className="text-gray-600 text-xs">
+                {returnPickupAddress
+                  ? `${returnPickupAddress.contactName} • ${returnPickupAddress.phoneNumber}`
+                  : "Courier collects from the same location as your drop-off."}
+              </Paragraph1>
+              {returnPickupAddress?.instructions && (
+                <Paragraph1 className="mt-1 text-gray-500 text-xs">
+                  {returnPickupAddress.instructions}
+                </Paragraph1>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {!isLoading && !error && approvedGroups.length === 0 && (
         <div className="bg-gray-50 p-4 border border-gray-200 rounded-xl text-center">
@@ -480,11 +493,20 @@ export default function FinalOrderSummaryCard({
           <div className="bg-gray-50 p-3 border border-gray-200 rounded-lg">
             <div className="space-y-3">
               {dispatchContexts
-                .filter((ctx) => ctx.type === "OUTBOUND" || ctx.type === "RETURN")
+                .filter(
+                  (ctx) =>
+                    ctx.type === "OUTBOUND" ||
+                    ctx.type === "RETURN" ||
+                    ctx.type === "RESALE",
+                )
                 .map((ctx) => (
                   <div key={ctx.type}>
                     <Paragraph1 className="font-semibold text-[11px] text-gray-400 uppercase tracking-[0.2em]">
-                      {ctx.type === "OUTBOUND" ? "Delivery" : "Return pickup"}
+                      {ctx.type === "OUTBOUND"
+                        ? "Delivery"
+                        : ctx.type === "RESALE"
+                          ? "Delivery"
+                          : "Return pickup"}
                     </Paragraph1>
                     <Paragraph1 className="font-semibold text-gray-900 text-sm">
                       {formatWindowRange(ctx.suggested.window)}
@@ -573,12 +595,13 @@ export default function FinalOrderSummaryCard({
                               </div>
                             </>
                           )}
-<div className="flex justify-between font-medium text-gray-700 text-sm">
+                          <div className="flex justify-between font-medium text-gray-700 text-sm">
                             <Paragraph1>Outbound Pick-up Fee</Paragraph1>
                             <Paragraph1>
                               {CURRENCY}
                               {formatCurrency(
-                                orderSummary.data.summary.outboundPickupTotal || 0,
+                                orderSummary.data.summary.outboundPickupTotal ||
+                                  0,
                               )}
                             </Paragraph1>
                           </div>
@@ -601,7 +624,8 @@ export default function FinalOrderSummaryCard({
                             <Paragraph1>
                               {CURRENCY}
                               {formatCurrency(
-                                orderSummary.data.summary.outboundShippingTotal || 0,
+                                orderSummary.data.summary
+                                  .outboundShippingTotal || 0,
                               )}
                             </Paragraph1>
                           </div>
@@ -612,8 +636,8 @@ export default function FinalOrderSummaryCard({
                               <Paragraph1>
                                 {CURRENCY}
                                 {formatCurrency(
-                                  orderSummary.data.summary.returnShippingTotal ||
-                                    0,
+                                  orderSummary.data.summary
+                                    .returnShippingTotal || 0,
                                 )}
                               </Paragraph1>
                             </div>
@@ -682,13 +706,15 @@ export default function FinalOrderSummaryCard({
                       </Paragraph1>
                     </button>
 
-                    <div className="flex items-start gap-2 bg-green-50 mt-4 p-3 border border-green-200 rounded-md text-green-700 text-xs">
-                      <CheckCircle size={16} className="mt-0.5 shrink-0" />
-                      <Paragraph1 className="text-green-700">
-                        Your <strong>deposit is secure</strong> and fully
-                        refunded after item return and approval.
-                      </Paragraph1>
-                    </div>
+                    {orderSummary?.data?.summary?.rentalTotal > 0 && (
+                      <div className="flex items-start gap-2 bg-green-50 mt-4 p-3 border border-green-200 rounded-md text-green-700 text-xs">
+                        <CheckCircle size={16} className="mt-0.5 shrink-0" />
+                        <Paragraph1 className="text-green-700">
+                          Your <strong>deposit is secure</strong> and fully
+                          refunded after item return and approval.
+                        </Paragraph1>
+                      </div>
+                    )}
 
                     <label className="flex items-start space-x-2 mt-4 text-gray-700 cursor-pointer">
                       <input

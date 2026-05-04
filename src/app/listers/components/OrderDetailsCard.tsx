@@ -126,8 +126,15 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
   const totalAmount = order ? `₦${order.totalAmount?.toLocaleString()}` : "-";
 
   const isPendingApproval = isListerAvailabilityPending(order);
-  const isPendingReturn =
-    normalizeListerOrderStatusKey(String(order?.status ?? "")) === "RETURN_DUE";
+  const orderStatusKey = normalizeListerOrderStatusKey(
+    String(order?.status ?? ""),
+  );
+  const rr = order?.returnRequest as { status?: string } | null | undefined;
+  const listerReturnReceiptOpen =
+    !!rr &&
+    rr.status !== "COMPLETED" &&
+    rr.status !== "REJECTED" &&
+    (orderStatusKey === "RETURN_DUE" || orderStatusKey === "RETURNED");
 
   // Countdown timer effect
   useEffect(() => {
@@ -360,7 +367,7 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
       </div>
 
       {/* Confirm Return Receipt Section */}
-      {isPendingReturn && (
+      {listerReturnReceiptOpen && (
         <div className="mt-6">
           <ConfirmReturnReceiptSection
             orderId={orderId}

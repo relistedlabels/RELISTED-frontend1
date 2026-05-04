@@ -189,13 +189,16 @@ export default function CheckoutPage() {
 
   const returnBaseDate = useMemo(() => {
     if (rentalItems.length === 0) return undefined;
-    const latestEndDate = rentalItems.reduce((latest: string | undefined, item) => {
-      if (!item.rentalEndDate) return latest;
-      if (!latest) return item.rentalEndDate;
-      return new Date(item.rentalEndDate) > new Date(latest)
-        ? item.rentalEndDate
-        : latest;
-    }, undefined);
+    const latestEndDate = rentalItems.reduce(
+      (latest: string | undefined, item) => {
+        if (!item.rentalEndDate) return latest;
+        if (!latest) return item.rentalEndDate;
+        return new Date(item.rentalEndDate) > new Date(latest)
+          ? item.rentalEndDate
+          : latest;
+      },
+      undefined,
+    );
     // Return date is typically one day after the rental end date
     return latestEndDate ? addDaysToDateString(latestEndDate, 1) : undefined;
   }, [rentalItems]);
@@ -389,14 +392,19 @@ export default function CheckoutPage() {
     [groupedByLister],
   );
 
+  const selectedTierData = useMemo(
+    () => shippingTiers.find((t) => t.name === selectedShippingTier),
+    [shippingTiers, selectedShippingTier],
+  );
+
   return (
     <div className="mx-auto px-4 sm:px-0 py-[70px] sm:py-[100px] container">
       <div className="mb-4">
         <Breadcrumbs items={path} />
       </div>
       <Header1Plus className="mb-8 uppercase">CHECKOUT</Header1Plus>
-      <div className="gap-4 sm:gap-16 grid xl:grid-cols-3">
-        <div className="col-span-2">
+      <div className="gap-4 sm:gap-8 grid grid-cols-1 xl:grid-cols-3 xl:gap-16">
+        <div className="min-w-0 xl:col-span-2">
           <CheckoutContactAndPayment
             onShippingTierSelected={setSelectedShippingTier}
             shippingTiers={shippingTiers}
@@ -405,19 +413,22 @@ export default function CheckoutPage() {
             onDispatchSelectionChange={handleDispatchSelectionChange}
             returnPickupAddress={returnPickupAddress}
             onReturnPickupChange={handleReturnPickupAddressChange}
+            isResaleOnly={
+              cartData?.items?.every(
+                (item: any) => item.isResale || item.days === 0,
+              ) || false
+            }
           />
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="min-w-0 xl:col-span-1">
           <FinalOrderSummaryCard
             listerGroups={listerGroups}
             isLoading={isLoading || cartIsLoading}
-            error={error}
+            error={error instanceof Error ? error : null}
             selectedShippingTier={selectedShippingTier}
-            selectedTierData={shippingTiers.find(
-              (tier) => tier.name === selectedShippingTier,
-            )}
-            dispatchContexts={dispatchContexts}
+            selectedTierData={selectedTierData}
             dispatchSelections={dispatchSelections}
+            dispatchContexts={dispatchContexts}
             returnPickupAddress={returnPickupAddress}
           />
         </div>

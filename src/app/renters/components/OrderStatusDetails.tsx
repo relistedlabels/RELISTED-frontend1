@@ -88,6 +88,16 @@ export default function OrderStatusDetails({
       })
     : "N/A";
 
+  const hasReturnDetails =
+    Boolean(
+      String(orderData.returnPickup?.pickupWindowSummary ?? "").trim(),
+    ) ||
+    Boolean(String(orderData.returnPickup?.trackingNumber ?? "").trim()) ||
+    Boolean(
+      String(orderData.returnLeg?.trackingId ?? "").trim() ||
+        String(orderData.returnLeg?.providerTrackingUrl ?? "").trim(),
+    );
+
   return (
     <div className="space-y-6">
       {/* --- 1. MONEY LOCKED NOTICE --- */}
@@ -193,11 +203,11 @@ export default function OrderStatusDetails({
         </div>
       </div>
 
-      {/* --- 3b. RETURN PICKUP (Topship / return request) --- */}
-      {(orderData.returnPickup || orderData.returnLeg) && (
+      {/* --- 3b. RETURN PICKUP (only when we have a window, tracking, or link) --- */}
+      {hasReturnDetails && (
         <div>
           <Paragraph1 className="mb-3 font-bold text-gray-900 text-base">
-            Return pickup & carrier
+            Your return
           </Paragraph1>
           <div className="space-y-3 bg-white p-4 border border-gray-300 rounded-xl">
             {orderData.returnPickup?.pickupWindowSummary ? (
@@ -237,18 +247,19 @@ export default function OrderStatusDetails({
                 </div>
               </div>
             ) : null}
-            {orderData.returnLeg?.label ? (
+            {orderData.returnLeg &&
+            (orderData.returnLeg.trackingId ||
+              orderData.returnLeg.providerTrackingUrl) ? (
               <div>
-                <Paragraph1 className="block mb-1 text-gray-500 text-xs">
-                  Return shipment (platform leg)
-                </Paragraph1>
-                <Paragraph1 className="font-semibold text-indigo-700">
-                  {orderData.returnLeg.label}
-                </Paragraph1>
                 {orderData.returnLeg.trackingId ? (
-                  <Paragraph1 className="mt-1 font-mono text-sm text-gray-800">
-                    {orderData.returnLeg.trackingId}
-                  </Paragraph1>
+                  <div>
+                    <Paragraph1 className="block mb-1 text-gray-500 text-xs">
+                      Return tracking
+                    </Paragraph1>
+                    <Paragraph1 className="font-mono font-semibold text-gray-900">
+                      {orderData.returnLeg.trackingId}
+                    </Paragraph1>
+                  </div>
                 ) : null}
                 {orderData.returnLeg.providerTrackingUrl ? (
                   <a
@@ -258,7 +269,7 @@ export default function OrderStatusDetails({
                     className="inline-flex items-center gap-1 mt-2 font-semibold text-blue-600 hover:text-blue-800 text-sm"
                   >
                     <ExternalLink size={14} />
-                    Carrier tracking
+                    Track return shipment
                   </a>
                 ) : null}
               </div>
@@ -281,7 +292,9 @@ export default function OrderStatusDetails({
                   Current Status
                 </Paragraph1>
                 <Paragraph1 className="font-semibold text-blue-600">
-                  {orderData.tracking.status}
+                  {getRenterOrderStatusLabel(
+                    String(orderData.tracking.status ?? ""),
+                  )}
                 </Paragraph1>
               </div>
             )}

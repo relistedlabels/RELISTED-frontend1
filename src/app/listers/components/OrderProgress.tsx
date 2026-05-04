@@ -20,10 +20,11 @@ import {
 const rentalSteps = [
   { label: "Pending", icon: CheckCircle2 },
   { label: "Approved", icon: CheckCircle2 },
-  { label: "In Transit", icon: Truck },
+  { label: "Dispatched", icon: Truck },
+  { label: "In transit", icon: Package },
   { label: "Delivered", icon: Home },
-  { label: "Return Due", icon: RotateCcw },
-  { label: "Return Transit", icon: Truck },
+  { label: "Awaiting return", icon: RotateCcw },
+  { label: "Return received", icon: CheckCircle2 },
   { label: "Completed", icon: Check },
 ];
 
@@ -86,7 +87,7 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
         active: 4,
         return_due: 5,
         returned: 6,
-        completed: 6,
+        completed: 7,
         in_dispute: 4,
         cancelled: 0,
         rejected: 0,

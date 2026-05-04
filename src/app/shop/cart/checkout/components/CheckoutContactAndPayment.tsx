@@ -95,6 +95,7 @@ interface CheckoutContactAndPaymentProps {
   ) => void;
   returnPickupAddress?: ReturnPickupAddressPayload;
   onReturnPickupChange?: (value?: ReturnPickupAddressPayload) => void;
+  isResaleOnly?: boolean;
 }
 
 const CONTACT_SKELETON_KEYS = [
@@ -175,21 +176,24 @@ const getDeliveryTierDetails = (tierName: string) => {
 
 export default function CheckoutContactAndPayment({
   onShippingTierSelected,
-  shippingTiers = [],
-  dispatchContexts = [],
-  dispatchSelections = {},
+  shippingTiers,
+  dispatchContexts,
+  dispatchSelections,
   onDispatchSelectionChange,
   returnPickupAddress,
   onReturnPickupChange,
+  isResaleOnly = false,
 }: CheckoutContactAndPaymentProps) {
   const { data: user } = useMe();
   const { data: profile } = useProfile();
   const { data: walletResponse } = useWallet();
   const [isSameAsBilling, setIsSameAsBilling] = useState(true);
   const [selectedShippingTier, setSelectedShippingTier] = useState<string>(
-    shippingTiers[0]?.name || "",
+    shippingTiers?.[0]?.name || "",
   );
-  const [localShippingTiers, setLocalShippingTiers] = useState(shippingTiers);
+  const [localShippingTiers, setLocalShippingTiers] = useState(
+    shippingTiers || [],
+  );
   const [isLoadingShipping, setIsLoadingShipping] = useState(false);
   const basePickupDefaults = useMemo<ReturnPickupAddressPayload>(
     () => ({
@@ -428,7 +432,6 @@ export default function CheckoutContactAndPayment({
             <Paragraph1 className="font-bold text-gray-800 tracking-wider">
               SHIPPING METHOD
             </Paragraph1>
-           
           </div>
           <Truck size={24} className="text-gray-400" />
         </div>
@@ -495,7 +498,7 @@ export default function CheckoutContactAndPayment({
                             </span>
                           )}
                           <span className="bg-gray-100 px-2 py-0.5 rounded-full text-[11px] text-gray-600">
-                            Pickup + return
+                            {isResaleOnly ? "Pickup" : "Pickup + return"}
                           </span>
                         </div>
                         <Paragraph1 className="mt-1 text-gray-600 text-xs">
@@ -527,172 +530,183 @@ export default function CheckoutContactAndPayment({
         )}
       </div>
 
-      {/* 4. RETURN PICKUP Section */}
-      <div className="bg-white p-4 border border-gray-100 rounded-xl">
-        <div className="flex justify-between items-start gap-3">
-          <div>
-            <Paragraph1 className="font-bold text-gray-800 tracking-wider">
-              RETURN PICKUP
-            </Paragraph1>
-            <Paragraph1 className="text-gray-600 text-sm">
-              Share where the courier should collect items at rental wrap-up.
-              We’ll lock this in alongside your pickup window.
-            </Paragraph1>
-          </div>
-          <Compass size={22} className="text-amber-500" />
-        </div>
-
-        <div className="flex flex-wrap gap-3 mt-4">
-          {[
-            { label: "Use delivery address", value: "delivery" },
-            { label: "Custom pickup spot", value: "custom" },
-          ].map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() =>
-                handleReturnPickupModeChange(
-                  option.value as "delivery" | "custom",
-                )
-              }
-              className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
-                returnPickupMode === option.value
-                  ? "bg-gray-900 text-white shadow-lg shadow-gray-900/20"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-
-{returnPickupMode === "delivery" ? (
-          <div className="bg-gray-50 mt-4 p-4 border border-gray-200 rounded-2xl">
-            <Paragraph1 className="font-semibold text-gray-900 text-sm">
-              {returnPickupForm.street
-                ? `${returnPickupForm.street}, ${returnPickupForm.city}`
-                : deliveryAddress}
-            </Paragraph1>
-          </div>
-        ) : (
-          <div className="space-y-4 mt-4">
-            <div className="gap-3 grid sm:grid-cols-2">
-              <label className="font-semibold text-gray-500 text-xs uppercase tracking-wide">
-                Contact name
-                <input
-                  type="text"
-                  value={returnPickupForm.contactName}
-                  onChange={(e) =>
-                    handleReturnPickupFieldChange("contactName", e.target.value)
-                  }
-                  className="mt-1 px-3 py-2 border border-gray-200 focus:border-gray-900 rounded-lg focus:outline-none w-full text-sm"
-                  placeholder="e.g. Adaora N."
-                />
-              </label>
-              <label className="font-semibold text-gray-500 text-xs uppercase tracking-wide">
-                Phone number
-                <input
-                  type="tel"
-                  value={returnPickupForm.phoneNumber}
-                  onChange={(e) =>
-                    handleReturnPickupFieldChange("phoneNumber", e.target.value)
-                  }
-                  className="mt-1 px-3 py-2 border border-gray-200 focus:border-gray-900 rounded-lg focus:outline-none w-full text-sm"
-                  placeholder="0801..."
-                />
-              </label>
-              <label className="sm:col-span-2 font-semibold text-gray-500 text-xs uppercase tracking-wide">
-                Street
-                <input
-                  type="text"
-                  value={returnPickupForm.street}
-                  onChange={(e) =>
-                    handleReturnPickupFieldChange("street", e.target.value)
-                  }
-                  className="mt-1 px-3 py-2 border border-gray-200 focus:border-gray-900 rounded-lg focus:outline-none w-full text-sm"
-                  placeholder="Apartment, street, landmark"
-                />
-              </label>
-              <label className="font-semibold text-gray-500 text-xs uppercase tracking-wide">
-                City
-                <div className="relative">
-                  <select
-                    value={returnPickupForm.city}
-                    onChange={(e) => {
-                      handleReturnPickupFieldChange("city", e.target.value);
-                      handleReturnPickupFieldChange("state", "Lagos");
-                    }}
-                    className="bg-white mt-1 px-3 py-2 pr-10 border border-gray-200 focus:border-gray-900 rounded-lg focus:outline-none w-full text-sm appearance-none"
-                  >
-                    <option value="">Select City</option>
-                    {TOPSHIP_CITIES.map((city) => (
-                      <option key={city} value={city}>
-                        {city}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="top-1/2 right-3 absolute w-4 h-4 text-gray-400 -translate-y-1/2 pointer-events-none" />
-                </div>
-              </label>
-              <label className="font-semibold text-gray-500 text-xs uppercase tracking-wide">
-                State
-                <input
-                  type="text"
-                  value="Lagos"
-                  disabled
-                  className="bg-gray-50 mt-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none w-full text-gray-500 text-sm"
-                />
-              </label>
-            </div>
-
-            <label className="font-semibold text-gray-500 text-xs uppercase tracking-wide">
-              Handoff notes (optional)
-              <textarea
-                value={returnPickupForm.instructions ?? ""}
-                onChange={(e) =>
-                  handleReturnPickupFieldChange("instructions", e.target.value)
-                }
-                className="mt-1 px-3 py-2 border border-gray-200 focus:border-gray-900 rounded-lg focus:outline-none w-full text-sm"
-                rows={3}
-                placeholder="Gate codes, concierge numbers, etc."
-              />
-            </label>
-
-            {returnPickupErrors.length > 0 && hasTouchedReturnPickup && (
-              <div className="bg-red-50 p-3 border border-red-200 rounded-2xl text-red-700 text-xs">
-                {returnPickupErrors.map((error) => (
-                  <p key={error}>{error}</p>
-                ))}
-              </div>
-            )}
-
-            <div className="bg-gray-50 p-4 border border-gray-200 rounded-2xl">
-              <Paragraph1 className="font-semibold text-gray-900 text-sm">
-                Pickup summary
+      {/* 4. RETURN PICKUP Section - Only show for rental orders */}
+      {!isResaleOnly && (
+        <div className="bg-white p-4 border border-gray-100 rounded-xl">
+          <div className="flex justify-between items-start gap-3">
+            <div>
+              <Paragraph1 className="font-bold text-gray-800 tracking-wider">
+                RETURN PICKUP
               </Paragraph1>
               <Paragraph1 className="text-gray-600 text-sm">
-                {returnPickupForm.contactName} — {returnPickupForm.street} ·{" "}
-                {returnPickupForm.city}, {returnPickupForm.state}
-              </Paragraph1>
-              <Paragraph1 className="mt-1 text-gray-500 text-xs">
-                Phone: {returnPickupForm.phoneNumber || "—"}
+                Share where the courier should collect items at rental wrap-up.
+                We'll lock this in alongside your pickup window.
               </Paragraph1>
             </div>
-
-            <button
-              type="button"
-              onClick={handleSaveReturnPickup}
-              disabled={returnPickupErrors.length > 0 || savingPickup}
-              className="bg-black hover:bg-gray-900 disabled:opacity-50 mt-3 px-4 py-2 rounded-lg font-semibold text-white text-xs"
-            >
-              {savingPickup ? "Saving..." : "Save pickup spot"}
-            </button>
+            <Compass size={22} className="text-amber-500" />
           </div>
-        )}
-      </div>
+
+          <div className="flex flex-wrap gap-3 mt-4">
+            {[
+              { label: "Use delivery address", value: "delivery" },
+              { label: "Custom pickup spot", value: "custom" },
+            ].map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() =>
+                  handleReturnPickupModeChange(
+                    option.value as "delivery" | "custom",
+                  )
+                }
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
+                  returnPickupMode === option.value
+                    ? "bg-gray-900 text-white shadow-lg shadow-gray-900/20"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+
+          {returnPickupMode === "delivery" ? (
+            <div className="bg-gray-50 mt-4 p-4 border border-gray-200 rounded-2xl">
+              <Paragraph1 className="font-semibold text-gray-900 text-sm">
+                {returnPickupForm.street
+                  ? `${returnPickupForm.street}, ${returnPickupForm.city}`
+                  : deliveryAddress}
+              </Paragraph1>
+            </div>
+          ) : (
+            <div className="space-y-4 mt-4">
+              <div className="gap-3 grid sm:grid-cols-2">
+                <label className="font-semibold text-gray-500 text-xs uppercase tracking-wide">
+                  Contact name
+                  <input
+                    type="text"
+                    value={returnPickupForm.contactName}
+                    onChange={(e) =>
+                      handleReturnPickupFieldChange(
+                        "contactName",
+                        e.target.value,
+                      )
+                    }
+                    className="mt-1 px-3 py-2 border border-gray-200 focus:border-gray-900 rounded-lg focus:outline-none w-full text-sm"
+                    placeholder="e.g. Adaora N."
+                  />
+                </label>
+                <label className="font-semibold text-gray-500 text-xs uppercase tracking-wide">
+                  Phone number
+                  <input
+                    type="tel"
+                    value={returnPickupForm.phoneNumber}
+                    onChange={(e) =>
+                      handleReturnPickupFieldChange(
+                        "phoneNumber",
+                        e.target.value,
+                      )
+                    }
+                    className="mt-1 px-3 py-2 border border-gray-200 focus:border-gray-900 rounded-lg focus:outline-none w-full text-sm"
+                    placeholder="0801..."
+                  />
+                </label>
+                <label className="sm:col-span-2 font-semibold text-gray-500 text-xs uppercase tracking-wide">
+                  Street
+                  <input
+                    type="text"
+                    value={returnPickupForm.street}
+                    onChange={(e) =>
+                      handleReturnPickupFieldChange("street", e.target.value)
+                    }
+                    className="mt-1 px-3 py-2 border border-gray-200 focus:border-gray-900 rounded-lg focus:outline-none w-full text-sm"
+                    placeholder="Apartment, street, landmark"
+                  />
+                </label>
+                <label className="font-semibold text-gray-500 text-xs uppercase tracking-wide">
+                  City
+                  <div className="relative">
+                    <select
+                      value={returnPickupForm.city}
+                      onChange={(e) => {
+                        handleReturnPickupFieldChange("city", e.target.value);
+                        handleReturnPickupFieldChange("state", "Lagos");
+                      }}
+                      className="bg-white mt-1 px-3 py-2 pr-10 border border-gray-200 focus:border-gray-900 rounded-lg focus:outline-none w-full text-sm appearance-none"
+                    >
+                      <option value="">Select City</option>
+                      {TOPSHIP_CITIES.map((city) => (
+                        <option key={city} value={city}>
+                          {city}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="top-1/2 right-3 absolute w-4 h-4 text-gray-400 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                </label>
+                <label className="font-semibold text-gray-500 text-xs uppercase tracking-wide">
+                  State
+                  <input
+                    type="text"
+                    value="Lagos"
+                    disabled
+                    className="bg-gray-50 mt-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none w-full text-gray-500 text-sm"
+                  />
+                </label>
+              </div>
+
+              <label className="font-semibold text-gray-500 text-xs uppercase tracking-wide">
+                Handoff notes (optional)
+                <textarea
+                  value={returnPickupForm.instructions ?? ""}
+                  onChange={(e) =>
+                    handleReturnPickupFieldChange(
+                      "instructions",
+                      e.target.value,
+                    )
+                  }
+                  className="mt-1 px-3 py-2 border border-gray-200 focus:border-gray-900 rounded-lg focus:outline-none w-full text-sm"
+                  rows={3}
+                  placeholder="Gate codes, concierge numbers, etc."
+                />
+              </label>
+
+              {returnPickupErrors.length > 0 && hasTouchedReturnPickup && (
+                <div className="bg-red-50 p-3 border border-red-200 rounded-2xl text-red-700 text-xs">
+                  {returnPickupErrors.map((error) => (
+                    <p key={error}>{error}</p>
+                  ))}
+                </div>
+              )}
+
+              <div className="bg-gray-50 p-4 border border-gray-200 rounded-2xl">
+                <Paragraph1 className="font-semibold text-gray-900 text-sm">
+                  Pickup summary
+                </Paragraph1>
+                <Paragraph1 className="text-gray-600 text-sm">
+                  {returnPickupForm.contactName} — {returnPickupForm.street} ·{" "}
+                  {returnPickupForm.city}, {returnPickupForm.state}
+                </Paragraph1>
+                <Paragraph1 className="mt-1 text-gray-500 text-xs">
+                  Phone: {returnPickupForm.phoneNumber || "—"}
+                </Paragraph1>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSaveReturnPickup}
+                disabled={returnPickupErrors.length > 0 || savingPickup}
+                className="bg-black hover:bg-gray-900 disabled:opacity-50 mt-3 px-4 py-2 rounded-lg font-semibold text-white text-xs"
+              >
+                {savingPickup ? "Saving..." : "Save pickup spot"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 4. DISPATCH WINDOWS Section */}
-      {dispatchContexts.length > 0 && (
+      {dispatchContexts && dispatchContexts.length > 0 && (
         <div className="bg-white p-4 border border-gray-100 rounded-xl">
           <Paragraph1 className="mb-4 font-bold text-gray-800 tracking-wider">
             DISPATCH WINDOWS
@@ -702,7 +716,7 @@ export default function CheckoutContactAndPayment({
           </Paragraph1>
           <DispatchWindowsScheduler
             contexts={dispatchContexts}
-            selections={dispatchSelections}
+            selections={dispatchSelections || {}}
             onSelectionChange={onDispatchSelectionChange}
             readOnly={true}
           />
