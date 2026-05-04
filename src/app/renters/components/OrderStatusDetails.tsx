@@ -219,9 +219,7 @@ export default function OrderStatusDetails({
                   {orderData.returnPickup.pickupWindowSummary}
                 </Paragraph1>
                 <Paragraph1 className="mt-2 text-gray-600 text-xs">
-                  This is when the carrier plans to collect the return — it is
-                  not the same as the package already being on the way to the
-                  lister.
+                  Pickup window only, not the same as in transit to the lister.
                 </Paragraph1>
               </div>
             ) : null}
