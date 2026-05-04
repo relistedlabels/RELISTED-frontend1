@@ -417,7 +417,7 @@ export default function DispatchWindowsScheduler({
                       : "border-gray-300 bg-white text-gray-700 hover:border-gray-900"
                   }`}
                 >
-                  Default window
+                  Earliest delivery
                 </button>
                 <button
                   type="button"
@@ -428,7 +428,7 @@ export default function DispatchWindowsScheduler({
                       : "border-gray-300 bg-white text-gray-700 hover:border-gray-900"
                   }`}
                 >
-                  Custom window
+                  Custom delivery
                 </button>
               </div>
 

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { HiOutlineTag, HiOutlineHeart } from "react-icons/hi2";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
-import { Heart, Loader2, Bell } from "lucide-react";
+import { Heart, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, usePathname } from "next/navigation";
@@ -102,7 +102,6 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
   const [isRequesting, setIsRequesting] = useState(false);
   const [isProfileSetupModalOpen, setIsProfileSetupModalOpen] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
-  const [showNotifyMe, setShowNotifyMe] = useState(false);
   const [dispatchSelections, setDispatchSelections] =
     useState<DispatchWindowSelectionMap>({});
 
@@ -379,14 +378,27 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
               </button>
             </div>
           ) : addedToCart ? (
-            <div className="w-full">
+            <div className="flex gap-2 w-full">
+              <Link
+                href="/shop/cart"
+                className="flex flex-1 justify-center items-center bg-black hover:bg-gray-800 px-4 py-3 rounded-lg font-semibold text-white text-center transition duration-150"
+              >
+                View cart
+              </Link>
               <button
                 type="button"
-                onClick={() => setShowNotifyMe(!showNotifyMe)}
-                className="flex flex-1 justify-center items-center gap-2 hover:bg-gray-50 px-4 py-3 border-2 border-gray-800 rounded-lg w-full font-semibold text-gray-800 transition duration-150"
+                onClick={handleFavoriteClick}
+                disabled={addFavorite.isPending || removeFavorite.isPending}
+                className="bg-white hover:bg-gray-50 disabled:opacity-50 p-3 border border-gray-300 rounded-lg transition duration-150 shrink-0"
+                aria-label={
+                  isFavorited ? "Remove from favorites" : "Add to favorites"
+                }
               >
-                <Bell className="w-5 h-5" />
-                Notify Me When Available
+                <Heart
+                  className="w-6 h-6"
+                  fill={isFavorited ? "red" : "none"}
+                  color={isFavorited ? "red" : "#222"}
+                />
               </button>
             </div>
           ) : (
@@ -441,21 +453,6 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
           </div>
         )}
 
-        <AnimatePresence>
-          {showNotifyMe && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="bg-blue-50 my-3 p-3 border border-blue-200 rounded-lg"
-            >
-              <Paragraph1 className="text-gray-500 text-sm text-center leading-relaxed">
-                We'll email you the moment this item is available to rent or
-                buy.
-              </Paragraph1>
-            </motion.div>
-          )}
-        </AnimatePresence>
         {/* Security / Shipping Info */}
         <div className="flex items-center space-x-2 bg-white mb-4 p-3 border border-gray-200 rounded-lg">
           <img src="/icons/safe1.svg" alt="secure" />

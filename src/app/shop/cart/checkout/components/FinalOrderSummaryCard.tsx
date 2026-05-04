@@ -499,20 +499,26 @@ export default function FinalOrderSummaryCard({
                     ctx.type === "RETURN" ||
                     ctx.type === "RESALE",
                 )
-                .map((ctx) => (
-                  <div key={ctx.type}>
-                    <Paragraph1 className="font-semibold text-[11px] text-gray-400 uppercase tracking-[0.2em]">
-                      {ctx.type === "OUTBOUND"
-                        ? "Delivery"
-                        : ctx.type === "RESALE"
+                .map((ctx) => {
+                  const selectedWindow =
+                    dispatchSelections[ctx.type]?.window ??
+                    ctx.lockedWindow ??
+                    ctx.suggested.window;
+                  return (
+                    <div key={ctx.type}>
+                      <Paragraph1 className="font-semibold text-[11px] text-gray-400 uppercase tracking-[0.2em]">
+                        {ctx.type === "OUTBOUND"
                           ? "Delivery"
-                          : "Return pickup"}
-                    </Paragraph1>
-                    <Paragraph1 className="font-semibold text-gray-900 text-sm">
-                      {formatWindowRange(ctx.suggested.window)}
-                    </Paragraph1>
-                  </div>
-                ))}
+                          : ctx.type === "RESALE"
+                            ? "Delivery"
+                            : "Return pickup"}
+                      </Paragraph1>
+                      <Paragraph1 className="font-semibold text-gray-900 text-sm">
+                        {formatWindowRange(selectedWindow)}
+                      </Paragraph1>
+                    </div>
+                  );
+                })}
             </div>
           </div>
         </div>

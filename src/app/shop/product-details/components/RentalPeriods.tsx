@@ -595,7 +595,9 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                                   {startTime} – {endTime} WAT
                                 </Paragraph1>
                                 <Paragraph1 className="text-[11px] text-gray-400">
-                                  {isCustom ? "Custom window" : "Default window"}
+                                  {isCustom
+                                    ? "Custom delivery"
+                                    : "Earliest delivery"}
                                 </Paragraph1>
                               </div>
                             </div>
