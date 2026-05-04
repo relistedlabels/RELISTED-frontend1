@@ -478,7 +478,6 @@ export default function CheckoutPage() {
             selectedShippingTier={selectedShippingTier}
             selectedTierData={selectedTierData}
             dispatchSelections={dispatchSelections}
-            dispatchContexts={dispatchContexts}
             returnPickupAddress={returnPickupAddress}
           />
         </div>

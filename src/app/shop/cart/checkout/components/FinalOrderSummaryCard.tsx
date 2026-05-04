@@ -22,11 +22,6 @@ import type {
   DispatchWindowsPayload,
   ShipmentDispatchType,
 } from "@/lib/checkout/dispatchWindows";
-import {
-  formatWindowRange,
-  isImmediateDispatch,
-} from "@/lib/checkout/dispatchWindows";
-import type { DispatchWindowContext } from "@/lib/checkout/dispatchWindows";
 
 const CURRENCY = "₦";
 
@@ -304,7 +299,6 @@ interface FinalOrderSummaryCardProps {
     grandTotal: number;
   };
   dispatchSelections?: DispatchWindowSelectionMap;
-  dispatchContexts?: DispatchWindowContext[];
   returnPickupAddress?: ReturnPickupAddressPayload;
 }
 
@@ -315,7 +309,6 @@ export default function FinalOrderSummaryCard({
   selectedShippingTier = "",
   selectedTierData,
   dispatchSelections = {},
-  dispatchContexts = [],
   returnPickupAddress,
 }: FinalOrderSummaryCardProps) {
   const router = useRouter();
@@ -482,45 +475,6 @@ export default function FinalOrderSummaryCard({
           <Paragraph1 className="text-gray-600">
             No approved items. Add items to get started!
           </Paragraph1>
-        </div>
-      )}
-
-      {dispatchContexts.length > 0 && (
-        <div className="bg-white p-4 border border-gray-200 rounded-xl">
-          <Paragraph1 className="mb-4 font-bold text-gray-900 text-lg">
-            Dispatch windows
-          </Paragraph1>
-          <div className="bg-gray-50 p-3 border border-gray-200 rounded-lg">
-            <div className="space-y-3">
-              {dispatchContexts
-                .filter(
-                  (ctx) =>
-                    ctx.type === "OUTBOUND" ||
-                    ctx.type === "RETURN" ||
-                    ctx.type === "RESALE",
-                )
-                .map((ctx) => {
-                  const selectedWindow =
-                    dispatchSelections[ctx.type]?.window ??
-                    ctx.lockedWindow ??
-                    ctx.suggested.window;
-                  return (
-                    <div key={ctx.type}>
-                      <Paragraph1 className="font-semibold text-[11px] text-gray-400 uppercase tracking-[0.2em]">
-                        {ctx.type === "OUTBOUND"
-                          ? "Delivery"
-                          : ctx.type === "RESALE"
-                            ? "Delivery"
-                            : "Return pickup"}
-                      </Paragraph1>
-                      <Paragraph1 className="font-semibold text-gray-900 text-sm">
-                        {formatWindowRange(selectedWindow)}
-                      </Paragraph1>
-                    </div>
-                  );
-                })}
-            </div>
-          </div>
         </div>
       )}
 
