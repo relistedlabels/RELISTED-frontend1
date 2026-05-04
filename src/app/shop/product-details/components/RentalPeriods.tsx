@@ -767,15 +767,15 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-start gap-4">
-                <div>
+                <div className="flex min-w-0 flex-col gap-3 pr-2">
                   <Paragraph1 className="font-semibold text-gray-500 text-xs uppercase tracking-[0.3em]">
                     Step {dispatchModalStep + 1} of {totalDispatchSteps}
                   </Paragraph1>
-                  <Paragraph2 className="font-semibold text-gray-900 text-2xl">
+                  <Paragraph2 className="font-semibold text-gray-900 text-2xl leading-snug tracking-tight">
                     {dispatchWindowMeta[activeDispatchContext.type]?.title ??
                       activeDispatchContext.title}
                   </Paragraph2>
-                  <Paragraph1 className="text-gray-600 text-sm">
+                  <Paragraph1 className="text-gray-600 text-sm leading-relaxed">
                     {dispatchWindowMeta[activeDispatchContext.type]
                       ?.description ?? activeDispatchContext.subtitle}
                   </Paragraph1>
