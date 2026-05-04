@@ -104,19 +104,21 @@ const dispatchWindowMeta: Record<
   }
 > = {
   OUTBOUND: {
-    title: "Courier arrival window",
-    kicker: "Rental start delivery",
-    description: "Courier brings your item as your rental begins.",
+    title: "When should we deliver to you?",
+    kicker: "Delivery to you",
+    description:
+      "Pick a time for the handoff so the item reaches you on the first day of your rental.",
   },
   RETURN: {
-    title: "Courier arrival window",
-    kicker: "Return pickup",
-    description: "Courier collects the item when your rental ends.",
+    title: "When should we collect the return?",
+    kicker: "Pickup from you",
+    description:
+      "Pick a time for us to collect the item from you after your rental ends.",
   },
   RESALE: {
-    title: "Delivery drop-off window",
-    kicker: "Delivery drop-off",
-    description: "Courier drops off your purchase at your address.",
+    title: "When should we deliver?",
+    kicker: "Your delivery",
+    description: "Pick a time for us to drop off your purchase at your address.",
   },
 };
 
@@ -767,7 +769,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
               <div className="flex justify-between items-start gap-4">
                 <div>
                   <Paragraph1 className="font-semibold text-gray-500 text-xs uppercase tracking-[0.3em]">
-                    Window {dispatchModalStep + 1} of {totalDispatchSteps}
+                    Step {dispatchModalStep + 1} of {totalDispatchSteps}
                   </Paragraph1>
                   <Paragraph2 className="font-semibold text-gray-900 text-2xl">
                     {dispatchWindowMeta[activeDispatchContext.type]?.title ??
