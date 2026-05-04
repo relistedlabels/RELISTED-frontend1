@@ -115,8 +115,15 @@ const buildIsoFromDateAndMinutes = (
   return `${dateString}T${pad(hours)}:${pad(minutes)}:00${LAGOS_OFFSET}`;
 };
 
-const roundToSlot = (minutes: number) =>
-  Math.ceil(minutes / SLOT_INTERVAL_MINUTES) * SLOT_INTERVAL_MINUTES;
+const roundToSlot = (minutes: number) => {
+  // Round to nearest hour: if minutes >= 30, round up; else round down
+  const hourMinutes = minutes % 60;
+  if (hourMinutes >= 30) {
+    return minutes + (60 - hourMinutes); // round up to next hour
+  } else {
+    return minutes - hourMinutes; // round down to current hour
+  }
+};
 
 /** Lexicographic max for YYYY-MM-DD Lagos calendar strings. */
 const lagosCalendarMax = (a: string, b: string): string => (a < b ? b : a);
@@ -334,14 +341,20 @@ export const deriveDefaultDispatchWindow = (
 
   for (let i = 0; i < 7; i += 1) {
     const isSameDay = dateCursor === nowParts.date;
-    let candidateStart = roundToSlot(preferredStart);
+    // Round to nearest hour: if minutes >= 30, round up; else round down
+    let candidateStart = preferredStart;
+    const currentHourMinutes = candidateStart % 60;
+    if (currentHourMinutes >= 30) {
+      candidateStart += 60 - currentHourMinutes; // round up to next hour
+    } else {
+      candidateStart -= currentHourMinutes; // round down to current hour
+    }
     candidateStart = Math.max(candidateStart, dayStart);
 
-    if (isSameDay) {
-      const minStartForToday = roundToSlot(
-        nowParts.minutesFromMidnight + minLeadMinutes,
-      );
-      candidateStart = Math.max(candidateStart, minStartForToday);
+    // For same-day windows, ensure the rounded time is at least the current time
+    // Don't apply additional lead time - just use the rounded hour
+    if (isSameDay && candidateStart < nowParts.minutesFromMidnight) {
+      candidateStart = nowParts.minutesFromMidnight;
     }
 
     const lastAllowedStart = dayEnd - duration;
