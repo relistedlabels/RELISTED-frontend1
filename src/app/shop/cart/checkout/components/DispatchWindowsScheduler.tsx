@@ -428,7 +428,7 @@ export default function DispatchWindowsScheduler({
                       : "border-gray-300 bg-white text-gray-700 hover:border-gray-900"
                   }`}
                 >
-                  Custom delivery
+                  Scheduled delivery
                 </button>
               </div>
 

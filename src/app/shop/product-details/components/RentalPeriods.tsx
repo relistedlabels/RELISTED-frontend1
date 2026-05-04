@@ -596,7 +596,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                                 </Paragraph1>
                                 <Paragraph1 className="text-[11px] text-gray-400">
                                   {isCustom
-                                    ? "Custom delivery"
+                                    ? "Scheduled delivery"
                                     : "Earliest delivery"}
                                 </Paragraph1>
                               </div>
