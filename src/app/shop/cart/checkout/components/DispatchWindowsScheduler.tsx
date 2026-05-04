@@ -52,7 +52,7 @@ const LAST_START_MINUTES = DISPATCH_WINDOW_END_HOUR * 60 - FIXED_DURATION;
 const TYPE_LABELS: Record<ShipmentDispatchType, string> = {
   OUTBOUND: "Rental start",
   RETURN: "Return pickup",
-  RESALE: "Delivery window",
+  RESALE: "Delivery options",
 };
 
 const slotOptions = Array.from({
@@ -113,32 +113,41 @@ export default function DispatchWindowsScheduler({
   if (contexts.length === 0) return null;
 
   if (readOnly) {
-    const outboundCtx = contexts.find((c) => c.type === "OUTBOUND");
-    const returnCtx = contexts.find((c) => c.type === "RETURN");
+    const readOnlyLabel = (type: ShipmentDispatchType) =>
+      type === "RETURN" ? "Return pickup" : "Delivery";
 
     return (
       <div className="bg-gray-50 p-3 border border-gray-200 rounded-lg">
         <div className="space-y-3">
-          {outboundCtx && (
-            <div>
-              <Paragraph1 className="font-semibold text-[11px] text-gray-400 uppercase tracking-[0.2em]">
-                Delivery
-              </Paragraph1>
-              <Paragraph1 className="font-semibold text-gray-900 text-sm">
-                {formatWindowRange(outboundCtx.suggested.window)}
-              </Paragraph1>
-            </div>
-          )}
-          {returnCtx && (
-            <div>
-              <Paragraph1 className="font-semibold text-[11px] text-gray-400 uppercase tracking-[0.2em]">
-                Return pickup
-              </Paragraph1>
-              <Paragraph1 className="font-semibold text-gray-900 text-sm">
-                {formatWindowRange(returnCtx.suggested.window)}
-              </Paragraph1>
-            </div>
-          )}
+          {contexts.map((ctx) => {
+            const windowToShow =
+              selections?.[ctx.type]?.window ??
+              ctx.lockedWindow ??
+              ctx.suggested.window;
+            const hasWindow =
+              windowToShow &&
+              typeof windowToShow.start === "string" &&
+              typeof windowToShow.end === "string" &&
+              windowToShow.start.length > 0 &&
+              windowToShow.end.length > 0;
+            return (
+              <div key={ctx.type}>
+                <Paragraph1 className="font-semibold text-[11px] text-gray-400 uppercase tracking-[0.2em]">
+                  {readOnlyLabel(ctx.type)}
+                </Paragraph1>
+                {hasWindow ? (
+                  <Paragraph1 className="font-semibold text-gray-900 text-sm">
+                    {formatWindowRange(windowToShow)}
+                  </Paragraph1>
+                ) : (
+                  <Paragraph1 className="text-gray-500 text-sm">
+                    Delivery time is not on file yet. Refresh the page, or open
+                    the product page and confirm delivery options again.
+                  </Paragraph1>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     );

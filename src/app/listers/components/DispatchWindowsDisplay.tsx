@@ -31,7 +31,7 @@ interface DispatchWindowsDisplayProps {
 const TYPE_LABELS: Record<string, string> = {
   OUTBOUND: "Rental start delivery",
   RETURN: "Return pickup",
-  RESALE: "Delivery window",
+  RESALE: "Delivery options",
 };
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {

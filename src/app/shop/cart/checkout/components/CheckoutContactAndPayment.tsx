@@ -177,13 +177,14 @@ const getDeliveryTierDetails = (tierName: string) => {
 export default function CheckoutContactAndPayment({
   onShippingTierSelected,
   shippingTiers,
-  dispatchContexts,
+  dispatchContexts: dispatchContextsProp,
   dispatchSelections,
   onDispatchSelectionChange,
   returnPickupAddress,
   onReturnPickupChange,
   isResaleOnly = false,
 }: CheckoutContactAndPaymentProps) {
+  const dispatchContexts = dispatchContextsProp ?? [];
   const { data: user } = useMe();
   const { data: profile } = useProfile();
   const { data: walletResponse } = useWallet();
@@ -497,9 +498,6 @@ export default function CheckoutContactAndPayment({
                               Same-day
                             </span>
                           )}
-                          <span className="bg-gray-100 px-2 py-0.5 rounded-full text-[11px] text-gray-600">
-                            {isResaleOnly ? "Pickup" : "Pickup + return"}
-                          </span>
                         </div>
                         <Paragraph1 className="mt-1 text-gray-600 text-xs">
                           {tierDetails.description}
@@ -706,13 +704,15 @@ export default function CheckoutContactAndPayment({
       )}
 
       {/* 4. DISPATCH WINDOWS Section */}
-      {dispatchContexts && dispatchContexts.length > 0 && (
+      {dispatchContexts.length > 0 && (
         <div className="bg-white p-4 border border-gray-100 rounded-xl">
           <Paragraph1 className="mb-4 font-bold text-gray-800 tracking-wider">
-            DISPATCH WINDOWS
+            {isResaleOnly ? "DELIVERY OPTIONS" : "DISPATCH WINDOWS"}
           </Paragraph1>
           <Paragraph1 className="mb-4 text-gray-600 text-sm">
-            These windows were selected when you created your approval request.
+            {isResaleOnly
+              ? "The delivery slot below is the one we will use for this purchase."
+              : "These windows were selected when you created your approval request."}
           </Paragraph1>
           <DispatchWindowsScheduler
             contexts={dispatchContexts}

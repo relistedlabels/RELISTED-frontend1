@@ -251,7 +251,7 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
     }
 
     if (dispatchContexts.length > 0 && !dispatchWindowsPayload) {
-      toast.error("Please confirm a delivery window before proceeding.");
+      toast.error("Please confirm delivery options before proceeding.");
       return;
     }
 
@@ -439,7 +439,7 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
         {!soldOut && !addedToCart && dispatchContexts.length > 0 && (
           <div className="space-y-3 mb-6">
             <Paragraph1 className="font-bold text-gray-800 text-sm uppercase tracking-wide">
-              Delivery window
+              Delivery options
             </Paragraph1>
             <Paragraph1 className="text-gray-600 text-xs">
               Choose when to receive this purchase so our courier can lock in

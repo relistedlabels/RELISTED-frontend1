@@ -28,14 +28,18 @@ export type CartLineRentalSnapshot = {
   endDate?: string;
   createdAt?: string;
   selectedWindows?: {
-    outboundDeliveryWindow: {
+    outboundDeliveryWindow?: {
       start: string;
       end: string;
-    };
-    returnPickupWindow: {
+    } | null;
+    returnPickupWindow?: {
       start: string;
       end: string;
-    };
+    } | null;
+    resaleWindow?: {
+      start: string;
+      end: string;
+    } | null;
   };
 };
 

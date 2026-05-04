@@ -228,7 +228,7 @@ const DEFAULT_CONTEXT_COPY: Record<ShipmentDispatchType, DispatchContextCopy> = 
     helperText: "Choose the hour that works for handoff so we can close out your rental smoothly.",
   },
   RESALE: {
-    title: "Resale delivery window",
+    title: "Resale delivery options",
     subtitle: "Tell us when you’d like this purchase dropped off.",
     baseDateReason: "Defaults to the next available same-day slot",
     helperText:

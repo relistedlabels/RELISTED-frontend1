@@ -29,6 +29,29 @@ import {
 import type { DispatchWindowContext } from "@/lib/checkout/dispatchWindows";
 import { useDispatchScheduleClock } from "@/lib/checkout/useDispatchScheduleClock";
 
+type ResaleWindow = { start: string; end: string };
+
+/** Resale slot may be on the request row or only on the cart line snapshot (`rentalRequest`). */
+function pickResaleWindowFromCheckoutItem(item: unknown): ResaleWindow | undefined {
+  if (!item || typeof item !== "object") return undefined;
+  const o = item as Record<string, unknown>;
+  const top = o.selectedWindows as { resaleWindow?: ResaleWindow | null } | undefined;
+  if (top?.resaleWindow?.start && top?.resaleWindow?.end) {
+    return { start: top.resaleWindow.start, end: top.resaleWindow.end };
+  }
+  const rr = o.rentalRequest as
+    | { selectedWindows?: { resaleWindow?: ResaleWindow | null } }
+    | undefined;
+  const w1 = rr?.selectedWindows?.resaleWindow;
+  if (w1?.start && w1?.end) return { start: w1.start, end: w1.end };
+  const rrs = o.rentalRequests as
+    | { selectedWindows?: { resaleWindow?: ResaleWindow | null } }[]
+    | undefined;
+  const w2 = rrs?.[0]?.selectedWindows?.resaleWindow;
+  if (w2?.start && w2?.end) return { start: w2.start, end: w2.end };
+  return undefined;
+}
+
 export default function CheckoutPage() {
   const [shippingTiers, setShippingTiers] = useState<
     Array<{
@@ -275,29 +298,56 @@ export default function CheckoutPage() {
     }
 
     if (resaleItems.length > 0) {
-      const now = new Date();
-      const suggested = deriveDefaultDispatchWindow(now, {
-        allowRollForward: true,
-      });
-      contexts.push({
-        type: "RESALE",
-        title: "Delivery",
-        subtitle: "",
-        baseDateLabel: formatLagosDate(now, { includeWeekday: true }),
-        baseDateReason: "",
-        helperText: "",
-        suggested,
-        allowDateChange: true,
-        minDate: suggested.scheduledDate,
-        defaultSummary: formatWindowRange(suggested.window),
-      });
+      const savedResaleWindow = pickResaleWindowFromCheckoutItem(resaleItems[0]);
+
+      if (savedResaleWindow) {
+        const scheduledDate = getLagosDateString(savedResaleWindow.start);
+        const baseDate = getLagosDateString(savedResaleWindow.start);
+        const suggested: DerivedDispatchWindow = {
+          window: savedResaleWindow,
+          baseDate,
+          scheduledDate,
+          rolledForwardDays: 0,
+        };
+        contexts.push({
+          type: "RESALE",
+          title: "Delivery",
+          subtitle: "",
+          baseDateLabel: formatLagosDate(savedResaleWindow.start, {
+            includeWeekday: true,
+          }),
+          baseDateReason: "",
+          helperText: "",
+          suggested,
+          allowDateChange: true,
+          minDate: scheduledDate,
+          defaultSummary: formatWindowRange(savedResaleWindow),
+        });
+      } else {
+        const now = new Date();
+        const suggested = deriveDefaultDispatchWindow(now, {
+          allowRollForward: true,
+        });
+        contexts.push({
+          type: "RESALE",
+          title: "Delivery",
+          subtitle: "",
+          baseDateLabel: formatLagosDate(now, { includeWeekday: true }),
+          baseDateReason: "",
+          helperText: "",
+          suggested,
+          allowDateChange: true,
+          minDate: suggested.scheduledDate,
+          defaultSummary: formatWindowRange(suggested.window),
+        });
+      }
     }
 
     return contexts;
   }, [
     outboundBaseDate,
     returnBaseDate,
-    resaleItems.length,
+    resaleItems,
     rentalItems,
     dispatchScheduleClock,
   ]);
