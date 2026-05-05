@@ -4,7 +4,8 @@
 
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { Suspense, useMemo, useState, useEffect, useRef } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
 import {
@@ -33,6 +34,7 @@ import type {
   ShipmentStatus,
   ShipmentType,
 } from "@/lib/api/shipments";
+import { getShipment } from "@/lib/api/shipments";
 import { formatLagosDate, formatWindowRange } from "@/lib/checkout/dispatchWindows";
 import { getShipmentStatusLabel } from "@/lib/orders/shipmentAndOrderLabels";
 import { toast } from "sonner";
@@ -202,6 +204,24 @@ function formatDispatchErrorCode(code: string | null | undefined): string | null
 }
 
 export default function ShipmentsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen">
+          <TableSkeleton rows={8} columns={8} />
+        </div>
+      }
+    >
+      <ShipmentsPageInner />
+    </Suspense>
+  );
+}
+
+function ShipmentsPageInner() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [statusFilter, setStatusFilter] = useState<ShipmentStatus | "All">("All");
   const [typeFilter, setTypeFilter] = useState<ShipmentType | "All">("All");
   const [fulfillmentFilter, setFulfillmentFilter] = useState<FulfillmentFilter>("all");
@@ -217,6 +237,35 @@ export default function ShipmentsPage() {
     const t = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 350);
     return () => clearTimeout(t);
   }, [searchQuery]);
+
+  const shipmentIdFromLink = searchParams.get("shipmentId")?.trim() ?? "";
+  const processedShipmentLinkRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!shipmentIdFromLink) {
+      processedShipmentLinkRef.current = null;
+      return;
+    }
+    if (processedShipmentLinkRef.current === shipmentIdFromLink) return;
+    processedShipmentLinkRef.current = shipmentIdFromLink;
+
+    void (async () => {
+      try {
+        const res = await getShipment(shipmentIdFromLink);
+        if (!res?.data) return;
+        setSelectedShipment(res.data);
+        setIsDetailModalOpen(true);
+      } catch {
+        toast.error("Could not load shipment from link");
+        processedShipmentLinkRef.current = null;
+      } finally {
+        const next = new URLSearchParams(searchParams.toString());
+        next.delete("shipmentId");
+        const q = next.toString();
+        router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+      }
+    })();
+  }, [shipmentIdFromLink, pathname, router, searchParams]);
 
   useEffect(() => {
     setCurrentPage(1);
