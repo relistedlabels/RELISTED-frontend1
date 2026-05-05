@@ -813,7 +813,7 @@ export default function ShipmentsPage() {
                   {formatAddress(displayShipment.pickupAddress)}
                 </Paragraph1>
               </div>
-              <div>au
+              <div>
                 <Paragraph1 className="flex items-center gap-1 mb-2 text-gray-500 text-xs">
                   <Truck size={12} />
                   Deliver to (renter)
