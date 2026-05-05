@@ -6,6 +6,7 @@ import {
   getOrderShipments,
   cancelShipment,
   redispatchShipment,
+  completeManualShipment,
   type ShipmentStatus,
   type ShipmentType,
 } from "@/lib/api/shipments";
@@ -14,6 +15,7 @@ export const useShipments = (params?: {
   status?: ShipmentStatus;
   type?: ShipmentType;
   orderId?: string;
+  manualFulfillment?: boolean;
   dateFrom?: string;
   dateTo?: string;
   page?: number;
@@ -69,6 +71,25 @@ export const useRedispatchShipment = () => {
   return useMutation({
     mutationFn: (shipmentId: string) => redispatchShipment(shipmentId),
     onSuccess: (_data, shipmentId) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "shipments"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "shipment", shipmentId] });
+    },
+  });
+};
+
+export const useCompleteManualShipment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      shipmentId,
+      trackingId,
+      trackingUrl,
+    }: {
+      shipmentId: string;
+      trackingId?: string;
+      trackingUrl?: string;
+    }) => completeManualShipment(shipmentId, { trackingId, trackingUrl }),
+    onSuccess: (_data, { shipmentId }) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "shipments"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "shipment", shipmentId] });
     },

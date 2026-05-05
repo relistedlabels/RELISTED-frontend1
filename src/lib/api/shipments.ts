@@ -62,6 +62,7 @@ export interface Shipment {
   pickupPartner?: string | null;
   pickupId?: string | null;
   deliveryLocation?: string | null;
+  manualFulfillment?: boolean;
   dispatchAttempts: number;
   dispatchedAt?: string | null;
   createdAt: string;
@@ -112,6 +113,7 @@ export const getShipments = async (params?: {
   status?: ShipmentStatus;
   type?: ShipmentType;
   orderId?: string;
+  manualFulfillment?: boolean;
   dateFrom?: string;
   dateTo?: string;
   page?: number;
@@ -121,6 +123,12 @@ export const getShipments = async (params?: {
   if (params?.status) queryParams.append("status", params.status);
   if (params?.type) queryParams.append("type", params.type);
   if (params?.orderId) queryParams.append("orderId", params.orderId);
+  if (params?.manualFulfillment === true) {
+    queryParams.append("manualFulfillment", "true");
+  }
+  if (params?.manualFulfillment === false) {
+    queryParams.append("manualFulfillment", "false");
+  }
   if (params?.dateFrom) queryParams.append("dateFrom", params.dateFrom);
   if (params?.dateTo) queryParams.append("dateTo", params.dateTo);
   if (params?.page) queryParams.append("page", params.page.toString());
@@ -173,5 +181,22 @@ export const redispatchShipment = async (
   return apiFetch<{ success: boolean; message: string }>(
     `/shipments/${shipmentId}/redispatch`,
     { method: "POST" },
+  );
+};
+
+export const completeManualShipment = async (
+  shipmentId: string,
+  body?: { trackingId?: string; trackingUrl?: string },
+): Promise<{ success: boolean; message: string }> => {
+  return apiFetch<{ success: boolean; message: string }>(
+    `/shipments/${shipmentId}/manual-complete`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        trackingId: body?.trackingId,
+        trackingUrl: body?.trackingUrl,
+      }),
+    },
   );
 };

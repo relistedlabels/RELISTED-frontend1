@@ -1,5 +1,6 @@
 // ENDPOINTS: GET /shipments, GET /shipments/:id, GET /shipments/:id/tracking,
-// GET /orders/:orderId/shipments, POST /shipments/:id/cancel, POST /shipments/:id/redispatch
+// GET /orders/:orderId/shipments, POST /shipments/:id/cancel, POST /shipments/:id/redispatch,
+// POST /shipments/:id/manual-complete (Relisted dispatch)
 
 "use client";
 
@@ -24,6 +25,7 @@ import {
   useShipment,
   useCancelShipment,
   useRedispatchShipment,
+  useCompleteManualShipment,
 } from "@/lib/queries/admin/useShipments";
 import type {
   DispatchAttemptLog,
@@ -123,6 +125,8 @@ const STATUS_FILTERS: Array<ShipmentStatus | "All"> = [
 
 const TYPE_FILTERS: Array<ShipmentType | "All"> = ["All", "OUTBOUND", "RETURN", "RESALE"];
 
+type FulfillmentFilter = "all" | "manual" | "automated";
+
 function shortenId(id: string, keep = 8): string {
   if (id.length <= keep + 4) return id;
   return `${id.slice(0, keep)}…${id.slice(-4)}`;
@@ -200,11 +204,14 @@ function formatDispatchErrorCode(code: string | null | undefined): string | null
 export default function ShipmentsPage() {
   const [statusFilter, setStatusFilter] = useState<ShipmentStatus | "All">("All");
   const [typeFilter, setTypeFilter] = useState<ShipmentType | "All">("All");
+  const [fulfillmentFilter, setFulfillmentFilter] = useState<FulfillmentFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [manualTrackingRef, setManualTrackingRef] = useState("");
+  const [manualTrackingUrl, setManualTrackingUrl] = useState("");
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 350);
@@ -213,7 +220,14 @@ export default function ShipmentsPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, typeFilter, debouncedSearch]);
+  }, [statusFilter, typeFilter, fulfillmentFilter, debouncedSearch]);
+
+  const manualFulfillmentParam =
+    fulfillmentFilter === "manual"
+      ? true
+      : fulfillmentFilter === "automated"
+        ? false
+        : undefined;
 
   const {
     data: shipmentsData,
@@ -223,18 +237,26 @@ export default function ShipmentsPage() {
     status: statusFilter === "All" ? undefined : statusFilter,
     type: typeFilter === "All" ? undefined : typeFilter,
     orderId: debouncedSearch || undefined,
+    manualFulfillment: manualFulfillmentParam,
     page: currentPage,
     limit: 20,
   });
 
   const cancelShipment = useCancelShipment();
   const redispatchShipment = useRedispatchShipment();
+  const completeManualShipment = useCompleteManualShipment();
 
   const detailQuery = useShipment(selectedShipment?.id ?? "", {
     enabled: Boolean(isDetailModalOpen && selectedShipment?.id),
   });
   const detailFromApi = detailQuery.data?.data;
   const displayShipment: Shipment | null = detailFromApi ?? selectedShipment;
+
+  useEffect(() => {
+    if (!displayShipment?.id) return;
+    setManualTrackingRef("");
+    setManualTrackingUrl("");
+  }, [displayShipment?.id]);
 
   const sortedDispatchAttemptLogs = useMemo(
     () => sortDispatchAttemptLogs(displayShipment?.attemptLogs),
@@ -286,6 +308,21 @@ export default function ShipmentsPage() {
   const handleViewDetails = (shipment: Shipment) => {
     setSelectedShipment(shipment);
     setIsDetailModalOpen(true);
+  };
+
+  const handleMarkManualDispatched = async () => {
+    if (!displayShipment?.id) return;
+    try {
+      await completeManualShipment.mutateAsync({
+        shipmentId: displayShipment.id,
+        trackingId: manualTrackingRef.trim() || undefined,
+        trackingUrl: manualTrackingUrl.trim() || undefined,
+      });
+      toast.success("Marked as dispatched. Customer notified.");
+      setIsDetailModalOpen(false);
+    } catch {
+      toast.error("Could not complete shipment");
+    }
   };
 
   return (
@@ -344,6 +381,34 @@ export default function ShipmentsPage() {
               }`}
             >
               {t === "All" ? "All types" : getTypeLabel(t)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-white mb-6 px-6 py-4 border border-gray-200 rounded-lg">
+        <Paragraph1 className="mb-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">
+          Fulfillment
+        </Paragraph1>
+        <div className="flex items-center gap-2 pb-1 overflow-x-auto">
+          {(
+            [
+              { key: "all" as const, label: "All" },
+              { key: "manual" as const, label: "Relisted dispatch" },
+              { key: "automated" as const, label: "Carrier (Topship)" },
+            ] as const
+          ).map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setFulfillmentFilter(key)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                fulfillmentFilter === key
+                  ? "bg-gray-900 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {label}
             </button>
           ))}
         </div>
@@ -453,9 +518,16 @@ export default function ShipmentsPage() {
                           </Paragraph1>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="inline-block bg-gray-100 px-3 py-1 rounded-full font-semibold text-gray-700 text-xs">
-                            {getTypeLabel(shipment.type)}
-                          </span>
+                          <div className="flex flex-col items-start gap-1">
+                            <span className="inline-block bg-gray-100 px-3 py-1 rounded-full font-semibold text-gray-700 text-xs">
+                              {getTypeLabel(shipment.type)}
+                            </span>
+                            {shipment.manualFulfillment && (
+                              <span className="inline-block bg-amber-100 px-2 py-0.5 rounded font-medium text-amber-900 text-[10px] tracking-wide uppercase">
+                                Relisted dispatch
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <span
@@ -511,7 +583,7 @@ export default function ShipmentsPage() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
-                            {shipment.status === "DISPATCH_FAILED" && (
+                            {shipment.status === "DISPATCH_FAILED" && !shipment.manualFulfillment && (
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -698,6 +770,17 @@ export default function ShipmentsPage() {
                 </div>
               </div>
 
+              {displayShipment.manualFulfillment && (
+                <div className="bg-amber-50 p-4 border border-amber-200 rounded-lg">
+                  <Paragraph1 className="mb-1 font-semibold text-amber-950 text-sm">
+                    Relisted dispatch
+                  </Paragraph1>
+                  <Paragraph1 className="text-amber-900 text-sm leading-relaxed">
+                    This order did not get an automated Topship quote. Arrange pickup or a rider using the addresses below, then mark the shipment as dispatched. The customer is notified with any tracking reference or link you add.
+                  </Paragraph1>
+                </div>
+              )}
+
               {displayShipment.order?.orderItems &&
                 displayShipment.order.orderItems.length > 0 && (
                   <div>
@@ -870,8 +953,54 @@ export default function ShipmentsPage() {
                 )}
               </div>
 
+              {displayShipment.manualFulfillment &&
+                (displayShipment.status === "PENDING" ||
+                  displayShipment.status === "DISPATCHING") && (
+                  <div className="space-y-3 pt-2 border-gray-100 border-t">
+                    <Paragraph1 className="font-semibold text-gray-700 text-xs uppercase tracking-wide">
+                      Mark dispatched (manual)
+                    </Paragraph1>
+                    <div className="gap-3 grid grid-cols-1 sm:grid-cols-2">
+                      <label className="block">
+                        <Paragraph1 className="mb-1 text-gray-500 text-xs">
+                          Reference (phone, rider id, etc.)
+                        </Paragraph1>
+                        <input
+                          type="text"
+                          value={manualTrackingRef}
+                          onChange={(e) => setManualTrackingRef(e.target.value)}
+                          className="px-3 py-2 border border-gray-200 rounded-lg w-full text-gray-900 text-sm"
+                          placeholder="Optional"
+                        />
+                      </label>
+                      <label className="block">
+                        <Paragraph1 className="mb-1 text-gray-500 text-xs">
+                          Tracking URL
+                        </Paragraph1>
+                        <input
+                          type="url"
+                          value={manualTrackingUrl}
+                          onChange={(e) => setManualTrackingUrl(e.target.value)}
+                          className="px-3 py-2 border border-gray-200 rounded-lg w-full text-gray-900 text-sm"
+                          placeholder="https://…"
+                        />
+                      </label>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void handleMarkManualDispatched();
+                      }}
+                      disabled={completeManualShipment.isPending}
+                      className="bg-gray-900 hover:bg-gray-800 disabled:opacity-50 px-4 py-2 rounded-lg w-full sm:w-auto font-medium text-white text-sm transition"
+                    >
+                      {completeManualShipment.isPending ? "Saving…" : "Mark dispatched"}
+                    </button>
+                  </div>
+                )}
+
               <div className="flex sm:flex-row flex-col gap-3 pt-4 border-gray-200 border-t">
-                {displayShipment.status === "DISPATCH_FAILED" && (
+                {displayShipment.status === "DISPATCH_FAILED" && !displayShipment.manualFulfillment && (
                   <button
                     type="button"
                     onClick={() => {
