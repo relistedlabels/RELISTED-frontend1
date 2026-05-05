@@ -105,6 +105,53 @@ export const reRequestAvailability = (cartItemId: string) =>
     { method: "POST" },
   );
 
+/** One shipment pricing leg from GET /order/summary (matches backend `shipmentBuckets`). */
+export type CheckoutShipmentBucket = {
+  listerId: string;
+  listerName: string;
+  bucketMode: "RENTAL" | "RESALE" | string;
+  productIds?: string[];
+  outboundDeliveryWindow?: { start: string; end: string } | null;
+  returnPickupWindow?: { start: string; end: string } | null;
+  resaleDeliveryWindow?: { start: string; end: string } | null;
+  outboundShippingCost?: number;
+  returnShippingCost?: number;
+  outboundPickupCost?: number;
+  returnPickupCost?: number;
+};
+
+export type OrderSummaryPayload = {
+  summary: {
+    rentalTotal?: number;
+    collateralTotal?: number;
+    cleaningTotal?: number;
+    purchaseTotal?: number;
+    pickupTotal?: number;
+    shippingTotal?: number;
+    outboundShippingTotal?: number;
+    returnShippingTotal?: number;
+    outboundPickupTotal?: number;
+    returnPickupTotal?: number;
+    returnTotal?: number;
+    serviceCharge?: number;
+    vatAmount?: number;
+    grandTotal?: number;
+  };
+  shippingTiers: Array<{
+    name: string;
+    totalShippingCost: number;
+    grandTotal: number;
+  }>;
+  listerBreakdowns?: unknown[];
+  shipmentBuckets?: CheckoutShipmentBucket[];
+};
+
+export type OrderSummaryResponse = {
+  success: boolean;
+  message?: string;
+  data?: OrderSummaryPayload;
+};
+
 export type OrderPostResponse = {
   success: boolean;
   message?: string;
@@ -176,10 +223,12 @@ export const getOrderSummaryApi = (returnAddress?: {
   const queryString = params.toString();
   const url = `/order/summary${queryString ? `?${queryString}` : ""}`;
   
-  return apiFetch<any>(url, {
+  return apiFetch<OrderSummaryResponse>(url, {
     method: "GET",
   });
 };
+
+export type OrderSummaryApiResult = Awaited<ReturnType<typeof getOrderSummaryApi>>;
 
 export interface ReturnPickupAddressPayload {
   contactName: string;

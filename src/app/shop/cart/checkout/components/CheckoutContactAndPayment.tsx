@@ -14,9 +14,9 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { toast } from "sonner";
-import {
-  getOrderSummaryApi,
-  type ReturnPickupAddressPayload,
+import type {
+  OrderSummaryApiResult,
+  ReturnPickupAddressPayload,
 } from "@/lib/api/cart";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useWallet } from "@/lib/queries/renters/useWallet";
@@ -81,12 +81,16 @@ const TOPSHIP_CITIES = [
 ];
 
 interface CheckoutContactAndPaymentProps {
+  /** Same GET /order/summary payload as the sidebar (used for wallet shortfall vs checkout total). */
+  orderSummary?: OrderSummaryApiResult;
   onShippingTierSelected?: (tierName: string) => void;
   shippingTiers?: Array<{
     name: string;
     totalShippingCost: number;
     grandTotal: number;
   }>;
+  selectedShippingTier?: string;
+  isShippingTiersLoading?: boolean;
   dispatchContexts?: DispatchWindowContext[];
   dispatchSelections?: DispatchWindowSelectionMap;
   onDispatchSelectionChange?: (
@@ -95,6 +99,12 @@ interface CheckoutContactAndPaymentProps {
   ) => void;
   returnPickupAddress?: ReturnPickupAddressPayload;
   onReturnPickupChange?: (value?: ReturnPickupAddressPayload) => void;
+  checkoutBlockingIssues?: string[];
+  /** Quote-based dispatch: one optional heading per shipment bucket, then rental/return rows. */
+  summaryDispatchPreview?: Array<{
+    groupHeading: string | null;
+    rows: Array<{ title: string; range: string }>;
+  }>;
   isResaleOnly?: boolean;
 }
 
@@ -122,6 +132,25 @@ const ContactSkeleton = () => (
         <div className="bg-gray-200 mb-3 rounded w-32 h-5"></div>
         <hr className="mb-3" />
         <div className="bg-gray-200 rounded w-48 h-4"></div>
+      </div>
+    ))}
+  </div>
+);
+
+const DISPATCH_QUOTE_SKELETON_KEYS = ["dq-s1", "dq-s2"];
+
+const DispatchWindowsQuoteSkeleton = () => (
+  <div className="space-y-3 bg-linear-to-b from-neutral-50 to-neutral-50/40 p-3 sm:p-4 border border-gray-100 rounded-xl animate-pulse">
+    {DISPATCH_QUOTE_SKELETON_KEYS.map((key) => (
+      <div
+        key={key}
+        className="bg-white shadow-sm border border-gray-200/90 rounded-lg overflow-hidden"
+      >
+        <div className="space-y-3 px-4 sm:px-5 py-4">
+          <div className="bg-gray-200 rounded-md w-36 h-4" />
+          <div className="bg-gray-200 rounded-md w-full max-w-md h-5" />
+          <div className="bg-gray-200 rounded-md w-full max-w-sm h-5" />
+        </div>
       </div>
     ))}
   </div>
@@ -175,27 +204,76 @@ const getDeliveryTierDetails = (tierName: string) => {
 };
 
 export default function CheckoutContactAndPayment({
+  orderSummary,
   onShippingTierSelected,
   shippingTiers,
+  selectedShippingTier = "",
+  isShippingTiersLoading = false,
   dispatchContexts: dispatchContextsProp,
   dispatchSelections,
   onDispatchSelectionChange,
   returnPickupAddress,
   onReturnPickupChange,
+  checkoutBlockingIssues = [],
+  summaryDispatchPreview,
   isResaleOnly = false,
 }: CheckoutContactAndPaymentProps) {
   const dispatchContexts = dispatchContextsProp ?? [];
+  const hasRentalDispatch = useMemo(
+    () =>
+      dispatchContexts.some(
+        (c) => c.type === "OUTBOUND" || c.type === "RETURN",
+      ),
+    [dispatchContexts],
+  );
+  const hasSummaryDispatchPreview = Boolean(
+    summaryDispatchPreview && summaryDispatchPreview.length > 0,
+  );
+  /** Avoid read-only scheduler from rentalItems[0] while GET /order/summary is still loading (multi-lister carts). */
+  const showQuoteDispatchLoading =
+    !isResaleOnly &&
+    hasRentalDispatch &&
+    isShippingTiersLoading &&
+    !hasSummaryDispatchPreview;
   const { data: user } = useMe();
   const { data: profile } = useProfile();
   const { data: walletResponse } = useWallet();
   const [isSameAsBilling, setIsSameAsBilling] = useState(true);
-  const [selectedShippingTier, setSelectedShippingTier] = useState<string>(
-    shippingTiers?.[0]?.name || "",
-  );
-  const [localShippingTiers, setLocalShippingTiers] = useState(
-    shippingTiers || [],
-  );
-  const [isLoadingShipping, setIsLoadingShipping] = useState(false);
+  const tierList = shippingTiers ?? [];
+
+  /** Matches grand total in FinalOrderSummaryCard (line items plus selected-tier shipping adjustment). */
+  const checkoutGrandTotalNgN = useMemo(() => {
+    const summary = orderSummary?.data?.summary;
+    if (!summary) return undefined;
+
+    const summaryOutboundShipping = summary.outboundShippingTotal || 0;
+    const summaryReturnShipping = summary.returnShippingTotal || 0;
+    const summarySplitShippingTotal =
+      summaryOutboundShipping + summaryReturnShipping;
+    const summaryShippingTotal =
+      summary.shippingTotal || summarySplitShippingTotal;
+
+    const tiers = shippingTiers ?? [];
+    const selectedTierRow = tiers.find((t) => t.name === selectedShippingTier);
+    const selectedShippingTotal =
+      selectedTierRow?.totalShippingCost ?? summaryShippingTotal;
+    const shippingTierAdjustment = selectedShippingTotal - summaryShippingTotal;
+
+    return (
+      (summary.purchaseTotal ?? 0) +
+      (summary.rentalTotal ?? 0) +
+      (summary.collateralTotal ?? 0) +
+      (summary.cleaningTotal ?? 0) +
+      (summary.outboundPickupTotal ?? 0) +
+      (summary.returnPickupTotal ?? 0) +
+      (summary.outboundShippingTotal ?? 0) +
+      (summary.returnShippingTotal ?? 0) +
+      (summary.serviceCharge ?? 0) +
+      (summary.vatAmount ?? 0) +
+      shippingTierAdjustment
+    );
+  }, [orderSummary?.data?.summary, shippingTiers, selectedShippingTier]);
+
   const basePickupDefaults = useMemo<ReturnPickupAddressPayload>(
     () => ({
       contactName: user?.name ?? "",
@@ -223,61 +301,7 @@ export default function CheckoutContactAndPayment({
   const [hasTouchedReturnPickup, setHasTouchedReturnPickup] = useState(false);
   const [savingPickup, setSavingPickup] = useState(false);
 
-  // Fetch shipping tiers with return pickup address
-  useEffect(() => {
-    const fetchShippingTiers = async () => {
-      setIsLoadingShipping(true);
-      try {
-        const response = await getOrderSummaryApi({
-          returnStreet: returnPickupAddress?.street,
-          returnCity: returnPickupAddress?.city,
-          returnState: returnPickupAddress?.state,
-          returnLandmark: returnPickupAddress?.instructions,
-        });
-        if (response.data?.shippingTiers) {
-          setLocalShippingTiers(response.data.shippingTiers);
-          const defaultTier = response.data.shippingTiers[0];
-          if (defaultTier?.name) {
-            setSelectedShippingTier(defaultTier.name);
-            onShippingTierSelected?.(defaultTier.name);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch shipping tiers:", err);
-      } finally {
-        setIsLoadingShipping(false);
-      }
-    };
-    fetchShippingTiers();
-  }, []);
-
-  // Refetch shipping tiers when return pickup address changes
-  useEffect(() => {
-    if (returnPickupAddress?.street && returnPickupAddress?.city) {
-      const fetchUpdatedTiers = async () => {
-        setIsLoadingShipping(true);
-        try {
-          const response = await getOrderSummaryApi({
-            returnStreet: returnPickupAddress.street,
-            returnCity: returnPickupAddress.city,
-            returnState: returnPickupAddress.state,
-            returnLandmark: returnPickupAddress.instructions,
-          });
-          if (response.data?.shippingTiers) {
-            setLocalShippingTiers(response.data.shippingTiers);
-          }
-        } catch (err) {
-          console.error("Failed to fetch updated shipping tiers:", err);
-        } finally {
-          setIsLoadingShipping(false);
-        }
-      };
-      fetchUpdatedTiers();
-    }
-  }, [returnPickupAddress?.street, returnPickupAddress?.city]);
-
   const handleShippingTierChange = (tierName: string) => {
-    setSelectedShippingTier(tierName);
     onShippingTierSelected?.(tierName);
   };
 
@@ -357,6 +381,11 @@ export default function CheckoutContactAndPayment({
   const formatCurrency = (amount: number): string => {
     return amount.toLocaleString("en-NG");
   };
+
+  const walletTopUpNgN =
+    checkoutGrandTotalNgN !== undefined
+      ? Math.max(0, Math.round(checkoutGrandTotalNgN - availableBalance))
+      : undefined;
 
   return (
     <div className="space-y-6 bg-gray-50">
@@ -439,7 +468,7 @@ export default function CheckoutContactAndPayment({
 
         <hr className="my-4 text-gray-100" />
 
-        {isLoadingShipping ? (
+        {isShippingTiersLoading ? (
           <div className="space-y-3">
             {SHIPPING_SKELETON_KEYS.map((key) => (
               <div
@@ -448,9 +477,9 @@ export default function CheckoutContactAndPayment({
               ></div>
             ))}
           </div>
-        ) : localShippingTiers.length > 0 ? (
+        ) : tierList.length > 0 ? (
           <div className="space-y-3">
-            {[...localShippingTiers]
+            {[...tierList]
               .filter((tier) => {
                 const isExpress =
                   tier.name.toLowerCase().includes("dhl") ||
@@ -712,14 +741,73 @@ export default function CheckoutContactAndPayment({
           <Paragraph1 className="mb-4 text-gray-600 text-sm">
             {isResaleOnly
               ? "The delivery slot below is the one we will use for this purchase."
-              : "These windows were selected when you created your approval request."}
+              : showQuoteDispatchLoading
+                ? "Loading windows that match your quote. Each lister or schedule can have its own delivery and return slot."
+                : hasSummaryDispatchPreview
+                  ? "Windows below match your checkout quote (each rental schedule may have its own outbound and return slot)."
+                  : "These windows were selected when you created your approval request."}
           </Paragraph1>
-          <DispatchWindowsScheduler
-            contexts={dispatchContexts}
-            selections={dispatchSelections || {}}
-            onSelectionChange={onDispatchSelectionChange}
-            readOnly={true}
-          />
+          {hasSummaryDispatchPreview ? (
+            <div className="space-y-3 bg-linear-to-b from-neutral-50 to-neutral-50/40 p-3 sm:p-4 border border-gray-100 rounded-xl">
+              {(summaryDispatchPreview ?? []).map((group, gi) => (
+                <div
+                  key={`dispatch-group-${gi}`}
+                  className="bg-white shadow-sm border border-gray-200/90 rounded-lg overflow-hidden"
+                >
+                  {group.groupHeading ? (
+                    <div className="flex gap-2.5 bg-neutral-50/70 px-4 py-3 border-gray-100 border-b">
+                      <Clock
+                        className="mt-0.5 size-4 text-gray-400 shrink-0"
+                        strokeWidth={2}
+                        aria-hidden
+                      />
+                      <Paragraph1 className="font-semibold text-gray-900 text-sm leading-snug">
+                        {group.groupHeading}
+                      </Paragraph1>
+                    </div>
+                  ) : null}
+                  <div className="divide-y divide-gray-100">
+                    {group.rows.map((row, ri) => (
+                      <div
+                        key={`${row.title}-${gi}-${ri}`}
+                        className="px-4 sm:px-5 py-3.5 sm:py-4"
+                      >
+                        <Paragraph1 className="mb-1 font-semibold text-[10px] text-gray-500 uppercase tracking-[0.18em]">
+                          {row.title}
+                        </Paragraph1>
+                        <Paragraph1 className="font-medium text-[15px] text-gray-950 leading-relaxed tracking-tight">
+                          {row.range}
+                        </Paragraph1>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : showQuoteDispatchLoading ? (
+            <DispatchWindowsQuoteSkeleton />
+          ) : (
+            <DispatchWindowsScheduler
+              contexts={dispatchContexts}
+              selections={dispatchSelections || {}}
+              onSelectionChange={onDispatchSelectionChange}
+              readOnly={true}
+            />
+          )}
+          {checkoutBlockingIssues.length > 0 && (
+            <div className="bg-red-50 mt-4 p-3 border border-red-200 rounded-lg">
+              <Paragraph1 className="font-semibold text-red-700 text-xs uppercase tracking-wide">
+                Action needed before payment
+              </Paragraph1>
+              <div className="space-y-1 mt-1">
+                {checkoutBlockingIssues.map((issue) => (
+                  <Paragraph1 key={issue} className="text-red-700 text-xs">
+                    {issue}
+                  </Paragraph1>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -746,22 +834,17 @@ export default function CheckoutContactAndPayment({
                 >
                   ₦{formatCurrency(availableBalance)}
                 </Paragraph3>
+                {walletTopUpNgN !== undefined && walletTopUpNgN > 0 ? (
+                  <Paragraph1 className="mt-2 max-w-56 sm:max-w-none text-green-700 text-xs leading-snug">
+                    Fund your wallet with ₦{formatCurrency(walletTopUpNgN)} to complete your order.
+                  </Paragraph1>
+                ) : null}
               </div>
             </div>
           </div>
           <FundWallet />
         </div>
       </div>
-
-      {/* Footer Note */}
-      {!isWalletFunded && (
-        <div className="flex items-center mt-4 text-gray-500 text-xs">
-          <span className="mr-1 text-base">ⓘ</span>
-          <Paragraph1 className="text-gray-500">
-            Fund your wallet to complete this order
-          </Paragraph1>
-        </div>
-      )}
     </div>
   );
 }
