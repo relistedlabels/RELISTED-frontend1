@@ -31,7 +31,7 @@ import type {
   ShipmentStatus,
   ShipmentType,
 } from "@/lib/api/shipments";
-import { formatWindowRange } from "@/lib/checkout/dispatchWindows";
+import { formatLagosDate, formatWindowRange } from "@/lib/checkout/dispatchWindows";
 import { getShipmentStatusLabel } from "@/lib/orders/shipmentAndOrderLabels";
 import { toast } from "sonner";
 
@@ -475,7 +475,7 @@ export default function ShipmentsPage() {
                         <td className="px-6 py-4">
                           <Paragraph1 className="text-gray-700 text-sm">
                             {shipment.scheduledDate
-                              ? new Date(shipment.scheduledDate).toLocaleString()
+                              ? formatLagosDate(shipment.scheduledDate)
                               : "—"}
                           </Paragraph1>
                         </td>
@@ -714,10 +714,14 @@ export default function ShipmentsPage() {
 
               <div className="gap-4 grid grid-cols-1 sm:grid-cols-2">
                 <div>
-                  <Paragraph1 className="mb-1 text-gray-500 text-xs">Scheduled date</Paragraph1>
+                  <Paragraph1 className="mb-1 text-gray-500 text-xs">
+                    Scheduled date (calendar day, Lagos)
+                  </Paragraph1>
                   <Paragraph1 className="font-medium text-gray-900">
                     {displayShipment.scheduledDate
-                      ? new Date(displayShipment.scheduledDate).toLocaleString()
+                      ? formatLagosDate(displayShipment.scheduledDate, {
+                          includeWeekday: true,
+                        })
                       : "—"}
                   </Paragraph1>
                 </div>
