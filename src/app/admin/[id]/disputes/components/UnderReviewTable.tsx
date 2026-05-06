@@ -7,7 +7,11 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Paragraph1 } from "@/common/ui/Text";
-import type { Dispute } from "@/lib/api/admin/disputes";
+import {
+  type Dispute,
+  adminDisputeStatusBadgeClasses,
+  formatAdminDisputeStatusLabel,
+} from "@/lib/api/admin/disputes";
 import { useDisputeById } from "@/lib/queries/admin/useDisputes";
 import { DisputeResolutionPanel } from "./DisputeResolutionPanel";
 import {
@@ -28,7 +32,7 @@ interface UnderReviewDisputeData {
   preferredResolution: string;
   dateCreated: string;
   assignedTo: string;
-  status: "Under Review";
+  statusRaw: string;
 }
 
 interface UnderReviewTableProps {
@@ -331,7 +335,7 @@ function transformDisputeData(dispute: Dispute): UnderReviewDisputeData {
         })
       : "—",
     assignedTo: dispute.assignedTo?.name ?? "Unassigned",
-    status: "Under Review",
+    statusRaw: String(dispute.status ?? ""),
   };
 }
 
@@ -354,7 +358,10 @@ export default function UnderReviewTable({
         item.raisedBy.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.listerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.renterName.toLowerCase().includes(searchQuery.toLowerCase()),
+        item.renterName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        formatAdminDisputeStatusLabel(item.statusRaw)
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()),
     );
   }, [searchQuery, displayData]);
 
@@ -457,6 +464,11 @@ export default function UnderReviewTable({
             </th>
             <th className="px-6 py-4 text-left">
               <Paragraph1 className="font-semibold text-gray-900">
+                STATUS
+              </Paragraph1>
+            </th>
+            <th className="px-6 py-4 text-left">
+              <Paragraph1 className="font-semibold text-gray-900">
                 ASSIGNED TO
               </Paragraph1>
             </th>
@@ -470,7 +482,7 @@ export default function UnderReviewTable({
         <tbody>
           {filteredData.length === 0 ? (
             <tr>
-              <td colSpan={10} className="px-6 py-8 text-center">
+              <td colSpan={11} className="px-6 py-8 text-center">
                 <Paragraph1 className="text-gray-500">
                   No disputes under review found
                 </Paragraph1>
@@ -544,6 +556,13 @@ export default function UnderReviewTable({
                   <Paragraph1 className="text-gray-600">
                     {item.dateCreated}
                   </Paragraph1>
+                </td>
+                <td className="px-6 py-4">
+                  <span
+                    className={`${adminDisputeStatusBadgeClasses(item.statusRaw)} px-3 py-1 rounded-full font-medium text-xs`}
+                  >
+                    {formatAdminDisputeStatusLabel(item.statusRaw)}
+                  </span>
                 </td>
                 <td className="px-6 py-4">
                   <Paragraph1 className="text-gray-600">

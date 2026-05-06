@@ -3,7 +3,6 @@ import React from "react";
 import Link from "next/link";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
-import { usePublicUserById } from "@/lib/queries/user/usePublicUserById";
 
 const StatusPill = ({ isSuspended }: { isSuspended: boolean }) => {
   const isActive = !isSuspended;
@@ -26,10 +25,7 @@ const getInitials = (name: string) => {
     .toUpperCase();
 };
 
-// User row component that fetches individual user data for avatar
 const UserRow = ({ user, adminId }: { user: any; adminId: string | null }) => {
-  const { data: publicUser, isLoading } = usePublicUserById(user.id);
-
   const profileDate = user.profile?.createdAt
     ? new Date(user.profile.createdAt).toLocaleDateString("en-US", {
         year: "numeric",
@@ -38,13 +34,14 @@ const UserRow = ({ user, adminId }: { user: any; adminId: string | null }) => {
       })
     : "N/A";
 
-  const avatar = publicUser?.avatar || null;
+  const avatar =
+    user.profile?.avatarUpload?.url ?? user.profile?.avatar ?? null;
 
   return (
     <tr className="hover:bg-gray-50/30 transition-colors">
       <td className="px-6 py-4 flex items-center gap-3">
         <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-600 flex-shrink-0">
-          {avatar && !isLoading ? (
+          {avatar ? (
             <img
               src={avatar}
               alt={`${user.name} avatar`}

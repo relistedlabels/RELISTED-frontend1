@@ -5,7 +5,7 @@ import { X, CheckCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1, Header3 } from "@/common/ui/Text";
 import { Product } from "@/lib/api/admin/listings";
-import { usePublicProductById } from "@/lib/queries/product/usePublicProductById";
+import { listingThumbnailUrl } from "@/app/admin/lib/adminListingDisplay";
 
 interface ApprovalConfirmationModalProps {
   isOpen: boolean;
@@ -18,8 +18,7 @@ interface ApprovalConfirmationModalProps {
 export const ApprovalConfirmationModal: React.FC<
   ApprovalConfirmationModalProps
 > = ({ isOpen, product, isLoading, onConfirm, onCancel }) => {
-  const { data: productData } = usePublicProductById(product?.id || "");
-  const firstImageUrl = productData?.attachments?.uploads?.[0]?.url;
+  const firstImageUrl = product ? listingThumbnailUrl(product) : null;
 
   return (
     <AnimatePresence>

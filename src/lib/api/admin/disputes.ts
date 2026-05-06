@@ -31,6 +31,44 @@ export function normalizeAdminDisputeStatus(raw: unknown): DisputeStatus | "" {
   return "";
 }
 
+const ADMIN_DISPUTE_STATUS_LABELS: Record<DisputeStatus, string> = {
+  PENDING: "Pending",
+  IN_REVIEW: "In review",
+  IN_DISPUTE: "In dispute",
+  WITHDRAW: "Withdrawn",
+  RESOLVED: "Resolved",
+  REJECTED: "Rejected",
+};
+
+/** Human-readable label for admin dispute tables (handles legacy API values). */
+export function formatAdminDisputeStatusLabel(raw: unknown): string {
+  const n = normalizeAdminDisputeStatus(raw);
+  if (!n) {
+    const s = String(raw ?? "").trim();
+    return s || "—";
+  }
+  return ADMIN_DISPUTE_STATUS_LABELS[n] ?? n;
+}
+
+export function adminDisputeStatusBadgeClasses(raw: unknown): string {
+  const n = normalizeAdminDisputeStatus(raw);
+  switch (n) {
+    case "PENDING":
+      return "bg-yellow-100 text-yellow-700";
+    case "IN_REVIEW":
+    case "IN_DISPUTE":
+      return "bg-blue-100 text-blue-700";
+    case "RESOLVED":
+      return "bg-green-100 text-green-700";
+    case "REJECTED":
+      return "bg-red-100 text-red-700";
+    case "WITHDRAW":
+      return "bg-gray-100 text-gray-700";
+    default:
+      return "bg-gray-100 text-gray-700";
+  }
+}
+
 export type DisputesListStatus =
   | "pending"
   | "in_review"

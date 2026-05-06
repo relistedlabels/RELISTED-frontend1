@@ -9,8 +9,6 @@ const ProfileFromStore = () => {
 
   if (!profile) return null;
 
-  console.log("PROFILE FROM STORE:", profile);
-
   return (
     <div>
       <pre>{JSON.stringify(profile, null, 2)}</pre>

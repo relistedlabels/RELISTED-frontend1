@@ -29,6 +29,10 @@ export interface Curator {
   name: string;
   email: string;
   avatar?: string;
+  profile?: {
+    avatar?: string | null;
+    avatarUpload?: { url: string } | null;
+  } | null;
 }
 
 export interface Product {
@@ -37,6 +41,9 @@ export interface Product {
   subText: string;
   category: string | { id: string; name: string };
   image: string;
+  attachments?: {
+    uploads: { id?: string; url: string }[];
+  } | null;
   condition: string;
   originalValue: number;
   dailyPrice: number;

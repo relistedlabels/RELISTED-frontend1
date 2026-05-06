@@ -5,6 +5,7 @@
 import ProductCard from "@/common/ui/ProductCard";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import { useRef } from "react";
+import { useHorizontalWheelScroll } from "@/hooks/useHorizontalWheelScroll";
 import { useProducts } from "@/lib/queries/product/useProducts";
 import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import Link from "next/link";
@@ -32,17 +33,11 @@ const TopListingSection = () => {
     limit: 7,
   });
 
-  const onWheel = (e: React.WheelEvent) => {
-    const el = scrollerRef.current;
-    if (!el) return;
-
-    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-      return;
-    }
-
-    el.scrollLeft += e.deltaY;
-    e.preventDefault();
-  };
+  const displayProductsEarly = products ?? [];
+  useHorizontalWheelScroll(
+    scrollerRef,
+    !isLoading && !error && displayProductsEarly.length > 0,
+  );
 
   if (isLoading) {
     return (
@@ -77,7 +72,7 @@ const TopListingSection = () => {
     );
   }
 
-  const displayProducts = products || [];
+  const displayProducts = displayProductsEarly;
 
   return (
     <section className="bg-white px-4 sm:px-0 py-6 sm:py-12">
@@ -113,7 +108,6 @@ const TopListingSection = () => {
         ) : (
           <div
             ref={scrollerRef}
-            onWheel={onWheel}
             style={{
               WebkitOverflowScrolling: "touch",
             }}

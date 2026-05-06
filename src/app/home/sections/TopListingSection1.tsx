@@ -5,6 +5,7 @@
 import ProductCard from "@/common/ui/ProductCard";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import { useRef } from "react";
+import { useHorizontalWheelScroll } from "@/hooks/useHorizontalWheelScroll";
 import { useProducts } from "@/lib/queries/product/useProducts";
 import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import Link from "next/link";
@@ -21,22 +22,12 @@ const TopListingSection = () => {
     tags: "Black Tie",
     limit: 7,
   });
-  // Convert vertical wheel to horizontal scroll for mouse users
-  const onWheel = (e: React.WheelEvent) => {
-    const el = scrollerRef.current;
-    if (!el) return;
 
-    // If the user is actually scrolling horizontally (deltaX present) allow it,
-    // otherwise convert vertical wheel to horizontal.
-    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-      // let native horizontal wheel happen
-      return;
-    }
-
-    // convert vertical scroll into horizontal scroll
-    el.scrollLeft += e.deltaY;
-    e.preventDefault();
-  };
+  const displayProductsEarly = products ?? [];
+  useHorizontalWheelScroll(
+    scrollerRef,
+    !isLoading && !error && displayProductsEarly.length > 0,
+  );
 
   if (isLoading) {
     return (
@@ -73,7 +64,7 @@ const TopListingSection = () => {
     );
   }
 
-  const displayProducts = products || [];
+  const displayProducts = displayProductsEarly;
 
   return (
     <section className="bg-white px-4 sm:px-0 py-6 sm:py-12">
@@ -107,7 +98,6 @@ const TopListingSection = () => {
           /* Native horizontal scroll — gestures will work */
           <div
             ref={scrollerRef}
-            onWheel={onWheel}
             // styles: horizontal scroll, hide vertical overflow, enable momentum scrolling on iOS
             style={{
               WebkitOverflowScrolling: "touch",

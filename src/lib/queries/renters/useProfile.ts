@@ -6,12 +6,7 @@ export const useProfile = (enabled: boolean = true) =>
     queryKey: ["renters", "profile"],
     queryFn: async () => {
       const response = await rentersApi.getProfile();
-      console.log("✅ Full API response:", response);
-      const profile = response.data?.profile;
-      console.log("✅ Extracted profile:", profile);
-      console.log("✅ Profile nin:", profile?.nin);
-      console.log("✅ Profile bvn:", profile?.bvn);
-      return profile;
+      return response.data?.profile;
     },
     staleTime: 10 * 60 * 1000,
     retry: 1,

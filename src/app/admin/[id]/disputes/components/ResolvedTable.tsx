@@ -7,7 +7,11 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Paragraph1 } from "@/common/ui/Text";
-import type { Dispute } from "@/lib/api/admin/disputes";
+import {
+  type Dispute,
+  adminDisputeStatusBadgeClasses,
+  formatAdminDisputeStatusLabel,
+} from "@/lib/api/admin/disputes";
 import { useDisputeById } from "@/lib/queries/admin/useDisputes";
 import { DisputeResolutionPanel } from "./DisputeResolutionPanel";
 import {
@@ -29,7 +33,7 @@ interface ResolvedDisputeData {
   resolution: string;
   dateCreated: string;
   dateResolved: string;
-  status: "Resolved";
+  statusRaw: string;
 }
 
 interface ResolvedTableProps {
@@ -352,7 +356,7 @@ function transformDisputeData(dispute: Dispute): ResolvedDisputeData {
     resolution,
     dateCreated: dateCreatedStr,
     dateResolved: dateResolvedStr,
-    status: "Resolved",
+    statusRaw: String(dispute.status ?? ""),
   };
 }
 
@@ -375,7 +379,10 @@ export default function ResolvedTable({
         item.raisedBy.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.listerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.renterName.toLowerCase().includes(searchQuery.toLowerCase()),
+        item.renterName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        formatAdminDisputeStatusLabel(item.statusRaw)
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()),
     );
   }, [searchQuery, displayData]);
 
@@ -488,6 +495,11 @@ export default function ResolvedTable({
             </th>
             <th className="px-6 py-4 text-left">
               <Paragraph1 className="font-semibold text-gray-900">
+                STATUS
+              </Paragraph1>
+            </th>
+            <th className="px-6 py-4 text-left">
+              <Paragraph1 className="font-semibold text-gray-900">
                 ACTION
               </Paragraph1>
             </th>
@@ -496,7 +508,7 @@ export default function ResolvedTable({
         <tbody>
           {filteredData.length === 0 ? (
             <tr>
-              <td colSpan={11} className="px-6 py-8 text-center">
+              <td colSpan={12} className="px-6 py-8 text-center">
                 <Paragraph1 className="text-gray-500">
                   No resolved disputes found
                 </Paragraph1>
@@ -580,6 +592,13 @@ export default function ResolvedTable({
                   <Paragraph1 className="text-gray-600">
                     {item.dateResolved}
                   </Paragraph1>
+                </td>
+                <td className="px-6 py-4">
+                  <span
+                    className={`${adminDisputeStatusBadgeClasses(item.statusRaw)} px-3 py-1 rounded-full font-medium text-xs`}
+                  >
+                    {formatAdminDisputeStatusLabel(item.statusRaw)}
+                  </span>
                 </td>
                 <td className="px-6 py-4">
                   <button
