@@ -12,6 +12,18 @@ import { useAdminAllUsers } from "@/lib/queries/admin/useUsers";
 
 type UserRole = "LISTER" | "RENTER" | "ADMIN";
 
+function tabLabel(
+  role: UserRole,
+  listerCount?: number,
+  renterCount?: number,
+) {
+  if (listerCount === undefined || renterCount === undefined) {
+    return role === "LISTER" ? "Lister" : "Renters";
+  }
+  if (role === "LISTER") return `Lister (${listerCount})`;
+  return `Renters (${renterCount})`;
+}
+
 export default function UsersPage() {
   const [activeTab, setActiveTab] = useState<UserRole>("LISTER");
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,6 +43,16 @@ export default function UsersPage() {
     role: activeTab,
   });
   const users = usersData?.data?.users || [];
+
+  const { listerCount, renterCount } = useMemo(() => {
+    let listers = 0;
+    let renters = 0;
+    for (const u of users as { role?: string }[]) {
+      if (u.role === "LISTER") listers += 1;
+      else if (u.role === "RENTER") renters += 1;
+    }
+    return { listerCount: listers, renterCount: renters };
+  }, [users]);
 
   // Log error to console
   if (error) {
@@ -87,13 +109,13 @@ export default function UsersPage() {
 
         {/* Tabs */}
         <div className="flex border-b border-gray-200">
-          {["LISTER", "RENTERS"].map((tab) => (
+          {(["LISTER", "RENTER"] as const).map((role) => (
             <button
-              key={tab}
+              key={role}
               disabled
               className="px-6 py-3 transition-all relative text-gray-400"
             >
-              <Paragraph1>{tab}</Paragraph1>
+              <Paragraph1>{tabLabel(role)}</Paragraph1>
             </button>
           ))}
         </div>
@@ -137,13 +159,13 @@ export default function UsersPage() {
 
         {/* Tabs */}
         <div className="flex border-b border-gray-200">
-          {["LISTER", "RENTER", "ADMIN"].map((tab) => (
+          {(["LISTER", "RENTER"] as const).map((role) => (
             <button
-              key={tab}
+              key={role}
               disabled
               className="px-6 py-3 transition-all relative text-gray-400"
             >
-              <Paragraph1>{tab}</Paragraph1>
+              <Paragraph1>{tabLabel(role)}</Paragraph1>
             </button>
           ))}
         </div>
@@ -205,7 +227,9 @@ export default function UsersPage() {
               activeTab === tab ? "text-black font-semibold" : "text-gray-400"
             }`}
           >
-            <Paragraph1>{tab}</Paragraph1>
+            <Paragraph1>
+              {tabLabel(tab, listerCount, renterCount)}
+            </Paragraph1>
             {activeTab === tab && (
               <div className="absolute bottom-0 left-0 w-full h-0.5 bg-black" />
             )}
