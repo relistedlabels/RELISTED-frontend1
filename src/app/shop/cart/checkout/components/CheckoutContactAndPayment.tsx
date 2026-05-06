@@ -264,8 +264,6 @@ export default function CheckoutContactAndPayment({
       (summary.rentalTotal ?? 0) +
       (summary.collateralTotal ?? 0) +
       (summary.cleaningTotal ?? 0) +
-      (summary.outboundPickupTotal ?? 0) +
-      (summary.returnPickupTotal ?? 0) +
       (summary.outboundShippingTotal ?? 0) +
       (summary.returnShippingTotal ?? 0) +
       (summary.serviceCharge ?? 0) +

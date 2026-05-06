@@ -1,5 +1,45 @@
 import type { ShipmentStatus, ShipmentType } from "@/lib/api/shipments";
 
+/** User-facing copy for a checkout shipment leg (domain enums stay OUTBOUND / RETURN / RESALE). */
+export function getShipmentLegDisplayLabel(
+  type: ShipmentType | string | null | undefined,
+): string {
+  const t = String(type ?? "").toUpperCase();
+  switch (t) {
+    case "OUTBOUND":
+      return "Rental delivery";
+    case "RETURN":
+      return "Rental return";
+    case "RESALE":
+      return "Resale delivery";
+    default:
+      return t || "Shipment";
+  }
+}
+
+/** Admin detail: who is pickup vs delivery for each leg. */
+export function getShipmentPartyRowLabels(
+  type: ShipmentType | string | null | undefined,
+): { pickupHeading: string; deliveryHeading: string } {
+  const t = String(type ?? "").toUpperCase();
+  if (t === "RETURN") {
+    return {
+      pickupHeading: "Pickup from (renter)",
+      deliveryHeading: "Deliver to (lister)",
+    };
+  }
+  if (t === "RESALE") {
+    return {
+      pickupHeading: "Pickup from (lister)",
+      deliveryHeading: "Deliver to (buyer)",
+    };
+  }
+  return {
+    pickupHeading: "Pickup from (lister)",
+    deliveryHeading: "Deliver to (renter)",
+  };
+}
+
 /**
  * Human-readable shipment state. For RETURN legs, "DISPATCHED" means the
  * carrier is booked for the pickup window — not that the package is already

@@ -10,6 +10,7 @@ import {
   Home,
   RotateCcw,
   CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
@@ -21,6 +22,7 @@ const rentalSteps = [
   { label: "Pending", icon: CheckCircle2 },
   { label: "Approved", icon: CheckCircle2 },
   { label: "Dispatched", icon: Truck },
+  { label: "Processing pickup", icon: Loader2 },
   { label: "In transit", icon: Package },
   { label: "Delivered", icon: Home },
   { label: "Awaiting return", icon: RotateCcw },
@@ -81,14 +83,14 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
       const rentalByApi: Record<string, number> = {
         processing: 0,
         accepted: 1,
-        confirmed: 2,
-        intransit: 3,
-        delivered: 4,
-        active: 4,
-        return_due: 5,
-        returned: 6,
-        completed: 7,
-        in_dispute: 4,
+        confirmed: 3,
+        intransit: 4,
+        delivered: 5,
+        active: 5,
+        return_due: 6,
+        returned: 7,
+        completed: 8,
+        in_dispute: 5,
         cancelled: 0,
         rejected: 0,
       };

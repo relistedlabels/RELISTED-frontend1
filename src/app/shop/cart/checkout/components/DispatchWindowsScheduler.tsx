@@ -113,7 +113,7 @@ export default function DispatchWindowsScheduler({
   if (contexts.length === 0) return null;
 
   if (readOnly) {
-    const readOnlyLabel = (type: ShipmentDispatchType) =>
+    const readOnlyFallbackLabel = (type: ShipmentDispatchType) =>
       type === "RETURN" ? "Return pickup" : "Delivery";
 
     return (
@@ -130,10 +130,12 @@ export default function DispatchWindowsScheduler({
               typeof windowToShow.end === "string" &&
               windowToShow.start.length > 0 &&
               windowToShow.end.length > 0;
+            const heading =
+              ctx.title?.trim() || readOnlyFallbackLabel(ctx.type);
             return (
               <div key={ctx.type}>
                 <Paragraph1 className="font-semibold text-[11px] text-gray-400 uppercase tracking-[0.2em]">
-                  {readOnlyLabel(ctx.type)}
+                  {heading}
                 </Paragraph1>
                 {hasWindow ? (
                   <Paragraph1 className="font-semibold text-gray-900 text-sm">

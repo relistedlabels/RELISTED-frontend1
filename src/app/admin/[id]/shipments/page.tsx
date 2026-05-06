@@ -36,7 +36,11 @@ import type {
 } from "@/lib/api/shipments";
 import { getShipment } from "@/lib/api/shipments";
 import { formatLagosDate, formatWindowRange } from "@/lib/checkout/dispatchWindows";
-import { getShipmentStatusLabel } from "@/lib/orders/shipmentAndOrderLabels";
+import {
+  getShipmentLegDisplayLabel,
+  getShipmentPartyRowLabels,
+  getShipmentStatusLabel,
+} from "@/lib/orders/shipmentAndOrderLabels";
 import { toast } from "sonner";
 
 const formatCurrency = (value: number): string => {
@@ -98,19 +102,6 @@ const getStatusIcon = (status: ShipmentStatus) => {
       return XCircle;
     default:
       return Clock;
-  }
-};
-
-const getTypeLabel = (type: ShipmentType): string => {
-  switch (type) {
-    case "OUTBOUND":
-      return "Outbound";
-    case "RETURN":
-      return "Return";
-    case "RESALE":
-      return "Resale";
-    default:
-      return type;
   }
 };
 
@@ -312,6 +303,13 @@ function ShipmentsPageInner() {
     [displayShipment?.attemptLogs, displayShipment?.id],
   );
 
+  const detailPartyLabels = useMemo(
+    () => getShipmentPartyRowLabels(displayShipment?.type),
+    [displayShipment?.type],
+  );
+
+  const showPickupFeeRow = (displayShipment?.pickupCharge ?? 0) > 0;
+
   const listData = shipmentsData?.data;
   const shipments = listData?.shipments ?? [];
   const total = listData?.total ?? 0;
@@ -429,7 +427,7 @@ function ShipmentsPageInner() {
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
-              {t === "All" ? "All types" : getTypeLabel(t)}
+              {t === "All" ? "All types" : getShipmentLegDisplayLabel(t)}
             </button>
           ))}
         </div>
@@ -569,7 +567,7 @@ function ShipmentsPageInner() {
                         <td className="px-6 py-4">
                           <div className="flex flex-col items-start gap-1">
                             <span className="inline-block bg-gray-100 px-3 py-1 rounded-full font-semibold text-gray-700 text-xs">
-                              {getTypeLabel(shipment.type)}
+                              {getShipmentLegDisplayLabel(shipment.type)}
                             </span>
                             {shipment.manualFulfillment && (
                               <span className="inline-block bg-amber-100 px-2 py-0.5 rounded font-medium text-amber-900 text-[10px] tracking-wide uppercase">
@@ -756,7 +754,7 @@ function ShipmentsPageInner() {
                   </h2>
                   <Paragraph1 className="mt-1 text-gray-600 text-sm">
                     Order {displayShipment.order?.orderId ?? "—"} ·{" "}
-                    {getTypeLabel(displayShipment.type)}
+                    {getShipmentLegDisplayLabel(displayShipment.type)}
                   </Paragraph1>
                 </div>
                 <button
@@ -833,7 +831,7 @@ function ShipmentsPageInner() {
               {displayShipment.order?.orderItems &&
                 displayShipment.order.orderItems.length > 0 && (
                   <div>
-                    <Paragraph1 className="mb-2 text-gray-500 text-xs">Items in this order</Paragraph1>
+                    <Paragraph1 className="mb-2 text-gray-500 text-xs">Items in this shipment</Paragraph1>
                     <ul className="space-y-1 bg-gray-50 p-3 border border-gray-100 rounded-lg text-gray-800 text-sm list-disc list-inside">
                       {displayShipment.order.orderItems.map((line) => (
                         <li key={line.id ?? line.product?.name}>
@@ -896,19 +894,23 @@ function ShipmentsPageInner() {
                 </div>
               </div>
 
-              <div className="gap-3 grid grid-cols-1 sm:grid-cols-3">
+              <div
+                className={`gap-3 grid grid-cols-1 ${showPickupFeeRow ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
+              >
                 <div className="bg-gray-50 p-3 border border-gray-100 rounded-lg">
                   <Paragraph1 className="mb-1 text-gray-500 text-xs">Shipment (NGN)</Paragraph1>
                   <Paragraph1 className="font-semibold text-gray-900">
                     {koboToNaira(displayShipment.shipmentCharge)}
                   </Paragraph1>
                 </div>
-                <div className="bg-gray-50 p-3 border border-gray-100 rounded-lg">
-                  <Paragraph1 className="mb-1 text-gray-500 text-xs">Pickup (NGN)</Paragraph1>
-                  <Paragraph1 className="font-semibold text-gray-900">
-                    {koboToNaira(displayShipment.pickupCharge)}
-                  </Paragraph1>
-                </div>
+                {showPickupFeeRow && (
+                  <div className="bg-gray-50 p-3 border border-gray-100 rounded-lg">
+                    <Paragraph1 className="mb-1 text-gray-500 text-xs">Pickup (NGN)</Paragraph1>
+                    <Paragraph1 className="font-semibold text-gray-900">
+                      {koboToNaira(displayShipment.pickupCharge)}
+                    </Paragraph1>
+                  </div>
+                )}
                 <div className="bg-gray-50 p-3 border border-gray-100 rounded-lg">
                   <Paragraph1 className="mb-1 text-gray-500 text-xs">VAT (NGN)</Paragraph1>
                   <Paragraph1 className="font-semibold text-gray-900">
@@ -943,7 +945,7 @@ function ShipmentsPageInner() {
               <div>
                 <Paragraph1 className="flex items-center gap-1 mb-2 text-gray-500 text-xs">
                   <Package size={12} />
-                  Pickup from (lister)
+                  {detailPartyLabels.pickupHeading}
                 </Paragraph1>
                 <Paragraph1 className="bg-gray-50 p-3 border border-gray-100 rounded-lg text-gray-800 text-sm">
                   {formatAddress(displayShipment.pickupAddress)}
@@ -952,7 +954,7 @@ function ShipmentsPageInner() {
               <div>
                 <Paragraph1 className="flex items-center gap-1 mb-2 text-gray-500 text-xs">
                   <Truck size={12} />
-                  Deliver to (renter)
+                  {detailPartyLabels.deliveryHeading}
                 </Paragraph1>
                 <Paragraph1 className="bg-gray-50 p-3 border border-gray-100 rounded-lg text-gray-800 text-sm">
                   {formatAddress(displayShipment.deliveryAddress)}

@@ -53,6 +53,29 @@ function pickResaleWindowFromCheckoutItem(item: unknown): ResaleWindow | undefin
   return undefined;
 }
 
+/** Earliest scheduled window start in a shipment bucket (for chronological ordering on checkout). */
+function bucketEarliestWindowStartMs(
+  bucket: CheckoutShipmentBucket,
+): number {
+  const parse = (iso: string | undefined) => {
+    if (!iso?.trim()) return NaN;
+    const t = new Date(iso).getTime();
+    return Number.isFinite(t) ? t : NaN;
+  };
+  if (bucket.bucketMode === "RENTAL") {
+    const times = [
+      parse(bucket.outboundDeliveryWindow?.start),
+      parse(bucket.returnPickupWindow?.start),
+    ].filter((n) => Number.isFinite(n));
+    return times.length ? Math.min(...times) : Number.POSITIVE_INFINITY;
+  }
+  if (bucket.bucketMode === "RESALE") {
+    const t = parse(bucket.resaleDeliveryWindow?.start);
+    return Number.isFinite(t) ? t : Number.POSITIVE_INFINITY;
+  }
+  return Number.POSITIVE_INFINITY;
+}
+
 export default function CheckoutPage() {
   const [selectedShippingTier, setSelectedShippingTier] = useState<string>("");
 
@@ -519,7 +542,16 @@ export default function CheckoutPage() {
       const name = bucket.listerName?.trim().toLowerCase();
       return name ? `name:${name}` : "";
     };
-    const bucketsPerGroup = buckets.reduce((acc, bucket) => {
+    const bucketsChronological = [...buckets].sort((a, b) => {
+      const ta = bucketEarliestWindowStartMs(a);
+      const tb = bucketEarliestWindowStartMs(b);
+      if (ta !== tb) return ta - tb;
+      const la = `${a.listerId ?? ""}:${a.listerName ?? ""}:${a.bucketMode}`;
+      const lb = `${b.listerId ?? ""}:${b.listerName ?? ""}:${b.bucketMode}`;
+      return la.localeCompare(lb);
+    });
+
+    const bucketsPerGroup = bucketsChronological.reduce((acc, bucket) => {
       const key = bucketGroupKey(bucket);
       acc.set(key, (acc.get(key) ?? 0) + 1);
       return acc;
@@ -529,22 +561,19 @@ export default function CheckoutPage() {
       groupHeading: string | null;
       rows: Array<{ title: string; range: string }>;
     }> = [];
-    const multipleBuckets = buckets.length > 1;
-
-    for (const b of buckets) {
+    for (const b of bucketsChronological) {
       const groupKey = bucketGroupKey(b);
       const severalLegsForGroup =
         groupKey !== "" && (bucketsPerGroup.get(groupKey) ?? 0) > 1;
-      let groupHeading: string | null = null;
-      if (multipleBuckets) {
-        const listerDisplay = b.listerName?.trim() || "Lister";
-        if (severalLegsForGroup) {
-          const next = (listerLegIndex.get(groupKey) ?? 0) + 1;
-          listerLegIndex.set(groupKey, next);
-          groupHeading = `Order from ${listerDisplay} · ${next}${itemTitlesSuffix(b)}`;
-        } else {
-          groupHeading = `Order from ${listerDisplay}`;
-        }
+      const listerDisplay = b.listerName?.trim() || "Lister";
+      const itemSuffix = itemTitlesSuffix(b);
+      let groupHeading: string;
+      if (severalLegsForGroup) {
+        const next = (listerLegIndex.get(groupKey) ?? 0) + 1;
+        listerLegIndex.set(groupKey, next);
+        groupHeading = `Order from ${listerDisplay} · ${next}${itemSuffix}`;
+      } else {
+        groupHeading = `Order from ${listerDisplay}${itemSuffix}`;
       }
 
       const bucketRows: Array<{ title: string; range: string }> = [];

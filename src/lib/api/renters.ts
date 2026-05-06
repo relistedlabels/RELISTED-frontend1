@@ -528,6 +528,18 @@ export const rentersApi = {
           providerTrackingUrl: string | null;
           windowSummary: string | null;
         } | null;
+        outboundLegs?: Array<{
+          shipmentId: string;
+          listerId: string | null;
+          listerName: string | null;
+          status: string;
+          scheduledDate: string;
+          windowSummary: string | null;
+          trackingId: string | null;
+          providerTrackingUrl: string | null;
+          isBooked: boolean;
+        }>;
+        outboundSummary?: { total: number; bookedCount: number };
       };
     }>(`/api/renters/orders/${orderId}/progress`, { method: "GET" }),
 

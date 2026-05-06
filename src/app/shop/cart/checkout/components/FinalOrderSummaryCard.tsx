@@ -194,23 +194,7 @@ const ListerOrderCard = memo(
                   </>
                 )}
                 <div className="flex justify-between font-medium text-gray-700 text-sm">
-                  <Paragraph1>Outbound Pick-up Fee</Paragraph1>
-                  <Paragraph1>
-                    {CURRENCY}
-                    {formatCurrency(listerBreakdown.outboundPickupCost || 0)}
-                  </Paragraph1>
-                </div>
-                {hasRentalItems && (
-                  <div className="flex justify-between font-medium text-gray-700 text-sm">
-                    <Paragraph1>Return Pick-up Fee</Paragraph1>
-                    <Paragraph1>
-                      {CURRENCY}
-                      {formatCurrency(listerBreakdown.returnPickupCost || 0)}
-                    </Paragraph1>
-                  </div>
-                )}
-                <div className="flex justify-between font-medium text-gray-700 text-sm">
-                  <Paragraph1>Outbound Shipping</Paragraph1>
+                  <Paragraph1>Delivery fee</Paragraph1>
                   <Paragraph1>
                     {CURRENCY}
                     {formatCurrency(listerBreakdown.outboundShippingCost || 0)}
@@ -218,7 +202,7 @@ const ListerOrderCard = memo(
                 </div>
                 {hasRentalItems && (
                   <div className="flex justify-between font-medium text-gray-700 text-sm">
-                    <Paragraph1>Return Shipping</Paragraph1>
+                    <Paragraph1>Return fee</Paragraph1>
                     <Paragraph1>
                       {CURRENCY}
                       {formatCurrency(listerBreakdown.returnShippingCost || 0)}
@@ -250,8 +234,6 @@ const ListerOrderCard = memo(
                       (hasRentalItems ? listerBreakdown.rentalTotal : 0) +
                       (hasRentalItems ? listerBreakdown.collateralTotal : 0) +
                       (hasRentalItems ? listerBreakdown.cleaningTotal : 0) +
-                      listerBreakdown.outboundPickupCost +
-                      listerBreakdown.returnPickupCost +
                       listerBreakdown.outboundShippingCost +
                       listerBreakdown.returnShippingCost,
                   )}
@@ -550,31 +532,7 @@ export default function FinalOrderSummaryCard({
                             </>
                           )}
                           <div className="flex justify-between font-medium text-gray-700 text-sm">
-                            <Paragraph1>Outbound Pick-up Fee</Paragraph1>
-                            <Paragraph1>
-                              {CURRENCY}
-                              {formatCurrency(
-                                orderSummary.data.summary.outboundPickupTotal ||
-                                  0,
-                              )}
-                            </Paragraph1>
-                          </div>
-
-                          {hasRentalItems && (
-                            <div className="flex justify-between font-medium text-gray-700 text-sm">
-                              <Paragraph1>Return Pick-up Fee</Paragraph1>
-                              <Paragraph1>
-                                {CURRENCY}
-                                {formatCurrency(
-                                  orderSummary.data.summary.returnPickupTotal ||
-                                    0,
-                                )}
-                              </Paragraph1>
-                            </div>
-                          )}
-
-                          <div className="flex justify-between font-medium text-gray-700 text-sm">
-                            <Paragraph1>Outbound Shipping</Paragraph1>
+                            <Paragraph1>Delivery fee</Paragraph1>
                             <Paragraph1>
                               {CURRENCY}
                               {formatCurrency(
@@ -585,7 +543,7 @@ export default function FinalOrderSummaryCard({
 
                           {hasRentalItems && (
                             <div className="flex justify-between font-medium text-gray-700 text-sm">
-                              <Paragraph1>Return Shipping</Paragraph1>
+                              <Paragraph1>Return fee</Paragraph1>
                               <Paragraph1>
                                 {CURRENCY}
                                 {formatCurrency(
@@ -637,8 +595,6 @@ export default function FinalOrderSummaryCard({
                             (orderSummary.data.summary.rentalTotal ?? 0) +
                             (orderSummary.data.summary.collateralTotal ?? 0) +
                             (orderSummary.data.summary.cleaningTotal ?? 0) +
-                            (orderSummary.data.summary.outboundPickupTotal ?? 0) +
-                            (orderSummary.data.summary.returnPickupTotal ?? 0) +
                             (orderSummary.data.summary.outboundShippingTotal ??
                               0) +
                             (orderSummary.data.summary.returnShippingTotal ?? 0) +
@@ -649,8 +605,9 @@ export default function FinalOrderSummaryCard({
                       </Paragraph1>
                     </div>
                     <Paragraph1 className="mb-4 text-gray-500 text-xs">
-                      Shipping total is based on{" "}
-                      <strong>{selectedShippingTier || "your selected tier"}</strong>.
+                      Delivery and return fees use{" "}
+                      <strong>{selectedShippingTier || "your selected tier"}</strong>{" "}
+                      rates from our courier partner.
                     </Paragraph1>
 
                     {passCartMutation.isError && (
