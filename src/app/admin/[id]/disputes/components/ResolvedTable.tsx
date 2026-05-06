@@ -770,12 +770,6 @@ export default function ResolvedTable({
                           <Paragraph1 className="font-semibold text-gray-900">
                             {formatMoney(payoutLocked)}
                           </Paragraph1>
-                          {escrowStatus === "LOCKED" && (
-                            <Paragraph1 className="mt-1 text-gray-500 text-xs">
-                              Rental + resale (not cleaning again); the rental
-                              field already includes cleaning at checkout.
-                            </Paragraph1>
-                          )}
                         </div>
                         <div>
                           <Paragraph1 className="text-gray-600 text-sm">

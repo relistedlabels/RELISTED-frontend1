@@ -36,25 +36,22 @@ function readStatNumber(stats: unknown, keys: string[]): number | undefined {
   return undefined;
 }
 
-function mergeDisputeLists(a?: Dispute[], b?: Dispute[], c?: Dispute[]): Dispute[] {
-  const out: Dispute[] = [];
-  const seen = new Set<string>();
-
-  const pushAll = (list?: Dispute[]) => {
-    if (!Array.isArray(list)) return;
-    for (const d of list) {
-      const id = String(d?.id ?? (d as any)?.disputeId ?? "").trim();
-      if (!id || seen.has(id)) continue;
-      seen.add(id);
-      out.push(d);
-    }
-  };
-
-  pushAll(a);
-  pushAll(b);
-  pushAll(c);
-
-  return out;
+/** Backend returns total on data (pagination object is not always present). */
+function readDisputesListTotal(data: unknown): number {
+  if (!data || typeof data !== "object") return 0;
+  const d = data as Record<string, unknown>;
+  const inner = d.data;
+  if (!inner || typeof inner !== "object") return 0;
+  const payload = inner as Record<string, unknown>;
+  const pagination = payload.pagination;
+  if (pagination && typeof pagination === "object") {
+    const t = (pagination as Record<string, unknown>).total;
+    if (typeof t === "number" && Number.isFinite(t)) return t;
+  }
+  const total = payload.total;
+  if (typeof total === "number" && Number.isFinite(total)) return total;
+  const list = payload.disputes;
+  return Array.isArray(list) ? list.length : 0;
 }
 
 export default function DisputesPage() {
@@ -83,28 +80,6 @@ export default function DisputesPage() {
     limit: 20,
   });
 
-  const {
-    data: inDisputeSnakeData,
-    isLoading: inDisputeSnakeLoading,
-    error: inDisputeSnakeError,
-  } = useDisputes({
-    status: "in_dispute",
-    search: searchQuery,
-    page: 1,
-    limit: 20,
-  });
-
-  const {
-    data: inDisputeKebabData,
-    isLoading: inDisputeKebabLoading,
-    error: inDisputeKebabError,
-  } = useDisputes({
-    status: "in-dispute",
-    search: searchQuery,
-    page: 1,
-    limit: 20,
-  });
-
   const { data: pendingCountData } = useDisputes({
     status: "pending",
     page: 1,
@@ -115,13 +90,8 @@ export default function DisputesPage() {
     page: 1,
     limit: 1,
   });
-  const { data: inDisputeSnakeCountData } = useDisputes({
-    status: "in_dispute",
-    page: 1,
-    limit: 1,
-  });
-  const { data: inDisputeKebabCountData } = useDisputes({
-    status: "in-dispute",
+  const { data: resolvedCountData } = useDisputes({
+    status: "resolved",
     page: 1,
     limit: 1,
   });
@@ -129,57 +99,40 @@ export default function DisputesPage() {
   // Log errors to console only
   if (statsError) console.error("Disputes stats error:", statsError);
   if (disputesError) console.error("Disputes error:", disputesError);
-  if (inDisputeSnakeError)
-    console.error("Disputes (in_dispute) error:", inDisputeSnakeError);
-  if (inDisputeKebabError)
-    console.error("Disputes (in-dispute) error:", inDisputeKebabError);
 
   const statsPayloadRaw =
     (statsData as any)?.data ?? (statsData as unknown as any) ?? undefined;
   const statsPayload = (statsPayloadRaw as any)?.stats ?? statsPayloadRaw;
   const pendingCount =
-    readStatNumber(statsPayload, ["pendingCount", "pending", "pending_count"]) ??
-    0;
+    readStatNumber(statsPayload, [
+      "pendingCount",
+      "pending",
+      "pending_count",
+      "pendingReview",
+    ]) ?? 0;
   const underReviewCount =
     readStatNumber(statsPayload, [
       "underReviewCount",
       "inReviewCount",
       "under_review_count",
       "in_review_count",
-      "in_dispute_count",
       "underReview",
       "inReview",
     ]) ?? 0;
-  const resolvedThisMonth =
+  const resolvedTotal =
     readStatNumber(statsPayload, [
       "resolvedThisMonth",
       "resolved_this_month",
       "resolvedThisMonthCount",
       "resolvedThisMonthTotal",
       "resolvedCountThisMonth",
+      "resolved",
+      "resolvedCount",
     ]) ?? 0;
-  const pendingTotalFromList =
-    pendingCountData?.data?.pagination?.total ??
-    pendingCountData?.data?.disputes?.length ??
-    0;
-  const inDisputeTotalFromList = Math.max(
-    inDisputeSnakeCountData?.data?.pagination?.total ??
-      inDisputeSnakeCountData?.data?.disputes?.length ??
-      0,
-    inDisputeKebabCountData?.data?.pagination?.total ??
-      inDisputeKebabCountData?.data?.disputes?.length ??
-      0,
-  );
+  const pendingTotalFromList = readDisputesListTotal(pendingCountData);
 
-  const combinedUnderReviewList = mergeDisputeLists(
-    disputesData?.data?.disputes,
-    inDisputeSnakeData?.data?.disputes,
-    inDisputeKebabData?.data?.disputes,
-  );
-  const underReviewTotalFromList =
-    underReviewCountData?.data?.pagination?.total ??
-    underReviewCountData?.data?.disputes?.length ??
-    0;
+  const underReviewTotalFromList = readDisputesListTotal(underReviewCountData);
+  const resolvedTotalFromList = readDisputesListTotal(resolvedCountData);
   const pendingCountDisplay = Math.max(
     pendingCount,
     pendingTotalFromList,
@@ -187,18 +140,11 @@ export default function DisputesPage() {
   const underReviewCountDisplay = Math.max(
     underReviewCount,
     underReviewTotalFromList,
-    inDisputeTotalFromList,
-    combinedUnderReviewList.length,
   );
+  const resolvedCountDisplay = Math.max(resolvedTotal, resolvedTotalFromList);
 
-  const tableLoading =
-    disputesLoading ||
-    (activeTab === "under-review" &&
-      (inDisputeSnakeLoading || inDisputeKebabLoading));
-  const tableError =
-    disputesError ||
-    (activeTab === "under-review" &&
-      (inDisputeSnakeError || inDisputeKebabError));
+  const tableLoading = disputesLoading;
+  const tableError = disputesError;
 
   const statuses: StatusData[] = [
     {
@@ -222,8 +168,8 @@ export default function DisputesPage() {
       ),
     },
     {
-      label: "Resolved This Month",
-      value: resolvedThisMonth,
+      label: "Resolved",
+      value: resolvedCountDisplay,
       color: "success",
       icon: (
         <div className="bg-green-100 p-3 rounded-lg text-green-600">
@@ -288,7 +234,7 @@ export default function DisputesPage() {
           <TabButton
             active={activeTab === "resolved"}
             onClick={() => setActiveTab("resolved")}
-            label={`Resolved (${resolvedThisMonth})`}
+            label={`Resolved (${resolvedCountDisplay})`}
           />
         </div>
 
@@ -307,7 +253,7 @@ export default function DisputesPage() {
               {activeTab === "under-review" && (
                 <UnderReviewTable
                   searchQuery={searchQuery}
-                  disputes={combinedUnderReviewList}
+                  disputes={disputesData?.data?.disputes}
                 />
               )}
               {activeTab === "resolved" && (

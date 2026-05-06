@@ -9,14 +9,16 @@ import { useProducts } from "@/lib/queries/product/useProducts";
 import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import Link from "next/link";
 import { primaryProductHeroImage } from "@/lib/product/primaryProductHeroImage";
+import { CLOSET_DROPS_SHOP_TITLE } from "@/lib/queries/product/useProductsQuery";
 
 const browseShopHref =
   "/shop?title=" +
-  encodeURIComponent("Closet Drops") +
+  encodeURIComponent(CLOSET_DROPS_SHOP_TITLE) +
   "&description=" +
   encodeURIComponent(
     "Celebrity wardrobes. Limited drops. Shop it before it disappears.",
-  );
+  ) +
+  "&onlyWithCloset=true";
 
 const TopListingSection = () => {
   const scrollerRef = useRef<HTMLDivElement | null>(null);

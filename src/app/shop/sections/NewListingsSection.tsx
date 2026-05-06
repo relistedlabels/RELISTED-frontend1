@@ -7,7 +7,10 @@ import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import Filters from "../components/Filters";
 import { primaryProductHeroImage } from "@/lib/product/primaryProductHeroImage";
 import ClosetShopSelector from "@/app/shop/components/ClosetShopSelector";
-import { useProductsQuery } from "@/lib/queries/product/useProductsQuery";
+import {
+  CLOSET_DROPS_SHOP_TITLE,
+  useProductsQuery,
+} from "@/lib/queries/product/useProductsQuery";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
@@ -23,6 +26,8 @@ export default function NewListingsSection() {
   } = useProductsQuery();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const showClosetShopSelector =
+    searchParams.get("title") === CLOSET_DROPS_SHOP_TITLE;
 
   // Filter out internal / staging lister inventory everywhere (same as search & marketplace).
   const HIDDEN_CURATOR_ID = "7d172d18-daad-46cd-ab6d-8d8af28c0b16";
@@ -74,10 +79,10 @@ export default function NewListingsSection() {
     <section className="bg-white px-4 md:px-10 py-4 w-full">
       <div className="mx-auto container">
         {/* Top Bar */}
-        <div className="flex justify-between items-center gap-4 mb-2 sm:mb-6">
-          {/* Celebrity Selector */}
-          <ClosetShopSelector />
-          {/* Left Controls */}
+        <div
+          className={`flex items-center gap-4 mb-2 sm:mb-6 ${showClosetShopSelector ? "justify-between" : "justify-end"}`}
+        >
+          {showClosetShopSelector ? <ClosetShopSelector /> : null}
           <div className="hidden sm:flex items-center gap-4">
             <Filters />
           </div>
