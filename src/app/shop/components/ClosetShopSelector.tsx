@@ -60,8 +60,8 @@ export default function ClosetShopSelector() {
     setIsOpen(false);
     pushParams((p) => {
       p.delete("closetId");
-      // "All closets" = full shop; drop stale onlyWithCloset or old links would keep hiding non-closet products.
-      p.delete("onlyWithCloset");
+      // "All closets" on Closet Drops: every listing must belong to some closet (not the full marketplace).
+      p.set("onlyWithCloset", "true");
     });
   };
 
