@@ -171,10 +171,18 @@ export default function ListingDetailModal({
     }
   };
 
-  // Get images from ProductDetail attachments or fallback to single image
-  const imagesToDisplay: string[] = (
-    displayProduct as any
-  ).attachments?.uploads?.map((u: any) => u.url) || [displayProduct.image];
+  // Prefer attachment URLs; empty array must fall back (uploads [] is truthy and would skip `||` alone).
+  const urlsFromUploads = (
+    (displayProduct as any).attachments?.uploads as { url?: string }[] | undefined
+  )
+    ?.map((u) => u.url)
+    .filter((u): u is string => typeof u === "string" && !!u);
+  const imagesToDisplay: string[] =
+    urlsFromUploads && urlsFromUploads.length > 0
+      ? urlsFromUploads
+      : [displayProduct.image].filter(
+          (u): u is string => typeof u === "string" && !!u,
+        );
 
   return (
     <AnimatePresence>

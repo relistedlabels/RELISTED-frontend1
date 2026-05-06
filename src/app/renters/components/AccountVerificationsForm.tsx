@@ -103,10 +103,6 @@ const AccountVerificationsForm: React.FC = () => {
   // ✅ Sync emergency contact from profile on load
   useEffect(() => {
     if (emergencyContact) {
-      console.log(
-        "🔄 Loading emergency contact from profile:",
-        emergencyContact,
-      );
       setEmergencyForm({
         fullName: emergencyContact.name || "",
         email: emergencyContact.email || "",
@@ -121,10 +117,6 @@ const AccountVerificationsForm: React.FC = () => {
   // ✅ Sync NIN and BVN when profile data loads
   useEffect(() => {
     if (profile) {
-      console.log("🔄 Profile loaded, syncing NIN and BVN:", {
-        nin: profile.nin,
-        bvn: profile.bvn,
-      });
       setNinNumber(profile.nin || "");
       setBvnNumber(profile.bvn || "");
     }
@@ -269,7 +261,6 @@ const AccountVerificationsForm: React.FC = () => {
     }
 
     setBvnError(null);
-    console.log("📤 Submitting BVN to PUT /api/renters/profile:", bvnNumber);
     updateVerificationMutation.mutate(
       { bvn: bvnNumber.trim() },
       {
@@ -690,10 +681,6 @@ const AccountVerificationsForm: React.FC = () => {
               return;
             }
 
-            console.log(
-              "📤 Saving emergency contact to PUT /api/renters/profile:",
-              emergencyForm,
-            );
             updateVerificationMutation.mutate(
               {
                 emergencyContact: {

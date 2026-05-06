@@ -7,9 +7,6 @@ export const useProfileDetails = () =>
     queryKey: ["renter-profile-details"],
     queryFn: async () => {
       const response = await rentersApi.getProfile();
-      // Extract profile from nested response structure
-      console.log("✅ Full response:", response);
-      console.log("✅ Profile from data.profile:", response.data?.profile);
       return response.data; // Returns {profile: {...}, addresses: [...]}
     },
     staleTime: 5 * 60 * 1000,

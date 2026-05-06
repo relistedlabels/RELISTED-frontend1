@@ -72,11 +72,6 @@ export async function apiFetch<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  console.log("[apiFetch] REQUEST START:", {
-    path,
-    method: options.method || "GET",
-  });
-
   let authTokenUsed = getAuthToken();
   const isFormData = options.body instanceof FormData;
 
@@ -161,7 +156,5 @@ export async function apiFetch<T>(
     throw new Error(errorMessage);
   }
 
-  const data = await res.json();
-  console.log("[apiFetch] RESPONSE SUCCESS:", { path, data });
-  return data;
+  return res.json() as Promise<T>;
 }

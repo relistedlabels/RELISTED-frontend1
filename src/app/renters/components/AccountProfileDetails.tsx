@@ -42,12 +42,7 @@ const AccountProfileDetails: React.FC = () => {
   const addAddressMutation = useAddProfileAddress();
   const uploadAvatarMutation = useUploadProfileAvatar();
 
-  // ✅ Extract profile data from GET /api/renters/profile (nested in data.profile)
-  console.log("🔍 Full profileResponse:", profileResponse);
-  console.log("🔍 profileResponse?.profile:", profileResponse?.profile);
-  const profileData = profileResponse?.profile; // Hook returns response.data which has {profile: {...}}
-  console.log("📌 Extracted profileData:", profileData);
-  console.log("⚠️ Profile Error:", profileError);
+  const profileData = profileResponse?.profile;
 
   // ✅ Extract addresses from GET /api/renters/profile/addresses
   const addresses = addressesResponse?.data?.addresses || [];
@@ -79,29 +74,19 @@ const AccountProfileDetails: React.FC = () => {
 
   // ✅ Sync profile data to form on load
   useEffect(() => {
-    console.log("🔄 useEffect triggered, profileData:", profileData);
     if (profileData) {
-      console.log("✅ Setting formData with:", {
-        fullName: profileData.fullName,
-        email: profileData.email,
-        phone: profileData.phone,
-        role: profileData.role,
-      });
       setFormData({
         fullName: profileData.fullName || "",
         email: profileData.email || "",
         phone: profileData.phone || "",
         role: profileData.role || "Renter",
       });
-    } else {
-      console.warn("⚠️ No profileData available");
     }
   }, [profileData]);
 
   // ✅ Load avatar from profile data
   useEffect(() => {
     if (profileImageUrl) {
-      console.log("🖼️ Avatar URL loaded from profile:", profileImageUrl);
       setAvatarPreview(profileImageUrl);
     }
   }, [profileImageUrl]);
@@ -201,8 +186,7 @@ const AccountProfileDetails: React.FC = () => {
       formData.append("avatar", file);
 
       uploadAvatarMutation.mutate(formData, {
-        onSuccess: (response) => {
-          console.log("✅ Avatar uploaded:", response.data);
+        onSuccess: () => {
           toast.success("Profile photo updated successfully!");
           // Refetch profile query since profileImage is in the profile response
           queryClient.invalidateQueries({

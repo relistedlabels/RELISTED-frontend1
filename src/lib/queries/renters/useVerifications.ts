@@ -14,13 +14,15 @@ export const useUploadIdDocument = () => {
   return useMutation({
     mutationFn: rentersApi.uploadIdDocument,
     onSuccess: () => {
-      console.log("✅ NIN document uploaded");
       queryClient.invalidateQueries({
         queryKey: ["renter-verifications-status"],
       });
     },
-    onError: (error: any) => {
-      console.error("❌ Failed to upload NIN document:", error);
+    onError: (error: unknown) => {
+      console.error(
+        "Failed to upload NIN document:",
+        error instanceof Error ? error.message : error,
+      );
     },
   });
 };
@@ -35,15 +37,17 @@ export const useUpdateVerificationDetails = () => {
   return useMutation({
     mutationFn: rentersApi.updateProfile,
     onSuccess: () => {
-      console.log("✅ Verification details updated");
       // Invalidate both profile and verification queries
       queryClient.invalidateQueries({ queryKey: ["renters", "profile"] });
       queryClient.invalidateQueries({
         queryKey: ["renter-verifications-status"],
       });
     },
-    onError: (error: any) => {
-      console.error("❌ Failed to update verification details:", error);
+    onError: (error: unknown) => {
+      console.error(
+        "Failed to update verification details:",
+        error instanceof Error ? error.message : error,
+      );
     },
   });
 };
