@@ -7,16 +7,14 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Paragraph1 } from "@/common/ui/Text";
-import {
-  normalizeAdminDisputeStatus,
-  type Dispute,
-  type DisputeStatus,
-} from "@/lib/api/admin/disputes";
-import {
-  useResolveDispute,
-  useUpdateDisputeStatus,
-} from "@/lib/mutations/admin";
+import type { Dispute } from "@/lib/api/admin/disputes";
 import { useDisputeById } from "@/lib/queries/admin/useDisputes";
+import { DisputeResolutionPanel } from "./DisputeResolutionPanel";
+import {
+  formatMoney,
+  getDisputeResolutionCaps,
+  toNumberOrNull,
+} from "./disputeResolutionCaps";
 
 interface UnderReviewDisputeData {
   id: string;
@@ -55,24 +53,6 @@ function displayName(person: any): string {
   if (typeof person.email === "string" && person.email.trim())
     return person.email;
   return "";
-}
-
-function toNumberOrNull(value: unknown): number | null {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string") {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : null;
-  }
-  return null;
-}
-
-function formatMoney(value: number | null | undefined): string {
-  const safe = typeof value === "number" && Number.isFinite(value) ? value : 0;
-  return safe.toLocaleString("en-NG", {
-    style: "currency",
-    currency: "NGN",
-    maximumFractionDigits: 0,
-  });
 }
 
 type DisputeMessageType = "user" | "admin" | "status";
@@ -418,30 +398,17 @@ export default function UnderReviewTable({
     "—";
   const otherPartyRole = (otherParty as any)?.role ?? "—";
 
-  const updateStatusMutation = useUpdateDisputeStatus();
-  const resolveMutation = useResolveDispute();
-  const [nextStatus, setNextStatus] = useState<DisputeStatus | "">("");
-  const [statusNote, setStatusNote] = useState("");
-  const [resolutionDetails, setResolutionDetails] = useState("");
-  const [refundAmount, setRefundAmount] = useState("");
-  const [collateralWithheldToLister, setCollateralWithheldToLister] =
-    useState("");
-  const currentStatus = normalizeAdminDisputeStatus(
-    (disputeDetail as any)?.status,
+  const caps = useMemo(
+    () => getDisputeResolutionCaps(disputeDetail),
+    [disputeDetail],
   );
-  const effectiveStatus = (nextStatus || currentStatus) as DisputeStatus | "";
   const escrow = (disputeDetail as any)?.orderDetails?.escrow;
-  const escrowStatus = String(escrow?.status ?? "");
-  const collateralLocked = toNumberOrNull(escrow?.collateralAmount) ?? 0;
-  const rentalAmount = toNumberOrNull(escrow?.rentalAmount) ?? 0;
-  const cleaningFee = toNumberOrNull(escrow?.cleaningFee) ?? 0;
-  const resaleAmount = toNumberOrNull(escrow?.resaleAmount) ?? 0;
-  const payoutLocked =
-    escrowStatus === "LOCKED"
-      ? rentalAmount + cleaningFee + resaleAmount
-      : escrowStatus === "PARTIALLY_RELEASED"
-        ? cleaningFee + resaleAmount
-        : 0;
+  const escrowStatus = caps.escrowStatus;
+  const collateralLocked = caps.collateralLocked;
+  const rentalAmount = caps.rentalAmount;
+  const cleaningFee = caps.cleaningFee;
+  const resaleAmount = caps.resaleAmount;
+  const payoutLocked = caps.payoutLocked;
 
   return (
     <div className="overflow-x-auto">
@@ -772,6 +739,12 @@ export default function UnderReviewTable({
                           <Paragraph1 className="font-semibold text-gray-900">
                             {formatMoney(payoutLocked)}
                           </Paragraph1>
+                          {escrowStatus === "LOCKED" && (
+                            <Paragraph1 className="mt-1 text-gray-500 text-xs">
+                              Rental + resale (not cleaning again); the rental
+                              field already includes cleaning at checkout.
+                            </Paragraph1>
+                          )}
                         </div>
                         <div>
                           <Paragraph1 className="text-gray-600 text-sm">
@@ -1139,181 +1112,10 @@ export default function UnderReviewTable({
                       )}
                     </div>
 
-                    <div className="bg-gray-50 p-4 border border-gray-200 rounded-lg">
-                      <Paragraph1 className="mb-2 text-gray-500 text-xs">
-                        ACTIONS
-                      </Paragraph1>
-
-                      <div className="gap-4 grid grid-cols-1 md:grid-cols-2">
-                        <div>
-                          <Paragraph1 className="mb-2 text-gray-600 text-sm">
-                            Update Status
-                          </Paragraph1>
-                          <div className="flex items-center gap-3">
-                            <select
-                              className="bg-white px-3 py-2 border border-gray-300 rounded-lg w-full text-sm"
-                              value={effectiveStatus}
-                              onChange={(e) =>
-                                setNextStatus(e.target.value as DisputeStatus)
-                              }
-                            >
-                              <option value="">Select status</option>
-                              <option value="PENDING">Pending</option>
-                              <option value="IN_REVIEW">In Review</option>
-                              <option value="IN_DISPUTE">In Dispute</option>
-                              <option value="RESOLVED">Resolved</option>
-                              <option value="REJECTED">Rejected</option>
-                              <option value="WITHDRAW">Withdrawn</option>
-                            </select>
-                            <button
-                              type="button"
-                              className="bg-gray-900 disabled:opacity-50 px-4 py-2 rounded-lg font-medium text-white text-sm"
-                              disabled={
-                                !selectedDisputeId ||
-                                !effectiveStatus ||
-                                updateStatusMutation.isPending
-                              }
-                              onClick={async () => {
-                                if (!selectedDisputeId || !effectiveStatus)
-                                  return;
-                                try {
-                                  await updateStatusMutation.mutateAsync({
-                                    disputeId: selectedDisputeId,
-                                    status: effectiveStatus,
-                                    note:
-                                      statusNote.trim() ||
-                                      (effectiveStatus === "IN_REVIEW" ||
-                                      effectiveStatus === "IN_DISPUTE"
-                                        ? "Assigned and reviewing"
-                                        : undefined),
-                                  });
-                                  toast.success("Dispute status updated");
-                                } catch (error: any) {
-                                  toast.error(
-                                    error?.message || "Failed to update status",
-                                  );
-                                }
-                              }}
-                            >
-                              {updateStatusMutation.isPending
-                                ? "Updating..."
-                                : "Update"}
-                            </button>
-                          </div>
-                          <input
-                            className="bg-white mt-3 px-3 py-2 border border-gray-300 rounded-lg w-full text-sm"
-                            placeholder="Optional note"
-                            value={statusNote}
-                            onChange={(e) => setStatusNote(e.target.value)}
-                          />
-                          {updateStatusMutation.isError && (
-                            <Paragraph1 className="mt-2 text-red-600 text-sm">
-                              Failed to update status
-                            </Paragraph1>
-                          )}
-                        </div>
-
-                        <div>
-                          <Paragraph1 className="mb-2 text-gray-600 text-sm">
-                            Resolve Dispute
-                          </Paragraph1>
-                          <div className="space-y-3">
-                            <input
-                              className="bg-white px-3 py-2 border border-gray-300 rounded-lg w-full text-sm"
-                              placeholder="Resolution details"
-                              value={resolutionDetails}
-                              onChange={(e) =>
-                                setResolutionDetails(e.target.value)
-                              }
-                            />
-                            <input
-                              className="bg-white px-3 py-2 border border-gray-300 rounded-lg w-full text-sm"
-                              placeholder="Refund to renter (from escrow payout)"
-                              inputMode="decimal"
-                              value={refundAmount}
-                              onChange={(e) => setRefundAmount(e.target.value)}
-                            />
-                            <input
-                              className="bg-white px-3 py-2 border border-gray-300 rounded-lg w-full text-sm"
-                              placeholder="Award lister from collateral (damage/penalty)"
-                              inputMode="decimal"
-                              value={collateralWithheldToLister}
-                              onChange={(e) =>
-                                setCollateralWithheldToLister(e.target.value)
-                              }
-                            />
-                            <button
-                              type="button"
-                              className="bg-green-700 disabled:opacity-50 px-4 py-2 rounded-lg font-medium text-white text-sm"
-                              disabled={
-                                !selectedDisputeId ||
-                                !resolutionDetails.trim() ||
-                                resolveMutation.isPending
-                              }
-                              onClick={() => {
-                                if (!selectedDisputeId) return;
-                                const refundValueRaw = refundAmount.trim()
-                                  ? Number(refundAmount)
-                                  : 0;
-                                const collateralValueRaw =
-                                  collateralWithheldToLister.trim()
-                                    ? Number(collateralWithheldToLister)
-                                    : 0;
-                                const refundValue =
-                                  Number.isFinite(refundValueRaw) &&
-                                  refundValueRaw >= 0
-                                    ? refundValueRaw
-                                    : null;
-                                const collateralValue =
-                                  Number.isFinite(collateralValueRaw) &&
-                                  collateralValueRaw >= 0
-                                    ? collateralValueRaw
-                                    : null;
-                                if (refundValue == null) {
-                                  toast.error("Refund amount must be a number");
-                                  return;
-                                }
-                                if (collateralValue == null) {
-                                  toast.error(
-                                    "Collateral award must be a number",
-                                  );
-                                  return;
-                                }
-                                if (refundValue > payoutLocked) {
-                                  toast.error(
-                                    `Refund must be <= ${formatMoney(payoutLocked)}`,
-                                  );
-                                  return;
-                                }
-                                if (collateralValue > collateralLocked) {
-                                  toast.error(
-                                    `Collateral award must be <= ${formatMoney(collateralLocked)}`,
-                                  );
-                                  return;
-                                }
-                                resolveMutation.mutate({
-                                  disputeId: selectedDisputeId,
-                                  resolutionDetails: resolutionDetails.trim(),
-                                  refundAmount:
-                                    refundValue !== 0 ? refundValue : 0,
-                                  collateralWithheldToLister:
-                                    collateralValue !== 0 ? collateralValue : 0,
-                                });
-                              }}
-                            >
-                              {resolveMutation.isPending
-                                ? "Resolving..."
-                                : "Resolve"}
-                            </button>
-                            {resolveMutation.isError && (
-                              <Paragraph1 className="text-red-600 text-sm">
-                                Failed to resolve dispute
-                              </Paragraph1>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    <DisputeResolutionPanel
+                      disputeId={selectedDisputeId}
+                      disputeDetail={disputeDetail}
+                    />
                   </>
                 )}
               </div>

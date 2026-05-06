@@ -9,6 +9,7 @@ import OrderSection1 from "./OrderSection1";
 import OrderSection2 from "./OrderSection2";
 import OrderSection3 from "./OrderSection3";
 import OrderSection4 from "./OrderSection4";
+import { getAdminOrderStatusLabel } from "@/lib/orders/shipmentAndOrderLabels";
 
 interface Order {
   id: string;
@@ -36,48 +37,28 @@ interface OrderDetailModalProps {
   order?: Order;
 }
 
-const getOrderStatusLabel = (raw: unknown): string => {
-  const s = String(raw ?? "").trim();
-  if (!s) return "—";
-  const k = s
-    .toUpperCase()
-    .replace(/-/g, "_")
-    .replace(/\s+/g, "_");
-
-  switch (k) {
-    case "PREPARING":
-      return "Preparing";
-    case "IN_TRANSIT":
-      return "In Transit";
-    case "DELIVERED":
-      return "Delivered";
-    case "RETURN_DUE":
-      return "Return Due";
-    case "RETURN_PICKUP":
-      return "Return Pickup";
-    case "IN_DISPUTE":
-    case "DISPUTED":
-      return "Disputed";
-    case "COMPLETED":
-      return "Completed";
-    default:
-      return s;
-  }
-};
-
-const getStatusColor = (status: string) => {
-  switch (status) {
+const getStatusColor = (statusLabel: string) => {
+  switch (statusLabel) {
+    case "Processing":
+    case "Accepted":
+    case "Confirmed":
     case "Preparing":
       return "bg-gray-100 text-gray-700";
-    case "In Transit":
+    case "In transit":
       return "bg-blue-100 text-blue-700";
     case "Delivered":
+    case "Active (rental)":
       return "bg-green-100 text-green-700";
-    case "Return Due":
+    case "Return due":
+    case "Return pickup":
       return "bg-yellow-100 text-yellow-700";
-    case "Return Pickup":
-      return "bg-purple-100 text-purple-700";
-    case "Disputed":
+    case "Returned":
+      return "bg-indigo-100 text-indigo-800";
+    case "Completed":
+      return "bg-emerald-100 text-emerald-800";
+    case "Cancelled":
+    case "Rejected":
+    case "In dispute":
       return "bg-red-100 text-red-700";
     default:
       return "bg-gray-100 text-gray-700";
@@ -90,7 +71,7 @@ export default function OrderDetailModal({
   order,
 }: OrderDetailModalProps) {
   if (!order) return null;
-  const statusLabel = getOrderStatusLabel(order.status);
+  const statusLabel = getAdminOrderStatusLabel(order.status);
   return (
     <AnimatePresence>
       {isOpen && (

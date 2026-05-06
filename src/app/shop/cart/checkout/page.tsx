@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import { Header1, Header1Plus } from "@/common/ui/Text";
@@ -8,17 +8,75 @@ import FinalOrderSummaryCard from "./components/FinalOrderSummaryCard";
 import { useRentalRequests } from "@/lib/queries/renters/useRentalRequests";
 import { useCartItems } from "@/lib/queries/renters/useCartItems";
 import { productApi } from "@/lib/api/product";
-import { getOrderSummaryApi } from "@/lib/api/cart";
+import {
+  type CheckoutShipmentBucket,
+  type ReturnPickupAddressPayload,
+} from "@/lib/api/cart";
+import { useCheckoutOrderSummary } from "@/lib/queries/order/useCheckoutOrderSummary";
 import { approvedRentalsMatchingCurrentCart } from "@/lib/cart/approvedRentalsMatchingCart";
+import type {
+  DerivedDispatchWindow,
+  DispatchWindowSelection,
+  DispatchWindowSelectionMap,
+} from "@/lib/checkout/dispatchWindows";
+import {
+  deriveDefaultDispatchWindow,
+  formatLagosDate,
+  formatWindowRange,
+  getLagosDateString,
+  addDaysToDateString,
+  type ShipmentDispatchType,
+} from "@/lib/checkout/dispatchWindows";
+import type { DispatchWindowContext } from "@/lib/checkout/dispatchWindows";
+import { useDispatchScheduleClock } from "@/lib/checkout/useDispatchScheduleClock";
+
+type ResaleWindow = { start: string; end: string };
+
+/** Resale slot may be on the request row or only on the cart line snapshot (`rentalRequest`). */
+function pickResaleWindowFromCheckoutItem(item: unknown): ResaleWindow | undefined {
+  if (!item || typeof item !== "object") return undefined;
+  const o = item as Record<string, unknown>;
+  const top = o.selectedWindows as { resaleWindow?: ResaleWindow | null } | undefined;
+  if (top?.resaleWindow?.start && top?.resaleWindow?.end) {
+    return { start: top.resaleWindow.start, end: top.resaleWindow.end };
+  }
+  const rr = o.rentalRequest as
+    | { selectedWindows?: { resaleWindow?: ResaleWindow | null } }
+    | undefined;
+  const w1 = rr?.selectedWindows?.resaleWindow;
+  if (w1?.start && w1?.end) return { start: w1.start, end: w1.end };
+  const rrs = o.rentalRequests as
+    | { selectedWindows?: { resaleWindow?: ResaleWindow | null } }[]
+    | undefined;
+  const w2 = rrs?.[0]?.selectedWindows?.resaleWindow;
+  if (w2?.start && w2?.end) return { start: w2.start, end: w2.end };
+  return undefined;
+}
+
+/** Earliest scheduled window start in a shipment bucket (for chronological ordering on checkout). */
+function bucketEarliestWindowStartMs(
+  bucket: CheckoutShipmentBucket,
+): number {
+  const parse = (iso: string | undefined) => {
+    if (!iso?.trim()) return NaN;
+    const t = new Date(iso).getTime();
+    return Number.isFinite(t) ? t : NaN;
+  };
+  if (bucket.bucketMode === "RENTAL") {
+    const times = [
+      parse(bucket.outboundDeliveryWindow?.start),
+      parse(bucket.returnPickupWindow?.start),
+    ].filter((n) => Number.isFinite(n));
+    return times.length ? Math.min(...times) : Number.POSITIVE_INFINITY;
+  }
+  if (bucket.bucketMode === "RESALE") {
+    const t = parse(bucket.resaleDeliveryWindow?.start);
+    return Number.isFinite(t) ? t : Number.POSITIVE_INFINITY;
+  }
+  return Number.POSITIVE_INFINITY;
+}
 
 export default function CheckoutPage() {
-  const [shippingTiers, setShippingTiers] = useState<
-    Array<{
-      name: string;
-      totalShippingCost: number;
-      grandTotal: number;
-    }>
-  >([]);
   const [selectedShippingTier, setSelectedShippingTier] = useState<string>("");
 
   const path = [
@@ -28,29 +86,39 @@ export default function CheckoutPage() {
     { label: "Checkout", href: null },
   ];
 
+  const dispatchScheduleClock = useDispatchScheduleClock();
   const { data, isLoading, error } = useRentalRequests("approved", 1, 100);
   const { data: cartData, isLoading: cartIsLoading } = useCartItems();
   const [cartItemsWithProduct, setCartItemsWithProduct] = useState<Array<any>>(
     [],
   );
+
+  const handleReturnPickupAddressChange = useCallback(
+    (value?: ReturnPickupAddressPayload) => {
+      setReturnPickupAddress(value);
+    },
+    [],
+  );
   const [resaleItemsWithProduct, setResaleItemsWithProduct] = useState<
     Array<any>
   >([]);
+  const [dispatchSelections, setDispatchSelections] =
+    useState<DispatchWindowSelectionMap>({});
+  const [returnPickupAddress, setReturnPickupAddress] = useState<
+    ReturnPickupAddressPayload | undefined
+  >(undefined);
 
-  // Fetch shipping tiers on mount
+  const orderSummaryQuery = useCheckoutOrderSummary(returnPickupAddress);
+  const shippingTiers = orderSummaryQuery.data?.data?.shippingTiers ?? [];
+
   useEffect(() => {
-    const fetchShippingTiers = async () => {
-      try {
-        const response = await getOrderSummaryApi();
-        if (response.data?.shippingTiers) {
-          setShippingTiers(response.data.shippingTiers);
-        }
-      } catch (err) {
-        console.error("Failed to fetch shipping tiers:", err);
-      }
-    };
-    fetchShippingTiers();
-  }, []);
+    if (shippingTiers.length === 0) return;
+    setSelectedShippingTier((prev) => {
+      const stillValid =
+        prev && shippingTiers.some((t: { name: string }) => t.name === prev);
+      return stillValid ? prev : shippingTiers[0].name;
+    });
+  }, [shippingTiers]);
 
   useEffect(() => {
     async function fetchProductDetails() {
@@ -129,6 +197,292 @@ export default function CheckoutPage() {
     return [...fromRentals, ...uniqueResaleItems];
   }, [cartItemsWithProduct, cartData?.items, resaleItemsWithProduct]);
 
+  const rentalItems = useMemo(
+    () =>
+      approvedOnCheckout.filter(
+        (item) => !(item.isResale || item.rentalDays === 0),
+      ),
+    [approvedOnCheckout],
+  );
+
+  const resaleItems = useMemo(
+    () =>
+      approvedOnCheckout.filter(
+        (item) => item.isResale || item.rentalDays === 0,
+      ),
+    [approvedOnCheckout],
+  );
+
+  const outboundBaseDate = useMemo(() => {
+    if (rentalItems.length === 0) return undefined;
+    return rentalItems.reduce((earliest: string | undefined, item) => {
+      if (!item.rentalStartDate) return earliest;
+      if (!earliest) return item.rentalStartDate;
+      return new Date(item.rentalStartDate) < new Date(earliest)
+        ? item.rentalStartDate
+        : earliest;
+    }, undefined);
+  }, [rentalItems]);
+
+  const returnBaseDate = useMemo(() => {
+    if (rentalItems.length === 0) return undefined;
+    const latestEndDate = rentalItems.reduce(
+      (latest: string | undefined, item) => {
+        if (!item.rentalEndDate) return latest;
+        if (!latest) return item.rentalEndDate;
+        return new Date(item.rentalEndDate) > new Date(latest)
+          ? item.rentalEndDate
+          : latest;
+      },
+      undefined,
+    );
+    // Return date is typically one day after the rental end date
+    return latestEndDate ? addDaysToDateString(latestEndDate, 1) : undefined;
+  }, [rentalItems]);
+
+  const dispatchContexts = useMemo(() => {
+    const contexts: DispatchWindowContext[] = [];
+
+    // Use selectedWindows from rental requests if available
+    const firstRentalRequest = rentalItems[0];
+    const selectedWindows = firstRentalRequest?.selectedWindows;
+
+    let outboundDerived: DerivedDispatchWindow | undefined;
+
+    if (outboundBaseDate) {
+      let window: DerivedDispatchWindow;
+      if (selectedWindows?.outboundDeliveryWindow) {
+        window = {
+          window: selectedWindows.outboundDeliveryWindow,
+          baseDate: getLagosDateString(
+            selectedWindows.outboundDeliveryWindow.start,
+          ),
+          scheduledDate: getLagosDateString(
+            selectedWindows.outboundDeliveryWindow.start,
+          ),
+          rolledForwardDays: 0,
+        };
+      } else {
+        window = deriveDefaultDispatchWindow(outboundBaseDate, {
+          allowRollForward: false,
+        });
+      }
+      outboundDerived = window;
+      contexts.push({
+        type: "OUTBOUND",
+        title: "Rental delivery",
+        subtitle: "",
+        baseDateLabel: formatLagosDate(outboundBaseDate, {
+          includeWeekday: true,
+        }),
+        baseDateReason: "",
+        helperText: "",
+        suggested: window,
+        allowDateChange: false,
+        minDate: window.scheduledDate,
+        defaultSummary: formatWindowRange(window.window),
+      });
+    }
+
+    if (returnBaseDate) {
+      let window: DerivedDispatchWindow;
+      if (selectedWindows?.returnPickupWindow) {
+        window = {
+          window: selectedWindows.returnPickupWindow,
+          baseDate: getLagosDateString(returnBaseDate),
+          scheduledDate: getLagosDateString(returnBaseDate),
+          rolledForwardDays: 0,
+        };
+      } else {
+        window = deriveDefaultDispatchWindow(returnBaseDate, {
+          allowRollForward: false,
+        });
+      }
+      contexts.push({
+        type: "RETURN",
+        title: "Return pickup",
+        subtitle: "",
+        baseDateLabel: formatLagosDate(returnBaseDate, {
+          includeWeekday: true,
+        }),
+        baseDateReason: "",
+        helperText: "",
+        suggested: window,
+        allowDateChange: false,
+        minDate: window.scheduledDate,
+        defaultSummary: formatWindowRange(window.window),
+      });
+    }
+
+    if (resaleItems.length > 0) {
+      const savedResaleWindow = pickResaleWindowFromCheckoutItem(resaleItems[0]);
+
+      let resaleSuggested: DerivedDispatchWindow;
+      if (savedResaleWindow) {
+        const scheduledDate = getLagosDateString(savedResaleWindow.start);
+        const baseDate = getLagosDateString(savedResaleWindow.start);
+        resaleSuggested = {
+          window: savedResaleWindow,
+          baseDate,
+          scheduledDate,
+          rolledForwardDays: 0,
+        };
+      } else {
+        const now = new Date();
+        resaleSuggested = deriveDefaultDispatchWindow(now, {
+          allowRollForward: true,
+        });
+      }
+
+      const outboundWin = outboundDerived?.window;
+      const resaleWin = resaleSuggested.window;
+      const resaleUsesSameSlotAsRentalOutbound =
+        outboundWin &&
+        resaleWin.start === outboundWin.start &&
+        resaleWin.end === outboundWin.end;
+
+      // Mixed cart: one UI row when rental outbound and resale share the same slot (same lister flow).
+      // Selection syncing still mirrors RESALE onto OUTBOUND for passCart (see effect below).
+      if (!resaleUsesSameSlotAsRentalOutbound) {
+        if (savedResaleWindow) {
+          contexts.push({
+            type: "RESALE",
+            title: "Purchase delivery",
+            subtitle: "",
+            baseDateLabel: formatLagosDate(savedResaleWindow.start, {
+              includeWeekday: true,
+            }),
+            baseDateReason: "",
+            helperText: "",
+            suggested: resaleSuggested,
+            allowDateChange: true,
+            minDate: resaleSuggested.scheduledDate,
+            defaultSummary: formatWindowRange(savedResaleWindow),
+          });
+        } else {
+          contexts.push({
+            type: "RESALE",
+            title: "Purchase delivery",
+            subtitle: "",
+            baseDateLabel: formatLagosDate(resaleSuggested.window.start, {
+              includeWeekday: true,
+            }),
+            baseDateReason: "",
+            helperText: "",
+            suggested: resaleSuggested,
+            allowDateChange: true,
+            minDate: resaleSuggested.scheduledDate,
+            defaultSummary: formatWindowRange(resaleSuggested.window),
+          });
+        }
+      }
+    }
+
+    return contexts;
+  }, [
+    outboundBaseDate,
+    returnBaseDate,
+    resaleItems,
+    rentalItems,
+    dispatchScheduleClock,
+  ]);
+
+  useEffect(() => {
+    if (dispatchContexts.length === 0) {
+      setDispatchSelections({});
+      return;
+    }
+
+    const mirrorResaleSelectionFromOutbound =
+      rentalItems.length > 0 &&
+      resaleItems.length > 0 &&
+      dispatchContexts.some((c) => c.type === "OUTBOUND") &&
+      !dispatchContexts.some((c) => c.type === "RESALE");
+
+    setDispatchSelections((prev) => {
+      const next: DispatchWindowSelectionMap = { ...prev };
+      let changed = false;
+      dispatchContexts.forEach((ctx) => {
+        const existing = next[ctx.type];
+        if (!existing) {
+          next[ctx.type] = {
+            type: ctx.type,
+            window: ctx.suggested.window,
+            mode: "DEFAULT",
+            baseDate: ctx.suggested.baseDate,
+            scheduledDate: ctx.suggested.scheduledDate,
+            rolledForwardDays: ctx.suggested.rolledForwardDays,
+          } satisfies DispatchWindowSelection;
+          changed = true;
+          return;
+        }
+        if (
+          existing.mode === "DEFAULT" &&
+          (existing.window.start !== ctx.suggested.window.start ||
+            existing.scheduledDate !== ctx.suggested.scheduledDate ||
+            existing.rolledForwardDays !== ctx.suggested.rolledForwardDays)
+        ) {
+          next[ctx.type] = {
+            type: ctx.type,
+            window: ctx.suggested.window,
+            mode: "DEFAULT",
+            baseDate: ctx.suggested.baseDate,
+            scheduledDate: ctx.suggested.scheduledDate,
+            rolledForwardDays: ctx.suggested.rolledForwardDays,
+          } satisfies DispatchWindowSelection;
+          changed = true;
+        }
+      });
+
+      if (mirrorResaleSelectionFromOutbound && next.OUTBOUND) {
+        const mirrored: DispatchWindowSelection = {
+          ...next.OUTBOUND,
+          type: "RESALE",
+        };
+        const cur = next.RESALE;
+        if (
+          !cur ||
+          cur.window.start !== mirrored.window.start ||
+          cur.window.end !== mirrored.window.end ||
+          cur.mode !== mirrored.mode ||
+          cur.scheduledDate !== mirrored.scheduledDate
+        ) {
+          next.RESALE = mirrored;
+          changed = true;
+        }
+      }
+
+      Object.keys(next).forEach((typeKey) => {
+        const t = typeKey as ShipmentDispatchType;
+        if (!dispatchContexts.some((ctx) => ctx.type === t)) {
+          if (t === "RESALE" && mirrorResaleSelectionFromOutbound) return;
+          delete next[t];
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [dispatchContexts, rentalItems.length, resaleItems.length]);
+
+  const handleDispatchSelectionChange = useCallback(
+    (
+      type: ShipmentDispatchType,
+      selection: DispatchWindowSelection | undefined,
+    ) => {
+      setDispatchSelections((prev) => {
+        const next = { ...prev };
+        if (!selection) {
+          delete next[type];
+        } else {
+          next[type] = selection;
+        }
+        return next;
+      });
+    },
+    [],
+  );
+
   const groupedByLister = useMemo(() => {
     return approvedOnCheckout.reduce((acc: Map<string, any[]>, item: any) => {
       const listerId =
@@ -150,28 +504,160 @@ export default function CheckoutPage() {
     [groupedByLister],
   );
 
+  /** Resolve bucket `productIds` to titles from approved checkout lines. */
+  const productLabelById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const item of approvedOnCheckout as Array<Record<string, unknown>>) {
+      const pid =
+        typeof item.productId === "string" ? item.productId.trim() : "";
+      if (!pid) continue;
+      const detail = item.productDetail as { name?: string } | undefined;
+      const name =
+        (typeof detail?.name === "string" && detail.name.trim()) ||
+        (typeof item.productName === "string" && item.productName.trim()) ||
+        "";
+      if (name) m.set(pid, name);
+    }
+    return m;
+  }, [approvedOnCheckout]);
+
+  /** Matches GET /order/summary `shipmentBuckets` for DISPATCH WINDOWS (multi-leg aware). */
+  const summaryDispatchPreview = useMemo(() => {
+    const buckets = orderSummaryQuery.data?.data
+      ?.shipmentBuckets as CheckoutShipmentBucket[] | undefined;
+    if (!buckets?.length) return undefined;
+
+    const itemTitlesSuffix = (bucket: CheckoutShipmentBucket): string => {
+      const ids = bucket.productIds;
+      if (!ids?.length) return "";
+      const labels = ids
+        .map((id) => productLabelById.get(id))
+        .filter((x): x is string => Boolean(x?.trim()));
+      if (!labels.length) return "";
+      return ` · ${labels.join(", ")}`;
+    };
+    const bucketGroupKey = (bucket: CheckoutShipmentBucket) => {
+      const id = bucket.listerId?.trim();
+      if (id) return id;
+      const name = bucket.listerName?.trim().toLowerCase();
+      return name ? `name:${name}` : "";
+    };
+    const bucketsChronological = [...buckets].sort((a, b) => {
+      const ta = bucketEarliestWindowStartMs(a);
+      const tb = bucketEarliestWindowStartMs(b);
+      if (ta !== tb) return ta - tb;
+      const la = `${a.listerId ?? ""}:${a.listerName ?? ""}:${a.bucketMode}`;
+      const lb = `${b.listerId ?? ""}:${b.listerName ?? ""}:${b.bucketMode}`;
+      return la.localeCompare(lb);
+    });
+
+    const bucketsPerGroup = bucketsChronological.reduce((acc, bucket) => {
+      const key = bucketGroupKey(bucket);
+      acc.set(key, (acc.get(key) ?? 0) + 1);
+      return acc;
+    }, new Map<string, number>());
+    const listerLegIndex = new Map<string, number>();
+    const groups: Array<{
+      groupHeading: string | null;
+      rows: Array<{ title: string; range: string }>;
+    }> = [];
+    for (const b of bucketsChronological) {
+      const groupKey = bucketGroupKey(b);
+      const severalLegsForGroup =
+        groupKey !== "" && (bucketsPerGroup.get(groupKey) ?? 0) > 1;
+      const listerDisplay = b.listerName?.trim() || "Lister";
+      const itemSuffix = itemTitlesSuffix(b);
+      let groupHeading: string;
+      if (severalLegsForGroup) {
+        const next = (listerLegIndex.get(groupKey) ?? 0) + 1;
+        listerLegIndex.set(groupKey, next);
+        groupHeading = `Order from ${listerDisplay} · ${next}${itemSuffix}`;
+      } else {
+        groupHeading = `Order from ${listerDisplay}${itemSuffix}`;
+      }
+
+      const bucketRows: Array<{ title: string; range: string }> = [];
+      if (b.bucketMode === "RENTAL") {
+        const ob = b.outboundDeliveryWindow;
+        const ret = b.returnPickupWindow;
+        if (ob?.start && ob?.end) {
+          bucketRows.push({
+            title: "Rental delivery",
+            range: formatWindowRange(ob),
+          });
+        }
+        if (ret?.start && ret?.end) {
+          bucketRows.push({
+            title: "Return pickup",
+            range: formatWindowRange(ret),
+          });
+        }
+      } else if (b.bucketMode === "RESALE") {
+        const rw = b.resaleDeliveryWindow;
+        if (rw?.start && rw?.end) {
+          bucketRows.push({
+            title: "Purchase delivery",
+            range: formatWindowRange(rw),
+          });
+        }
+      }
+      if (bucketRows.length > 0) {
+        groups.push({ groupHeading, rows: bucketRows });
+      }
+    }
+    return groups.length > 0 ? groups : undefined;
+  }, [orderSummaryQuery.data?.data?.shipmentBuckets, productLabelById]);
+
+  const checkoutBlockingIssues: string[] = [];
+
+  const selectedTierData = useMemo(
+    () =>
+      shippingTiers.find(
+        (t: { name: string }) => t.name === selectedShippingTier,
+      ),
+    [shippingTiers, selectedShippingTier],
+  );
+
   return (
     <div className="mx-auto px-4 sm:px-0 py-[70px] sm:py-[100px] container">
       <div className="mb-4">
         <Breadcrumbs items={path} />
       </div>
       <Header1Plus className="mb-8 uppercase">CHECKOUT</Header1Plus>
-      <div className="gap-4 sm:gap-16 grid xl:grid-cols-3">
-        <div className="col-span-2">
+      <div className="gap-4 sm:gap-8 grid grid-cols-1 xl:grid-cols-3 xl:gap-16">
+        <div className="min-w-0 xl:col-span-2">
           <CheckoutContactAndPayment
+            orderSummary={orderSummaryQuery.data}
             onShippingTierSelected={setSelectedShippingTier}
             shippingTiers={shippingTiers}
+            selectedShippingTier={selectedShippingTier}
+            isShippingTiersLoading={orderSummaryQuery.isLoading}
+            dispatchContexts={dispatchContexts}
+            dispatchSelections={dispatchSelections}
+            onDispatchSelectionChange={handleDispatchSelectionChange}
+            returnPickupAddress={returnPickupAddress}
+            onReturnPickupChange={handleReturnPickupAddressChange}
+            checkoutBlockingIssues={checkoutBlockingIssues}
+            summaryDispatchPreview={summaryDispatchPreview}
+            isResaleOnly={
+              cartData?.items?.every(
+                (item: any) => item.isResale || item.days === 0,
+              ) || false
+            }
           />
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="min-w-0 xl:col-span-1">
           <FinalOrderSummaryCard
             listerGroups={listerGroups}
             isLoading={isLoading || cartIsLoading}
-            error={error}
+            error={error instanceof Error ? error : null}
             selectedShippingTier={selectedShippingTier}
-            selectedTierData={shippingTiers.find(
-              (tier) => tier.name === selectedShippingTier,
-            )}
+            selectedTierData={selectedTierData}
+            dispatchSelections={dispatchSelections}
+            returnPickupAddress={returnPickupAddress}
+            orderSummary={orderSummaryQuery.data}
+            orderSummaryLoading={orderSummaryQuery.isLoading}
+            checkoutBlockingIssues={checkoutBlockingIssues}
           />
         </div>
       </div>

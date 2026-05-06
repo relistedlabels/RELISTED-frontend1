@@ -78,12 +78,24 @@ const ConfirmReturnReceiptSection: React.FC<
           </div>
           <div className="flex-1 space-y-2">
             <Paragraph1 className="font-bold text-gray-900">
-              Return Ready for Confirmation
+              Confirm return receipt
             </Paragraph1>
             <Paragraph1 className="text-gray-700 text-sm">
-              The renter has marked this order as ready to return. Please
-              confirm receipt once you have received and inspected the item.
+              The renter has started a return. When you have the item in hand,
+              open <strong>Confirm Return Receipt</strong> below, review their
+              condition report, then record the actual condition. This step{" "}
+              <strong>completes the order</strong>: the renter&apos;s collateral
+              is released to them and your <strong>rental amount plus cleaning fee</strong>{" "}
+              is credited to your wallet (unless a dispute is open).
             </Paragraph1>
+            <ol className="space-y-1 mt-2 text-gray-700 text-sm list-decimal list-inside">
+              <li>Physically inspect the returned item.</li>
+              <li>Compare with the renter&apos;s photos and notes on this page.</li>
+              <li>
+                Tap the button and submit the actual condition (add notes or
+                photos if needed).
+              </li>
+            </ol>
 
             {errorMessage && (
               <div className="bg-red-50 px-3 py-2 border border-red-200 rounded text-red-700 text-sm">

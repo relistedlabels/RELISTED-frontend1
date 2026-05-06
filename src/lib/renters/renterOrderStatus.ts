@@ -9,11 +9,16 @@ export function getRenterOrderStatusLabel(status: string): string {
   const k = normalizeRenterOrderStatusKey(status || "");
   const map: Record<string, string> = {
     PROCESSING: "Processing",
+    ACCEPTED: "Accepted",
+    CONFIRMED: "Confirmed",
+    IN_TRANSIT: "In transit",
+    DELIVERED: "Delivered",
     ACTIVE: "Active",
     COMPLETED: "Completed",
     CANCELLED: "Cancelled",
     RETURNED: "Returned",
     RETURN_DUE: "Return Due",
+    REJECTED: "Rejected",
     DISPUTED: "In Dispute",
     IN_DISPUTE: "In Dispute",
   };
@@ -33,7 +38,15 @@ export function getRenterOrderBadgeTone(statusLabel: string): RenterOrderBadgeTo
   if (lower.includes("cancel")) return "danger";
   if (lower.includes("dispute")) return "warning";
   if (lower.includes("return due")) return "warning";
-  if (lower.includes("active") || lower.includes("processing")) return "success";
+  if (lower.includes("reject")) return "danger";
+  if (
+    lower.includes("active") ||
+    lower.includes("processing") ||
+    lower.includes("confirmed") ||
+    lower.includes("in transit") ||
+    lower.includes("delivered")
+  )
+    return "success";
   if (lower.includes("completed") || lower.includes("returned")) return "success";
   
   return "neutral";

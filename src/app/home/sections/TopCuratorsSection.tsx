@@ -12,6 +12,7 @@ import {
   ParagraphLink1,
 } from "@/common/ui/Text";
 import { useUsers } from "@/lib/queries/user/useUsers";
+import Link from "next/link";
 
 interface Curator {
   name: string;
@@ -122,14 +123,15 @@ export default function TopCuratorsSection() {
       <div className="text-center mb-4 sm:mb-10">
         <Header1Plus className="tracking-wide">TOP LISTERS</Header1Plus>
         <Paragraph1 className="text-gray-500 mt-1">
-          Wardrobe liked by many.{" "}
-          <a
-            href="/listers-marketplace"
-            className="underline cursor-pointer hover:opacity-70 transition"
-          >
-            VIEW ALL
-          </a>
+          Gain access to amazing outfits from your favourite celebrity’s
+          closets{" "}
         </Paragraph1>
+        <Link
+          href="/listers-marketplace"
+          className="mt-4 text-sm font-bold border-b hover:opacity-70 transition-opacity"
+        >
+          Browse All →
+        </Link>
       </div>
 
       {duplicatedCurators.length === 0 ? (

@@ -56,7 +56,7 @@ const orderStages: TimelineStage[] = [
   {
     id: 6,
     label: "Completed",
-    description: "Curator confirmed return, transaction closed.",
+    description: "Curator confirmed return, order completed.",
     icon: CheckCircle,
   },
 ];

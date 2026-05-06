@@ -52,6 +52,7 @@ export const useCreateProduct = () => {
         categoryId: draft.categoryId,
         tagids: tagIds,
         brandId: draft.brandId,
+        ...(draft.closetId ? { closetId: draft.closetId } : {}),
       };
 
       // ✅ Log exact payload being sent
@@ -94,6 +95,8 @@ export const useCreateProduct = () => {
     onSuccess: (response) => {
       console.log("✅ Product created:", response.message);
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["user-products"] });
+      queryClient.invalidateQueries({ queryKey: ["closets", "mine"] });
       reset();
     },
     onError: (error: any) => {

@@ -65,7 +65,6 @@ const TopListingSection = () => {
               {" "}
               Find the perfect look for your black tie events, no matter the
               style or season. Discover popular looks this week.{" "}
-              <a className="underline cursor-pointer">Bro NOW</a>
             </Paragraph1>
           </div>
           <ProductCardSkeleton count={6} />
@@ -89,6 +88,12 @@ const TopListingSection = () => {
             Find the perfect look for your black tie events, no matter the style
             or season.
           </Paragraph1>
+          <Link
+            href={`/shop?tags=${encodeURIComponent("Black Tie")}&title=${encodeURIComponent("BLACK TIE OUTFITS")}&description=${encodeURIComponent("Find the perfect look for your black tie events, no matter the style or season.")}`}
+            className="mt-4 hidden text-sm font-bold border-b hover:opacity-70 transition-opacity"
+          >
+            Browse All →
+          </Link>
         </div>
 
         {/* Products or No Products Message */}
@@ -132,6 +137,8 @@ const TopListingSection = () => {
                     resalePrice={product.resalePrice}
                     listingType={product.listingType}
                     size={product.measurement}
+                    isSold={product.status === "SOLD"}
+                    isRentedOut={product.status === "RENTED"}
                   />
                 </div>
               ))}

@@ -1,20 +1,24 @@
 "use client";
 // ENDPOINTS: GET /api/listers/orders/:orderId, POST …/approve, POST …/reject, return actions, etc.
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { approveOrder } from "@/lib/api/listers";
-import { rejectOrder } from "@/lib/api/listers";
-import { rejectReturn } from "@/lib/api/listers";
+import {
+  approveOrder,
+  nudgeRenterForExpiredAvailability,
+  rejectOrder,
+  rejectReturn,
+} from "@/lib/api/listers";
 
 import React, { useState, useEffect } from "react";
 import { useOrderDetails } from "@/lib/queries/listers/useOrderDetails";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import BackHeader from "@/common/ui/BackHeader";
-import { div } from "framer-motion/client";
 import OrderItemList from "./OrderItemList";
+import { toast } from "sonner";
 import ConfirmReturnReceiptSection from "./ConfirmReturnReceiptSection";
+import DispatchWindowsDisplay from "./DispatchWindowsDisplay";
+import RejectOrderModal from "./RejectOrderModal";
 import {
   getListerOrderStatusLabel,
-  isListerAvailabilityPending,
   normalizeListerOrderStatusKey,
 } from "@/lib/listers/listerOrderStatus";
 
@@ -42,13 +46,17 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
 
   // Reject mutation state
   const [showRejectMessage, setShowRejectMessage] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
   const rejectMutation = useMutation({
-    mutationFn: () => rejectOrder(orderId, "Item no longer available", "full"),
+    mutationFn: ({ reason, notes }: { reason: string; notes?: string }) =>
+      rejectOrder(orderId, reason, "full", notes),
     onSuccess: () => {
+      setShowRejectModal(false);
       setShowRejectMessage(true);
       queryClient.invalidateQueries({ queryKey: ["listers", "orders"] });
     },
     onError: () => {
+      setShowRejectModal(false);
       setShowRejectMessage(false);
     },
   });
@@ -62,6 +70,21 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
     },
     onError: () => {
       setShowRejectReturnMessage(false);
+    },
+  });
+
+  const nudgeRenterMutation = useMutation({
+    mutationFn: (intent: "rerequest" | "now_available") =>
+      nudgeRenterForExpiredAvailability(orderId, intent),
+    onSuccess: (_, intent) => {
+      toast.success(
+        intent === "rerequest"
+          ? "The renter was nudged to send a new request from their cart."
+          : "The renter was notified that you are ready for a new request.",
+      );
+    },
+    onError: (err: Error & { message?: string }) => {
+      toast.error(err?.message || "Could not notify the renter.");
     },
   });
   // Use local state for orderId
@@ -92,15 +115,23 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
 
   const order = data?.data?.order;
 
+  const availabilityNeedsListerAction = Boolean(
+    order?.approvalRequired && order?.canApprove,
+  );
+  const isExpiredAvailability =
+    String(order?.availabilityStatus ?? "").toUpperCase() === "EXPIRED";
+
   // State for the timer
   const [secondsRemaining, setSecondsRemaining] = useState(0);
   const [isApprovalExpired, setIsApprovalExpired] = useState(false);
 
   useEffect(() => {
     if (order) {
+      const expired =
+        String(order.availabilityStatus ?? "").toUpperCase() === "EXPIRED";
       const remaining = order.timeRemainingSeconds ?? 0;
       setSecondsRemaining(remaining);
-      setIsApprovalExpired(remaining <= 0);
+      setIsApprovalExpired(expired || remaining <= 0);
     }
   }, [order]);
 
@@ -119,14 +150,25 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
   const totalItems = itemCount;
   const totalAmount = order ? `₦${order.totalAmount?.toLocaleString()}` : "-";
 
-  const isPendingApproval = isListerAvailabilityPending(order);
-  const isPendingReturn =
-    normalizeListerOrderStatusKey(String(order?.status ?? "")) === "RETURN_DUE";
+  const orderStatusKey = normalizeListerOrderStatusKey(
+    String(order?.status ?? ""),
+  );
+  const rr = order?.returnRequest as { status?: string } | null | undefined;
+  const listerReturnReceiptOpen =
+    !!rr &&
+    rr.status !== "COMPLETED" &&
+    rr.status !== "REJECTED" &&
+    (orderStatusKey === "RETURN_DUE" || orderStatusKey === "RETURNED");
 
-  // Countdown timer effect
+  // Countdown timer effect (skip for EXPIRED rows; those stay terminal until renter re-requests)
   useEffect(() => {
-    if (!isPendingApproval || isApprovalExpired || secondsRemaining <= 0)
+    if (
+      !availabilityNeedsListerAction ||
+      isExpiredAvailability ||
+      isApprovalExpired
+    ) {
       return;
+    }
 
     const interval = setInterval(() => {
       setSecondsRemaining((prev) => {
@@ -140,7 +182,12 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isPendingApproval, isApprovalExpired, secondsRemaining]);
+  }, [
+    availabilityNeedsListerAction,
+    isExpiredAvailability,
+    isApprovalExpired,
+    orderId,
+  ]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -206,28 +253,34 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
           </div>
         </div>
 
-        {isPendingApproval && (
+        {availabilityNeedsListerAction && (
           <div
             className={`mb-6 p-4 rounded-lg ${timerBg} border ${isApprovalExpired ? "border-red-300" : isLowTime ? "border-orange-300" : "border-gray-200"}`}
           >
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-2">
                 <Paragraph1 className="font-bold text-gray-500 text-xs uppercase tracking-widest">
-                  {isApprovalExpired
-                    ? "Order Approval Expired"
-                    : "Time Remaining to Approve"}
+                  {isExpiredAvailability
+                    ? "Renter request expired"
+                    : isApprovalExpired
+                      ? "Approval time expired"
+                      : "Time remaining to approve"}
                 </Paragraph1>
               </div>
               <div>
                 <Paragraph3
                   className={`text-2xl font-bold font-mono ${timerColor}`}
                 >
-                  {isApprovalExpired ? "Expired" : formatTime(secondsRemaining)}
+                  {isExpiredAvailability || isApprovalExpired
+                    ? "Expired"
+                    : formatTime(secondsRemaining)}
                 </Paragraph3>
                 <Paragraph1 className="mt-1 text-[10px] text-gray-500 text-right">
-                  {isApprovalExpired
-                    ? "This order will be auto-cancelled"
-                    : "Approve or reject order"}
+                  {isExpiredAvailability
+                    ? "The renter can send a new request from their cart. You can still approve this row if you want to honor the original request."
+                    : isApprovalExpired
+                      ? "This request is no longer within the live approval timer"
+                      : "Approve or reject this request"}
                 </Paragraph1>
               </div>
             </div>
@@ -271,17 +324,55 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
           </div>
         </div>
 
-        {isPendingApproval &&
-          !isApprovalExpired &&
+        <DispatchWindowsDisplay
+          dispatchWindows={order?.dispatchWindows}
+          orderData={order}
+        />
+
+        {isExpiredAvailability &&
+          availabilityNeedsListerAction &&
           !showApproveMessage &&
           !showRejectMessage && (
+            <div className="flex flex-col gap-3 mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <Paragraph1 className="font-bold text-black text-sm">
+                Nudge the renter (in-app)
+              </Paragraph1>
+              <Paragraph3 className="text-gray-600 text-xs">
+                If you missed their window, send a short reminder so they know
+                whether to try again or that you are ready for a new request.
+              </Paragraph3>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button
+                  type="button"
+                  className="flex-1 bg-white hover:bg-gray-100 px-4 py-2.5 rounded-lg font-bold text-black text-xs border border-gray-300"
+                  onClick={() => nudgeRenterMutation.mutate("rerequest")}
+                  disabled={nudgeRenterMutation.isPending}
+                >
+                  Ask them to request approval again
+                </button>
+                <button
+                  type="button"
+                  className="flex-1 bg-white hover:bg-gray-100 px-4 py-2.5 rounded-lg font-bold text-black text-xs border border-gray-300"
+                  onClick={() => nudgeRenterMutation.mutate("now_available")}
+                  disabled={nudgeRenterMutation.isPending}
+                >
+                  Say you are ready for a new request
+                </button>
+              </div>
+            </div>
+          )}
+
+        {availabilityNeedsListerAction &&
+          !showApproveMessage &&
+          !showRejectMessage &&
+          (isExpiredAvailability || !isApprovalExpired) && (
             <div className="flex gap-3 mt-8 pt-8 border-gray-300 border-t">
               <button
                 className="flex-1 bg-gray-100 hover:bg-gray-200 px-6 py-3 rounded-lg font-bold text-black text-sm"
-                onClick={() => rejectMutation.mutate()}
+                onClick={() => setShowRejectModal(true)}
                 disabled={rejectMutation.isPending}
               >
-                {rejectMutation.isPending ? "Rejecting..." : "Reject Order"}
+                Reject Order
               </button>
               <button
                 className="flex-1 bg-black hover:bg-gray-900 px-6 py-3 rounded-lg font-bold text-white text-sm"
@@ -318,15 +409,6 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
           </div>
         )}
 
-        {isApprovalExpired && isPendingApproval && (
-          <div className="bg-red-50 mt-8 p-4 pt-8 border-red-200 border-t rounded-lg">
-            <Paragraph1 className="font-bold text-red-700 text-xs">
-              This order&apos;s approval deadline has expired and will be
-              automatically cancelled.
-            </Paragraph1>
-          </div>
-        )}
-
         {showRejectReturnMessage && (
           <div className="flex flex-col justify-center items-center mt-8 pt-8 border-gray-300 border-t">
             <Paragraph1 className="mb-2 font-bold text-red-700 text-lg">
@@ -349,7 +431,7 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
       </div>
 
       {/* Confirm Return Receipt Section */}
-      {isPendingReturn && (
+      {listerReturnReceiptOpen && (
         <div className="mt-6">
           <ConfirmReturnReceiptSection
             orderId={orderId}
@@ -368,6 +450,13 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
           />
         </div>
       )}
+
+      <RejectOrderModal
+        isOpen={showRejectModal}
+        onClose={() => setShowRejectModal(false)}
+        onConfirm={(data) => rejectMutation.mutate(data)}
+        isRejecting={rejectMutation.isPending}
+      />
     </div>
   );
 };

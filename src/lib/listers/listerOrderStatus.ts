@@ -52,13 +52,13 @@ export function formatListerOrderStatusLabel(raw: string): string {
     IN_PROGRESS: "In Progress",
     COMPLETED: "Completed",
     CANCELLED: "Cancelled",
-    RETURN_DUE: "Return Due",
+    RETURN_DUE: "Awaiting return",
     PROCESSING: "Processing",
     CONFIRMED: "Confirmed",
     IN_TRANSIT: "In Transit",
     DELIVERED: "Delivered",
     ACTIVE: "Active",
-    RETURNED: "Returned",
+    RETURNED: "Return received",
   };
   if (!k) return "Unknown";
   return (
@@ -87,6 +87,7 @@ const BADGE_GREEN_LABELS = new Set([
   "Active",
   "Completed",
   "Returned",
+  "Return received",
 ]);
 
 const BADGE_RED_LABELS = new Set([
@@ -105,7 +106,8 @@ export function getListerOrderBadgeToneFromLabel(
   if (BADGE_GREEN_LABELS.has(t)) return "success";
   if (BADGE_RED_LABELS.has(t)) return "danger";
   if (t === "In Dispute") return "warning";
-  if (t === "Pending Approval" || t === "Return Due") return "warning";
+  if (t === "Pending Approval" || t === "Return Due" || t === "Awaiting return")
+    return "warning";
 
   const lower = t.toLowerCase();
   if (
@@ -118,6 +120,7 @@ export function getListerOrderBadgeToneFromLabel(
   if (
     lower.includes("pending") ||
     lower.includes("return due") ||
+    lower.includes("awaiting return") ||
     lower.includes("dispute")
   ) {
     return "warning";

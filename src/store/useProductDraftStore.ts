@@ -46,6 +46,8 @@ export type ProductDraft = {
   categoryId: string;
   brandId: string;
   saleType: "resale" | "rent" | "rent-resale";
+  /** Backend closet UUID; empty string = uncategorized */
+  closetId?: string;
 };
 
 type ProductDraftStore = {
@@ -87,6 +89,7 @@ const initialState: ProductDraft = {
   categoryId: "",
   brandId: "",
   saleType: "rent-resale",
+  closetId: "",
 };
 
 export const useProductDraftStore = create<ProductDraftStore>()(
@@ -167,12 +170,13 @@ export const useProductDraftStore = create<ProductDraftStore>()(
             saleType: (["RENTAL", "RESALE", "RENT_OR_RESALE"].includes(
               product.listingType || "",
             )
-              ? (product.listingType === "RENTAL"
+              ? ((product.listingType === "RENTAL"
                   ? "rent"
                   : product.listingType === "RESALE"
                     ? "resale"
-                    : "rent-resale") as "resale" | "rent" | "rent-resale"
+                    : "rent-resale") as "resale" | "rent" | "rent-resale")
               : "rent-resale") as "resale" | "rent" | "rent-resale",
+            closetId: product.closetId ?? "",
           },
         });
       },

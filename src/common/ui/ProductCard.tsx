@@ -24,6 +24,12 @@ interface ProductCardProps {
   listingType?: "RENTAL" | "RESALE" | "RENT_OR_RESALE";
   size?: string;
   measurement?: string;
+  closetOwner?: string;
+  closetImage?: string;
+  /** Resale sold — still shown in closet/shop closet views, greyed out */
+  isSold?: boolean;
+  /** Active rental in progress — greyed out; rent blocked on PDP */
+  isRentedOut?: boolean;
 }
 
 export default function ProductCard({
@@ -37,10 +43,13 @@ export default function ProductCard({
   listingType = "RENTAL",
   size,
   measurement,
+  closetOwner,
+  closetImage,
+  isSold = false,
+  isRentedOut = false,
 }: ProductCardProps) {
   const router = useRouter();
   const addViewed = useBrowseStore((state) => state.addViewed);
-  const [imageLoaded, setImageLoaded] = useState(false);
 
   const { data: user } = useMe();
   const { data: favoritesData } = useFavorites(1, 100);
@@ -59,6 +68,8 @@ export default function ProductCard({
   const handleFavoriteClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (isSold || isRentedOut) return;
 
     if (!user) {
       router.push("/auth/sign-in");
@@ -86,25 +97,44 @@ export default function ProductCard({
       name,
       price,
       measurement: size || measurement,
+      isSold,
+      isRentedOut,
     });
     router.push(`/shop/product-details/${id}`);
   };
 
+  const isDimmed = isSold || isRentedOut;
+
   return (
     <div
-      className="overflow-hidden cursor-pointer"
+      className={`overflow-hidden cursor-pointer ${isDimmed ? "opacity-[0.58] grayscale" : ""}`}
       onClick={handleProductClick}
     >
       <div className="relative w-full h-[260px] sm:h-[300px]">
         <div
-          className="w-full h-full bg-cover bg-center"
+          className="bg-cover bg-center w-full h-full"
           style={{ backgroundImage: `url(${image})` }}
         />
 
+        {isSold ? (
+          <div className="top-3 left-3 z-10 absolute bg-black/75 px-2.5 py-1 rounded font-semibold text-[10px] text-white uppercase tracking-wider">
+            Sold
+          </div>
+        ) : isRentedOut ? (
+          <div className="top-3 left-3 z-10 absolute bg-amber-900/90 px-2.5 py-1 rounded font-semibold text-[10px] text-white uppercase tracking-wider">
+            Rented
+          </div>
+        ) : null}
+
         <button
           onClick={handleFavoriteClick}
-          disabled={addFavorite.isPending || removeFavorite.isPending}
-          className="absolute top-3 right-3 bg-black/20 backdrop-blur-sm p-1.5 rounded-full hover:bg-white transition disabled:opacity-50"
+          disabled={
+            isSold ||
+            isRentedOut ||
+            addFavorite.isPending ||
+            removeFavorite.isPending
+          }
+          className={`absolute top-3 right-3 bg-black/20 backdrop-blur-sm p-1.5 rounded-full hover:bg-white transition disabled:opacity-50 ${isDimmed ? "hidden" : ""}`}
         >
           <Heart
             className="w-5 h-5"
@@ -114,7 +144,7 @@ export default function ProductCard({
         </button>
 
         {/* Rent and Resale badges */}
-        <div className="absolute bottom-3 hidden left-3 flex-">
+        <div className="hidden bottom-3 left-3 absolute flex-">
           {(listingType === "RENTAL" || listingType === "RENT_OR_RESALE") && (
             <span
               className={`bg-white text-black px-2.5 py-1 ${
@@ -142,11 +172,35 @@ export default function ProductCard({
 
       {/* product description */}
       <div className="py-4">
-        <Paragraph1 className="text-xs font-semibold tracking-wide">
+        <Paragraph1 className="font-semibold text-xs tracking-wide">
           {brand ? `${brand} ${name}` : name}
         </Paragraph1>
+        {closetOwner ? (
+          <div className="flex justify-between items-center gap-2 mt-3 mb-1">
+            <Paragraph1 className="text-gray-700 text-xs">Closet:</Paragraph1>
+            <div className="flex items-center gap-1 min-w-0">
+              <div className="relative bg-gray-200 rounded-full w-6 h-6 overflow-hidden shrink-0">
+                {closetImage ? (
+                  <Image
+                    src={closetImage}
+                    alt={closetOwner}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <span className="flex justify-center items-center w-full h-full font-bold text-[9px] text-gray-600">
+                    {closetOwner.slice(0, 2).toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <Paragraph1 className="font-medium text-gray-700 text-xs truncate">
+                {closetOwner}
+              </Paragraph1>
+            </div>
+          </div>
+        ) : null}{" "}
         {(size || measurement) && (
-          <Paragraph1 className="text-gray-700 mt-1">
+          <Paragraph1 className="mt-1 text-gray-700">
             Size: {size || measurement}
           </Paragraph1>
         )}
@@ -154,7 +208,7 @@ export default function ProductCard({
           // Resale-only pricing
           <div className="flex justify-between items-start">
             <Paragraph1 className="text-gray-700">Buy</Paragraph1>
-            <Paragraph1 className="text-black font-semibold">
+            <Paragraph1 className="font-semibold text-black">
               ₦{resalePrice?.toLocaleString() || "0"}
             </Paragraph1>
           </div>
@@ -162,7 +216,7 @@ export default function ProductCard({
           // Rental-only pricing
           <div className="flex justify-between items-start">
             <Paragraph1 className="text-gray-700">Rent from </Paragraph1>
-            <Paragraph1 className="text-black font-semibold">
+            <Paragraph1 className="font-semibold text-black">
               ₦{dailyPrice?.toLocaleString() || "0"}
             </Paragraph1>
           </div>
@@ -171,20 +225,20 @@ export default function ProductCard({
           <div>
             <div className="flex justify-between items-start">
               <Paragraph1 className="text-gray-700">Rent from </Paragraph1>
-              <Paragraph1 className="text-black font-semibold">
+              <Paragraph1 className="font-semibold text-black">
                 ₦{dailyPrice?.toLocaleString() || "0"}
               </Paragraph1>
             </div>
             <div className="flex justify-between items-start mt-1">
               <Paragraph1 className="text-gray-700">Buy </Paragraph1>
-              <Paragraph1 className="text-black font-semibold">
+              <Paragraph1 className="font-semibold text-black">
                 ₦{resalePrice?.toLocaleString() || "0"}
               </Paragraph1>
             </div>
           </div>
         )}
         <div className="flex justify-between items-start mt-1">
-          <Paragraph1 className="text-gray-600 ">RRP:</Paragraph1>
+          <Paragraph1 className="text-gray-600">RRP:</Paragraph1>
           <Paragraph1 className="text-gray-600 line-through">
             {price}
           </Paragraph1>

@@ -63,10 +63,17 @@ export type UserProduct = {
   createdAt: string;
   updatedAt: string;
   attachments: ProductAttachment | null;
-  curator: ProductCurator;
+  curator?: ProductCurator;
   collateralPrice: number;
   depreciationPrompt?: boolean;
   rejectionComment?: string | null;
+  closetId?: string | null;
+  closet?: {
+    id: string;
+    name: string;
+    slug: string;
+    imageUrl: string | null;
+  } | null;
 };
 
 export type ProductPayload = {
@@ -160,8 +167,14 @@ export const productApi = {
     page?: number;
     limit?: number;
     sort?: string;
+    closetId?: string;
+    onlyWithCloset?: boolean;
   }) => {
     const params = new URLSearchParams();
+    if (filters?.closetId) params.append("closetId", filters.closetId);
+    if (filters?.onlyWithCloset === true && !filters?.closetId) {
+      params.append("onlyWithCloset", "true");
+    }
     if (filters?.search) params.append("search", filters.search);
     if (filters?.category?.length)
       params.append("category", filters.category.join(","));
@@ -217,10 +230,21 @@ export const productApi = {
       method: "DELETE",
     }),
 
-  getUserProducts: () =>
-    apiFetch<UserProductsResponse>("/product/user-products", {
-      method: "GET",
-    }),
+  getUserProducts: (filters?: {
+    closetId?: string;
+    uncategorized?: boolean;
+  }) => {
+    const params = new URLSearchParams();
+    if (filters?.closetId) params.append("closetId", filters.closetId);
+    if (filters?.uncategorized) params.append("uncategorized", "true");
+    const q = params.toString();
+    return apiFetch<UserProductsResponse>(
+      `/product/user-products${q ? `?${q}` : ""}`,
+      {
+        method: "GET",
+      },
+    );
+  },
 
   getStatistics: () =>
     apiFetch<ProductStatisticsResponse>("/admin/products/statistics", {

@@ -2,22 +2,26 @@
 
 "use client";
 
-import React, { useState } from "react";
-import {
-  SlidersVertical,
-  X,
-  Search,
-  ChevronLeft,
-  ArrowLeft,
-} from "lucide-react";
+import React, { useState, type ComponentProps } from "react";
+import { X, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1 } from "@/common/ui/Text";
-import Button from "@/common/ui/Button";
 import ProductCuratorDetails from "./ProductCuratorDetails";
 import OrderProgressTimeline from "./OrderProgressTimeline";
 import OrderStatusDetails from "./OrderStatusDetails";
 import ReadyToReturnSection from "./ReadyToReturnSection";
-import { useOrderDetails } from "@/lib/queries/renters/useOrderDetails";
+import {
+  useOrderDetails,
+  useOrderProgress,
+} from "@/lib/queries/renters/useOrderDetails";
+import DispatchWindowsDisplay, {
+  type DispatchWindow,
+} from "@/app/listers/components/DispatchWindowsDisplay";
+import { isListerResaleOrder } from "@/lib/listers/listerOrderRow";
+
+type RenterOrderProgressPayload = ComponentProps<
+  typeof OrderProgressTimeline
+>["progress"];
 
 interface OrderDetailsPanelProps {
   isOpen: boolean;
@@ -25,6 +29,8 @@ interface OrderDetailsPanelProps {
   orderId?: string;
   orderData?: any;
   isLoading?: boolean;
+  progressData?: RenterOrderProgressPayload;
+  progressLoading?: boolean;
 }
 
 const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
@@ -33,21 +39,17 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
   orderId,
   orderData,
   isLoading,
+  progressData,
+  progressLoading,
 }) => {
-  const minPrice = 50000;
-  const maxPrice = 200000;
-
   const variants = {
     hidden: { x: "100%" },
     visible: { x: 0 },
   };
 
-  const ExampleData = {
-    rentalDays: 3,
-    rentalFeePerPeriod: 165000,
-    securityDeposit: 15000,
-    cleaningFee: 10000,
-  };
+  const resaleOnlyOrder = orderData
+    ? isListerResaleOrder(orderData as Record<string, unknown>)
+    : false;
 
   return (
     <AnimatePresence>
@@ -94,7 +96,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
             </div>
 
             {/* Content */}
-            <div className="grow pt-4 pb-20 space-y-8">
+            <div className="grow pt-4 pb-20 space-y-4">
               {isLoading ? (
                 <div className="space-y-4 animate-pulse">
                   <div className="h-48 bg-gray-200 rounded-xl"></div>
@@ -108,9 +110,30 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
               ) : (
                 <>
                   <ProductCuratorDetails orderData={orderData} />
-                  <OrderProgressTimeline orderData={orderData} />
+
+                  <DispatchWindowsDisplay
+                    dispatchWindows={
+                      orderData?.dispatchWindows as
+                        | DispatchWindow[]
+                        | undefined
+                    }
+                    orderData={orderData}
+                    sectionTitle="Dispatch windows"
+                  />
+
+                  <OrderProgressTimeline
+                    orderData={orderData}
+                    progress={progressData ?? undefined}
+                  />
+                  {progressLoading ? (
+                    <Paragraph1 className="text-xs text-gray-400">
+                      Refreshing progress…
+                    </Paragraph1>
+                  ) : null}
                   <OrderStatusDetails orderData={orderData} />
-                  <ReadyToReturnSection orderId={orderId} />
+                  {!resaleOnlyOrder ? (
+                    <ReadyToReturnSection orderId={orderId} />
+                  ) : null}
                 </>
               )}
             </div>
@@ -145,6 +168,9 @@ interface OrderDetailsProps {
 const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { data: orderData, isLoading } = useOrderDetails(orderId || "");
+  const { data: progressData, isLoading: progressLoading } = useOrderProgress(
+    orderId || "",
+  );
 
   return (
     <>
@@ -163,6 +189,8 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId }) => {
         orderId={orderId}
         orderData={orderData}
         isLoading={isLoading}
+        progressData={progressData}
+        progressLoading={progressLoading}
       />
     </>
   );

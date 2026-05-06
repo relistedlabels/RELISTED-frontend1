@@ -10,6 +10,7 @@ import {
   Home,
   RotateCcw,
   CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
@@ -20,10 +21,12 @@ import {
 const rentalSteps = [
   { label: "Pending", icon: CheckCircle2 },
   { label: "Approved", icon: CheckCircle2 },
-  { label: "In Transit", icon: Truck },
+  { label: "Dispatched", icon: Truck },
+  { label: "Processing pickup", icon: Loader2 },
+  { label: "In transit", icon: Package },
   { label: "Delivered", icon: Home },
-  { label: "Return Due", icon: RotateCcw },
-  { label: "Return Transit", icon: Truck },
+  { label: "Awaiting return", icon: RotateCcw },
+  { label: "Return received", icon: CheckCircle2 },
   { label: "Completed", icon: Check },
 ];
 
@@ -50,17 +53,49 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
   const isResale = isResaleItem(clickedItem) || isListerResaleOrder(orderData);
   const steps = isResale ? resaleSteps : rentalSteps;
 
-  // If orderData is provided, extract the current step
+  // Map API order / timeline status → step index (timeline uses lowercase API slugs e.g. intransit, confirmed).
   let currentStep = propCurrentStep;
-  if (orderData?.timeline?.currentStep) {
-    // Map the step name to index
-    const stepIndex = steps.findIndex(
-      (s) =>
-        s.label.toLowerCase() ===
-        (orderData.timeline.currentStep || "").toLowerCase(),
-    );
-    if (stepIndex !== -1) {
-      currentStep = stepIndex;
+  if (orderData) {
+    const raw = String(
+      orderData.timeline?.currentStep ?? orderData.status ?? "",
+    )
+      .toLowerCase()
+      .replace(/-/g, "_");
+
+    if (isResale) {
+      const resaleByApi: Record<string, number> = {
+        processing: 0,
+        accepted: 1,
+        confirmed: 1,
+        intransit: 2,
+        delivered: 3,
+        active: 3,
+        completed: 4,
+        returned: 4,
+        return_due: 4,
+        in_dispute: 2,
+        cancelled: 0,
+        rejected: 0,
+      };
+      const idx = resaleByApi[raw];
+      if (idx !== undefined) currentStep = idx;
+    } else {
+      const rentalByApi: Record<string, number> = {
+        processing: 0,
+        accepted: 1,
+        confirmed: 3,
+        intransit: 4,
+        delivered: 5,
+        active: 5,
+        return_due: 6,
+        returned: 7,
+        completed: 8,
+        in_dispute: 5,
+        cancelled: 0,
+        rejected: 0,
+      };
+      const idx = rentalByApi[raw];
+      if (idx !== undefined) currentStep = idx;
     }
   }
   return (

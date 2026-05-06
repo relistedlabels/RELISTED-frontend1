@@ -351,10 +351,22 @@ export async function rejectOrder(
   orderId: string,
   reason: string,
   refundType: "full" = "full",
+  notes?: string,
 ): Promise<{ success: boolean; message: string }> {
   return apiFetch(`/api/listers/orders/${orderId}/reject`, {
     method: "POST",
-    body: JSON.stringify({ reason, refundType }),
+    body: JSON.stringify({ reason, refundType, notes }),
+  });
+}
+
+/** In-app reminder for an expired availability request (orderId is the request row id). */
+export async function nudgeRenterForExpiredAvailability(
+  orderId: string,
+  intent: "rerequest" | "now_available",
+): Promise<{ success: boolean; message: string }> {
+  return apiFetch(`/api/listers/orders/${orderId}/nudge-renter`, {
+    method: "POST",
+    body: JSON.stringify({ intent }),
   });
 }
 

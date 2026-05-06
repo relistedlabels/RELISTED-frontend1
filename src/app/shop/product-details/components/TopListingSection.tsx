@@ -121,6 +121,8 @@ export default function TopListingSection() {
                   resalePrice={item.resalePrice}
                   listingType={item.listingType}
                   size={item.measurement}
+                  isSold={item.status === "SOLD"}
+                  isRentedOut={item.status === "RENTED"}
                 />
               </div>
             ))}

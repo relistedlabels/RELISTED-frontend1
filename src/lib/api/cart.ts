@@ -1,4 +1,5 @@
 import { apiFetch } from "./http";
+import type { DispatchWindowsPayload } from "@/lib/checkout/dispatchWindows";
 
 export type CartProduct = {
   id: string;
@@ -26,6 +27,20 @@ export type CartLineRentalSnapshot = {
   startDate?: string;
   endDate?: string;
   createdAt?: string;
+  selectedWindows?: {
+    outboundDeliveryWindow?: {
+      start: string;
+      end: string;
+    } | null;
+    returnPickupWindow?: {
+      start: string;
+      end: string;
+    } | null;
+    resaleWindow?: {
+      start: string;
+      end: string;
+    } | null;
+  };
 };
 
 export type CartItem = {
@@ -90,6 +105,53 @@ export const reRequestAvailability = (cartItemId: string) =>
     { method: "POST" },
   );
 
+/** One shipment pricing leg from GET /order/summary (matches backend `shipmentBuckets`). */
+export type CheckoutShipmentBucket = {
+  listerId: string;
+  listerName: string;
+  bucketMode: "RENTAL" | "RESALE" | string;
+  productIds?: string[];
+  outboundDeliveryWindow?: { start: string; end: string } | null;
+  returnPickupWindow?: { start: string; end: string } | null;
+  resaleDeliveryWindow?: { start: string; end: string } | null;
+  outboundShippingCost?: number;
+  returnShippingCost?: number;
+  outboundPickupCost?: number;
+  returnPickupCost?: number;
+};
+
+export type OrderSummaryPayload = {
+  summary: {
+    rentalTotal?: number;
+    collateralTotal?: number;
+    cleaningTotal?: number;
+    purchaseTotal?: number;
+    pickupTotal?: number;
+    shippingTotal?: number;
+    outboundShippingTotal?: number;
+    returnShippingTotal?: number;
+    outboundPickupTotal?: number;
+    returnPickupTotal?: number;
+    returnTotal?: number;
+    serviceCharge?: number;
+    vatAmount?: number;
+    grandTotal?: number;
+  };
+  shippingTiers: Array<{
+    name: string;
+    totalShippingCost: number;
+    grandTotal: number;
+  }>;
+  listerBreakdowns?: unknown[];
+  shipmentBuckets?: CheckoutShipmentBucket[];
+};
+
+export type OrderSummaryResponse = {
+  success: boolean;
+  message?: string;
+  data?: OrderSummaryPayload;
+};
+
 export type OrderPostResponse = {
   success: boolean;
   message?: string;
@@ -99,6 +161,7 @@ export type OrderPostResponse = {
     orderIds?: string[];
     orderId?: string;
     orders?: Array<{ orderId?: string }>;
+    shipmentIds?: string[];
   };
 };
 
@@ -137,15 +200,54 @@ export const createOrderApi = () =>
 
 /**
  * Get order summary (GET /order/summary)
+ * @param returnAddress - Optional return pickup address to recalculate shipping
  */
-export const getOrderSummaryApi = () =>
-  apiFetch<any>("/order/summary", {
+export const getOrderSummaryApi = (returnAddress?: {
+  returnStreet?: string;
+  returnCity?: string;
+  returnState?: string;
+  returnCountry?: string;
+  returnPostalCode?: string;
+  returnLandmark?: string;
+  returnInstructions?: string;
+}) => {
+  const params = new URLSearchParams();
+  if (returnAddress?.returnStreet) params.append("returnStreet", returnAddress.returnStreet);
+  if (returnAddress?.returnCity) params.append("returnCity", returnAddress.returnCity);
+  if (returnAddress?.returnState) params.append("returnState", returnAddress.returnState);
+  if (returnAddress?.returnCountry) params.append("returnCountry", returnAddress.returnCountry);
+  if (returnAddress?.returnPostalCode) params.append("returnPostalCode", returnAddress.returnPostalCode);
+  if (returnAddress?.returnLandmark) params.append("returnLandmark", returnAddress.returnLandmark);
+  if (returnAddress?.returnInstructions) params.append("returnInstructions", returnAddress.returnInstructions);
+  
+  const queryString = params.toString();
+  const url = `/order/summary${queryString ? `?${queryString}` : ""}`;
+  
+  return apiFetch<OrderSummaryResponse>(url, {
     method: "GET",
   });
+};
 
-/** POST /order with `{ pricingTier }` (full checkout). */
-export const passCartApi = (shippingTierName: string) =>
+export type OrderSummaryApiResult = Awaited<ReturnType<typeof getOrderSummaryApi>>;
+
+export interface ReturnPickupAddressPayload {
+  contactName: string;
+  phoneNumber: string;
+  street: string;
+  city: string;
+  state: string;
+  instructions?: string;
+}
+
+export interface PassCartPayload {
+  pricingTier: string;
+  dispatchWindows?: DispatchWindowsPayload;
+  returnPickupAddress?: ReturnPickupAddressPayload;
+}
+
+/** POST /order with `{ pricingTier, dispatchWindows? }` (full checkout). */
+export const passCartApi = (payload: PassCartPayload) =>
   apiFetch<OrderPostResponse>("/order", {
     method: "POST",
-    body: JSON.stringify({ pricingTier: shippingTierName }),
+    body: JSON.stringify(payload),
   });

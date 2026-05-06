@@ -8,7 +8,8 @@ import {
 } from "react-icons/hi2";
 import { TiTick } from "react-icons/ti";
 import { Paragraph1 } from "@/common/ui/Text"; // Assuming custom text components based on previous context
-import { Heart } from "lucide-react";
+import { Bell, Heart } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   useAddFavorite,
   useRemoveFavorite,
@@ -19,6 +20,9 @@ import RentalPeriods from "./RentalPeriods";
 import { usePublicProductById } from "@/lib/queries/product/usePublicProductById";
 import { usePublicUserById } from "@/lib/queries/user/usePublicUserById";
 import { DetailPanelSkeleton } from "@/common/ui/SkeletonLoaders";
+import { isInhouseManager } from "@/lib/inhouseManager";
+import { toast } from "sonner";
+import { useSubscribeProductNotifyWhenAvailable } from "@/lib/mutations/renters/useSubscribeProductNotifyWhenAvailable";
 
 // ============================================================================
 // API ENDPOINTS USED:
@@ -55,7 +59,10 @@ const UserProfile: React.FC<UserProfileProps> = ({
       </div>
       <div>
         <Paragraph1 className="text-sm font-semibold text-gray-900">
-          {name.toUpperCase()}
+          {name.toUpperCase()}{" "}
+          {isInhouseManager(userId) && (
+            <span className=" text-gray-500">- Managed by Relisted</span>
+          )}
         </Paragraph1>
         <div className="flex items-center  text-yellow-500">
           <span aria-label={`${rating} star rating`}>
@@ -91,6 +98,9 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
   const addFavorite = useAddFavorite();
   const removeFavorite = useRemoveFavorite();
   const [isFavorited, setIsFavorited] = useState(false);
+  const [showNotifyMe, setShowNotifyMe] = useState(false);
+  const [notifySignedUp, setNotifySignedUp] = useState(false);
+  const subscribeNotify = useSubscribeProductNotifyWhenAvailable();
 
   useEffect(() => {
     if (favoritesData?.favorites && product) {
@@ -123,12 +133,35 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
     }
   };
 
+  const handleNotifyWhenAvailable = async () => {
+    if (!user) {
+      const currentUrl = encodeURIComponent(window.location.href);
+      window.location.href = `/auth/sign-in?redirect=${currentUrl}`;
+      return;
+    }
+    if (!product) return;
+    try {
+      const res = await subscribeNotify.mutateAsync(product.id);
+      toast.success(res.message);
+      setNotifySignedUp(true);
+      setShowNotifyMe(true);
+    } catch (e: unknown) {
+      const msg =
+        e && typeof e === "object" && "message" in e
+          ? String((e as { message: string }).message)
+          : "Could not sign up for notifications.";
+      toast.error(msg);
+    }
+  };
+
   if (isLoading || !product) {
     return <DetailPanelSkeleton />;
   }
 
   // Use collateralPrice from product (API now provides this)
   const collateralPrice = product.collateralPrice;
+  const soldOut = product.status === "SOLD";
+  const rentedOut = product.status === "RENTED";
 
   return (
     <div className="font-sans">
@@ -168,31 +201,118 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
           <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
             Rental Duration
           </Paragraph1>
-          <div className="flex space-x-2 mb-4">
-            {/* RentalPeriods now receives product/lister info as props */}
-            <RentalPeriods
-              productId={product.id}
-              listerId={product.curatorId}
-              dailyPrice={product.dailyPrice}
-              collateralPrice={collateralPrice}
-              listingType={product.listingType}
-              resalePrice={product.resalePrice}
-            />
-            <button
-              onClick={handleFavoriteClick}
-              disabled={addFavorite.isPending || removeFavorite.isPending}
-              className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 disabled:opacity-50 bg-white"
-              aria-label={
-                isFavorited ? "Remove from favorites" : "Add to favorites"
-              }
-            >
-              <Heart
-                className="w-6 h-6"
-                fill={isFavorited ? "red" : "none"}
-                color={isFavorited ? "red" : "#222"}
+          {soldOut ? (
+            <div className="flex gap-2 mb-4">
+              <Paragraph1 className="flex-1 text-sm text-gray-600 py-4 px-3 bg-gray-50 rounded-lg border border-gray-200 leading-relaxed">
+                This listing is sold out and is no longer available to rent.
+              </Paragraph1>
+              <button
+                type="button"
+                onClick={handleFavoriteClick}
+                disabled={addFavorite.isPending || removeFavorite.isPending}
+                className="self-start p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 disabled:opacity-50 bg-white shrink-0"
+                aria-label={
+                  isFavorited ? "Remove from favorites" : "Add to favorites"
+                }
+              >
+                <Heart
+                  className="w-6 h-6"
+                  fill={isFavorited ? "red" : "none"}
+                  color={isFavorited ? "red" : "#222"}
+                />
+              </button>
+            </div>
+          ) : rentedOut ? (
+            <div className="mb-4 space-y-3">
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3">
+                <Paragraph1 className="text-sm font-semibold text-amber-950">
+                  Currently out on rental
+                </Paragraph1>
+                <Paragraph1 className="text-sm text-amber-900/90 mt-1 leading-relaxed">
+                  You can&apos;t book new dates until the item is returned. Tap
+                  below to hear when it&apos;s available again.
+                </Paragraph1>
+              </div>
+              <div className="flex gap-2">
+                <div className="flex-1 space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (notifySignedUp) {
+                        setShowNotifyMe((v) => !v);
+                        return;
+                      }
+                      void handleNotifyWhenAvailable();
+                    }}
+                    disabled={subscribeNotify.isPending}
+                    className="flex w-full justify-center items-center gap-2 hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed px-4 py-3 border-2 border-gray-800 rounded-lg font-semibold text-gray-800 transition duration-150"
+                  >
+                    <Bell className="w-5 h-5 shrink-0" />
+                    {notifySignedUp
+                      ? "You're on the list"
+                      : subscribeNotify.isPending
+                        ? "Saving…"
+                        : "Notify Me When Available"}
+                  </button>
+                  <AnimatePresence>
+                    {showNotifyMe && notifySignedUp && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="rounded-lg border border-blue-200 bg-blue-50 p-3"
+                      >
+                        <Paragraph1 className="text-blue-900 text-sm leading-relaxed">
+                          We&apos;ll email your Relisted account when this item
+                          is back and available to rent.
+                        </Paragraph1>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleFavoriteClick}
+                  disabled={addFavorite.isPending || removeFavorite.isPending}
+                  className="self-start p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 disabled:opacity-50 bg-white shrink-0"
+                  aria-label={
+                    isFavorited ? "Remove from favorites" : "Add to favorites"
+                  }
+                >
+                  <Heart
+                    className="w-6 h-6"
+                    fill={isFavorited ? "red" : "none"}
+                    color={isFavorited ? "red" : "#222"}
+                  />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex space-x-2 mb-4">
+              <RentalPeriods
+                productId={product.id}
+                listerId={product.curatorId}
+                dailyPrice={product.dailyPrice}
+                collateralPrice={collateralPrice}
+                listingType={product.listingType}
+                resalePrice={product.resalePrice}
               />
-            </button>
-          </div>
+              <button
+                onClick={handleFavoriteClick}
+                disabled={addFavorite.isPending || removeFavorite.isPending}
+                className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 disabled:opacity-50 bg-white"
+                aria-label={
+                  isFavorited ? "Remove from favorites" : "Add to favorites"
+                }
+              >
+                <Heart
+                  className="w-6 h-6"
+                  fill={isFavorited ? "red" : "none"}
+                  color={isFavorited ? "red" : "#222"}
+                />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}

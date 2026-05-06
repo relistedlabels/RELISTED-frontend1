@@ -1,17 +1,25 @@
 "use client";
 
-import React, { useState, memo } from "react";
+import React, { useState, memo, useMemo } from "react";
 import Image from "next/image";
-import { Check, CheckCircle } from "lucide-react";
+import { Check, CheckCircle, MapPin } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
-import { useProfile } from "@/lib/queries/user/useProfile";
 import { useRouter } from "next/navigation";
-import { getOrderSummaryApi, orderIdsFromOrderPost } from "@/lib/api/cart";
+import {
+  orderIdsFromOrderPost,
+  type OrderSummaryApiResult,
+  type ReturnPickupAddressPayload,
+} from "@/lib/api/cart";
 import { usePassCart } from "@/lib/mutations/renters/usePassCartMutation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useListerProfile } from "@/lib/queries/shop/useListerProfile";
 import { toast } from "sonner";
 import { isResaleItem } from "@/lib/listers/listerOrderRow";
-import { useQuery } from "@tanstack/react-query";
+import type {
+  DispatchWindowSelectionMap,
+  DispatchWindowsPayload,
+  ShipmentDispatchType,
+} from "@/lib/checkout/dispatchWindows";
 
 const CURRENCY = "₦";
 
@@ -186,30 +194,21 @@ const ListerOrderCard = memo(
                   </>
                 )}
                 <div className="flex justify-between font-medium text-gray-700 text-sm">
-                  <Paragraph1>Pick-up Fee</Paragraph1>
+                  <Paragraph1>Delivery fee</Paragraph1>
                   <Paragraph1>
                     {CURRENCY}
-                    {formatCurrency(listerBreakdown.pickupCost)}
+                    {formatCurrency(listerBreakdown.outboundShippingCost || 0)}
                   </Paragraph1>
                 </div>
-                <div className="flex justify-between font-medium text-gray-700 text-sm">
-                  <Paragraph1>Delivery Fee</Paragraph1>
-                  <Paragraph1>
-                    {CURRENCY}
-                    {formatCurrency(
-                      selectedTierData
-                        ? calculateListerShippingShare(
-                            selectedTierData.totalShippingCost,
-                            listerBreakdown.itemsCount || 1,
-                            approvedGroups.reduce(
-                              (sum, g) => sum + g.items.length,
-                              0,
-                            ),
-                          )
-                        : listerBreakdown.shippingCost,
-                    )}
-                  </Paragraph1>
-                </div>
+                {hasRentalItems && (
+                  <div className="flex justify-between font-medium text-gray-700 text-sm">
+                    <Paragraph1>Return fee</Paragraph1>
+                    <Paragraph1>
+                      {CURRENCY}
+                      {formatCurrency(listerBreakdown.returnShippingCost || 0)}
+                    </Paragraph1>
+                  </div>
+                )}
               </div>
             ) : null;
           })()}
@@ -235,17 +234,8 @@ const ListerOrderCard = memo(
                       (hasRentalItems ? listerBreakdown.rentalTotal : 0) +
                       (hasRentalItems ? listerBreakdown.collateralTotal : 0) +
                       (hasRentalItems ? listerBreakdown.cleaningTotal : 0) +
-                      listerBreakdown.pickupCost +
-                      (selectedTierData
-                        ? calculateListerShippingShare(
-                            selectedTierData.totalShippingCost,
-                            listerBreakdown.itemsCount || 1,
-                            approvedGroups.reduce(
-                              (sum, g) => sum + g.items.length,
-                              0,
-                            ),
-                          )
-                        : listerBreakdown.shippingCost),
+                      listerBreakdown.outboundShippingCost +
+                      listerBreakdown.returnShippingCost,
                   )}
                 </Paragraph1>
               </div>
@@ -288,6 +278,12 @@ interface FinalOrderSummaryCardProps {
     totalShippingCost: number;
     grandTotal: number;
   };
+  dispatchSelections?: DispatchWindowSelectionMap;
+  returnPickupAddress?: ReturnPickupAddressPayload;
+  /** Response body from GET /order/summary (parent-owned React Query). */
+  orderSummary?: OrderSummaryApiResult;
+  orderSummaryLoading?: boolean;
+  checkoutBlockingIssues?: string[];
 }
 
 export default function FinalOrderSummaryCard({
@@ -296,22 +292,45 @@ export default function FinalOrderSummaryCard({
   error,
   selectedShippingTier = "",
   selectedTierData,
+  dispatchSelections = {},
+  returnPickupAddress,
+  orderSummary,
+  orderSummaryLoading = false,
+  checkoutBlockingIssues = [],
 }: FinalOrderSummaryCardProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const passCartMutation = usePassCart();
-  const { data: profile } = useProfile();
   const [isAgree, setIsAgree] = useState(false);
+  const canCheckout = checkoutBlockingIssues.length === 0;
 
-  // Use React Query for order summary - better caching and performance
-  const { data: orderSummary, isLoading: orderSummaryLoading } = useQuery({
-    queryKey: ["orderSummary"],
-    queryFn: getOrderSummaryApi,
-    staleTime: 30000, // 30 seconds
-    retry: 1,
-  });
+  const dispatchWindowsPayload = useMemo<
+    DispatchWindowsPayload | undefined
+  >(() => {
+    const payload: DispatchWindowsPayload = {};
+    (Object.keys(dispatchSelections) as ShipmentDispatchType[]).forEach(
+      (type) => {
+        const selection = dispatchSelections[type];
+        if (selection?.window) {
+          payload[type] = selection.window;
+        }
+      },
+    );
+    return Object.keys(payload).length > 0 ? payload : undefined;
+  }, [dispatchSelections]);
 
   // All items are already approved from the API
   const approvedGroups = listerGroups.filter((group) => group.items.length > 0);
+  const summary = orderSummary?.data?.summary;
+  const summaryOutboundShipping = summary?.outboundShippingTotal || 0;
+  const summaryReturnShipping = summary?.returnShippingTotal || 0;
+  const summarySplitShippingTotal =
+    summaryOutboundShipping + summaryReturnShipping;
+  const summaryShippingTotal =
+    summary?.shippingTotal || summarySplitShippingTotal;
+  const selectedShippingTotal =
+    selectedTierData?.totalShippingCost ?? summaryShippingTotal;
+  const shippingTierAdjustment = selectedShippingTotal - summaryShippingTotal;
 
   const handleCheckout = async () => {
     if (!isAgree) {
@@ -323,6 +342,13 @@ export default function FinalOrderSummaryCard({
       alert("Please select a shipping method");
       return;
     }
+    if (!canCheckout) {
+      toast.error(
+        checkoutBlockingIssues[0] ||
+          "Resolve shipment schedule conflicts before checkout.",
+      );
+      return;
+    }
 
     const approvedItemCount = approvedGroups.reduce(
       (n, g) => n + g.items.length,
@@ -330,31 +356,51 @@ export default function FinalOrderSummaryCard({
     );
     if (approvedItemCount === 0) return;
 
-    passCartMutation.mutate(selectedShippingTier, {
-      onSuccess: (passResponse) => {
-        const ids = orderIdsFromOrderPost(passResponse);
-        const id = ids[0];
-        if (!id) {
-          toast.error(
-            "Checkout succeeded but no order id was returned. Check My Orders or refresh your cart.",
+    passCartMutation.mutate(
+      {
+        tierName: selectedShippingTier,
+        dispatchWindows: dispatchWindowsPayload,
+        returnPickupAddress,
+      },
+      {
+        onSuccess: (passResponse) => {
+          const ids = orderIdsFromOrderPost(passResponse);
+          const id = ids[0];
+          const shipmentIds = passResponse?.data?.shipmentIds || [];
+
+          // Force refetch cart items
+          queryClient.invalidateQueries({ queryKey: ["cart", "items"] });
+          queryClient.invalidateQueries({
+            queryKey: ["renters", "rental-requests"],
+          });
+
+          if (!id) {
+            toast.error(
+              "Checkout succeeded but no order id was returned. Check My Orders or refresh your cart.",
+            );
+            return;
+          }
+          toast.success(
+            ids.length > 1 ? `${ids.length} orders placed` : "Order placed",
           );
-          return;
-        }
-        toast.success(
-          ids.length > 1 ? `${ids.length} orders placed` : "Order placed",
-        );
-        router.push(
-          `/shop/cart/checkout/success?orderId=${encodeURIComponent(id)}`,
-        );
+          // Force clear cart cache before navigation
+          queryClient.invalidateQueries({ queryKey: ["cart", "items"] });
+          queryClient.invalidateQueries({
+            queryKey: ["renters", "rental-requests"],
+          });
+          router.push(
+            `/shop/cart/checkout/success?orderId=${encodeURIComponent(id)}`,
+          );
+        },
+        onError: (err: unknown) => {
+          toast.error(
+            err instanceof Error
+              ? err.message
+              : "Checkout failed. Please try again.",
+          );
+        },
       },
-      onError: (err: unknown) => {
-        toast.error(
-          err instanceof Error
-            ? err.message
-            : "Checkout failed. Please try again.",
-        );
-      },
-    });
+    );
   };
 
   return (
@@ -366,6 +412,36 @@ export default function FinalOrderSummaryCard({
           <Paragraph1 className="text-yellow-800 text-sm">
             Failed to load checkout summary. Please try again.
           </Paragraph1>
+        </div>
+      )}
+
+      {(orderSummary?.data?.summary?.rentalTotal ?? 0) > 0 && (
+        <div className="bg-white p-4 border border-gray-200 rounded-xl">
+          <Paragraph1 className="mb-4 font-bold text-gray-900 text-lg">
+            Return pickup details
+          </Paragraph1>
+          <div className="flex items-start gap-3">
+            <div className="bg-gray-100 p-2 rounded-full">
+              <MapPin size={18} className="text-gray-700" />
+            </div>
+            <div>
+              <Paragraph1 className="font-semibold text-gray-900 text-sm">
+                {returnPickupAddress
+                  ? `${returnPickupAddress.street}, ${returnPickupAddress.city}`
+                  : "Using your delivery address"}
+              </Paragraph1>
+              <Paragraph1 className="text-gray-600 text-xs">
+                {returnPickupAddress
+                  ? `${returnPickupAddress.contactName} • ${returnPickupAddress.phoneNumber}`
+                  : "Courier collects from the same location as your drop-off."}
+              </Paragraph1>
+              {returnPickupAddress?.instructions && (
+                <Paragraph1 className="mt-1 text-gray-500 text-xs">
+                  {returnPickupAddress.instructions}
+                </Paragraph1>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -404,9 +480,9 @@ export default function FinalOrderSummaryCard({
                     {/* Use API summary data with purchaseTotal */}
                     {(() => {
                       const isResaleOrder =
-                        orderSummary?.data?.summary?.purchaseTotal > 0;
+                        (orderSummary?.data?.summary?.purchaseTotal ?? 0) > 0;
                       const hasRentalItems =
-                        orderSummary?.data?.summary?.rentalTotal > 0;
+                        (orderSummary?.data?.summary?.rentalTotal ?? 0) > 0;
 
                       return (
                         <div className="space-y-3 py-4 border-gray-200 border-b">
@@ -416,7 +492,7 @@ export default function FinalOrderSummaryCard({
                               <Paragraph1>
                                 {CURRENCY}
                                 {formatCurrency(
-                                  orderSummary.data.summary.purchaseTotal,
+                                  orderSummary.data.summary.purchaseTotal ?? 0,
                                 )}
                               </Paragraph1>
                             </div>
@@ -427,7 +503,7 @@ export default function FinalOrderSummaryCard({
                               <Paragraph1>
                                 {CURRENCY}
                                 {formatCurrency(
-                                  orderSummary.data.summary.rentalTotal,
+                                  orderSummary.data.summary.rentalTotal ?? 0,
                                 )}
                               </Paragraph1>
                             </div>
@@ -439,7 +515,8 @@ export default function FinalOrderSummaryCard({
                                 <Paragraph1>
                                   {CURRENCY}
                                   {formatCurrency(
-                                    orderSummary.data.summary.collateralTotal,
+                                    orderSummary.data.summary.collateralTotal ??
+                                      0,
                                   )}
                                 </Paragraph1>
                               </div>
@@ -448,33 +525,43 @@ export default function FinalOrderSummaryCard({
                                 <Paragraph1>
                                   {CURRENCY}
                                   {formatCurrency(
-                                    orderSummary.data.summary.cleaningTotal,
+                                    orderSummary.data.summary.cleaningTotal ?? 0,
                                   )}
                                 </Paragraph1>
                               </div>
                             </>
                           )}
                           <div className="flex justify-between font-medium text-gray-700 text-sm">
-                            <Paragraph1>Pick-up Fee</Paragraph1>
+                            <Paragraph1>Delivery fee</Paragraph1>
                             <Paragraph1>
                               {CURRENCY}
                               {formatCurrency(
-                                orderSummary.data.summary.pickupTotal,
+                                summaryOutboundShipping,
                               )}
                             </Paragraph1>
                           </div>
 
-                          <div className="flex justify-between font-medium text-gray-700 text-sm">
-                            <Paragraph1>Delivery Fee</Paragraph1>
-                            <Paragraph1>
-                              {CURRENCY}
-                              {formatCurrency(
-                                selectedTierData
-                                  ? selectedTierData.totalShippingCost
-                                  : orderSummary.data.summary.shippingTotal,
-                              )}
-                            </Paragraph1>
-                          </div>
+                          {hasRentalItems && (
+                            <div className="flex justify-between font-medium text-gray-700 text-sm">
+                              <Paragraph1>Return fee</Paragraph1>
+                              <Paragraph1>
+                                {CURRENCY}
+                                {formatCurrency(
+                                  summaryReturnShipping,
+                                )}
+                              </Paragraph1>
+                            </div>
+                          )}
+                          {shippingTierAdjustment !== 0 && (
+                            <div className="flex justify-between font-medium text-amber-700 text-sm">
+                              <Paragraph1>Shipping tier adjustment</Paragraph1>
+                              <Paragraph1>
+                                {shippingTierAdjustment > 0 ? "+" : "-"}
+                                {CURRENCY}
+                                {formatCurrency(Math.abs(shippingTierAdjustment))}
+                              </Paragraph1>
+                            </div>
+                          )}
                           <div className="flex justify-between font-medium text-gray-700 text-sm">
                             <Paragraph1>Service Charge</Paragraph1>
                             <Paragraph1>
@@ -504,19 +591,24 @@ export default function FinalOrderSummaryCard({
                       <Paragraph1 className="font-extrabold text-gray-900 text-2xl">
                         {CURRENCY}
                         {formatCurrency(
-                          (orderSummary.data.summary.purchaseTotal || 0) +
-                            orderSummary.data.summary.rentalTotal +
-                            orderSummary.data.summary.collateralTotal +
-                            orderSummary.data.summary.cleaningTotal +
-                            orderSummary.data.summary.pickupTotal +
-                            (selectedTierData
-                              ? selectedTierData.totalShippingCost
-                              : orderSummary.data.summary.shippingTotal) +
-                            (orderSummary.data.summary.serviceCharge || 0) +
-                            (orderSummary.data.summary.vatAmount || 0),
+                          (orderSummary.data.summary.purchaseTotal ?? 0) +
+                            (orderSummary.data.summary.rentalTotal ?? 0) +
+                            (orderSummary.data.summary.collateralTotal ?? 0) +
+                            (orderSummary.data.summary.cleaningTotal ?? 0) +
+                            (orderSummary.data.summary.outboundShippingTotal ??
+                              0) +
+                            (orderSummary.data.summary.returnShippingTotal ?? 0) +
+                            (orderSummary.data.summary.serviceCharge ?? 0) +
+                            (orderSummary.data.summary.vatAmount ?? 0) +
+                            shippingTierAdjustment,
                         )}
                       </Paragraph1>
                     </div>
+                    <Paragraph1 className="mb-4 text-gray-500 text-xs">
+                      Delivery and return fees use{" "}
+                      <strong>{selectedShippingTier || "your selected tier"}</strong>{" "}
+                      rates from our courier partner.
+                    </Paragraph1>
 
                     {passCartMutation.isError && (
                       <div className="bg-red-50 mb-4 p-3 border border-red-200 rounded-lg">
@@ -529,7 +621,7 @@ export default function FinalOrderSummaryCard({
 
                     <button
                       onClick={handleCheckout}
-                      disabled={!isAgree || passCartMutation.isPending}
+                      disabled={!isAgree || passCartMutation.isPending || !canCheckout}
                       className="flex justify-center bg-black hover:bg-gray-900 disabled:opacity-50 py-3 rounded-lg w-full font-semibold text-white transition-colors disabled:cursor-not-allowed"
                     >
                       <Paragraph1>
@@ -538,14 +630,30 @@ export default function FinalOrderSummaryCard({
                           : "Complete Order"}
                       </Paragraph1>
                     </button>
+                    {!canCheckout && (
+                      <div className="bg-red-50 mt-4 p-3 border border-red-200 rounded-lg">
+                        <Paragraph1 className="font-semibold text-red-700 text-xs uppercase tracking-wide">
+                          Checkout blocked
+                        </Paragraph1>
+                        <div className="space-y-1 mt-1">
+                          {checkoutBlockingIssues.map((issue) => (
+                            <Paragraph1 key={issue} className="text-red-700 text-xs">
+                              {issue}
+                            </Paragraph1>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-                    <div className="flex items-start gap-2 bg-green-50 mt-4 p-3 border border-green-200 rounded-md text-green-700 text-xs">
-                      <CheckCircle size={16} className="mt-0.5 shrink-0" />
-                      <Paragraph1 className="text-green-700">
-                        Your <strong>deposit is secure</strong> and fully
-                        refunded after item return and approval.
-                      </Paragraph1>
-                    </div>
+                    {(orderSummary?.data?.summary?.rentalTotal ?? 0) > 0 && (
+                      <div className="flex items-start gap-2 bg-green-50 mt-4 p-3 border border-green-200 rounded-md text-green-700 text-xs">
+                        <CheckCircle size={16} className="mt-0.5 shrink-0" />
+                        <Paragraph1 className="text-green-700">
+                          Your <strong>deposit is secure</strong> and fully
+                          refunded after item return and approval.
+                        </Paragraph1>
+                      </div>
+                    )}
 
                     <label className="flex items-start space-x-2 mt-4 text-gray-700 cursor-pointer">
                       <input
