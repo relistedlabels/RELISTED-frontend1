@@ -19,4 +19,5 @@ export const useUserProducts = (
     enabled: options?.enabled ?? true,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,
+    refetchOnWindowFocus: false,
   });

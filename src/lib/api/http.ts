@@ -56,6 +56,10 @@ async function doFetch<T>(
 ): Promise<Response> {
   return fetch(`${BASE_URL}${path}`, {
     ...options,
+    // Avoid browser HTTP cache + conditional revalidation (304) on auth APIs;
+    // React Query owns client caching.
+    cache:
+      options.cache ?? (token ? ("no-store" as RequestCache) : "default"),
     headers: {
       ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
