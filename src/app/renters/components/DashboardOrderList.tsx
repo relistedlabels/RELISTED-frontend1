@@ -2,18 +2,22 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Calendar, Package } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import OrderDetails from "./OrderDetails1";
 import { useOrders } from "@/lib/queries/renters/useOrders";
+import { useSearchParams } from "next/navigation";
 import {
   getRenterOrderBadgeClassName,
   getRenterOrderStatusLabel,
 } from "@/lib/renters/renterOrderStatus";
 
 export default function DashboardOrderList() {
+  const searchParams = useSearchParams();
+  const deepLinkedOrderId = (searchParams.get("orderId") || "").trim();
   const [orderView, setOrderView] = useState<"active" | "completed">("active");
+  const [deepLinkFallbackTried, setDeepLinkFallbackTried] = useState(false);
 
   const { data, isLoading, error } = useOrders(
     orderView === "active" ? "active" : "completed",
@@ -23,6 +27,19 @@ export default function DashboardOrderList() {
   );
 
   const orders = data?.orders || [];
+
+  useEffect(() => {
+    setDeepLinkFallbackTried(false);
+  }, [deepLinkedOrderId]);
+
+  useEffect(() => {
+    if (!deepLinkedOrderId || isLoading || deepLinkFallbackTried) return;
+    const hasMatch = orders.some((order) => order.orderId === deepLinkedOrderId);
+    if (!hasMatch && orderView === "active") {
+      setOrderView("completed");
+      setDeepLinkFallbackTried(true);
+    }
+  }, [deepLinkedOrderId, isLoading, deepLinkFallbackTried, orders, orderView]);
 
   // Filter orders based on view - remove PROCESSING/ACTIVE from completed view
   const filteredOrders = orders.filter((order) => {
@@ -142,7 +159,10 @@ export default function DashboardOrderList() {
                     {formatCurrency(order.totalAmount)}
                   </Paragraph1>{" "}
                 </div>
-                <OrderDetails orderId={order.orderId} />
+                <OrderDetails
+                  orderId={order.orderId}
+                  autoOpen={order.orderId === deepLinkedOrderId}
+                />
               </div>
             </div>
           </div>

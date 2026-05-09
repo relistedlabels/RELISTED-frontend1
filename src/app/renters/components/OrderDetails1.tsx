@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState, type ComponentProps } from "react";
+import React, { useEffect, useState, type ComponentProps } from "react";
 import { X, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1 } from "@/common/ui/Text";
@@ -163,14 +163,19 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
 // --------------------
 interface OrderDetailsProps {
   orderId?: string;
+  autoOpen?: boolean;
 }
 
-const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId }) => {
+const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, autoOpen }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { data: orderData, isLoading } = useOrderDetails(orderId || "");
   const { data: progressData, isLoading: progressLoading } = useOrderProgress(
     orderId || "",
   );
+
+  useEffect(() => {
+    if (autoOpen) setIsOpen(true);
+  }, [autoOpen]);
 
   return (
     <>
