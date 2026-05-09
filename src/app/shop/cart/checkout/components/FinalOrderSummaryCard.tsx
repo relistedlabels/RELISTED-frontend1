@@ -1,6 +1,10 @@
 "use client";
 
 import React, { useState, memo, useMemo } from "react";
+import type {
+  OutboundShippingBucketQuote,
+  ReturnShippingBucketQuote,
+} from "@/lib/api/cart";
 import Image from "next/image";
 import { Check, CheckCircle, MapPin } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
@@ -278,6 +282,17 @@ interface FinalOrderSummaryCardProps {
     totalShippingCost: number;
     grandTotal: number;
   };
+  hasReturnShippingLeg?: boolean;
+  selectedReturnShippingTier?: string;
+  selectedReturnTierData?: {
+    name: string;
+    totalShippingCost: number;
+    grandTotal: number;
+  };
+  outboundShippingByBucket?: OutboundShippingBucketQuote[];
+  selectedOutboundTierByBucket?: Record<number, string>;
+  returnShippingByBucket?: ReturnShippingBucketQuote[];
+  selectedReturnTierByBucket?: Record<number, string>;
   dispatchSelections?: DispatchWindowSelectionMap;
   returnPickupAddress?: ReturnPickupAddressPayload;
   /** Response body from GET /order/summary (parent-owned React Query). */
@@ -292,6 +307,13 @@ export default function FinalOrderSummaryCard({
   error,
   selectedShippingTier = "",
   selectedTierData,
+  hasReturnShippingLeg = false,
+  selectedReturnShippingTier = "",
+  selectedReturnTierData,
+  outboundShippingByBucket = [],
+  selectedOutboundTierByBucket = {},
+  returnShippingByBucket = [],
+  selectedReturnTierByBucket = {},
   dispatchSelections = {},
   returnPickupAddress,
   orderSummary,
@@ -324,13 +346,59 @@ export default function FinalOrderSummaryCard({
   const summary = orderSummary?.data?.summary;
   const summaryOutboundShipping = summary?.outboundShippingTotal || 0;
   const summaryReturnShipping = summary?.returnShippingTotal || 0;
-  const summarySplitShippingTotal =
-    summaryOutboundShipping + summaryReturnShipping;
-  const summaryShippingTotal =
-    summary?.shippingTotal || summarySplitShippingTotal;
-  const selectedShippingTotal =
-    selectedTierData?.totalShippingCost ?? summaryShippingTotal;
-  const shippingTierAdjustment = selectedShippingTotal - summaryShippingTotal;
+  const shipmentBucketsMeta = orderSummary?.data?.shipmentBuckets ?? [];
+
+  const usePerBucketOutbound = outboundShippingByBucket.length > 0;
+  const usePerBucketReturn =
+    hasReturnShippingLeg && returnShippingByBucket.length > 0;
+
+  const displayOutboundShipping = useMemo(() => {
+    if (!usePerBucketOutbound) {
+      return selectedTierData?.totalShippingCost ?? summaryOutboundShipping;
+    }
+    return outboundShippingByBucket.reduce((sum, b) => {
+      const pick =
+        selectedOutboundTierByBucket[b.bucketIndex] ??
+        b.shippingTiers[0]?.name ??
+        "";
+      const row = b.shippingTiers.find((t) => t.name === pick);
+      if (row) return sum + row.totalShippingCost;
+      const fb = shipmentBucketsMeta.find((sb) => sb.bucketIndex === b.bucketIndex);
+      return sum + (fb?.outboundShippingCost ?? 0);
+    }, 0);
+  }, [
+    usePerBucketOutbound,
+    outboundShippingByBucket,
+    selectedOutboundTierByBucket,
+    shipmentBucketsMeta,
+    selectedTierData,
+    summaryOutboundShipping,
+  ]);
+
+  const displayReturnShipping = useMemo(() => {
+    if (!hasReturnShippingLeg) return summaryReturnShipping;
+    if (usePerBucketReturn) {
+      return returnShippingByBucket.reduce((sum, b) => {
+        const pick =
+          selectedReturnTierByBucket[b.bucketIndex] ??
+          b.shippingTiers[0]?.name ??
+          "";
+        const row = b.shippingTiers.find((t) => t.name === pick);
+        if (row) return sum + row.totalShippingCost;
+        const fb = shipmentBucketsMeta.find((sb) => sb.bucketIndex === b.bucketIndex);
+        return sum + (fb?.returnShippingCost ?? 0);
+      }, 0);
+    }
+    return selectedReturnTierData?.totalShippingCost ?? summaryReturnShipping;
+  }, [
+    hasReturnShippingLeg,
+    usePerBucketReturn,
+    returnShippingByBucket,
+    selectedReturnTierByBucket,
+    shipmentBucketsMeta,
+    selectedReturnTierData,
+    summaryReturnShipping,
+  ]);
 
   const handleCheckout = async () => {
     if (!isAgree) {
@@ -338,8 +406,34 @@ export default function FinalOrderSummaryCard({
       return;
     }
 
-    if (!selectedShippingTier) {
+    if (usePerBucketOutbound) {
+      for (const b of outboundShippingByBucket) {
+        const pick =
+          selectedOutboundTierByBucket[b.bucketIndex] ??
+          b.shippingTiers[0]?.name ??
+          "";
+        if (!pick.trim()) {
+          alert("Please select a delivery shipping method for each order.");
+          return;
+        }
+      }
+    } else if (!selectedShippingTier) {
       alert("Please select a shipping method");
+      return;
+    }
+    if (hasReturnShippingLeg && usePerBucketReturn) {
+      for (const b of returnShippingByBucket) {
+        const pick =
+          selectedReturnTierByBucket[b.bucketIndex] ??
+          b.shippingTiers[0]?.name ??
+          "";
+        if (!pick.trim()) {
+          alert("Please select a return shipping method for each rental.");
+          return;
+        }
+      }
+    } else if (hasReturnShippingLeg && !selectedReturnShippingTier) {
+      alert("Please select a return shipping method");
       return;
     }
     if (!canCheckout) {
@@ -356,9 +450,40 @@ export default function FinalOrderSummaryCard({
     );
     if (approvedItemCount === 0) return;
 
+    const primaryOutboundTier =
+      usePerBucketOutbound && outboundShippingByBucket[0]
+        ? selectedOutboundTierByBucket[outboundShippingByBucket[0].bucketIndex] ??
+          outboundShippingByBucket[0].shippingTiers[0]?.name ??
+          selectedShippingTier
+        : selectedShippingTier;
+
     passCartMutation.mutate(
       {
-        tierName: selectedShippingTier,
+        tierName: primaryOutboundTier,
+        returnTierName:
+          hasReturnShippingLeg && !usePerBucketReturn
+            ? selectedReturnShippingTier
+            : undefined,
+        outboundPricingByBucket:
+          usePerBucketOutbound && outboundShippingByBucket.length > 0
+            ? outboundShippingByBucket.map((b) => ({
+                bucketIndex: b.bucketIndex,
+                pricingTier:
+                  selectedOutboundTierByBucket[b.bucketIndex] ??
+                  b.shippingTiers[0]?.name ??
+                  "",
+              }))
+            : undefined,
+        returnPricingByBucket:
+          hasReturnShippingLeg && usePerBucketReturn
+            ? returnShippingByBucket.map((b) => ({
+                bucketIndex: b.bucketIndex,
+                pricingTier:
+                  selectedReturnTierByBucket[b.bucketIndex] ??
+                  b.shippingTiers[0]?.name ??
+                  "",
+              }))
+            : undefined,
         dispatchWindows: dispatchWindowsPayload,
         returnPickupAddress,
       },
@@ -535,9 +660,7 @@ export default function FinalOrderSummaryCard({
                             <Paragraph1>Delivery fee</Paragraph1>
                             <Paragraph1>
                               {CURRENCY}
-                              {formatCurrency(
-                                summaryOutboundShipping,
-                              )}
+                              {formatCurrency(displayOutboundShipping)}
                             </Paragraph1>
                           </div>
 
@@ -546,19 +669,7 @@ export default function FinalOrderSummaryCard({
                               <Paragraph1>Return fee</Paragraph1>
                               <Paragraph1>
                                 {CURRENCY}
-                                {formatCurrency(
-                                  summaryReturnShipping,
-                                )}
-                              </Paragraph1>
-                            </div>
-                          )}
-                          {shippingTierAdjustment !== 0 && (
-                            <div className="flex justify-between font-medium text-amber-700 text-sm">
-                              <Paragraph1>Shipping tier adjustment</Paragraph1>
-                              <Paragraph1>
-                                {shippingTierAdjustment > 0 ? "+" : "-"}
-                                {CURRENCY}
-                                {formatCurrency(Math.abs(shippingTierAdjustment))}
+                                {formatCurrency(displayReturnShipping)}
                               </Paragraph1>
                             </div>
                           )}
@@ -595,19 +706,43 @@ export default function FinalOrderSummaryCard({
                             (orderSummary.data.summary.rentalTotal ?? 0) +
                             (orderSummary.data.summary.collateralTotal ?? 0) +
                             (orderSummary.data.summary.cleaningTotal ?? 0) +
-                            (orderSummary.data.summary.outboundShippingTotal ??
-                              0) +
-                            (orderSummary.data.summary.returnShippingTotal ?? 0) +
+                            displayOutboundShipping +
+                            displayReturnShipping +
                             (orderSummary.data.summary.serviceCharge ?? 0) +
-                            (orderSummary.data.summary.vatAmount ?? 0) +
-                            shippingTierAdjustment,
+                            (orderSummary.data.summary.vatAmount ?? 0),
                         )}
                       </Paragraph1>
                     </div>
                     <Paragraph1 className="mb-4 text-gray-500 text-xs">
-                      Delivery and return fees use{" "}
-                      <strong>{selectedShippingTier || "your selected tier"}</strong>{" "}
-                      rates from our courier partner.
+                      {usePerBucketOutbound ? (
+                        <>
+                          Delivery shipping is chosen per seller location
+                          {usePerBucketReturn
+                            ? "; return shipping is chosen per rental return"
+                            : ""}
+                          .
+                        </>
+                      ) : hasReturnShippingLeg ? (
+                        <>
+                          Delivery shipping:{" "}
+                          <strong>
+                            {selectedShippingTier || "your selection"}
+                          </strong>
+                          . Return shipping:{" "}
+                          <strong>
+                            {selectedReturnShippingTier || "your selection"}
+                          </strong>
+                          .
+                        </>
+                      ) : (
+                        <>
+                          Delivery uses{" "}
+                          <strong>
+                            {selectedShippingTier || "your selected tier"}
+                          </strong>{" "}
+                          rates from our courier partner.
+                        </>
+                      )}
                     </Paragraph1>
 
                     {passCartMutation.isError && (

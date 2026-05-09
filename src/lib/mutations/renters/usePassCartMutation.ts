@@ -7,6 +7,9 @@ import type { ReturnPickupAddressPayload } from "@/lib/api/cart";
 
 type PassCartMutationInput = {
   tierName: string;
+  returnTierName?: string;
+  outboundPricingByBucket?: Array<{ bucketIndex: number; pricingTier: string }>;
+  returnPricingByBucket?: Array<{ bucketIndex: number; pricingTier: string }>;
   dispatchWindows?: DispatchWindowsPayload;
   returnPickupAddress?: ReturnPickupAddressPayload;
 };
@@ -15,9 +18,25 @@ export const usePassCart = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ tierName, dispatchWindows, returnPickupAddress }: PassCartMutationInput) =>
+    mutationFn: ({
+      tierName,
+      returnTierName,
+      outboundPricingByBucket,
+      returnPricingByBucket,
+      dispatchWindows,
+      returnPickupAddress,
+    }: PassCartMutationInput) =>
       passCartApi({
         pricingTier: tierName,
+        ...(returnTierName != null && returnTierName !== ""
+          ? { returnPricingTier: returnTierName }
+          : {}),
+        ...(outboundPricingByBucket != null && outboundPricingByBucket.length > 0
+          ? { outboundPricingByBucket }
+          : {}),
+        ...(returnPricingByBucket != null && returnPricingByBucket.length > 0
+          ? { returnPricingByBucket }
+          : {}),
         dispatchWindows,
         returnPickupAddress,
       }),

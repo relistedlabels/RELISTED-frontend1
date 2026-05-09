@@ -9,6 +9,7 @@ import { useRentalRequests } from "@/lib/queries/renters/useRentalRequests";
 import { useCartItems } from "@/lib/queries/renters/useCartItems";
 import { productApi } from "@/lib/api/product";
 import {
+  canonicalReturnPickupJson,
   type CheckoutShipmentBucket,
   type ReturnPickupAddressPayload,
 } from "@/lib/api/cart";
@@ -29,6 +30,15 @@ import {
 } from "@/lib/checkout/dispatchWindows";
 import type { DispatchWindowContext } from "@/lib/checkout/dispatchWindows";
 import { useDispatchScheduleClock } from "@/lib/checkout/useDispatchScheduleClock";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+
+const RETURN_PICKUP_SUMMARY_DEBOUNCE_MS = 1000;
+
+const EMPTY_SHIPPING_TIERS: Array<{
+  name: string;
+  totalShippingCost: number;
+  grandTotal: number;
+}> = [];
 
 type ResaleWindow = { start: string; end: string };
 
@@ -78,6 +88,13 @@ function bucketEarliestWindowStartMs(
 
 export default function CheckoutPage() {
   const [selectedShippingTier, setSelectedShippingTier] = useState<string>("");
+  const [selectedReturnShippingTier, setSelectedReturnShippingTier] =
+    useState<string>("");
+  const [selectedOutboundTierByBucket, setSelectedOutboundTierByBucket] =
+    useState<Record<number, string>>({});
+  const [selectedReturnTierByBucket, setSelectedReturnTierByBucket] = useState<
+    Record<number, string>
+  >({});
 
   const path = [
     { label: "Home", href: "/" },
@@ -95,7 +112,18 @@ export default function CheckoutPage() {
 
   const handleReturnPickupAddressChange = useCallback(
     (value?: ReturnPickupAddressPayload) => {
-      setReturnPickupAddress(value);
+      setReturnPickupAddress((prev) => {
+        if (prev === value) return prev;
+        if (!prev && !value) return prev;
+        if (
+          prev &&
+          value &&
+          canonicalReturnPickupJson(prev) === canonicalReturnPickupJson(value)
+        ) {
+          return prev;
+        }
+        return value;
+      });
     },
     [],
   );
@@ -108,17 +136,71 @@ export default function CheckoutPage() {
     ReturnPickupAddressPayload | undefined
   >(undefined);
 
-  const orderSummaryQuery = useCheckoutOrderSummary(returnPickupAddress);
-  const shippingTiers = orderSummaryQuery.data?.data?.shippingTiers ?? [];
+  const returnPickupForSummary = useDebouncedValue(
+    returnPickupAddress,
+    RETURN_PICKUP_SUMMARY_DEBOUNCE_MS,
+  );
+
+  const orderSummaryQuery = useCheckoutOrderSummary(returnPickupForSummary);
+  const shippingTiers =
+    orderSummaryQuery.data?.data?.shippingTiers ?? EMPTY_SHIPPING_TIERS;
+  const returnShippingTiers =
+    orderSummaryQuery.data?.data?.returnShippingTiers ?? EMPTY_SHIPPING_TIERS;
+  const outboundShippingByBucket =
+    orderSummaryQuery.data?.data?.outboundShippingByBucket ?? [];
+  const returnShippingByBucket =
+    orderSummaryQuery.data?.data?.returnShippingByBucket ?? [];
+  const useOutboundByBucket = outboundShippingByBucket.length > 0;
+
+  const outboundBucketsSyncKey = useMemo(
+    () =>
+      outboundShippingByBucket
+        .map(
+          (b) =>
+            `${b.bucketIndex}:${b.shippingTiers.map((t) => `${t.name}:${t.totalShippingCost}`).join(",")}`,
+        )
+        .join("|"),
+    [outboundShippingByBucket],
+  );
+
+  const returnBucketsSyncKey = useMemo(
+    () =>
+      returnShippingByBucket
+        .map(
+          (b) =>
+            `${b.bucketIndex}:${b.shippingTiers.map((t) => `${t.name}:${t.totalShippingCost}`).join(",")}`,
+        )
+        .join("|"),
+    [returnShippingByBucket],
+  );
 
   useEffect(() => {
-    if (shippingTiers.length === 0) return;
+    if (!useOutboundByBucket) return;
+    setSelectedOutboundTierByBucket((prev) => {
+      const next: Record<number, string> = { ...prev };
+      for (const b of outboundShippingByBucket) {
+        const cur = next[b.bucketIndex];
+        const valid =
+          cur && b.shippingTiers.some((t: { name: string }) => t.name === cur);
+        if (!valid) next[b.bucketIndex] = b.shippingTiers[0]?.name ?? "";
+      }
+      for (const k of Object.keys(next)) {
+        const ki = Number(k);
+        if (!outboundShippingByBucket.some((b) => b.bucketIndex === ki))
+          delete next[ki];
+      }
+      return next;
+    });
+  }, [outboundBucketsSyncKey, useOutboundByBucket, outboundShippingByBucket]);
+
+  useEffect(() => {
+    if (shippingTiers.length === 0 || useOutboundByBucket) return;
     setSelectedShippingTier((prev) => {
       const stillValid =
         prev && shippingTiers.some((t: { name: string }) => t.name === prev);
       return stillValid ? prev : shippingTiers[0].name;
     });
-  }, [shippingTiers]);
+  }, [shippingTiers, useOutboundByBucket]);
 
   useEffect(() => {
     async function fetchProductDetails() {
@@ -204,6 +286,54 @@ export default function CheckoutPage() {
       ),
     [approvedOnCheckout],
   );
+
+  const hasReturnShippingLeg = rentalItems.length > 0;
+
+  useEffect(() => {
+    if (
+      !hasReturnShippingLeg ||
+      returnShippingByBucket.length === 0
+    )
+      return;
+    setSelectedReturnTierByBucket((prev) => {
+      const next: Record<number, string> = { ...prev };
+      for (const b of returnShippingByBucket) {
+        const cur = next[b.bucketIndex];
+        const valid =
+          cur && b.shippingTiers.some((t: { name: string }) => t.name === cur);
+        if (!valid) next[b.bucketIndex] = b.shippingTiers[0]?.name ?? "";
+      }
+      for (const k of Object.keys(next)) {
+        const ki = Number(k);
+        if (!returnShippingByBucket.some((b) => b.bucketIndex === ki))
+          delete next[ki];
+      }
+      return next;
+    });
+  }, [
+    returnBucketsSyncKey,
+    hasReturnShippingLeg,
+    returnShippingByBucket,
+  ]);
+
+  useEffect(() => {
+    if (
+      !hasReturnShippingLeg ||
+      returnShippingByBucket.length > 0 ||
+      returnShippingTiers.length === 0
+    )
+      return;
+    setSelectedReturnShippingTier((prev) => {
+      const stillValid =
+        prev &&
+        returnShippingTiers.some((t: { name: string }) => t.name === prev);
+      return stillValid ? prev : returnShippingTiers[0].name;
+    });
+  }, [
+    returnShippingTiers,
+    hasReturnShippingLeg,
+    returnShippingByBucket.length,
+  ]);
 
   const resaleItems = useMemo(
     () =>
@@ -618,19 +748,47 @@ export default function CheckoutPage() {
     [shippingTiers, selectedShippingTier],
   );
 
+  const selectedReturnTierData = useMemo(
+    () =>
+      returnShippingTiers.find(
+        (t: { name: string }) => t.name === selectedReturnShippingTier,
+      ),
+    [returnShippingTiers, selectedReturnShippingTier],
+  );
+
   return (
     <div className="mx-auto px-4 sm:px-0 py-[70px] sm:py-[100px] container">
       <div className="mb-4">
         <Breadcrumbs items={path} />
       </div>
       <Header1Plus className="mb-8 uppercase">CHECKOUT</Header1Plus>
-      <div className="gap-4 sm:gap-8 grid grid-cols-1 xl:grid-cols-3 xl:gap-16">
-        <div className="min-w-0 xl:col-span-2">
+      <div className="gap-4 sm:gap-8 xl:gap-16 grid grid-cols-1 xl:grid-cols-3">
+        <div className="xl:col-span-2 min-w-0">
           <CheckoutContactAndPayment
             orderSummary={orderSummaryQuery.data}
             onShippingTierSelected={setSelectedShippingTier}
             shippingTiers={shippingTiers}
             selectedShippingTier={selectedShippingTier}
+            outboundShippingByBucket={outboundShippingByBucket}
+            selectedOutboundTierByBucket={selectedOutboundTierByBucket}
+            onOutboundTierForBucket={(bucketIndex, tierName) =>
+              setSelectedOutboundTierByBucket((prev) => ({
+                ...prev,
+                [bucketIndex]: tierName,
+              }))
+            }
+            returnShippingTiers={returnShippingTiers}
+            returnShippingByBucket={returnShippingByBucket}
+            selectedReturnShippingTier={selectedReturnShippingTier}
+            selectedReturnTierByBucket={selectedReturnTierByBucket}
+            onReturnShippingTierSelected={setSelectedReturnShippingTier}
+            onReturnTierForBucket={(bucketIndex, tierName) =>
+              setSelectedReturnTierByBucket((prev) => ({
+                ...prev,
+                [bucketIndex]: tierName,
+              }))
+            }
+            showReturnShippingTierPicker={hasReturnShippingLeg}
             isShippingTiersLoading={orderSummaryQuery.isLoading}
             dispatchContexts={dispatchContexts}
             dispatchSelections={dispatchSelections}
@@ -646,13 +804,20 @@ export default function CheckoutPage() {
             }
           />
         </div>
-        <div className="min-w-0 xl:col-span-1">
+        <div className="xl:col-span-1 min-w-0">
           <FinalOrderSummaryCard
             listerGroups={listerGroups}
             isLoading={isLoading || cartIsLoading}
             error={error instanceof Error ? error : null}
             selectedShippingTier={selectedShippingTier}
             selectedTierData={selectedTierData}
+            outboundShippingByBucket={outboundShippingByBucket}
+            selectedOutboundTierByBucket={selectedOutboundTierByBucket}
+            hasReturnShippingLeg={hasReturnShippingLeg}
+            selectedReturnShippingTier={selectedReturnShippingTier}
+            selectedReturnTierData={selectedReturnTierData}
+            returnShippingByBucket={returnShippingByBucket}
+            selectedReturnTierByBucket={selectedReturnTierByBucket}
             dispatchSelections={dispatchSelections}
             returnPickupAddress={returnPickupAddress}
             orderSummary={orderSummaryQuery.data}
