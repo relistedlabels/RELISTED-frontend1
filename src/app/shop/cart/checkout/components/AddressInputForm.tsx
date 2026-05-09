@@ -27,18 +27,24 @@ export default function AddressInputForm({ onClose }: AddressInputFormProps) {
     zipCode: "",
   });
 
-  // Populate form with existing profile data
+  // Populate form when address fields change (avoid resetting on each profile refetch by reference).
   useEffect(() => {
-    if (profile?.address) {
-      setAddress({
-        street: profile.address.street || "",
-        city: profile.address.city || "",
-        state: profile.address.state || "Lagos State",
-        country: profile.address.country || "Nigeria",
-        zipCode: profile.address.zipCode || "",
-      });
-    }
-  }, [profile]);
+    if (!profile?.address) return;
+    const a = profile.address;
+    setAddress({
+      street: a.street || "",
+      city: a.city || "",
+      state: a.state || "Lagos State",
+      country: a.country || "Nigeria",
+      zipCode: a.zipCode || "",
+    });
+  }, [
+    profile?.address?.street,
+    profile?.address?.city,
+    profile?.address?.state,
+    profile?.address?.country,
+    profile?.address?.zipCode,
+  ]);
 
   // Close modal and refresh on successful save
   useEffect(() => {

@@ -11,12 +11,15 @@ import {
   Wallet,
   ChevronDown,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { toast } from "sonner";
-import type {
-  OrderSummaryApiResult,
-  ReturnPickupAddressPayload,
+import {
+  canonicalReturnPickupJson,
+  type OrderSummaryApiResult,
+  type OutboundShippingBucketQuote,
+  type ReturnPickupAddressPayload,
+  type ReturnShippingBucketQuote,
 } from "@/lib/api/cart";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useWallet } from "@/lib/queries/renters/useWallet";
@@ -33,15 +36,10 @@ import type {
 
 const TOPSHIP_CITIES = [
   "Abule Egba",
-  "Agbara",
   "Agege",
   "Ajah",
-  "Alagbole",
-  "Alakuko",
   "Amuwo Odofin",
   "Apapa",
-  "Arepo",
-  "Atan",
   "Badagry",
   "Bariga",
   "Ebute Metta",
@@ -58,15 +56,12 @@ const TOPSHIP_CITIES = [
   "Ipaja",
   "Isolo",
   "Iyana Ipaja",
-  "Ketu",
   "Kosofe",
   "Lagos",
   "Lagos Island",
   "Lekki",
-  "Magboro",
   "Marina",
   "Maryland",
-  "Mowe",
   "Mushin",
   "Ogba",
   "Ojo",
@@ -90,6 +85,23 @@ interface CheckoutContactAndPaymentProps {
     grandTotal: number;
   }>;
   selectedShippingTier?: string;
+  /** When present, delivery quotes are per shipment bucket (multi-lister carts). */
+  outboundShippingByBucket?: OutboundShippingBucketQuote[];
+  selectedOutboundTierByBucket?: Record<number, string>;
+  onOutboundTierForBucket?: (bucketIndex: number, tierName: string) => void;
+  /** Rental return leg (outbound-only costs per option). */
+  returnShippingTiers?: Array<{
+    name: string;
+    totalShippingCost: number;
+    grandTotal: number;
+  }>;
+  returnShippingByBucket?: ReturnShippingBucketQuote[];
+  selectedReturnShippingTier?: string;
+  selectedReturnTierByBucket?: Record<number, string>;
+  onReturnShippingTierSelected?: (tierName: string) => void;
+  onReturnTierForBucket?: (bucketIndex: number, tierName: string) => void;
+  /** When true, show a separate return-leg carrier picker after return pickup. */
+  showReturnShippingTierPicker?: boolean;
   isShippingTiersLoading?: boolean;
   dispatchContexts?: DispatchWindowContext[];
   dispatchSelections?: DispatchWindowSelectionMap;
@@ -208,6 +220,16 @@ export default function CheckoutContactAndPayment({
   onShippingTierSelected,
   shippingTiers,
   selectedShippingTier = "",
+  outboundShippingByBucket,
+  selectedOutboundTierByBucket = {},
+  onOutboundTierForBucket,
+  returnShippingTiers,
+  returnShippingByBucket,
+  selectedReturnShippingTier = "",
+  selectedReturnTierByBucket = {},
+  onReturnShippingTierSelected,
+  onReturnTierForBucket,
+  showReturnShippingTierPicker = false,
   isShippingTiersLoading = false,
   dispatchContexts: dispatchContextsProp,
   dispatchSelections,
@@ -240,37 +262,85 @@ export default function CheckoutContactAndPayment({
   const { data: walletResponse } = useWallet();
   const [isSameAsBilling, setIsSameAsBilling] = useState(true);
   const tierList = shippingTiers ?? [];
+  const returnTierList = returnShippingTiers ?? [];
+  const outboundBuckets = outboundShippingByBucket ?? [];
+  const usePerBucketOutbound = outboundBuckets.length > 0;
+  const returnBuckets = returnShippingByBucket ?? [];
+  const usePerBucketReturn = returnBuckets.length > 0;
 
-  /** Matches grand total in FinalOrderSummaryCard (line items plus selected-tier shipping adjustment). */
+  /** Matches grand total in FinalOrderSummaryCard (line items plus selected outbound and return shipping). */
   const checkoutGrandTotalNgN = useMemo(() => {
     const summary = orderSummary?.data?.summary;
     if (!summary) return undefined;
 
-    const summaryOutboundShipping = summary.outboundShippingTotal || 0;
-    const summaryReturnShipping = summary.returnShippingTotal || 0;
-    const summarySplitShippingTotal =
-      summaryOutboundShipping + summaryReturnShipping;
-    const summaryShippingTotal =
-      summary.shippingTotal || summarySplitShippingTotal;
+    const baselineOutbound = summary.outboundShippingTotal ?? 0;
+    const baselineReturn = summary.returnShippingTotal ?? 0;
+    const bucketsMeta = orderSummary?.data?.shipmentBuckets ?? [];
 
-    const tiers = shippingTiers ?? [];
-    const selectedTierRow = tiers.find((t) => t.name === selectedShippingTier);
-    const selectedShippingTotal =
-      selectedTierRow?.totalShippingCost ?? summaryShippingTotal;
-    const shippingTierAdjustment = selectedShippingTotal - summaryShippingTotal;
+    let selectedOutboundCost = baselineOutbound;
+    if (usePerBucketOutbound) {
+      selectedOutboundCost = outboundBuckets.reduce((sum, b) => {
+        const pick =
+          selectedOutboundTierByBucket[b.bucketIndex] ??
+          b.shippingTiers[0]?.name ??
+          "";
+        const row = b.shippingTiers.find((t) => t.name === pick);
+        if (row) return sum + row.totalShippingCost;
+        const fb = bucketsMeta.find((sb) => sb.bucketIndex === b.bucketIndex);
+        return sum + (fb?.outboundShippingCost ?? 0);
+      }, 0);
+    } else {
+      const outboundRow = tierList.find((t) => t.name === selectedShippingTier);
+      selectedOutboundCost =
+        outboundRow?.totalShippingCost ?? baselineOutbound;
+    }
+
+    let selectedReturnCost = baselineReturn;
+    if (showReturnShippingTierPicker) {
+      if (usePerBucketReturn) {
+        selectedReturnCost = returnBuckets.reduce((sum, b) => {
+          const pick =
+            selectedReturnTierByBucket[b.bucketIndex] ??
+            b.shippingTiers[0]?.name ??
+            "";
+          const row = b.shippingTiers.find((t) => t.name === pick);
+          if (row) return sum + row.totalShippingCost;
+          const fb = bucketsMeta.find((sb) => sb.bucketIndex === b.bucketIndex);
+          return sum + (fb?.returnShippingCost ?? 0);
+        }, 0);
+      } else {
+        const returnRow = returnTierList.find(
+          (t) => t.name === selectedReturnShippingTier,
+        );
+        selectedReturnCost = returnRow?.totalShippingCost ?? baselineReturn;
+      }
+    }
 
     return (
       (summary.purchaseTotal ?? 0) +
       (summary.rentalTotal ?? 0) +
       (summary.collateralTotal ?? 0) +
       (summary.cleaningTotal ?? 0) +
-      (summary.outboundShippingTotal ?? 0) +
-      (summary.returnShippingTotal ?? 0) +
+      selectedOutboundCost +
+      (showReturnShippingTierPicker ? selectedReturnCost : baselineReturn) +
       (summary.serviceCharge ?? 0) +
-      (summary.vatAmount ?? 0) +
-      shippingTierAdjustment
+      (summary.vatAmount ?? 0)
     );
-  }, [orderSummary?.data?.summary, shippingTiers, selectedShippingTier]);
+  }, [
+    orderSummary?.data?.summary,
+    orderSummary?.data?.shipmentBuckets,
+    tierList,
+    returnTierList,
+    outboundBuckets,
+    usePerBucketOutbound,
+    selectedOutboundTierByBucket,
+    returnBuckets,
+    usePerBucketReturn,
+    selectedReturnTierByBucket,
+    selectedShippingTier,
+    selectedReturnShippingTier,
+    showReturnShippingTierPicker,
+  ]);
 
   const basePickupDefaults = useMemo<ReturnPickupAddressPayload>(
     () => ({
@@ -298,10 +368,95 @@ export default function CheckoutContactAndPayment({
   >(returnPickupAddress ? "custom" : "delivery");
   const [hasTouchedReturnPickup, setHasTouchedReturnPickup] = useState(false);
   const [savingPickup, setSavingPickup] = useState(false);
+  /** Avoids redundant parent updates / summary refetches when JSON-stable form is unchanged. */
+  const lastSyncedPickupJsonRef = useRef<string>("");
 
   const handleShippingTierChange = (tierName: string) => {
     onShippingTierSelected?.(tierName);
   };
+
+  const handleReturnShippingTierChange = (tierName: string) => {
+    onReturnShippingTierSelected?.(tierName);
+  };
+
+  const renderOutboundTierRadios = (
+    tiers: Array<{
+      name: string;
+      totalShippingCost: number;
+      grandTotal: number;
+    }>,
+    selectedName: string,
+    radioGroupName: string,
+    onPick: (name: string) => void,
+  ) =>
+    [...tiers]
+      .filter((tier) => {
+        const isExpress =
+          tier.name.toLowerCase().includes("dhl") ||
+          tier.name.toLowerCase().includes("express");
+        return !isExpress;
+      })
+      .map((tier) => {
+        const tierDetails = getDeliveryTierDetails(tier.name);
+        const isSameDay = isSameDayShippingTierName(tier.name);
+        const isSelected = selectedName === tier.name;
+        return (
+          <label
+            key={`${radioGroupName}-${tier.name}`}
+            className={`group relative block rounded-2xl border-2 p-4 transition-all duration-200 cursor-pointer ${
+              isSelected
+                ? "border-gray-900 shadow-xl shadow-gray-900/10"
+                : "border-gray-200 hover:border-gray-400"
+            }`}
+          >
+            <input
+              type="radio"
+              name={radioGroupName}
+              value={tier.name}
+              checked={isSelected}
+              onChange={() => onPick(tier.name)}
+              className="hidden"
+            />
+            <div className="flex items-start gap-4">
+              <div
+                className={`rounded-full p-3 ${
+                  isSelected
+                    ? "bg-gray-900 text-white"
+                    : "bg-gray-100 text-gray-700"
+                }`}
+              >
+                <Truck size={18} />
+              </div>
+              <div className="flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Paragraph1 className="font-semibold text-gray-900">
+                    {tierDetails.type}
+                  </Paragraph1>
+                  {isSameDay && (
+                    <span className="bg-amber-100 px-2 py-0.5 rounded-full font-semibold text-[11px] text-amber-700">
+                      Same-day
+                    </span>
+                  )}
+                </div>
+                <Paragraph1 className="mt-1 text-gray-600 text-xs">
+                  {tierDetails.description}
+                </Paragraph1>
+                {isSameDay && (
+                  <Paragraph1 className="mt-2 text-amber-700 text-xs">
+                    {SAME_DAY_CUTOFF_DISCLAIMER}
+                  </Paragraph1>
+                )}
+              </div>
+              <div className="text-right">
+                <Paragraph1 className="text-gray-500 text-xs">Shipping</Paragraph1>
+                <Paragraph1 className="font-bold text-gray-900 text-lg">
+                  ₦{formatCurrency(tier.totalShippingCost)}
+                </Paragraph1>
+              </div>
+            </div>
+          </label>
+        );
+      });
 
   useEffect(() => {
     if (returnPickupMode === "delivery") {
@@ -312,19 +467,56 @@ export default function CheckoutContactAndPayment({
   }, [basePickupDefaults, returnPickupMode]);
 
   useEffect(() => {
-    if (returnPickupAddress) {
-      setReturnPickupMode("custom");
-      setReturnPickupForm(returnPickupAddress);
-    }
+    if (!returnPickupAddress) return;
+    setReturnPickupMode("custom");
+    setReturnPickupForm((prev) => {
+      if (
+        canonicalReturnPickupJson(prev) ===
+        canonicalReturnPickupJson(returnPickupAddress)
+      ) {
+        return prev;
+      }
+      return returnPickupAddress;
+    });
   }, [returnPickupAddress]);
+
+  useEffect(() => {
+    if (returnPickupMode !== "custom") {
+      lastSyncedPickupJsonRef.current = "";
+      return;
+    }
+    const payloadJson = canonicalReturnPickupJson(returnPickupForm);
+    if (payloadJson === lastSyncedPickupJsonRef.current) return;
+    const defaultsJson = canonicalReturnPickupJson(basePickupDefaults);
+    if (
+      payloadJson === defaultsJson &&
+      !returnPickupAddress
+    ) {
+      lastSyncedPickupJsonRef.current = payloadJson;
+      return;
+    }
+    if (
+      returnPickupAddress &&
+      canonicalReturnPickupJson(returnPickupAddress) === payloadJson
+    ) {
+      lastSyncedPickupJsonRef.current = payloadJson;
+      return;
+    }
+    lastSyncedPickupJsonRef.current = payloadJson;
+    onReturnPickupChange?.(returnPickupForm);
+  }, [
+    basePickupDefaults,
+    returnPickupForm,
+    returnPickupMode,
+    onReturnPickupChange,
+    returnPickupAddress,
+  ]);
 
   const handleReturnPickupModeChange = (mode: "delivery" | "custom") => {
     setReturnPickupMode(mode);
     setHasTouchedReturnPickup(true);
     if (mode === "delivery") {
       onReturnPickupChange?.(undefined);
-    } else {
-      onReturnPickupChange?.(returnPickupForm);
     }
   };
 
@@ -339,14 +531,12 @@ export default function CheckoutContactAndPayment({
   };
 
   const handleSaveReturnPickup = () => {
-    if (returnPickupMode === "custom" && returnPickupErrors.length === 0) {
-      setSavingPickup(true);
-      onReturnPickupChange?.(returnPickupForm);
-      setTimeout(() => {
-        setSavingPickup(false);
-        toast.success("Pickup spot saved");
-      }, 500);
-    }
+    if (returnPickupMode !== "custom" || returnPickupErrors.length > 0) return;
+    lastSyncedPickupJsonRef.current = canonicalReturnPickupJson(returnPickupForm);
+    onReturnPickupChange?.(returnPickupForm);
+    setSavingPickup(true);
+    toast.success("Pickup spot saved");
+    window.setTimeout(() => setSavingPickup(false), 450);
   };
 
   const returnPickupErrors = useMemo(() => {
@@ -453,13 +643,27 @@ export default function CheckoutContactAndPayment({
         </label>
       </div>
 
-      {/* 3. SHIPPING METHOD Section */}
+      {/* 3. DELIVERY / OUTBOUND SHIPPING */}
       <div className="bg-white p-4 border border-gray-100 rounded-xl">
         <div className="flex justify-between items-start gap-3">
           <div>
             <Paragraph1 className="font-bold text-gray-800 tracking-wider">
-              SHIPPING METHOD
+              {showReturnShippingTierPicker
+                ? "DELIVERY SHIPPING"
+                : "SHIPPING METHOD"}
             </Paragraph1>
+            {showReturnShippingTierPicker ? (
+              <Paragraph1 className="mt-1 text-gray-600 text-xs">
+                Courier from the lister to your delivery address.
+                {usePerBucketOutbound && outboundBuckets.length > 1 ? (
+                  <>
+                    {" "}
+                    Each seller location has its own courier options and
+                    pricing.
+                  </>
+                ) : null}
+              </Paragraph1>
+            ) : null}
           </div>
           <Truck size={24} className="text-gray-400" />
         </div>
@@ -475,78 +679,50 @@ export default function CheckoutContactAndPayment({
               ></div>
             ))}
           </div>
+        ) : usePerBucketOutbound ? (
+          <div className="space-y-8">
+            {outboundBuckets.map((bucket) => {
+              const selectedName =
+                selectedOutboundTierByBucket[bucket.bucketIndex] ??
+                bucket.shippingTiers[0]?.name ??
+                "";
+              return (
+                <div key={bucket.bucketIndex} className="space-y-3">
+                  {outboundBuckets.length > 1 ? (
+                    <Paragraph1 className="font-semibold text-gray-900 text-sm">
+                      From {bucket.listerName}
+                      {bucket.bucketMode === "RESALE"
+                        ? " (purchase delivery)"
+                        : ""}
+                    </Paragraph1>
+                  ) : null}
+                  {bucket.shippingTiers.length > 0 ? (
+                    <div className="space-y-3">
+                      {renderOutboundTierRadios(
+                        bucket.shippingTiers,
+                        selectedName,
+                        `outboundBucket-${bucket.bucketIndex}`,
+                        (name) =>
+                          onOutboundTierForBucket?.(bucket.bucketIndex, name),
+                      )}
+                    </div>
+                  ) : (
+                    <Paragraph1 className="text-gray-600 text-sm">
+                      No shipping methods for this order segment.
+                    </Paragraph1>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         ) : tierList.length > 0 ? (
           <div className="space-y-3">
-            {[...tierList]
-              .filter((tier) => {
-                const isExpress =
-                  tier.name.toLowerCase().includes("dhl") ||
-                  tier.name.toLowerCase().includes("express");
-                return !isExpress;
-              })
-              .map((tier) => {
-                const tierDetails = getDeliveryTierDetails(tier.name);
-                const isSameDay = isSameDayShippingTierName(tier.name);
-                const isSelected = selectedShippingTier === tier.name;
-                return (
-                  <label
-                    key={tier.name}
-                    className={`group relative block rounded-2xl border-2 p-4 transition-all duration-200 cursor-pointer ${
-                      isSelected
-                        ? "border-gray-900 shadow-xl shadow-gray-900/10"
-                        : "border-gray-200 hover:border-gray-400"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="shippingTier"
-                      value={tier.name}
-                      checked={isSelected}
-                      onChange={() => handleShippingTierChange(tier.name)}
-                      className="hidden"
-                    />
-                    <div className="flex items-start gap-4">
-                      <div
-                        className={`rounded-full p-3 ${
-                          isSelected
-                            ? "bg-gray-900 text-white"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        <Truck size={18} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Paragraph1 className="font-semibold text-gray-900">
-                            {tierDetails.type}
-                          </Paragraph1>
-                          {isSameDay && (
-                            <span className="bg-amber-100 px-2 py-0.5 rounded-full font-semibold text-[11px] text-amber-700">
-                              Same-day
-                            </span>
-                          )}
-                        </div>
-                        <Paragraph1 className="mt-1 text-gray-600 text-xs">
-                          {tierDetails.description}
-                        </Paragraph1>
-                        {isSameDay && (
-                          <Paragraph1 className="mt-2 text-amber-700 text-xs">
-                            {SAME_DAY_CUTOFF_DISCLAIMER}
-                          </Paragraph1>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <Paragraph1 className="text-gray-500 text-xs">
-                          Shipping
-                        </Paragraph1>
-                        <Paragraph1 className="font-bold text-gray-900 text-lg">
-                          ₦{formatCurrency(tier.totalShippingCost)}
-                        </Paragraph1>
-                      </div>
-                    </div>
-                  </label>
-                );
-              })}
+            {renderOutboundTierRadios(
+              tierList,
+              selectedShippingTier,
+              "outboundShippingTierLegacy",
+              handleShippingTierChange,
+            )}
           </div>
         ) : (
           <Paragraph1 className="text-gray-600 text-sm">
@@ -704,6 +880,16 @@ export default function CheckoutContactAndPayment({
                 </div>
               )}
 
+              <button
+                type="button"
+                onClick={handleSaveReturnPickup}
+                disabled={returnPickupErrors.length > 0 || savingPickup}
+                className="flex justify-center items-center gap-2 bg-gray-900 hover:bg-black disabled:opacity-50 shadow-md hover:shadow-lg mt-2 px-4 py-3.5 rounded-xl focus-visible:outline-2 focus-visible:outline-gray-900 focus-visible:outline-offset-2 w-full font-semibold text-white text-sm transition-all"
+              >
+                <Check className="w-4 h-4 shrink-0" aria-hidden />
+                {savingPickup ? "Saving..." : "Save pickup spot"}
+              </button>
+
               <div className="bg-gray-50 p-4 border border-gray-200 rounded-2xl">
                 <Paragraph1 className="font-semibold text-gray-900 text-sm">
                   Pickup summary
@@ -716,16 +902,91 @@ export default function CheckoutContactAndPayment({
                   Phone: {returnPickupForm.phoneNumber || "—"}
                 </Paragraph1>
               </div>
-
-              <button
-                type="button"
-                onClick={handleSaveReturnPickup}
-                disabled={returnPickupErrors.length > 0 || savingPickup}
-                className="bg-black hover:bg-gray-900 disabled:opacity-50 mt-3 px-4 py-2 rounded-lg font-semibold text-white text-xs"
-              >
-                {savingPickup ? "Saving..." : "Save pickup spot"}
-              </button>
             </div>
+          )}
+        </div>
+      )}
+
+      {/* Return-leg shipping (rental): quoted separately from delivery */}
+      {showReturnShippingTierPicker && (
+        <div className="bg-white p-4 border border-gray-100 rounded-xl">
+          <div className="flex justify-between items-start gap-3">
+            <div>
+              <Paragraph1 className="font-bold text-gray-800 tracking-wider">
+                RETURN SHIPPING
+              </Paragraph1>
+              <Paragraph1 className="mt-1 text-gray-600 text-xs">
+                Courier from your return pickup location back to the lister.
+                Options depend on that address.
+                {usePerBucketReturn && returnBuckets.length > 1 ? (
+                  <>
+                    {" "}
+                    Each rental return is priced separately by destination.
+                  </>
+                ) : null}
+              </Paragraph1>
+            </div>
+            <Truck size={24} className="text-gray-400" />
+          </div>
+          <hr className="my-4 text-gray-100" />
+          {isShippingTiersLoading &&
+          (usePerBucketReturn
+            ? returnBuckets.length === 0
+            : returnTierList.length === 0) ? (
+            <div className="space-y-3">
+              {SHIPPING_SKELETON_KEYS.map((key) => (
+                <div
+                  key={`ret-${key}`}
+                  className="bg-gray-200 rounded-2xl h-20 animate-pulse"
+                />
+              ))}
+            </div>
+          ) : usePerBucketReturn ? (
+            <div className="space-y-8">
+              {returnBuckets.map((bucket) => {
+                const selectedName =
+                  selectedReturnTierByBucket[bucket.bucketIndex] ??
+                  bucket.shippingTiers[0]?.name ??
+                  "";
+                return (
+                  <div key={bucket.bucketIndex} className="space-y-3">
+                    {returnBuckets.length > 1 ? (
+                      <Paragraph1 className="font-semibold text-gray-900 text-sm">
+                        Return to {bucket.listerName}
+                      </Paragraph1>
+                    ) : null}
+                    {bucket.shippingTiers.length > 0 ? (
+                      <div className="space-y-3">
+                        {renderOutboundTierRadios(
+                          bucket.shippingTiers,
+                          selectedName,
+                          `returnBucket-${bucket.bucketIndex}`,
+                          (name) =>
+                            onReturnTierForBucket?.(bucket.bucketIndex, name),
+                        )}
+                      </div>
+                    ) : (
+                      <Paragraph1 className="text-gray-600 text-sm">
+                        No return shipping methods for this segment.
+                      </Paragraph1>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : returnTierList.length > 0 ? (
+            <div className="space-y-3">
+              {renderOutboundTierRadios(
+                returnTierList,
+                selectedReturnShippingTier,
+                "returnShippingTier",
+                handleReturnShippingTierChange,
+              )}
+            </div>
+          ) : (
+            <Paragraph1 className="text-gray-600 text-sm">
+              No return shipping methods available for this pickup address.
+            </Paragraph1>
           )}
         </div>
       )}

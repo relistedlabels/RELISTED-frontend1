@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Calendar, Package } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import OrderDetails from "./OrderDetails1";
@@ -29,12 +29,10 @@ export default function DashboardOrderList() {
   const orders = data?.orders || [];
 
   useEffect(() => {
-    setDeepLinkFallbackTried(false);
-  }, [deepLinkedOrderId]);
-
-  useEffect(() => {
     if (!deepLinkedOrderId || isLoading || deepLinkFallbackTried) return;
-    const hasMatch = orders.some((order) => order.orderId === deepLinkedOrderId);
+    const hasMatch = orders.some(
+      (order) => order.orderId === deepLinkedOrderId,
+    );
     if (!hasMatch && orderView === "active") {
       setOrderView("completed");
       setDeepLinkFallbackTried(true);

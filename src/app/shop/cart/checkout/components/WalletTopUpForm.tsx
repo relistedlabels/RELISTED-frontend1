@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Copy, RefreshCw, Shield } from "lucide-react";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { useUpdateProfile } from "@/lib/mutations/renters/useProfileMutations";
@@ -36,6 +36,8 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
     number | null
   >(null);
   const [countdown, setCountdown] = useState(0);
+  /** Avoid reopening the verification modal after the user closes it when queries refetch. */
+  const verificationModalDismissedRef = useRef(false);
 
   // Fetch profile and wallet data
   const {
@@ -65,8 +67,9 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
     if (profileLoading || verificationsLoading) return;
     setIsVerified(satisfiesWallet);
     if (satisfiesWallet) {
+      verificationModalDismissedRef.current = false;
       setIsVerificationModalOpen(false);
-    } else {
+    } else if (!verificationModalDismissedRef.current) {
       setIsVerificationModalOpen(true);
     }
   }, [
@@ -97,6 +100,7 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
 
   const handleVerificationComplete = () => {
     setVerificationSubmittedAt(Date.now());
+    verificationModalDismissedRef.current = true;
     setIsVerificationModalOpen(false);
   };
 
@@ -283,7 +287,11 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
 
           {!verificationSubmittedAt && (
             <button
-              onClick={() => setIsVerificationModalOpen(true)}
+              type="button"
+              onClick={() => {
+                verificationModalDismissedRef.current = false;
+                setIsVerificationModalOpen(true);
+              }}
               className="bg-black hover:bg-gray-900 px-4 py-2 rounded-lg w-full font-semibold text-white text-sm transition"
             >
               Verify Identity
@@ -514,7 +522,10 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
       {/* Verification Modal */}
       <VerificationModal
         isOpen={isVerificationModalOpen}
-        onClose={() => setIsVerificationModalOpen(false)}
+        onClose={() => {
+          verificationModalDismissedRef.current = true;
+          setIsVerificationModalOpen(false);
+        }}
         onVerified={handleVerificationComplete}
         currentBvn={profileResponse?.bvn || ""}
         currentNin={profileResponse?.nin}

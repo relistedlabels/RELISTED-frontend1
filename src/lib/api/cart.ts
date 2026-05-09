@@ -105,8 +105,32 @@ export const reRequestAvailability = (cartItemId: string) =>
     { method: "POST" },
   );
 
+export type CheckoutShippingTierRow = {
+  name: string;
+  totalShippingCost: number;
+  grandTotal: number;
+};
+
+/** Per outbound/resale delivery bucket (same `bucketIndex` as `shipmentBuckets`). */
+export type OutboundShippingBucketQuote = {
+  bucketIndex: number;
+  listerId: string;
+  listerName: string;
+  bucketMode: string;
+  shippingTiers: CheckoutShippingTierRow[];
+};
+
+/** Per rental return-leg bucket. */
+export type ReturnShippingBucketQuote = {
+  bucketIndex: number;
+  listerId: string;
+  listerName: string;
+  shippingTiers: CheckoutShippingTierRow[];
+};
+
 /** One shipment pricing leg from GET /order/summary (matches backend `shipmentBuckets`). */
 export type CheckoutShipmentBucket = {
+  bucketIndex?: number;
   listerId: string;
   listerName: string;
   bucketMode: "RENTAL" | "RESALE" | string;
@@ -137,11 +161,13 @@ export type OrderSummaryPayload = {
     vatAmount?: number;
     grandTotal?: number;
   };
-  shippingTiers: Array<{
-    name: string;
-    totalShippingCost: number;
-    grandTotal: number;
-  }>;
+  shippingTiers: CheckoutShippingTierRow[];
+  /** Outbound quotes per shipment bucket (split when multiple listers or schedules). */
+  outboundShippingByBucket?: OutboundShippingBucketQuote[];
+  /** Return-leg options when the cart includes rental shipments (outbound-only costs per tier name). */
+  returnShippingTiers?: CheckoutShippingTierRow[];
+  /** Return quotes per rental bucket (split when multiple rental shipments). */
+  returnShippingByBucket?: ReturnShippingBucketQuote[];
   listerBreakdowns?: unknown[];
   shipmentBuckets?: CheckoutShipmentBucket[];
 };
@@ -239,8 +265,26 @@ export interface ReturnPickupAddressPayload {
   instructions?: string;
 }
 
+/** Stable serialization for comparing pickup payloads (reference-independent). */
+export function canonicalReturnPickupJson(
+  p: ReturnPickupAddressPayload,
+): string {
+  return JSON.stringify({
+    contactName: p.contactName ?? "",
+    phoneNumber: p.phoneNumber ?? "",
+    street: p.street ?? "",
+    city: p.city ?? "",
+    state: p.state ?? "",
+    instructions: p.instructions ?? "",
+  });
+}
+
 export interface PassCartPayload {
   pricingTier: string;
+  /** Rental return leg; omit for resale-only or to mirror `pricingTier` on the server default. */
+  returnPricingTier?: string;
+  outboundPricingByBucket?: Array<{ bucketIndex: number; pricingTier: string }>;
+  returnPricingByBucket?: Array<{ bucketIndex: number; pricingTier: string }>;
   dispatchWindows?: DispatchWindowsPayload;
   returnPickupAddress?: ReturnPickupAddressPayload;
 }
