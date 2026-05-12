@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
+import { X } from "lucide-react";
 import { toast } from "sonner";
 import { registerVaultClosetSaleInterest } from "@/lib/api/vaultClosetSale";
+import { Paragraph1 } from "@/common/ui/Text";
+import Button from "@/common/ui/Button";
 
 type Props = {
   open: boolean;
@@ -57,7 +60,7 @@ export default function VaultClosetSaleNotifyModal({
 
   return (
     <div
-      className="fixed inset-0 z-200 flex items-center justify-center bg-black/60 p-4"
+      className="z-200 fixed inset-0 flex justify-center items-center bg-black/50 backdrop-blur-[2px] p-4"
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -67,17 +70,30 @@ export default function VaultClosetSaleNotifyModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full max-w-md rounded-lg border border-white/15 bg-neutral-950 p-6 text-white shadow-xl"
+        className="relative bg-white shadow-2xl p-6 sm:p-8 border border-black/10 rounded-md w-full max-w-md"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <h2 id={titleId} className="text-lg font-semibold tracking-tight">
-          Get sale updates
-        </h2>
-        <p className="mt-2 text-sm text-white/75">
+        <div className="flex justify-between items-start gap-3">
+          <h2
+            id={titleId}
+            className="flex-1 min-w-0 font-semibold text-[17px] text-black leading-snug tracking-tight"
+          >
+            Get sale updates
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="hover:bg-black/5 -m-1 p-1 rounded text-black/50 hover:text-black transition-colors shrink-0"
+            aria-label="Close"
+          >
+            <X className="size-5" strokeWidth={1.75} />
+          </button>
+        </div>
+        <Paragraph1 className="mt-2 text-black/70">
           We will email you when the Vault Closet sale is live. No account
           required.
-        </p>
-        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+        </Paragraph1>
+        <form onSubmit={handleSubmit} className="space-y-4 mt-6">
           <div>
             <label htmlFor="vault-sale-email" className="sr-only">
               Email
@@ -89,26 +105,32 @@ export default function VaultClosetSaleNotifyModal({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full rounded border border-white/20 bg-black/40 px-3 py-2.5 text-sm text-white placeholder:text-white/40 outline-none focus:border-amber-200/60 focus:ring-1 focus:ring-amber-200/40"
+              className="bg-white px-3 py-2.5 border border-black/15 focus:border-black outline-none focus:ring-1 focus:ring-black/20 w-full text-[13px] text-black placeholder:text-black/40 transition-shadow"
               disabled={submitting}
             />
           </div>
-          <div className="flex flex-wrap justify-end gap-2">
-            <button
+          <div className="flex flex-wrap justify-end gap-2 pt-1">
+            <Button
               type="button"
+              text="Cancel"
               onClick={onClose}
-              className="rounded border border-white/25 px-4 py-2 text-sm font-medium text-white/90 hover:bg-white/5"
+              simpleHover
               disabled={submitting}
-            >
-              Cancel
-            </button>
-            <button
+              backgroundColor="bg-white"
+              color="text-black"
+              border="border border-black/20"
+              additionalClasses="hover:bg-black hover:text-white"
+            />
+            <Button
               type="submit"
+              text={submitting ? "Sending…" : "Notify me"}
+              simpleHover
               disabled={submitting}
-              className="rounded bg-amber-100 px-4 py-2 text-sm font-semibold text-neutral-950 hover:bg-amber-200 disabled:opacity-60"
-            >
-              {submitting ? "Sending…" : "Notify me"}
-            </button>
+              backgroundColor="bg-black"
+              color="text-white"
+              border="border border-black"
+              additionalClasses="disabled:cursor-not-allowed disabled:opacity-50 hover:bg-neutral-800"
+            />
           </div>
         </form>
       </div>

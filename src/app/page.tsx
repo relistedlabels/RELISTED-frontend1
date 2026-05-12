@@ -1,5 +1,6 @@
 import BrandLogosCarousel from "./home/components/BrandLogosCarousel";
 import VaultClosetSaleBanner from "./home/components/VaultClosetSaleBanner";
+import { isVaultClosetSaleBannerVisible } from "@/lib/vaultClosetSaleDates";
 import BecomeCurator from "./home/sections/BecomeCurator";
 import EndlessStyleHero from "./home/sections/EndlessStyleHero";
 import HowItWorks from "./home/sections/HowItWorks";
@@ -12,8 +13,14 @@ import TopListingSection2 from "./home/sections/TopListingSection2";
 import TopListingSection3 from "./home/sections/TopListingSection3";
 
 export default function Home() {
+  const reserveNavForSaleBanner = isVaultClosetSaleBannerVisible();
+
   return (
-    <div>
+    <div
+      className={
+        reserveNavForSaleBanner ? "pt-20 xl:pt-19.25" : undefined
+      }
+    >
       <VaultClosetSaleBanner />
       <EndlessStyleHero />
       <BrandLogosCarousel />
