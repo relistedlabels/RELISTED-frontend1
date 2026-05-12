@@ -9,6 +9,8 @@ import {
   VAULT_CLOSET_SALE_START,
 } from "@/lib/vaultClosetSaleDates";
 import VaultClosetSaleNotifyModal from "./VaultClosetSaleNotifyModal";
+import { usePublicSiteFeatures } from "@/lib/queries/site/useSiteFeatures";
+import { VAULT_CLOSET_DROPS_BROWSE_SHOP_HREF } from "@/lib/nav/vaultClosetDropsShop";
 
 function pad2(n: number) {
   return n.toString().padStart(2, "0");
@@ -49,6 +51,9 @@ export default function VaultClosetSaleBanner() {
   const [tick, setTick] = useState(0);
   const [notifyOpen, setNotifyOpen] = useState(false);
   const { data: me } = useMe();
+  const { data: siteFeaturesRes } = usePublicSiteFeatures();
+  const closetShopLive =
+    siteFeaturesRes?.data?.headerClosetsShopNavEnabled !== false;
 
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 1000);
@@ -139,17 +144,32 @@ export default function VaultClosetSaleBanner() {
                 >
                   |
                 </span>
-                <Button
-                  type="button"
-                  text="Join Waitlist"
-                  simpleHover
-                  responsive
-                  onClick={() => setNotifyOpen(true)}
-                  backgroundColor="bg-black"
-                  color="text-white"
-                  border="border border-black"
-                  additionalClasses="shrink-0 uppercase tracking-wide hover:bg-white hover:text-black"
-                />
+                {closetShopLive ? (
+                  <Button
+                    type="button"
+                    text="Shop now"
+                    simpleHover
+                    responsive
+                    isLink
+                    href={VAULT_CLOSET_DROPS_BROWSE_SHOP_HREF}
+                    backgroundColor="bg-black"
+                    color="text-white"
+                    border="border border-black"
+                    additionalClasses="shrink-0 tracking-wide hover:bg-white hover:text-black"
+                  />
+                ) : (
+                  <Button
+                    type="button"
+                    text="Join Waitlist"
+                    simpleHover
+                    responsive
+                    onClick={() => setNotifyOpen(true)}
+                    backgroundColor="bg-black"
+                    color="text-white"
+                    border="border border-black"
+                    additionalClasses="shrink-0 uppercase tracking-wide hover:bg-white hover:text-black"
+                  />
+                )}
               </>
             )}
           </div>
