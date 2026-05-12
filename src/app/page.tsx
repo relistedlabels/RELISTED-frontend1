@@ -1,4 +1,5 @@
 import BrandLogosCarousel from "./home/components/BrandLogosCarousel";
+import VaultClosetSaleBanner from "./home/components/VaultClosetSaleBanner";
 import BecomeCurator from "./home/sections/BecomeCurator";
 import EndlessStyleHero from "./home/sections/EndlessStyleHero";
 import HowItWorks from "./home/sections/HowItWorks";
@@ -13,6 +14,7 @@ import TopListingSection3 from "./home/sections/TopListingSection3";
 export default function Home() {
   return (
     <div>
+      <VaultClosetSaleBanner />
       <EndlessStyleHero />
       <BrandLogosCarousel />
       <PopularCategorySection />
