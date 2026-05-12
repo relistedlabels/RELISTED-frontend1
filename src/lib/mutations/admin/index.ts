@@ -1,5 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { disputesApi, ordersApi, settingsApi, usersApi, walletsApi } from "@/lib/api/admin/";
+import {
+  adminSiteFeaturesApi,
+  disputesApi,
+  ordersApi,
+  settingsApi,
+  usersApi,
+  walletsApi,
+} from "@/lib/api/admin/";
 import type { DisputeStatus } from "@/lib/api/admin/disputes";
 
 // Orders mutations
@@ -317,6 +324,18 @@ export const useLogoutAllDevices = () => {
       queryClient.invalidateQueries({
         queryKey: ["admin", "settings", "devices"],
       });
+    },
+  });
+};
+
+export const useUpdateAdminSiteFeatures = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { headerClosetsShopNavEnabled: boolean }) =>
+      adminSiteFeaturesApi.update(body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "site-features"] });
+      queryClient.invalidateQueries({ queryKey: ["public", "site-features"] });
     },
   });
 };

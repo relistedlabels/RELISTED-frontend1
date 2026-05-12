@@ -10,18 +10,11 @@ import { useProducts } from "@/lib/queries/product/useProducts";
 import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import Link from "next/link";
 import { primaryProductHeroImage } from "@/lib/product/primaryProductHeroImage";
-import { CLOSET_DROPS_SHOP_TITLE } from "@/lib/queries/product/useProductsQuery";
+import { VAULT_CLOSET_DROPS_BROWSE_SHOP_HREF } from "@/lib/nav/vaultClosetDropsShop";
 
 const vaultClosetDropsSectionTitle = "The Vault Closet Drops";
 
-const browseShopHref =
-  "/shop?title=" +
-  encodeURIComponent(CLOSET_DROPS_SHOP_TITLE) +
-  "&description=" +
-  encodeURIComponent(
-    "Celebrity wardrobes. Limited drops. Shop it before it disappears.",
-  ) +
-  "&onlyWithCloset=true";
+const browseShopHref = VAULT_CLOSET_DROPS_BROWSE_SHOP_HREF;
 
 const TopListingSection = () => {
   const scrollerRef = useRef<HTMLDivElement | null>(null);

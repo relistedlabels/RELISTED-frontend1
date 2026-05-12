@@ -293,6 +293,13 @@ export type PublicSearchResponse = {
   };
 };
 
+export type PublicSiteFeaturesResponse = {
+  success: boolean;
+  data: {
+    headerClosetsShopNavEnabled: boolean;
+  };
+};
+
 // ============================================================================
 // PUBLIC API FUNCTIONS
 // ============================================================================
@@ -466,6 +473,11 @@ export const publicApi = {
 
     return apiFetch<PublicReviewsResponse>(url, { method: "GET" });
   },
+
+  getSiteFeatures: () =>
+    apiFetch<PublicSiteFeaturesResponse>("/api/public/site-features", {
+      method: "GET",
+    }),
 
   // Search
   search: (

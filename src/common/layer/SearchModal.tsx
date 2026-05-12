@@ -97,7 +97,7 @@ export default function SearchModal() {
                     if (e.key === "Enter" && query.trim())
                       addSearch(query.trim());
                   }}
-                  placeholder="Search products, brands..."
+                  placeholder="Search products, brands, closets..."
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-400 outline-none"
                 />
               </div>

@@ -3,14 +3,8 @@ import VaultClosetSaleBanner from "./home/components/VaultClosetSaleBanner";
 import { isVaultClosetSaleBannerVisible } from "@/lib/vaultClosetSaleDates";
 import BecomeCurator from "./home/sections/BecomeCurator";
 import EndlessStyleHero from "./home/sections/EndlessStyleHero";
-import HowItWorks from "./home/sections/HowItWorks";
-import MainCategorySection from "./home/sections/MainCategorySection";
 import PopularCategorySection from "./home/sections/PopularCategorySection";
-import ReviewCarousel from "./home/sections/ReviewCarousel";
-import TopCuratorsSection from "./home/sections/TopCuratorsSection";
-import TopListingSection1 from "./home/sections/TopListingSection1";
-import TopListingSection2 from "./home/sections/TopListingSection2";
-import TopListingSection3 from "./home/sections/TopListingSection3";
+import HomeMidSections from "./home/components/HomeMidSections";
 
 export default function Home() {
   const reserveNavForSaleBanner = isVaultClosetSaleBannerVisible();
@@ -25,14 +19,8 @@ export default function Home() {
       <EndlessStyleHero />
       <BrandLogosCarousel />
       <PopularCategorySection />
-      <br />
-      <TopListingSection2 />
-
-      <HowItWorks />
-
-      <TopListingSection3 />
+      <HomeMidSections />
       {/* <TopCuratorsSection /> */}
-      <TopListingSection1 />
 
       <div className=" px-4 sm:px-0">
         <BecomeCurator />

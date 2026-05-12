@@ -16,6 +16,8 @@ import { useFavoriteCountStore } from "@/store/useFavoriteCountStore";
 import { useCartCountStore } from "@/store/useCartCountStore";
 import { useCartItems } from "@/lib/queries/renters/useCartItems";
 import { useUserStore } from "@/store/useUserStore";
+import { usePublicSiteFeatures } from "@/lib/queries/site/useSiteFeatures";
+import { VAULT_CLOSET_DROPS_BROWSE_SHOP_HREF } from "@/lib/nav/vaultClosetDropsShop";
 
 function DesktopNavbarContent() {
   const favoriteCount = useFavoriteCountStore((state) => state.favoriteCount);
@@ -23,6 +25,10 @@ function DesktopNavbarContent() {
   const setCartCount = useCartCountStore((state) => state.setCartCount);
   const token = useUserStore((s) => s.token);
   const { data } = useCartItems();
+  const { data: siteFeaturesRes } = usePublicSiteFeatures();
+
+  const showClosetsNav =
+    siteFeaturesRes?.data?.headerClosetsShopNavEnabled !== false;
 
   useEffect(() => {
     if (!token) {
@@ -46,6 +52,11 @@ function DesktopNavbarContent() {
           <Link href="/how-it-works">
             <ParagraphLink1>How it works</ParagraphLink1>
           </Link>
+          {showClosetsNav ? (
+            <Link href={VAULT_CLOSET_DROPS_BROWSE_SHOP_HREF}>
+              <ParagraphLink1>Closets</ParagraphLink1>
+            </Link>
+          ) : null}
         </div>
 
         {/* Center Logo */}

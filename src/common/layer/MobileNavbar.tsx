@@ -17,6 +17,8 @@ import { useFavoriteCountStore } from "@/store/useFavoriteCountStore";
 import { useCartCountStore } from "@/store/useCartCountStore";
 import { useCartItems } from "@/lib/queries/renters/useCartItems";
 import { useUserStore } from "@/store/useUserStore";
+import { usePublicSiteFeatures } from "@/lib/queries/site/useSiteFeatures";
+import { VAULT_CLOSET_DROPS_BROWSE_SHOP_HREF } from "@/lib/nav/vaultClosetDropsShop";
 
 function MobileNavbarContent() {
   const [open, setOpen] = useState(false);
@@ -26,6 +28,10 @@ function MobileNavbarContent() {
   const setCartCount = useCartCountStore((state) => state.setCartCount);
   const token = useUserStore((s) => s.token);
   const { data } = useCartItems();
+  const { data: siteFeaturesRes } = usePublicSiteFeatures();
+
+  const showClosetsNav =
+    siteFeaturesRes?.data?.headerClosetsShopNavEnabled !== false;
 
   useEffect(() => {
     if (!token) {
@@ -136,6 +142,14 @@ function MobileNavbarContent() {
               <Link href="/how-it-works" onClick={() => setOpen(false)}>
                 <Paragraph1>How it works</Paragraph1>
               </Link>
+              {showClosetsNav ? (
+                <Link
+                  href={VAULT_CLOSET_DROPS_BROWSE_SHOP_HREF}
+                  onClick={() => setOpen(false)}
+                >
+                  <Paragraph1>Closets</Paragraph1>
+                </Link>
+              ) : null}
               <Link href="/about" onClick={() => setOpen(false)}>
                 <Paragraph1>About</Paragraph1>
               </Link>

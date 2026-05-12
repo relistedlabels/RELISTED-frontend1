@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { productApi } from "@/lib/api/product";
 import { useSearchParams } from "next/navigation";
+import { matchesClosetDropsShopTitle } from "@/lib/nav/vaultClosetDropsShop";
 
-/** Must match `title` on `/shop` for the Closet Drops view (home strip link and ClosetShopSelector). */
-export const CLOSET_DROPS_SHOP_TITLE = "Closet Drops";
+export { CLOSET_DROPS_SHOP_TITLE, matchesClosetDropsShopTitle } from "@/lib/nav/vaultClosetDropsShop";
 
 export const useProductsQuery = () => {
   const searchParams = useSearchParams();
@@ -14,8 +14,8 @@ export const useProductsQuery = () => {
   const tags = searchParams.get("tags") || undefined;
   const closetId = searchParams.get("closetId") || undefined;
   const shopTitle = searchParams.get("title");
-  const isClosetDropsShop = shopTitle === CLOSET_DROPS_SHOP_TITLE;
-  // Closet Drops + no closetId: only products in any public closet. Explicit param still supported elsewhere.
+  const isClosetDropsShop = matchesClosetDropsShopTitle(shopTitle);
+  // Vault closet drops + no closetId: only products in any public closet. Explicit param still supported elsewhere.
   // When `closetId` is set, filter is that closet only — never send onlyWithCloset together (see productApi.getAll).
   const onlyWithClosetParam = searchParams.get("onlyWithCloset");
   const onlyWithCloset = Boolean(
