@@ -28,6 +28,8 @@ export type ClosetRecord = {
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
+  /** Integer Naira: running total of lister payout attributed to this closet (partner settlement). */
+  closetWalletBalance?: number;
   productCount?: number;
 };
 

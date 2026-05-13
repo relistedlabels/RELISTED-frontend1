@@ -7,10 +7,8 @@ import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import Filters from "../components/Filters";
 import { primaryProductHeroImage } from "@/lib/product/primaryProductHeroImage";
 import ClosetShopSelector from "@/app/shop/components/ClosetShopSelector";
-import {
-  CLOSET_DROPS_SHOP_TITLE,
-  useProductsQuery,
-} from "@/lib/queries/product/useProductsQuery";
+import { matchesClosetDropsShopTitle } from "@/lib/nav/vaultClosetDropsShop";
+import { useProductsQuery } from "@/lib/queries/product/useProductsQuery";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
@@ -26,8 +24,9 @@ export default function NewListingsSection() {
   } = useProductsQuery();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const showClosetShopSelector =
-    searchParams.get("title") === CLOSET_DROPS_SHOP_TITLE;
+  const showClosetShopSelector = matchesClosetDropsShopTitle(
+    searchParams.get("title"),
+  );
 
   // Filter out internal / staging lister inventory everywhere (same as search & marketplace).
   const HIDDEN_CURATOR_ID = "7d172d18-daad-46cd-ab6d-8d8af28c0b16";

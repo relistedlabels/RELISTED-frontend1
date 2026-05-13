@@ -10,16 +10,11 @@ import { useProducts } from "@/lib/queries/product/useProducts";
 import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import Link from "next/link";
 import { primaryProductHeroImage } from "@/lib/product/primaryProductHeroImage";
-import { CLOSET_DROPS_SHOP_TITLE } from "@/lib/queries/product/useProductsQuery";
+import { VAULT_CLOSET_DROPS_BROWSE_SHOP_HREF } from "@/lib/nav/vaultClosetDropsShop";
 
-const browseShopHref =
-  "/shop?title=" +
-  encodeURIComponent(CLOSET_DROPS_SHOP_TITLE) +
-  "&description=" +
-  encodeURIComponent(
-    "Celebrity wardrobes. Limited drops. Shop it before it disappears.",
-  ) +
-  "&onlyWithCloset=true";
+const vaultClosetDropsSectionTitle = "The Vault Closet Drops";
+
+const browseShopHref = VAULT_CLOSET_DROPS_BROWSE_SHOP_HREF;
 
 const TopListingSection = () => {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
@@ -45,7 +40,7 @@ const TopListingSection = () => {
         <div className="mx-auto container">
           <div className="mb-2 sm:mb-6 text-center">
             <Header1Plus className="uppercase tracking-wide">
-              Closet Drops
+              {vaultClosetDropsSectionTitle}
             </Header1Plus>
           </div>
           <ProductCardSkeleton count={4} />
@@ -60,7 +55,7 @@ const TopListingSection = () => {
         <div className="mx-auto container">
           <div className="mb-2 sm:mb-6 text-center">
             <Header1Plus className="uppercase tracking-wide">
-              Closet Drops
+              {vaultClosetDropsSectionTitle}
             </Header1Plus>
             <Paragraph1 className="text-gray-600">
               Celebrity wardrobes. Limited drops. Shop it before it disappears.
@@ -78,12 +73,12 @@ const TopListingSection = () => {
     <section className="bg-white px-4 sm:px-0 py-6 sm:py-12">
       <div className="mx-auto container">
         <div className="flex flex-col justify-center items-center mb-2 sm:mb-6 text-center">
-          <div className=" flex items-center gap-4">
+          <div className="flex items-center gap-4">
             <Header1Plus className="uppercase tracking-wide">
-              Closet Drops{" "}
+              {vaultClosetDropsSectionTitle}{" "}
             </Header1Plus>
 
-            <div className=" bg-black rounded-full sm:block hidden text-white text-[12px] px-4 py-1">
+            <div className="hidden sm:block bg-black px-4 py-1 rounded-full text-[12px] text-white">
               New
             </div>
           </div>
@@ -93,7 +88,7 @@ const TopListingSection = () => {
           </Paragraph1>
           <Link
             href={browseShopHref}
-            className="mt-4 text-sm font-bold border-b hover:opacity-70 transition-opacity"
+            className="hover:opacity-70 mt-4 border-b font-bold text-sm transition-opacity"
           >
             Browse All →
           </Link>

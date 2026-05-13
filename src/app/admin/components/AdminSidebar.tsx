@@ -15,6 +15,7 @@ import {
   HiOutlineShoppingCart,
   HiOutlineUsers,
   HiOutlineTruck,
+  HiOutlineRectangleStack,
 } from "react-icons/hi2";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useMe } from "@/lib/queries/auth/useMe";
@@ -57,6 +58,12 @@ const getNavItems = (): NavItem[] => [
     label: "Shipments",
     icon: HiOutlineTruck,
     getHref: (id) => `/admin/${id}/shipments`,
+  },
+  {
+    id: "closets",
+    label: "Closets",
+    icon: HiOutlineRectangleStack,
+    getHref: (id) => `/admin/${id}/closets`,
   },
   {
     id: "wallet",

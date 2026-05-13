@@ -4,6 +4,8 @@ export { disputesApi } from "./disputes";
 export { usersApi } from "./users";
 export { walletsApi } from "./wallets";
 export { settingsApi } from "./settings";
+export { adminClosetsApi } from "./closets";
+export { adminSiteFeaturesApi } from "./siteFeatures";
 
 // Type exports
 export type {
@@ -40,3 +42,9 @@ export type {
   Device,
   AuditLog,
 } from "./settings";
+export type {
+  AdminClosetListRow,
+  AdminClosetDetail,
+  AdminClosetProductRow,
+} from "./closets";
+export type { AdminSiteFeatures } from "./siteFeatures";
