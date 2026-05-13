@@ -11,8 +11,8 @@ import {
   Wallet,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useLogout } from "@/lib/mutations";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useListerProfile } from "@/lib/queries/listers/useListerProfile";
@@ -37,7 +37,14 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const adminId = useAdminIdStore((s) => s.adminId);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [signInRedirectUrl, setSignInRedirectUrl] = useState(pathname);
   const router = useRouter();
+
+  useEffect(() => {
+    const qs = searchParams.toString();
+    setSignInRedirectUrl(qs ? `${pathname}?${qs}` : pathname);
+  }, [pathname, searchParams]);
   const logout = useLogout();
 
   // Avoid flicker while auth state is resolving
@@ -238,11 +245,10 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
   }
 
   // ❌ Not logged in → show Sign In / Sign Up stacked
-  const redirectUrl = `${pathname}${typeof window !== "undefined" ? window.location.search : ""}`;
   return (
     <div className="flex flex-col gap-3">
       <Link
-        href={`/auth/sign-in?redirect=${encodeURIComponent(redirectUrl)}`}
+        href={`/auth/sign-in?redirect=${encodeURIComponent(signInRedirectUrl)}`}
         onClick={handleLinkClick}
       >
         <button

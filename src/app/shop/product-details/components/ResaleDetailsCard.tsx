@@ -347,7 +347,7 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
   const soldOut = product.status === "SOLD";
 
   return (
-    <div className="font-sans">
+    <div className="">
       <div className="bg-[#FBFBFB] p-4 py-6 border border-gray-200 rounded-xl">
         {/* Resale Value Section */}
         <div className="space-y-4 mb-6">
@@ -366,13 +366,13 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex space-x-2 mb-4 text-[14px]">
+        <div className="flex space-x-2 mb-4">
           {soldOut ? (
             <div className="flex gap-2 w-full">
               <button
                 type="button"
                 disabled
-                className="flex-1 px-4 py-3 rounded-lg font-semibold text-center bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300"
+                className="flex-1 bg-gray-200 px-4 py-3 border border-gray-300 rounded-lg font-semibold text-gray-500 text-center cursor-not-allowed"
               >
                 Sold out
               </button>
@@ -422,19 +422,27 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
                 type="button"
                 onClick={handleBuy}
                 disabled={isRequesting}
-                className={
+                className={`flex flex-1 min-w-0 cursor-pointer items-center justify-center gap-1 rounded-lg border border-black bg-black text-center font-semibold text-white transition hover:bg-gray-100 hover:text-black disabled:opacity-50 ${
                   closetPrimaryCtaOverride
-                    ? "flex-1 rounded-lg border border-black bg-white px-2 py-2.5 font-semibold text-[11px] text-black leading-snug text-center transition hover:bg-neutral-50 disabled:opacity-50 sm:px-3 sm:text-xs"
-                    : "flex-1 rounded-lg bg-black px-4 py-3 font-semibold text-white transition duration-150 hover:bg-gray-800 disabled:opacity-50"
-                }
+                    ? "px-2 py-2.5 sm:px-3"
+                    : "px-4 py-2 text-sm"
+                }`}
               >
                 {isRequesting ? (
                   <>
-                    <Loader2 className="inline mr-2 w-4 h-4 animate-spin" />
-                    Processing...
+                    <Loader2 className="inline h-4 w-4 shrink-0 animate-spin" />
+                    <Paragraph1 className="m-0 text-center text-inherit">
+                      Processing...
+                    </Paragraph1>
                   </>
+                ) : closetPrimaryCtaOverride ? (
+                  <Paragraph1 className="m-0 max-w-full text-center text-[11px] leading-snug text-inherit sm:text-xs">
+                    {closetPrimaryCtaOverride}
+                  </Paragraph1>
                 ) : (
-                  (closetPrimaryCtaOverride ?? "Add to Cart")
+                  <Paragraph1 className="m-0 text-center text-sm text-white">
+                    Add to Cart
+                  </Paragraph1>
                 )}
               </button>
               <button

@@ -767,7 +767,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-start gap-4">
-                <div className="flex min-w-0 flex-col gap-3 pr-2">
+                <div className="flex flex-col gap-3 pr-2 min-w-0">
                   <Paragraph1 className="font-semibold text-gray-500 text-xs uppercase tracking-[0.3em]">
                     Step {dispatchModalStep + 1} of {totalDispatchSteps}
                   </Paragraph1>
@@ -961,13 +961,19 @@ const RentalPeriods: React.FC<RentalPeriodsProps> = ({
           }
           setIsOpen(true);
         }}
-        className={
+        className={`flex w-full cursor-pointer items-center justify-center gap-1 rounded-lg border border-black bg-black font-semibold text-white transition hover:bg-gray-100 hover:text-black ${
           useVaultClosetCtaStyle
-            ? "flex cursor-pointer justify-center items-center gap-1 rounded-lg border border-black bg-white px-2 py-2.5 w-full font-semibold text-[11px] text-black leading-snug text-center transition hover:bg-neutral-50 sm:px-3 sm:text-xs"
-            : "flex cursor-pointer justify-center items-center gap-1 rounded-lg border border-black bg-black px-4 py-2 w-full font-semibold text-sm text-white transition hover:bg-gray-100 hover:text-black"
-        }
+            ? "px-2 py-2.5 sm:px-3"
+            : "px-4 py-2 text-sm"
+        }`}
       >
-        <Paragraph1 className={useVaultClosetCtaStyle ? "leading-snug" : ""}>
+        <Paragraph1
+          className={
+            useVaultClosetCtaStyle
+              ? "m-0 max-w-full text-center text-[11px] leading-snug text-inherit sm:text-xs"
+              : "m-0 text-center text-inherit"
+          }
+        >
           {primaryLabel}
         </Paragraph1>
       </button>
