@@ -1,4 +1,4 @@
-// ENDPOINTS: GET /api/admin/closets?page&limit&search, GET /api/admin/site-features, PUT /api/admin/site-features
+// ENDPOINTS: GET /api/admin/closets?page&limit&search, GET /api/admin/site-features, PUT /api/admin/site-features, GET /api/admin/closets/vault-closet-sale/waitlist, POST /api/admin/closets/vault-closet-sale/notify-waitlist
 "use client";
 
 import Link from "next/link";
@@ -12,6 +12,7 @@ import { useAdminSiteFeatures } from "@/lib/queries/admin/useAdminSiteFeatures";
 import { useUpdateAdminSiteFeatures } from "@/lib/mutations/admin";
 import { toast } from "sonner";
 import type { AdminClosetListRow } from "@/lib/api/admin/closets";
+import AdminVaultClosetSaleWaitlistCard from "./components/AdminVaultClosetSaleWaitlistCard";
 
 const formatCurrency = (value: number): string =>
   new Intl.NumberFormat("en-NG", {
@@ -72,24 +73,24 @@ export default function AdminClosetsPage() {
           Closets
         </Paragraph2>
         <Paragraph1 className="text-gray-600">
-          Browse curator closets, tracked payout balance per closet, and inventory
-          linked to each drop (admin). Use the toggle below to show or hide the
-          Closets link in the public header.
+          Curator closets, balances, and inventory for admin.
         </Paragraph1>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-        <Paragraph1 className="mb-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">
-          Site feature (global)
-        </Paragraph1>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="bg-white mb-6 p-6 border border-gray-200 rounded-lg">
+        <div className="flex sm:flex-row flex-col sm:justify-between sm:items-center gap-4">
           <div>
-            <Paragraph1 className="text-gray-900 font-medium">
-              Closets link in public header
+            <Paragraph1 className="font-medium text-gray-900">
+              Closet Feature
             </Paragraph1>
-            <Paragraph1 className="text-gray-500 text-sm mt-1 leading-relaxed">
-              When on, renters see Closets next to How it works. It opens the same Vault
-              closet drops shop view as Browse All on the home page.
+            <Paragraph1 className="mt-1 text-gray-500 text-sm leading-snug">
+              <b>On:</b> <span className="text-gray-800">Closets</span> shown in
+              the top menu and as the first category on the home page,
+              banner shows <span className="text-gray-800">Shop now</span>.
+            </Paragraph1>
+            <Paragraph1 className="mt-1 text-gray-500 text-sm leading-snug">
+              <b>Off:</b> no menu item, banner shows{" "}
+              <span className="text-gray-800">Join waitlist</span>.
             </Paragraph1>
           </div>
           <button
@@ -110,9 +111,11 @@ export default function AdminClosetsPage() {
         </div>
       </div>
 
+      <AdminVaultClosetSaleWaitlistCard />
+
       <div className="bg-white mb-6 p-4 border border-gray-200 rounded-lg">
         <form
-          className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between"
+          className="flex sm:flex-row flex-col sm:justify-between sm:items-center gap-3"
           onSubmit={(e) => {
             e.preventDefault();
             setPage(1);
@@ -126,12 +129,12 @@ export default function AdminClosetsPage() {
               placeholder="Search name, slug, owner name or email"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 bg-transparent outline-none text-gray-900 text-sm placeholder-gray-500 min-w-0"
+              className="flex-1 bg-transparent outline-none min-w-0 text-gray-900 text-sm placeholder-gray-500"
             />
           </div>
           <button
             type="submit"
-            className="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap bg-gray-900 text-white hover:bg-gray-800 transition-colors"
+            className="bg-gray-900 hover:bg-gray-800 px-4 py-2 rounded-lg font-medium text-white text-sm whitespace-nowrap transition-colors"
           >
             Search
           </button>
@@ -150,7 +153,7 @@ export default function AdminClosetsPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
+                  <tr className="bg-gray-50 border-gray-200 border-b">
                     <th className="px-6 py-4 text-left">
                       <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                         Closet
@@ -196,7 +199,7 @@ export default function AdminClosetsPage() {
                     closets.map((c) => (
                       <tr
                         key={c.id}
-                        className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors"
+                        className="hover:bg-gray-50 border-gray-100 last:border-0 border-b transition-colors"
                       >
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
@@ -205,36 +208,36 @@ export default function AdminClosetsPage() {
                               <img
                                 src={c.imageUrl}
                                 alt=""
-                                className="w-10 h-10 rounded-lg object-cover border border-gray-100 shrink-0"
+                                className="border border-gray-100 rounded-lg w-10 h-10 object-cover shrink-0"
                               />
                             ) : (
-                              <div className="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 shrink-0" />
+                              <div className="bg-gray-100 border border-gray-200 rounded-lg w-10 h-10 shrink-0" />
                             )}
                             <div className="min-w-0">
-                              <Paragraph1 className="text-gray-900 font-medium text-sm truncate">
+                              <Paragraph1 className="font-medium text-gray-900 text-sm truncate">
                                 {c.name}
                               </Paragraph1>
-                              <Paragraph1 className="text-gray-500 text-xs font-mono truncate">
+                              <Paragraph1 className="font-mono text-gray-500 text-xs truncate">
                                 {c.slug}
                               </Paragraph1>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <Paragraph1 className="text-gray-900 font-medium text-sm">
+                          <Paragraph1 className="font-medium text-gray-900 text-sm">
                             {c.owner.name}
                           </Paragraph1>
-                          <Paragraph1 className="text-gray-500 text-xs truncate max-w-[200px]">
+                          <Paragraph1 className="max-w-[200px] text-gray-500 text-xs truncate">
                             {c.owner.email}
                           </Paragraph1>
                         </td>
                         <td className="px-6 py-4">
-                          <Paragraph1 className="text-gray-900 tabular-nums">
+                          <Paragraph1 className="tabular-nums text-gray-900">
                             {c.productCount}
                           </Paragraph1>
                         </td>
                         <td className="px-6 py-4">
-                          <Paragraph1 className="text-gray-900 font-medium tabular-nums">
+                          <Paragraph1 className="font-medium tabular-nums text-gray-900">
                             {formatCurrency(c.closetWalletBalance)}
                           </Paragraph1>
                         </td>
@@ -252,7 +255,7 @@ export default function AdminClosetsPage() {
                         <td className="px-6 py-4">
                           <Link
                             href={`/admin/${adminId}/closets/${c.id}`}
-                            className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900 font-medium text-sm"
+                            className="inline-flex items-center gap-1 font-medium text-gray-600 hover:text-gray-900 text-sm"
                           >
                             <Paragraph1>View</Paragraph1>
                             <ChevronRight size={16} />
@@ -282,20 +285,22 @@ export default function AdminClosetsPage() {
                   Previous
                 </button>
                 <div className="flex flex-wrap items-center gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => setPage(p)}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
-                        page === p
-                          ? "bg-gray-900 text-white"
-                          : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ))}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setPage(p)}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+                          page === p
+                            ? "bg-gray-900 text-white"
+                            : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ),
+                  )}
                 </div>
                 <button
                   type="button"

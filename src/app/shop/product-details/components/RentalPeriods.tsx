@@ -929,6 +929,8 @@ interface RentalPeriodsProps {
   collateralPrice: number;
   listingType?: "RENTAL" | "RESALE" | "RENT_OR_RESALE";
   resalePrice?: number | null;
+  /** When set (closet + shop nav off), replaces "Rent now" label; same click behavior. */
+  closetPrimaryCtaOverride?: string;
 }
 
 const RentalPeriods: React.FC<RentalPeriodsProps> = ({
@@ -938,14 +940,18 @@ const RentalPeriods: React.FC<RentalPeriodsProps> = ({
   collateralPrice,
   listingType,
   resalePrice,
+  closetPrimaryCtaOverride,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { data: user } = useMe();
+  const primaryLabel = closetPrimaryCtaOverride?.trim() || "Rent now";
+  const useVaultClosetCtaStyle = Boolean(closetPrimaryCtaOverride?.trim());
 
   return (
     <>
       {/* Toggle Button */}
       <button
+        type="button"
         onClick={() => {
           if (!user) {
             // Capture current page URL
@@ -955,9 +961,15 @@ const RentalPeriods: React.FC<RentalPeriodsProps> = ({
           }
           setIsOpen(true);
         }}
-        className="flex justify-center items-center gap-1 bg-black hover:bg-gray-100 px-4 py-2 border border-black rounded-lg w-full font-semibold text-white hover:text-black text-sm transition cursor-pointer"
+        className={
+          useVaultClosetCtaStyle
+            ? "flex cursor-pointer justify-center items-center gap-1 rounded-lg border border-black bg-white px-2 py-2.5 w-full font-semibold text-[11px] text-black leading-snug text-center transition hover:bg-neutral-50 sm:px-3 sm:text-xs"
+            : "flex cursor-pointer justify-center items-center gap-1 rounded-lg border border-black bg-black px-4 py-2 w-full font-semibold text-sm text-white transition hover:bg-gray-100 hover:text-black"
+        }
       >
-        <Paragraph1>Rent now</Paragraph1>
+        <Paragraph1 className={useVaultClosetCtaStyle ? "leading-snug" : ""}>
+          {primaryLabel}
+        </Paragraph1>
       </button>
 
       {/* Filter Panel */}

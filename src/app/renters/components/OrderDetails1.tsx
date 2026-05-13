@@ -1,10 +1,12 @@
-// ENDPOINTS: GET /api/renters/orders/:orderId, GET /api/renters/orders/:orderId/progress, POST /api/renters/orders/:orderId/return
+// ENDPOINTS: GET /api/renters/orders/:orderId, GET /api/renters/orders/:orderId/progress,
+// POST /api/renters/orders/:orderId/return, POST /order/resale/confirm
 
 "use client";
 
 import React, { useEffect, useState, type ComponentProps } from "react";
 import { X, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import { Paragraph1 } from "@/common/ui/Text";
 import ProductCuratorDetails from "./ProductCuratorDetails";
 import OrderProgressTimeline from "./OrderProgressTimeline";
@@ -17,7 +19,11 @@ import {
 import DispatchWindowsDisplay, {
   type DispatchWindow,
 } from "@/app/listers/components/DispatchWindowsDisplay";
-import { isListerResaleOrder } from "@/lib/listers/listerOrderRow";
+import {
+  isListerResaleOrder,
+  shouldShowRenterResaleDeliveryConfirm,
+} from "@/lib/listers/listerOrderRow";
+import { useConfirmResaleDelivery } from "@/lib/mutations/renters/useConfirmResaleDelivery";
 
 type RenterOrderProgressPayload = ComponentProps<
   typeof OrderProgressTimeline
@@ -42,6 +48,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
   progressData,
   progressLoading,
 }) => {
+  const confirmResaleDelivery = useConfirmResaleDelivery();
   const variants = {
     hidden: { x: "100%" },
     visible: { x: 0 },
@@ -50,6 +57,15 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
   const resaleOnlyOrder = orderData
     ? isListerResaleOrder(orderData as Record<string, unknown>)
     : false;
+
+  const displayOrderId =
+    (orderData as { orderId?: string } | undefined)?.orderId ?? orderId ?? "";
+  const showResaleConfirm =
+    !!orderData &&
+    !!displayOrderId &&
+    shouldShowRenterResaleDeliveryConfirm(
+      orderData as Record<string, unknown>,
+    );
 
   return (
     <AnimatePresence>
@@ -129,6 +145,44 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
                     <Paragraph1 className="text-xs text-gray-400">
                       Refreshing progress…
                     </Paragraph1>
+                  ) : null}
+                  {showResaleConfirm ? (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50/90 p-4 space-y-3">
+                      <Paragraph1 className="text-sm font-semibold text-gray-900">
+                        Confirm you received your purchase
+                      </Paragraph1>
+                      <Paragraph1 className="text-xs text-gray-700 leading-relaxed">
+                        When you confirm, we complete this order and release the
+                        seller payout from escrow. Only confirm if everything
+                        arrived as expected.
+                      </Paragraph1>
+                      <button
+                        type="button"
+                        disabled={confirmResaleDelivery.isPending}
+                        onClick={() => {
+                          confirmResaleDelivery.mutate(displayOrderId, {
+                            onSuccess: (res) => {
+                              toast.success(
+                                res?.message ??
+                                  "Order completed. Thank you for confirming.",
+                              );
+                            },
+                            onError: (err) => {
+                              toast.error(
+                                err instanceof Error
+                                  ? err.message
+                                  : "Could not confirm delivery. Try again.",
+                              );
+                            },
+                          });
+                        }}
+                        className="w-full rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white hover:bg-gray-900 disabled:opacity-60 disabled:pointer-events-none transition"
+                      >
+                        {confirmResaleDelivery.isPending
+                          ? "Confirming…"
+                          : "I received my items"}
+                      </button>
+                    </div>
                   ) : null}
                   <OrderStatusDetails orderData={orderData} />
                   {!resaleOnlyOrder ? (

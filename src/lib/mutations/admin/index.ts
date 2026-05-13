@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   adminSiteFeaturesApi,
+  adminVaultClosetSaleWaitlistApi,
   disputesApi,
   ordersApi,
   settingsApi,
@@ -336,6 +337,18 @@ export const useUpdateAdminSiteFeatures = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "site-features"] });
       queryClient.invalidateQueries({ queryKey: ["public", "site-features"] });
+    },
+  });
+};
+
+export const useNotifyVaultClosetSaleWaitlist = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => adminVaultClosetSaleWaitlistApi.notifyAll(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "vault-closet-sale-waitlist"],
+      });
     },
   });
 };

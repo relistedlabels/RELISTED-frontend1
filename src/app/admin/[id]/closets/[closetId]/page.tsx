@@ -1,4 +1,4 @@
-// ENDPOINTS: GET /api/admin/closets/:closetId
+// ENDPOINTS: GET /api/admin/closets/:closetId, GET /api/admin/closets/vault-closet-sale/waitlist, POST /api/admin/closets/vault-closet-sale/notify-waitlist
 "use client";
 
 import Image from "next/image";
@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight, LayoutGrid } from "lucide-react";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
 import { useAdminClosetDetail } from "@/lib/queries/admin/useAdminClosets";
+import AdminVaultClosetSaleWaitlistCard from "../components/AdminVaultClosetSaleWaitlistCard";
 
 const formatCurrency = (value: number): string =>
   new Intl.NumberFormat("en-NG", {
@@ -255,6 +256,8 @@ export default function AdminClosetDetailPage() {
               </div>
             </div>
           </div>
+
+          <AdminVaultClosetSaleWaitlistCard />
         </div>
       ) : null}
     </div>

@@ -6,6 +6,7 @@ import type {
   ReturnShippingBucketQuote,
 } from "@/lib/api/cart";
 import Image from "next/image";
+import Link from "next/link";
 import { Check, CheckCircle, MapPin } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useRouter } from "next/navigation";
@@ -298,6 +299,9 @@ interface FinalOrderSummaryCardProps {
   /** Response body from GET /order/summary (parent-owned React Query). */
   orderSummary?: OrderSummaryApiResult;
   orderSummaryLoading?: boolean;
+  /** GET /order/summary failed (e.g. expired dispatch window, no approved lines). */
+  orderSummaryError?: string | null;
+  onRefetchOrderSummary?: () => void;
   checkoutBlockingIssues?: string[];
 }
 
@@ -318,6 +322,8 @@ export default function FinalOrderSummaryCard({
   returnPickupAddress,
   orderSummary,
   orderSummaryLoading = false,
+  orderSummaryError = null,
+  onRefetchOrderSummary,
   checkoutBlockingIssues = [],
 }: FinalOrderSummaryCardProps) {
   const router = useRouter();
@@ -528,14 +534,50 @@ export default function FinalOrderSummaryCard({
     );
   };
 
+  const showOrderSummarySkeleton =
+    (isLoading || orderSummaryLoading) && !orderSummaryError;
+
   return (
     <div className="space-y-6">
-      {(isLoading || orderSummaryLoading) && <CheckoutSummarySkeleton />}
+      {showOrderSummarySkeleton && <CheckoutSummarySkeleton />}
+
+      {orderSummaryError ? (
+        <div className="space-y-3 bg-amber-50 p-4 border border-amber-200 rounded-xl">
+          <Paragraph1 className="font-semibold text-amber-950 text-sm">
+            Could not load payment summary
+          </Paragraph1>
+          <Paragraph1 className="text-amber-900 text-sm whitespace-pre-wrap">
+            {orderSummaryError}
+          </Paragraph1>
+          <Paragraph1 className="text-amber-900 text-sm">
+            Go to your cart and use Request approval again so delivery windows
+            reset to the next available slots, or open the product page to pick
+            dates and send a new request.
+          </Paragraph1>
+          <div className="flex flex-wrap gap-2">
+            {onRefetchOrderSummary ? (
+              <button
+                type="button"
+                className="font-medium text-amber-950 text-sm bg-white hover:bg-amber-100 px-3 py-2 border border-amber-300 rounded-lg transition-colors"
+                onClick={() => onRefetchOrderSummary()}
+              >
+                Try again
+              </button>
+            ) : null}
+            <Link
+              href="/shop/cart"
+              className="inline-flex items-center font-medium text-amber-950 text-sm bg-white hover:bg-amber-100 px-3 py-2 border border-amber-300 rounded-lg transition-colors"
+            >
+              Back to cart
+            </Link>
+          </div>
+        </div>
+      ) : null}
 
       {error && (
         <div className="bg-yellow-50 p-4 border border-yellow-200 rounded-xl">
           <Paragraph1 className="text-yellow-800 text-sm">
-            Failed to load checkout summary. Please try again.
+            Failed to load approved items for checkout. Please try again.
           </Paragraph1>
         </div>
       )}
@@ -570,7 +612,10 @@ export default function FinalOrderSummaryCard({
         </div>
       )}
 
-      {!isLoading && !error && approvedGroups.length === 0 && (
+      {!isLoading &&
+        !error &&
+        !orderSummaryError &&
+        approvedGroups.length === 0 && (
         <div className="bg-gray-50 p-4 border border-gray-200 rounded-xl text-center">
           <Paragraph1 className="text-gray-600">
             No approved items. Add items to get started!
@@ -578,7 +623,10 @@ export default function FinalOrderSummaryCard({
         </div>
       )}
 
-      {!isLoading && !error && approvedGroups.length > 0 && (
+      {!isLoading &&
+        !error &&
+        !orderSummaryError &&
+        approvedGroups.length > 0 && (
         <>
           {/* Use API summary data directly */}
           {(() => {

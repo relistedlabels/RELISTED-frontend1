@@ -5,6 +5,7 @@ export { usersApi } from "./users";
 export { walletsApi } from "./wallets";
 export { settingsApi } from "./settings";
 export { adminClosetsApi } from "./closets";
+export { adminVaultClosetSaleWaitlistApi } from "./vaultClosetSaleWaitlist";
 export { adminSiteFeaturesApi } from "./siteFeatures";
 
 // Type exports

@@ -60,6 +60,63 @@ export function isResaleItem(
   return days === 0;
 }
 
+/** Renter order line that counts as a resale purchase (matches checkout line semantics). */
+export function isRenterResalePurchaseLine(
+  item: Record<string, unknown> | null | undefined,
+): boolean {
+  if (!isResaleItem(item)) return false;
+  const lt = String(item.listingType ?? "").trim();
+  return lt === "RESALE" || lt === "RENT_OR_RESALE";
+}
+
+export function orderHasResalePurchaseLines(
+  order: Record<string, unknown> | null | undefined,
+): boolean {
+  if (!order) return false;
+  const items = (order.items ?? order.orderItems) as unknown[] | undefined;
+  if (!items?.length) return false;
+  return items.some((row) =>
+    isRenterResalePurchaseLine(row as Record<string, unknown>),
+  );
+}
+
+/**
+ * At least one resale line: explicit product listing on the line, or any zero-day
+ * line on a RESALE / RENT_OR_RESALE order (matches checkout: resale uses days === 0).
+ */
+export function orderHasAtLeastOneResaleItem(
+  order: Record<string, unknown> | null | undefined,
+): boolean {
+  if (!order) return false;
+  if (orderHasResalePurchaseLines(order)) return true;
+  const orderLt = String(
+    order.listingType ?? order.listing_type ?? "",
+  ).trim();
+  if (orderLt !== "RESALE" && orderLt !== "RENT_OR_RESALE") return false;
+  const items = (order.items ?? order.orderItems) as unknown[] | undefined;
+  if (!items?.length) return false;
+  return items.some((row) =>
+    isResaleItem(row as Record<string, unknown>),
+  );
+}
+
+/**
+ * Buyer can call POST /order/resale/confirm when the order is delivered, listing
+ * type allows resale confirm on the server, and the cart includes at least one resale item.
+ */
+export function shouldShowRenterResaleDeliveryConfirm(
+  order: Record<string, unknown> | null | undefined,
+): boolean {
+  if (!order) return false;
+  const st = String(order.status ?? "").trim().toUpperCase();
+  if (st !== "DELIVERED") return false;
+  const lt = String(
+    order.listingType ?? order.listing_type ?? "",
+  ).trim();
+  if (lt !== "RESALE" && lt !== "RENT_OR_RESALE") return false;
+  return orderHasAtLeastOneResaleItem(order);
+}
+
 /** Check if an order item is a rental item. */
 export function isRentalItem(
   item: Record<string, unknown> | null | undefined,

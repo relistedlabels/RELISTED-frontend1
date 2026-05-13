@@ -32,6 +32,11 @@ import type {
   ShipmentDispatchType,
 } from "@/lib/checkout/dispatchWindows";
 import { buildDispatchWindowContexts } from "@/lib/checkout/dispatchWindows";
+import { usePublicSiteFeatures } from "@/lib/queries/site/useSiteFeatures";
+import {
+  publicProductHasCloset,
+  VAULT_CLOSET_SHOP_OFF_PRIMARY_CTA,
+} from "@/lib/vaultClosetSaleDates";
 
 interface UserProfileProps {
   name: string;
@@ -87,8 +92,18 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
   const pathname = usePathname();
   const setUser = useUserStore((s) => s.setUser);
   const { data: product, isLoading } = usePublicProductById(productId);
-
-  // Fetch lister/curator details
+  const { data: siteFeaturesRes } = usePublicSiteFeatures();
+  const closetShopNavEnabled =
+    siteFeaturesRes?.data?.headerClosetsShopNavEnabled !== false;
+  const closetPrimaryCtaOverride = useMemo(
+    () =>
+      !closetShopNavEnabled &&
+      product &&
+      publicProductHasCloset(product)
+        ? VAULT_CLOSET_SHOP_OFF_PRIMARY_CTA
+        : undefined,
+    [closetShopNavEnabled, product],
+  );
   const { data: lister } = usePublicUserById(product?.curatorId || "");
 
   // Favorite logic
@@ -407,7 +422,11 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
                 type="button"
                 onClick={handleBuy}
                 disabled={isRequesting}
-                className="flex-1 bg-black hover:bg-gray-800 disabled:opacity-50 px-4 py-3 rounded-lg font-semibold text-white transition duration-150"
+                className={
+                  closetPrimaryCtaOverride
+                    ? "flex-1 rounded-lg border border-black bg-white px-2 py-2.5 font-semibold text-[11px] text-black leading-snug text-center transition hover:bg-neutral-50 disabled:opacity-50 sm:px-3 sm:text-xs"
+                    : "flex-1 rounded-lg bg-black px-4 py-3 font-semibold text-white transition duration-150 hover:bg-gray-800 disabled:opacity-50"
+                }
               >
                 {isRequesting ? (
                   <>
@@ -415,7 +434,7 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
                     Processing...
                   </>
                 ) : (
-                  "Add to Cart"
+                  (closetPrimaryCtaOverride ?? "Add to Cart")
                 )}
               </button>
               <button
