@@ -1,9 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api/http";
 
+export type ProductAttachmentUpload = {
+  id: string;
+  url: string;
+  /** MIME type from upload row (e.g. image/jpeg, video/mp4). */
+  type?: string;
+  /** Gallery order from backend (0 = hero). Omitted on older API payloads. */
+  displayOrder?: number;
+};
+
 export type ProductAttachmentDetail = {
   id: string;
-  uploads: { id: string; url: string }[];
+  uploads: ProductAttachmentUpload[];
 };
 
 export type Product = {

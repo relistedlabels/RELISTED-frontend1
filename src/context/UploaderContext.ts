@@ -106,6 +106,7 @@ export function useUploaderProvider() {
     // addUpload,
     addUploads,
     cancelUpload,
+    clearUploads,
     // cleanup,
   };
 }

@@ -2,6 +2,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Product } from "@/lib/queries/product/useGetProductById";
+import { orderListingAttachments } from "@/lib/product/attachmentSlotOrder";
+import { sortProductAttachmentUploads } from "@/lib/product/sortProductAttachmentUploads";
 
 export type Tag = {
   id: string;
@@ -108,8 +110,8 @@ export const useProductDraftStore = create<ProductDraftStore>()(
         })),
 
       populateFromProduct: (product: Product) => {
-        // Map uploads to slots
-        const uploads = product.attachments?.uploads || [];
+        const uploadsRaw = product.attachments?.uploads || [];
+        const uploadsSorted = sortProductAttachmentUploads(uploadsRaw);
         const slotMap = ["main", "photo1", "photo2", "photo3", "video"];
         const productLike = product as Product & {
           tagids?: string[];
@@ -130,16 +132,19 @@ export const useProductDraftStore = create<ProductDraftStore>()(
             ).filter((id): id is string => !!id),
           ),
         );
-        const mappedAttachments = uploads.map(
-          (upload: { id: string; url: string }, idx: number) => ({
+        const mappedAttachments = uploadsSorted.map((upload, idx: number) => {
+          const mime = upload.type || "";
+          const isVideo = mime.startsWith("video/");
+          return {
             id: upload.id,
             url: upload.url,
             name: `Image ${idx + 1}`,
             progress: 100,
-            type: "image",
+            type: isVideo ? "video" : "image",
             slotId: slotMap[idx] || undefined,
-          }),
-        );
+          };
+        });
+        const attachmentsOrdered = orderListingAttachments(mappedAttachments);
         set({
           data: {
             name: product.name,
@@ -164,7 +169,7 @@ export const useProductDraftStore = create<ProductDraftStore>()(
             careSteps: product.careSteps || "",
             stylingTip: product.stylingTip,
             tagIds: normalizedTagIds,
-            attachments: mappedAttachments,
+            attachments: attachmentsOrdered,
             categoryId: product.categoryId,
             brandId: product.brandId ?? "",
             saleType: (["RENTAL", "RESALE", "RENT_OR_RESALE"].includes(

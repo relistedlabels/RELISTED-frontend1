@@ -3,6 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
+import { useUploader } from "@/context/UploaderContext";
 import { useListerProductById } from "@/lib/queries/product/useGetProductById";
 import { useProductDraftStore } from "@/store/useProductDraftStore";
 import DashboardLayout from "@/app/listers/components/DashboardLayout";
@@ -26,6 +27,7 @@ export default function Page() {
     (state) => state.populateFromProduct,
   );
   const reset = useProductDraftStore((state) => state.reset);
+  const { clearUploads } = useUploader();
 
   useEffect(() => {
     reset(); // Clear old draft data
@@ -33,9 +35,10 @@ export default function Page() {
 
   useEffect(() => {
     if (product) {
+      clearUploads();
       populateFromProduct(product);
     }
-  }, [product, populateFromProduct]);
+  }, [product, populateFromProduct, clearUploads]);
 
   useEffect(() => {
     return () => {

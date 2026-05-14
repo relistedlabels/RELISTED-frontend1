@@ -31,6 +31,7 @@ import { ItemDescription } from "@/app/listers/components/ItemDescription";
 import { useProductDraftStore } from "@/store/useProductDraftStore";
 import { useUpdateProduct } from "@/lib/mutations/product/useUpdateProduct";
 import { toast } from "sonner";
+import { orderedProductImageUrls } from "@/lib/product/sortProductAttachmentUploads";
 
 import DeleteProductButton from "./DeleteProductButton";
 import { CategorySelector } from "@/app/listers/components/CategorySelector";
@@ -171,15 +172,13 @@ export default function ListingDetailModal({
     }
   };
 
-  // Prefer attachment URLs; empty array must fall back (uploads [] is truthy and would skip `||` alone).
-  const urlsFromUploads = (
-    (displayProduct as any).attachments?.uploads as { url?: string }[] | undefined
-  )
-    ?.map((u) => u.url)
-    .filter((u): u is string => typeof u === "string" && !!u);
+  // Prefer attachment URLs in display order; empty array falls back to legacy image.
+  const fromUploads = orderedProductImageUrls({
+    attachments: (displayProduct as any).attachments,
+  });
   const imagesToDisplay: string[] =
-    urlsFromUploads && urlsFromUploads.length > 0
-      ? urlsFromUploads
+    fromUploads.length > 0
+      ? fromUploads
       : [displayProduct.image].filter(
           (u): u is string => typeof u === "string" && !!u,
         );

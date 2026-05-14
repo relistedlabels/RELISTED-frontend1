@@ -12,6 +12,7 @@ import { fetchProductById } from "@/lib/queries/product/useGetProductById";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import { SlidersVertical, Heart } from "lucide-react";
 import Button from "@/common/ui/Button";
+import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
 
 // Custom hook to batch fetch favorite products by IDs
 function useFavoriteProducts(productIds: string[]) {
@@ -153,7 +154,11 @@ export default function Favorites() {
                 <div key={product.id} className="relative">
                   <ProductCard
                     id={product.id}
-                    image={product.attachments?.uploads?.[0]?.url || ""}
+                    image={
+                      firstProductAttachmentImageUrl(
+                        product.attachments?.uploads,
+                      ) || ""
+                    }
                     brand={product.brand?.name || ""}
                     name={product.name}
                     price={`₦${product?.originalValue?.toLocaleString() || "0"}`}

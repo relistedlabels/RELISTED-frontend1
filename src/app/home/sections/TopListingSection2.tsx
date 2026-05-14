@@ -9,6 +9,7 @@ import { useHorizontalWheelScroll } from "@/hooks/useHorizontalWheelScroll";
 import { useProducts } from "@/lib/queries/product/useProducts";
 import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import Link from "next/link";
+import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
 
 const TopListingSection = () => {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
@@ -112,8 +113,9 @@ const TopListingSection = () => {
                   <ProductCard
                     id={product.id}
                     image={
-                      product.attachments?.uploads?.[0]?.url ||
-                      "/placeholder.jpg"
+                      firstProductAttachmentImageUrl(
+                        product.attachments?.uploads,
+                      ) || "/placeholder.jpg"
                     }
                     brand={product.brand?.name || "BRAND"}
                     name={product.name}

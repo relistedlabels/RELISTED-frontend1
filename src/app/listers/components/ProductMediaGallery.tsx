@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, X, Play } from "lucide-react";
 import { useProductDetailsStore } from "@/store/useProductDetailsStore";
+import { sortProductAttachmentUploads } from "@/lib/product/sortProductAttachmentUploads";
 
 interface MediaItem {
   type: "image" | "video";
@@ -15,7 +16,9 @@ const ProductMediaGallery: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const product = useProductDetailsStore((state) => state.product);
 
-  const uploads = product?.attachments?.uploads ?? [];
+  const uploads = sortProductAttachmentUploads(
+    product?.attachments?.uploads ?? [],
+  );
   if (!product || uploads.length === 0) {
     return <div className="text-center py-8">No media available</div>;
   }

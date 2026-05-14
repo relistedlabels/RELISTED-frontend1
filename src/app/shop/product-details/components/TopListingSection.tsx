@@ -6,6 +6,7 @@ import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import { useEffect, useRef, useState } from "react";
 import { useProducts } from "@/lib/queries/product/useProducts";
 import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
+import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
 
 export default function TopListingSection() {
   const { data: products = [], isLoading, error } = useProducts();
@@ -112,7 +113,9 @@ export default function TopListingSection() {
                 <ProductCard
                   id={item.id}
                   image={
-                    item.attachments?.uploads?.[0]?.url || "/placeholder.jpg"
+                    firstProductAttachmentImageUrl(
+                      item.attachments?.uploads,
+                    ) || "/placeholder.jpg"
                   }
                   brand={item.brand?.name || "BRAND"}
                   name={item.name}

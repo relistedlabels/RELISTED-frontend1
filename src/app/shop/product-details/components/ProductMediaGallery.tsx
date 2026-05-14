@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, X, Play } from "lucide-react";
 import { usePublicProductById } from "@/lib/queries/product/usePublicProductById";
+import { orderedProductImageUrls } from "@/lib/product/sortProductAttachmentUploads";
 import { CardGridSkeleton } from "@/common/ui/SkeletonLoaders";
 
 interface ProductMediaGalleryProps {
@@ -17,13 +18,10 @@ const ProductMediaGallery: React.FC<ProductMediaGalleryProps> = ({
   const [activeIndex, setActiveIndex] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
 
-  // Product photos only — do not treat the closet cover as item media when it
-  // appears as a duplicate upload URL (common when the same asset is reused).
-  const closetCoverUrl = product?.closet?.imageUrl?.trim() || null;
-  const productImages = (product?.attachments?.uploads ?? [])
-    .map((upload: { url?: string }) => upload.url?.trim())
-    .filter((url): url is string => Boolean(url))
-    .filter((url) => !closetCoverUrl || url !== closetCoverUrl);
+  const productImages = orderedProductImageUrls({
+    attachments: product?.attachments ?? null,
+    closet: product?.closet ?? null,
+  });
 
   const media =
     productImages.length > 0
