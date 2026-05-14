@@ -12,7 +12,7 @@ import Link from "next/link";
 import { primaryProductHeroImage } from "@/lib/product/primaryProductHeroImage";
 import { VAULT_CLOSET_DROPS_BROWSE_SHOP_HREF } from "@/lib/nav/vaultClosetDropsShop";
 
-const vaultClosetDropsSectionTitle = "The Vault Closet Drops";
+const vaultClosetDropsSectionTitle = "The Vault Closet Sale";
 
 const browseShopHref = VAULT_CLOSET_DROPS_BROWSE_SHOP_HREF;
 

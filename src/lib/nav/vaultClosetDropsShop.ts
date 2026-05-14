@@ -15,7 +15,7 @@ export function matchesClosetDropsShopTitle(
 export const CLOSET_DROPS_SHOP_DESCRIPTION =
   "Celebrity wardrobes. Limited drops. Shop it before it disappears.";
 
-/** Same destination as home "Browse All" for The Vault Closet Drops. */
+/** Same destination as home "Browse All" for The Vault Closet Sale. */
 export const VAULT_CLOSET_DROPS_BROWSE_SHOP_HREF =
   "/shop?title=" +
   encodeURIComponent(CLOSET_DROPS_SHOP_TITLE) +
