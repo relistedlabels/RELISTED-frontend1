@@ -188,7 +188,7 @@ const ShopDropdownMobile: React.FC<ShopDropdownMobileProps> = ({
                                   subItem,
                                   `Shop ${subItem} collection`,
                                   {
-                                    key: "brands",
+                                    key: "brand",
                                     value: subItem,
                                   },
                                 );
