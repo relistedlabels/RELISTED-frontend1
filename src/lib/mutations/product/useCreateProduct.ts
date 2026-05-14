@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api/http";
+import { orderedImageAttachmentIds } from "@/lib/product/attachmentSlotOrder";
 import {
+  type ProductDraft,
   useProductDraftStore,
-  ProductDraft,
 } from "@/store/useProductDraftStore";
 
 export const useCreateProduct = () => {
@@ -11,10 +12,7 @@ export const useCreateProduct = () => {
 
   return useMutation({
     mutationFn: async (draft: ProductDraft) => {
-      // ✅ Extract ONLY image IDs (as strings)
-      const attachmentIds = draft.attachments
-        .filter((att) => att.type === "image")
-        .map((att) => att.id);
+      const attachmentIds = orderedImageAttachmentIds(draft.attachments);
       const tagIds = draft.tagIds;
 
       // ✅ Validate before sending
