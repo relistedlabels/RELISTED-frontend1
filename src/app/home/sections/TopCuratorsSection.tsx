@@ -13,6 +13,7 @@ import {
 } from "@/common/ui/Text";
 import { useUsers } from "@/lib/queries/user/useUsers";
 import Link from "next/link";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 interface Curator {
   name: string;
@@ -157,7 +158,7 @@ export default function TopCuratorsSection() {
                 key={`${curator.name}-${index}`}
                 className="min-w-[200px] sm:min-w-[345px] h-[270px] sm:h-[435px] overflow-hidden relative shadow-md "
                 style={{
-                  backgroundImage: `url(${curator.image})`,
+                  backgroundImage: `url("${cloudinaryOptimizedImageUrl(curator.image, { maxWidth: 900 })}")`,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                 }}

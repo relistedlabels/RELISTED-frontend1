@@ -36,6 +36,8 @@ export default function HeroVideo() {
       loop
       muted
       playsInline
+      poster="/videos/hero1-poster.jpg"
+      preload="metadata"
       className={`
         absolute inset-0 w-full h-full object-cover sm:object-contain
         transition-opacity duration-1000 ease-in-out
