@@ -4,7 +4,7 @@
 
 import ProductCard from "@/common/ui/ProductCard";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { useHorizontalWheelScroll } from "@/hooks/useHorizontalWheelScroll";
 import { useProducts } from "@/lib/queries/product/useProducts";
 import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
@@ -12,6 +12,7 @@ import Link from "next/link";
 import { primaryProductHeroImage } from "@/lib/product/primaryProductHeroImage";
 import { VAULT_CLOSET_DROPS_BROWSE_SHOP_HREF } from "@/lib/nav/vaultClosetDropsShop";
 import { usePublicSiteFeatures } from "@/lib/queries/site/useSiteFeatures";
+import { pickVaultHomeStripProducts } from "@/lib/product/pickVaultHomeStripProducts";
 
 const vaultClosetDropsSectionTitle = "The Vault Closet Sale";
 
@@ -33,13 +34,18 @@ const TopListingSection = () => {
   } = useProducts({
     sort: "newest",
     onlyWithCloset: true,
-    limit: 7,
+    // Pull a wider pool so we can interleave by closet; shop pages keep their own limits.
+    limit: 96,
   });
 
-  const displayProductsEarly = products ?? [];
+  const displayProducts = useMemo(
+    () => pickVaultHomeStripProducts(products ?? [], 7),
+    [products],
+  );
+
   useHorizontalWheelScroll(
     scrollerRef,
-    !isLoading && !error && displayProductsEarly.length > 0,
+    !isLoading && !error && displayProducts.length > 0,
   );
 
   if (isLoading) {
@@ -74,8 +80,6 @@ const TopListingSection = () => {
       </section>
     );
   }
-
-  const displayProducts = displayProductsEarly;
 
   return (
     <section className="bg-white px-4 sm:px-0 py-6 sm:py-12">
