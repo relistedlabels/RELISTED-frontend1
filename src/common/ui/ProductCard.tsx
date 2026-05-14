@@ -12,6 +12,7 @@ import {
   useFavorites,
 } from "@/lib/queries/renters/useFavorites";
 import { useMe } from "@/lib/queries/auth/useMe";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 interface ProductCardProps {
   id: string;
@@ -104,6 +105,10 @@ export default function ProductCard({
   };
 
   const isDimmed = isSold || isRentedOut;
+  const heroSrc = cloudinaryOptimizedImageUrl(image, { maxWidth: 800 });
+  const closetSrc = closetImage
+    ? cloudinaryOptimizedImageUrl(closetImage, { maxWidth: 128 })
+    : null;
 
   return (
     <div
@@ -113,7 +118,7 @@ export default function ProductCard({
       <div className="relative w-full h-[260px] sm:h-[300px]">
         <div
           className="bg-cover bg-center w-full h-full"
-          style={{ backgroundImage: `url(${image})` }}
+          style={{ backgroundImage: `url("${heroSrc}")` }}
         />
 
         {isSold ? (
@@ -180,9 +185,9 @@ export default function ProductCard({
             <Paragraph1 className="text-gray-700 text-xs">Closet:</Paragraph1>
             <div className="flex items-center gap-1 min-w-0">
               <div className="relative bg-gray-200 rounded-full w-6 h-6 overflow-hidden shrink-0">
-                {closetImage ? (
+                {closetSrc ? (
                   <Image
-                    src={closetImage}
+                    src={closetSrc}
                     alt={closetOwner}
                     fill
                     className="object-cover"

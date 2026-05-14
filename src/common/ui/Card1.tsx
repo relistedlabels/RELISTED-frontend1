@@ -1,6 +1,7 @@
 "use client";
 
 import { Paragraph1 } from "./Text";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 interface Card1Props {
   image: string;
@@ -9,12 +10,13 @@ interface Card1Props {
 }
 
 export default function Card1({ image, name, role }: Card1Props) {
+  const heroSrc = cloudinaryOptimizedImageUrl(image, { maxWidth: 800 });
   return (
     <div className="min-w-[260px] max-w-[260px] overflow-hidden bg-white  ">
       {/* Image as background */}
       <div
         className="w-full h-[322px] bg-cover bg-center"
-        style={{ backgroundImage: `url(${image})` }}
+        style={{ backgroundImage: `url("${heroSrc}")` }}
       ></div>
 
       <div className="py-4 ">

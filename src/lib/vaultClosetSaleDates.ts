@@ -1,5 +1,8 @@
-/** Sale window for the Vault Closet promo banner (local midnight boundaries). */
-export const VAULT_CLOSET_SALE_START = new Date(2026, 4, 15, 0, 0, 0);
+/**
+ * Sale window for the Vault Closet promo banner (local time).
+ * Opens 10:00 May 15; last moment May 17 end-of-day.
+ */
+export const VAULT_CLOSET_SALE_START = new Date(2026, 4, 15, 10, 0, 0);
 export const VAULT_CLOSET_SALE_END = new Date(2026, 4, 17, 23, 59, 59, 999);
 
 /** True while the banner should show (through end of last sale day). */
