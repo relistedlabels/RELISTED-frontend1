@@ -4,7 +4,9 @@ import { isVaultClosetSaleBannerVisible } from "@/lib/vaultClosetSaleDates";
 import BecomeCurator from "./home/sections/BecomeCurator";
 import EndlessStyleHero from "./home/sections/EndlessStyleHero";
 import PopularCategorySection from "./home/sections/PopularCategorySection";
-import HomeMidSections from "./home/components/HomeMidSections";
+import HomeMidSections, {
+  HomeBeforeCategorySections,
+} from "./home/components/HomeMidSections";
 
 export default function Home() {
   const reserveNavForSaleBanner = isVaultClosetSaleBannerVisible();
@@ -18,6 +20,7 @@ export default function Home() {
       <VaultClosetSaleBanner />
       <EndlessStyleHero />
       <BrandLogosCarousel />
+      <HomeBeforeCategorySections />
       <PopularCategorySection />
       <HomeMidSections />
       {/* <TopCuratorsSection /> */}
