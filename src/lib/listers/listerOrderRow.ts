@@ -64,6 +64,7 @@ export function isResaleItem(
 export function isRenterResalePurchaseLine(
   item: Record<string, unknown> | null | undefined,
 ): boolean {
+  if (item == null) return false;
   if (!isResaleItem(item)) return false;
   const lt = String(item.listingType ?? "").trim();
   return lt === "RESALE" || lt === "RENT_OR_RESALE";
@@ -100,16 +101,25 @@ export function orderHasAtLeastOneResaleItem(
   );
 }
 
+/** Order statuses where buyer cannot confirm resale receipt (terminal or blocked). */
+const RENTER_RESALE_CONFIRM_BLOCKED = new Set<string>([
+  "COMPLETED",
+  "CANCELLED",
+  "REJECTED",
+  "IN_DISPUTE",
+  "RETURNED",
+]);
+
 /**
- * Buyer can call POST /order/resale/confirm when the order is delivered, listing
- * type allows resale confirm on the server, and the cart includes at least one resale item.
+ * Show resale receipt confirm when the order can still be completed by the buyer:
+ * RESALE / RENT_OR_RESALE with at least one resale line, and status is not terminal.
  */
 export function shouldShowRenterResaleDeliveryConfirm(
   order: Record<string, unknown> | null | undefined,
 ): boolean {
   if (!order) return false;
-  const st = String(order.status ?? "").trim().toUpperCase();
-  if (st !== "DELIVERED") return false;
+  const st = normalizeListerOrderStatusKey(String(order.status ?? ""));
+  if (RENTER_RESALE_CONFIRM_BLOCKED.has(st)) return false;
   const lt = String(
     order.listingType ?? order.listing_type ?? "",
   ).trim();

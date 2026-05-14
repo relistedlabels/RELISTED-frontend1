@@ -152,9 +152,9 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
                         Confirm you received your purchase
                       </Paragraph1>
                       <Paragraph1 className="text-xs text-gray-700 leading-relaxed">
-                        When you confirm, we complete this order and release the
-                        seller payout from escrow. Only confirm if everything
-                        arrived as expected.
+                        Confirm when you have received your items. We will complete
+                        this order and release the seller payout from escrow. Only
+                        confirm if everything arrived as expected.
                       </Paragraph1>
                       <button
                         type="button"
