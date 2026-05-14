@@ -12,6 +12,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { toast } from "sonner";
 import {
@@ -112,6 +113,9 @@ interface CheckoutContactAndPaymentProps {
   returnPickupAddress?: ReturnPickupAddressPayload;
   onReturnPickupChange?: (value?: ReturnPickupAddressPayload) => void;
   checkoutBlockingIssues?: string[];
+  /** GET /order/summary failed (shown above shipping so renters know what to do). */
+  orderSummaryError?: string | null;
+  onRefetchOrderSummary?: () => void;
   /** Quote-based dispatch: one optional heading per shipment bucket, then rental/return rows. */
   summaryDispatchPreview?: Array<{
     groupHeading: string | null;
@@ -237,6 +241,8 @@ export default function CheckoutContactAndPayment({
   returnPickupAddress,
   onReturnPickupChange,
   checkoutBlockingIssues = [],
+  orderSummaryError = null,
+  onRefetchOrderSummary,
   summaryDispatchPreview,
   isResaleOnly = false,
 }: CheckoutContactAndPaymentProps) {
@@ -256,7 +262,8 @@ export default function CheckoutContactAndPayment({
     !isResaleOnly &&
     hasRentalDispatch &&
     isShippingTiersLoading &&
-    !hasSummaryDispatchPreview;
+    !hasSummaryDispatchPreview &&
+    !orderSummaryError;
   const { data: user } = useMe();
   const { data: profile } = useProfile();
   const { data: walletResponse } = useWallet();
@@ -579,6 +586,39 @@ export default function CheckoutContactAndPayment({
     <div className="space-y-6 bg-gray-50">
       {/* Payment expiring timer */}
       <ReservationTimer />
+
+      {orderSummaryError ? (
+        <div className="space-y-3 bg-amber-50 p-4 border border-amber-200 rounded-xl">
+          <Paragraph1 className="font-semibold text-amber-950 text-sm">
+            Could not load payment summary
+          </Paragraph1>
+          <Paragraph1 className="text-amber-900 text-sm whitespace-pre-wrap">
+            {orderSummaryError}
+          </Paragraph1>
+          <Paragraph1 className="text-amber-900 text-sm">
+            Go to your cart and use Request approval again so delivery windows
+            reset to the next available slots, or open the product page to pick
+            dates and send a new request.
+          </Paragraph1>
+          <div className="flex flex-wrap gap-2">
+            {onRefetchOrderSummary ? (
+              <button
+                type="button"
+                className="font-medium text-amber-950 text-sm bg-white hover:bg-amber-100 px-3 py-2 border border-amber-300 rounded-lg transition-colors"
+                onClick={() => onRefetchOrderSummary()}
+              >
+                Try again
+              </button>
+            ) : null}
+            <Link
+              href="/shop/cart"
+              className="inline-flex items-center font-medium text-amber-950 text-sm bg-white hover:bg-amber-100 px-3 py-2 border border-amber-300 rounded-lg transition-colors"
+            >
+              Back to cart
+            </Link>
+          </div>
+        </div>
+      ) : null}
 
       {/* 1. CONTACT Section */}
       <div className="bg-white p-4 border border-gray-100 rounded-xl">

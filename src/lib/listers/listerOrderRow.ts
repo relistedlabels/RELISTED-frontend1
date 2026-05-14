@@ -60,6 +60,73 @@ export function isResaleItem(
   return days === 0;
 }
 
+/** Renter order line that counts as a resale purchase (matches checkout line semantics). */
+export function isRenterResalePurchaseLine(
+  item: Record<string, unknown> | null | undefined,
+): boolean {
+  if (item == null) return false;
+  if (!isResaleItem(item)) return false;
+  const lt = String(item.listingType ?? "").trim();
+  return lt === "RESALE" || lt === "RENT_OR_RESALE";
+}
+
+export function orderHasResalePurchaseLines(
+  order: Record<string, unknown> | null | undefined,
+): boolean {
+  if (!order) return false;
+  const items = (order.items ?? order.orderItems) as unknown[] | undefined;
+  if (!items?.length) return false;
+  return items.some((row) =>
+    isRenterResalePurchaseLine(row as Record<string, unknown>),
+  );
+}
+
+/**
+ * At least one resale line: explicit product listing on the line, or any zero-day
+ * line on a RESALE / RENT_OR_RESALE order (matches checkout: resale uses days === 0).
+ */
+export function orderHasAtLeastOneResaleItem(
+  order: Record<string, unknown> | null | undefined,
+): boolean {
+  if (!order) return false;
+  if (orderHasResalePurchaseLines(order)) return true;
+  const orderLt = String(
+    order.listingType ?? order.listing_type ?? "",
+  ).trim();
+  if (orderLt !== "RESALE" && orderLt !== "RENT_OR_RESALE") return false;
+  const items = (order.items ?? order.orderItems) as unknown[] | undefined;
+  if (!items?.length) return false;
+  return items.some((row) =>
+    isResaleItem(row as Record<string, unknown>),
+  );
+}
+
+/** Order statuses where buyer cannot confirm resale receipt (terminal or blocked). */
+const RENTER_RESALE_CONFIRM_BLOCKED = new Set<string>([
+  "COMPLETED",
+  "CANCELLED",
+  "REJECTED",
+  "IN_DISPUTE",
+  "RETURNED",
+]);
+
+/**
+ * Show resale receipt confirm when the order can still be completed by the buyer:
+ * RESALE / RENT_OR_RESALE with at least one resale line, and status is not terminal.
+ */
+export function shouldShowRenterResaleDeliveryConfirm(
+  order: Record<string, unknown> | null | undefined,
+): boolean {
+  if (!order) return false;
+  const st = normalizeListerOrderStatusKey(String(order.status ?? ""));
+  if (RENTER_RESALE_CONFIRM_BLOCKED.has(st)) return false;
+  const lt = String(
+    order.listingType ?? order.listing_type ?? "",
+  ).trim();
+  if (lt !== "RESALE" && lt !== "RENT_OR_RESALE") return false;
+  return orderHasAtLeastOneResaleItem(order);
+}
+
 /** Check if an order item is a rental item. */
 export function isRentalItem(
   item: Record<string, unknown> | null | undefined,

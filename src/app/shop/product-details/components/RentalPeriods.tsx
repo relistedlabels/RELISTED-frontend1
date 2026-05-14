@@ -767,7 +767,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-start gap-4">
-                <div className="flex min-w-0 flex-col gap-3 pr-2">
+                <div className="flex flex-col gap-3 pr-2 min-w-0">
                   <Paragraph1 className="font-semibold text-gray-500 text-xs uppercase tracking-[0.3em]">
                     Step {dispatchModalStep + 1} of {totalDispatchSteps}
                   </Paragraph1>
@@ -929,6 +929,8 @@ interface RentalPeriodsProps {
   collateralPrice: number;
   listingType?: "RENTAL" | "RESALE" | "RENT_OR_RESALE";
   resalePrice?: number | null;
+  /** When set (closet + shop nav off), replaces "Rent now" label; same click behavior. */
+  closetPrimaryCtaOverride?: string;
 }
 
 const RentalPeriods: React.FC<RentalPeriodsProps> = ({
@@ -938,14 +940,18 @@ const RentalPeriods: React.FC<RentalPeriodsProps> = ({
   collateralPrice,
   listingType,
   resalePrice,
+  closetPrimaryCtaOverride,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { data: user } = useMe();
+  const primaryLabel = closetPrimaryCtaOverride?.trim() || "Rent now";
+  const useVaultClosetCtaStyle = Boolean(closetPrimaryCtaOverride?.trim());
 
   return (
     <>
       {/* Toggle Button */}
       <button
+        type="button"
         onClick={() => {
           if (!user) {
             // Capture current page URL
@@ -955,9 +961,21 @@ const RentalPeriods: React.FC<RentalPeriodsProps> = ({
           }
           setIsOpen(true);
         }}
-        className="flex justify-center items-center gap-1 bg-black hover:bg-gray-100 px-4 py-2 border border-black rounded-lg w-full font-semibold text-white hover:text-black text-sm transition cursor-pointer"
+        className={`flex w-full cursor-pointer items-center justify-center gap-1 rounded-lg border border-black bg-black font-semibold text-white transition hover:bg-gray-100 hover:text-black ${
+          useVaultClosetCtaStyle
+            ? "px-2 py-2.5 sm:px-3"
+            : "px-4 py-2 text-sm"
+        }`}
       >
-        <Paragraph1>Rent now</Paragraph1>
+        <Paragraph1
+          className={
+            useVaultClosetCtaStyle
+              ? "m-0 max-w-full text-center text-[11px] leading-snug text-inherit sm:text-xs"
+              : "m-0 text-center text-inherit"
+          }
+        >
+          {primaryLabel}
+        </Paragraph1>
       </button>
 
       {/* Filter Panel */}

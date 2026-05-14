@@ -23,6 +23,11 @@ import { DetailPanelSkeleton } from "@/common/ui/SkeletonLoaders";
 import { isInhouseManager } from "@/lib/inhouseManager";
 import { toast } from "sonner";
 import { useSubscribeProductNotifyWhenAvailable } from "@/lib/mutations/renters/useSubscribeProductNotifyWhenAvailable";
+import { usePublicSiteFeatures } from "@/lib/queries/site/useSiteFeatures";
+import {
+  publicProductHasCloset,
+  VAULT_CLOSET_SHOP_OFF_PRIMARY_CTA,
+} from "@/lib/vaultClosetSaleDates";
 
 // ============================================================================
 // API ENDPOINTS USED:
@@ -88,6 +93,15 @@ interface RentalDetailsCardProps {
 
 const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
   const { data: product, isLoading } = usePublicProductById(productId);
+  const { data: siteFeaturesRes } = usePublicSiteFeatures();
+  const closetShopNavEnabled =
+    siteFeaturesRes?.data?.headerClosetsShopNavEnabled !== false;
+  const closetPrimaryCtaOverride =
+    !closetShopNavEnabled &&
+    product &&
+    publicProductHasCloset(product)
+      ? VAULT_CLOSET_SHOP_OFF_PRIMARY_CTA
+      : undefined;
 
   // Fetch lister/curator details
   const { data: lister } = usePublicUserById(product?.curatorId || "");
@@ -296,6 +310,7 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
                 collateralPrice={collateralPrice}
                 listingType={product.listingType}
                 resalePrice={product.resalePrice}
+                closetPrimaryCtaOverride={closetPrimaryCtaOverride}
               />
               <button
                 onClick={handleFavoriteClick}

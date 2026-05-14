@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Trash2, ShoppingCart } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
+import { toast } from "sonner";
 // import { useCart } from "@/lib/queries/renters/useCart";
 import { useRemoveCartItem } from "@/lib/mutations/cart/useRemoveCartItem";
 import { useReRequestAvailability } from "@/lib/mutations/cart/useReRequestAvailability";
@@ -103,8 +104,16 @@ export default function CheckoutProductList({
   const handleReRequest = async (cartItemId: string) => {
     try {
       await reRequestMutation.mutateAsync(cartItemId);
+      toast.success(
+        "Request sent again with updated delivery windows. Wait for the lister to approve.",
+      );
     } catch (error) {
       console.error("Failed to re-request availability:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not send the request again. Please try again.",
+      );
     }
   };
 

@@ -30,7 +30,7 @@ export default function PublicClosetPage() {
 
   if (!slug) {
     return (
-      <div className="min-h-[40vh] flex items-center justify-center px-4">
+      <div className="flex justify-center items-center px-4 min-h-[40vh]">
         <Paragraph1>Invalid closet link.</Paragraph1>
       </div>
     );
@@ -38,7 +38,7 @@ export default function PublicClosetPage() {
 
   if (metaQuery.isLoading) {
     return (
-      <div className="min-h-[40vh] flex items-center justify-center px-4">
+      <div className="flex justify-center items-center px-4 min-h-[40vh]">
         <Paragraph1 className="text-gray-600">Loading closet…</Paragraph1>
       </div>
     );
@@ -46,11 +46,11 @@ export default function PublicClosetPage() {
 
   if (metaQuery.isError || !metaQuery.data?.data) {
     return (
-      <div className="min-h-[40vh] flex flex-col items-center justify-center gap-4 px-4">
-        <Paragraph1 className="text-gray-800 font-semibold">
+      <div className="flex flex-col justify-center items-center gap-4 px-4 min-h-[40vh]">
+        <Paragraph1 className="font-semibold text-gray-800">
           Closet not found
         </Paragraph1>
-        <Link href="/shop" className="text-sm underline text-gray-700">
+        <Link href="/shop" className="text-gray-700 text-sm underline">
           Browse shop
         </Link>
       </div>
@@ -63,17 +63,17 @@ export default function PublicClosetPage() {
 
   return (
     <section className="bg-white px-4 md:px-10 py-8 w-full">
-      <div className="mx-auto container max-w-6xl">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
+      <div className="mx-auto max-w-6xl container">
+        <div className="flex sm:flex-row flex-col sm:items-center gap-4 mb-8">
           {meta.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={meta.imageUrl}
               alt=""
-              className="w-20 h-20 rounded-full object-cover border border-gray-200"
+              className="border border-gray-200 rounded-full w-20 h-20 object-cover"
             />
           ) : (
-            <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-xl">
+            <div className="flex justify-center items-center bg-gray-200 rounded-full w-20 h-20 font-bold text-gray-600 text-xl">
               {meta.name.slice(0, 2).toUpperCase()}
             </div>
           )}
@@ -82,7 +82,7 @@ export default function PublicClosetPage() {
               {meta.name}
             </Header1Plus>
             {meta.description ? (
-              <Paragraph1 className="mt-2 text-gray-600 max-w-2xl">
+              <Paragraph1 className="mt-2 max-w-2xl text-gray-600">
                 {meta.description}
               </Paragraph1>
             ) : null}
@@ -95,7 +95,7 @@ export default function PublicClosetPage() {
         {productsQuery.isLoading ? (
           <ProductCardSkeleton count={12} />
         ) : products.length === 0 ? (
-          <Paragraph1 className="text-gray-600 py-12 text-center">
+          <Paragraph1 className="py-12 text-gray-600 text-center">
             No listings in this closet yet.
           </Paragraph1>
         ) : (
@@ -122,7 +122,7 @@ export default function PublicClosetPage() {
             </div>
 
             {pagination && pagination.totalPages > 1 && (
-              <Paragraph1 className="text-center text-sm text-gray-500 mt-8">
+              <Paragraph1 className="mt-8 text-gray-500 text-sm text-center">
                 More pages: use the shop filters API or increase limit — pagination
                 UI can be extended here.
               </Paragraph1>

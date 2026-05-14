@@ -142,6 +142,12 @@ export default function CheckoutPage() {
   );
 
   const orderSummaryQuery = useCheckoutOrderSummary(returnPickupForSummary);
+  const orderSummaryErrorMessage = useMemo(() => {
+    if (!orderSummaryQuery.isError) return null;
+    const e = orderSummaryQuery.error;
+    if (e instanceof Error && e.message.trim()) return e.message;
+    return "Could not load your payment summary.";
+  }, [orderSummaryQuery.isError, orderSummaryQuery.error]);
   const shippingTiers =
     orderSummaryQuery.data?.data?.shippingTiers ?? EMPTY_SHIPPING_TIERS;
   const returnShippingTiers =
@@ -797,6 +803,10 @@ export default function CheckoutPage() {
             onReturnPickupChange={handleReturnPickupAddressChange}
             checkoutBlockingIssues={checkoutBlockingIssues}
             summaryDispatchPreview={summaryDispatchPreview}
+            orderSummaryError={orderSummaryErrorMessage}
+            onRefetchOrderSummary={() => {
+              void orderSummaryQuery.refetch();
+            }}
             isResaleOnly={
               cartData?.items?.every(
                 (item: any) => item.isResale || item.days === 0,
@@ -822,6 +832,10 @@ export default function CheckoutPage() {
             returnPickupAddress={returnPickupAddress}
             orderSummary={orderSummaryQuery.data}
             orderSummaryLoading={orderSummaryQuery.isLoading}
+            orderSummaryError={orderSummaryErrorMessage}
+            onRefetchOrderSummary={() => {
+              void orderSummaryQuery.refetch();
+            }}
             checkoutBlockingIssues={checkoutBlockingIssues}
           />
         </div>

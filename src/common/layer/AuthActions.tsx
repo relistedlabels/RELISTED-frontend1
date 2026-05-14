@@ -1,6 +1,7 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useListerProfile } from "@/lib/queries/listers/useListerProfile";
 import { useProfile as useRenterProfile } from "@/lib/queries/renters/useProfile";
@@ -16,6 +17,13 @@ export function AuthActions() {
     Boolean(user) && !isLister && !isAdmin,
   );
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [redirectUrl, setRedirectUrl] = useState(pathname);
+
+  useEffect(() => {
+    const qs = searchParams.toString();
+    setRedirectUrl(qs ? `${pathname}?${qs}` : pathname);
+  }, [pathname, searchParams]);
 
   // Avoid flicker while auth state is resolving
   if (isLoading) return null;
@@ -41,7 +49,6 @@ export function AuthActions() {
   }
 
   // ❌ Not logged in → show Sign In / Sign Up
-  const redirectUrl = `${pathname}${typeof window !== "undefined" ? window.location.search : ""}`;
   return (
     <div className="flex items-center gap-[9px]">
       <Button
