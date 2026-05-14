@@ -1,11 +1,19 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
 import { Upload, X } from "lucide-react";
-import { Paragraph3, Paragraph1 } from "@/common/ui/Text";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { ToolInfo } from "@/common/ui/ToolInfo";
-import { Attachment, useProductDraftStore } from "@/store/useProductDraftStore";
 import { useUploader } from "@/context/UploaderContext";
+import {
+  listingAttachmentsSameOrder,
+  orderListingAttachments,
+} from "@/lib/product/attachmentSlotOrder";
+import {
+  type Attachment,
+  useProductDraftStore,
+} from "@/store/useProductDraftStore";
 
 type Slot = {
   id: string;
@@ -28,47 +36,40 @@ export const ItemImageUploader: React.FC = () => {
   const [uploadStatus, setUploadStatus] = useState<Record<string, string>>({});
   const attachments = Array.isArray(data.attachments) ? data.attachments : [];
 
-  // ✅ Watch uploads and save them to store when done
+  // Merge completed uploads into the draft once per update, ordered by slot (not upload finish time).
   useEffect(() => {
-    uploader.uploads.forEach((upload) => {
-      // ✅ Guard against undefined slotId
+    const bySlot = new Map<string, Attachment>();
+    for (const att of attachments) {
+      if (att.slotId) bySlot.set(att.slotId, att);
+    }
+    for (const upload of uploader.uploads) {
       if (upload.done && upload.slotId && upload.url) {
-        const slotId = upload.slotId; // Narrow type
-
-        // Check if this attachment is already in store
-        const alreadyExists = attachments.some(
-          (att) => att.slotId === slotId && att.id === upload.id,
-        );
-
-        if (!alreadyExists) {
-          console.log(`💾 Saving upload to store:`, {
-            id: upload.id,
-            slotId,
-            url: upload.url,
-          });
-
-          const newAttachment: Attachment = {
-            id: upload.id,
-            slotId,
-            url: upload.url,
-            name: upload.file.name,
-            type: upload.file.type.startsWith("video") ? "video" : "image",
-            progress: 100,
-          };
-
-          const updatedAttachments = [
-            ...attachments.filter((att) => att.slotId !== slotId),
-            newAttachment,
-          ];
-
-          setField("attachments", updatedAttachments);
-          setUploadStatus((prev) => ({
-            ...prev,
-            [slotId]: "saved ✅",
-          }));
-        }
+        bySlot.set(upload.slotId, {
+          id: upload.id,
+          slotId: upload.slotId,
+          url: upload.url,
+          name: upload.file.name,
+          type: upload.file.type.startsWith("video") ? "video" : "image",
+          progress: 100,
+        });
       }
-    });
+    }
+    const withoutSlot = attachments.filter((a) => !a.slotId);
+    const next = orderListingAttachments([...bySlot.values(), ...withoutSlot]);
+
+    if (listingAttachmentsSameOrder(next, attachments)) return;
+
+    setField("attachments", next);
+
+    const statusUpdate: Record<string, string> = {};
+    for (const upload of uploader.uploads) {
+      if (upload.done && upload.slotId && upload.url) {
+        statusUpdate[upload.slotId] = "saved ✅";
+      }
+    }
+    if (Object.keys(statusUpdate).length > 0) {
+      setUploadStatus((prev) => ({ ...prev, ...statusUpdate }));
+    }
   }, [uploader.uploads, attachments, setField]);
 
   // ✅ Clear temp previews when store is reset (attachments become empty)
