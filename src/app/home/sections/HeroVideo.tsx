@@ -37,14 +37,12 @@ export default function HeroVideo() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!srcReady) return;
-    videoRef.current?.load();
-  }, [srcReady]);
+  // Do not call video.load() here. Adding <source> triggers a load; an extra load()
+  // can abort the first range request (Network shows "canceled" then a slow retry).
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !srcReady) return;
 
     const FADE_DURATION = 0.5; // seconds before end to fade out
 
@@ -63,7 +61,7 @@ export default function HeroVideo() {
 
     video.addEventListener("timeupdate", handleTimeUpdate);
     return () => video.removeEventListener("timeupdate", handleTimeUpdate);
-  }, []);
+  }, [srcReady]);
 
   return (
     <video
