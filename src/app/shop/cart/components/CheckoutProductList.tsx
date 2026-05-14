@@ -16,6 +16,7 @@ import {
 } from "@/lib/cart/rentalRequestUi";
 import type { CartCheckoutLine } from "../types";
 import { isResaleItem } from "@/lib/listers/listerOrderRow";
+import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
 
 // --- Formatting Helper (for thousands separator) ---
 const formatCurrency = (amount: number): string => {
@@ -287,13 +288,18 @@ export default function CheckoutProductList({
         {cartItems.map((item) => {
           const isSelected = selectedLineIds.includes(item.lineId);
           const product = (item.productDetail || {}) as {
-            attachments?: { uploads?: { url: string }[] };
+            attachments?: {
+              uploads?: Array<{ url: string; displayOrder?: number | null }>;
+            };
             name?: string;
             dailyPrice?: number;
             resalePrice?: number;
             originalValue?: number;
             collateralPrice?: number;
           };
+          const thumbUrl = firstProductAttachmentImageUrl(
+            product.attachments?.uploads,
+          );
           const deposit = item.isResale
             ? 0
             : (product.collateralPrice ?? product.originalValue ?? 0);
@@ -328,14 +334,14 @@ export default function CheckoutProductList({
                 </div>
                 {/* Image */}
                 <div className="relative bg-gray-200 border border-gray-100 rounded-sm w-16 h-20 overflow-hidden shrink-0">
-                  {product.attachments?.uploads?.[0]?.url && (
+                  {thumbUrl ? (
                     <Image
-                      src={product.attachments.uploads[0].url}
+                      src={thumbUrl}
                       alt={product.name || item.productName || "Product"}
                       fill
                       className="object-cover"
                     />
-                  )}
+                  ) : null}
                 </div>
                 {/* Name and Details */}
                 <div className="grow">

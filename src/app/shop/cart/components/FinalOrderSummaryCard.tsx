@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { publicApi } from "@/lib/api/public";
 import { useListerProfile } from "@/lib/queries/shop/useListerProfile";
 import { isResaleItem } from "@/lib/listers/listerOrderRow";
+import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
 
 const CURRENCY = "₦";
 
@@ -103,7 +104,9 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
           const product = item.productDetail || {};
           // Try productDetail image, fallback to rental request image
           const productImageUrl =
-            product.attachments?.uploads?.[0]?.url || item.productImage || "";
+            firstProductAttachmentImageUrl(product.attachments?.uploads) ||
+            item.productImage ||
+            "";
           return (
             <div key={item.requestId} className="flex items-start gap-4">
               {/* Product Image */}

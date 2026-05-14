@@ -20,6 +20,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useListerProfile } from "@/lib/queries/shop/useListerProfile";
 import { toast } from "sonner";
 import { isResaleItem } from "@/lib/listers/listerOrderRow";
+import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
 import type {
   DispatchWindowSelectionMap,
   DispatchWindowsPayload,
@@ -105,7 +106,9 @@ const ListerOrderCard = memo(
           {group.items.map((item) => {
             const product = item.productDetail || {};
             const productImageUrl =
-              product.attachments?.uploads?.[0]?.url || item.productImage || "";
+              firstProductAttachmentImageUrl(product.attachments?.uploads) ||
+              item.productImage ||
+              "";
 
             return (
               <div

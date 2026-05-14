@@ -6,6 +6,7 @@ import { Heart } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { UserFavorite } from "@/lib/api/admin/users";
 import { usePublicProductById } from "@/lib/queries/product/usePublicProductById";
+import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
 
 interface SavedItemsProps {
   favorites: UserFavorite[];
@@ -18,7 +19,9 @@ const FavoriteProductCard: React.FC<{ favorite: UserFavorite }> = ({
   const { data: publicProduct, isLoading } = usePublicProductById(
     favorite.productId,
   );
-  const firstImageUrl = publicProduct?.attachments?.uploads?.[0]?.url;
+  const firstImageUrl = firstProductAttachmentImageUrl(
+    publicProduct?.attachments?.uploads,
+  );
   const product = favorite.product;
 
   return (

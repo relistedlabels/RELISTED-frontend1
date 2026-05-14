@@ -1,20 +1,24 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
-import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { AnimatePresence, motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  useUserProducts,
-  type UserProductsFilters,
-} from "@/lib/queries/product/useUserProducts";
+import type React from "react";
+import { useMemo, useState } from "react";
+import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { ToolInfo } from "@/common/ui/ToolInfo";
+import type { UserProduct } from "@/lib/api/product";
+import { isClosetInventoryLister } from "@/lib/closetInventoryAccess";
+import { useMe } from "@/lib/queries/auth/useMe";
+import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
+import {
+  type UserProductsFilters,
+  useUserProducts,
+} from "@/lib/queries/product/useUserProducts";
 import ClosetInfoCard from "./ClosetInfoCard";
 import CreateClosetModal from "./CreateClosetModal";
-import InventoryItemCard, { InventoryItem } from "./InventoryItemCard";
+import InventoryItemCard, { type InventoryItem } from "./InventoryItemCard";
 import InventoryTabsAndSearch from "./InventoryTabsAndSearch";
-import type { UserProduct } from "@/lib/api/product";
 
 const formatStatusLabel = (
   status:
@@ -47,7 +51,9 @@ interface SelectedCloset {
   isActive?: boolean;
 }
 
-function filtersForClosetSelection(id: string): UserProductsFilters | undefined {
+function filtersForClosetSelection(
+  id: string,
+): UserProductsFilters | undefined {
   if (id === "all") return undefined;
   if (id === "uncategorized") return { uncategorized: true };
   return { closetId: id };
@@ -59,6 +65,8 @@ const InventoryList: React.FC<{
   /** Return to the closet grid (create/switch closets) */
   onOpenClosetPicker?: () => void;
 }> = ({ selectedClosetId, selectedCloset, onOpenClosetPicker }) => {
+  const { data: user } = useMe();
+  const canCreateCloset = isClosetInventoryLister(user?.id);
   const [createClosetOpen, setCreateClosetOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "AVAILABLE" | "RENTED" | "MAINTENANCE" | "RESERVED" | "All"
@@ -73,7 +81,11 @@ const InventoryList: React.FC<{
     [selectedClosetId],
   );
 
-  const { data: products, isLoading, error } = useUserProducts(listFilters, {
+  const {
+    data: products,
+    isLoading,
+    error,
+  } = useUserProducts(listFilters, {
     enabled: !!selectedClosetId,
   });
 
@@ -95,7 +107,8 @@ const InventoryList: React.FC<{
       status: product.status,
       isActive: product.isActive,
       imageUrl:
-        product.attachments?.uploads?.[0]?.url ?? "/images/placeholder.png",
+        firstProductAttachmentImageUrl(product.attachments?.uploads) ??
+        "/images/placeholder.png",
       curatorName: product.curator?.name ?? "",
       depreciationPrompt: product.depreciationPrompt,
       rejectionComment: product.rejectionComment,
@@ -161,7 +174,9 @@ const InventoryList: React.FC<{
           availableCount={availableCount}
           totalRentals={totalRentals}
           onBrowseClosets={onOpenClosetPicker}
-          onCreateCloset={() => setCreateClosetOpen(true)}
+          onCreateCloset={
+            canCreateCloset ? () => setCreateClosetOpen(true) : undefined
+          }
         />
       )}
 
@@ -186,13 +201,15 @@ const InventoryList: React.FC<{
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => setCreateClosetOpen(true)}
-              className="px-4 py-2 rounded-lg border border-gray-300 font-semibold text-gray-900 text-sm hover:bg-gray-50 transition duration-150"
-            >
-              Create closet
-            </button>
+            {canCreateCloset ? (
+              <button
+                type="button"
+                onClick={() => setCreateClosetOpen(true)}
+                className="px-4 py-2 rounded-lg border border-gray-300 font-semibold text-gray-900 text-sm hover:bg-gray-50 transition duration-150"
+              >
+                Create closet
+              </button>
+            ) : null}
             <Link
               href="/listers/inventory/product-upload"
               className="flex items-center space-x-2 bg-black hover:bg-gray-800 px-4 py-2 rounded-lg font-semibold text-white text-sm transition duration-150"
@@ -237,10 +254,12 @@ const InventoryList: React.FC<{
         </AnimatePresence>
       </motion.div>
 
-      <CreateClosetModal
-        isOpen={createClosetOpen}
-        onClose={() => setCreateClosetOpen(false)}
-      />
+      {canCreateCloset ? (
+        <CreateClosetModal
+          isOpen={createClosetOpen}
+          onClose={() => setCreateClosetOpen(false)}
+        />
+      ) : null}
     </div>
   );
 };

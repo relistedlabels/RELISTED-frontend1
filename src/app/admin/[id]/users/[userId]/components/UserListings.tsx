@@ -7,6 +7,7 @@ import { Paragraph1 } from "@/common/ui/Text";
 import { UserListing } from "@/lib/api/admin/users";
 import { usePublicProductById } from "@/lib/queries/product/usePublicProductById";
 import ListingDetailModal from "../../../listings/components/ListingDetailModal";
+import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
 
 interface UserListingsProps {
   listings: UserListing[];
@@ -32,7 +33,9 @@ const ProductImageRow: React.FC<{ productId: string }> = ({ productId }) => {
   const { data: product, isLoading, isError } = usePublicProductById(productId);
 
   // Extract first image from product attachments
-  const firstImageUrl = product?.attachments?.uploads?.[0]?.url || undefined;
+  const firstImageUrl = firstProductAttachmentImageUrl(
+    product?.attachments?.uploads,
+  );
 
   return (
     <div className="w-16 h-16 rounded object-cover bg-gray-100 flex items-center justify-center overflow-hidden">

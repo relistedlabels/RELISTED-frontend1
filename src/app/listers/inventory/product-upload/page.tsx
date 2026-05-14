@@ -10,15 +10,18 @@ import { TagSelector } from "../../components/TagSelector";
 import { ItemDescription } from "../../components/ItemDescription";
 import { SaleTypeSelector } from "../../components/SaleTypeSelector";
 import { AnimatedFormContent } from "../../components/AnimatedFormContent";
+import { useUploader } from "@/context/UploaderContext";
 import { useProductDraftStore } from "@/store/useProductDraftStore";
 
 export default function Page() {
   const reset = useProductDraftStore((state) => state.reset);
+  const { clearUploads } = useUploader();
 
   // Clear store and image previews when creating a new item
   useEffect(() => {
     reset();
-  }, [reset]);
+    clearUploads();
+  }, [reset, clearUploads]);
 
   const path = [
     // { label: "Dashboard", href: "/listers/dashboard" },

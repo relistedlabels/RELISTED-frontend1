@@ -1,13 +1,16 @@
 "use client";
 
 import React from "react";
+import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
 
 /** Admin product rows return Prisma-shaped payloads from GET /api/admin/products/*. */
 export function listingThumbnailUrl(product: {
-  attachments?: { uploads?: { url?: string }[] } | null;
+  attachments?: {
+    uploads?: Array<{ url?: string | null; displayOrder?: number | null }>;
+  } | null;
   image?: string;
 }): string | null {
-  const u = product.attachments?.uploads?.[0]?.url;
+  const u = firstProductAttachmentImageUrl(product.attachments?.uploads);
   if (u) return u;
   if (typeof product.image === "string" && product.image.trim())
     return product.image.trim();
