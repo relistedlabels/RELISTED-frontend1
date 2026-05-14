@@ -5,7 +5,7 @@ import TopListingSection1 from "@/app/home/sections/TopListingSection1";
 import TopListingSection2 from "@/app/home/sections/TopListingSection2";
 import TopListingSection3 from "@/app/home/sections/TopListingSection3";
 
-/** Vacation outfits, then How it works, then vault closet strip, then black tie. */
+/** the vault closet sale, then How it works, then vacation outfits, then black tie. */
 export default function HomeMidSections() {
   return (
     <>

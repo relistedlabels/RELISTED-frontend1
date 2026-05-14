@@ -11,6 +11,7 @@ import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import Link from "next/link";
 import { primaryProductHeroImage } from "@/lib/product/primaryProductHeroImage";
 import { VAULT_CLOSET_DROPS_BROWSE_SHOP_HREF } from "@/lib/nav/vaultClosetDropsShop";
+import { usePublicSiteFeatures } from "@/lib/queries/site/useSiteFeatures";
 
 const vaultClosetDropsSectionTitle = "The Vault Closet Sale";
 
@@ -18,6 +19,13 @@ const browseShopHref = VAULT_CLOSET_DROPS_BROWSE_SHOP_HREF;
 
 const TopListingSection = () => {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const { data: siteFeaturesRes } = usePublicSiteFeatures();
+  const closetShopNavEnabled =
+    siteFeaturesRes?.data?.headerClosetsShopNavEnabled !== false;
+  const browseVaultCtaLabel = closetShopNavEnabled
+    ? "Browse All"
+    : "Available May 15th - May 17th";
+
   const {
     data: products,
     isLoading,
@@ -90,7 +98,7 @@ const TopListingSection = () => {
             href={browseShopHref}
             className="hover:opacity-70 mt-4 border-b font-bold text-sm transition-opacity"
           >
-            Browse All →
+            {closetShopNavEnabled ? `${browseVaultCtaLabel} →` : browseVaultCtaLabel}
           </Link>
         </div>
 
@@ -139,9 +147,13 @@ const TopListingSection = () => {
           <Link
             href={browseShopHref}
             className="inline-flex justify-center items-center bg-black hover:bg-neutral-800 px-8 py-3 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 w-full max-w-md font-medium text-white text-sm tracking-wider transition-colors duration-200"
-            aria-label="Browse all items"
+            aria-label={
+              closetShopNavEnabled
+                ? "Browse all items"
+                : "Vault closet sale availability"
+            }
           >
-            <Paragraph1 className="text-white">Browse All</Paragraph1>
+            <Paragraph1 className="text-white">{browseVaultCtaLabel}</Paragraph1>
           </Link>
         </div>
       </div>
