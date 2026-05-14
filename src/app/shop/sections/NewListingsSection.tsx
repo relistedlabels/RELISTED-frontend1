@@ -28,13 +28,6 @@ export default function NewListingsSection() {
     searchParams.get("title"),
   );
 
-  // Filter out internal / staging lister inventory everywhere (same as search & marketplace).
-  const HIDDEN_CURATOR_ID = "7d172d18-daad-46cd-ab6d-8d8af28c0b16";
-  const visibleProducts = filteredProducts.filter(
-    (product: { curatorId?: string }) =>
-      product.curatorId !== HIDDEN_CURATOR_ID,
-  );
-
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams);
     params.set("page", newPage.toString());
@@ -92,7 +85,7 @@ export default function NewListingsSection() {
         </div>
 
         {/* Product Grid */}
-        {visibleProducts.length === 0 ? (
+        {filteredProducts.length === 0 ? (
           <div className="py-12 text-center">
             <Paragraph1 className="text-gray-600">
               No products found matching your criteria.
@@ -101,7 +94,7 @@ export default function NewListingsSection() {
         ) : (
           <>
             <div className="gap-2 sm:gap-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {visibleProducts.map((product: any) => (
+              {filteredProducts.map((product: any) => (
                 <ProductCard
                   key={product.id}
                   id={product.id}

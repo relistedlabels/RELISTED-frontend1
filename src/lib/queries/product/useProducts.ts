@@ -36,23 +36,7 @@ export const useProducts = (filters?: ProductFilters) =>
     queryKey: ["products", filters],
     queryFn: async () => {
       const response = await productApi.getAll(filters);
-      const closetScope = Boolean(
-        filters?.closetId || filters?.onlyWithCloset,
-      );
-      const filteredProducts = response.data.products.filter((product) => {
-        if (closetScope) {
-          return (
-            product.status === "APPROVED" ||
-            product.status === "AVAILABLE" ||
-            product.status === "RENTED" ||
-            product.status === "SOLD"
-          );
-        }
-        return (
-          product.status === "APPROVED" || product.status === "AVAILABLE"
-        );
-      });
-      return filteredProducts;
+      return response.data.products;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,

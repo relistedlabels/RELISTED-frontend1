@@ -76,23 +76,10 @@ export const useProductsQuery = () => {
         limit: 15,
       });
 
-      const closetScope = Boolean(closetId || onlyWithCloset);
-      const filteredProducts = response.data.products.filter((product) => {
-        if (closetScope) {
-          return (
-            product.status === "APPROVED" ||
-            product.status === "AVAILABLE" ||
-            product.status === "RENTED" ||
-            product.status === "SOLD"
-          );
-        }
-        return (
-          product.status === "APPROVED" || product.status === "AVAILABLE"
-        );
-      });
-
+      // Pagination matches the API: do not drop rows here (that used to hide
+      // RENTED and skew page sizes vs totalPages).
       return {
-        products: filteredProducts,
+        products: response.data.products,
         pagination: response.data.pagination,
       };
     },
