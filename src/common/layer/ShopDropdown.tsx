@@ -225,7 +225,7 @@ const ShopDropdown: React.FC = () => {
                                   brand,
                                   `Shop ${brand} collection`,
                                   {
-                                    key: "brands",
+                                    key: "brand",
                                     value: brand,
                                   },
                                 );
