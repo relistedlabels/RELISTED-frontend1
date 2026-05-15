@@ -31,6 +31,7 @@ import {
 import type {
   DispatchAttemptLog,
   Shipment,
+  ShipmentOrderLineItem,
   ShipmentStatus,
   ShipmentType,
 } from "@/lib/api/shipments";
@@ -42,6 +43,25 @@ import {
   getShipmentStatusLabel,
 } from "@/lib/orders/shipmentAndOrderLabels";
 import { toast } from "sonner";
+import {
+  AdminListingThumb,
+  listingThumbnailUrl,
+} from "@/app/admin/lib/adminListingDisplay";
+
+function shipmentLineItemThumbnailUrl(line: ShipmentOrderLineItem): string | null {
+  if (!line.product) return null;
+  return listingThumbnailUrl(line.product);
+}
+
+function firstShipmentItemThumbnail(shipment: Shipment): string | null {
+  const items = shipment.order?.orderItems;
+  if (!items?.length) return null;
+  for (const line of items) {
+    const url = shipmentLineItemThumbnailUrl(line);
+    if (url) return url;
+  }
+  return null;
+}
 
 const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat("en-NG", {
@@ -199,7 +219,7 @@ export default function ShipmentsPage() {
     <Suspense
       fallback={
         <div className="min-h-screen">
-          <TableSkeleton rows={8} columns={8} />
+          <TableSkeleton rows={8} columns={9} />
         </div>
       }
     >
@@ -491,7 +511,7 @@ function ShipmentsPageInner() {
             </Paragraph1>
           </div>
         ) : (
-          <TableSkeleton rows={6} columns={8} />
+          <TableSkeleton rows={6} columns={9} />
         )
       ) : (
         <>
@@ -500,6 +520,11 @@ function ShipmentsPageInner() {
               <table className="w-full">
                 <thead>
                   <tr className="bg-gray-50 border-gray-200 border-b">
+                    <th className="px-6 py-4 text-left">
+                      <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
+                        Item
+                      </Paragraph1>
+                    </th>
                     <th className="px-6 py-4 text-left">
                       <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                         Reference
@@ -546,12 +571,27 @@ function ShipmentsPageInner() {
                   {shipments.map((shipment) => {
                     const StatusIcon = getStatusIcon(shipment.status);
                     const humanOrderId = shipment.order?.orderId ?? "—";
+                    const itemThumb = firstShipmentItemThumbnail(shipment);
+                    const firstItemName =
+                      shipment.order?.orderItems?.[0]?.product?.name ?? "Item";
                     return (
                       <tr
                         key={shipment.id}
                         className="hover:bg-gray-50 border-gray-100 border-b transition cursor-pointer"
                         onClick={() => handleViewDetails(shipment)}
                       >
+                        <td className="px-6 py-4">
+                          <div
+                            className="w-12 h-12 shrink-0"
+                            title={firstItemName}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <AdminListingThumb
+                              url={itemThumb}
+                              alt={firstItemName}
+                            />
+                          </div>
+                        </td>
                         <td className="px-6 py-4">
                           <span title={shipment.id}>
                             <Paragraph1 className="font-medium text-gray-900 text-sm">
@@ -832,12 +872,22 @@ function ShipmentsPageInner() {
                 displayShipment.order.orderItems.length > 0 && (
                   <div>
                     <Paragraph1 className="mb-2 text-gray-500 text-xs">Items in this shipment</Paragraph1>
-                    <ul className="space-y-1 bg-gray-50 p-3 border border-gray-100 rounded-lg text-gray-800 text-sm list-disc list-inside">
-                      {displayShipment.order.orderItems.map((line) => (
-                        <li key={line.id ?? line.product?.name}>
-                          {line.product?.name ?? "Item"}
-                        </li>
-                      ))}
+                    <ul className="space-y-2 bg-gray-50 p-3 border border-gray-100 rounded-lg">
+                      {displayShipment.order.orderItems.map((line) => {
+                        const name = line.product?.name ?? "Item";
+                        const thumb = shipmentLineItemThumbnailUrl(line);
+                        return (
+                          <li
+                            key={line.id ?? name}
+                            className="flex items-center gap-3 text-gray-800 text-sm"
+                          >
+                            <div className="w-14 h-14 shrink-0">
+                              <AdminListingThumb url={thumb} alt={name} />
+                            </div>
+                            <span className="font-medium text-gray-900">{name}</span>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 )}
