@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { X, ArrowLeft, Copy, RotateCcw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
@@ -41,6 +41,8 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
     number | null
   >(null);
   const [countdown, setCountdown] = useState(0);
+  /** Same as checkout WalletTopUpForm: avoid forcing the verification modal open after the user closes it. */
+  const verificationModalDismissedRef = useRef(false);
 
   // useProfile() returns the profile object directly (not { profile })
   const virtualAccount = profileResponse?.virtualAccount;
@@ -63,8 +65,9 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
 
     setIsVerified(satisfiesFundWallet);
     if (satisfiesFundWallet) {
+      verificationModalDismissedRef.current = false;
       setIsVerificationModalOpen(false);
-    } else {
+    } else if (!verificationModalDismissedRef.current) {
       setIsVerificationModalOpen(true);
     }
   }, [
@@ -243,7 +246,11 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
 
                   {!verificationSubmittedAt && (
                     <button
-                      onClick={() => setIsVerificationModalOpen(true)}
+                      type="button"
+                      onClick={() => {
+                        verificationModalDismissedRef.current = false;
+                        setIsVerificationModalOpen(true);
+                      }}
                       className="bg-black hover:bg-gray-900 px-4 py-2 rounded-lg w-full font-semibold text-white text-sm transition"
                     >
                       Verify Identity
@@ -258,7 +265,7 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
                 </div>
               )}
 
-              {isVerified && !isLoading ? (
+              {isVerified && !isLoading && virtualAccount?.vaNumber ? (
                 <div className="space-y-6">
                   {/* Virtual Account Card */}
                   <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 border border-blue-300 rounded-lg">
@@ -381,19 +388,23 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
                     </button>
                   </div>
                 </div>
-              ) : (
-                <div className="bg-red-50 p-4 border border-red-300 rounded-lg">
-                  <Paragraph1 className="text-red-800 text-sm">
-                    Virtual account not found. Please contact support.
+              ) : isVerified && !isLoading && !virtualAccount?.vaNumber ? (
+                <div className="bg-amber-50 p-4 border border-amber-300 rounded-lg">
+                  <Paragraph1 className="text-amber-900 text-sm">
+                    You are verified, but a virtual account number is not available
+                    yet. Try refreshing the page or contact support if this continues.
                   </Paragraph1>
                 </div>
-              )}
+              ) : null}
             </div>
 
             {/* Verification Modal */}
             <VerificationModal
               isOpen={isVerificationModalOpen}
-              onClose={() => setIsVerificationModalOpen(false)}
+              onClose={() => {
+                verificationModalDismissedRef.current = true;
+                setIsVerificationModalOpen(false);
+              }}
               onVerified={handleVerificationComplete}
               currentBvn={profileResponse?.bvn || ""}
               currentNin={profileResponse?.nin}
