@@ -16,7 +16,16 @@ export type ShipmentType = "OUTBOUND" | "RETURN" | "RESALE";
 /** List view (`GET /shipments`) — partial `order`. Detail (`GET /shipments/:id`) adds `id`, `orderItems`. */
 export interface ShipmentOrderLineItem {
   id?: string;
-  product?: { name: string | null } | null;
+  product?: {
+    name: string | null;
+    attachments?: {
+      uploads?: Array<{
+        id?: string;
+        url?: string | null;
+        displayOrder?: number | null;
+      }>;
+    } | null;
+  } | null;
 }
 
 export interface ShipmentOrderSummary {
