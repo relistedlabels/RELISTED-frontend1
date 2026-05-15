@@ -5,6 +5,26 @@
 export const VAULT_CLOSET_SALE_START = new Date(2026, 4, 15, 10, 0, 0);
 export const VAULT_CLOSET_SALE_END = new Date(2026, 4, 17, 23, 59, 59, 999);
 
+/** Earliest delivery / dispatch for closet inventory (Africa/Lagos, 08:00). */
+export const VAULT_CLOSET_EARLIEST_DELIVERY_AT = new Date(
+  "2026-05-18T08:00:00+01:00",
+);
+
+/** Lagos calendar date (YYYY-MM-DD) for earliest closet delivery. */
+export function getClosetEarliestDeliveryLagosYmd(): string {
+  return "2026-05-18";
+}
+
+export function lagosYmdMax(a: string, b: string): string {
+  return a >= b ? a : b;
+}
+
+/** Dispatch anchor for closet products: now, but not before earliest delivery. */
+export function closetDispatchAnchorDate(now: number = Date.now()): Date {
+  const floor = VAULT_CLOSET_EARLIEST_DELIVERY_AT.getTime();
+  return new Date(Math.max(now, floor));
+}
+
 /** True while the banner should show (through end of last sale day). */
 export function isVaultClosetSaleBannerVisible(now: number = Date.now()) {
   return now <= VAULT_CLOSET_SALE_END.getTime();

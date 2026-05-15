@@ -34,9 +34,13 @@ import type {
 import { buildDispatchWindowContexts } from "@/lib/checkout/dispatchWindows";
 import { usePublicSiteFeatures } from "@/lib/queries/site/useSiteFeatures";
 import {
+  closetDispatchAnchorDate,
+  getClosetEarliestDeliveryLagosYmd,
+  lagosYmdMax,
   publicProductHasCloset,
   VAULT_CLOSET_SHOP_OFF_PRIMARY_CTA,
 } from "@/lib/vaultClosetSaleDates";
+import { getTodayInLagos } from "@/lib/checkout/dispatchWindows";
 
 interface UserProfileProps {
   name: string;
@@ -134,17 +138,26 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
     }
   }, [favoritesData, product]);
 
+  const isClosetProduct = Boolean(product && publicProductHasCloset(product));
+
   const dispatchContexts = useMemo<DispatchWindowContext[]>(() => {
     if (!product) return [];
+    const minDate = isClosetProduct
+      ? lagosYmdMax(getTodayInLagos(), getClosetEarliestDeliveryLagosYmd())
+      : undefined;
     return buildDispatchWindowContexts([
       {
         type: "RESALE",
-        baseDate: new Date(),
+        baseDate: isClosetProduct ? closetDispatchAnchorDate() : new Date(),
+        minDate,
         allowDateChange: true,
         allowRollForward: true,
+        baseDateReason: isClosetProduct
+          ? "Earliest delivery is Monday 18 May"
+          : undefined,
       },
     ]);
-  }, [product]);
+  }, [product, isClosetProduct]);
 
   useEffect(() => {
     if (dispatchContexts.length === 0) {

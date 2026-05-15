@@ -54,12 +54,14 @@ const Calendar = ({
   startDate,
   setStartDate,
   unavailableDays = [],
+  minSelectableLagosYmd,
 }: {
   selectedDuration: number;
   customDays: number;
   startDate: Date;
   setStartDate: (date: Date) => void;
   unavailableDays?: number[];
+  minSelectableLagosYmd?: string;
 }) => {
   const [currentDate, setCurrentDate] = useState(startDate);
 
@@ -87,8 +89,15 @@ const Calendar = ({
   const isUnavailable = (day: number) =>
     typeof day === "number" && unavailableDays.includes(day);
 
+  const isBeforeMinSelectable = (day: number) => {
+    if (typeof day !== "number" || !minSelectableLagosYmd) return false;
+    const cellYmd = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    return cellYmd < minSelectableLagosYmd;
+  };
+
   const isClickDisabledDay = (day: number) =>
-    typeof day === "number" && isUnavailable(day);
+    typeof day === "number" &&
+    (isUnavailable(day) || isBeforeMinSelectable(day));
 
   // Function to determine if a day is part of the selected range
   const isSelectedRange = (day: number) => {
@@ -199,6 +208,8 @@ interface RentalDurationSelectorProps {
   onChangeRentalDays?: (days: number, startDate?: Date) => void;
   /** Lagos YYYY-MM-DD: when the current pick is before this, snap highlight forward (no greyed-out grid). */
   suggestedStartLagosYmd?: string;
+  /** Lagos YYYY-MM-DD: earliest selectable start (e.g. Vault Closet delivery floor). */
+  minSelectableLagosYmd?: string;
 }
 
 const RentalDurationSelector = ({
@@ -208,6 +219,7 @@ const RentalDurationSelector = ({
   collateralPrice,
   onChangeRentalDays,
   suggestedStartLagosYmd,
+  minSelectableLagosYmd,
 }: RentalDurationSelectorProps) => {
   const [selectedDuration, setSelectedDuration] = useState<number | "custom">(
     3,
@@ -377,6 +389,7 @@ const RentalDurationSelector = ({
         startDate={startDate}
         setStartDate={setStartDate}
         unavailableDays={[]}
+        minSelectableLagosYmd={minSelectableLagosYmd}
       />
 
       {/* Legends */}
