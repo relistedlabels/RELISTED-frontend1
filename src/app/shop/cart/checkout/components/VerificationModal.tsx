@@ -81,7 +81,8 @@ export default function VerificationModal({
       // 2. Upload ID document via POST /api/renters/profile/verifications/id-document
       const idFormData = new FormData();
       idFormData.append("idDocument", idFile);
-      idFormData.append("idType", "national_id");
+      // Backend only accepts NIN, PASSPORT, or DRIVERS_LICENSE (see renters.service uploadIdDocument).
+      idFormData.append("idType", "NIN");
       promises.push(uploadIdDocMutation.mutateAsync(idFormData));
 
       // Wait for both to complete
@@ -95,7 +96,9 @@ export default function VerificationModal({
       onClose();
     } catch (err) {
       console.error("Verification error:", err);
-      setError("Submission failed. Please try again.");
+      const message =
+        err instanceof Error ? err.message : "Submission failed. Please try again.";
+      setError(message);
       setStep("input");
     } finally {
       setIsSubmitting(false);
