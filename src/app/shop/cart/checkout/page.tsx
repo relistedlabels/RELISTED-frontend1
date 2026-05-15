@@ -25,12 +25,19 @@ import {
   formatLagosDate,
   formatWindowRange,
   getLagosDateString,
+  getTodayInLagos,
   addDaysToDateString,
   type ShipmentDispatchType,
 } from "@/lib/checkout/dispatchWindows";
 import type { DispatchWindowContext } from "@/lib/checkout/dispatchWindows";
 import { useDispatchScheduleClock } from "@/lib/checkout/useDispatchScheduleClock";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import {
+  closetDispatchAnchorDate,
+  getClosetEarliestDeliveryLagosYmd,
+  lagosYmdMax,
+  publicProductHasCloset,
+} from "@/lib/vaultClosetSaleDates";
 
 const RETURN_PICKUP_SUMMARY_DEBOUNCE_MS = 1000;
 
@@ -61,6 +68,15 @@ function pickResaleWindowFromCheckoutItem(item: unknown): ResaleWindow | undefin
   const w2 = rrs?.[0]?.selectedWindows?.resaleWindow;
   if (w2?.start && w2?.end) return { start: w2.start, end: w2.end };
   return undefined;
+}
+
+function checkoutItemHasCloset(item: unknown): boolean {
+  if (!item || typeof item !== "object") return false;
+  const o = item as Record<string, unknown>;
+  const detail = o.productDetail ?? o.product;
+  return publicProductHasCloset(
+    detail as { closetId?: string | null; closet?: { id: string } | null },
+  );
 }
 
 /** Earliest scheduled window start in a shipment bucket (for chronological ordering on checkout). */
@@ -452,6 +468,10 @@ export default function CheckoutPage() {
 
     if (resaleItems.length > 0) {
       const savedResaleWindow = pickResaleWindowFromCheckoutItem(resaleItems[0]);
+      const hasClosetResale = resaleItems.some(checkoutItemHasCloset);
+      const closetResaleMinYmd = hasClosetResale
+        ? lagosYmdMax(getTodayInLagos(), getClosetEarliestDeliveryLagosYmd())
+        : undefined;
 
       let resaleSuggested: DerivedDispatchWindow;
       if (savedResaleWindow) {
@@ -464,11 +484,15 @@ export default function CheckoutPage() {
           rolledForwardDays: 0,
         };
       } else {
-        const now = new Date();
-        resaleSuggested = deriveDefaultDispatchWindow(now, {
+        const anchor = hasClosetResale ? closetDispatchAnchorDate() : new Date();
+        resaleSuggested = deriveDefaultDispatchWindow(anchor, {
           allowRollForward: true,
         });
       }
+
+      const resaleMinDate = closetResaleMinYmd
+        ? lagosYmdMax(resaleSuggested.scheduledDate, closetResaleMinYmd)
+        : resaleSuggested.scheduledDate;
 
       const outboundWin = outboundDerived?.window;
       const resaleWin = resaleSuggested.window;
@@ -488,11 +512,13 @@ export default function CheckoutPage() {
             baseDateLabel: formatLagosDate(savedResaleWindow.start, {
               includeWeekday: true,
             }),
-            baseDateReason: "",
+            baseDateReason: hasClosetResale
+              ? "Earliest delivery is Monday 18 May"
+              : "",
             helperText: "",
             suggested: resaleSuggested,
             allowDateChange: true,
-            minDate: resaleSuggested.scheduledDate,
+            minDate: resaleMinDate,
             defaultSummary: formatWindowRange(savedResaleWindow),
           });
         } else {
@@ -503,11 +529,13 @@ export default function CheckoutPage() {
             baseDateLabel: formatLagosDate(resaleSuggested.window.start, {
               includeWeekday: true,
             }),
-            baseDateReason: "",
+            baseDateReason: hasClosetResale
+              ? "Earliest delivery is Monday 18 May"
+              : "",
             helperText: "",
             suggested: resaleSuggested,
             allowDateChange: true,
-            minDate: resaleSuggested.scheduledDate,
+            minDate: resaleMinDate,
             defaultSummary: formatWindowRange(resaleSuggested.window),
           });
         }
