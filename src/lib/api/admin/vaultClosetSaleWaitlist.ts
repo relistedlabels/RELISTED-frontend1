@@ -12,6 +12,12 @@ export type AdminVaultClosetSaleWaitlistResponse = {
   data: {
     total: number;
     entries: VaultClosetSaleWaitlistEntry[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      pages: number;
+    };
   };
 };
 
@@ -28,9 +34,9 @@ export type AdminVaultClosetSaleNotifyResponse = {
 };
 
 export const adminVaultClosetSaleWaitlistApi = {
-  list: () =>
+  list: (page = 1, limit = 20) =>
     apiFetch<AdminVaultClosetSaleWaitlistResponse>(
-      "/api/admin/closets/vault-closet-sale/waitlist",
+      `/api/admin/closets/vault-closet-sale/waitlist?page=${page}&limit=${limit}`,
     ),
 
   notifyAll: () =>

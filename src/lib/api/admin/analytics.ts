@@ -1,7 +1,7 @@
 import { apiFetch } from "../http";
 
 export interface AnalyticsStats {
-  totalRentals: number;
+  totalOrders: number;
   totalRevenue: number;
   activeListings: number;
   activeDisputes: number;
