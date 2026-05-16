@@ -49,19 +49,22 @@ export const useOrders = (params: OrderListParams = {}) =>
     ],
     queryFn: () =>
       params.status === "Returns"
-        ? ordersApi.getReturns()
+        ? ordersApi.getReturns({
+            page: params.page,
+            limit: params.limit,
+          })
         : ordersApi.getOrders(params),
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
 
-export const useOrderById = (orderId: string) =>
+export const useOrderById = (orderId: string, enabled = true) =>
   useQuery({
     queryKey: ["admin", "orders", orderId],
     queryFn: () => ordersApi.getOrderById(orderId),
     staleTime: 5 * 60 * 1000,
     retry: 1,
-    enabled: !!orderId,
+    enabled: !!orderId && enabled,
   });
 
 export const useOrderStats = (timeframe: string = "all_time") =>

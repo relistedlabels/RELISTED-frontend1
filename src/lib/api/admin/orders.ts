@@ -3,15 +3,15 @@ import { apiFetch } from "../http";
 export interface Order {
   id: string;
   date: string;
-  curator?: {
+  lister?: {
     id: string;
     name: string;
-    avatar?: string;
+    avatar?: string | null;
   };
-  dresser?: {
+  renter?: {
     id: string;
     name: string;
-    avatar?: string;
+    avatar?: string | null;
   };
   items: number;
   total: number;
@@ -49,29 +49,43 @@ export interface Return {
   itemName: string;
 }
 
-export interface OrderDetail extends Order {
-  curator: {
-    id: string;
-    name: string;
-    email: string;
-    phone: string;
-    avatar: string;
-  };
-  dresser: {
-    id: string;
-    name: string;
-    email: string;
-    phone: string;
-    avatar: string;
-  };
+export interface OrderPerson {
+  id: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  avatar?: string | null;
+}
+
+export interface OrderDetail {
+  id: string;
+  internalId?: string;
+  date: string;
+  listingType?: string;
+  status: string;
+  items: number;
+  total: number;
+  returnDue?: string | null;
+  paymentReference?: string | null;
+  trackingNumber?: string | null;
+  externalTrackingUrl?: string | null;
+  lister?: OrderPerson | null;
+  listers?: OrderPerson[];
+  renter?: OrderPerson | null;
   items_details: Array<{
     id: string;
+    productId?: string;
     name: string;
-    image: string;
-    brand: string;
+    image?: string | null;
+    brand?: string | null;
     dailyPrice: number;
     rentalDays: number;
+    cleaningFee?: number;
+    collateralFee?: number;
+    listingType?: string | null;
     subtotal: number;
+    rentalStart?: string | null;
+    rentalEnd?: string | null;
   }>;
   shipping: {
     rentalPeriod: string;
@@ -84,16 +98,19 @@ export interface OrderDetail extends Order {
     subtotal: number;
     serviceFee: number;
     deliveryFee: number;
-    insurance: number;
+    vat: number;
     total: number;
     paymentStatus: string;
   };
-  activity: Array<{
+  escrows?: Array<{
     id: string;
-    title: string;
-    timestamp: string;
-    actor: string;
-    type: string;
+    status: string;
+    lockedAmount: number;
+    rentalAmount: number;
+    resaleAmount?: number | null;
+    collateralAmount: number;
+    cleaningFee: number;
+    listerId: string;
   }>;
 }
 
@@ -191,7 +208,7 @@ export const ordersApi = {
       method: "GET",
     }),
 
-  getReturns: () =>
+  getReturns: (params: Pick<OrderListParams, 'page' | 'limit'> = {}) =>
     apiFetch<{
       success: true;
       data: {
@@ -203,5 +220,5 @@ export const ordersApi = {
           pages: number;
         };
       };
-    }>(`/api/admin/orders/returns`),
+    }>(`/api/admin/orders/returns?${buildOrderParams(params)}`),
 };

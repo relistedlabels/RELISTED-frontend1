@@ -67,7 +67,7 @@ const getNavItems = (): NavItem[] => [
   },
   {
     id: "wallet",
-    label: "Wallet & Escrow",
+    label: "Payments & balances",
     icon: HiOutlineCreditCard,
     getHref: (id) => `/admin/${id}/wallets`,
   },

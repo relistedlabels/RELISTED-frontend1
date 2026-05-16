@@ -2,7 +2,7 @@
 // ENDPOINTS: GET /api/admin/wallets/stats, GET /api/admin/wallets, GET /api/admin/wallets/escrow, GET /api/admin/wallets/transactions, POST /api/admin/wallets/export, GET /api/admin/wallets/withdrawal-requests, PUT /api/admin/wallets/withdrawals/:withdrawalId/status (APPROVED | REJECTED), PUT /api/admin/wallets/withdrawal-requests/:id/paid, GET /api/admin/wallets/payouts
 
 import { useState } from "react";
-import { Search, Download, FileText } from "lucide-react";
+import { Search, Download, FileText, Receipt } from "lucide-react";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import { MetricCardsSkeleton } from "@/common/ui/SkeletonLoaders";
 import {
@@ -24,12 +24,12 @@ interface MetricData {
   label: string;
   value: string;
   currency: string;
-  percentage: number;
   icon: React.ReactNode;
+  detail?: string;
 }
 
 const walletIcon = (
-  <div className="bg-black text-white p-2 rounded">
+  <div className="bg-black p-2 rounded text-white">
     <svg
       width="20"
       height="20"
@@ -44,7 +44,7 @@ const walletIcon = (
 );
 
 const escrowIcon = (
-  <div className="bg-black text-white p-2 rounded">
+  <div className="bg-black p-2 rounded text-white">
     <svg
       width="20"
       height="20"
@@ -58,8 +58,8 @@ const escrowIcon = (
   </div>
 );
 
-const curatorIcon = (
-  <div className="bg-black text-white p-2 rounded">
+const listerPayoutIcon = (
+  <div className="bg-black p-2 rounded text-white">
     <svg
       width="20"
       height="20"
@@ -67,13 +67,20 @@ const curatorIcon = (
       fill="none"
       stroke="currentColor"
     >
-      <polyline points="23 6 13 16 8 11"></polyline>
+      <polyline points="6 14 10 10 14 14" />
+      <path d="M10 4v6" />
     </svg>
   </div>
 );
 
+const taxIcon = (
+  <div className="bg-black p-2 rounded text-white">
+    <Receipt width={20} height={20} strokeWidth={1.75} />
+  </div>
+);
+
 const earningsIcon = (
-  <div className="bg-black text-white p-2 rounded">
+  <div className="bg-black p-2 rounded text-white">
     <svg
       width="20"
       height="20"
@@ -129,58 +136,73 @@ export default function WalletsPage() {
   };
 
   // Build metrics from real data
-  const metrics: MetricData[] = statsQuery.data?.data
+  const stats = statsQuery.data?.data;
+  const releasedToListers =
+    stats?.totalReleasedToListers ?? stats?.totalReleasedToCurators ?? 0;
+
+  const metrics: MetricData[] = stats
     ? [
         {
           label: "Total Wallet Balance",
-          value: formatCurrency(statsQuery.data.data.totalWalletBalance || 0),
+          value: formatCurrency(stats.totalWalletBalance || 0),
           currency: "₦",
-          percentage: 0,
           icon: walletIcon,
         },
         {
-          label: "Total Escrow (Locked)",
-          value: formatCurrency(statsQuery.data.data.totalEscrowBalance || 0),
+          label: "Order escrow (locked)",
+          value: formatCurrency(stats.totalEscrowBalance || 0),
           currency: "₦",
-          percentage: 0,
           icon: escrowIcon,
+          detail: "Lister payouts held until order release",
         },
         {
-          label: "Released to Curators",
+          label: "Wallet collateral (locked)",
+          value: formatCurrency(stats.totalCollateralLocked ?? 0),
+          currency: "₦",
+          icon: walletIcon,
+          detail:
+            "Renter security deposits held on wallets until return is confirmed.",
+        },
+        {
+          label: "Released to Listers",
+          value: formatCurrency(releasedToListers),
+          currency: "₦",
+          icon: listerPayoutIcon,
+        },
+        {
+          label: "Platform Earnings (Service Fees)",
           value: formatCurrency(
-            statsQuery.data.data.totalReleasedToCurators || 0,
+            stats.platformServiceFees ?? stats.platformEarnings ?? 0,
           ),
           currency: "₦",
-          percentage: 0,
-          icon: curatorIcon,
+          icon: earningsIcon,
         },
         {
-          label: "Platform Earnings",
-          value: formatCurrency(statsQuery.data.data.platformEarnings || 0),
+          label: "Total VAT (Orders)",
+          value: formatCurrency(stats.totalVatCollected ?? 0),
           currency: "₦",
-          percentage: 0,
-          icon: earningsIcon,
+          icon: taxIcon,
         },
       ]
     : [];
 
   return (
-    <div className="min-h-screen ">
+    <div className="min-h-screen">
       {/* Header Section */}
       <div className="mb-8">
-        <Paragraph2 className="text-gray-900 mb-2">
-          Wallet & Escrow Management
+        <Paragraph2 className="mb-2 text-gray-900">
+          Payments & balances
         </Paragraph2>
         <Paragraph1 className="text-gray-600">
-          Monitor transactions, manage locked funds, and track platform
-          earnings.
+          Balances, held funds, withdrawals, lister payouts, and platform
+          revenue.
         </Paragraph1>
       </div>
 
       {/* Metrics Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="gap-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 mb-8">
         {statsQuery.isPending ? (
-          <MetricCardsSkeleton count={4} />
+          <MetricCardsSkeleton count={6} />
         ) : (
           metrics.map((metric, index) => (
             <MetricsCard key={index} {...metric} />
@@ -189,25 +211,25 @@ export default function WalletsPage() {
       </div>
 
       {/* Filters and Export Section */}
-      <div className="bg-white rounded-lg py-4 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+      <div className="flex md:flex-row flex-col justify-between items-center gap-4 bg-white mb-6 py-4 rounded-lg">
         <div className="flex-1 w-full md:w-auto">
           <div className="relative">
-            <Search className="absolute left-3 top-3 text-gray-400" size={20} />
+            <Search className="top-3 left-3 absolute text-gray-400" size={20} />
             <input
               type="text"
               placeholder="Search by user name or order ID"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="py-2 pr-4 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black w-full"
             />
           </div>
         </div>
-        <div className="flex- hidden gap-2 w-full md:w-auto">
-          <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">
+        <div className="hidden flex- gap-2 w-full md:w-auto">
+          <button className="flex items-center gap-2 hover:bg-gray-50 px-4 py-2 border border-gray-300 rounded-lg font-medium">
             <Download size={18} />
             Export CSV
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">
+          <button className="flex items-center gap-2 hover:bg-gray-50 px-4 py-2 border border-gray-300 rounded-lg font-medium">
             <FileText size={18} />
             Export PDF
           </button>
@@ -216,7 +238,7 @@ export default function WalletsPage() {
 
       {/* Tabs Section */}
       <div className="bg-white rounded-lg overflow-hidden">
-        <div className="flex border-b border-gray-200">
+        <div className="flex border-gray-200 border-b">
           <TabButton
             active={activeTab === "wallet"}
             onClick={() => setActiveTab("wallet")}

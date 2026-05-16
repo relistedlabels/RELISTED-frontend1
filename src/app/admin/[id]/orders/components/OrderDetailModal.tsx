@@ -5,37 +5,25 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
-import OrderSection1 from "./OrderSection1";
 import OrderSection2 from "./OrderSection2";
 import OrderSection3 from "./OrderSection3";
-import OrderSection4 from "./OrderSection4";
+import OrderItemsSection from "./OrderItemsSection";
+import { useOrderById } from "@/lib/queries/admin/useOrders";
+import type { OrderDetail } from "@/lib/api/admin/orders";
 import { getAdminOrderStatusLabel } from "@/lib/orders/shipmentAndOrderLabels";
-
-interface Order {
-  id: string;
-  date: string;
-  curator: {
-    id: string;
-    name: string;
-    avatar: string;
-  };
-  dresser: {
-    id: string;
-    name: string;
-    avatar: string;
-  };
-  items: number;
-  total: number;
-  status: string;
-  returnDue: string | null;
-  paymentReference: string | null;
-}
 
 interface OrderDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  order?: Order;
+  orderId: string | null;
 }
+
+const formatMoney = (amount: number): string =>
+  new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: 0,
+  }).format(amount);
 
 const getStatusColor = (statusLabel: string) => {
   switch (statusLabel) {
@@ -68,15 +56,19 @@ const getStatusColor = (statusLabel: string) => {
 export default function OrderDetailModal({
   isOpen,
   onClose,
-  order,
+  orderId,
 }: OrderDetailModalProps) {
-  if (!order) return null;
-  const statusLabel = getAdminOrderStatusLabel(order.status);
+  const { data, isLoading, isError } = useOrderById(orderId ?? "", isOpen);
+  const order = data?.data as OrderDetail | undefined;
+
+  const statusLabel = order
+    ? getAdminOrderStatusLabel(order.status)
+    : "—";
+
   return (
     <AnimatePresence>
-      {isOpen && (
+      {isOpen && orderId && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -85,7 +77,6 @@ export default function OrderDetailModal({
             className="z-40 fixed inset-0 bg-black/50"
           />
 
-          {/* Modal */}
           <motion.div
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
@@ -93,51 +84,119 @@ export default function OrderDetailModal({
             transition={{ duration: 0.3, ease: "easeOut" }}
             className="top-0 right-0 bottom-0 z-50 fixed bg-white shadow-lg w-full md:w-3/4 overflow-y-auto"
           >
-            {/* Header */}
             <div className="top-0 sticky bg-white p-6 border-gray-200 border-b">
               <div className="flex justify-between items-start gap-4">
                 <button
                   onClick={onClose}
-                  className="flex-shrink-0 -ml-1 p-1 text-gray-400 hover:text-gray-600 transition"
+                  className="shrink-0 -ml-1 p-1 text-gray-400 hover:text-gray-600 transition"
                 >
                   <X size={20} />
                 </button>
 
                 <div className="flex-1">
                   <Paragraph3 className="mb-1 font-bold text-gray-900 text-lg">
-                    Order Details
+                    Order details
                   </Paragraph3>
                   <Paragraph1 className="text-gray-500 text-xs">
-                    {order.id} • {order.date}
+                    {orderId}
+                    {order?.date ? ` · ${order.date}` : ""}
                   </Paragraph1>
                 </div>
 
-                <span
-                  className={`inline-block px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${getStatusColor(
-                    statusLabel,
-                  )}`}
-                >
-                  {statusLabel}
-                </span>
+                {!isLoading && order && (
+                  <span
+                    className={`inline-block px-3 py-1 rounded-full text-xs font-semibold shrink-0 ${getStatusColor(
+                      statusLabel,
+                    )}`}
+                  >
+                    {statusLabel}
+                  </span>
+                )}
               </div>
             </div>
 
-            {/* Content - 4 Sections */}
             <div className="space-y-6 p-6">
-              {/* Section 2: Order Details with Curator & Dresser */}
-              <OrderSection2
-                returnDue={order.returnDue || "N/A"}
-                paymentReference={order.paymentReference || "N/A"}
-                curatorName={order.curator.name}
-                curatorAvatar={order.curator.avatar}
-                dresserName={order.dresser.name}
-                dresserAvatar={order.dresser.avatar}
-              />
-              {/* Section 3: Payment Breakdown */}
-              <OrderSection3 />
+              {isLoading && (
+                <Paragraph1 className="text-gray-500 text-sm">
+                  Loading order details…
+                </Paragraph1>
+              )}
 
-              {/* Section 4: Activity Log */}
-              {/* <OrderSection4 /> */}
+              {isError && (
+                <Paragraph1 className="text-red-600 text-sm">
+                  Could not load order details. Check the API and try again.
+                </Paragraph1>
+              )}
+
+              {order && !isLoading && (
+                <>
+                  <OrderSection2
+                    listingType={order.listingType}
+                    returnDue={order.returnDue ?? "N/A"}
+                    paymentReference={order.paymentReference ?? "N/A"}
+                    paymentStatus={order.payment?.paymentStatus}
+                    trackingNumber={order.trackingNumber}
+                    rentalPeriod={order.shipping?.rentalPeriod}
+                    lister={{
+                      name: order.lister?.name ?? "N/A",
+                      email: order.lister?.email,
+                      phone: order.lister?.phone,
+                      avatar: order.lister?.avatar,
+                    }}
+                    additionalListers={(order.listers ?? [])
+                      .filter((l) => l && l.id !== order.lister?.id)
+                      .map((l) => ({
+                        name: l!.name,
+                        email: l!.email,
+                        phone: l!.phone,
+                        avatar: l!.avatar,
+                      }))}
+                    renter={{
+                      name: order.renter?.name ?? "N/A",
+                      email: order.renter?.email,
+                      phone: order.renter?.phone,
+                      avatar: order.renter?.avatar,
+                    }}
+                  />
+
+                  <OrderItemsSection
+                    items={order.items_details ?? []}
+                    formatMoney={formatMoney}
+                  />
+
+                  <OrderSection3
+                    subtotal={formatMoney(order.payment?.subtotal ?? 0)}
+                    serviceFee={formatMoney(order.payment?.serviceFee ?? 0)}
+                    deliveryFee={formatMoney(order.payment?.deliveryFee ?? 0)}
+                    vat={formatMoney(order.payment?.vat ?? 0)}
+                    total={formatMoney(order.payment?.total ?? order.total ?? 0)}
+                    paymentStatus={order.payment?.paymentStatus}
+                  />
+
+                  {(order.escrows?.length ?? 0) > 0 && (
+                    <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                      <Paragraph3 className="text-base font-bold text-gray-900 mb-4">
+                        Escrow
+                      </Paragraph3>
+                      <div className="space-y-3">
+                        {order.escrows!.map((e) => (
+                          <div
+                            key={e.id}
+                            className="flex justify-between items-center text-sm"
+                          >
+                            <Paragraph1 className="text-gray-600">
+                              {e.status.replace(/_/g, " ")}
+                            </Paragraph1>
+                            <Paragraph1 className="font-medium text-gray-900">
+                              {formatMoney(e.lockedAmount)} locked
+                            </Paragraph1>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </motion.div>
         </>

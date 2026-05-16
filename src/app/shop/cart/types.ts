@@ -14,4 +14,6 @@ export type CartCheckoutLine = {
   rentalRequestId?: string;
   isResale?: boolean;
   listerId?: string;
+  /** From cart product or PDP merge; used to hide re-request when inventory is gone. */
+  productStatus?: string;
 };

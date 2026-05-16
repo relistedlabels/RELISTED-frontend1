@@ -24,6 +24,25 @@ const formatCurrency = (amount: number): string => {
   return amount.toLocaleString("en-NG");
 };
 
+function mergedProductStatus(line: CartCheckoutLine): string {
+  const fromLine = (line.productStatus ?? "").trim();
+  if (fromLine) return fromLine;
+  const pd = line.productDetail as { status?: string } | undefined;
+  return (pd?.status ?? "").trim();
+}
+
+/** Backend also blocks POST /cart-items/:id/request when the item is sold or rented out. */
+function inventoryBlockMessage(line: CartCheckoutLine): string | null {
+  const ps = mergedProductStatus(line).toUpperCase();
+  if (ps === "SOLD") {
+    return "This item has been sold. Remove it from your cart if you no longer need it.";
+  }
+  if (ps === "RENTED") {
+    return "This item is rented out right now. Remove it from your cart or try again later.";
+  }
+  return null;
+}
+
 function isLineRentalPendingWithoutTimer(
   status?: string,
   expiresAt?: string,
@@ -315,6 +334,7 @@ export default function CheckoutProductList({
             item.status,
             item.expiresAt,
           );
+          const reRequestInventoryMessage = inventoryBlockMessage(item);
 
           return (
             <div
@@ -394,16 +414,22 @@ export default function CheckoutProductList({
                         <span className="bg-orange-100 px-2 py-0.5 border border-orange-200 rounded-full font-semibold text-orange-800 text-xs">
                           Approval expired
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => handleReRequest(item.cartItemId)}
-                          disabled={reRequestMutation.isPending}
-                          className="ml-1 font-semibold text-blue-600 hover:text-blue-800 text-xs underline disabled:opacity-50"
-                        >
-                          {reRequestMutation.isPending
-                            ? "Requesting..."
-                            : "Request approval again"}
-                        </button>
+                        {reRequestInventoryMessage ? (
+                          <span className="ml-1 text-gray-600 text-xs leading-snug max-w-56">
+                            {reRequestInventoryMessage}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleReRequest(item.cartItemId)}
+                            disabled={reRequestMutation.isPending}
+                            className="ml-1 font-semibold text-blue-600 hover:text-blue-800 text-xs underline disabled:opacity-50"
+                          >
+                            {reRequestMutation.isPending
+                              ? "Requesting..."
+                              : "Request approval again"}
+                          </button>
+                        )}
                       </div>
                     )}
                     {item.isResale && isApproved && (
@@ -427,16 +453,22 @@ export default function CheckoutProductList({
                         <span className="bg-orange-100 px-2 py-0.5 border border-orange-200 rounded-full font-semibold text-orange-800 text-xs">
                           Approval expired
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => handleReRequest(item.cartItemId)}
-                          disabled={reRequestMutation.isPending}
-                          className="ml-1 font-semibold text-blue-600 hover:text-blue-800 text-xs underline disabled:opacity-50"
-                        >
-                          {reRequestMutation.isPending
-                            ? "Requesting..."
-                            : "Request approval again"}
-                        </button>
+                        {reRequestInventoryMessage ? (
+                          <span className="ml-1 text-gray-600 text-xs leading-snug max-w-56">
+                            {reRequestInventoryMessage}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleReRequest(item.cartItemId)}
+                            disabled={reRequestMutation.isPending}
+                            className="ml-1 font-semibold text-blue-600 hover:text-blue-800 text-xs underline disabled:opacity-50"
+                          >
+                            {reRequestMutation.isPending
+                              ? "Requesting..."
+                              : "Request approval again"}
+                          </button>
+                        )}
                       </div>
                     )}
                     {!item.isResale && isApproved && (
@@ -563,16 +595,22 @@ export default function CheckoutProductList({
                             <Trash2 size={16} />
                           </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => handleReRequest(item.cartItemId)}
-                          disabled={reRequestMutation.isPending}
-                          className="font-semibold text-blue-600 hover:text-blue-800 text-xs underline disabled:opacity-50"
-                        >
-                          {reRequestMutation.isPending
-                            ? "Requesting..."
-                            : "Request approval again"}
-                        </button>
+                        {reRequestInventoryMessage ? (
+                          <span className="text-gray-600 text-xs text-center max-w-48 leading-snug">
+                            {reRequestInventoryMessage}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleReRequest(item.cartItemId)}
+                            disabled={reRequestMutation.isPending}
+                            className="font-semibold text-blue-600 hover:text-blue-800 text-xs underline disabled:opacity-50"
+                          >
+                            {reRequestMutation.isPending
+                              ? "Requesting..."
+                              : "Request approval again"}
+                          </button>
+                        )}
                       </div>
                     )}
                     {item.isResale && isApproved && (
@@ -607,16 +645,22 @@ export default function CheckoutProductList({
                             <Trash2 size={16} />
                           </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => handleReRequest(item.cartItemId)}
-                          disabled={reRequestMutation.isPending}
-                          className="font-semibold text-blue-600 hover:text-blue-800 text-xs underline disabled:opacity-50"
-                        >
-                          {reRequestMutation.isPending
-                            ? "Requesting..."
-                            : "Request approval again"}
-                        </button>
+                        {reRequestInventoryMessage ? (
+                          <span className="text-gray-600 text-xs text-center max-w-48 leading-snug">
+                            {reRequestInventoryMessage}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleReRequest(item.cartItemId)}
+                            disabled={reRequestMutation.isPending}
+                            className="font-semibold text-blue-600 hover:text-blue-800 text-xs underline disabled:opacity-50"
+                          >
+                            {reRequestMutation.isPending
+                              ? "Requesting..."
+                              : "Request approval again"}
+                          </button>
+                        )}
                       </div>
                     )}
                     {!item.isResale && isApproved && (

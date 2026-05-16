@@ -5,6 +5,7 @@ export interface AnalyticsStats {
   totalRevenue: number;
   activeListings: number;
   activeDisputes: number;
+  /** Renters or listers with order, availability request, or app visit in the period */
   activeUsers: number;
   avgDeliveryTime: number;
   timeframe: string;

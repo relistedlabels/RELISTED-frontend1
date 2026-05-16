@@ -63,7 +63,7 @@ function WalletRow({
     switch (role?.toLowerCase()) {
       case "lister":
         return "bg-blue-100 text-blue-700";
-      case "dresser":
+      case "renter":
         return "bg-purple-100 text-purple-700";
       case "admin":
         return "bg-red-100 text-red-700";
@@ -197,7 +197,7 @@ export default function WalletTable({ searchQuery }: WalletTableProps) {
             </th>
             <th className="px-6 py-4 text-left">
               <Paragraph1 className="text-gray-900 font-semibold">
-                LOCKED
+                COLLATERAL
               </Paragraph1>
             </th>
             <th className="px-6 py-4 text-left">

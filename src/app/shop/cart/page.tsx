@@ -82,6 +82,13 @@ export default function CartPage() {
             ) || 0;
           const productName =
             (productDetail as { name?: string })?.name ?? embedded?.name;
+          const productStatusRaw =
+            (productDetail as { status?: string })?.status ?? embedded?.status;
+          const productStatus =
+            typeof productStatusRaw === "string" &&
+            productStatusRaw.trim() !== ""
+              ? productStatusRaw.trim()
+              : undefined;
           const listerId =
             (productDetail as { listerId?: string })?.listerId ??
             embedded?.listerId;
@@ -116,6 +123,7 @@ export default function CartPage() {
                 productName,
                 isResale,
                 listerId: listerId as string | undefined,
+                productStatus,
               } satisfies CartCheckoutLine,
             ];
           }
@@ -144,6 +152,7 @@ export default function CartPage() {
               rentalRequestId: merged.rentalRequestId,
               isResale,
               listerId: listerId as string | undefined,
+              productStatus,
             } satisfies CartCheckoutLine,
           ];
         }),

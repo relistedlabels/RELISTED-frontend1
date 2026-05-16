@@ -57,14 +57,15 @@ const RentalsRevenueTrend = ({
     );
   }
 
-  // Map API response to expected format
-  const chartData = Array.isArray(data.data)
-    ? data.data.map((item) => ({
-        month: item.month,
-        rentals: item.rentals,
-        revenue: item.revenue,
-      }))
-    : data.data.trend || [];
+  const chartData = (
+    Array.isArray(data.data)
+      ? data.data
+      : (data.data.trend ?? [])
+  ).map((item) => ({
+    month: item.month,
+    rentals: item.rentals ?? 0,
+    revenue: item.revenue ?? 0,
+  }));
 
   return (
     <div className="bg-[#111827] p-6 rounded-xl h-full text-white">
@@ -118,7 +119,7 @@ const RentalsRevenueTrend = ({
             stroke="#D97706"
             strokeWidth={2}
             dot={{ r: 4, fill: "#D97706", strokeWidth: 2 }}
-            name="Revenue (Millions)"
+            name="Revenue (₦)"
           />
         </ComposedChart>
       </ResponsiveContainer>

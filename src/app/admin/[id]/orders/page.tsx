@@ -1,8 +1,7 @@
 // ENDPOINTS: GET /api/admin/orders, GET /api/admin/orders/stats, GET /api/admin/orders/:orderId, PUT /api/admin/orders/:orderId/status, POST /api/admin/orders/:orderId/cancel, GET /api/admin/orders/export
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { useRouter, useParams } from "next/navigation";
+import React, { useState, useMemo, useEffect } from "react";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import { TableSkeleton, StatCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import {
@@ -64,19 +63,29 @@ const getStatusColor = (statusLabel: string) => {
   }
 };
 
-export default function OrdersPage() {
-  const router = useRouter();
-  const params = useParams();
-  const adminId = params.id as string;
+const ORDERS_PAGE_SIZE = 20;
 
-  const [activeTab, setActiveTab] = useState("all");
+export default function OrdersPage() {
+  const [activeTab, setActiveTab] = useState("active");
   const [statusFilter, setStatusFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedReturn, setSelectedReturn] = useState<any>(null);
   const [isReturnDetailModalOpen, setIsReturnDetailModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 350);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, statusFilter, debouncedSearch]);
+
+  const isReturnsView = statusFilter === "Returns";
 
   // Fetch orders and stats
   const {
@@ -84,9 +93,11 @@ export default function OrdersPage() {
     isLoading: ordersLoading,
     isError: ordersError,
   } = useOrders({
-    tab: activeTab,
+    page: currentPage,
+    limit: ORDERS_PAGE_SIZE,
+    tab: isReturnsView ? undefined : activeTab,
     status: adminOrderListStatusToApiParam(statusFilter),
-    search: searchQuery || undefined,
+    search: debouncedSearch || undefined,
   }) as any;
 
   const {
@@ -110,9 +121,20 @@ export default function OrdersPage() {
   // Get pagination info
   const pagination = useMemo(() => {
     return (
-      ordersData?.data?.pagination || { total: 0, page: 1, limit: 20, pages: 1 }
+      ordersData?.data?.pagination || {
+        total: 0,
+        page: 1,
+        limit: ORDERS_PAGE_SIZE,
+        pages: 1,
+      }
     );
   }, [ordersData]);
+
+  useEffect(() => {
+    if (pagination.pages > 0 && currentPage > pagination.pages) {
+      setCurrentPage(pagination.pages);
+    }
+  }, [pagination.pages, currentPage]);
 
   // Build stat cards from real data
   const statCards = useMemo(() => {
@@ -183,7 +205,7 @@ export default function OrdersPage() {
               </svg>
               <input
                 type="text"
-                placeholder="Search orders, dressers, curators..."
+                placeholder="Search orders, renters, listers..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1 bg-transparent outline-none text-gray-900 text-sm placeholder-gray-500"
@@ -250,7 +272,12 @@ export default function OrdersPage() {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  if (statusFilter === "Returns") {
+                    setStatusFilter("All");
+                  }
+                }}
                 className={`py-4 font-medium text-sm border-b-2 transition-colors ${
                   activeTab === tab.id
                     ? "text-gray-900 border-black"
@@ -404,10 +431,9 @@ export default function OrdersPage() {
                           if (statusFilter === "Returns") {
                             setSelectedReturn(item);
                             setIsReturnDetailModalOpen(true);
-                          } else if (item.curator?.id) {
-                            router.push(
-                              `/admin/${adminId}/users/${item.curator.id}`,
-                            );
+                          } else {
+                            setSelectedOrderId(item.id);
+                            setIsDetailModalOpen(true);
                           }
                         }}
                         className={`border-b border-gray-100 ${
@@ -509,18 +535,18 @@ export default function OrdersPage() {
                                     </Paragraph1>
                                   </td>
                                   <td className="px-6 py-4">
-                                    {item.curator ? (
+                                    {item.lister ? (
                                       <div className="flex items-center gap-2">
                                         <img
                                           src={
-                                            item.curator.avatar ||
-                                            getDefaultAvatar(item.curator.name)
+                                            item.lister.avatar ||
+                                            getDefaultAvatar(item.lister.name)
                                           }
-                                          alt={item.curator.name}
+                                          alt={item.lister.name}
                                           className="rounded-full w-8 h-8 object-cover"
                                         />
                                         <Paragraph1 className="text-gray-900 text-sm">
-                                          {item.curator.name}
+                                          {item.lister.name}
                                         </Paragraph1>
                                       </div>
                                     ) : (
@@ -530,18 +556,18 @@ export default function OrdersPage() {
                                     )}
                                   </td>
                                   <td className="px-6 py-4">
-                                    {item.dresser ? (
+                                    {item.renter ? (
                                       <div className="flex items-center gap-2">
                                         <img
                                           src={
-                                            item.dresser.avatar ||
-                                            getDefaultAvatar(item.dresser.name)
+                                            item.renter.avatar ||
+                                            getDefaultAvatar(item.renter.name)
                                           }
-                                          alt={item.dresser.name}
+                                          alt={item.renter.name}
                                           className="rounded-full w-8 h-8 object-cover"
                                         />
                                         <Paragraph1 className="text-gray-900 text-sm">
-                                          {item.dresser.name}
+                                          {item.renter.name}
                                         </Paragraph1>
                                       </div>
                                     ) : (
@@ -587,7 +613,7 @@ export default function OrdersPage() {
             </div>
 
             {/* Pagination */}
-            {pagination.pages > 1 && (
+            {pagination.total > 0 && (
               <div className="flex justify-between items-center bg-white mt-6 px-6 py-4 border border-gray-200 rounded-lg">
                 <Paragraph1 className="text-gray-600 text-sm">
                   Showing {(currentPage - 1) * pagination.limit + 1} to{" "}
@@ -640,8 +666,11 @@ export default function OrdersPage() {
 
       <OrderDetailModal
         isOpen={isDetailModalOpen}
-        onClose={() => setIsDetailModalOpen(false)}
-        order={selectedOrder || undefined}
+        onClose={() => {
+          setIsDetailModalOpen(false);
+          setSelectedOrderId(null);
+        }}
+        orderId={selectedOrderId}
       />
 
       <ReturnDetailModal
