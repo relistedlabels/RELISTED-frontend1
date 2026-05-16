@@ -69,11 +69,17 @@ const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
     return num.toLocaleString();
   };
 
-  /** API returns avg delivery time in days (dispatch → delivered). */
-  const formatAvgDeliveryMinutes = (days: number | undefined | null) => {
-    if (typeof days !== "number" || isNaN(days) || days <= 0) return "0 min";
-    const minutes = Math.round(days * 24 * 60);
-    return `${minutes.toLocaleString()} min`;
+  const formatAvgDeliveryMinutes = (
+    days: number | string | undefined | null,
+    minutesFromApi?: number | string | null,
+  ) => {
+    const minutes = Number(minutesFromApi);
+    if (Number.isFinite(minutes) && minutes > 0) {
+      return `${Math.round(minutes).toLocaleString()} min`;
+    }
+    const d = Number(days);
+    if (!Number.isFinite(d) || d <= 0) return "0 min";
+    return `${Math.round(d * 24 * 60).toLocaleString()} min`;
   };
 
   return (
@@ -112,7 +118,10 @@ const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
 
       <StatCard
         icon={<HiOutlineClock className="w-5 h-5" />}
-        value={formatAvgDeliveryMinutes(stats.avgDeliveryTime)}
+        value={formatAvgDeliveryMinutes(
+          stats.avgDeliveryTime,
+          stats.avgDeliveryTimeMinutes,
+        )}
         label="Avg delivery time"
         detail="Dispatch to delivered"
       />

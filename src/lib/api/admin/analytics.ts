@@ -8,14 +8,19 @@ export interface AnalyticsStats {
   /** Renters or listers with order, availability request, or app visit in the period */
   activeUsers: number;
   avgDeliveryTime: number;
+  /** Dispatch → delivered, whole minutes (preferred for display). */
+  avgDeliveryTimeMinutes?: number;
+  deliveryTimeSampleSize?: number;
   timeframe: string;
   period: string;
 }
 
 export interface TrendData {
   month: string;
-  rentals: number;
+  orders: number;
   revenue: number;
+  /** @deprecated Use orders */
+  rentals?: number;
 }
 
 export interface CategoryBreakdown {

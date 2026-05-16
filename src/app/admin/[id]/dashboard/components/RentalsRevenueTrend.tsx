@@ -63,7 +63,7 @@ const RentalsRevenueTrend = ({
       : (data.data.trend ?? [])
   ).map((item) => ({
     month: item.month,
-    rentals: item.rentals ?? 0,
+    orders: item.orders ?? item.rentals ?? 0,
     revenue: item.revenue ?? 0,
   }));
 
@@ -105,12 +105,12 @@ const RentalsRevenueTrend = ({
           <Area
             yAxisId="left"
             type="monotone"
-            dataKey="rentals"
+            dataKey="orders"
             fill="#374151"
             stroke="#fff"
             strokeWidth={2}
             dot={{ r: 4, fill: "#fff", strokeWidth: 2 }}
-            name="Rentals"
+            name="Orders"
           />
           <Line
             yAxisId="right"
