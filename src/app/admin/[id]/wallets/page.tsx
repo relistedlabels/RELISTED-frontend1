@@ -140,6 +140,13 @@ export default function WalletsPage() {
   const releasedToListers =
     stats?.totalReleasedToListers ?? stats?.totalReleasedToCurators ?? 0;
 
+  const sinceLaunch = stats?.orderAnalyticsCutoff
+    ? `Since ${new Date(stats.orderAnalyticsCutoff).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`
+    : "Since official launch";
+  const excludesTest = stats?.excludesTestAccounts
+    ? "Excludes staging curator and test inboxes"
+    : undefined;
+
   const metrics: MetricData[] = stats
     ? [
         {
@@ -147,13 +154,14 @@ export default function WalletsPage() {
           value: formatCurrency(stats.totalWalletBalance || 0),
           currency: "₦",
           icon: walletIcon,
+          detail: excludesTest,
         },
         {
           label: "Order escrow (locked)",
           value: formatCurrency(stats.totalEscrowBalance || 0),
           currency: "₦",
           icon: escrowIcon,
-          detail: "Lister payouts held until order release",
+          detail: `${sinceLaunch}. Lister payouts held until order release.`,
         },
         {
           label: "Wallet collateral (locked)",
@@ -161,6 +169,7 @@ export default function WalletsPage() {
           currency: "₦",
           icon: walletIcon,
           detail:
+            excludesTest ??
             "Renter security deposits held on wallets until return is confirmed.",
         },
         {
@@ -168,6 +177,7 @@ export default function WalletsPage() {
           value: formatCurrency(releasedToListers),
           currency: "₦",
           icon: listerPayoutIcon,
+          detail: sinceLaunch,
         },
         {
           label: "Platform Earnings (Service Fees)",
@@ -176,12 +186,14 @@ export default function WalletsPage() {
           ),
           currency: "₦",
           icon: earningsIcon,
+          detail: sinceLaunch,
         },
         {
           label: "Total VAT (Orders)",
           value: formatCurrency(stats.totalVatCollected ?? 0),
           currency: "₦",
           icon: taxIcon,
+          detail: sinceLaunch,
         },
       ]
     : [];

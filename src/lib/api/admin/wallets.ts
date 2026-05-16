@@ -15,6 +15,8 @@ export interface WalletStats {
   platformServiceFees?: number;
   /** Sum of order VAT fields for the same order set, NGN. */
   totalVatCollected?: number;
+  orderAnalyticsCutoff?: string;
+  excludesTestAccounts?: boolean;
 }
 
 export interface Wallet {
