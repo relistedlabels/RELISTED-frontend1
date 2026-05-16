@@ -45,7 +45,7 @@ export default function OrderSection1() {
           </div>
           <Paragraph1 className="text-xs text-blue-700">
             Refunds can only be processed via the Disputes panel. If a refund is
-            needed, the dresser or curator must file a dispute first.
+            needed, the renter or lister must file a dispute first.
           </Paragraph1>
         </div>
       </div>

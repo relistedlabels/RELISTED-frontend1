@@ -1,7 +1,7 @@
 "use client";
 // ENDPOINTS: GET /api/admin/wallets/escrow?search=&page=1&limit=20, PUT /api/admin/wallets/escrow/:escrowId/release
 
-import React, { useMemo } from "react";
+import React from "react";
 import { Lock, Unlock, AlertCircle } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useEscrows } from "@/lib/queries/admin/useWallets";
@@ -53,6 +53,10 @@ function EscrowRow({ escrow }: { escrow: any }) {
         return <AlertCircle size={16} className="text-yellow-600" />;
       case "released":
         return <Unlock size={16} className="text-green-600" />;
+      case "partially_released":
+        return <AlertCircle size={16} className="text-amber-600" />;
+      case "refunded":
+        return <Unlock size={16} className="text-gray-600" />;
       default:
         return null;
     }
@@ -66,6 +70,10 @@ function EscrowRow({ escrow }: { escrow: any }) {
         return "bg-yellow-100 text-yellow-700";
       case "released":
         return "bg-green-100 text-green-700";
+      case "partially_released":
+        return "bg-amber-100 text-amber-800";
+      case "refunded":
+        return "bg-gray-100 text-gray-700";
       default:
         return "bg-gray-100 text-gray-700";
     }
@@ -79,6 +87,10 @@ function EscrowRow({ escrow }: { escrow: any }) {
         return "Pending";
       case "released":
         return "Released";
+      case "partially_released":
+        return "Partially released";
+      case "refunded":
+        return "Refunded";
       default:
         return status;
     }
@@ -110,18 +122,18 @@ function EscrowRow({ escrow }: { escrow: any }) {
             </div>
           )}
           <Paragraph1 className="font-medium text-gray-900">
-            {escrow.userName || "N/A"}
+            {escrow.renterName ?? escrow.userName ?? "N/A"}
           </Paragraph1>
         </div>
       </td>
       <td className="px-6 py-4">
         <Paragraph1 className="text-gray-900 font-medium">
-          {escrow.curatorName || "N/A"}
+          {escrow.listerName ?? escrow.curatorName ?? "N/A"}
         </Paragraph1>
       </td>
       <td className="px-6 py-4">
         <Paragraph1 className="font-semibold text-orange-600">
-          {formatCurrency(escrow.amount || 0)}
+          {formatCurrency(escrow.lockedAmount ?? escrow.amount ?? 0)}
         </Paragraph1>
       </td>
       <td className="px-6 py-4">
@@ -154,17 +166,12 @@ function EscrowRow({ escrow }: { escrow: any }) {
 }
 
 export default function EscrowTable({ searchQuery }: EscrowTableProps) {
-  const escrowsQuery = useEscrows({ search: searchQuery });
+  const escrowsQuery = useEscrows({
+    search: searchQuery,
+    limit: 100,
+  });
 
-  const filteredData = useMemo(() => {
-    if (!escrowsQuery.data?.data?.escrows) return [];
-    return escrowsQuery.data.data.escrows.filter(
-      (item: any) =>
-        (item.userName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.orderId?.toLowerCase().includes(searchQuery.toLowerCase())) ??
-        false,
-    );
-  }, [escrowsQuery.data, searchQuery]);
+  const escrows = escrowsQuery.data?.data?.escrows ?? [];
 
   return (
     <div className="overflow-x-auto">
@@ -183,12 +190,12 @@ export default function EscrowTable({ searchQuery }: EscrowTableProps) {
             </th>
             <th className="px-6 py-4 text-left">
               <Paragraph1 className="text-gray-900 font-semibold">
-                DRESSER
+                RENTER
               </Paragraph1>
             </th>
             <th className="px-6 py-4 text-left">
               <Paragraph1 className="text-gray-900 font-semibold">
-                CURATOR
+                LISTER
               </Paragraph1>
             </th>
             <th className="px-6 py-4 text-left">
@@ -225,14 +232,14 @@ export default function EscrowTable({ searchQuery }: EscrowTableProps) {
                 <p className="text-gray-500">Loading escrow records...</p>
               </td>
             </tr>
-          ) : filteredData.length === 0 ? (
+          ) : escrows.length === 0 ? (
             <tr>
               <td colSpan={9} className="px-6 py-8 text-center">
                 <p className="text-gray-500">No escrow records found</p>
               </td>
             </tr>
           ) : (
-            filteredData.map((escrow: any) => (
+            escrows.map((escrow: any) => (
               <EscrowRow key={escrow.id} escrow={escrow} />
             ))
           )}

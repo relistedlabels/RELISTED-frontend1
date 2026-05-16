@@ -23,7 +23,7 @@ export default function CancelOrderModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Cancel Order"
-      description={`Are you sure you want to cancel order ${orderId}? This will notify both the curator and dresser.`}
+      description={`Are you sure you want to cancel order ${orderId}? This will notify both the lister and renter.`}
       actionType="negative"
       actionLabel="Cancel Order"
       cancelLabel="Go Back"

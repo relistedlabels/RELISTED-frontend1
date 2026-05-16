@@ -2,9 +2,19 @@ import { apiFetch } from "../http";
 
 export interface WalletStats {
   totalWalletBalance: number;
+  /** Funds in order escrow records (lister payouts), not wallet collateral */
   totalEscrowBalance: number;
-  totalReleasedToCurators: number;
+  /** Sum of wallet.collateralBalance (renter deposits), matches wallet table column */
+  totalCollateralLocked?: number;
+  /** Credits to lister wallets from escrow or dispute resolution (NGN). */
+  totalReleasedToListers: number;
+  /** @deprecated Same as totalReleasedToListers; older API name. */
+  totalReleasedToCurators?: number;
+  /** Sum of order service fees (non-cancelled / non-rejected orders), NGN. */
   platformEarnings: number;
+  platformServiceFees?: number;
+  /** Sum of order VAT fields for the same order set, NGN. */
+  totalVatCollected?: number;
 }
 
 export interface Wallet {

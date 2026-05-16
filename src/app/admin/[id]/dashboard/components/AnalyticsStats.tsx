@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   HiOutlineUsers,
   HiOutlineScale,
@@ -52,27 +52,20 @@ const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
   }
 
   const stats = data.data;
-  const mockLine = [
-    { value: 10 },
-    { value: 18 },
-    { value: 14 },
-    { value: 22 },
-    { value: 20 },
-    { value: 28 },
-  ];
 
-  const formatRevenue = (amount: number) => {
+  const formatRevenue = (amount: number | undefined | null) => {
+    if (typeof amount !== "number" || isNaN(amount)) return "₦0";
     if (amount >= 1000000) {
       return `₦${(amount / 1000000).toFixed(1)}M`;
     }
     if (amount >= 1000) {
       return `₦${(amount / 1000).toFixed(1)}K`;
     }
-    return `₦${amount}`;
+    return `₦${amount.toLocaleString()}`;
   };
 
   const formatNumber = (num: number | undefined | null) => {
-    if (typeof num !== "number" || isNaN(num)) return "-";
+    if (typeof num !== "number" || isNaN(num)) return "0";
     return num.toLocaleString();
   };
 
@@ -81,51 +74,38 @@ const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
       <StatCard
         icon={<HiOutlineChartBar className="w-5 h-5" />}
         value={formatNumber(stats.totalRentals)}
-        label="Total Rentals"
-        change="+12.5%"
-        data={mockLine}
+        label="Total rentals"
       />
 
       <StatCard
         icon={<HiOutlineCurrencyDollar className="w-5 h-5" />}
         value={formatRevenue(stats.totalRevenue)}
-        label="Total Revenue"
-        change="+18.2%"
-        data={mockLine}
+        label="Total revenue"
       />
 
       <StatCard
         icon={<HiOutlineBuildingStorefront className="w-5 h-5" />}
         value={formatNumber(stats.activeListings)}
-        label="Active Listings"
-        change="+5.3%"
-        data={mockLine}
+        label="Active listings"
       />
 
       <StatCard
         icon={<HiOutlineScale className="w-5 h-5" />}
         value={(stats.activeDisputes ?? 0).toString()}
-        label="Active Disputes"
-        change="-8.1%"
-        positive={false}
-        data={mockLine}
+        label="Active disputes"
       />
 
       <StatCard
         icon={<HiOutlineUsers className="w-5 h-5" />}
         value={formatNumber(stats.activeUsers)}
-        label="Active Users"
-        change="+22.4%"
-        data={mockLine}
+        label="Active users"
+        detail="Order, availability request, or app visit in this period"
       />
 
       <StatCard
         icon={<HiOutlineClock className="w-5 h-5" />}
         value={`${(stats.avgDeliveryTime ?? 0).toFixed(1)} days`}
-        label="Avg Delivery Time"
-        change="-0.5 days"
-        positive={false}
-        data={mockLine}
+        label="Avg delivery time"
       />
     </div>
   );

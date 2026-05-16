@@ -79,8 +79,8 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
     onSuccess: (_, intent) => {
       toast.success(
         intent === "rerequest"
-          ? "The renter was nudged to send a new request from their cart."
-          : "The renter was notified that you are ready for a new request.",
+          ? "The renter was emailed and notified in-app to send a new request from their cart."
+          : "The renter was emailed and notified in-app that you are ready for a new request.",
       );
     },
     onError: (err: Error & { message?: string }) => {
@@ -335,11 +335,12 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
           !showRejectMessage && (
             <div className="flex flex-col gap-3 mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
               <Paragraph1 className="font-bold text-black text-sm">
-                Nudge the renter (in-app)
+                Nudge the renter
               </Paragraph1>
               <Paragraph3 className="text-gray-600 text-xs">
-                If you missed their window, send a short reminder so they know
-                whether to try again or that you are ready for a new request.
+                If you missed their window, send a short reminder by email and
+                in-app so they know whether to try again or that you are ready
+                for a new request.
               </Paragraph3>
               <div className="flex flex-col sm:flex-row gap-2">
                 <button
