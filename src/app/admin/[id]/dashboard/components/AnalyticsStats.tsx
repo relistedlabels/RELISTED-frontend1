@@ -6,7 +6,7 @@ import {
   HiOutlineClock,
   HiOutlineBuildingStorefront,
   HiOutlineCurrencyDollar,
-  HiOutlineChartBar,
+  HiOutlineShoppingBag,
 } from "react-icons/hi2";
 import { useAnalyticsStats } from "@/lib/queries/admin/useAnalytics";
 import { StatCardSkeleton } from "@/common/ui/SkeletonLoaders";
@@ -33,7 +33,7 @@ const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-3 mt-6 lg:grid-cols-3 gap-4">
+      <div className="gap-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 mt-6">
         {[...Array(6)].map((_, i) => (
           <StatCardSkeleton key={i} />
         ))}
@@ -43,7 +43,7 @@ const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
 
   if (error || !data?.data) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-3 mt-6 lg:grid-cols-3 gap-4">
+      <div className="gap-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 mt-6">
         {[...Array(6)].map((_, i) => (
           <StatCardSkeleton key={i} />
         ))}
@@ -69,12 +69,20 @@ const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
     return num.toLocaleString();
   };
 
+  /** API returns avg delivery time in days (dispatch → delivered). */
+  const formatAvgDeliveryMinutes = (days: number | undefined | null) => {
+    if (typeof days !== "number" || isNaN(days) || days <= 0) return "0 min";
+    const minutes = Math.round(days * 24 * 60);
+    return `${minutes.toLocaleString()} min`;
+  };
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 mt-6 lg:grid-cols-3 gap-4">
+    <div className="gap-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 mt-6">
       <StatCard
-        icon={<HiOutlineChartBar className="w-5 h-5" />}
-        value={formatNumber(stats.totalRentals)}
-        label="Total rentals"
+        icon={<HiOutlineShoppingBag className="w-5 h-5" />}
+        value={formatNumber(stats.totalOrders)}
+        label="Successful orders"
+        detail="Since official launch"
       />
 
       <StatCard
@@ -104,8 +112,9 @@ const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
 
       <StatCard
         icon={<HiOutlineClock className="w-5 h-5" />}
-        value={`${(stats.avgDeliveryTime ?? 0).toFixed(1)} days`}
+        value={formatAvgDeliveryMinutes(stats.avgDeliveryTime)}
         label="Avg delivery time"
+        detail="Dispatch to delivered"
       />
     </div>
   );
