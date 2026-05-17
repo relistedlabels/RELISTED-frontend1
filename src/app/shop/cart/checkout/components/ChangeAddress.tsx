@@ -13,11 +13,13 @@ import { useUpdateProfile } from "@/lib/mutations/user/useUpdateProfile";
 interface ChangeAddressPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  onAddressSaved?: () => void;
 }
 
 const ChangeAddressPanel: React.FC<ChangeAddressPanelProps> = ({
   isOpen,
   onClose,
+  onAddressSaved,
 }) => {
   const updateProfile = useUpdateProfile();
 
@@ -80,7 +82,7 @@ const ChangeAddressPanel: React.FC<ChangeAddressPanelProps> = ({
 
             {/* Content */}
             <div className="grow pt-4 pb-20">
-              <AddressInputForm />
+              <AddressInputForm onAddressSaved={onAddressSaved} />
             </div>
           </motion.div>
         </motion.div>
@@ -92,7 +94,11 @@ const ChangeAddressPanel: React.FC<ChangeAddressPanelProps> = ({
 // --------------------
 // Main Component
 // --------------------
-const ChangeAddress: React.FC = () => {
+interface ChangeAddressProps {
+  onAddressSaved?: () => void;
+}
+
+const ChangeAddress: React.FC<ChangeAddressProps> = ({ onAddressSaved }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -106,7 +112,11 @@ const ChangeAddress: React.FC = () => {
       </button>
 
       {/* Address Modal */}
-      <ChangeAddressPanel isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <ChangeAddressPanel
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        onAddressSaved={onAddressSaved}
+      />
     </>
   );
 };

@@ -1,6 +1,6 @@
 // ENDPOINTS: GET /shipments, GET /shipments/:id, GET /shipments/:id/tracking,
 // GET /orders/:orderId/shipments, POST /shipments/:id/cancel, POST /shipments/:id/redispatch,
-// POST /shipments/:id/manual-complete (Relisted dispatch)
+// POST /shipments/:id/manual-complete, POST /shipments/:id/manual-delivered (Relisted dispatch)
 
 "use client";
 
@@ -27,6 +27,7 @@ import {
   useCancelShipment,
   useRedispatchShipment,
   useCompleteManualShipment,
+  useMarkManualShipmentDelivered,
 } from "@/lib/queries/admin/useShipments";
 import type {
   DispatchAttemptLog,
@@ -305,6 +306,7 @@ function ShipmentsPageInner() {
   const cancelShipment = useCancelShipment();
   const redispatchShipment = useRedispatchShipment();
   const completeManualShipment = useCompleteManualShipment();
+  const markManualDelivered = useMarkManualShipmentDelivered();
 
   const detailQuery = useShipment(selectedShipment?.id ?? "", {
     enabled: Boolean(isDetailModalOpen && selectedShipment?.id),
@@ -389,6 +391,24 @@ function ShipmentsPageInner() {
       setIsDetailModalOpen(false);
     } catch {
       toast.error("Could not complete shipment");
+    }
+  };
+
+  const handleMarkManualDelivered = async () => {
+    if (!displayShipment?.id) return;
+    if (
+      !window.confirm(
+        "Mark this leg as delivered? The order status will update and the buyer can confirm receipt (or auto-complete after the inspection period).",
+      )
+    ) {
+      return;
+    }
+    try {
+      await markManualDelivered.mutateAsync(displayShipment.id);
+      toast.success("Marked as delivered. Order status updated.");
+      await detailQuery.refetch();
+    } catch {
+      toast.error("Could not mark as delivered");
     }
   };
 
@@ -1096,6 +1116,33 @@ function ShipmentsPageInner() {
                       className="bg-gray-900 hover:bg-gray-800 disabled:opacity-50 px-4 py-2 rounded-lg w-full sm:w-auto font-medium text-white text-sm transition"
                     >
                       {completeManualShipment.isPending ? "Saving…" : "Mark dispatched"}
+                    </button>
+                  </div>
+                )}
+
+              {displayShipment.manualFulfillment &&
+                (displayShipment.status === "DISPATCHED" ||
+                  displayShipment.status === "IN_TRANSIT") && (
+                  <div className="space-y-3 pt-2 border-gray-100 border-t">
+                    <Paragraph1 className="font-semibold text-gray-700 text-xs uppercase tracking-wide">
+                      Mark delivered (manual)
+                    </Paragraph1>
+                    <Paragraph1 className="text-gray-600 text-xs leading-relaxed">
+                      Use when the item reached the buyer or renter. This updates
+                      the order to delivered (or active for rentals) and notifies
+                      the customer to confirm receipt where applicable.
+                    </Paragraph1>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void handleMarkManualDelivered();
+                      }}
+                      disabled={markManualDelivered.isPending}
+                      className="bg-emerald-800 hover:bg-emerald-900 disabled:opacity-50 px-4 py-2 rounded-lg w-full sm:w-auto font-medium text-white text-sm transition"
+                    >
+                      {markManualDelivered.isPending
+                        ? "Saving…"
+                        : "Mark delivered"}
                     </button>
                   </div>
                 )}

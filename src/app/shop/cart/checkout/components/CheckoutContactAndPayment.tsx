@@ -17,7 +17,9 @@ import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { toast } from "sonner";
 import {
   canonicalReturnPickupJson,
+  formatShippingQuoteWarningLine,
   type OrderSummaryApiResult,
+  type ShippingQuoteWarning,
   type OutboundShippingBucketQuote,
   type ReturnPickupAddressPayload,
   type ReturnShippingBucketQuote,
@@ -115,10 +117,13 @@ interface CheckoutContactAndPaymentProps {
   checkoutBlockingIssues?: string[];
   /** GET /order/summary failed (shown above shipping so renters know what to do). */
   orderSummaryError?: string | null;
+  /** Optional carrier quote failures (summary still loads with fallback tiers). */
+  shippingQuoteWarnings?: ShippingQuoteWarning[];
   onRefetchOrderSummary?: () => void;
   /** Quote-based dispatch: one optional heading per shipment bucket, then rental/return rows. */
   summaryDispatchPreview?: Array<{
     groupHeading: string | null;
+    listerLocation?: string;
     rows: Array<{ title: string; range: string }>;
   }>;
   isResaleOnly?: boolean;
@@ -131,14 +136,28 @@ const CONTACT_SKELETON_KEYS = [
   "contact-4",
 ];
 const SHIPPING_SKELETON_KEYS = ["shipping-1", "shipping-2", "shipping-3"];
-const SAME_DAY_TIER_KEYWORDS = ["chowdeck", "errandlr", "dellyman", "glovo"];
+const SAME_DAY_TIER_KEYWORDS = [
+  "chowdeck",
+  "errandlr",
+  "dellyman",
+  "glovo",
+  "gokada",
+  "go-kada",
+  "via shipbubble",
+];
 const SAME_DAY_CUTOFF_DISCLAIMER =
   "Orders placed after 11:00am WAT (Lagos time) may be delivered the next day.";
+
+const isShipbubbleShippingTierName = (tierName: string) =>
+  tierName.toLowerCase().includes("via shipbubble");
 
 const isSameDayShippingTierName = (tierName: string) => {
   const normalized = tierName.toLowerCase();
   return SAME_DAY_TIER_KEYWORDS.some((keyword) => normalized.includes(keyword));
 };
+
+const showSameDayCutoffDisclaimer = (tierName: string) =>
+  isSameDayShippingTierName(tierName) && !isShipbubbleShippingTierName(tierName);
 
 // === Skeleton Loader ===
 const ContactSkeleton = () => (
@@ -212,7 +231,31 @@ const ReservationTimer = () => {
 };
 
 // === Delivery Tier Helper Function ===
-const getDeliveryTierDetails = (tierName: string) => {
+const getDeliveryTierDetails = (
+  tierName: string,
+  tierDescription?: string,
+) => {
+  const normalized = tierName.toLowerCase();
+  if (normalized.includes("via shipbubble")) {
+    return {
+      type: tierName,
+      description: "Same-day courier pickup via Shipbubble",
+    };
+  }
+  if (normalized.includes("shipbubble")) {
+    return {
+      type: tierName,
+      description:
+        tierDescription?.trim() ||
+        "Verified address shipping via Shipbubble (courier pickup at sender)",
+    };
+  }
+  if (normalized.includes("chowdeck") && normalized.includes("relay")) {
+    return {
+      type: tierName,
+      description: "On-demand delivery via Chowdeck Relay",
+    };
+  }
   return {
     type: tierName,
     description: "Shipping partner",
@@ -242,6 +285,7 @@ export default function CheckoutContactAndPayment({
   onReturnPickupChange,
   checkoutBlockingIssues = [],
   orderSummaryError = null,
+  shippingQuoteWarnings = [],
   onRefetchOrderSummary,
   summaryDispatchPreview,
   isResaleOnly = false,
@@ -386,25 +430,40 @@ export default function CheckoutContactAndPayment({
     onReturnShippingTierSelected?.(tierName);
   };
 
+  const isRelistedDispatchTierName = (tierName: string) =>
+    tierName.trim().toLowerCase().includes("relisted dispatch");
+
   const renderOutboundTierRadios = (
     tiers: Array<{
       name: string;
       totalShippingCost: number;
       grandTotal: number;
+      description?: string;
     }>,
     selectedName: string,
     radioGroupName: string,
     onPick: (name: string) => void,
-  ) =>
-    [...tiers]
+  ) => {
+    const hasThirdPartyTier = tiers.some(
+      (tier) => !isRelistedDispatchTierName(tier.name),
+    );
+    return [...tiers]
       .filter((tier) => {
-        const isExpress =
-          tier.name.toLowerCase().includes("dhl") ||
-          tier.name.toLowerCase().includes("express");
-        return !isExpress;
+        if (hasThirdPartyTier && isRelistedDispatchTierName(tier.name)) {
+          return false;
+        }
+        // Keep Shipbubble tiers (e.g. "Bubble Express (via Shipbubble)") even when the
+        // courier name contains "express"; only hide legacy DHL/international express rows.
+        if (isShipbubbleShippingTierName(tier.name)) {
+          return true;
+        }
+        const normalized = tier.name.toLowerCase();
+        const isLegacyExpressOption =
+          normalized.includes("dhl") || normalized.includes("express");
+        return !isLegacyExpressOption;
       })
       .map((tier) => {
-        const tierDetails = getDeliveryTierDetails(tier.name);
+        const tierDetails = getDeliveryTierDetails(tier.name, tier.description);
         const isSameDay = isSameDayShippingTierName(tier.name);
         const isSelected = selectedName === tier.name;
         return (
@@ -448,7 +507,7 @@ export default function CheckoutContactAndPayment({
                 <Paragraph1 className="mt-1 text-gray-600 text-xs">
                   {tierDetails.description}
                 </Paragraph1>
-                {isSameDay && (
+                {showSameDayCutoffDisclaimer(tier.name) && (
                   <Paragraph1 className="mt-2 text-amber-700 text-xs">
                     {SAME_DAY_CUTOFF_DISCLAIMER}
                   </Paragraph1>
@@ -464,6 +523,7 @@ export default function CheckoutContactAndPayment({
           </label>
         );
       });
+  };
 
   useEffect(() => {
     if (returnPickupMode === "delivery") {
@@ -620,6 +680,27 @@ export default function CheckoutContactAndPayment({
         </div>
       ) : null}
 
+      {shippingQuoteWarnings.length > 0 ? (
+        <div className="space-y-2 bg-amber-50 p-4 border border-amber-200 rounded-xl">
+          <Paragraph1 className="font-semibold text-amber-950 text-sm">
+            Some shipping options are unavailable
+          </Paragraph1>
+          <ul className="space-y-1.5 list-disc pl-5 text-amber-900 text-sm">
+            {shippingQuoteWarnings.map((w, i) => (
+              <li
+                key={`${w.provider}-${w.leg}-${w.bucketIndex ?? i}-${w.message}`}
+              >
+                {formatShippingQuoteWarningLine(w)}
+              </li>
+            ))}
+          </ul>
+          <Paragraph1 className="text-amber-900 text-xs">
+            You can still checkout using the options shown below. Update your
+            profile phone or address if a carrier rejected them.
+          </Paragraph1>
+        </div>
+      ) : null}
+
       {/* 1. CONTACT Section */}
       <div className="bg-white p-4 border border-gray-100 rounded-xl">
         <Paragraph1 className="mb-3 font-bold text-gray-800 tracking-wider">
@@ -658,7 +739,7 @@ export default function CheckoutContactAndPayment({
               {deliveryAddress}
             </Paragraph1>
           </div>
-          <ChangeAddress />
+          <ChangeAddress onAddressSaved={onRefetchOrderSummary} />
         </div>
         <hr className="mb-3 text-gray-300" />
 
@@ -1060,9 +1141,16 @@ export default function CheckoutContactAndPayment({
                         strokeWidth={2}
                         aria-hidden
                       />
-                      <Paragraph1 className="font-semibold text-gray-900 text-sm leading-snug">
-                        {group.groupHeading}
-                      </Paragraph1>
+                      <div className="min-w-0">
+                        <Paragraph1 className="font-semibold text-gray-900 text-sm leading-snug">
+                          {group.groupHeading}
+                        </Paragraph1>
+                        {group.listerLocation ? (
+                          <Paragraph1 className="mt-0.5 text-gray-600 text-xs leading-snug">
+                            Ships from {group.listerLocation}
+                          </Paragraph1>
+                        ) : null}
+                      </div>
                     </div>
                   ) : null}
                   <div className="divide-y divide-gray-100">
