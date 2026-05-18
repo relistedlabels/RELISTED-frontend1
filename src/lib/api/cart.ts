@@ -109,6 +109,8 @@ export type CheckoutShippingTierRow = {
   name: string;
   totalShippingCost: number;
   grandTotal: number;
+  /** ETA / same-day note from Shipbubble (and similar providers). */
+  description?: string;
 };
 
 /** Per outbound/resale delivery bucket (same `bucketIndex` as `shipmentBuckets`). */
@@ -133,6 +135,9 @@ export type CheckoutShipmentBucket = {
   bucketIndex?: number;
   listerId: string;
   listerName: string;
+  /** Lister pickup city from profile (outbound/resale ship-from). */
+  listerCity?: string;
+  listerState?: string;
   bucketMode: "RENTAL" | "RESALE" | string;
   productIds?: string[];
   outboundDeliveryWindow?: { start: string; end: string } | null;
@@ -142,6 +147,14 @@ export type CheckoutShipmentBucket = {
   returnShippingCost?: number;
   outboundPickupCost?: number;
   returnPickupCost?: number;
+};
+
+export type ShippingQuoteWarning = {
+  provider: string;
+  message: string;
+  leg: "outbound" | "return";
+  bucketIndex?: number;
+  listerName?: string;
 };
 
 export type OrderSummaryPayload = {
@@ -170,6 +183,8 @@ export type OrderSummaryPayload = {
   returnShippingByBucket?: ReturnShippingBucketQuote[];
   listerBreakdowns?: unknown[];
   shipmentBuckets?: CheckoutShipmentBucket[];
+  /** Carrier quote failures (checkout can continue with fallback tiers). */
+  shippingQuoteWarnings?: ShippingQuoteWarning[];
 };
 
 export type OrderSummaryResponse = {
@@ -177,6 +192,25 @@ export type OrderSummaryResponse = {
   message?: string;
   data?: OrderSummaryPayload;
 };
+
+export function formatShippingQuoteWarningLine(
+  warning: ShippingQuoteWarning,
+): string {
+  const providerLabel =
+    warning.provider === "shipbubble"
+      ? "Shipbubble"
+      : warning.provider === "chowdeck_relay"
+        ? "Chowdeck Relay"
+        : warning.provider === "topship"
+          ? "Topship"
+          : warning.provider;
+  const who = warning.listerName?.trim();
+  const leg =
+    warning.leg === "return" ? "return shipping" : "delivery shipping";
+  return who
+    ? `${providerLabel} (${who}, ${leg}): ${warning.message}`
+    : `${providerLabel} (${leg}): ${warning.message}`;
+}
 
 export type OrderPostResponse = {
   success: boolean;

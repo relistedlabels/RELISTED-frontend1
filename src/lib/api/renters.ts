@@ -500,15 +500,20 @@ export const rentersApi = {
       { method: "GET" },
     ),
 
-  /** POST /order/resale/confirm — buyer confirms delivery; releases resale escrow to listers. */
-  confirmResaleDelivery: (orderId: string) =>
+  /** POST /order/resale/confirm — buyer confirms one RESALE shipment; releases that payout only. */
+  confirmResaleDelivery: (orderId: string, shipmentId?: string) =>
     apiFetch<{
       success: boolean;
       message?: string;
-      data?: { orderId: string; status: string };
+      data?: {
+        orderId: string;
+        status: string;
+        shipmentId?: string | null;
+        orderCompleted?: boolean;
+      };
     }>("/order/resale/confirm", {
       method: "POST",
-      body: JSON.stringify({ orderId }),
+      body: JSON.stringify({ orderId, ...(shipmentId ? { shipmentId } : {}) }),
     }),
 
   getOrderProgress: (orderId: string) =>

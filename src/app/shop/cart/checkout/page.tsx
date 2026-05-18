@@ -14,6 +14,7 @@ import {
   type ReturnPickupAddressPayload,
 } from "@/lib/api/cart";
 import { useCheckoutOrderSummary } from "@/lib/queries/order/useCheckoutOrderSummary";
+import { useProfile } from "@/lib/queries/user/useProfile";
 import { approvedRentalsMatchingCurrentCart } from "@/lib/cart/approvedRentalsMatchingCart";
 import type {
   DerivedDispatchWindow,
@@ -157,13 +158,34 @@ export default function CheckoutPage() {
     RETURN_PICKUP_SUMMARY_DEBOUNCE_MS,
   );
 
-  const orderSummaryQuery = useCheckoutOrderSummary(returnPickupForSummary);
+  const { data: profile } = useProfile();
+  const deliveryAddressForSummary = useMemo(
+    () => ({
+      street: profile?.address?.street,
+      city: profile?.address?.city,
+      state: profile?.address?.state,
+      zipCode: profile?.address?.zipCode ?? undefined,
+    }),
+    [
+      profile?.address?.street,
+      profile?.address?.city,
+      profile?.address?.state,
+      profile?.address?.zipCode,
+    ],
+  );
+
+  const orderSummaryQuery = useCheckoutOrderSummary(
+    returnPickupForSummary,
+    deliveryAddressForSummary,
+  );
   const orderSummaryErrorMessage = useMemo(() => {
     if (!orderSummaryQuery.isError) return null;
     const e = orderSummaryQuery.error;
     if (e instanceof Error && e.message.trim()) return e.message;
     return "Could not load your payment summary.";
   }, [orderSummaryQuery.isError, orderSummaryQuery.error]);
+  const shippingQuoteWarnings =
+    orderSummaryQuery.data?.data?.shippingQuoteWarnings ?? [];
   const shippingTiers =
     orderSummaryQuery.data?.data?.shippingTiers ?? EMPTY_SHIPPING_TIERS;
   const returnShippingTiers =
@@ -721,8 +743,18 @@ export default function CheckoutPage() {
       return acc;
     }, new Map<string, number>());
     const listerLegIndex = new Map<string, number>();
+    const formatListerLocation = (bucket: CheckoutShipmentBucket): string => {
+      const city = bucket.listerCity?.trim();
+      const state = bucket.listerState?.trim();
+      if (city && state && city.toLowerCase() !== state.toLowerCase()) {
+        return `${city}, ${state}`;
+      }
+      return city || state || "";
+    };
+
     const groups: Array<{
       groupHeading: string | null;
+      listerLocation?: string;
       rows: Array<{ title: string; range: string }>;
     }> = [];
     for (const b of bucketsChronological) {
@@ -766,7 +798,12 @@ export default function CheckoutPage() {
         }
       }
       if (bucketRows.length > 0) {
-        groups.push({ groupHeading, rows: bucketRows });
+        const listerLocation = formatListerLocation(b);
+        groups.push({
+          groupHeading,
+          ...(listerLocation ? { listerLocation } : {}),
+          rows: bucketRows,
+        });
       }
     }
     return groups.length > 0 ? groups : undefined;
@@ -832,6 +869,7 @@ export default function CheckoutPage() {
             checkoutBlockingIssues={checkoutBlockingIssues}
             summaryDispatchPreview={summaryDispatchPreview}
             orderSummaryError={orderSummaryErrorMessage}
+            shippingQuoteWarnings={shippingQuoteWarnings}
             onRefetchOrderSummary={() => {
               void orderSummaryQuery.refetch();
             }}

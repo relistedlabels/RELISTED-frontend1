@@ -81,6 +81,28 @@ export function orderHasResalePurchaseLines(
   );
 }
 
+/** Order includes at least one rental line (days > 0). */
+export function orderHasRentalLines(
+  order: Record<string, unknown> | null | undefined,
+): boolean {
+  if (!order) return false;
+  const items = (order.items ?? order.orderItems) as unknown[] | undefined;
+  if (!items?.length) return false;
+  return items.some((row) => {
+    const item = row as Record<string, unknown>;
+    const days = Number(item.days ?? item.rentalDays ?? 0);
+    if (days <= 0) return false;
+    const lt = String(item.listingType ?? "").trim();
+    return lt === "RENTAL" || lt === "RENT_OR_RESALE";
+  });
+}
+
+export function isMixedRenterOrder(
+  order: Record<string, unknown> | null | undefined,
+): boolean {
+  return orderHasResalePurchaseLines(order) && orderHasRentalLines(order);
+}
+
 /**
  * At least one resale line: explicit product listing on the line, or any zero-day
  * line on a RESALE / RENT_OR_RESALE order (matches checkout: resale uses days === 0).
@@ -101,31 +123,7 @@ export function orderHasAtLeastOneResaleItem(
   );
 }
 
-/** Order statuses where buyer cannot confirm resale receipt (terminal or blocked). */
-const RENTER_RESALE_CONFIRM_BLOCKED = new Set<string>([
-  "COMPLETED",
-  "CANCELLED",
-  "REJECTED",
-  "IN_DISPUTE",
-  "RETURNED",
-]);
-
-/**
- * Show resale receipt confirm when the order can still be completed by the buyer:
- * RESALE / RENT_OR_RESALE with at least one resale line, and status is not terminal.
- */
-export function shouldShowRenterResaleDeliveryConfirm(
-  order: Record<string, unknown> | null | undefined,
-): boolean {
-  if (!order) return false;
-  const st = normalizeListerOrderStatusKey(String(order.status ?? ""));
-  if (RENTER_RESALE_CONFIRM_BLOCKED.has(st)) return false;
-  const lt = String(
-    order.listingType ?? order.listing_type ?? "",
-  ).trim();
-  if (lt !== "RESALE" && lt !== "RENT_OR_RESALE") return false;
-  return orderHasAtLeastOneResaleItem(order);
-}
+export { shouldShowRenterResaleDeliveryConfirm } from "@/lib/orders/resaleDeliveryConfirm";
 
 /** Check if an order item is a rental item. */
 export function isRentalItem(

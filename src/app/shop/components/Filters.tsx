@@ -75,12 +75,12 @@ const variants = {
   visible: { x: 0 },
 };
 
-/** Keep shop marketing + closet scope when applying or clearing facet filters. */
+/** Keep shop marketing copy when applying or clearing facet filters. */
 function mergePreservedShopParams(
   target: URLSearchParams,
   from: URLSearchParams,
 ) {
-  for (const key of ["closetId", "title", "description", "onlyWithCloset"] as const) {
+  for (const key of ["title", "description"] as const) {
     const v = from.get(key);
     if (v) target.set(key, v);
   }

@@ -6,8 +6,6 @@ import ProductCard from "@/common/ui/ProductCard";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import Filters from "../components/Filters";
 import { primaryProductHeroImage } from "@/lib/product/primaryProductHeroImage";
-import ClosetShopSelector from "@/app/shop/components/ClosetShopSelector";
-import { matchesClosetDropsShopTitle } from "@/lib/nav/vaultClosetDropsShop";
 import { useProductsQuery } from "@/lib/queries/product/useProductsQuery";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -24,9 +22,6 @@ export default function NewListingsSection() {
   } = useProductsQuery();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const showClosetShopSelector = matchesClosetDropsShopTitle(
-    searchParams.get("title"),
-  );
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams);
@@ -72,9 +67,8 @@ export default function NewListingsSection() {
       <div className="mx-auto container">
         {/* Top Bar */}
         <div
-          className={`flex items-center gap-4 mb-2 sm:mb-6 ${showClosetShopSelector ? "justify-between" : "justify-end"}`}
+          className="mb-2 sm:mb-6 flex items-center justify-end gap-4"
         >
-          {showClosetShopSelector ? <ClosetShopSelector /> : null}
           <div className="hidden sm:flex items-center gap-4">
             <Filters />
           </div>

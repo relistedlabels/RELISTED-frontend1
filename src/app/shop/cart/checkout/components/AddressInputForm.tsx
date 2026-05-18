@@ -12,9 +12,14 @@ import { useUpdateProfile } from "@/lib/mutations/user/useUpdateProfile";
 
 interface AddressInputFormProps {
   onClose?: () => void;
+  /** Refetch checkout shipping quotes after delivery address is saved. */
+  onAddressSaved?: () => void;
 }
 
-export default function AddressInputForm({ onClose }: AddressInputFormProps) {
+export default function AddressInputForm({
+  onClose,
+  onAddressSaved,
+}: AddressInputFormProps) {
   const router = useRouter();
   const { data: profile } = useProfile();
   const updateProfile = useUpdateProfile();
@@ -49,10 +54,11 @@ export default function AddressInputForm({ onClose }: AddressInputFormProps) {
   // Close modal and refresh on successful save
   useEffect(() => {
     if (updateProfile.isSuccess) {
+      onAddressSaved?.();
       onClose?.();
       router.refresh();
     }
-  }, [updateProfile.isSuccess, onClose, router]);
+  }, [updateProfile.isSuccess, onClose, onAddressSaved, router]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,

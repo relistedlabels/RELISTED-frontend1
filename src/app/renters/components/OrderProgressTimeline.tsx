@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   CheckCircle,
   Package,
@@ -12,76 +12,292 @@ import {
   Thermometer,
   Loader,
   CircleDot,
+  ChevronDown,
 } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { normalizeRenterOrderStatusKey } from "@/lib/renters/renterOrderStatus";
+import {
+  isListerResaleOrder,
+  orderHasRentalLines,
+} from "@/lib/listers/listerOrderRow";
 
 interface TimelineStage {
   id: number;
   label: string;
   description: string;
   icon: React.ElementType;
-  milestone?: string;
 }
+
+type TimelineRow = {
+  milestone: string;
+  label: string;
+  timestamp?: string | null;
+  status: "completed" | "current" | "pending";
+  description: string;
+};
+
+type ShipmentLegDetail = {
+  legType: "OUTBOUND" | "RETURN" | "RESALE";
+  shipmentId: string;
+  status: string;
+  trackingId: string | null;
+  providerTrackingUrl: string | null;
+  scheduledDate: string | null;
+  windowSummary: string | null;
+  isBooked: boolean;
+  isDelivered: boolean;
+};
+
+export type ShipmentProgressGroup = {
+  id: string;
+  kind: "rental" | "resale";
+  title: string;
+  itemNames: string[];
+  listerName: string | null;
+  delivery: ShipmentLegDetail | null;
+  return: ShipmentLegDetail | null;
+  timeline: TimelineRow[];
+  percentComplete: number;
+  currentLabel: string;
+};
 
 interface OrderProgressTimelineProps {
   orderData?: any;
-  /** When set, timeline + percent come from GET …/progress (aligned with backend). */
   progress?: {
-    timeline: Array<{
-      milestone: string;
-      label: string;
-      timestamp?: string | null;
-      status: "completed" | "current" | "pending";
-      description: string;
-    }>;
-    currentMilestone: string;
+    timeline: TimelineRow[];
+    currentMilestone?: string;
     percentComplete: number;
-    returnScheduling?: {
-      requestStatus: string;
-      trackingNumber: string | null;
-      pickupWindowStart: string | null;
-      pickupWindowEnd: string | null;
-      pickupScheduledAt: string | null;
-      summary: string | null;
-    } | null;
-    returnLeg?: {
-      status: string;
-      label: string;
-      trackingId: string | null;
-      providerTrackingUrl: string | null;
-      windowSummary: string | null;
-    } | null;
-    outboundLegs?: Array<{
-      shipmentId: string;
-      listerId: string | null;
-      listerName: string | null;
-      status: string;
-      scheduledDate: string;
-      windowSummary: string | null;
-      trackingId: string | null;
-      providerTrackingUrl: string | null;
-      isBooked: boolean;
-    }>;
-    outboundSummary?: { total: number; bookedCount: number };
+    summaryLabel?: string;
+    shipmentGroups?: ShipmentProgressGroup[];
+    returnScheduling?: { summary: string | null } | null;
   } | null;
+}
+
+function shipmentStatusLabel(status: string): string {
+  const s = String(status ?? "").toUpperCase();
+  if (s === "COMPLETED") return "Delivered";
+  if (s === "IN_TRANSIT") return "In transit";
+  if (s === "DISPATCHED" || s === "DISPATCHING") return "Booked with carrier";
+  if (s === "PENDING") return "Awaiting booking";
+  return s.replace(/_/g, " ").toLowerCase();
+}
+
+function formatLagosDate(iso: string | null | undefined): string | null {
+  if (!iso?.trim()) return null;
+  return new Date(iso).toLocaleDateString("en-NG", {
+    timeZone: "Africa/Lagos",
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatLagosDateTime(iso: string | null | undefined): string | null {
+  if (!iso?.trim()) return null;
+  return new Date(iso).toLocaleString("en-NG", {
+    timeZone: "Africa/Lagos",
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 }
 
 function milestoneIcon(milestone: string): React.ElementType {
   const m = milestone.toLowerCase();
-  if (m.includes("preparing") || m.includes("processing_order"))
-    return Loader;
   if (m.includes("transit")) return Truck;
   if (m.includes("deliver") || m.includes("with_you")) return Home;
-  if (m.includes("return") || m.includes("dispatch")) return RefreshCw;
-  if (m.includes("accept") || m.includes("confirm") || m.includes("booked"))
+  if (m.includes("return") || m.includes("dispatch") || m.includes("booked"))
+    return RefreshCw;
+  if (m.includes("complete") || m.includes("returned") || m.includes("placed"))
     return CheckCircle;
-  if (m.includes("complete") || m.includes("returned")) return CheckCircle;
-  if (m.includes("cancel")) return RefreshCw;
   return Package;
 }
 
-/** Rental / mixed: Prisma `OrderStatus` → timeline stage 1–7 (fallback only). */
+function ProgressBarInner({ percent, className }: { percent: number; className?: string }) {
+  const clamped = Math.min(100, Math.max(0, percent));
+  return (
+    <div className={`h-2 overflow-hidden rounded-full bg-gray-200 ${className ?? "mb-4"}`}>
+      <div
+        className="bg-black h-full transition-all duration-500"
+        style={{ width: `${clamped}%` }}
+      />
+    </div>
+  );
+}
+
+function TimelineRowView({ row, compact }: { row: TimelineRow; compact?: boolean }) {
+  const active = row.status === "current";
+  const completed = row.status === "completed";
+  const Icon = milestoneIcon(row.milestone);
+  const mb = compact ? "mb-4" : "mb-8";
+  const offset = compact ? "-left-10" : "-left-12";
+  const size = compact ? "h-6 w-6" : "h-8 w-8";
+  const iconPx = compact ? 12 : 16;
+
+  return (
+    <div className={`relative ${mb}`}>
+      <div
+        className={`absolute top-0 ${offset} flex ${size} items-center justify-center rounded-full
+          ${
+            active
+              ? "bg-black text-white"
+              : completed
+                ? "bg-green-500 text-white"
+                : "bg-gray-200 text-gray-500"
+          }`}
+      >
+        {active ? <CircleDot size={iconPx} /> : <Icon size={iconPx} />}
+      </div>
+      <div>
+        <Paragraph1
+          className={`font-semibold ${compact ? "text-sm" : "text-base"} ${
+            active ? "text-black" : completed ? "text-gray-800" : "text-gray-500"
+          }`}
+        >
+          {row.label}
+        </Paragraph1>
+        <Paragraph1 className={`mt-1 text-gray-600 ${compact ? "text-xs" : "text-sm"}`}>
+          {row.description}
+        </Paragraph1>
+        {row.timestamp ? (
+          <Paragraph1 className="mt-1 text-gray-400 text-xs">
+            {formatLagosDateTime(row.timestamp)}
+          </Paragraph1>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function LegTrackingBlock({
+  leg,
+  label,
+}: {
+  leg: ShipmentLegDetail;
+  label: string;
+}) {
+  const statusText = shipmentStatusLabel(leg.status);
+  const scheduledText = formatLagosDate(leg.scheduledDate);
+
+  return (
+    <div className="bg-white p-2.5 border border-gray-100 rounded-md">
+      <Paragraph1 className="text-xs font-bold text-gray-900">{label}</Paragraph1>
+      <Paragraph1 className="mt-1 text-xs text-gray-600">
+        <span className="font-bold text-gray-900">{statusText}</span>
+        {scheduledText ? ` · Scheduled ${scheduledText}` : null}
+      </Paragraph1>
+      {leg.windowSummary?.trim() ? (
+        <Paragraph1 className="mt-1 text-xs text-gray-600">
+          <span className="font-bold text-gray-900">Window</span>
+          {`: ${leg.windowSummary.trim()}`}
+        </Paragraph1>
+      ) : null}
+      {leg.trackingId?.trim() ? (
+        <Paragraph1 className="mt-1 text-xs text-gray-600">
+          <span className="font-bold text-gray-900">Tracking</span>
+          <span className="font-mono text-gray-800">
+            {`: ${leg.trackingId.trim()}`}
+          </span>
+        </Paragraph1>
+      ) : null}
+      {leg.providerTrackingUrl?.trim() ? (
+        <a
+          href={leg.providerTrackingUrl.trim()}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block mt-1 font-semibold text-blue-700 text-xs underline"
+        >
+          Track this shipment
+        </a>
+      ) : null}
+    </div>
+  );
+}
+
+function ShipmentGroupCard({
+  group,
+  packageIndex,
+  packageTotal,
+  returnSchedulingSummary,
+}: {
+  group: ShipmentProgressGroup;
+  packageIndex: number;
+  packageTotal: number;
+  returnSchedulingSummary?: string | null;
+}) {
+  const kindLabel = group.kind === "rental" ? "Rental" : "Purchase";
+  const [isOpen, setIsOpen] = useState(packageIndex === 1);
+
+  return (
+    <details
+      className="group bg-gray-50 border border-gray-200 rounded-xl overflow-hidden"
+      open={isOpen}
+      onToggle={(e) => setIsOpen(e.currentTarget.open)}
+    >
+      <summary className="[&::-webkit-details-marker]:hidden flex justify-between items-start gap-2 p-4 marker:content-none cursor-pointer list-none">
+        <div className="flex-1 min-w-0 text-left">
+          <div className="space-y-1">
+            <Paragraph1 className="font-medium text-gray-500 text-xs uppercase tracking-wide">
+              {kindLabel}
+            </Paragraph1>
+            <Paragraph1 className="font-semibold text-gray-800 text-xs">
+              Package {packageIndex} of {packageTotal}
+            </Paragraph1>
+          </div>
+          <Paragraph1 className="mt-2 font-semibold text-gray-900 text-base">
+            {group.title}
+          </Paragraph1>
+          {group.listerName ? (
+            <Paragraph1 className="text-gray-500 text-xs">
+              Seller: {group.listerName}
+            </Paragraph1>
+          ) : null}
+        </div>
+        <div className="flex items-center gap-2 pt-0.5 shrink-0">
+          <Paragraph1 className="font-semibold text-gray-900 text-sm">
+            {group.percentComplete}%
+          </Paragraph1>
+          <ChevronDown
+            size={16}
+            className="text-gray-400 group-open:rotate-180 transition shrink-0"
+            aria-hidden
+          />
+        </div>
+      </summary>
+
+      <div className="px-4 pt-3 pb-4 border-gray-200 border-t">
+        <ProgressBarInner percent={group.percentComplete} className="mb-4" />
+
+        <div className="relative pl-8 border-gray-200 border-l-2">
+          {group.timeline.map((row) => (
+            <TimelineRowView key={row.milestone} row={row} compact />
+          ))}
+        </div>
+
+        {group.delivery ? (
+          <div className="mt-3">
+            <LegTrackingBlock
+              leg={group.delivery}
+              label={group.kind === "rental" ? "Delivery to you" : "Delivery"}
+            />
+          </div>
+        ) : null}
+
+        {group.return ? (
+          <div className="mt-2">
+            <LegTrackingBlock leg={group.return} label="Return to lister" />
+          </div>
+        ) : null}
+
+        {group.kind === "rental" && returnSchedulingSummary ? (
+          <Paragraph1 className="mt-2 text-slate-700 text-xs">
+            Return pickup: {returnSchedulingSummary}
+          </Paragraph1>
+        ) : null}
+      </div>
+    </details>
+  );
+}
+
 function rentalOrderStatusToStageId(statusRaw: string | undefined): number {
   const k = normalizeRenterOrderStatusKey(String(statusRaw ?? ""));
   const map: Record<string, number> = {
@@ -120,18 +336,17 @@ function resaleOrderStatusToStageId(statusRaw: string | undefined): number {
   return map[k] ?? 1;
 }
 
-function isResaleOnlyOrder(orderData: any): boolean {
-  return String(orderData?.listingType ?? "").toUpperCase() === "RESALE";
-}
-
 export default function OrderProgressTimeline({
   orderData,
   progress,
 }: OrderProgressTimelineProps) {
-  const resaleOnly = isResaleOnlyOrder(orderData);
+  const pureResale = isListerResaleOrder(orderData);
+  const hasRentals = orderHasRentalLines(orderData);
+  const shipmentGroups = progress?.shipmentGroups ?? [];
+  const useGroupProgress = shipmentGroups.length > 0;
 
   const stages: TimelineStage[] = useMemo(() => {
-    if (resaleOnly) {
+    if (pureResale) {
       return [
         {
           id: 1,
@@ -143,7 +358,7 @@ export default function OrderProgressTimeline({
           id: 2,
           label: "Confirmed",
           description:
-            "Payment received — we are coordinating pickup with the seller.",
+            "Payment received. We are coordinating pickup with the seller.",
           icon: CheckCircle,
         },
         {
@@ -183,8 +398,7 @@ export default function OrderProgressTimeline({
       {
         id: 4,
         label: "In transit",
-        description:
-          "Carrier pickup is booked and your item is on the way to you.",
+        description: "Carrier pickup is booked and your item is on the way.",
         icon: Truck,
       },
       {
@@ -197,25 +411,24 @@ export default function OrderProgressTimeline({
         id: 6,
         label: "Return",
         description:
-          "Return the item by the due date. Start a return in the app when you are ready to schedule pickup.",
+          "Return the item by the due date. Start a return in the app when ready.",
         icon: RefreshCw,
       },
       {
         id: 7,
         label: "Returned",
-        description:
-          "The item is back with the lister (delivered or confirmed by them).",
+        description: "The item is back with the lister.",
         icon: CheckCircle,
       },
     ];
-  }, [resaleOnly]);
+  }, [pureResale]);
 
   const currentStageId = useMemo(() => {
-    const fn = resaleOnly
+    const fn = pureResale
       ? resaleOrderStatusToStageId
       : rentalOrderStatusToStageId;
     return fn(orderData?.status);
-  }, [orderData?.status, resaleOnly]);
+  }, [orderData?.status, pureResale]);
 
   const fallbackPercent = useMemo(() => {
     if (stages.length <= 1) return 0;
@@ -223,82 +436,103 @@ export default function OrderProgressTimeline({
   }, [currentStageId, stages.length]);
 
   const useApi = Boolean(progress?.timeline?.length);
-
   const percentComplete = useApi
     ? Math.min(100, Math.max(0, progress!.percentComplete))
     : fallbackPercent;
 
-  const showReturnSupplement =
-    useApi &&
-    (Boolean(progress?.returnScheduling?.summary?.trim()) ||
-      Boolean(progress?.returnLeg?.trackingId?.trim()) ||
-      Boolean(progress?.returnLeg?.providerTrackingUrl?.trim()));
-
-  const showOutboundShipmentsDetail =
-    useApi &&
-    !resaleOnly &&
-    Boolean(progress?.outboundLegs?.length);
-  const outboundShipmentCount = progress?.outboundLegs?.length ?? 0;
-  const hasMultipleOutboundShipments = outboundShipmentCount > 1;
+  const returnSchedulingSummary = progress?.returnScheduling?.summary?.trim();
 
   if (!orderData) {
     return (
       <div className="bg-white p-6 border border-gray-300 rounded-xl">
-        <Paragraph1 className="text-gray-600">
-          No progress data available.
-        </Paragraph1>
+        <Paragraph1 className="text-gray-600">No progress data available.</Paragraph1>
       </div>
     );
   }
 
   return (
-    <div className="bg-white p-6 border border-gray-300 rounded-xl">
-      <Paragraph1 className="mb-6 font-bold text-gray-900 text-xl">
-        Progress ({percentComplete}%)
-      </Paragraph1>
-
-      <div className="bg-gray-200 mb-6 rounded-full h-2 overflow-hidden">
-        <div
-          className="bg-black h-full transition-all duration-500"
-          style={{ width: `${percentComplete}%` }}
-        />
+    <div>
+      <div className="flex flex-wrap justify-between items-baseline gap-2 mb-1">
+        <Paragraph1 className="font-semibold text-gray-900 text-sm">
+          Overall progress ({percentComplete}%)
+        </Paragraph1>
+        {progress?.summaryLabel ? (
+          <Paragraph1 className="text-gray-600 text-xs">
+            {progress.summaryLabel}
+          </Paragraph1>
+        ) : null}
       </div>
 
-      <div className="relative pl-8 border-gray-200 border-l-2">
-        <div className="top-0 -left-4 absolute">
-          <Thermometer
-            size={24}
-            className="bg-white p-1 border border-gray-200 rounded-full text-gray-900"
-          />
+      <ProgressBarInner percent={percentComplete} className="mb-6" />
+
+      {useGroupProgress ? (
+        <div className="space-y-6">
+          {useApi && progress!.timeline.length > 0 ? (
+            <div className="relative pl-8 border-gray-200 border-l-2">
+              <div className="top-0 -left-4 absolute">
+                <Thermometer
+                  size={24}
+                  className="bg-white p-1 border border-gray-200 rounded-full text-gray-900"
+                />
+              </div>
+              {progress!.timeline.map((row) => (
+                <TimelineRowView key={row.milestone} row={row} />
+              ))}
+            </div>
+          ) : null}
+
+          <Paragraph1 className="font-semibold text-gray-900 text-sm">
+            Package progress
+          </Paragraph1>
+
+          {shipmentGroups.map((group, index) => (
+            <ShipmentGroupCard
+              key={group.id}
+              group={group}
+              packageIndex={index + 1}
+              packageTotal={shipmentGroups.length}
+              returnSchedulingSummary={
+                hasRentals && group.kind === "rental"
+                  ? returnSchedulingSummary
+                  : null
+              }
+            />
+          ))}
         </div>
+      ) : (
+        <div className="relative pl-8 border-gray-200 border-l-2">
+          <div className="top-0 -left-4 absolute">
+            <Thermometer
+              size={24}
+              className="bg-white p-1 border border-gray-200 rounded-full text-gray-900"
+            />
+          </div>
 
-        {useApi ? (
-          <>
-            {progress!.timeline.map((row) => {
-              const active = row.status === "current";
-              const completed = row.status === "completed";
-              const Icon = milestoneIcon(row.milestone);
-
+          {useApi ? (
+            progress!.timeline.map((row) => (
+              <TimelineRowView key={row.milestone} row={row} />
+            ))
+          ) : (
+            stages.map((stage) => {
+              const active = stage.id === currentStageId;
+              const completed = stage.id < currentStageId;
+              const Icon = stage.icon;
               return (
-                <div key={row.milestone} className="relative mb-8">
+                <div key={stage.id} className="relative mb-8">
                   <div
-                    className={`absolute -left-12 top-0 w-8 h-8 rounded-full flex items-center justify-center 
-                                ${
-                                  active
-                                    ? "bg-black text-white"
-                                    : completed
-                                      ? "bg-green-500 text-white"
-                                      : "bg-gray-200 text-gray-500"
-                                }`}
+                    className={`absolute -left-12 top-0 flex h-8 w-8 items-center justify-center rounded-full
+                      ${
+                        active
+                          ? "bg-black text-white"
+                          : completed
+                            ? "bg-green-500 text-white"
+                            : "bg-gray-200 text-gray-500"
+                      }`}
                   >
-                    {active ? (
-                      <CircleDot size={16} />
-                    ) : (
-                      <Icon size={16} />
-                    )}
+                    {active && <Loader size={16} className="animate-spin" />}
+                    {!active && <Icon size={16} />}
                   </div>
-
-                  <div className="ml-0">
+                  <div>
                     <Paragraph1
                       className={`text-base font-semibold ${
                         active
@@ -308,197 +542,18 @@ export default function OrderProgressTimeline({
                             : "text-gray-500"
                       }`}
                     >
-                      {row.label}
+                      {stage.label}
                     </Paragraph1>
                     <Paragraph1 className="mt-1 text-gray-600 text-sm">
-                      {row.description}
+                      {stage.description}
                     </Paragraph1>
-                    {row.timestamp ? (
-                      <Paragraph1 className="mt-1 text-gray-400 text-xs">
-                        {new Date(row.timestamp).toLocaleString("en-NG", {
-                          timeZone: "Africa/Lagos",
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                        })}
-                      </Paragraph1>
-                    ) : null}
                   </div>
                 </div>
               );
-            })}
-
-            {showOutboundShipmentsDetail && (
-              <div className="space-y-3 bg-gray-50 mt-4 p-4 border border-gray-200 rounded-lg">
-                <Paragraph1 className="font-bold text-gray-700 text-xs uppercase tracking-wide">
-                  Shipments to you
-                </Paragraph1>
-                {(progress?.outboundSummary?.total ?? 0) > 1 ? (
-                  <Paragraph1 className="text-gray-700 text-xs font-medium">
-                    Carrier bookings: {progress?.outboundSummary?.bookedCount ?? 0}{" "}
-                    of {progress?.outboundSummary?.total ?? 0} seller shipments.
-                  </Paragraph1>
-                ) : null}
-                {progress!.outboundLegs!.map((leg, index) => {
-                  const sellerName = leg.listerName?.trim() || "Seller";
-                  const bookedText = leg.isBooked
-                    ? "Booked with carrier"
-                    : "Waiting for carrier booking";
-                  const scheduledText = new Date(leg.scheduledDate).toLocaleDateString(
-                    "en-NG",
-                    {
-                      timeZone: "Africa/Lagos",
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                    },
-                  );
-                  if (!hasMultipleOutboundShipments) {
-                    return (
-                      <div
-                        key={leg.shipmentId}
-                        className="border-gray-200 border-b pb-3 last:border-0 last:pb-0 space-y-1"
-                      >
-                        <Paragraph1 className="text-gray-900 text-sm font-semibold">
-                          {sellerName}
-                        </Paragraph1>
-                        <Paragraph1 className="text-gray-600 text-xs">
-                          {bookedText} {" · "} Scheduled {scheduledText}
-                        </Paragraph1>
-                        {leg.windowSummary?.trim() ? (
-                          <Paragraph1 className="text-gray-600 text-xs">
-                            Pickup window: {leg.windowSummary.trim()}
-                          </Paragraph1>
-                        ) : null}
-                        {leg.trackingId?.trim() ? (
-                          <Paragraph1 className="text-gray-700 text-xs">
-                            Tracking: {leg.trackingId.trim()}
-                          </Paragraph1>
-                        ) : null}
-                        {leg.providerTrackingUrl?.trim() ? (
-                          <a
-                            href={leg.providerTrackingUrl.trim()}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-700 text-xs underline inline-block"
-                          >
-                            Track shipment
-                          </a>
-                        ) : null}
-                      </div>
-                    );
-                  }
-                  return (
-                    <details
-                      key={leg.shipmentId}
-                      className="bg-white p-3 border border-gray-200 rounded-lg"
-                    >
-                      <summary className="font-semibold text-gray-900 text-sm cursor-pointer">
-                        Shipment {index + 1}: {sellerName} {" · "} {bookedText}
-                      </summary>
-                      <div className="space-y-1 mt-2">
-                        <Paragraph1 className="text-gray-600 text-xs">
-                          Scheduled: {scheduledText}
-                        </Paragraph1>
-                        {leg.windowSummary?.trim() ? (
-                          <Paragraph1 className="text-gray-600 text-xs">
-                            Pickup window: {leg.windowSummary.trim()}
-                          </Paragraph1>
-                        ) : null}
-                        {leg.trackingId?.trim() ? (
-                          <Paragraph1 className="text-gray-700 text-xs">
-                            Tracking: {leg.trackingId.trim()}
-                          </Paragraph1>
-                        ) : null}
-                        {leg.providerTrackingUrl?.trim() ? (
-                          <a
-                            href={leg.providerTrackingUrl.trim()}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-700 text-xs underline inline-block"
-                          >
-                            Track shipment
-                          </a>
-                        ) : null}
-                      </div>
-                    </details>
-                  );
-                })}
-              </div>
-            )}
-
-            {showReturnSupplement && (
-              <div className="space-y-2 bg-slate-50 mt-4 p-4 border border-slate-200 rounded-lg">
-                <Paragraph1 className="font-bold text-slate-700 text-xs uppercase tracking-wide">
-                  Your return
-                </Paragraph1>
-                {progress?.returnScheduling?.summary?.trim() ? (
-                  <Paragraph1 className="text-slate-800 text-sm">
-                    <span className="font-semibold">Pickup window: </span>
-                    {progress.returnScheduling.summary.trim()}
-                  </Paragraph1>
-                ) : null}
-                {progress?.returnLeg?.trackingId?.trim() ? (
-                  <Paragraph1 className="text-slate-800 text-sm">
-                    <span className="font-semibold">Tracking: </span>
-                    {progress.returnLeg.trackingId.trim()}
-                  </Paragraph1>
-                ) : null}
-                {progress?.returnLeg?.providerTrackingUrl?.trim() ? (
-                  <a
-                    href={progress.returnLeg.providerTrackingUrl.trim()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-700 text-sm underline"
-                  >
-                    Track return shipment
-                  </a>
-                ) : null}
-              </div>
-            )}
-          </>
-        ) : (
-          stages.map((stage) => {
-            const active = stage.id === currentStageId;
-            const completed = stage.id < currentStageId;
-            const Icon = stage.icon;
-
-            return (
-              <div key={stage.id} className="relative mb-8">
-                <div
-                  className={`absolute -left-12 top-0 w-8 h-8 rounded-full flex items-center justify-center 
-                                ${
-                                  active
-                                    ? "bg-black text-white"
-                                    : completed
-                                      ? "bg-green-500 text-white"
-                                      : "bg-gray-200 text-gray-500"
-                                }`}
-                >
-                  {active && <Loader size={16} className="animate-spin" />}
-                  {!active && <Icon size={16} />}
-                </div>
-
-                <div className="ml-0">
-                  <Paragraph1
-                    className={`text-base font-semibold ${
-                      active
-                        ? "text-black"
-                        : completed
-                          ? "text-gray-800"
-                          : "text-gray-500"
-                    }`}
-                  >
-                    {stage.label}
-                  </Paragraph1>
-                  <Paragraph1 className="mt-1 text-gray-600 text-sm">
-                    {stage.description}
-                  </Paragraph1>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
+            })
+          )}
+        </div>
+      )}
     </div>
   );
 }
