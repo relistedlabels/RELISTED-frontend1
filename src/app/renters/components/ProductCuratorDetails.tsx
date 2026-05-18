@@ -44,6 +44,8 @@ export default function ProductCuratorDetails({
     days?: number;
     listingType?: string;
     rentalFee?: number;
+    resalePrice?: number | null;
+    resaleListerAmount?: number | null;
     cleaningFee?: number;
     collateralFee?: number;
     rentalStartDate?: string | null;
@@ -171,6 +173,14 @@ export default function ProductCuratorDetails({
               const end = line.rentalEndDate ?? orderData.rentalEndDate;
               const days = Number(line.rentalDays ?? line.days ?? 0);
               const resale = isResaleLine(line);
+              const linePrice = resale
+                ? Number(
+                    line.resalePrice ??
+                      line.resaleListerAmount ??
+                      line.rentalFee ??
+                      0,
+                  )
+                : Number(line.rentalFee ?? 0);
               const periodLabel = formatShortRange(start, end);
               const returnLabel = formatReturnDueLabel(
                 line.returnDueDate ?? null,
@@ -239,7 +249,7 @@ export default function ProductCuratorDetails({
                         {resale ? "Price" : "Rental"}{" "}
                         <span className="font-semibold text-gray-900">
                           {CURRENCY}
-                          {formatCurrency(line.rentalFee)}
+                          {formatCurrency(linePrice)}
                         </span>
                       </span>
                       {!resale && Number(line.cleaningFee) > 0 ? (

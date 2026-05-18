@@ -43,7 +43,7 @@ const RentalsRevenueTrend = ({
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-gray-200 p-6 rounded-xl h-full">
+      <div className="bg-white p-6 border border-gray-200 rounded-xl h-full">
         <ChartSkeleton />
       </div>
     );
@@ -51,7 +51,7 @@ const RentalsRevenueTrend = ({
 
   if (error || !data?.data) {
     return (
-      <div className="bg-white border border-gray-200 p-6 rounded-xl h-full">
+      <div className="bg-white p-6 border border-gray-200 rounded-xl h-full">
         <ChartSkeleton />
       </div>
     );
@@ -69,8 +69,8 @@ const RentalsRevenueTrend = ({
 
   return (
     <div className="bg-[#111827] p-6 rounded-xl h-full text-white">
-      <Paragraph3 className="text-xl font-semibold mb-4">
-        Rentals & Revenue Trend
+      <Paragraph3 className="mb-4 font-semibold text-xl">
+        Orders & Revenue Trend
       </Paragraph3>
       <ResponsiveContainer width="100%" height={300}>
         <ComposedChart

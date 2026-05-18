@@ -209,3 +209,13 @@ export const completeManualShipment = async (
     },
   );
 };
+
+/** POST /shipments/:id/manual-delivered — admin marks Relisted dispatch leg delivered. */
+export const markManualShipmentDelivered = async (
+  shipmentId: string,
+): Promise<{ success: boolean; message: string }> => {
+  return apiFetch<{ success: boolean; message: string }>(
+    `/shipments/${shipmentId}/manual-delivered`,
+    { method: "POST" },
+  );
+};

@@ -50,10 +50,12 @@ const DispatchWindowsDisplay: React.FC<DispatchWindowsDisplayProps> = ({
   }
 
   return (
-    <div className="bg-gray-50 mt-4 p-4 border border-gray-200 rounded-2xl">
-      <Paragraph1 className="mb-3 font-bold text-[10px] text-gray-400 uppercase tracking-widest">
-        {sectionTitle}
-      </Paragraph1>
+    <div className={sectionTitle ? "mt-4 rounded-2xl border border-gray-200 bg-gray-50 p-4" : ""}>
+      {sectionTitle ? (
+        <Paragraph1 className="mb-3 font-bold text-[10px] text-gray-400 uppercase tracking-widest">
+          {sectionTitle}
+        </Paragraph1>
+      ) : null}
       <div className="space-y-2">
         {dispatchWindows.map((dw) => {
           const startTime = formatLagosTime(dw.window.start);

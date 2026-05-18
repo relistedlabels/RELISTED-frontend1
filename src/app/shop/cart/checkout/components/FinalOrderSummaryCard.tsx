@@ -11,6 +11,7 @@ import { Check, CheckCircle, MapPin } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useRouter } from "next/navigation";
 import {
+  formatShippingQuoteWarningLine,
   orderIdsFromOrderPost,
   type OrderSummaryApiResult,
   type ReturnPickupAddressPayload,
@@ -353,6 +354,8 @@ export default function FinalOrderSummaryCard({
   // All items are already approved from the API
   const approvedGroups = listerGroups.filter((group) => group.items.length > 0);
   const summary = orderSummary?.data?.summary;
+  const shippingQuoteWarnings =
+    orderSummary?.data?.shippingQuoteWarnings ?? [];
   const summaryOutboundShipping = summary?.outboundShippingTotal || 0;
   const summaryReturnShipping = summary?.returnShippingTotal || 0;
   const shipmentBucketsMeta = orderSummary?.data?.shipmentBuckets ?? [];
@@ -574,6 +577,23 @@ export default function FinalOrderSummaryCard({
               Back to cart
             </Link>
           </div>
+        </div>
+      ) : null}
+
+      {shippingQuoteWarnings.length > 0 ? (
+        <div className="space-y-2 bg-amber-50 p-3 border border-amber-200 rounded-xl">
+          <Paragraph1 className="font-semibold text-amber-950 text-xs">
+            Shipping quote note
+          </Paragraph1>
+          <ul className="space-y-1 list-disc pl-4 text-amber-900 text-xs">
+            {shippingQuoteWarnings.map((w, i) => (
+              <li
+                key={`${w.provider}-${w.leg}-${w.bucketIndex ?? i}-${w.message}`}
+              >
+                {formatShippingQuoteWarningLine(w)}
+              </li>
+            ))}
+          </ul>
         </div>
       ) : null}
 

@@ -1,29 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { productApi } from "@/lib/api/product";
 import { useSearchParams } from "next/navigation";
-import { matchesClosetDropsShopTitle } from "@/lib/nav/vaultClosetDropsShop";
 
 export { CLOSET_DROPS_SHOP_TITLE, matchesClosetDropsShopTitle } from "@/lib/nav/vaultClosetDropsShop";
+
+/** Closet drops are disabled on the main shop; always exclude closet inventory. */
+const ONLY_WITH_CLOSET = false;
 
 export const useProductsQuery = () => {
   const searchParams = useSearchParams();
 
-  // Parse URL parameters
   const search = searchParams.get("search") || undefined;
   const category = searchParams.getAll("category");
   const tags = searchParams.get("tags") || undefined;
-  const closetId = searchParams.get("closetId") || undefined;
-  const shopTitle = searchParams.get("title");
-  const isClosetDropsShop = matchesClosetDropsShopTitle(shopTitle);
-  // Vault closet drops + no closetId: only products in any public closet. Explicit param still supported elsewhere.
-  // When `closetId` is set, filter is that closet only — never send onlyWithCloset together (see productApi.getAll).
-  const onlyWithClosetParam = searchParams.get("onlyWithCloset");
-  const onlyWithCloset = Boolean(
-    !closetId &&
-      (onlyWithClosetParam === "true" ||
-        onlyWithClosetParam === "1" ||
-        isClosetDropsShop),
-  );
   const brand = searchParams.getAll("brand");
   const size = searchParams.get("size") || undefined;
   const minPrice = searchParams.get("minPrice")
@@ -46,8 +35,7 @@ export const useProductsQuery = () => {
         search,
         category,
         tags,
-        closetId,
-        onlyWithCloset,
+        onlyWithCloset: ONLY_WITH_CLOSET,
         brand,
         size,
         minPrice,
@@ -63,8 +51,7 @@ export const useProductsQuery = () => {
         search,
         category: category.length > 0 ? category : undefined,
         tags,
-        closetId,
-        onlyWithCloset,
+        onlyWithCloset: ONLY_WITH_CLOSET,
         brand: brand.length > 0 ? brand : undefined,
         size,
         minPrice,
@@ -76,14 +63,12 @@ export const useProductsQuery = () => {
         limit: 15,
       });
 
-      // Pagination matches the API: do not drop rows here (that used to hide
-      // RENTED and skew page sizes vs totalPages).
       return {
         products: response.data.products,
         pagination: response.data.pagination,
       };
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
     retry: 1,
   });
 
