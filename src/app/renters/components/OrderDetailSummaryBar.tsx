@@ -2,20 +2,9 @@
 
 import { Paragraph1 } from "@/common/ui/Text";
 import {
+  getRenterOrderBadgeClassName,
   getRenterOrderStatusLabel,
-  normalizeRenterOrderStatusKey,
 } from "@/lib/renters/renterOrderStatus";
-
-const STATUS_STYLES: Record<string, string> = {
-  PROCESSING: "bg-gray-100 text-gray-700",
-  CONFIRMED: "bg-blue-50 text-blue-800",
-  IN_TRANSIT: "bg-amber-50 text-amber-900",
-  DELIVERED: "bg-emerald-50 text-emerald-900",
-  ACTIVE: "bg-emerald-50 text-emerald-900",
-  COMPLETED: "bg-gray-100 text-gray-700",
-  CANCELLED: "bg-red-50 text-red-800",
-  RETURNED: "bg-gray-100 text-gray-700",
-};
 
 interface OrderDetailSummaryBarProps {
   orderData: {
@@ -28,12 +17,9 @@ interface OrderDetailSummaryBarProps {
 export default function OrderDetailSummaryBar({
   orderData,
 }: OrderDetailSummaryBarProps) {
-  const statusKey = normalizeRenterOrderStatusKey(
-    String(orderData.status ?? ""),
-  );
-  const statusLabel = getRenterOrderStatusLabel(orderData.status);
-  const badgeClass =
-    STATUS_STYLES[statusKey] ?? "bg-gray-100 text-gray-700";
+  const statusRaw = String(orderData.status ?? "");
+  const statusLabel = getRenterOrderStatusLabel(statusRaw);
+  const badgeClass = getRenterOrderBadgeClassName(statusLabel);
 
   const orderDate = orderData.createdAt
     ? new Date(orderData.createdAt).toLocaleDateString("en-NG", {
