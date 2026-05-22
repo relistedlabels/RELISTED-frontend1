@@ -48,6 +48,47 @@ describe("buildApprovedCheckoutLines", () => {
     expect(lines[0].totalPrice).toBe(1000);
   });
 
+  test("cart summary prefers cart row over duplicate rental request row", () => {
+    const cartItems = [
+      {
+        id: "cart-line-1",
+        productId: "prod-resale",
+        days: 0,
+        product: { listingType: "RESALE" },
+      },
+    ];
+
+    const lines = buildCartApprovedSummaryLines(
+      [
+        {
+          productId: "prod-resale",
+          cartItemId: "cart-line-1",
+          status: "approved",
+          rentalDays: 7,
+          isResale: false,
+          totalPrice: 0,
+          productName: "Test resale Item",
+        },
+      ],
+      [
+        {
+          lineId: "cart-line-1",
+          cartItemId: "cart-line-1",
+          productId: "prod-resale",
+          isResale: true,
+          status: "approved",
+          totalPrice: 1000,
+          productName: "Test resale Item",
+        },
+      ],
+      cartItems as never,
+    );
+
+    expect(lines).toHaveLength(1);
+    expect(lines[0].totalPrice).toBe(1000);
+    expect((lines[0] as { isResale?: boolean }).isResale).toBe(true);
+  });
+
   test("includes cart resale line when status is lowercase approved", () => {
     const cartItems = [
       {
