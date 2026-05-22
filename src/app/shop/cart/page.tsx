@@ -92,6 +92,7 @@ export default function CartPage() {
               : undefined;
           const listerId =
             (productDetail as { listerId?: string })?.listerId ??
+            (productDetail as { curatorId?: string })?.curatorId ??
             embedded?.listerId;
 
           const days = item.days || 0;

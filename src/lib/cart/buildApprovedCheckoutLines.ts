@@ -88,12 +88,11 @@ export function buildCartApprovedSummaryLines<
     cartItems,
   );
 
-  const seen = new Set(fromRequests.map(cartLineKey).filter(Boolean));
-  const rentalCartLines = approvedCartLines.filter((line) => !line.isResale);
-  const extraRentals = rentalCartLines.filter((line) => {
-    const id = cartLineKey(line);
-    return id && !seen.has(id);
+  const cartKeys = new Set(approvedCartLines.map(cartLineKey).filter(Boolean));
+  const orphanRequests = fromRequests.filter((item) => {
+    const id = cartLineKey(item);
+    return id && !cartKeys.has(id);
   });
 
-  return [...fromRequests, ...extraRentals];
+  return [...approvedCartLines, ...orphanRequests];
 }
