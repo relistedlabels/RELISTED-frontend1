@@ -15,7 +15,7 @@ import {
 } from "@/lib/api/cart";
 import { useCheckoutOrderSummary } from "@/lib/queries/order/useCheckoutOrderSummary";
 import { useProfile } from "@/lib/queries/user/useProfile";
-import { approvedRentalsMatchingCurrentCart } from "@/lib/cart/approvedRentalsMatchingCart";
+import { buildApprovedCheckoutLines } from "@/lib/cart/buildApprovedCheckoutLines";
 import {
   isCheckoutRentalLine,
   isCheckoutResalePurchaseLine,
@@ -295,12 +295,15 @@ export default function CheckoutPage() {
           } catch (err) {
             // keep null
           }
+          const resalePrice =
+            Number(pDetail?.resalePrice ?? item.resalePrice) || 0;
           return {
             ...item,
             cartItemId: item.id,
             productDetail: pDetail,
             isResale: true,
-            rentalPrice: pDetail?.resalePrice || 0,
+            rentalPrice: resalePrice,
+            totalPrice: resalePrice,
             securityDeposit: 0,
             cleaningFee: 0,
             deliveryFee: 0, // Should be addressed in order breakdown
@@ -316,22 +319,15 @@ export default function CheckoutPage() {
 
   const cartItems = cartData?.items;
 
-  const approvedOnCheckout = useMemo(() => {
-    const fromRentals = approvedRentalsMatchingCurrentCart(
-      cartItemsWithProduct,
-      cartItems,
-    );
-    // Only dedupe cart resale lines when the same product is an active rental on this cart.
-    const rentalProductIds = new Set(
-      fromRentals
-        .filter((item) => isCheckoutRentalLine(item, cartItems))
-        .map((item) => item.productId),
-    );
-    const uniqueResaleItems = resaleItemsWithProduct.filter(
-      (item) => !rentalProductIds.has(item.productId),
-    );
-    return [...fromRentals, ...uniqueResaleItems];
-  }, [cartItemsWithProduct, cartItems, resaleItemsWithProduct]);
+  const approvedOnCheckout = useMemo(
+    () =>
+      buildApprovedCheckoutLines(
+        cartItemsWithProduct,
+        resaleItemsWithProduct,
+        cartItems,
+      ),
+    [cartItemsWithProduct, cartItems, resaleItemsWithProduct],
+  );
 
   const rentalItems = useMemo(
     () =>

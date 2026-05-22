@@ -17,7 +17,7 @@ import {
   resolveRentalMetaForCartLine,
 } from "@/lib/cart/mergeCartLineRental";
 import type { CartCheckoutLine } from "./types";
-import { approvedRentalsMatchingCurrentCart } from "@/lib/cart/approvedRentalsMatchingCart";
+import { buildApprovedCheckoutLines } from "@/lib/cart/buildApprovedCheckoutLines";
 
 export default function CartPage() {
   const path = [
@@ -212,13 +212,11 @@ export default function CartPage() {
       deliveryFee: line.deliveryFee,
     }));
 
-  const approvedMatchingCart = [
-    ...approvedRentalsMatchingCurrentCart(
-      approvedItemsWithProduct,
-      cartData?.items,
-    ),
-    ...resaleLines,
-  ];
+  const approvedMatchingCart = buildApprovedCheckoutLines(
+    approvedItemsWithProduct,
+    resaleLines,
+    cartData?.items,
+  );
 
   const groupedByLister = approvedMatchingCart.reduce(
     (acc: Map<string, any[]>, item: any) => {
