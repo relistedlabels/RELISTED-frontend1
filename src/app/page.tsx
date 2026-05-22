@@ -2,16 +2,13 @@ import BrandLogosCarousel from "./home/components/BrandLogosCarousel";
 import BecomeCurator from "./home/sections/BecomeCurator";
 import EndlessStyleHero from "./home/sections/EndlessStyleHero";
 import PopularCategorySection from "./home/sections/PopularCategorySection";
-import HomeMidSections, {
-  HomeBeforeCategorySections,
-} from "./home/components/HomeMidSections";
+import HomeMidSections from "./home/components/HomeMidSections";
 
 export default function Home() {
   return (
     <div>
       <EndlessStyleHero />
       <BrandLogosCarousel />
-      <HomeBeforeCategorySections />
       <PopularCategorySection />
       <HomeMidSections />
 

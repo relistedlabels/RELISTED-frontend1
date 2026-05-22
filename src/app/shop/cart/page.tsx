@@ -17,7 +17,8 @@ import {
   resolveRentalMetaForCartLine,
 } from "@/lib/cart/mergeCartLineRental";
 import type { CartCheckoutLine } from "./types";
-import { approvedRentalsMatchingCurrentCart } from "@/lib/cart/approvedRentalsMatchingCart";
+import { buildCartApprovedSummaryLines } from "@/lib/cart/buildApprovedCheckoutLines";
+import { isLineRentalApproved } from "@/lib/cart/rentalRequestUi";
 
 export default function CartPage() {
   const path = [
@@ -91,6 +92,7 @@ export default function CartPage() {
               : undefined;
           const listerId =
             (productDetail as { listerId?: string })?.listerId ??
+            (productDetail as { curatorId?: string })?.curatorId ??
             embedded?.listerId;
 
           const days = item.days || 0;
@@ -202,23 +204,22 @@ export default function CartPage() {
     fetchApprovedProductDetails();
   }, [approvedData]);
 
-  const resaleLines = cartLines
-    .filter((line) => line.isResale && line.status === "APPROVED")
+  const approvedCartLines = cartLines
+    .filter((line) => isLineRentalApproved(line.status))
     .map((line) => ({
-      ...line, // Use line properties
+      ...line,
+      requestId: line.rentalRequestId,
       rentalPrice: line.totalPrice,
       securityDeposit: 0,
       cleaningFee: 0,
       deliveryFee: line.deliveryFee,
     }));
 
-  const approvedMatchingCart = [
-    ...approvedRentalsMatchingCurrentCart(
-      approvedItemsWithProduct,
-      cartData?.items,
-    ),
-    ...resaleLines,
-  ];
+  const approvedMatchingCart = buildCartApprovedSummaryLines(
+    approvedItemsWithProduct,
+    approvedCartLines,
+    cartData?.items,
+  );
 
   const groupedByLister = approvedMatchingCart.reduce(
     (acc: Map<string, any[]>, item: any) => {

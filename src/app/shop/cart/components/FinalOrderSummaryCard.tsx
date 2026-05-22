@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { publicApi } from "@/lib/api/public";
 import { useListerProfile } from "@/lib/queries/shop/useListerProfile";
 import { isResaleItem } from "@/lib/listers/listerOrderRow";
+import { isLineRentalApproved } from "@/lib/cart/rentalRequestUi";
 import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
 
 const CURRENCY = "₦";
@@ -102,13 +103,21 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
       <div className="space-y-4 pb-6 border-gray-200 border-b">
         {group.items.map((item) => {
           const product = item.productDetail || {};
+          const isResale =
+            item.isResale === true || isResaleItem(item);
+          const isApproved = isLineRentalApproved(item.status);
           // Try productDetail image, fallback to rental request image
           const productImageUrl =
             firstProductAttachmentImageUrl(product.attachments?.uploads) ||
             item.productImage ||
             "";
+          const rowKey =
+            item.requestId ||
+            item.cartItemId ||
+            item.lineId ||
+            item.productId;
           return (
-            <div key={item.requestId} className="flex items-start gap-4">
+            <div key={rowKey} className="flex items-start gap-4">
               {/* Product Image */}
               <div className="relative bg-gray-200 border border-gray-100 rounded-md w-16 h-20 overflow-hidden shrink-0">
                 {productImageUrl ? (
@@ -127,7 +136,7 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
                   {product.name || item.productName}
                 </Paragraph1>
                 <Paragraph1 className="mt-1 text-gray-600 text-xs leading-snug">
-                  {item.isResale || isResaleItem(item) ? (
+                  {isResale ? (
                     <>
                       Type: <strong>Resale</strong>
                     </>
@@ -137,21 +146,21 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
                     </>
                   )}
                 </Paragraph1>
-                {item.isResale && item.status === "APPROVED" && (
+                {isResale && isApproved && (
                   <div className="bg-green-100 mt-4 px-2 py-0.5 border border-green-200 rounded-full w-fit text-green-800">
                     <Paragraph1 className="font-semibold text-xs">
                       Ready to checkout
                     </Paragraph1>
                   </div>
                 )}
-                {item.isResale && item.status !== "APPROVED" && (
+                {isResale && !isApproved && (
                   <div className="bg-yellow-100 mt-4 px-2 py-0.5 border border-yellow-200 rounded-full w-fit text-yellow-800">
                     <Paragraph1 className="font-semibold text-xs">
                       Awaiting approval
                     </Paragraph1>
                   </div>
                 )}
-                {!item.isResale && (
+                {!isResale && isApproved && (
                   <div className="bg-green-100 mt-4 px-2 py-0.5 border border-green-200 rounded-full w-fit text-green-800">
                     <Paragraph1 className="font-semibold text-xs">
                       Approved
