@@ -17,7 +17,8 @@ import {
   resolveRentalMetaForCartLine,
 } from "@/lib/cart/mergeCartLineRental";
 import type { CartCheckoutLine } from "./types";
-import { buildApprovedCheckoutLines } from "@/lib/cart/buildApprovedCheckoutLines";
+import { buildCartApprovedSummaryLines } from "@/lib/cart/buildApprovedCheckoutLines";
+import { isLineRentalApproved } from "@/lib/cart/rentalRequestUi";
 
 export default function CartPage() {
   const path = [
@@ -202,19 +203,20 @@ export default function CartPage() {
     fetchApprovedProductDetails();
   }, [approvedData]);
 
-  const resaleLines = cartLines
-    .filter((line) => line.isResale && line.status === "APPROVED")
+  const approvedCartLines = cartLines
+    .filter((line) => isLineRentalApproved(line.status))
     .map((line) => ({
-      ...line, // Use line properties
+      ...line,
+      requestId: line.rentalRequestId,
       rentalPrice: line.totalPrice,
       securityDeposit: 0,
       cleaningFee: 0,
       deliveryFee: line.deliveryFee,
     }));
 
-  const approvedMatchingCart = buildApprovedCheckoutLines(
+  const approvedMatchingCart = buildCartApprovedSummaryLines(
     approvedItemsWithProduct,
-    resaleLines,
+    approvedCartLines,
     cartData?.items,
   );
 
