@@ -16,6 +16,10 @@ import {
 import { useCheckoutOrderSummary } from "@/lib/queries/order/useCheckoutOrderSummary";
 import { useProfile } from "@/lib/queries/user/useProfile";
 import { approvedRentalsMatchingCurrentCart } from "@/lib/cart/approvedRentalsMatchingCart";
+import {
+  isCheckoutRentalLine,
+  isCheckoutResalePurchaseLine,
+} from "@/lib/cart/checkoutLineKind";
 import type {
   DerivedDispatchWindow,
   DispatchWindowSelection,
@@ -310,25 +314,31 @@ export default function CheckoutPage() {
     fetchResaleProductDetails();
   }, [cartData]);
 
+  const cartItems = cartData?.items;
+
   const approvedOnCheckout = useMemo(() => {
     const fromRentals = approvedRentalsMatchingCurrentCart(
       cartItemsWithProduct,
-      cartData?.items,
+      cartItems,
     );
-    // Filter out resale items that already exist in rental requests to prevent duplicates
-    const rentalProductIds = new Set(fromRentals.map((item) => item.productId));
+    // Only dedupe cart resale lines when the same product is an active rental on this cart.
+    const rentalProductIds = new Set(
+      fromRentals
+        .filter((item) => isCheckoutRentalLine(item, cartItems))
+        .map((item) => item.productId),
+    );
     const uniqueResaleItems = resaleItemsWithProduct.filter(
       (item) => !rentalProductIds.has(item.productId),
     );
     return [...fromRentals, ...uniqueResaleItems];
-  }, [cartItemsWithProduct, cartData?.items, resaleItemsWithProduct]);
+  }, [cartItemsWithProduct, cartItems, resaleItemsWithProduct]);
 
   const rentalItems = useMemo(
     () =>
-      approvedOnCheckout.filter(
-        (item) => !(item.isResale || item.rentalDays === 0),
+      approvedOnCheckout.filter((item) =>
+        isCheckoutRentalLine(item, cartItems),
       ),
-    [approvedOnCheckout],
+    [approvedOnCheckout, cartItems],
   );
 
   const hasReturnShippingLeg = rentalItems.length > 0;
@@ -381,10 +391,10 @@ export default function CheckoutPage() {
 
   const resaleItems = useMemo(
     () =>
-      approvedOnCheckout.filter(
-        (item) => item.isResale || item.rentalDays === 0,
+      approvedOnCheckout.filter((item) =>
+        isCheckoutResalePurchaseLine(item, cartItems),
       ),
-    [approvedOnCheckout],
+    [approvedOnCheckout, cartItems],
   );
 
   const outboundBaseDate = useMemo(() => {
@@ -874,9 +884,23 @@ export default function CheckoutPage() {
               void orderSummaryQuery.refetch();
             }}
             isResaleOnly={
-              cartData?.items?.every(
-                (item: any) => item.isResale || item.days === 0,
-              ) || false
+              (cartItems?.length ?? 0) > 0 &&
+              cartItems!.every((item) =>
+                isCheckoutResalePurchaseLine(
+                  {
+                    cartItemId: item.id,
+                    rentalDays: item.days,
+                    productDetail: {
+                      listingType: item.product?.listingType as
+                        | "RENTAL"
+                        | "RESALE"
+                        | "RENT_OR_RESALE"
+                        | undefined,
+                    },
+                  },
+                  cartItems,
+                ),
+              )
             }
           />
         </div>

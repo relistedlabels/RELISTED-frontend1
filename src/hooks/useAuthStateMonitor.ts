@@ -6,12 +6,15 @@
  */
 
 import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
+import { isPublicBrowseRoute } from "@/lib/auth/signInRedirectPaths";
 import { useUserStore } from "@/store/useUserStore";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useQueryClient } from "@tanstack/react-query";
 
 export function useAuthStateMonitor() {
   const queryClient = useQueryClient();
+  const pathname = usePathname();
   const previousTokenRef = useRef<string | null>(null);
 
   // Monitor token changes for logout
@@ -25,15 +28,23 @@ export function useAuthStateMonitor() {
 
     // If token was cleared (logout due to 401 or manual logout)
     if (hadToken && !hasToken && tokenChanged) {
-      // Immediately invalidate all queries when user is logged out
-      void queryClient.invalidateQueries();
+      const onPublicBrowse =
+        typeof window !== "undefined" && isPublicBrowseRoute(pathname);
 
-      // Clear error states to prevent stale error messages
-      queryClient.clear();
+      if (onPublicBrowse) {
+        // Keep catalog queries; drop authed caches only so the shop grid stays visible.
+        void queryClient.invalidateQueries({ queryKey: ["auth"] });
+        void queryClient.invalidateQueries({ queryKey: ["cart"] });
+        void queryClient.invalidateQueries({ queryKey: ["renters"] });
+        void queryClient.invalidateQueries({ queryKey: ["profile"] });
+      } else {
+        void queryClient.invalidateQueries();
+        queryClient.clear();
+      }
     }
 
     previousTokenRef.current = token;
-  }, [token, queryClient]);
+  }, [token, queryClient, pathname]);
 
   // Also monitor session expiry flag
   useEffect(() => {

@@ -48,21 +48,29 @@ export function getAuthToken(): string | null {
   }
 }
 
+/** Public catalog endpoints must work for guests even when localStorage has a stale JWT. */
+function shouldAttachAuthHeader(path: string, token: string | null): boolean {
+  if (!token) return false;
+  if (path.startsWith("/api/public/")) return false;
+  return true;
+}
+
 async function doFetch<T>(
   path: string,
   options: RequestInit,
   token: string | null,
   isFormData: boolean,
 ): Promise<Response> {
+  const bearer = shouldAttachAuthHeader(path, token) ? token : null;
   return fetch(`${BASE_URL}${path}`, {
     ...options,
     // Avoid browser HTTP cache + conditional revalidation (304) on auth APIs;
     // React Query owns client caching.
     cache:
-      options.cache ?? (token ? ("no-store" as RequestCache) : "default"),
+      options.cache ?? (bearer ? ("no-store" as RequestCache) : "default"),
     headers: {
       ...(isFormData ? {} : { "Content-Type": "application/json" }),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
       ...(options.headers || {}),
     },
   });
