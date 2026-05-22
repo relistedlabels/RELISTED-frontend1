@@ -4,12 +4,15 @@ import {
   isCheckoutRentalLine,
   isCheckoutResalePurchaseLine,
 } from "@/lib/cart/checkoutLineKind";
+import { isLineRentalApproved } from "@/lib/cart/rentalRequestUi";
 
 type CheckoutLineRef = {
   productId: string;
   cartItemId?: string;
   cart_item_id?: string;
+  lineId?: string;
   id?: string;
+  status?: string;
 };
 
 /**
@@ -48,8 +51,13 @@ export function buildApprovedCheckoutLines<
   );
 
   const uniqueResaleItems = resaleCartLines.filter((item) => {
-    const lineId = String(item.cartItemId ?? item.id ?? "").trim();
-    if (!lineId || !approvedCartLineIds.has(lineId)) return false;
+    const lineId = String(
+      item.cartItemId ?? item.lineId ?? item.id ?? "",
+    ).trim();
+    if (!lineId) return false;
+    const linkedToApprovedRequest = approvedCartLineIds.has(lineId);
+    const preApprovedOnCart = isLineRentalApproved(item.status);
+    if (!linkedToApprovedRequest && !preApprovedOnCart) return false;
     if (rentalProductIds.has(item.productId)) return false;
     return true;
   });
