@@ -420,16 +420,18 @@ export default function CheckoutPage() {
     return latestEndDate ? addDaysToDateString(latestEndDate, 1) : undefined;
   }, [rentalItems]);
 
+  /** Per-lister windows come from GET /order/summary; avoid rentalItems[0] when 2+ rentals. */
+  const singleRentalLine =
+    rentalItems.length === 1 ? rentalItems[0] : undefined;
+  const multiListerRentalCart = rentalItems.length > 1;
+
   const dispatchContexts = useMemo(() => {
     const contexts: DispatchWindowContext[] = [];
-
-    // Use selectedWindows from rental requests if available
-    const firstRentalRequest = rentalItems[0];
-    const selectedWindows = firstRentalRequest?.selectedWindows;
+    const selectedWindows = singleRentalLine?.selectedWindows;
 
     let outboundDerived: DerivedDispatchWindow | undefined;
 
-    if (outboundBaseDate) {
+    if (singleRentalLine && outboundBaseDate) {
       let window: DerivedDispatchWindow;
       if (selectedWindows?.outboundDeliveryWindow) {
         window = {
@@ -464,13 +466,15 @@ export default function CheckoutPage() {
       });
     }
 
-    if (returnBaseDate) {
+    if (singleRentalLine && returnBaseDate) {
+      const returnPickup = selectedWindows?.returnPickupWindow;
       let window: DerivedDispatchWindow;
-      if (selectedWindows?.returnPickupWindow) {
+      if (returnPickup?.start) {
+        const returnYmd = getLagosDateString(returnPickup.start);
         window = {
-          window: selectedWindows.returnPickupWindow,
-          baseDate: getLagosDateString(returnBaseDate),
-          scheduledDate: getLagosDateString(returnBaseDate),
+          window: returnPickup,
+          baseDate: returnYmd,
+          scheduledDate: returnYmd,
           rolledForwardDays: 0,
         };
       } else {
@@ -482,7 +486,7 @@ export default function CheckoutPage() {
         type: "RETURN",
         title: "Return pickup",
         subtitle: "",
-        baseDateLabel: formatLagosDate(returnBaseDate, {
+        baseDateLabel: formatLagosDate(returnPickup?.start ?? returnBaseDate, {
           includeWeekday: true,
         }),
         baseDateReason: "",
@@ -575,7 +579,7 @@ export default function CheckoutPage() {
     outboundBaseDate,
     returnBaseDate,
     resaleItems,
-    rentalItems,
+    singleRentalLine,
     dispatchScheduleClock,
   ]);
 
@@ -870,6 +874,7 @@ export default function CheckoutPage() {
             dispatchContexts={dispatchContexts}
             dispatchSelections={dispatchSelections}
             onDispatchSelectionChange={handleDispatchSelectionChange}
+            multiListerRentalCart={multiListerRentalCart}
             returnPickupAddress={returnPickupAddress}
             onReturnPickupChange={handleReturnPickupAddressChange}
             checkoutBlockingIssues={checkoutBlockingIssues}

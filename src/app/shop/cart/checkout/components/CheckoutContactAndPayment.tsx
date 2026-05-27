@@ -126,6 +126,8 @@ interface CheckoutContactAndPaymentProps {
     listerLocation?: string;
     rows: Array<{ title: string; range: string }>;
   }>;
+  /** When true, rental dispatch UI waits for per-bucket summary (no rentalItems[0] fallback). */
+  multiListerRentalCart?: boolean;
   isResaleOnly?: boolean;
 }
 
@@ -288,6 +290,7 @@ export default function CheckoutContactAndPayment({
   shippingQuoteWarnings = [],
   onRefetchOrderSummary,
   summaryDispatchPreview,
+  multiListerRentalCart = false,
   isResaleOnly = false,
 }: CheckoutContactAndPaymentProps) {
   const dispatchContexts = dispatchContextsProp ?? [];
@@ -304,7 +307,7 @@ export default function CheckoutContactAndPayment({
   /** Avoid read-only scheduler from rentalItems[0] while GET /order/summary is still loading (multi-lister carts). */
   const showQuoteDispatchLoading =
     !isResaleOnly &&
-    hasRentalDispatch &&
+    (hasRentalDispatch || multiListerRentalCart) &&
     isShippingTiersLoading &&
     !hasSummaryDispatchPreview &&
     !orderSummaryError;
@@ -1113,7 +1116,7 @@ export default function CheckoutContactAndPayment({
       )}
 
       {/* 4. DISPATCH WINDOWS Section */}
-      {dispatchContexts.length > 0 && (
+      {(dispatchContexts.length > 0 || multiListerRentalCart) && (
         <div className="bg-white p-4 border border-gray-100 rounded-xl">
           <Paragraph1 className="mb-4 font-bold text-gray-800 tracking-wider">
             {isResaleOnly ? "DELIVERY OPTIONS" : "DISPATCH WINDOWS"}
