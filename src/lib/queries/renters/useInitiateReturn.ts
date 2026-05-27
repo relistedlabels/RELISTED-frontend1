@@ -3,6 +3,7 @@ import { rentersApi } from "@/lib/api/renters";
 
 interface ReturnWithShippingParams {
   orderId: string;
+  shipmentId?: string;
   images: string[];
   damageNotes?: string;
   itemCondition: "GOOD" | "FAIR" | "POOR";
@@ -15,6 +16,7 @@ export const useInitiateReturn = () => {
     mutationFn: async (params: ReturnWithShippingParams) => {
       const {
         orderId,
+        shipmentId,
         images,
         damageNotes = "",
         itemCondition = "GOOD",
@@ -24,6 +26,7 @@ export const useInitiateReturn = () => {
         itemCondition,
         damageNotes,
         images,
+        ...(shipmentId ? { shipmentId } : {}),
       });
 
       return response.data;

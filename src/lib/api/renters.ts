@@ -623,6 +623,7 @@ export const rentersApi = {
       itemCondition: "GOOD" | "FAIR" | "POOR";
       damageNotes?: string;
       images?: string[];
+      shipmentId?: string;
     },
   ) =>
     apiFetch<{

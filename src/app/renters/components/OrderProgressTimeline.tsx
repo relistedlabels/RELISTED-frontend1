@@ -20,6 +20,7 @@ import {
   isListerResaleOrder,
   orderHasRentalLines,
 } from "@/lib/listers/listerOrderRow";
+import { ReturnPackageItems, itemsForProgressGroup } from "@/lib/orders/returnPackageItems";
 
 interface TimelineStage {
   id: number;
@@ -70,6 +71,12 @@ interface OrderProgressTimelineProps {
     summaryLabel?: string;
     shipmentGroups?: ShipmentProgressGroup[];
     returnScheduling?: { summary: string | null } | null;
+    returnRequests?: Array<{
+      id: string;
+      shipmentId: string | null;
+      status: string;
+      pickupWindowSummary?: string | null;
+    }>;
   } | null;
 }
 
@@ -217,12 +224,14 @@ function ShipmentGroupCard({
   group,
   packageIndex,
   packageTotal,
-  returnSchedulingSummary,
+  returnRequestStatus,
+  packageItems,
 }: {
   group: ShipmentProgressGroup;
   packageIndex: number;
   packageTotal: number;
-  returnSchedulingSummary?: string | null;
+  returnRequestStatus?: string | null;
+  packageItems?: Array<{ name: string; imageUrl?: string | null }>;
 }) {
   const kindLabel = group.kind === "rental" ? "Rental" : "Purchase";
   const [isOpen, setIsOpen] = useState(packageIndex === 1);
@@ -246,6 +255,9 @@ function ShipmentGroupCard({
           <Paragraph1 className="mt-2 font-semibold text-gray-900 text-base">
             {group.title}
           </Paragraph1>
+          {packageItems && packageItems.length > 0 ? (
+            <ReturnPackageItems items={packageItems} />
+          ) : null}
           {group.listerName ? (
             <Paragraph1 className="text-gray-500 text-xs">
               Seller: {group.listerName}
@@ -288,9 +300,9 @@ function ShipmentGroupCard({
           </div>
         ) : null}
 
-        {group.kind === "rental" && returnSchedulingSummary ? (
+        {group.kind === "rental" && returnRequestStatus ? (
           <Paragraph1 className="mt-2 text-slate-700 text-xs">
-            Return pickup: {returnSchedulingSummary}
+            Return: {returnRequestStatus.replace(/_/g, " ").toLowerCase()}
           </Paragraph1>
         ) : null}
       </div>
@@ -440,7 +452,13 @@ export default function OrderProgressTimeline({
     ? Math.min(100, Math.max(0, progress!.percentComplete))
     : fallbackPercent;
 
-  const returnSchedulingSummary = progress?.returnScheduling?.summary?.trim();
+  const returnRequestStatusByShipment = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const rr of progress?.returnRequests ?? []) {
+      if (rr.shipmentId) map.set(rr.shipmentId, rr.status);
+    }
+    return map;
+  }, [progress?.returnRequests]);
 
   if (!orderData) {
     return (
@@ -491,9 +509,18 @@ export default function OrderProgressTimeline({
               group={group}
               packageIndex={index + 1}
               packageTotal={shipmentGroups.length}
-              returnSchedulingSummary={
-                hasRentals && group.kind === "rental"
-                  ? returnSchedulingSummary
+              packageItems={itemsForProgressGroup(
+                group,
+                orderData?.items as Array<{
+                  name?: string;
+                  imageUrl?: string | null;
+                }>,
+              )}
+              returnRequestStatus={
+                hasRentals && group.kind === "rental" && group.return?.shipmentId
+                  ? (returnRequestStatusByShipment.get(
+                      group.return.shipmentId,
+                    ) ?? null)
                   : null
               }
             />
