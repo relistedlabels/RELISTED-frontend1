@@ -15,6 +15,7 @@ import DispatchWindowsDisplay, {
   type DispatchWindow,
 } from "@/app/listers/components/DispatchWindowsDisplay";
 import { toast } from "sonner";
+import { ReturnPackageItems } from "@/lib/orders/returnPackageItems";
 
 const CURRENCY = "₦";
 
@@ -46,13 +47,25 @@ function CollapsibleSection({
         {title}
         <ChevronDown
           size={16}
-          className="shrink-0 text-gray-400 transition group-open:rotate-180"
+          className="flex-shrink-0 text-gray-400 transition group-open:rotate-180"
         />
       </summary>
       <div className="border-t border-gray-100 px-3.5 pb-3.5 pt-2">{children}</div>
     </details>
   );
 }
+
+type ReturnLegDetail = {
+  shipmentId: string;
+  windowSummary?: string | null;
+  trackingId?: string | null;
+  providerTrackingUrl?: string | null;
+  items?: Array<{ name: string; imageUrl?: string | null }>;
+  returnRequest?: {
+    status?: string;
+    trackingNumber?: string | null;
+  } | null;
+};
 
 interface OrderStatusDetailsProps {
   orderData?: Record<string, unknown>;
@@ -101,31 +114,25 @@ export default function OrderStatusDetails({
       })
     : null;
 
-  const returnPickup = orderData.returnPickup as
-    | {
-        pickupWindowSummary?: string;
-        trackingNumber?: string;
-      }
-    | undefined;
-  const returnLeg = orderData.returnLeg as
-    | {
-        trackingId?: string;
-        providerTrackingUrl?: string;
-      }
-    | undefined;
+  const returnLegs = (
+    Array.isArray(orderData.returnLegDetails)
+      ? orderData.returnLegDetails
+      : []
+  ) as ReturnLegDetail[];
 
-  const hasReturnDetails =
-    Boolean(String(returnPickup?.pickupWindowSummary ?? "").trim()) ||
-    Boolean(String(returnPickup?.trackingNumber ?? "").trim()) ||
-    Boolean(
-      String(returnLeg?.trackingId ?? "").trim() ||
-        String(returnLeg?.providerTrackingUrl ?? "").trim(),
-    );
+  const hasReturnDetails = returnLegs.some(
+    (leg) =>
+      leg.windowSummary ||
+      leg.returnRequest?.trackingNumber ||
+      leg.trackingId ||
+      leg.providerTrackingUrl,
+  );
 
   const hasExtras =
     showLockedFundsNotice ||
     (dispatchWindows && dispatchWindows.length > 0) ||
-    (!resaleOnlyOrder && (returnDate || hasReturnDetails)) ||
+    (!resaleOnlyOrder && (returnDate || orderData.canReturn != null)) ||
+    hasReturnDetails ||
     Boolean(orderData.shippingAddress);
 
   if (!hasExtras) return null;
@@ -196,43 +203,72 @@ export default function OrderStatusDetails({
       ) : null}
 
       {!resaleOnlyOrder && hasReturnDetails ? (
-        <CollapsibleSection title="Return pickup">
+        <CollapsibleSection
+          title={returnLegs.length > 1 ? "Return pickups" : "Return pickup"}
+        >
           <div className="space-y-3 text-sm">
-            {returnPickup?.pickupWindowSummary ? (
-              <div>
-                <Paragraph1 className="text-xs text-gray-500">Pickup window</Paragraph1>
-                <Paragraph1 className="font-semibold text-gray-900">
-                  {returnPickup.pickupWindowSummary}
-                </Paragraph1>
-              </div>
-            ) : null}
-            {returnPickup?.trackingNumber ? (
-              <div className="flex items-center gap-2">
-                <Paragraph1 className="font-mono font-semibold text-gray-900">
-                  {returnPickup.trackingNumber}
-                </Paragraph1>
-                <button
-                  type="button"
-                  onClick={() =>
-                    copyToClipboard(String(returnPickup.trackingNumber))
-                  }
-                  className="p-1 text-gray-500"
-                >
-                  <Copy size={14} />
-                </button>
-              </div>
-            ) : null}
-            {returnLeg?.providerTrackingUrl ? (
-              <a
-                href={returnLeg.providerTrackingUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 font-semibold text-blue-600"
+            {returnLegs.map((leg, idx) => (
+              <div
+                key={leg.shipmentId}
+                className={
+                  idx > 0 ? "space-y-2 border-t border-gray-100 pt-3" : "space-y-2"
+                }
               >
-                <ExternalLink size={14} />
-                Track return
-              </a>
-            ) : null}
+                {returnLegs.length > 1 ? (
+                  <Paragraph1 className="text-xs font-semibold text-gray-700">
+                    Package {idx + 1}
+                  </Paragraph1>
+                ) : null}
+                <ReturnPackageItems items={leg.items ?? []} />
+                {leg.windowSummary ? (
+                  <div>
+                    <Paragraph1 className="text-xs text-gray-500">
+                      Pickup window
+                    </Paragraph1>
+                    <Paragraph1 className="font-semibold text-gray-900">
+                      {leg.windowSummary}
+                    </Paragraph1>
+                  </div>
+                ) : null}
+                {leg.returnRequest?.status ? (
+                  <Paragraph1 className="text-xs text-gray-600">
+                    Status: {String(leg.returnRequest.status).replace(/_/g, " ")}
+                  </Paragraph1>
+                ) : null}
+                {(leg.returnRequest?.trackingNumber || leg.trackingId) && (
+                  <div className="flex items-center gap-2">
+                    <Paragraph1 className="font-mono font-semibold text-gray-900">
+                      {leg.returnRequest?.trackingNumber ?? leg.trackingId}
+                    </Paragraph1>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        copyToClipboard(
+                          String(
+                            leg.returnRequest?.trackingNumber ?? leg.trackingId,
+                          ),
+                        )
+                      }
+                      className="text-gray-500 hover:text-gray-800"
+                      aria-label="Copy tracking number"
+                    >
+                      <Copy size={14} />
+                    </button>
+                  </div>
+                )}
+                {leg.providerTrackingUrl ? (
+                  <a
+                    href={leg.providerTrackingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 font-semibold text-blue-600"
+                  >
+                    <ExternalLink size={14} />
+                    Track return
+                  </a>
+                ) : null}
+              </div>
+            ))}
           </div>
         </CollapsibleSection>
       ) : null}
@@ -247,13 +283,8 @@ export default function OrderStatusDetails({
 }
 
 function AddressBlock({ address }: { address: Record<string, string> }) {
-  return (
-    <Paragraph1 className="text-sm text-gray-700 leading-relaxed">
-      {address.street}
-      <br />
-      {address.city}, {address.state} {address.zipCode}
-      <br />
-      {address.country}
-    </Paragraph1>
-  );
+  const line = [address.street, address.city, address.state]
+    .filter(Boolean)
+    .join(", ");
+  return <Paragraph1 className="text-sm text-gray-700">{line || "—"}</Paragraph1>;
 }

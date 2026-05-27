@@ -12,6 +12,8 @@ import ProductCuratorDetails from "./ProductCuratorDetails";
 import OrderProgressTimeline from "./OrderProgressTimeline";
 import OrderStatusDetails from "./OrderStatusDetails";
 import ReadyToReturnSection from "./ReadyToReturnSection";
+import type { ShipmentProgressGroup } from "./OrderProgressTimeline";
+import { itemsForProgressGroup } from "@/lib/orders/returnPackageItems";
 import OrderDetailSummaryBar from "./OrderDetailSummaryBar";
 import ResaleDeliveryConfirmBanner from "./ResaleDeliveryConfirmBanner";
 import {
@@ -63,6 +65,30 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
   const confirmablePackages = orderData
     ? confirmableResaleShipmentsFromOrder(orderData)
     : [];
+
+  const rentalReturnGroups = (
+    (progressData?.shipmentGroups as ShipmentProgressGroup[] | undefined) ?? []
+  ).filter((g) => g.kind === "rental" && g.return?.shipmentId);
+  const orderItems = (orderData?.items as Array<{
+    name?: string;
+    imageUrl?: string | null;
+  }>) ?? [];
+  const returnLegByShipment = new Map(
+    (
+      (orderData?.returnLegDetails as Array<{
+        shipmentId: string;
+        items?: Array<{ name: string; imageUrl?: string | null }>;
+      }>) ?? []
+    ).map((leg) => [leg.shipmentId, leg.items ?? []]),
+  );
+  const returnRequestByShipment = new Map(
+    (
+      (progressData as { returnRequests?: Array<{ shipmentId: string | null; status: string }> })
+        ?.returnRequests ?? []
+    )
+      .filter((rr) => rr.shipmentId)
+      .map((rr) => [rr.shipmentId as string, rr.status]),
+  );
 
   const handleConfirmResale = (shipmentId: string) => {
     confirmResaleDelivery.mutate(
@@ -178,7 +204,65 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
                   <OrderStatusDetails orderData={orderData} />
 
                   {!resaleOnlyOrder ? (
-                    <ReadyToReturnSection orderId={orderId} />
+                    rentalReturnGroups.length > 1 ? (
+                      <div className="space-y-4">
+                        {rentalReturnGroups.map((group) => (
+                          <ReadyToReturnSection
+                            key={group.return!.shipmentId}
+                            orderId={orderId}
+                            shipmentId={group.return!.shipmentId}
+                            listerLabel={group.listerName}
+                            windowSummary={group.return!.windowSummary}
+                            items={
+                              returnLegByShipment.get(
+                                group.return!.shipmentId,
+                              ) ??
+                              itemsForProgressGroup(group, orderItems)
+                            }
+                            existingRequestStatus={
+                              returnRequestByShipment.get(
+                                group.return!.shipmentId,
+                              ) ?? null
+                            }
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <ReadyToReturnSection
+                        orderId={orderId}
+                        shipmentId={
+                          rentalReturnGroups[0]?.return?.shipmentId ??
+                          undefined
+                        }
+                        listerLabel={rentalReturnGroups[0]?.listerName}
+                        windowSummary={
+                          rentalReturnGroups[0]?.return?.windowSummary ?? null
+                        }
+                        items={
+                          rentalReturnGroups[0]?.return?.shipmentId
+                            ? (returnLegByShipment.get(
+                                rentalReturnGroups[0].return!.shipmentId,
+                              ) ??
+                              itemsForProgressGroup(
+                                rentalReturnGroups[0],
+                                orderItems,
+                              ))
+                            : itemsForProgressGroup(
+                                rentalReturnGroups[0] ?? {
+                                  itemNames: [],
+                                },
+                                orderItems,
+                              )
+                        }
+                        existingRequestStatus={
+                          rentalReturnGroups[0]?.return?.shipmentId
+                            ? (returnRequestByShipment.get(
+                                rentalReturnGroups[0].return!.shipmentId,
+                              ) ?? null)
+                            : null
+                        }
+                      />
+                    )
                   ) : null}
                 </>
               )}

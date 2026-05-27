@@ -2,22 +2,40 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Truck, Clock, AlertCircle } from "lucide-react";
+import { Truck, Clock, AlertCircle, CheckCircle } from "lucide-react";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import ReadyToReturnModal from "./ReadyToReturnModal";
 import { useInitiateReturn } from "@/lib/queries/renters/useInitiateReturn";
+import {
+  ReturnPackageItems,
+  type ReturnPackageItem,
+} from "@/lib/orders/returnPackageItems";
 
 interface ReadyToReturnSectionProps {
   orderId?: string;
+  shipmentId?: string;
+  listerLabel?: string | null;
+  windowSummary?: string | null;
+  existingRequestStatus?: string | null;
+  items?: ReturnPackageItem[];
 }
 
 const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
   orderId,
+  shipmentId,
+  listerLabel,
+  windowSummary,
+  existingRequestStatus,
+  items = [],
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const initiateReturnMutation = useInitiateReturn();
+
+  const alreadySubmitted =
+    !!existingRequestStatus &&
+    existingRequestStatus !== "REJECTED";
 
   const handleReturnConfirm = async (
     images: string[],
@@ -33,6 +51,7 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
       setErrorMessage(null);
       await initiateReturnMutation.mutateAsync({
         orderId,
+        shipmentId,
         images,
         itemCondition,
         damageNotes,
@@ -50,62 +69,81 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
     setErrorMessage(null);
   };
 
+  if (alreadySubmitted) {
+    return (
+      <div className="flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-3">
+        <CheckCircle size={18} className="mt-0.5 flex-shrink-0 text-green-600" />
+        <div>
+          <Paragraph1 className="text-sm font-semibold text-green-900">
+            Return submitted
+            {listerLabel ? ` to ${listerLabel}` : ""}
+          </Paragraph1>
+          <Paragraph2 className="mt-0.5 text-xs text-green-800">
+            Pickup is scheduled. You can start another return when another item
+            is due.
+          </Paragraph2>
+          <ReturnPackageItems items={items} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="space-y-4">
-        {/* Section Header */}
         <div>
           <Paragraph1 className="font-bold text-gray-900">
             Ready to Return?
+            {listerLabel ? ` (${listerLabel})` : ""}
           </Paragraph1>
           <Paragraph1 className="mt-1 text-gray-600">
-            Return your item when you're finished with the rental
+            Return the item(s) below when you&apos;re finished with the rental
           </Paragraph1>
+          <ReturnPackageItems items={items} />
+          {windowSummary ? (
+            <Paragraph2 className="mt-1 text-xs text-gray-500">
+              Pickup window: {windowSummary}
+            </Paragraph2>
+          ) : null}
         </div>
 
-        {/* Error Message */}
         {errorMessage && (
-          <div className="flex items-start gap-2 bg-red-50 p-3 border border-red-200 rounded-lg">
+          <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3">
             <AlertCircle
               size={16}
-              className="flex-shrink-0 mt-0.5 text-red-600"
+              className="mt-0.5 flex-shrink-0 text-red-600"
             />
-            <Paragraph1 className="text-red-700 text-sm">
-              {errorMessage}
-            </Paragraph1>
+            <Paragraph1 className="text-sm text-red-700">{errorMessage}</Paragraph1>
           </div>
         )}
 
-        {/* Info Cards */}
-        <div className="gap-3 grid grid-cols-1">
-          {/* Card 1: Easy Pickup */}
-          <div className="hover:shadow-md p-4 border border-gray-200 rounded-lg transition">
+        <div className="grid grid-cols-1 gap-3">
+          <div className="rounded-lg border border-gray-200 p-4 transition hover:shadow-md">
             <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 bg-blue-50 p-2 rounded-lg">
+              <div className="flex-shrink-0 rounded-lg bg-blue-50 p-2">
                 <Truck className="text-blue-600" size={20} />
               </div>
               <div>
-                <Paragraph1 className="font-semibold text-gray-900 text-sm">
+                <Paragraph1 className="text-sm font-semibold text-gray-900">
                   Easy Pickup
                 </Paragraph1>
-                <Paragraph1 className="mt-0.5 text-gray-600 text-xs">
+                <Paragraph1 className="mt-0.5 text-xs text-gray-600">
                   Schedule your pickup in seconds
                 </Paragraph1>
               </div>
             </div>
           </div>
 
-          {/* Card 2: Return on Time */}
-          <div className="hover:shadow-md p-4 border border-gray-200 rounded-lg transition">
+          <div className="rounded-lg border border-gray-200 p-4 transition hover:shadow-md">
             <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 bg-amber-50 p-2 rounded-lg">
+              <div className="flex-shrink-0 rounded-lg bg-amber-50 p-2">
                 <Clock className="text-amber-600" size={20} />
               </div>
               <div>
-                <Paragraph1 className="font-semibold text-gray-900 text-sm">
+                <Paragraph1 className="text-sm font-semibold text-gray-900">
                   Return on Time
                 </Paragraph1>
-                <Paragraph1 className="mt-0.5 text-gray-600 text-xs">
+                <Paragraph1 className="mt-0.5 text-xs text-gray-600">
                   Late returns attract extra rental charges
                 </Paragraph1>
               </div>
@@ -113,13 +151,12 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
           </div>
         </div>
 
-        {/* Action Button */}
         <motion.button
           onClick={() => setIsModalOpen(true)}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           disabled={initiateReturnMutation.isPending}
-          className="flex justify-center items-center gap-2 bg-black hover:bg-gray-900 disabled:bg-gray-400 px-4 py-3 rounded-lg w-full font-semibold text-white transition disabled:cursor-not-allowed"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-black px-4 py-3 font-semibold text-white transition hover:bg-gray-900 disabled:cursor-not-allowed disabled:bg-gray-400"
         >
           <Truck size={18} />
           {initiateReturnMutation.isPending
@@ -128,7 +165,6 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
         </motion.button>
       </div>
 
-      {/* Modal */}
       <ReadyToReturnModal
         isOpen={isModalOpen}
         onClose={handleModalClose}
