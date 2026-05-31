@@ -213,6 +213,9 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
                             shipmentId={group.return!.shipmentId}
                             listerLabel={group.listerName}
                             windowSummary={group.return!.windowSummary}
+                            returnWindowExpired={
+                              group.return!.returnWindowExpired ?? false
+                            }
                             items={
                               returnLegByShipment.get(
                                 group.return!.shipmentId,
@@ -237,6 +240,10 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
                         listerLabel={rentalReturnGroups[0]?.listerName}
                         windowSummary={
                           rentalReturnGroups[0]?.return?.windowSummary ?? null
+                        }
+                        returnWindowExpired={
+                          rentalReturnGroups[0]?.return?.returnWindowExpired ??
+                          false
                         }
                         items={
                           rentalReturnGroups[0]?.return?.shipmentId

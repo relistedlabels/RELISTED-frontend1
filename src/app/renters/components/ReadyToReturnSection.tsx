@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Truck, Clock, AlertCircle, CheckCircle } from "lucide-react";
-import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import { Paragraph1 } from "@/common/ui/Text";
 import ReadyToReturnModal from "./ReadyToReturnModal";
 import { useInitiateReturn } from "@/lib/queries/renters/useInitiateReturn";
 import {
@@ -16,6 +16,7 @@ interface ReadyToReturnSectionProps {
   shipmentId?: string;
   listerLabel?: string | null;
   windowSummary?: string | null;
+  returnWindowExpired?: boolean;
   existingRequestStatus?: string | null;
   items?: ReturnPackageItem[];
 }
@@ -25,6 +26,7 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
   shipmentId,
   listerLabel,
   windowSummary,
+  returnWindowExpired = false,
   existingRequestStatus,
   items = [],
 }) => {
@@ -41,6 +43,7 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
     images: string[],
     itemCondition: "GOOD" | "FAIR" | "POOR",
     damageNotes: string,
+    pickupWindow: { start: string; end: string },
   ): Promise<void> => {
     if (!orderId) {
       setErrorMessage("Order ID not found");
@@ -55,6 +58,7 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
         images,
         itemCondition,
         damageNotes,
+        pickupWindow,
       });
     } catch (error) {
       const message =
@@ -78,10 +82,10 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
             Return submitted
             {listerLabel ? ` to ${listerLabel}` : ""}
           </Paragraph1>
-          <Paragraph2 className="mt-0.5 text-xs text-green-800">
+          <Paragraph1 className="mt-0.5 text-xs text-green-800">
             Pickup is scheduled. You can start another return when another item
             is due.
-          </Paragraph2>
+          </Paragraph1>
           <ReturnPackageItems items={items} />
         </div>
       </div>
@@ -100,10 +104,13 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
             Return the item(s) below when you&apos;re finished with the rental
           </Paragraph1>
           <ReturnPackageItems items={items} />
-          {windowSummary ? (
-            <Paragraph2 className="mt-1 text-xs text-gray-500">
-              Pickup window: {windowSummary}
-            </Paragraph2>
+          {returnWindowExpired && windowSummary ? (
+            <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
+              <Paragraph1 className="text-xs leading-relaxed text-amber-900">
+                <span className="font-semibold">Original pickup window has passed:</span>{" "}
+                {windowSummary}. Choose a new time when you start the return.
+              </Paragraph1>
+            </div>
           ) : null}
         </div>
 
@@ -171,6 +178,7 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
         onConfirm={handleReturnConfirm}
         isLoading={initiateReturnMutation.isPending}
         orderId={orderId}
+        shipmentId={shipmentId}
       />
     </>
   );

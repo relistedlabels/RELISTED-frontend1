@@ -7,6 +7,7 @@ interface ReturnWithShippingParams {
   images: string[];
   damageNotes?: string;
   itemCondition: "GOOD" | "FAIR" | "POOR";
+  pickupWindow?: { start: string; end: string };
 }
 
 export const useInitiateReturn = () => {
@@ -20,6 +21,7 @@ export const useInitiateReturn = () => {
         images,
         damageNotes = "",
         itemCondition = "GOOD",
+        pickupWindow,
       } = params;
 
       const response = await rentersApi.returnWithShipping(orderId, {
@@ -27,12 +29,12 @@ export const useInitiateReturn = () => {
         damageNotes,
         images,
         ...(shipmentId ? { shipmentId } : {}),
+        ...(pickupWindow ? { pickupWindow } : {}),
       });
 
-      return response.data;
+      return response;
     },
-    onSuccess: (data, variables) => {
-      // Invalidate related queries to refresh data
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["renters", "orders", variables.orderId],
       });
