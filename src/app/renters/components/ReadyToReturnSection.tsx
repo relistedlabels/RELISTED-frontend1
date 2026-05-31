@@ -41,6 +41,7 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
     images: string[],
     itemCondition: "GOOD" | "FAIR" | "POOR",
     damageNotes: string,
+    pickupWindow: { start: string; end: string },
   ): Promise<void> => {
     if (!orderId) {
       setErrorMessage("Order ID not found");
@@ -55,6 +56,7 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
         images,
         itemCondition,
         damageNotes,
+        pickupWindow,
       });
     } catch (error) {
       const message =
@@ -171,6 +173,7 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
         onConfirm={handleReturnConfirm}
         isLoading={initiateReturnMutation.isPending}
         orderId={orderId}
+        shipmentId={shipmentId}
       />
     </>
   );

@@ -617,6 +617,37 @@ export const rentersApi = {
       method: "GET",
     }),
 
+  getReturnPickupWindowOptions: (orderId: string, shipmentId?: string) =>
+    apiFetch<{
+      success: boolean;
+      data: {
+        scheduledDay: string;
+        scheduledDayLabel: string;
+        originalWindow: {
+          start: string;
+          end: string;
+          summary: string;
+          expired: boolean;
+        } | null;
+        rescheduled: boolean;
+        suggested: {
+          start: string;
+          end: string;
+          summary: string;
+        };
+        sameDayOptions: Array<{
+          start: string;
+          end: string;
+          summary: string;
+        }>;
+      };
+    }>(
+      `/api/renters/orders/${orderId}/return-pickup-window-options${
+        shipmentId ? `?shipmentId=${encodeURIComponent(shipmentId)}` : ""
+      }`,
+      { method: "GET" },
+    ),
+
   returnWithShipping: (
     orderId: string,
     data: {
@@ -624,6 +655,7 @@ export const rentersApi = {
       damageNotes?: string;
       images?: string[];
       shipmentId?: string;
+      pickupWindow?: { start: string; end: string };
     },
   ) =>
     apiFetch<{
@@ -643,6 +675,8 @@ export const rentersApi = {
           orderId: string;
           status: string;
         };
+        pickupWindowRescheduled?: boolean;
+        pickupWindowSummary?: string | null;
       };
     }>(`/api/renters/orders/${orderId}/return-with-shipping`, {
       method: "POST",

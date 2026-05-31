@@ -3,10 +3,15 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Upload, CheckCircle2, AlertCircle, Star } from "lucide-react";
+import { X, Upload, CheckCircle2, AlertCircle, Star, Clock } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { useUpload } from "@/lib/queries/renters/useUpload";
-import { useAddresses, Address } from "@/lib/queries/renters/useAddresses";
+import { useAddresses } from "@/lib/queries/renters/useAddresses";
+import {
+  useReturnPickupWindowOptions,
+  type ReturnPickupWindowOption,
+} from "@/lib/queries/renters/useReturnPickupWindowOptions";
+import { formatLagosTime } from "@/lib/checkout/dispatchWindows";
 import { rentersApi } from "@/lib/api/renters";
 import { toast } from "sonner";
 
@@ -17,12 +22,18 @@ interface ReadyToReturnModalProps {
     images: string[],
     itemCondition: "GOOD" | "FAIR" | "POOR",
     damageNotes: string,
+    pickupWindow: { start: string; end: string },
   ) => Promise<void>;
   isLoading?: boolean;
   orderId?: string;
+  shipmentId?: string;
 }
 
 type ModalStep = "confirmation" | "upload" | "success" | "review" | "review-success";
+
+function slotTimeLabel(option: ReturnPickupWindowOption): string {
+  return `${formatLagosTime(option.start)} – ${formatLagosTime(option.end)}`;
+}
 
 const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
   isOpen,
@@ -30,6 +41,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
   onConfirm,
   isLoading: externalIsLoading = false,
   orderId,
+  shipmentId,
 }) => {
   const [currentStep, setCurrentStep] = useState<ModalStep>("confirmation");
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
@@ -43,27 +55,45 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
   const [rating, setRating] = useState<number>(0);
   const [reviewComment, setReviewComment] = useState<string>("");
   const [hoverRating, setHoverRating] = useState<number>(0);
+  const [selectedPickupWindow, setSelectedPickupWindow] =
+    useState<ReturnPickupWindowOption | null>(null);
+  const [confirmedPickupSummary, setConfirmedPickupSummary] = useState<
+    string | null
+  >(null);
+  const [wasRescheduled, setWasRescheduled] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
   const isMountedRef = useRef(true);
 
   const uploadMutation = useUpload();
-
-  // Fetch renter's addresses
   const { data: addresses } = useAddresses();
+  const {
+    data: windowOptions,
+    isLoading: windowOptionsLoading,
+    isError: windowOptionsError,
+  } = useReturnPickupWindowOptions(orderId, shipmentId, isOpen);
 
-  // Format address for display
   const location = useMemo(() => {
     if (!addresses || addresses.length === 0) {
       return "No address on file";
     }
-
-    // Find default address or use first one
     const defaultAddress =
       addresses.find((addr) => addr.isDefault) || addresses[0];
-
     return `${defaultAddress.street}, ${defaultAddress.city}, ${defaultAddress.state}`;
   }, [addresses]);
+
+  useEffect(() => {
+    if (!windowOptions?.suggested) return;
+    setSelectedPickupWindow((prev) => {
+      if (
+        prev &&
+        windowOptions.sameDayOptions.some((o) => o.start === prev.start)
+      ) {
+        return prev;
+      }
+      return windowOptions.suggested;
+    });
+  }, [windowOptions]);
 
   useEffect(() => {
     setMounted(true);
@@ -87,11 +117,22 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
     }
   }, [currentStep]);
 
+  const resetForm = () => {
+    setCurrentStep("confirmation");
+    setUploadedImages([]);
+    setPreviewUrls([]);
+    setItemCondition("GOOD");
+    setDamageNotes("");
+    setRating(0);
+    setReviewComment("");
+    setSelectedPickupWindow(null);
+    setConfirmedPickupSummary(null);
+    setWasRescheduled(false);
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     setUploadedImages((prev) => [...prev, ...files]);
-
-    // Create preview URLs
     files.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -111,10 +152,13 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
       alert("Please upload at least one image");
       return;
     }
+    if (!selectedPickupWindow) {
+      toast.error("Select a pickup window to continue.");
+      return;
+    }
 
     setIsLoading(true);
     try {
-      // Upload images first to get UUIDs
       const imageUuids: string[] = [];
       for (const file of uploadedImages) {
         const formData = new FormData();
@@ -123,10 +167,19 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
         imageUuids.push(uploadResult.uploadId || uploadResult.id || "");
       }
 
-      // Call onConfirm with new format
-      await onConfirm(imageUuids, itemCondition, damageNotes);
+      await onConfirm(
+        imageUuids,
+        itemCondition,
+        damageNotes,
+        {
+          start: selectedPickupWindow.start,
+          end: selectedPickupWindow.end,
+        },
+      );
 
       if (isMountedRef.current) {
+        setConfirmedPickupSummary(selectedPickupWindow.summary);
+        setWasRescheduled(Boolean(windowOptions?.rescheduled));
         setCurrentStep("success");
       }
     } catch (error) {
@@ -143,34 +196,16 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
 
   const handleClose = () => {
     if (currentStep === "success" || currentStep === "review-success") {
-      setCurrentStep("confirmation");
-      setUploadedImages([]);
-      setPreviewUrls([]);
-      setItemCondition("GOOD");
-      setDamageNotes("");
-      setRating(0);
-      setReviewComment("");
+      resetForm();
       onClose();
     } else {
       onClose();
-      setCurrentStep("confirmation");
-      setUploadedImages([]);
-      setPreviewUrls([]);
-      setItemCondition("GOOD");
-      setDamageNotes("");
-      setRating(0);
-      setReviewComment("");
+      resetForm();
     }
   };
 
   const handleSuccessClose = () => {
-    setCurrentStep("confirmation");
-    setUploadedImages([]);
-    setPreviewUrls([]);
-    setItemCondition("GOOD");
-    setDamageNotes("");
-    setRating(0);
-    setReviewComment("");
+    resetForm();
     onClose();
   };
 
@@ -217,7 +252,6 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
             exit={{ scale: 0.95, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
             <div className="top-0 sticky flex justify-between items-center bg-white p-4 border-gray-100 border-b">
               <Paragraph3 className="font-bold text-gray-900 text-lg">
                 Return Item
@@ -230,22 +264,19 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
               </button>
             </div>
 
-            {/* Content */}
-            <div className="space-y-6 p-6">
+            <div className="space-y-6 p-6" ref={contentRef}>
               {currentStep === "confirmation" && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="space-y-4"
                 >
-                  {/* Icon */}
                   <div className="flex justify-center mb-4">
                     <div className="bg-blue-50 p-4 rounded-full">
                       <AlertCircle className="text-blue-600" size={40} />
                     </div>
                   </div>
 
-                  {/* Description */}
                   <div className="space-y-3">
                     <Paragraph1 className="font-semibold text-gray-900">
                       Ready to Return?
@@ -254,48 +285,105 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                       Before proceeding, please make sure:
                     </Paragraph1>
 
-                    {/* Checklist */}
                     <ul className="space-y-2 ml-2">
                       <li className="flex items-start gap-2">
-                        <span className="mt-0.5 font-bold text-blue-600">
-                          ✓
-                        </span>
+                        <span className="mt-0.5 font-bold text-blue-600">✓</span>
                         <Paragraph1 className="text-gray-700">
                           Item is in good condition
                         </Paragraph1>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="mt-0.5 font-bold text-blue-600">
-                          ✓
-                        </span>
+                        <span className="mt-0.5 font-bold text-blue-600">✓</span>
                         <Paragraph1 className="text-gray-700">
                           Item is properly packaged
                         </Paragraph1>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="mt-0.5 font-bold text-blue-600">
-                          ✓
-                        </span>
+                        <span className="mt-0.5 font-bold text-blue-600">✓</span>
                         <Paragraph1 className="text-gray-700">
                           Item is ready to ship
                         </Paragraph1>
                       </li>
                     </ul>
 
-                    {/* Rider Info */}
                     <div className="space-y-3 bg-blue-50 mt-4 p-3 border border-blue-200 rounded-lg">
-                      <div className="space-y-2">
-                        <Paragraph1 className="text-blue-700 text-sm">
-                          <span className="font-semibold">Pickup: </span>A rider
-                          will be assigned to come collect the item at your
-                          location:{" "}
-                          <span className="font-semibold"> {location}</span>
+                      <Paragraph1 className="text-blue-700 text-sm">
+                        <span className="font-semibold">Pickup: </span>A rider
+                        will collect the item at{" "}
+                        <span className="font-semibold">{location}</span>
+                      </Paragraph1>
+                    </div>
+
+                    <div className="space-y-3 border border-gray-200 rounded-lg p-3">
+                      <div className="flex items-center gap-2">
+                        <Clock className="text-gray-700" size={18} />
+                        <Paragraph1 className="font-semibold text-gray-900 text-sm">
+                          Pickup window
                         </Paragraph1>
                       </div>
+
+                      {windowOptionsLoading ? (
+                        <Paragraph1 className="text-gray-500 text-sm">
+                          Loading available pickup times…
+                        </Paragraph1>
+                      ) : windowOptionsError || !windowOptions ? (
+                        <Paragraph1 className="text-red-600 text-sm">
+                          Could not load pickup times. Close and try again.
+                        </Paragraph1>
+                      ) : (
+                        <>
+                          <Paragraph1 className="text-gray-600 text-sm">
+                            {windowOptions.scheduledDayLabel}
+                          </Paragraph1>
+
+                          {windowOptions.rescheduled &&
+                          windowOptions.originalWindow?.expired ? (
+                            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
+                              <Paragraph1 className="text-amber-900 text-xs leading-relaxed">
+                                Your original return window has passed. We
+                                selected the next available slot below. You can
+                                pick another time on the same day.
+                              </Paragraph1>
+                            </div>
+                          ) : null}
+
+                          <div className="grid grid-cols-2 gap-2">
+                            {windowOptions.sameDayOptions.map((option) => {
+                              const selected =
+                                selectedPickupWindow?.start === option.start;
+                              return (
+                                <button
+                                  key={option.start}
+                                  type="button"
+                                  onClick={() => setSelectedPickupWindow(option)}
+                                  className={`rounded-lg border px-3 py-2 text-left text-sm font-medium transition ${
+                                    selected
+                                      ? "border-black bg-black text-white"
+                                      : "border-gray-200 bg-white text-gray-800 hover:border-gray-400"
+                                  }`}
+                                >
+                                  {slotTimeLabel(option)}
+                                  {option.start ===
+                                  windowOptions.suggested.start ? (
+                                    <span
+                                      className={`mt-0.5 block text-[10px] font-normal ${
+                                        selected
+                                          ? "text-gray-200"
+                                          : "text-gray-500"
+                                      }`}
+                                    >
+                                      Recommended
+                                    </span>
+                                  ) : null}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
 
-                  {/* Buttons */}
                   <div className="flex gap-3 pt-2">
                     <button
                       onClick={handleClose}
@@ -305,7 +393,12 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                     </button>
                     <button
                       onClick={() => setCurrentStep("upload")}
-                      className="flex-1 bg-black hover:bg-gray-900 px-4 py-3 rounded-lg font-semibold text-white text-sm transition"
+                      disabled={
+                        windowOptionsLoading ||
+                        !selectedPickupWindow ||
+                        windowOptionsError
+                      }
+                      className="flex-1 bg-black hover:bg-gray-900 disabled:bg-gray-400 px-4 py-3 rounded-lg font-semibold text-white text-sm transition disabled:cursor-not-allowed"
                     >
                       Continue
                     </button>
@@ -319,7 +412,20 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   className="space-y-4"
                 >
-                  {/* Header */}
+                  {selectedPickupWindow ? (
+                    <div
+                      data-section="shipping"
+                      className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2"
+                    >
+                      <Paragraph1 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        Selected pickup
+                      </Paragraph1>
+                      <Paragraph1 className="mt-1 text-sm font-medium text-gray-900">
+                        {selectedPickupWindow.summary}
+                      </Paragraph1>
+                    </div>
+                  ) : null}
+
                   <div>
                     <Paragraph1 className="font-semibold text-gray-900">
                       Upload Item Photos
@@ -330,7 +436,6 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                     </Paragraph1>
                   </div>
 
-                  {/* Image Upload Area */}
                   <div className="space-y-3">
                     <label className="block">
                       <div className="p-6 border-2 border-gray-300 hover:border-gray-400 border-dashed rounded-lg text-center transition cursor-pointer">
@@ -354,7 +459,6 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                       />
                     </label>
 
-                    {/* Image Previews */}
                     {previewUrls.length > 0 && (
                       <div className="space-y-2">
                         <Paragraph1 className="font-medium text-gray-700">
@@ -381,7 +485,6 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                     )}
                   </div>
 
-                  {/* Info Box */}
                   <div className="bg-blue-50 p-3 border border-blue-200 rounded-lg">
                     <Paragraph1 className="text-blue-700 text-xs">
                       <span className="font-semibold">Tip:</span> Upload clear
@@ -390,7 +493,6 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                     </Paragraph1>
                   </div>
 
-                  {/* Item Condition */}
                   <div className="space-y-2">
                     <label className="block">
                       <Paragraph1 className="mb-2 font-semibold text-gray-900">
@@ -412,7 +514,6 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                     </label>
                   </div>
 
-                  {/* Damage Notes */}
                   <div className="space-y-2">
                     <label className="block">
                       <Paragraph1 className="mb-2 font-semibold text-gray-900">
@@ -429,7 +530,6 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                     </label>
                   </div>
 
-                  {/* Buttons */}
                   <div className="flex gap-3 pt-2">
                     <button
                       onClick={() => setCurrentStep("confirmation")}
@@ -442,7 +542,8 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                       disabled={
                         isLoading ||
                         externalIsLoading ||
-                        uploadedImages.length === 0
+                        uploadedImages.length === 0 ||
+                        !selectedPickupWindow
                       }
                       className="flex-1 bg-black hover:bg-gray-900 disabled:bg-gray-400 px-4 py-3 rounded-lg font-semibold text-white text-sm transition disabled:cursor-not-allowed"
                     >
@@ -460,7 +561,6 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                   animate={{ opacity: 1, scale: 1 }}
                   className="space-y-4 py-4 text-center"
                 >
-                  {/* Success Icon */}
                   <div className="flex justify-center mb-4">
                     <motion.div
                       initial={{ scale: 0 }}
@@ -476,29 +576,32 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                     </motion.div>
                   </div>
 
-                  {/* Success Message */}
                   <div className="space-y-2">
                     <Paragraph1 className="font-bold text-gray-900">
                       Return Confirmed!
                     </Paragraph1>
                     <Paragraph1 className="text-gray-600">
-                      Your return request has been submitted successfully.
+                      {wasRescheduled
+                        ? "Your pickup was moved to the next available window."
+                        : "Your return request has been submitted successfully."}
                     </Paragraph1>
+                    {confirmedPickupSummary ? (
+                      <Paragraph1 className="text-gray-800 text-sm font-medium">
+                        Pickup scheduled: {confirmedPickupSummary}
+                      </Paragraph1>
+                    ) : null}
                   </div>
 
-                  {/* Info Box */}
-                  <div className="space-y-2 bg-blue-50 p-4 border border-blue-200 rounded-lg">
+                  <div className="space-y-2 bg-blue-50 p-4 border border-blue-200 rounded-lg text-left">
                     <Paragraph1 className="font-semibold text-blue-900">
                       What happens next?
                     </Paragraph1>
                     <Paragraph1 className="text-blue-700 text-sm leading-relaxed">
-                      The lister will be notified and will contact you to
-                      arrange pickup. Make sure to keep the item in the location
-                      you specified.
+                      We will book your return pickup for the window you chose.
+                      Have your item ready at {location} during that time.
                     </Paragraph1>
                   </div>
 
-                  {/* Close Button */}
                   <button
                     onClick={() => setCurrentStep("review")}
                     className="bg-black hover:bg-gray-900 px-4 py-3 rounded-lg w-full font-semibold text-white text-sm transition"
@@ -514,9 +617,6 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   className="space-y-4"
                 >
-                  {/* Header */}
-
-                  {/* Star Rating */}
                   <div className="space-y-3">
                     <Paragraph1 className="font-semibold text-gray-900">
                       Rating <span className="text-red-500">*</span>
@@ -552,7 +652,6 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                     )}
                   </div>
 
-                  {/* Review Comment */}
                   <div className="space-y-2">
                     <label className="block">
                       <Paragraph1 className="mt-1 text-gray-600">
@@ -568,7 +667,6 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                     </label>
                   </div>
 
-                  {/* Info Box */}
                   <div className="bg-blue-50 p-3 border border-blue-200 rounded-lg">
                     <Paragraph1 className="text-blue-700 text-xs">
                       <span className="font-semibold">Note:</span> Your review
@@ -577,14 +675,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                     </Paragraph1>
                   </div>
 
-                  {/* Buttons */}
                   <div className="flex gap-3 pt-2">
-                    {/* <button
-                    onClick={() => setCurrentStep("success")}
-                    className="flex-1 hover:bg-gray-50 px-4 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 text-sm transition"
-                  >
-                    Skip
-                  </button> */}
                     <button
                       onClick={handleSubmitReview}
                       disabled={rating === 0 || isSubmittingReview}
