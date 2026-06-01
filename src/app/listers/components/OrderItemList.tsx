@@ -46,7 +46,8 @@ const OrderItemList: React.FC<OrderItemListProps> = ({
     displayItems = items;
   } else {
     const query = useOrderItems(orderId);
-    displayItems = query.data?.data || [];
+    const raw = query.data as { data?: { items?: unknown[] } } | undefined;
+    displayItems = Array.isArray(raw?.data?.items) ? raw.data.items : [];
     isLoading = query.isLoading;
   }
   return (

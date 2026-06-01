@@ -14,41 +14,29 @@ export function isListerAvailabilityRequestRow(
   return st === "PENDING_APPROVAL";
 }
 
-/** Check if an order is a pure resale order (listingType === 'RESALE'). */
+/** Check if an order is a pure resale order for this lister (scoped items only). */
 export function isListerResaleOrder(
   order: Record<string, unknown> | null | undefined,
 ): boolean {
   if (!order) return false;
+  const items = (order.items ?? order.orderItems) as unknown[] | undefined;
+  if (items && items.length > 0) {
+    return items.every((row) =>
+      isRenterResalePurchaseLine(row as Record<string, unknown>),
+    );
+  }
   const listingType = String(
     order.listingType ?? order.listing_type ?? "",
   ).trim();
-  
-  // Check order-level listingType first
-  if (listingType === "RESALE") return true;
-  if (listingType === "RENTAL") return false;
-  
-  // If listingType is RENT_OR_RESALE or not set, check items
-  const items = order.items as unknown[] | undefined;
-  if (items && items.length > 0) {
-    // Check if all items are resale (days === 0)
-    return items.every((item) => {
-      const days = Number((item as Record<string, unknown>).days ?? (item as Record<string, unknown>).rentalDays ?? 0);
-      return days === 0;
-    });
-  }
-  
-  return false;
+  return listingType === "RESALE";
 }
 
-/** Check if an order is a mixed order (contains both rental and resale items). */
+/** Check if an order is a mixed order for this lister (rental + resale lines). */
 export function isListerMixedOrder(
   order: Record<string, unknown> | null | undefined,
 ): boolean {
   if (!order) return false;
-  const listingType = String(
-    order.listingType ?? order.listing_type ?? "",
-  ).trim();
-  return listingType === "RENT_OR_RESALE";
+  return orderHasResalePurchaseLines(order) && orderHasRentalLines(order);
 }
 
 /** Check if an order item is a resale item. */
@@ -110,17 +98,7 @@ export function isMixedRenterOrder(
 export function orderHasAtLeastOneResaleItem(
   order: Record<string, unknown> | null | undefined,
 ): boolean {
-  if (!order) return false;
-  if (orderHasResalePurchaseLines(order)) return true;
-  const orderLt = String(
-    order.listingType ?? order.listing_type ?? "",
-  ).trim();
-  if (orderLt !== "RESALE" && orderLt !== "RENT_OR_RESALE") return false;
-  const items = (order.items ?? order.orderItems) as unknown[] | undefined;
-  if (!items?.length) return false;
-  return items.some((row) =>
-    isResaleItem(row as Record<string, unknown>),
-  );
+  return orderHasResalePurchaseLines(order);
 }
 
 export { shouldShowRenterResaleDeliveryConfirm } from "@/lib/orders/resaleDeliveryConfirm";
