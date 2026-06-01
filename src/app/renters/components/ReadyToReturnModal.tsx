@@ -76,7 +76,15 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
     (windowOptionsLoading ? "Loading pickup address…" : "No pickup address on file");
 
   useEffect(() => {
-    if (!windowOptions?.suggested) return;
+    if (!windowOptions) return;
+    if (
+      !windowOptions.pickupWindowSelectable &&
+      windowOptions.bookedPickupWindow
+    ) {
+      setSelectedPickupWindow(windowOptions.bookedPickupWindow);
+      return;
+    }
+    if (!windowOptions.suggested) return;
     setSelectedPickupWindow((prev) => {
       if (
         prev &&
@@ -323,7 +331,16 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                         <Paragraph1 className="text-red-600 text-sm">
                           Could not load pickup times. Close and try again.
                         </Paragraph1>
-                      ) : (
+                      ) : !windowOptions.pickupWindowSelectable &&
+                        windowOptions.bookedPickupWindow ? (
+                        <Paragraph1 className="text-gray-600 text-sm leading-relaxed">
+                          Your return pickup from checkout is{" "}
+                          <span className="font-semibold text-gray-900">
+                            {windowOptions.bookedPickupWindow.summary}
+                          </span>
+                          .
+                        </Paragraph1>
+                      ) : windowOptions.pickupWindowSelectable ? (
                         <>
                           <Paragraph1 className="text-gray-600 text-sm">
                             {windowOptions.scheduledDayLabel}
@@ -373,6 +390,10 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                             })}
                           </div>
                         </>
+                      ) : (
+                        <Paragraph1 className="text-gray-500 text-sm">
+                          No pickup window on file for this return.
+                        </Paragraph1>
                       )}
                     </div>
                   </div>
@@ -388,8 +409,8 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                       onClick={() => setCurrentStep("upload")}
                       disabled={
                         windowOptionsLoading ||
-                        !selectedPickupWindow ||
-                        windowOptionsError
+                        windowOptionsError ||
+                        !selectedPickupWindow
                       }
                       className="flex-1 bg-black hover:bg-gray-900 disabled:bg-gray-400 px-4 py-3 rounded-lg font-semibold text-white text-sm transition disabled:cursor-not-allowed"
                     >
