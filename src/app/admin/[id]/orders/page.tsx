@@ -5,9 +5,6 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import { TableSkeleton, StatCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import {
-  Calendar,
-  Download,
-  Eye,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -18,7 +15,11 @@ import OrderDetailModal from "./components/OrderDetailModal";
 import ReturnDetailModal from "./components/ReturnDetailModal";
 import { useOrders, useOrderStats } from "@/lib/queries/admin/useOrders";
 import type { Order, Return } from "@/lib/api/admin/orders";
-import { getAdminOrderStatusLabel } from "@/lib/orders/shipmentAndOrderLabels";
+import type { ShipmentType } from "@/lib/api/shipments";
+import {
+  getAdminOrderStatusLabel,
+  getShipmentLegDisplayLabel,
+} from "@/lib/orders/shipmentAndOrderLabels";
 import { adminOrderListStatusToApiParam } from "@/lib/orders/adminOrderListFilters";
 
 const formatCurrency = (value: number): string => {
@@ -65,11 +66,38 @@ const getStatusColor = (statusLabel: string) => {
 
 const ORDERS_PAGE_SIZE = 20;
 
+const TYPE_FILTERS: Array<ShipmentType | "All"> = [
+  "All",
+  "OUTBOUND",
+  "RETURN",
+  "RESALE",
+];
+
+type FulfillmentFilter = "all" | "manual" | "automated";
+
+const ORDER_STATUS_FILTERS = [
+  "All",
+  "Preparing",
+  "In Transit",
+  "Delivered",
+  "Return Due",
+  "Returns",
+  "Return Pickup",
+  "Disputed",
+] as const;
+
+type OrderStatusFilter = (typeof ORDER_STATUS_FILTERS)[number];
+
 export default function OrdersPage() {
   const [activeTab, setActiveTab] = useState("active");
-  const [statusFilter, setStatusFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState<OrderStatusFilter>("All");
+  const [typeFilter, setTypeFilter] = useState<ShipmentType | "All">("All");
+  const [fulfillmentFilter, setFulfillmentFilter] =
+    useState<FulfillmentFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedReturn, setSelectedReturn] = useState<any>(null);
@@ -83,14 +111,30 @@ export default function OrdersPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, statusFilter, debouncedSearch]);
+  }, [
+    activeTab,
+    statusFilter,
+    debouncedSearch,
+    typeFilter,
+    fulfillmentFilter,
+    dateFrom,
+    dateTo,
+  ]);
 
   const isReturnsView = statusFilter === "Returns";
+
+  const manualFulfillmentParam =
+    fulfillmentFilter === "manual"
+      ? true
+      : fulfillmentFilter === "automated"
+        ? false
+        : undefined;
 
   // Fetch orders and stats
   const {
     data: ordersData,
     isLoading: ordersLoading,
+    isFetching: ordersFetching,
     isError: ordersError,
   } = useOrders({
     page: currentPage,
@@ -98,6 +142,10 @@ export default function OrdersPage() {
     tab: isReturnsView ? undefined : activeTab,
     status: adminOrderListStatusToApiParam(statusFilter),
     search: debouncedSearch || undefined,
+    type: typeFilter === "All" ? undefined : typeFilter,
+    manualFulfillment: isReturnsView ? undefined : manualFulfillmentParam,
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined,
   }) as any;
 
   const {
@@ -131,10 +179,11 @@ export default function OrdersPage() {
   }, [ordersData]);
 
   useEffect(() => {
-    if (pagination.pages > 0 && currentPage > pagination.pages) {
-      setCurrentPage(pagination.pages);
+    const totalPages = ordersData?.data?.pagination?.pages;
+    if (totalPages && currentPage > totalPages) {
+      setCurrentPage(totalPages);
     }
-  }, [pagination.pages, currentPage]);
+  }, [ordersData?.data?.pagination?.pages, currentPage]);
 
   // Build stat cards from real data
   const statCards = useMemo(() => {
@@ -186,48 +235,6 @@ export default function OrdersPage() {
           </Paragraph1>
         </div>
 
-        {/* Search and Filter Bar */}
-        <div className="bg-white mb-6 p-4 border border-gray-200 rounded-lg">
-          <div className="flex flex-wrap justify-between items-center gap-4">
-            <div className="flex flex-1 items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg min-w-64">
-              <svg
-                className="w-4 h-4 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              <input
-                type="text"
-                placeholder="Search orders, renters, listers..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 bg-transparent outline-none text-gray-900 text-sm placeholder-gray-500"
-              />
-            </div>
-
-            <div className="hidden flex- items-center gap-2">
-              <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 border border-gray-200 rounded-lg">
-                <Calendar size={16} className="text-gray-600" />
-                <select className="bg-transparent outline-none font-medium text-gray-900 text-sm">
-                  <option>All Time</option>
-                </select>
-              </div>
-
-              <button className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 px-4 py-2 rounded-lg font-medium text-white text-sm transition">
-                <Download size={16} />
-                Export
-              </button>
-            </div>
-          </div>
-        </div>
-
         {/* Stats Cards */}
         <div className="gap-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 mb-6">
           {statsLoading ? (
@@ -262,69 +269,147 @@ export default function OrdersPage() {
           )}
         </div>
 
-        {/* Tabs */}
-        <div className="bg-white mb-0 border-gray-200 border-b rounded-t-lg">
-          <div className="flex items-center gap-8 px-6">
-            {[
-              { id: "active", label: "Active", count: 4 },
-              { id: "completed", label: "Completed", count: 1 },
-              { id: "rejected", label: "Rejected", count: 1 },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  setActiveTab(tab.id);
-                  if (statusFilter === "Returns") {
-                    setStatusFilter("All");
-                  }
-                }}
-                className={`py-4 font-medium text-sm border-b-2 transition-colors ${
-                  activeTab === tab.id
-                    ? "text-gray-900 border-black"
-                    : "text-gray-500 border-transparent hover:text-gray-700"
-                }`}
-              >
-                {tab.label}
-                {/* <span className="ml-2 text-gray-500">({tab.count})</span> */}
-              </button>
-            ))}
+        <div className="bg-white mb-6 border border-gray-200 rounded-lg overflow-hidden">
+          <div className="px-6 py-4 border-gray-200 border-b">
+            <Paragraph2 className="mb-1 font-semibold text-gray-900">
+              Order list
+            </Paragraph2>
+            <Paragraph1 className="text-gray-500 text-sm">
+              Search and filters apply to the order table below.
+            </Paragraph1>
           </div>
-        </div>
 
-        {/* Status Filter Tabs */}
-        <div className="bg-white mb-6 px-6 py-4 border-gray-200 border-b">
-          <div className="flex items-center gap-4 pb-2 overflow-x-auto">
-            {[
-              "All",
-              "Preparing",
-              "In Transit",
-              "Delivered",
-              "Return Due",
-              "Returns",
-              "Return Pickup",
-              "Disputed",
-            ].map((status) => (
-              <button
-                key={status}
-                onClick={() => setStatusFilter(status)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                  statusFilter === status
-                    ? "bg-gray-900 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                {status}
-              </button>
-            ))}
+          {/* Tabs */}
+          <div className="border-gray-200 border-b">
+            <div className="flex items-center gap-8 px-6">
+              {[
+                { id: "active", label: "Active" },
+                { id: "completed", label: "Completed" },
+                { id: "rejected", label: "Rejected" },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    if (statusFilter === "Returns") {
+                      setStatusFilter("All");
+                    }
+                  }}
+                  className={`py-4 font-medium text-sm border-b-2 transition-colors ${
+                    activeTab === tab.id
+                      ? "text-gray-900 border-black"
+                      : "text-gray-500 border-transparent hover:text-gray-700"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+
+          <div className="flex flex-col lg:flex-row flex-wrap items-stretch lg:items-center gap-3 px-6 py-4 border-gray-200 border-b">
+            <div className="flex flex-1 items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg min-w-[220px]">
+              <svg
+                className="w-4 h-4 text-gray-400 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <input
+                type="text"
+                placeholder="Order id, renter, or lister..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 bg-transparent outline-none text-gray-900 text-sm placeholder-gray-500"
+              />
+            </div>
+
+            {!isReturnsView && (
+              <>
+                <select
+                  value={typeFilter}
+                  onChange={(e) =>
+                    setTypeFilter(e.target.value as ShipmentType | "All")
+                  }
+                  className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[160px] text-gray-900 text-sm"
+                  aria-label="Order type"
+                >
+                  {TYPE_FILTERS.map((t) => (
+                    <option key={t} value={t}>
+                      {t === "All" ? "All types" : getShipmentLegDisplayLabel(t)}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={fulfillmentFilter}
+                  onChange={(e) =>
+                    setFulfillmentFilter(e.target.value as FulfillmentFilter)
+                  }
+                  className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[180px] text-gray-900 text-sm"
+                  aria-label="Fulfillment"
+                >
+                  <option value="all">All fulfillment</option>
+                  <option value="manual">Relisted dispatch</option>
+                  <option value="automated">Carrier (Topship)</option>
+                </select>
+              </>
+            )}
+
+            <select
+              value={statusFilter}
+              onChange={(e) =>
+                setStatusFilter(e.target.value as OrderStatusFilter)
+              }
+              className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[180px] text-gray-900 text-sm"
+              aria-label="Status"
+            >
+              {ORDER_STATUS_FILTERS.map((status) => (
+                <option key={status} value={status}>
+                  {status === "All" ? "All statuses" : status}
+                </option>
+              ))}
+            </select>
+
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[160px] text-gray-900 text-sm"
+              aria-label="Created from"
+            />
+
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              min={dateFrom || undefined}
+              className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[160px] text-gray-900 text-sm"
+              aria-label="Created to"
+            />
+          </div>
 
         {/* Orders/Returns Table */}
-        {ordersLoading || ordersError ? (
+        {ordersLoading && !ordersData ? (
+          <TableSkeleton rows={5} columns={9} />
+        ) : ordersError ? (
           <TableSkeleton rows={5} columns={9} />
         ) : (
           <>
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div
+              className={`overflow-hidden transition-opacity ${
+                ordersFetching ? "opacity-60" : "opacity-100"
+              }`}
+            >
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -614,7 +699,7 @@ export default function OrdersPage() {
 
             {/* Pagination */}
             {pagination.total > 0 && (
-              <div className="flex justify-between items-center bg-white mt-6 px-6 py-4 border border-gray-200 rounded-lg">
+              <div className="flex justify-between items-center px-6 py-4 border-gray-200 border-t">
                 <Paragraph1 className="text-gray-600 text-sm">
                   Showing {(currentPage - 1) * pagination.limit + 1} to{" "}
                   {Math.min(currentPage * pagination.limit, pagination.total)}{" "}
@@ -622,8 +707,9 @@ export default function OrdersPage() {
                 </Paragraph1>
                 <div className="flex items-center gap-2">
                   <button
+                    type="button"
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
+                    disabled={currentPage === 1 || ordersFetching}
                     className="flex items-center gap-1 hover:bg-gray-50 disabled:opacity-50 px-3 py-2 border border-gray-300 rounded-lg font-medium text-sm transition disabled:cursor-not-allowed"
                   >
                     <ChevronLeft size={16} />
@@ -636,8 +722,10 @@ export default function OrdersPage() {
                     ).map((page) => (
                       <button
                         key={page}
+                        type="button"
                         onClick={() => setCurrentPage(page)}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+                        disabled={ordersFetching}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed ${
                           currentPage === page
                             ? "bg-gray-900 text-white"
                             : "border border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -648,10 +736,13 @@ export default function OrdersPage() {
                     ))}
                   </div>
                   <button
+                    type="button"
                     onClick={() =>
                       setCurrentPage((p) => Math.min(pagination.pages, p + 1))
                     }
-                    disabled={currentPage === pagination.pages}
+                    disabled={
+                      currentPage === pagination.pages || ordersFetching
+                    }
                     className="flex items-center gap-1 hover:bg-gray-50 disabled:opacity-50 px-3 py-2 border border-gray-300 rounded-lg font-medium text-sm transition disabled:cursor-not-allowed"
                   >
                     Next
@@ -662,6 +753,7 @@ export default function OrdersPage() {
             )}
           </>
         )}
+        </div>
       </div>
 
       <OrderDetailModal

@@ -128,6 +128,10 @@ interface OrderListParams {
   search?: string;
   status?: string;
   tab?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  type?: string;
+  manualFulfillment?: boolean;
 }
 
 function buildOrderParams(params: OrderListParams): string {
@@ -137,6 +141,14 @@ function buildOrderParams(params: OrderListParams): string {
   if (params.search) searchParams.append("search", params.search);
   if (params.status) searchParams.append("status", params.status);
   if (params.tab) searchParams.append("tab", params.tab);
+  if (params.dateFrom) searchParams.append("dateFrom", params.dateFrom);
+  if (params.dateTo) searchParams.append("dateTo", params.dateTo);
+  if (params.type) searchParams.append("type", params.type);
+  if (params.manualFulfillment === true) {
+    searchParams.append("manualFulfillment", "true");
+  } else if (params.manualFulfillment === false) {
+    searchParams.append("manualFulfillment", "false");
+  }
   return searchParams.toString();
 }
 
@@ -208,7 +220,7 @@ export const ordersApi = {
       method: "GET",
     }),
 
-  getReturns: (params: Pick<OrderListParams, 'page' | 'limit'> = {}) =>
+  getReturns: (params: Pick<OrderListParams, "page" | "limit" | "dateFrom" | "dateTo"> = {}) =>
     apiFetch<{
       success: true;
       data: {
