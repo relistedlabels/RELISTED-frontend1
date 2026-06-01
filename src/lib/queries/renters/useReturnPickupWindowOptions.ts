@@ -14,6 +14,7 @@ export type ReturnPickupWindowOptions = {
   rescheduled: boolean;
   suggested: ReturnPickupWindowOption;
   sameDayOptions: ReturnPickupWindowOption[];
+  pickupAddressSummary: string | null;
 };
 
 export const useReturnPickupWindowOptions = (
