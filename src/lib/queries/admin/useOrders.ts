@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ordersApi, Order, Return, OrderStats } from "@/lib/api/admin/";
 
 interface OrderListParams {
@@ -7,6 +7,10 @@ interface OrderListParams {
   search?: string;
   status?: string;
   tab?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  type?: string;
+  manualFulfillment?: boolean;
 }
 
 type OrdersResponse =
@@ -46,14 +50,21 @@ export const useOrders = (params: OrderListParams = {}) =>
       params.search,
       params.status,
       params.tab,
+      params.dateFrom,
+      params.dateTo,
+      params.type,
+      params.manualFulfillment,
     ],
     queryFn: () =>
       params.status === "Returns"
         ? ordersApi.getReturns({
             page: params.page,
             limit: params.limit,
+            dateFrom: params.dateFrom,
+            dateTo: params.dateTo,
           })
         : ordersApi.getOrders(params),
+    placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
