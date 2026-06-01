@@ -1,4 +1,4 @@
-// ENDPOINTS: GET /shipments, GET /shipments/:id, GET /shipments/:id/tracking,
+// ENDPOINTS: GET /shipments, GET /shipments/costs, GET /shipments/:id, GET /shipments/:id/tracking,
 // GET /orders/:orderId/shipments, POST /shipments/:id/cancel, POST /shipments/:id/redispatch,
 // POST /shipments/:id/manual-complete, POST /shipments/:id/manual-delivered (Relisted dispatch)
 
@@ -20,9 +20,12 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
   useShipments,
+  useShipmentCosts,
   useShipment,
   useCancelShipment,
   useRedispatchShipment,
@@ -48,6 +51,14 @@ import {
   AdminListingThumb,
   listingThumbnailUrl,
 } from "@/app/admin/lib/adminListingDisplay";
+
+const PROVIDER_LABELS: Record<string, string> = {
+  all: "All",
+  topship: "Topship",
+  shipbubble: "Shipbubble",
+  chowdeck_relay: "Chowdeck Relay",
+  manual: "Relisted dispatch",
+};
 
 function shipmentLineItemThumbnailUrl(line: ShipmentOrderLineItem): string | null {
   if (!line.product) return null;
@@ -76,6 +87,24 @@ const koboToNaira = (k?: number | null): string => {
   if (k == null) return "—";
   return formatCurrency(k / 100);
 };
+
+function formatShipmentRowCost(
+  shipment: Pick<Shipment, "shipmentCharge" | "pickupCharge" | "vatCharge">,
+): string {
+  const kobo =
+    (shipment.shipmentCharge ?? 0) +
+    (shipment.pickupCharge ?? 0) +
+    (shipment.vatCharge ?? 0);
+  if (
+    kobo <= 0 &&
+    shipment.shipmentCharge == null &&
+    shipment.pickupCharge == null &&
+    shipment.vatCharge == null
+  ) {
+    return "—";
+  }
+  return koboToNaira(kobo);
+}
 
 const getStatusLabel = (
   status: ShipmentStatus,
@@ -220,7 +249,7 @@ export default function ShipmentsPage() {
     <Suspense
       fallback={
         <div className="min-h-screen">
-          <TableSkeleton rows={8} columns={9} />
+          <TableSkeleton rows={8} columns={10} />
         </div>
       }
     >
@@ -244,6 +273,13 @@ function ShipmentsPageInner() {
   const [currentPage, setCurrentPage] = useState(1);
   const [manualTrackingRef, setManualTrackingRef] = useState("");
   const [manualTrackingUrl, setManualTrackingUrl] = useState("");
+  const [costProvider, setCostProvider] = useState("all");
+  const [costCourier, setCostCourier] = useState("all");
+  const [costsOpen, setCostsOpen] = useState(false);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [costDateFrom, setCostDateFrom] = useState("");
+  const [costDateTo, setCostDateTo] = useState("");
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 350);
@@ -281,7 +317,21 @@ function ShipmentsPageInner() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, typeFilter, fulfillmentFilter, debouncedSearch]);
+  }, [statusFilter, typeFilter, fulfillmentFilter, debouncedSearch, dateFrom, dateTo]);
+
+  useEffect(() => {
+    setCostProvider("all");
+    setCostCourier("all");
+  }, [
+    statusFilter,
+    typeFilter,
+    fulfillmentFilter,
+    debouncedSearch,
+    dateFrom,
+    dateTo,
+    costDateFrom,
+    costDateTo,
+  ]);
 
   const manualFulfillmentParam =
     fulfillmentFilter === "manual"
@@ -299,9 +349,23 @@ function ShipmentsPageInner() {
     type: typeFilter === "All" ? undefined : typeFilter,
     orderId: debouncedSearch || undefined,
     manualFulfillment: manualFulfillmentParam,
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined,
     page: currentPage,
     limit: 20,
   });
+
+  const { data: costsRes } = useShipmentCosts({
+    status: statusFilter === "All" ? undefined : statusFilter,
+    type: typeFilter === "All" ? undefined : typeFilter,
+    orderId: debouncedSearch || undefined,
+    manualFulfillment: manualFulfillmentParam,
+    dateFrom: costDateFrom || undefined,
+    dateTo: costDateTo || undefined,
+    provider: costProvider,
+    courier: costCourier,
+  });
+  const costs = costsRes?.data;
 
   const cancelShipment = useCancelShipment();
   const redispatchShipment = useRedispatchShipment();
@@ -423,9 +487,161 @@ function ShipmentsPageInner() {
         </Paragraph1>
       </div>
 
-      <div className="bg-white mb-6 p-4 border border-gray-200 rounded-lg">
-        <div className="flex flex-wrap justify-between items-center gap-4">
-          <div className="flex flex-1 items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg min-w-64">
+      <div className="bg-white mb-6 border border-gray-200 rounded-lg overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setCostsOpen((open) => !open)}
+          className="flex justify-between items-center gap-4 hover:bg-gray-50 px-5 py-4 w-full text-left transition-colors"
+          aria-expanded={costsOpen}
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            {costsOpen ? (
+              <ChevronUp className="w-4 h-4 text-gray-500 shrink-0" aria-hidden />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-gray-500 shrink-0" aria-hidden />
+            )}
+            <div className="min-w-0">
+              <Paragraph2 className="font-semibold text-gray-900">Shipping costs</Paragraph2>
+              <Paragraph1 className="text-gray-500 text-sm">
+                Aggregated shipping spend with its own date range and breakdown filters
+              </Paragraph1>
+            </div>
+          </div>
+        </button>
+
+        {costsOpen && (
+          <div className="px-5 py-4 border-gray-200 border-t">
+            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 mb-4">
+              <input
+                type="date"
+                value={costDateFrom}
+                onChange={(e) => setCostDateFrom(e.target.value)}
+                className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[160px] text-gray-900 text-sm"
+                aria-label="Cost scheduled from"
+              />
+
+              <input
+                type="date"
+                value={costDateTo}
+                onChange={(e) => setCostDateTo(e.target.value)}
+                min={costDateFrom || undefined}
+                className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[160px] text-gray-900 text-sm"
+                aria-label="Cost scheduled to"
+              />
+
+              <select
+                value={costProvider}
+                onChange={(e) => {
+                  setCostProvider(e.target.value);
+                  setCostCourier("all");
+                }}
+                className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[160px] text-gray-900 text-sm"
+                aria-label="Shipping provider"
+              >
+                <option value="all">All providers</option>
+                {(costs?.providers ?? []).map((p) => (
+                  <option key={p} value={p}>
+                    {PROVIDER_LABELS[p] ?? p}
+                  </option>
+                ))}
+              </select>
+
+              {(costs?.couriers.length ?? 0) > 0 && (
+                <select
+                  value={costCourier}
+                  onChange={(e) => setCostCourier(e.target.value)}
+                  className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[160px] text-gray-900 text-sm"
+                  aria-label="Courier"
+                >
+                  <option value="all">All couriers</option>
+                  {(costs?.couriers ?? []).map((c) => (
+                    <option key={c} value={c}>
+                      {c.charAt(0).toUpperCase() + c.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+            {costs && costs.count > 0 ? (
+              <div className="gap-6 grid grid-cols-1 md:grid-cols-2">
+                <div>
+                  <Paragraph1 className="mb-2 font-medium text-gray-700 text-sm">By month</Paragraph1>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-gray-200 border-b text-left text-gray-500 text-xs uppercase">
+                        <th className="py-2 pr-2">Month</th>
+                        <th className="py-2 pr-2">Shipments</th>
+                        <th className="py-2">Cost</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {costs.trend.map((row) => (
+                        <tr key={row.month} className="border-gray-100 border-b">
+                          <td className="py-2 pr-2">{row.month}</td>
+                          <td className="py-2 pr-2">{row.count}</td>
+                          <td className="py-2">{koboToNaira(row.kobo)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-gray-300 border-t font-semibold text-gray-900">
+                        <td className="py-2 pr-2">Total</td>
+                        <td className="py-2 pr-2">{costs.count}</td>
+                        <td className="py-2">{koboToNaira(costs.totalKobo)}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+                <div>
+                  <Paragraph1 className="mb-2 font-medium text-gray-700 text-sm">
+                    {costProvider !== "all" || costCourier !== "all" ? "By courier" : "By provider"}
+                  </Paragraph1>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-gray-200 border-b text-left text-gray-500 text-xs uppercase">
+                        <th className="py-2 pr-2">
+                          {costProvider !== "all" || costCourier !== "all" ? "Courier" : "Provider"}
+                        </th>
+                        <th className="py-2 pr-2">Shipments</th>
+                        <th className="py-2">Cost</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {costs.groups.map((row) => (
+                        <tr key={row.key} className="border-gray-100 border-b">
+                          <td className="py-2 pr-2">{row.label}</td>
+                          <td className="py-2 pr-2">{row.count}</td>
+                          <td className="py-2">{koboToNaira(row.kobo)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-gray-300 border-t font-semibold text-gray-900">
+                        <td className="py-2 pr-2">Total</td>
+                        <td className="py-2 pr-2">{costs.count}</td>
+                        <td className="py-2">{koboToNaira(costs.totalKobo)}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <Paragraph1 className="text-gray-500 text-sm">No cost data for these filters.</Paragraph1>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white mb-6 border border-gray-200 rounded-lg overflow-hidden">
+        <div className="px-6 py-4 border-gray-200 border-b">
+          <Paragraph2 className="mb-1 font-semibold text-gray-900">Shipment list</Paragraph2>
+          <Paragraph1 className="text-gray-500 text-sm">
+            Search and filters apply to the shipment table below.
+          </Paragraph1>
+        </div>
+
+        <div className="flex flex-col lg:flex-row flex-wrap items-stretch lg:items-center gap-3 px-6 py-4 border-gray-200 border-b">
+          <div className="flex flex-1 items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg min-w-[220px]">
             <svg
               className="w-4 h-4 text-gray-400 shrink-0"
               fill="none"
@@ -442,102 +658,82 @@ function ShipmentsPageInner() {
             </svg>
             <input
               type="text"
-              placeholder="Filter by order id (e.g. RL-…) or internal order UUID…"
+              placeholder="Order id or UUID…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-1 bg-transparent outline-none text-gray-900 text-sm placeholder-gray-500"
             />
           </div>
-        </div>
-      </div>
 
-      <div className="bg-white mb-6 px-6 py-4 border border-gray-200 rounded-lg">
-        <Paragraph1 className="mb-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">
-          Shipment type
-        </Paragraph1>
-        <div className="flex items-center gap-2 pb-1 overflow-x-auto">
-          {TYPE_FILTERS.map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setTypeFilter(t)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                typeFilter === t
-                  ? "bg-gray-900 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              {t === "All" ? "All types" : getShipmentLegDisplayLabel(t)}
-            </button>
-          ))}
-        </div>
-      </div>
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value as ShipmentType | "All")}
+            className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[160px] text-gray-900 text-sm"
+            aria-label="Shipment type"
+          >
+            {TYPE_FILTERS.map((t) => (
+              <option key={t} value={t}>
+                {t === "All" ? "All types" : getShipmentLegDisplayLabel(t)}
+              </option>
+            ))}
+          </select>
 
-      <div className="bg-white mb-6 px-6 py-4 border border-gray-200 rounded-lg">
-        <Paragraph1 className="mb-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">
-          Fulfillment
-        </Paragraph1>
-        <div className="flex items-center gap-2 pb-1 overflow-x-auto">
-          {(
-            [
-              { key: "all" as const, label: "All" },
-              { key: "manual" as const, label: "Relisted dispatch" },
-              { key: "automated" as const, label: "Carrier (Topship)" },
-            ] as const
-          ).map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setFulfillmentFilter(key)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                fulfillmentFilter === key
-                  ? "bg-gray-900 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
+          <select
+            value={fulfillmentFilter}
+            onChange={(e) => setFulfillmentFilter(e.target.value as FulfillmentFilter)}
+            className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[180px] text-gray-900 text-sm"
+            aria-label="Fulfillment"
+          >
+            <option value="all">All fulfillment</option>
+            <option value="manual">Relisted dispatch</option>
+            <option value="automated">Carrier (Topship)</option>
+          </select>
 
-      <div className="bg-white mb-6 px-6 py-4 border border-gray-200 border-b rounded-t-lg">
-        <Paragraph1 className="mb-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">
-          Status
-        </Paragraph1>
-        <div className="flex items-center gap-2 pb-2 overflow-x-auto">
-          {STATUS_FILTERS.map((status) => (
-            <button
-              key={status}
-              type="button"
-              onClick={() => setStatusFilter(status)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                statusFilter === status
-                  ? "bg-gray-900 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              {status === "All" ? "All" : getStatusLabel(status)}
-            </button>
-          ))}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as ShipmentStatus | "All")}
+            className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[180px] text-gray-900 text-sm"
+            aria-label="Status"
+          >
+            {STATUS_FILTERS.map((status) => (
+              <option key={status} value={status}>
+                {status === "All" ? "All statuses" : getStatusLabel(status)}
+              </option>
+            ))}
+          </select>
+
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[160px] text-gray-900 text-sm"
+            aria-label="Scheduled from"
+          />
+
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            min={dateFrom || undefined}
+            className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[160px] text-gray-900 text-sm"
+            aria-label="Scheduled to"
+          />
         </div>
-      </div>
 
       {isLoading || isError ? (
         isError ? (
-          <div className="bg-white p-8 border border-gray-200 rounded-lg text-center">
+          <div className="p-8 text-center">
             <Paragraph1 className="text-red-600">
               Failed to load shipments. Check your session and try again.
             </Paragraph1>
           </div>
         ) : (
-          <TableSkeleton rows={6} columns={9} />
+          <TableSkeleton rows={6} columns={10} />
         )
       ) : (
         <>
-          <div className="bg-white border border-gray-200 border-t-0 rounded-b-lg overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
+          <div className="overflow-x-auto">
+            <table className="w-full">
                 <thead>
                   <tr className="bg-gray-50 border-gray-200 border-b">
                     <th className="px-6 py-4 text-left">
@@ -568,6 +764,11 @@ function ShipmentsPageInner() {
                     <th className="px-6 py-4 text-left">
                       <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                         Scheduled
+                      </Paragraph1>
+                    </th>
+                    <th className="px-6 py-4 text-left">
+                      <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
+                        Cost
                       </Paragraph1>
                     </th>
                     <th className="px-6 py-4 text-left">
@@ -659,6 +860,11 @@ function ShipmentsPageInner() {
                           </Paragraph1>
                         </td>
                         <td className="px-6 py-4">
+                          <Paragraph1 className="font-medium text-gray-900 text-sm">
+                            {formatShipmentRowCost(shipment)}
+                          </Paragraph1>
+                        </td>
+                        <td className="px-6 py-4">
                           {shipment.trackingId ? (
                             <div className="flex items-center gap-2">
                               <Paragraph1 className="font-mono text-gray-900 text-sm">
@@ -725,11 +931,10 @@ function ShipmentsPageInner() {
                   })}
                 </tbody>
               </table>
-            </div>
           </div>
 
           {shipments.length === 0 && (
-            <div className="bg-white mt-4 p-8 border border-gray-200 rounded-lg text-center">
+            <div className="p-8 text-center">
               <Paragraph1 className="text-gray-500">
                 No shipments match these filters.
               </Paragraph1>
@@ -737,7 +942,7 @@ function ShipmentsPageInner() {
           )}
 
           {pagination.pages > 1 && (
-            <div className="flex sm:flex-row flex-col sm:justify-between sm:items-center gap-4 bg-white mt-6 px-6 py-4 border border-gray-200 rounded-lg">
+            <div className="flex sm:flex-row flex-col sm:justify-between sm:items-center gap-4 px-6 py-4 border-gray-200 border-t">
               <Paragraph1 className="text-gray-600 text-sm">
                 Showing {(currentPage - 1) * pagination.limit + 1} to{" "}
                 {Math.min(currentPage * pagination.limit, pagination.total)} of{" "}
@@ -783,6 +988,7 @@ function ShipmentsPageInner() {
           )}
         </>
       )}
+      </div>
 
       {isDetailModalOpen && selectedShipment && displayShipment && (
         <div

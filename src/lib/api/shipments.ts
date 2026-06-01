@@ -93,6 +93,15 @@ export interface ShipmentsListResponse {
   data: ShipmentsListData;
 }
 
+export interface ShipmentCostsData {
+  totalKobo: number;
+  count: number;
+  trend: { month: string; kobo: number; count: number }[];
+  groups: { key: string; label: string; kobo: number; count: number }[];
+  providers: string[];
+  couriers: string[];
+}
+
 export interface ShipmentDetailResponse {
   success: boolean;
   data: Shipment;
@@ -149,6 +158,33 @@ export const getShipments = async (params?: {
     { method: "GET" },
   );
 };
+
+export const getShipmentCosts = async (params?: {
+  status?: ShipmentStatus;
+  type?: ShipmentType;
+  orderId?: string;
+  manualFulfillment?: boolean;
+  dateFrom?: string;
+  dateTo?: string;
+  provider?: string;
+  courier?: string;
+}) =>
+  apiFetch<{ success: boolean; data: ShipmentCostsData }>(
+    `/shipments/costs?${new URLSearchParams(
+      Object.entries({
+        ...(params?.status && { status: params.status }),
+        ...(params?.type && { type: params.type }),
+        ...(params?.orderId && { orderId: params.orderId }),
+        ...(params?.manualFulfillment === true && { manualFulfillment: "true" }),
+        ...(params?.manualFulfillment === false && { manualFulfillment: "false" }),
+        ...(params?.dateFrom && { dateFrom: params.dateFrom }),
+        ...(params?.dateTo && { dateTo: params.dateTo }),
+        ...(params?.provider && params.provider !== "all" && { provider: params.provider }),
+        ...(params?.courier && params.courier !== "all" && { courier: params.courier }),
+      }).map(([k, v]) => [k, String(v)]),
+    ).toString()}`,
+    { method: "GET" },
+  );
 
 export const getShipment = async (
   shipmentId: string,

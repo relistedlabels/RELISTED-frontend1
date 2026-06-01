@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getShipments,
+  getShipmentCosts,
   getShipment,
   getShipmentTracking,
   getOrderShipments,
@@ -27,6 +28,21 @@ export const useShipments = (params?: {
     queryFn: () => getShipments(params),
   });
 };
+
+export const useShipmentCosts = (params?: {
+  status?: ShipmentStatus;
+  type?: ShipmentType;
+  orderId?: string;
+  manualFulfillment?: boolean;
+  dateFrom?: string;
+  dateTo?: string;
+  provider?: string;
+  courier?: string;
+}) =>
+  useQuery({
+    queryKey: ["admin", "shipments", "costs", params],
+    queryFn: () => getShipmentCosts(params),
+  });
 
 export const useShipment = (
   shipmentId: string,
