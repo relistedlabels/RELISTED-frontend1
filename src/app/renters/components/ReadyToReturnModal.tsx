@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Upload, CheckCircle2, AlertCircle, Star, Clock } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { useUpload } from "@/lib/queries/renters/useUpload";
-import { useAddresses } from "@/lib/queries/renters/useAddresses";
 import {
   useReturnPickupWindowOptions,
   type ReturnPickupWindowOption,
@@ -66,24 +65,26 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
   const isMountedRef = useRef(true);
 
   const uploadMutation = useUpload();
-  const { data: addresses } = useAddresses();
   const {
     data: windowOptions,
     isLoading: windowOptionsLoading,
     isError: windowOptionsError,
   } = useReturnPickupWindowOptions(orderId, shipmentId, isOpen);
 
-  const location = useMemo(() => {
-    if (!addresses || addresses.length === 0) {
-      return "No address on file";
-    }
-    const defaultAddress =
-      addresses.find((addr) => addr.isDefault) || addresses[0];
-    return `${defaultAddress.street}, ${defaultAddress.city}, ${defaultAddress.state}`;
-  }, [addresses]);
+  const pickupLocation =
+    windowOptions?.pickupAddressSummary?.trim() ||
+    (windowOptionsLoading ? "Loading pickup address…" : "No pickup address on file");
 
   useEffect(() => {
-    if (!windowOptions?.suggested) return;
+    if (!windowOptions) return;
+    if (
+      !windowOptions.pickupWindowSelectable &&
+      windowOptions.bookedPickupWindow
+    ) {
+      setSelectedPickupWindow(windowOptions.bookedPickupWindow);
+      return;
+    }
+    if (!windowOptions.suggested) return;
     setSelectedPickupWindow((prev) => {
       if (
         prev &&
@@ -310,7 +311,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                       <Paragraph1 className="text-blue-700 text-sm">
                         <span className="font-semibold">Pickup: </span>A rider
                         will collect the item at{" "}
-                        <span className="font-semibold">{location}</span>
+                        <span className="font-semibold">{pickupLocation}</span>
                       </Paragraph1>
                     </div>
 
@@ -330,7 +331,16 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                         <Paragraph1 className="text-red-600 text-sm">
                           Could not load pickup times. Close and try again.
                         </Paragraph1>
-                      ) : (
+                      ) : !windowOptions.pickupWindowSelectable &&
+                        windowOptions.bookedPickupWindow ? (
+                        <Paragraph1 className="text-gray-600 text-sm leading-relaxed">
+                          Your return pickup from checkout is{" "}
+                          <span className="font-semibold text-gray-900">
+                            {windowOptions.bookedPickupWindow.summary}
+                          </span>
+                          .
+                        </Paragraph1>
+                      ) : windowOptions.pickupWindowSelectable ? (
                         <>
                           <Paragraph1 className="text-gray-600 text-sm">
                             {windowOptions.scheduledDayLabel}
@@ -380,6 +390,10 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                             })}
                           </div>
                         </>
+                      ) : (
+                        <Paragraph1 className="text-gray-500 text-sm">
+                          No pickup window on file for this return.
+                        </Paragraph1>
                       )}
                     </div>
                   </div>
@@ -395,8 +409,8 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                       onClick={() => setCurrentStep("upload")}
                       disabled={
                         windowOptionsLoading ||
-                        !selectedPickupWindow ||
-                        windowOptionsError
+                        windowOptionsError ||
+                        !selectedPickupWindow
                       }
                       className="flex-1 bg-black hover:bg-gray-900 disabled:bg-gray-400 px-4 py-3 rounded-lg font-semibold text-white text-sm transition disabled:cursor-not-allowed"
                     >
@@ -598,7 +612,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                     </Paragraph1>
                     <Paragraph1 className="text-blue-700 text-sm leading-relaxed">
                       We will book your return pickup for the window you chose.
-                      Have your item ready at {location} during that time.
+                      Have your item ready at {pickupLocation} during that time.
                     </Paragraph1>
                   </div>
 

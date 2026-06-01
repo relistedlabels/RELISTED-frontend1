@@ -15,8 +15,6 @@ interface ReadyToReturnSectionProps {
   orderId?: string;
   shipmentId?: string;
   listerLabel?: string | null;
-  windowSummary?: string | null;
-  returnWindowExpired?: boolean;
   existingRequestStatus?: string | null;
   items?: ReturnPackageItem[];
 }
@@ -25,8 +23,6 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
   orderId,
   shipmentId,
   listerLabel,
-  windowSummary,
-  returnWindowExpired = false,
   existingRequestStatus,
   items = [],
 }) => {
@@ -104,14 +100,6 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
             Return the item(s) below when you&apos;re finished with the rental
           </Paragraph1>
           <ReturnPackageItems items={items} />
-          {returnWindowExpired && windowSummary ? (
-            <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
-              <Paragraph1 className="text-xs leading-relaxed text-amber-900">
-                <span className="font-semibold">Original pickup window has passed:</span>{" "}
-                {windowSummary}. Choose a new time when you start the return.
-              </Paragraph1>
-            </div>
-          ) : null}
         </div>
 
         {errorMessage && (

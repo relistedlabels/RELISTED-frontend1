@@ -640,6 +640,13 @@ export const rentersApi = {
           end: string;
           summary: string;
         }>;
+        pickupAddressSummary: string | null;
+        pickupWindowSelectable: boolean;
+        bookedPickupWindow: {
+          start: string;
+          end: string;
+          summary: string;
+        } | null;
       };
     }>(
       `/api/renters/orders/${orderId}/return-pickup-window-options${

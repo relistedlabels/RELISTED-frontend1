@@ -45,7 +45,6 @@ type ShipmentLegDetail = {
   providerTrackingUrl: string | null;
   scheduledDate: string | null;
   windowSummary: string | null;
-  returnWindowExpired?: boolean;
   isBooked: boolean;
   isDelivered: boolean;
 };
