@@ -66,11 +66,30 @@ const UploadItemHeader: React.FC<UploadItemHeaderProps> = ({
       return;
     }
 
-    // Validation: Check for price
-    if (!data.dailyRentalPrice || data.dailyRentalPrice <= 0) {
-      setErrorMessage("Please set a valid rental price for your item.");
-      toast.error("Please set a valid rental price for your item.");
-      return;
+    // Validation: price depends on listing type
+    if (data.saleType === "resale") {
+      if (!data.resalePrice || data.resalePrice <= 0) {
+        setErrorMessage("Please set a valid resale price for your item.");
+        toast.error("Please set a valid resale price for your item.");
+        return;
+      }
+    } else if (data.saleType === "rent") {
+      if (!data.dailyRentalPrice || data.dailyRentalPrice <= 0) {
+        setErrorMessage("Please set a valid rental price for your item.");
+        toast.error("Please set a valid rental price for your item.");
+        return;
+      }
+    } else {
+      if (!data.dailyRentalPrice || data.dailyRentalPrice <= 0) {
+        setErrorMessage("Please set a valid rental price for your item.");
+        toast.error("Please set a valid rental price for your item.");
+        return;
+      }
+      if (!data.resalePrice || data.resalePrice <= 0) {
+        setErrorMessage("Please set a valid resale price for your item.");
+        toast.error("Please set a valid resale price for your item.");
+        return;
+      }
     }
 
     // Validation: Check for brand
