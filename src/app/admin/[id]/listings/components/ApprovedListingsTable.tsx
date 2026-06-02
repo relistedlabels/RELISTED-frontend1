@@ -7,6 +7,7 @@ import {
   curatorAvatarUrl,
   listingThumbnailUrl,
 } from "@/app/admin/lib/adminListingDisplay";
+import { listingPriceDisplay } from "@/lib/product/listingPriceDisplay";
 
 interface ApprovedListingsTableProps {
   products: Product[];
@@ -72,7 +73,7 @@ export default function ApprovedListingsTable({
               Item Value
             </th>
             <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-              Price / Day
+              Price
             </th>
             <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
               Availability
@@ -116,9 +117,22 @@ export default function ApprovedListingsTable({
                 </Paragraph1>
               </td>
               <td className="py-4 px-6">
-                <Paragraph1 className="font-medium text-gray-900">
-                  ₦{product.dailyPrice?.toLocaleString() || 0}
-                </Paragraph1>
+                {(() => {
+                  const price = listingPriceDisplay(product as Product & { listingType?: string; resalePrice?: number });
+                  return (
+                    <>
+                      <Paragraph1 className="font-medium text-gray-900">
+                        ₦{price.primary.amount.toLocaleString()}
+                      </Paragraph1>
+                      {price.secondary ? (
+                        <Paragraph1 className="text-xs text-gray-600 mt-1">
+                          {price.secondary.label}: ₦
+                          {price.secondary.amount.toLocaleString()}
+                        </Paragraph1>
+                      ) : null}
+                    </>
+                  );
+                })()}
               </td>
               <td className="py-4 px-6">
                 {/* <span

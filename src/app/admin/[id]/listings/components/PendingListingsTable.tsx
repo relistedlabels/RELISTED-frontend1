@@ -10,6 +10,7 @@ import {
 } from "@/app/admin/lib/adminListingDisplay";
 import { ApprovalConfirmationModal } from "./ApprovalConfirmationModal";
 import ItemTypeBadge from "./ItemTypeBadge";
+import { listingPriceDisplay } from "@/lib/product/listingPriceDisplay";
 
 interface PendingListingsTableProps {
   products: Product[];
@@ -112,11 +113,16 @@ export default function PendingListingsTable({
             // Default type to RENTAL if not present, ensure curator is verified
             const safeProduct = {
               ...product,
-              listingType: (product as any).listingType || "RENTAL",
               curator: product.curator
                 ? { ...product.curator, isVerified: true }
                 : undefined,
             };
+            const priceInfo = listingPriceDisplay(
+              safeProduct as typeof safeProduct & {
+                listingType?: string;
+                resalePrice?: number;
+              },
+            );
             return (
               <tr
                 key={safeProduct.id}
@@ -139,13 +145,9 @@ export default function PendingListingsTable({
                         : (safeProduct as any).brand}
                     </Paragraph1>
                   )}
-                  {(safeProduct as any).listingType && (
-                    <div className="mt-2">
-                      <ItemTypeBadge
-                        listingType={(safeProduct as any).listingType}
-                      />
-                    </div>
-                  )}
+                  <div className="mt-2">
+                    <ItemTypeBadge listingType={priceInfo.listingType} />
+                  </div>
                 </td>
                 <td className="py-4 px-6">
                   <Paragraph1 className="text-sm text-gray-900">
@@ -176,34 +178,20 @@ export default function PendingListingsTable({
                     ₦{safeProduct.originalValue?.toLocaleString() || 0}
                   </Paragraph1>
                   {/* Show rent/resale prices if available */}
-                  {(safeProduct as any).listingType && (
-                    <div className="mt-1 space-y-1">
-                      {[
-                        "RENTAL",
-                        "RENT_OR_RESALE",
-                        "rent",
-                        "rent-resale",
-                      ].includes((safeProduct as any).listingType) && (
+                  <div className="mt-1 space-y-1">
+                      {priceInfo.listingType !== "RESALE" && (
                         <Paragraph1 className="text-xs text-gray-700">
-                          Rent price: ₦
-                          {(safeProduct as any).dailyPrice?.toLocaleString() ||
-                            0}
+                          {priceInfo.primary.label}: ₦
+                          {priceInfo.primary.amount.toLocaleString()}
                         </Paragraph1>
                       )}
-                      {[
-                        "RESALE",
-                        "RENT_OR_RESALE",
-                        "resale",
-                        "rent-resale",
-                      ].includes((safeProduct as any).listingType) && (
+                      {(priceInfo.secondary || priceInfo.listingType === "RESALE") && (
                         <Paragraph1 className="text-xs text-gray-700">
-                          Resale: ₦
-                          {(safeProduct as any).resalePrice?.toLocaleString() ||
-                            0}
+                          {(priceInfo.secondary ?? priceInfo.primary).label}: ₦
+                          {(priceInfo.secondary ?? priceInfo.primary).amount.toLocaleString()}
                         </Paragraph1>
                       )}
                     </div>
-                  )}
                 </td>
                 <td className="py-4 px-6">
                   <div className="flex items-center gap-2">

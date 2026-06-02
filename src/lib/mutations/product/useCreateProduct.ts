@@ -31,7 +31,7 @@ export const useCreateProduct = () => {
         material: draft.material || "Cotton",
         measurement: draft.measurement,
         originalValue: draft.originalValue,
-        dailyPrice: draft.dailyRentalPrice,
+        dailyPrice: draft.saleType === "resale" ? 0 : draft.dailyRentalPrice,
         resalePrice: draft.resalePrice,
         listingType:
           draft.saleType === "rent"

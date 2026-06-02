@@ -9,6 +9,7 @@ import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
 import { useAdminClosetDetail } from "@/lib/queries/admin/useAdminClosets";
 import AdminVaultClosetSaleWaitlistCard from "../components/AdminVaultClosetSaleWaitlistCard";
+import { listingPriceDisplay } from "@/lib/product/listingPriceDisplay";
 
 const formatCurrency = (value: number): string =>
   new Intl.NumberFormat("en-NG", {
@@ -229,7 +230,11 @@ export default function AdminClosetDetailPage() {
                           </td>
                           <td className="px-6 py-4">
                             <Paragraph1 className="text-gray-900 text-sm tabular-nums">
-                              {p.dailyPrice != null ? formatCurrency(p.dailyPrice) : "—"}
+                              {listingPriceDisplay(p).listingType === "RESALE"
+                                ? "—"
+                                : p.dailyPrice != null
+                                  ? formatCurrency(p.dailyPrice)
+                                  : "—"}
                             </Paragraph1>
                           </td>
                           <td className="px-6 py-4">
