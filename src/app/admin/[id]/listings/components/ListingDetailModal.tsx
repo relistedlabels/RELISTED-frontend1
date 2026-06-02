@@ -36,6 +36,7 @@ import { orderedProductImageUrls } from "@/lib/product/sortProductAttachmentUplo
 import DeleteProductButton from "./DeleteProductButton";
 import { CategorySelector } from "@/app/listers/components/CategorySelector";
 import ItemTypeBadge from "./ItemTypeBadge";
+import { listingPriceDisplay } from "@/lib/product/listingPriceDisplay";
 
 interface ListingDetailModalProps {
   isOpen: boolean;
@@ -122,6 +123,12 @@ export default function ListingDetailModal({
 
   // Use full product detail if available, fall back to basic product prop
   const displayProduct = productDetail?.data || product;
+  const priceInfo = listingPriceDisplay(
+    displayProduct as typeof displayProduct & {
+      listingType?: string;
+      resalePrice?: number;
+    },
+  );
   const subCategoryNames: string[] = React.useMemo(() => {
     const source = displayProduct as any;
     const tags = Array.isArray(source?.tags) ? source.tags : [];
@@ -233,11 +240,7 @@ export default function ListingDetailModal({
                       <Paragraph3 className="text-lg font-bold text-gray-900">
                         {displayProduct.name}
                       </Paragraph3>
-                      <ItemTypeBadge
-                        listingType={
-                          (displayProduct as any).listingType || "RENTAL"
-                        }
-                      />
+                      <ItemTypeBadge listingType={priceInfo.listingType} />
                     </div>
                   </div>
                 </div>
@@ -386,12 +389,22 @@ export default function ListingDetailModal({
                       </div>
                       <div className=" p-4 rounded-lg border border-gray-200">
                         <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                          Price/Day
+                          {priceInfo.primary.label}
                         </Paragraph1>
                         <Paragraph1 className="text-sm text-gray-900 font-medium">
-                          ₦{displayProduct.dailyPrice?.toLocaleString() || 0}
+                          ₦{priceInfo.primary.amount.toLocaleString()}
                         </Paragraph1>
                       </div>
+                      {priceInfo.secondary ? (
+                        <div className=" p-4 rounded-lg border border-gray-200">
+                          <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                            {priceInfo.secondary.label}
+                          </Paragraph1>
+                          <Paragraph1 className="text-sm text-gray-900 font-medium">
+                            ₦{priceInfo.secondary.amount.toLocaleString()}
+                          </Paragraph1>
+                        </div>
+                      ) : null}
                       <div className=" p-4 rounded-lg border border-gray-200">
                         <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
                           Condition

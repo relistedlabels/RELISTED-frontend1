@@ -13,6 +13,7 @@ import {
 } from "@/lib/queries/renters/useFavorites";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
+import { listingPriceDisplay } from "@/lib/product/listingPriceDisplay";
 
 interface ProductCardProps {
   id: string;
@@ -41,7 +42,7 @@ export default function ProductCard({
   price,
   dailyPrice,
   resalePrice,
-  listingType = "RENTAL",
+  listingType,
   size,
   measurement,
   closetOwner,
@@ -50,6 +51,8 @@ export default function ProductCard({
   isRentedOut = false,
 }: ProductCardProps) {
   const router = useRouter();
+  const priceInfo = listingPriceDisplay({ listingType, dailyPrice, resalePrice });
+  const type = priceInfo.listingType;
   const addViewed = useBrowseStore((state) => state.addViewed);
 
   const { data: user } = useMe();
@@ -150,10 +153,10 @@ export default function ProductCard({
 
         {/* Rent and Resale badges */}
         <div className="hidden bottom-3 left-3 absolute flex-">
-          {(listingType === "RENTAL" || listingType === "RENT_OR_RESALE") && (
+          {(type === "RENTAL" || type === "RENT_OR_RESALE") && (
             <span
               className={`bg-white text-black px-2.5 py-1 ${
-                listingType === "RENT_OR_RESALE"
+                type === "RENT_OR_RESALE"
                   ? "rounded-l-full"
                   : "rounded-full"
               } text-[10px] border border-black font-semibold`}
@@ -161,10 +164,10 @@ export default function ProductCard({
               RENT
             </span>
           )}
-          {(listingType === "RESALE" || listingType === "RENT_OR_RESALE") && (
+          {(type === "RESALE" || type === "RENT_OR_RESALE") && (
             <span
               className={`bg-black text-white px-2.5 py-1 ${
-                listingType === "RENT_OR_RESALE"
+                type === "RENT_OR_RESALE"
                   ? "rounded-r-full"
                   : "rounded-full"
               } text-[10px] border border-black font-semibold`}
@@ -209,35 +212,32 @@ export default function ProductCard({
             Size: {size || measurement}
           </Paragraph1>
         )}
-        {listingType === "RESALE" ? (
-          // Resale-only pricing
+        {type === "RESALE" ? (
           <div className="flex justify-between items-start">
             <Paragraph1 className="text-gray-700">Buy</Paragraph1>
             <Paragraph1 className="font-semibold text-black">
-              ₦{resalePrice?.toLocaleString() || "0"}
+              ₦{priceInfo.primary.amount.toLocaleString()}
             </Paragraph1>
           </div>
-        ) : listingType === "RENTAL" ? (
-          // Rental-only pricing
+        ) : type === "RENTAL" ? (
           <div className="flex justify-between items-start">
             <Paragraph1 className="text-gray-700">Rent from </Paragraph1>
             <Paragraph1 className="font-semibold text-black">
-              ₦{dailyPrice?.toLocaleString() || "0"}
+              ₦{priceInfo.primary.amount.toLocaleString()}
             </Paragraph1>
           </div>
         ) : (
-          // Rent or Resale - show both rental and purchase prices
           <div>
             <div className="flex justify-between items-start">
               <Paragraph1 className="text-gray-700">Rent from </Paragraph1>
               <Paragraph1 className="font-semibold text-black">
-                ₦{dailyPrice?.toLocaleString() || "0"}
+                ₦{priceInfo.primary.amount.toLocaleString()}
               </Paragraph1>
             </div>
             <div className="flex justify-between items-start mt-1">
               <Paragraph1 className="text-gray-700">Buy </Paragraph1>
               <Paragraph1 className="font-semibold text-black">
-                ₦{resalePrice?.toLocaleString() || "0"}
+                ₦{(priceInfo.secondary?.amount ?? 0).toLocaleString()}
               </Paragraph1>
             </div>
           </div>

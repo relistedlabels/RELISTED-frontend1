@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1, Header3 } from "@/common/ui/Text";
 import { Product } from "@/lib/api/admin/listings";
 import { listingThumbnailUrl } from "@/app/admin/lib/adminListingDisplay";
+import { listingPriceDisplay } from "@/lib/product/listingPriceDisplay";
 
 interface ApprovalConfirmationModalProps {
   isOpen: boolean;
@@ -19,6 +20,9 @@ export const ApprovalConfirmationModal: React.FC<
   ApprovalConfirmationModalProps
 > = ({ isOpen, product, isLoading, onConfirm, onCancel }) => {
   const firstImageUrl = product ? listingThumbnailUrl(product) : null;
+  const priceInfo = product
+    ? listingPriceDisplay(product as typeof product & { listingType?: string })
+    : null;
 
   return (
     <AnimatePresence>
@@ -80,8 +84,15 @@ export const ApprovalConfirmationModal: React.FC<
                       {product.name}
                     </Header3>
                     <Paragraph1 className="text-sm text-gray-600">
-                      Daily Price: ₦{product.dailyPrice?.toLocaleString() || 0}
+                      {priceInfo?.primary.label}: ₦
+                      {priceInfo?.primary.amount.toLocaleString() || 0}
                     </Paragraph1>
+                    {priceInfo?.secondary ? (
+                      <Paragraph1 className="text-sm text-gray-600">
+                        {priceInfo.secondary.label}: ₦
+                        {priceInfo.secondary.amount.toLocaleString()}
+                      </Paragraph1>
+                    ) : null}
                     <Paragraph1 className="text-sm text-gray-600">
                       Original Value: ₦
                       {product.originalValue?.toLocaleString() || 0}

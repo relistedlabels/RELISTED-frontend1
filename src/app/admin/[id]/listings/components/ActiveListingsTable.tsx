@@ -9,6 +9,7 @@ import {
   listingThumbnailUrl,
 } from "@/app/admin/lib/adminListingDisplay";
 import ItemTypeBadge from "./ItemTypeBadge";
+import { listingPriceDisplay } from "@/lib/product/listingPriceDisplay";
 
 interface ActiveListingsTableProps {
   products: Product[];
@@ -166,9 +167,22 @@ function ActiveListingsTable({
                   </span>
                 </td>
                 <td className="py-4 px-6">
-                  <Paragraph1 className="font-medium text-gray-900">
-                    ₦{(safeProduct as any).dailyPrice?.toLocaleString() || 0}
-                  </Paragraph1>
+                  {(() => {
+                    const price = listingPriceDisplay(safeProduct as typeof safeProduct & { listingType?: string; resalePrice?: number });
+                    return (
+                      <>
+                        <Paragraph1 className="font-medium text-gray-900">
+                          ₦{price.primary.amount.toLocaleString()}
+                        </Paragraph1>
+                        {price.secondary ? (
+                          <Paragraph1 className="text-xs text-gray-600 mt-1">
+                            {price.secondary.label}: ₦
+                            {price.secondary.amount.toLocaleString()}
+                          </Paragraph1>
+                        ) : null}
+                      </>
+                    );
+                  })()}
                 </td>
                 <td className="py-4 px-6 flex gap-2">
                   <button className="px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-sm">
