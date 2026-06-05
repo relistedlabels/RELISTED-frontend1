@@ -245,6 +245,7 @@ const RentalDurationSelector = ({
   useEffect(() => {
     const rentalDays =
       selectedDuration === "custom" ? customDays : selectedDuration;
+    if (selectedDuration === "custom" && customDays < 1) return;
     onChangeRentalDays?.(rentalDays as number, startDate);
   }, [selectedDuration, customDays, startDate, onChangeRentalDays]);
   const [_isLoginModalOpen, _setIsLoginModalOpen] = useState(false);
@@ -366,12 +367,16 @@ const RentalDurationSelector = ({
             type="number"
             min={1}
             max={30}
-            value={customDays}
+            value={customDays || ""}
             onChange={(e) => {
-              let val = Number(e.target.value);
-              if (Number.isNaN(val)) val = 1;
-              val = Math.max(1, Math.min(30, val));
-              setCustomDays(val);
+              const raw = e.target.value;
+              if (raw === "") {
+                setCustomDays(0);
+                return;
+              }
+              const val = Number(raw);
+              if (Number.isNaN(val)) return;
+              setCustomDays(Math.max(1, Math.min(30, val)));
             }}
             className="px-2 py-1 border rounded w-20 text-center"
           />
