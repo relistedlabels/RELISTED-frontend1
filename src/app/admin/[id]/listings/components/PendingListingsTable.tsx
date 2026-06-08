@@ -16,7 +16,6 @@ interface PendingListingsTableProps {
   products: Product[];
   isLoading: boolean;
   error: unknown;
-  searchQuery: string;
   onApprove: (productId: string) => void;
   onReject: (productId: string) => void;
   onView: (product: Product) => void;
@@ -27,7 +26,6 @@ export default function PendingListingsTable({
   products,
   isLoading,
   error,
-  searchQuery,
   onApprove,
   onReject,
   onView,
@@ -52,14 +50,7 @@ export default function PendingListingsTable({
     setConfirmingProduct(null);
   };
 
-  const filteredProducts = products.filter((product: Product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.curator?.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
-
-  if (isLoading) {
+  if (isLoading && products.length === 0) {
     return (
       <div className="p-8 text-center">
         <p className="text-gray-500">Loading products...</p>
@@ -75,7 +66,7 @@ export default function PendingListingsTable({
     );
   }
 
-  if (filteredProducts.length === 0) {
+  if (products.length === 0) {
     return (
       <div className="p-8 text-center">
         <p className="text-gray-500">No pending products found</p>
@@ -109,7 +100,7 @@ export default function PendingListingsTable({
           </tr>
         </thead>
         <tbody>
-          {filteredProducts.map((product: Product) => {
+          {products.map((product: Product) => {
             // Default type to RENTAL if not present, ensure curator is verified
             const safeProduct = {
               ...product,

@@ -22,6 +22,7 @@ import {
   ChevronRight,
   ChevronDown,
   ChevronUp,
+  Search,
 } from "lucide-react";
 import {
   useShipments,
@@ -51,6 +52,10 @@ import {
   AdminListingThumb,
   listingThumbnailUrl,
 } from "@/app/admin/lib/adminListingDisplay";
+import {
+  AdminComboBox,
+  AdminFilterField,
+} from "@/app/admin/components/AdminComboBox";
 
 const PROVIDER_LABELS: Record<string, string> = {
   all: "All",
@@ -169,6 +174,30 @@ const STATUS_FILTERS: Array<ShipmentStatus | "All"> = [
 const TYPE_FILTERS: Array<ShipmentType | "All"> = ["All", "OUTBOUND", "RETURN", "RESALE"];
 
 type FulfillmentFilter = "all" | "manual" | "automated";
+
+const FILTER_INPUT_CLASS =
+  "w-full px-3 py-2 border border-gray-200 rounded-lg bg-white text-gray-900 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900";
+
+const FILTER_DATE_CLASS =
+  "px-3 py-2 border border-gray-200 rounded-lg bg-white text-gray-900 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900 w-[9rem]";
+
+const FILTER_SELECT_WRAP_CLASS = "w-[9.5rem] shrink-0";
+
+const FULFILLMENT_FILTER_OPTIONS = [
+  { value: "all", label: "All fulfillment" },
+  { value: "manual", label: "Relisted dispatch" },
+  { value: "automated", label: "Carrier (Topship)" },
+] as const;
+
+const TYPE_FILTER_OPTIONS = TYPE_FILTERS.map((t) => ({
+  value: t,
+  label: t === "All" ? "All types" : getShipmentLegDisplayLabel(t),
+}));
+
+const STATUS_FILTER_OPTIONS = STATUS_FILTERS.map((status) => ({
+  value: status,
+  label: status === "All" ? "All statuses" : getStatusLabel(status),
+}));
 
 function shortenId(id: string, keep = 8): string {
   if (id.length <= keep + 4) return id;
@@ -367,6 +396,28 @@ function ShipmentsPageInner() {
   });
   const costs = costsRes?.data;
 
+  const costProviderOptions = useMemo(
+    () => [
+      { value: "all", label: "All providers" },
+      ...(costs?.providers ?? []).map((p) => ({
+        value: p,
+        label: PROVIDER_LABELS[p] ?? p,
+      })),
+    ],
+    [costs?.providers],
+  );
+
+  const costCourierOptions = useMemo(
+    () => [
+      { value: "all", label: "All couriers" },
+      ...(costs?.couriers ?? []).map((c) => ({
+        value: c,
+        label: c.charAt(0).toUpperCase() + c.slice(1),
+      })),
+    ],
+    [costs?.couriers],
+  );
+
   const cancelShipment = useCancelShipment();
   const redispatchShipment = useRedispatchShipment();
   const completeManualShipment = useCompleteManualShipment();
@@ -487,79 +538,73 @@ function ShipmentsPageInner() {
         </Paragraph1>
       </div>
 
-      <div className="bg-white mb-6 border border-gray-200 rounded-lg overflow-hidden">
+      <div className="bg-white mb-4 border border-gray-200 rounded-lg overflow-hidden">
         <button
           type="button"
           onClick={() => setCostsOpen((open) => !open)}
-          className="flex justify-between items-center gap-4 hover:bg-gray-50 px-5 py-4 w-full text-left transition-colors"
+          className="flex justify-between items-center gap-3 hover:bg-gray-50 px-5 py-3 w-full text-left transition-colors"
           aria-expanded={costsOpen}
         >
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
             {costsOpen ? (
               <ChevronUp className="w-4 h-4 text-gray-500 shrink-0" aria-hidden />
             ) : (
               <ChevronDown className="w-4 h-4 text-gray-500 shrink-0" aria-hidden />
             )}
-            <div className="min-w-0">
-              <Paragraph2 className="font-semibold text-gray-900">Shipping costs</Paragraph2>
-              <Paragraph1 className="text-gray-500 text-sm">
-                Aggregated shipping spend with its own date range and breakdown filters
-              </Paragraph1>
-            </div>
+            <Paragraph2 className="font-semibold text-gray-900 text-sm">Shipping costs</Paragraph2>
           </div>
+          {!costsOpen && costs && costs.count > 0 && (
+            <Paragraph1 className="text-gray-500 text-sm shrink-0">
+              {costs.count} shipments · {koboToNaira(costs.totalKobo)}
+            </Paragraph1>
+          )}
         </button>
 
         {costsOpen && (
           <div className="px-5 py-4 border-gray-200 border-t">
-            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 mb-4">
-              <input
-                type="date"
-                value={costDateFrom}
-                onChange={(e) => setCostDateFrom(e.target.value)}
-                className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[160px] text-gray-900 text-sm"
-                aria-label="Cost scheduled from"
-              />
+            <div className="flex flex-wrap items-end gap-3 mb-4">
+              <AdminFilterField label="From" className="shrink-0">
+                <input
+                  type="date"
+                  value={costDateFrom}
+                  onChange={(e) => setCostDateFrom(e.target.value)}
+                  className={FILTER_DATE_CLASS}
+                  aria-label="Cost scheduled from"
+                />
+              </AdminFilterField>
 
-              <input
-                type="date"
-                value={costDateTo}
-                onChange={(e) => setCostDateTo(e.target.value)}
-                min={costDateFrom || undefined}
-                className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[160px] text-gray-900 text-sm"
-                aria-label="Cost scheduled to"
-              />
+              <AdminFilterField label="To" className="shrink-0">
+                <input
+                  type="date"
+                  value={costDateTo}
+                  onChange={(e) => setCostDateTo(e.target.value)}
+                  min={costDateFrom || undefined}
+                  className={FILTER_DATE_CLASS}
+                  aria-label="Cost scheduled to"
+                />
+              </AdminFilterField>
 
-              <select
-                value={costProvider}
-                onChange={(e) => {
-                  setCostProvider(e.target.value);
-                  setCostCourier("all");
-                }}
-                className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[160px] text-gray-900 text-sm"
-                aria-label="Shipping provider"
-              >
-                <option value="all">All providers</option>
-                {(costs?.providers ?? []).map((p) => (
-                  <option key={p} value={p}>
-                    {PROVIDER_LABELS[p] ?? p}
-                  </option>
-                ))}
-              </select>
+              <AdminFilterField label="Provider" className={FILTER_SELECT_WRAP_CLASS}>
+                <AdminComboBox
+                  value={costProvider}
+                  onChange={(value) => {
+                    setCostProvider(value);
+                    setCostCourier("all");
+                  }}
+                  options={costProviderOptions}
+                  ariaLabel="Shipping provider"
+                />
+              </AdminFilterField>
 
               {(costs?.couriers.length ?? 0) > 0 && (
-                <select
-                  value={costCourier}
-                  onChange={(e) => setCostCourier(e.target.value)}
-                  className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[160px] text-gray-900 text-sm"
-                  aria-label="Courier"
-                >
-                  <option value="all">All couriers</option>
-                  {(costs?.couriers ?? []).map((c) => (
-                    <option key={c} value={c}>
-                      {c.charAt(0).toUpperCase() + c.slice(1)}
-                    </option>
-                  ))}
-                </select>
+                <AdminFilterField label="Courier" className={FILTER_SELECT_WRAP_CLASS}>
+                  <AdminComboBox
+                    value={costCourier}
+                    onChange={setCostCourier}
+                    options={costCourierOptions}
+                    ariaLabel="Courier"
+                  />
+                </AdminFilterField>
               )}
             </div>
             {costs && costs.count > 0 ? (
@@ -633,91 +678,76 @@ function ShipmentsPageInner() {
       </div>
 
       <div className="bg-white mb-6 border border-gray-200 rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-gray-200 border-b">
-          <Paragraph2 className="mb-1 font-semibold text-gray-900">Shipment list</Paragraph2>
-          <Paragraph1 className="text-gray-500 text-sm">
-            Search and filters apply to the shipment table below.
-          </Paragraph1>
-        </div>
+        <div className="px-5 py-4 border-gray-200 border-b">
+          <div className="flex flex-wrap items-end gap-3">
+            <AdminFilterField label="Search" className="flex-1 basis-[12rem] min-w-[12rem]">
+              <div className="relative">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                  aria-hidden
+                />
+                <input
+                  type="text"
+                  placeholder="Order id or UUID…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={`${FILTER_INPUT_CLASS} pl-9`}
+                />
+              </div>
+            </AdminFilterField>
 
-        <div className="flex flex-col lg:flex-row flex-wrap items-stretch lg:items-center gap-3 px-6 py-4 border-gray-200 border-b">
-          <div className="flex flex-1 items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg min-w-[220px]">
-            <svg
-              className="w-4 h-4 text-gray-400 shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            <AdminFilterField label="Type" className={FILTER_SELECT_WRAP_CLASS}>
+              <AdminComboBox
+                value={typeFilter}
+                onChange={(value) => setTypeFilter(value as ShipmentType | "All")}
+                options={TYPE_FILTER_OPTIONS}
+                ariaLabel="Shipment type"
               />
-            </svg>
-            <input
-              type="text"
-              placeholder="Order id or UUID…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 bg-transparent outline-none text-gray-900 text-sm placeholder-gray-500"
-            />
+            </AdminFilterField>
+
+            <AdminFilterField label="Fulfillment" className="w-[10.5rem] shrink-0">
+              <AdminComboBox
+                value={fulfillmentFilter}
+                onChange={(value) =>
+                  setFulfillmentFilter(value as FulfillmentFilter)
+                }
+                options={[...FULFILLMENT_FILTER_OPTIONS]}
+                ariaLabel="Fulfillment"
+              />
+            </AdminFilterField>
+
+            <AdminFilterField label="Status" className={FILTER_SELECT_WRAP_CLASS}>
+              <AdminComboBox
+                value={statusFilter}
+                onChange={(value) =>
+                  setStatusFilter(value as ShipmentStatus | "All")
+                }
+                options={STATUS_FILTER_OPTIONS}
+                ariaLabel="Status"
+              />
+            </AdminFilterField>
+
+            <AdminFilterField label="From" className="shrink-0">
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className={FILTER_DATE_CLASS}
+                aria-label="Scheduled from"
+              />
+            </AdminFilterField>
+
+            <AdminFilterField label="To" className="shrink-0">
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                min={dateFrom || undefined}
+                className={FILTER_DATE_CLASS}
+                aria-label="Scheduled to"
+              />
+            </AdminFilterField>
           </div>
-
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as ShipmentType | "All")}
-            className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[160px] text-gray-900 text-sm"
-            aria-label="Shipment type"
-          >
-            {TYPE_FILTERS.map((t) => (
-              <option key={t} value={t}>
-                {t === "All" ? "All types" : getShipmentLegDisplayLabel(t)}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={fulfillmentFilter}
-            onChange={(e) => setFulfillmentFilter(e.target.value as FulfillmentFilter)}
-            className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[180px] text-gray-900 text-sm"
-            aria-label="Fulfillment"
-          >
-            <option value="all">All fulfillment</option>
-            <option value="manual">Relisted dispatch</option>
-            <option value="automated">Carrier (Topship)</option>
-          </select>
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as ShipmentStatus | "All")}
-            className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[180px] text-gray-900 text-sm"
-            aria-label="Status"
-          >
-            {STATUS_FILTERS.map((status) => (
-              <option key={status} value={status}>
-                {status === "All" ? "All statuses" : getStatusLabel(status)}
-              </option>
-            ))}
-          </select>
-
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[160px] text-gray-900 text-sm"
-            aria-label="Scheduled from"
-          />
-
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            min={dateFrom || undefined}
-            className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[160px] text-gray-900 text-sm"
-            aria-label="Scheduled to"
-          />
         </div>
 
       {isLoading || isError ? (
@@ -736,52 +766,52 @@ function ShipmentsPageInner() {
             <table className="w-full">
                 <thead>
                   <tr className="bg-gray-50 border-gray-200 border-b">
-                    <th className="px-6 py-4 text-left">
+                    <th className="px-5 py-3 text-left">
                       <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                         Item
                       </Paragraph1>
                     </th>
-                    <th className="px-6 py-4 text-left">
+                    <th className="px-5 py-3 text-left">
                       <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                         Reference
                       </Paragraph1>
                     </th>
-                    <th className="px-6 py-4 text-left">
+                    <th className="px-5 py-3 text-left">
                       <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                         Order
                       </Paragraph1>
                     </th>
-                    <th className="px-6 py-4 text-left">
+                    <th className="px-5 py-3 text-left">
                       <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                         Type
                       </Paragraph1>
                     </th>
-                    <th className="px-6 py-4 text-left">
+                    <th className="px-5 py-3 text-left">
                       <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                         Status
                       </Paragraph1>
                     </th>
-                    <th className="px-6 py-4 text-left">
+                    <th className="px-5 py-3 text-left">
                       <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                         Scheduled
                       </Paragraph1>
                     </th>
-                    <th className="px-6 py-4 text-left">
+                    <th className="px-5 py-3 text-left">
                       <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                         Cost
                       </Paragraph1>
                     </th>
-                    <th className="px-6 py-4 text-left">
+                    <th className="px-5 py-3 text-left">
                       <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                         Tracking
                       </Paragraph1>
                     </th>
-                    <th className="px-6 py-4 text-left">
+                    <th className="px-5 py-3 text-left">
                       <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                         Customer
                       </Paragraph1>
                     </th>
-                    <th className="px-6 py-4 text-left">
+                    <th className="px-5 py-3 text-left">
                       <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                         Actions
                       </Paragraph1>
@@ -801,7 +831,7 @@ function ShipmentsPageInner() {
                         className="hover:bg-gray-50 border-gray-100 border-b transition cursor-pointer"
                         onClick={() => handleViewDetails(shipment)}
                       >
-                        <td className="px-6 py-4">
+                        <td className="px-5 py-3">
                           <div
                             className="w-12 h-12 shrink-0"
                             title={firstItemName}
@@ -813,19 +843,19 @@ function ShipmentsPageInner() {
                             />
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-5 py-3">
                           <span title={shipment.id}>
                             <Paragraph1 className="font-medium text-gray-900 text-sm">
                               {shortenId(shipment.id)}
                             </Paragraph1>
                           </span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-5 py-3">
                           <Paragraph1 className="font-medium text-gray-900 text-sm">
                             {humanOrderId}
                           </Paragraph1>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-5 py-3">
                           <div className="flex flex-col items-start gap-1">
                             <span className="inline-block bg-gray-100 px-3 py-1 rounded-full font-semibold text-gray-700 text-xs">
                               {getShipmentLegDisplayLabel(shipment.type)}
@@ -837,7 +867,7 @@ function ShipmentsPageInner() {
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-5 py-3">
                           <span
                             className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
                               shipment.status,
@@ -852,19 +882,19 @@ function ShipmentsPageInner() {
                             {getStatusLabel(shipment.status, shipment.type)}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-5 py-3">
                           <Paragraph1 className="text-gray-700 text-sm">
                             {shipment.scheduledDate
                               ? formatLagosDate(shipment.scheduledDate)
                               : "—"}
                           </Paragraph1>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-5 py-3">
                           <Paragraph1 className="font-medium text-gray-900 text-sm">
                             {formatShipmentRowCost(shipment)}
                           </Paragraph1>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-5 py-3">
                           {shipment.trackingId ? (
                             <div className="flex items-center gap-2">
                               <Paragraph1 className="font-mono text-gray-900 text-sm">
@@ -887,14 +917,14 @@ function ShipmentsPageInner() {
                             <Paragraph1 className="text-gray-500 text-sm">—</Paragraph1>
                           )}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-5 py-3">
                           <Paragraph1 className="text-gray-700 text-sm">
                             {shipment.order?.user?.name ||
                               shipment.order?.user?.email ||
                               "—"}
                           </Paragraph1>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-5 py-3">
                           <div className="flex items-center gap-2">
                             {shipment.status === "DISPATCH_FAILED" && !shipment.manualFulfillment && (
                               <button

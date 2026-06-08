@@ -13,7 +13,6 @@ interface ApprovedListingsTableProps {
   products: Product[];
   isLoading: boolean;
   error: unknown;
-  searchQuery: string;
   onView: (product: Product) => void;
 }
 
@@ -21,17 +20,9 @@ export default function ApprovedListingsTable({
   products,
   isLoading,
   error,
-  searchQuery,
   onView,
 }: ApprovedListingsTableProps) {
-  const filteredProducts = products.filter((product: Product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.curator?.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
-
-  if (isLoading) {
+  if (isLoading && products.length === 0) {
     return (
       <div className="p-8 text-center">
         <p className="text-gray-500">Loading approved products...</p>
@@ -47,7 +38,7 @@ export default function ApprovedListingsTable({
     );
   }
 
-  if (filteredProducts.length === 0) {
+  if (products.length === 0) {
     return (
       <div className="p-8 text-center">
         <p className="text-gray-500">No approved products found</p>
@@ -84,7 +75,7 @@ export default function ApprovedListingsTable({
           </tr>
         </thead>
         <tbody>
-          {filteredProducts.map((product: Product) => (
+          {products.map((product: Product) => (
             <tr
               key={product.id}
               className="border-b border-gray-200 hover:bg-gray-50 transition"

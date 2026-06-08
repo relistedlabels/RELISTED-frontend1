@@ -13,7 +13,6 @@ interface RejectedListingsTableProps {
   products: Product[];
   isLoading: boolean;
   error: unknown;
-  searchQuery: string;
   onView: (product: Product) => void;
 }
 
@@ -21,17 +20,9 @@ export default function RejectedListingsTable({
   products,
   isLoading,
   error,
-  searchQuery,
   onView,
 }: RejectedListingsTableProps) {
-  const filteredProducts = products.filter((product: Product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.curator?.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
-
-  if (isLoading) {
+  if (isLoading && products.length === 0) {
     return (
       <div className="p-8 text-center">
         <p className="text-gray-500">Loading rejected products...</p>
@@ -47,7 +38,7 @@ export default function RejectedListingsTable({
     );
   }
 
-  if (filteredProducts.length === 0) {
+  if (products.length === 0) {
     return (
       <div className="p-8 text-center">
         <p className="text-gray-500">No rejected products found</p>
@@ -84,7 +75,7 @@ export default function RejectedListingsTable({
           </tr>
         </thead>
         <tbody>
-          {filteredProducts.map((product: Product) => {
+          {products.map((product: Product) => {
             // Default type to RENTAL if not present, ensure curator is verified
             const safeProduct = {
               ...product,

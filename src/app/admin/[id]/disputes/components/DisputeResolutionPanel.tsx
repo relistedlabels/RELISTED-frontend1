@@ -14,6 +14,16 @@ import {
   getDisputeResolutionCaps,
   type DisputeInitiator,
 } from "./disputeResolutionCaps";
+import { AdminComboBox } from "@/app/admin/components/AdminComboBox";
+
+const DISPUTE_STATUS_OPTIONS = [
+  { value: "PENDING", label: "Pending" },
+  { value: "IN_REVIEW", label: "In Review" },
+  { value: "IN_DISPUTE", label: "In Dispute" },
+  { value: "RESOLVED", label: "Resolved" },
+  { value: "REJECTED", label: "Rejected" },
+  { value: "WITHDRAW", label: "Withdrawn" },
+] as const;
 
 function clamp(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n));
@@ -167,21 +177,13 @@ export function DisputeResolutionPanel({
             still in review or being reassigned.
           </Paragraph1>
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <select
-              className="bg-white px-3 py-2 border border-gray-300 rounded-lg w-full text-sm"
+            <AdminComboBox
               value={effectiveStatus}
-              onChange={(e) =>
-                setNextStatus(e.target.value as DisputeStatus)
-              }
-            >
-              <option value="">Select status</option>
-              <option value="PENDING">Pending</option>
-              <option value="IN_REVIEW">In Review</option>
-              <option value="IN_DISPUTE">In Dispute</option>
-              <option value="RESOLVED">Resolved</option>
-              <option value="REJECTED">Rejected</option>
-              <option value="WITHDRAW">Withdrawn</option>
-            </select>
+              onChange={(value) => setNextStatus(value as DisputeStatus)}
+              options={[...DISPUTE_STATUS_OPTIONS]}
+              placeholder="Select status"
+              ariaLabel="Dispute status"
+            />
             <button
               type="button"
               className="shrink-0 bg-gray-900 disabled:opacity-50 px-4 py-2 rounded-lg font-medium text-white text-sm"

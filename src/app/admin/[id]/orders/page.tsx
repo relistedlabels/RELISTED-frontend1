@@ -21,6 +21,7 @@ import {
   getShipmentLegDisplayLabel,
 } from "@/lib/orders/shipmentAndOrderLabels";
 import { adminOrderListStatusToApiParam } from "@/lib/orders/adminOrderListFilters";
+import { AdminComboBox } from "@/app/admin/components/AdminComboBox";
 
 const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat("en-NG", {
@@ -87,6 +88,22 @@ const ORDER_STATUS_FILTERS = [
 ] as const;
 
 type OrderStatusFilter = (typeof ORDER_STATUS_FILTERS)[number];
+
+const TYPE_FILTER_OPTIONS = TYPE_FILTERS.map((t) => ({
+  value: t,
+  label: t === "All" ? "All types" : getShipmentLegDisplayLabel(t),
+}));
+
+const FULFILLMENT_FILTER_OPTIONS = [
+  { value: "all", label: "All fulfillment" },
+  { value: "manual", label: "Relisted dispatch" },
+  { value: "automated", label: "Carrier (Topship)" },
+] as const;
+
+const ORDER_STATUS_FILTER_OPTIONS = ORDER_STATUS_FILTERS.map((status) => ({
+  value: status,
+  label: status === "All" ? "All statuses" : status,
+}));
 
 export default function OrdersPage() {
   const [activeTab, setActiveTab] = useState("active");
@@ -335,50 +352,40 @@ export default function OrdersPage() {
 
             {!isReturnsView && (
               <>
-                <select
-                  value={typeFilter}
-                  onChange={(e) =>
-                    setTypeFilter(e.target.value as ShipmentType | "All")
-                  }
-                  className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[160px] text-gray-900 text-sm"
-                  aria-label="Order type"
-                >
-                  {TYPE_FILTERS.map((t) => (
-                    <option key={t} value={t}>
-                      {t === "All" ? "All types" : getShipmentLegDisplayLabel(t)}
-                    </option>
-                  ))}
-                </select>
+                <div className="min-w-[160px]">
+                  <AdminComboBox
+                    value={typeFilter}
+                    onChange={(value) =>
+                      setTypeFilter(value as ShipmentType | "All")
+                    }
+                    options={TYPE_FILTER_OPTIONS}
+                    ariaLabel="Order type"
+                  />
+                </div>
 
-                <select
-                  value={fulfillmentFilter}
-                  onChange={(e) =>
-                    setFulfillmentFilter(e.target.value as FulfillmentFilter)
-                  }
-                  className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[180px] text-gray-900 text-sm"
-                  aria-label="Fulfillment"
-                >
-                  <option value="all">All fulfillment</option>
-                  <option value="manual">Relisted dispatch</option>
-                  <option value="automated">Carrier (Topship)</option>
-                </select>
+                <div className="min-w-[180px]">
+                  <AdminComboBox
+                    value={fulfillmentFilter}
+                    onChange={(value) =>
+                      setFulfillmentFilter(value as FulfillmentFilter)
+                    }
+                    options={[...FULFILLMENT_FILTER_OPTIONS]}
+                    ariaLabel="Fulfillment"
+                  />
+                </div>
               </>
             )}
 
-            <select
-              value={statusFilter}
-              onChange={(e) =>
-                setStatusFilter(e.target.value as OrderStatusFilter)
-              }
-              className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[180px] text-gray-900 text-sm"
-              aria-label="Status"
-            >
-              {ORDER_STATUS_FILTERS.map((status) => (
-                <option key={status} value={status}>
-                  {status === "All" ? "All statuses" : status}
-                </option>
-              ))}
-            </select>
+            <div className="min-w-[180px]">
+              <AdminComboBox
+                value={statusFilter}
+                onChange={(value) =>
+                  setStatusFilter(value as OrderStatusFilter)
+                }
+                options={ORDER_STATUS_FILTER_OPTIONS}
+                ariaLabel="Status"
+              />
+            </div>
 
             <input
               type="date"
