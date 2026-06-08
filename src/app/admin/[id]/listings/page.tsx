@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Search,
   Download,
@@ -34,10 +34,13 @@ import { Product, ProductDetail } from "@/lib/api/admin/listings";
 
 type TabType = "Pending" | "Active" | "Sold" | "Rejected";
 
+const LIST_PAGE_SIZE = 20;
+
 export default function ListingsPage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabType>("Pending");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedListing, setSelectedListing] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [approvingFromModalId, setApprovingFromModalId] = useState<
@@ -79,37 +82,63 @@ export default function ListingsPage() {
 
   const TABS: TabType[] = ["Pending", "Active", "Sold", "Rejected"];
 
-  // Fetch products for active tab only to reduce API calls
-  const { data: pendingResponse, isLoading: pendingLoading } =
-    usePendingProducts(
-      {
-        page: pendingPage,
-        count: 20,
-      },
-      activeTab === "Pending",
-    );
-  const { data: activeResponse, isLoading: activeLoading } = useActiveProducts(
-    {
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 350);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setPendingPage(1);
+    setActivePage(1);
+    setSoldPage(1);
+    setRejectedPage(1);
+  }, [debouncedSearch]);
+
+  const pendingListParams = useMemo(
+    () => ({
+      page: pendingPage,
+      count: LIST_PAGE_SIZE,
+      search: debouncedSearch || undefined,
+    }),
+    [pendingPage, debouncedSearch],
+  );
+  const activeListParams = useMemo(
+    () => ({
       page: activePage,
-      count: 20,
-    },
+      count: LIST_PAGE_SIZE,
+      search: debouncedSearch || undefined,
+    }),
+    [activePage, debouncedSearch],
+  );
+  const soldListParams = useMemo(
+    () => ({
+      page: soldPage,
+      count: LIST_PAGE_SIZE,
+      search: debouncedSearch || undefined,
+    }),
+    [soldPage, debouncedSearch],
+  );
+  const rejectedListParams = useMemo(
+    () => ({
+      page: rejectedPage,
+      count: LIST_PAGE_SIZE,
+      search: debouncedSearch || undefined,
+    }),
+    [rejectedPage, debouncedSearch],
+  );
+
+  const { data: pendingResponse, isLoading: pendingLoading } =
+    usePendingProducts(pendingListParams, activeTab === "Pending");
+  const { data: activeResponse, isLoading: activeLoading } = useActiveProducts(
+    activeListParams,
     activeTab === "Active",
   );
   const { data: soldResponse, isLoading: soldLoading } = useActiveProducts(
-    {
-      page: soldPage,
-      count: 20,
-    },
+    soldListParams,
     activeTab === "Sold",
   );
   const { data: rejectedResponse, isLoading: rejectedLoading } =
-    useRejectedProducts(
-      {
-        page: rejectedPage,
-        count: 20,
-      },
-      activeTab === "Rejected",
-    );
+    useRejectedProducts(rejectedListParams, activeTab === "Rejected");
 
   const pendingProducts = pendingResponse?.data?.products || [];
   const activeProducts = activeResponse?.data?.products || [];
@@ -135,12 +164,7 @@ export default function ListingsPage() {
     setApprovingProductId(productId);
 
     // Prepare query key for cache update
-    const queryKey = [
-      "admin",
-      "products",
-      "pending",
-      { page: pendingPage, count: 20 },
-    ];
+    const queryKey = ["admin", "products", "pending", pendingListParams];
 
     // Get current cached data
     const previousData = queryClient.getQueryData(queryKey);
@@ -187,12 +211,7 @@ export default function ListingsPage() {
   const handleConfirmReject = () => {
     if (rejectingProductId && rejectionComment.trim()) {
       // Prepare query key for cache update
-      const queryKey = [
-        "admin",
-        "products",
-        "pending",
-        { page: pendingPage, count: 20 },
-      ];
+      const queryKey = ["admin", "products", "pending", pendingListParams];
 
       // Get current cached data
       const previousData = queryClient.getQueryData(queryKey);
@@ -242,12 +261,7 @@ export default function ListingsPage() {
   // Handlers for modal actions
   const handleModalApprove = (productId: string) => {
     setApprovingFromModalId(productId);
-    const queryKey = [
-      "admin",
-      "products",
-      "pending",
-      { page: pendingPage, count: 20 },
-    ];
+    const queryKey = ["admin", "products", "pending", pendingListParams];
     const previousData = queryClient.getQueryData(queryKey);
 
     if (previousData) {
@@ -285,12 +299,7 @@ export default function ListingsPage() {
 
   const handleModalReject = (productId: string, comment: string) => {
     setRejectingFromModalId(productId);
-    const queryKey = [
-      "admin",
-      "products",
-      "pending",
-      { page: pendingPage, count: 20 },
-    ];
+    const queryKey = ["admin", "products", "pending", pendingListParams];
     const previousData = queryClient.getQueryData(queryKey);
 
     if (previousData) {
@@ -334,12 +343,7 @@ export default function ListingsPage() {
 
   const handleModalDisable = (productId: string) => {
     setDisablingFromModalId(productId);
-    const queryKey = [
-      "admin",
-      "products",
-      "active",
-      { page: activePage, count: 20 },
-    ];
+    const queryKey = ["admin", "products", "active", activeListParams];
     const previousData = queryClient.getQueryData(queryKey);
 
     if (previousData) {
@@ -582,7 +586,6 @@ export default function ListingsPage() {
                 products={pendingProducts}
                 isLoading={pendingLoading}
                 error={null}
-                searchQuery={searchQuery}
                 onApprove={handleApprove}
                 onReject={handleRejectClick}
                 onView={(product) => {
@@ -597,7 +600,6 @@ export default function ListingsPage() {
                 products={activeProducts}
                 isLoading={activeLoading}
                 error={null}
-                searchQuery={searchQuery}
                 onView={(product: Product) => {
                   setSelectedListing(product);
                   setIsModalOpen(true);
@@ -609,7 +611,6 @@ export default function ListingsPage() {
                 products={soldProducts}
                 isLoading={soldLoading}
                 error={null}
-                searchQuery={searchQuery}
                 onView={(product: Product) => {
                   setSelectedListing(product);
                   setIsModalOpen(true);
@@ -621,7 +622,6 @@ export default function ListingsPage() {
                 products={rejectedProducts}
                 isLoading={rejectedLoading}
                 error={null}
-                searchQuery={searchQuery}
                 onView={(product) => {
                   setSelectedListing(product);
                   setIsModalOpen(true);
@@ -634,10 +634,10 @@ export default function ListingsPage() {
 
       {/* Pagination Controls */}
       {!statsLoading &&
-        ((activeTab === "Pending" && pendingProducts.length > 0) ||
-          (activeTab === "Active" && activeProducts.length > 0) ||
-          (activeTab === "Sold" && soldProducts.length > 0) ||
-          (activeTab === "Rejected" && rejectedProducts.length > 0)) && (
+        ((activeTab === "Pending" && pendingTotal > 0) ||
+          (activeTab === "Active" && activeTotal > 0) ||
+          (activeTab === "Sold" && soldTotal > 0) ||
+          (activeTab === "Rejected" && rejectedTotal > 0)) && (
           <div className="mt-6 flex items-center justify-between">
             <Paragraph1 className="text-sm text-gray-600">
               {activeTab === "Pending" &&

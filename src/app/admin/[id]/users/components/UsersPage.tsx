@@ -2,15 +2,21 @@
 
 import React, { useState, useMemo } from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
-import { Search, ChevronDown, Mail } from "lucide-react";
+import { Search, Mail } from "lucide-react";
+import { AdminComboBox } from "@/app/admin/components/AdminComboBox";
 import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
 import DresserTable from "./DresserTable";
 import CuratorTable from "./CuratorTable";
-import AdminTable from "./AdminTable";
 import NewsletterModal from "./NewsletterModal";
 import { useAdminAllUsers } from "@/lib/queries/admin/useUsers";
 
 type UserRole = "LISTER" | "RENTER" | "ADMIN";
+
+const STATUS_FILTER_OPTIONS = [
+  { value: "All Status", label: "All Status" },
+  { value: "Active", label: "Active" },
+  { value: "Suspended", label: "Suspended" },
+] as const;
 
 function tabLabel(
   role: UserRole,
@@ -30,19 +36,9 @@ export default function UsersPage() {
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [isNewsletterModalOpen, setIsNewsletterModalOpen] = useState(false);
 
-  // Fetch all users from API with filters
-  const {
-    data: usersData,
-    isLoading,
-    error,
-  } = useAdminAllUsers({
-    page: 1,
-    count: 10,
-    search: searchQuery,
-    status: statusFilter === "All Status" ? undefined : statusFilter,
-    role: activeTab,
-  });
+  const { data: usersData, isLoading, isError, error } = useAdminAllUsers();
   const users = usersData?.data?.users || [];
+  const showTableSkeleton = isLoading && users.length === 0;
 
   const { listerCount, renterCount } = useMemo(() => {
     let listers = 0;
@@ -54,17 +50,13 @@ export default function UsersPage() {
     return { listerCount: listers, renterCount: renters };
   }, [users]);
 
-  // Log error to console
-  if (error) {
-    console.error("Failed to load users:", error);
-  }
-
-  // Filtering Logic
   const filteredData = useMemo(() => {
-    return users.filter((user: any) => {
+    const q = searchQuery.trim().toLowerCase();
+    return users.filter((user: { name: string; email: string; isSuspended: boolean; role: string }) => {
       const matchesSearch =
-        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase());
+        !q ||
+        user.name.toLowerCase().includes(q) ||
+        user.email.toLowerCase().includes(q);
 
       const matchesStatus =
         statusFilter === "All Status"
@@ -79,112 +71,16 @@ export default function UsersPage() {
     });
   }, [users, activeTab, searchQuery, statusFilter]);
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col space-y-6">
-        <Paragraph3 className="text-3xl font-bold">Users</Paragraph3>
-
-        {/* Filters Row */}
-        <div className="flex flex-col md:flex-row justify-between gap-4">
-          <div className="relative w-full md:w-2/3">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Search users..."
-              disabled
-              className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-black"
-            />
-          </div>
-
-          <div className="relative w-full md:w-1/4">
-            <select
-              disabled
-              className="w-full appearance-none px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none pr-10 cursor-pointer"
-            >
-              <option>All Status</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-5 h-5" />
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex border-b border-gray-200">
-          {(["LISTER", "RENTER"] as const).map((role) => (
-            <button
-              key={role}
-              disabled
-              className="px-6 py-3 transition-all relative text-gray-400"
-            >
-              <Paragraph1>{tabLabel(role)}</Paragraph1>
-            </button>
-          ))}
-        </div>
-
-        {/* Skeleton Loader */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-          <TableSkeleton />
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     console.error("Failed to load users:", error);
-    return (
-      <div className="flex flex-col space-y-6">
-        <Paragraph3 className="text-3xl font-bold">Users</Paragraph3>
-
-        {/* Filters Row */}
-        <div className="flex flex-col md:flex-row justify-between gap-4">
-          <div className="relative w-full md:w-2/3">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Search users..."
-              disabled
-              className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-black"
-            />
-          </div>
-
-          <div className="relative w-full md:w-1/4">
-            <select
-              disabled
-              className="w-full appearance-none px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none pr-10 cursor-pointer"
-            >
-              <option>All Status</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-5 h-5" />
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex border-b border-gray-200">
-          {(["LISTER", "RENTER"] as const).map((role) => (
-            <button
-              key={role}
-              disabled
-              className="px-6 py-3 transition-all relative text-gray-400"
-            >
-              <Paragraph1>{tabLabel(role)}</Paragraph1>
-            </button>
-          ))}
-        </div>
-
-        {/* Skeleton Loader */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-          <TableSkeleton />
-        </div>
-      </div>
-    );
   }
 
-  const TABS: UserRole[] = ["LISTER", "RENTER"]; // TODO: Uncomment "ADMIN" when ready
+  const TABS: UserRole[] = ["LISTER", "RENTER"];
 
   return (
     <div className="flex flex-col space-y-6">
       <Paragraph3 className="text-3xl font-bold">Users</Paragraph3>
 
-      {/* Filters Row */}
       <div className="flex flex-col md:flex-row justify-between gap-4">
         <div className="relative w-full md:w-2/3">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -197,39 +93,34 @@ export default function UsersPage() {
           />
         </div>
         <button
+          type="button"
           onClick={() => setIsNewsletterModalOpen(true)}
           className="flex items-center gap-2 px-4 py-2.5 bg-black text-white rounded-lg hover:bg-gray-800 transition font-semibold text-sm"
         >
           <Mail className="w-5 h-5" />
           Newsletter
         </button>
-        <div className="relative w-full md:w-1/4">
-          <select
-            className="w-full appearance-none px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none pr-10 cursor-pointer"
+        <div className="w-full md:w-1/4">
+          <AdminComboBox
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option>All Status</option>
-            <option>Active</option>
-            <option>Suspended</option>
-          </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-5 h-5" />
+            onChange={setStatusFilter}
+            options={[...STATUS_FILTER_OPTIONS]}
+            ariaLabel="User status"
+          />
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="flex border-b border-gray-200">
         {TABS.map((tab) => (
           <button
             key={tab}
+            type="button"
             onClick={() => setActiveTab(tab)}
             className={`px-6 py-3 transition-all relative ${
               activeTab === tab ? "text-black font-semibold" : "text-gray-400"
             }`}
           >
-            <Paragraph1>
-              {tabLabel(tab, listerCount, renterCount)}
-            </Paragraph1>
+            <Paragraph1>{tabLabel(tab, listerCount, renterCount)}</Paragraph1>
             {activeTab === tab && (
               <div className="absolute bottom-0 left-0 w-full h-0.5 bg-black" />
             )}
@@ -237,9 +128,16 @@ export default function UsersPage() {
         ))}
       </div>
 
-      {/* Tables */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        {filteredData.length === 0 ? (
+        {showTableSkeleton ? (
+          <TableSkeleton />
+        ) : isError ? (
+          <div className="text-center py-12">
+            <Paragraph1 className="text-red-600">
+              Failed to load users. Check your session and try again.
+            </Paragraph1>
+          </div>
+        ) : filteredData.length === 0 ? (
           <div className="text-center py-12">
             <Paragraph1 className="text-gray-500">
               No users found matching your criteria.
@@ -250,10 +148,8 @@ export default function UsersPage() {
         ) : (
           <CuratorTable data={filteredData} />
         )}
-        {/* TODO: Uncomment AdminTable when ADMIN tab is ready */}
       </div>
 
-      {/* Newsletter Modal */}
       <NewsletterModal
         isOpen={isNewsletterModalOpen}
         onClose={() => setIsNewsletterModalOpen(false)}

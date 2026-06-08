@@ -164,22 +164,37 @@ export const productsApi = {
     ),
 
   // 2. GET /api/admin/products/pending
-  getPending: (params: { page?: number; count?: number }) =>
-    apiFetch<{ success: true; data: PaginatedProductsResponse }>(
-      `/api/admin/products/pending?page=${params.page ?? 1}&count=${params.count ?? 20}`,
-    ),
+  getPending: (params: { page?: number; count?: number; search?: string }) => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("page", String(params.page ?? 1));
+    searchParams.set("limit", String(params.count ?? 20));
+    if (params.search?.trim()) searchParams.set("search", params.search.trim());
+    return apiFetch<{ success: true; data: PaginatedProductsResponse }>(
+      `/api/admin/products/pending?${searchParams.toString()}`,
+    );
+  },
 
   // 3. GET /api/admin/products/active
-  getActive: (params: { page?: number; count?: number }) =>
-    apiFetch<{ success: true; data: PaginatedProductsResponse }>(
-      `/api/admin/products/active?page=${params.page ?? 1}&count=${params.count ?? 20}`,
-    ),
+  getActive: (params: { page?: number; count?: number; search?: string }) => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("page", String(params.page ?? 1));
+    searchParams.set("limit", String(params.count ?? 20));
+    if (params.search?.trim()) searchParams.set("search", params.search.trim());
+    return apiFetch<{ success: true; data: PaginatedProductsResponse }>(
+      `/api/admin/products/active?${searchParams.toString()}`,
+    );
+  },
 
   // 4. GET /api/admin/products/rejected
-  getRejected: (params: { page?: number; count?: number }) =>
-    apiFetch<{ success: true; data: PaginatedProductsResponse }>(
-      `/api/admin/products/rejected?page=${params.page ?? 1}&count=${params.count ?? 20}`,
-    ),
+  getRejected: (params: { page?: number; count?: number; search?: string }) => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("page", String(params.page ?? 1));
+    searchParams.set("limit", String(params.count ?? 20));
+    if (params.search?.trim()) searchParams.set("search", params.search.trim());
+    return apiFetch<{ success: true; data: PaginatedProductsResponse }>(
+      `/api/admin/products/rejected?${searchParams.toString()}`,
+    );
+  },
 
   // 5. PATCH /api/admin/products/:productId/approve
   approveProduct: (productId: string) =>

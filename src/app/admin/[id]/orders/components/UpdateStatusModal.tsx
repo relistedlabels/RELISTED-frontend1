@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import ActionConfirmModal from "@/common/layer/ActionConfirmModal";
 import { Paragraph1 } from "@/common/ui/Text";
+import { AdminComboBox } from "@/app/admin/components/AdminComboBox";
 
 interface UpdateStatusModalProps {
   isOpen: boolean;
@@ -33,6 +34,11 @@ export default function UpdateStatusModal({
 }: UpdateStatusModalProps) {
   const [selectedStatus, setSelectedStatus] = useState("");
 
+  const statusOptions = useMemo(
+    () => validStatuses.map((status) => ({ value: status, label: status })),
+    [validStatuses],
+  );
+
   const handleConfirm = () => {
     if (selectedStatus) {
       onConfirm(selectedStatus);
@@ -60,18 +66,13 @@ export default function UpdateStatusModal({
         <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
           New Status
         </Paragraph1>
-        <select
+        <AdminComboBox
           value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
-        >
-          <option value="">Select new status...</option>
-          {validStatuses.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
+          onChange={setSelectedStatus}
+          options={statusOptions}
+          placeholder="Select new status..."
+          ariaLabel="New order status"
+        />
       </div>
     </ActionConfirmModal>
   );

@@ -36,7 +36,7 @@ export const useListingCategories = () =>
 // These replace the old generic listing query with status-specific endpoints matching the new API
 
 export const usePendingProducts = (
-  params: { page?: number; count?: number },
+  params: { page?: number; count?: number; search?: string },
   enabled = true,
 ) =>
   useQuery({
@@ -44,11 +44,12 @@ export const usePendingProducts = (
     queryFn: () => productsApi.getPending(params),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
+    placeholderData: (previousData) => previousData,
     enabled,
   });
 
 export const useActiveProducts = (
-  params: { page?: number; count?: number },
+  params: { page?: number; count?: number; search?: string },
   enabled = true,
 ) =>
   useQuery({
@@ -56,6 +57,7 @@ export const useActiveProducts = (
     queryFn: () => productsApi.getActive(params),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
+    placeholderData: (previousData) => previousData,
     enabled,
   });
 
@@ -75,6 +77,7 @@ export const useRejectedProducts = (
   params: {
     page?: number;
     count?: number;
+    search?: string;
   },
   enabled = true,
 ) =>
@@ -83,6 +86,7 @@ export const useRejectedProducts = (
     queryFn: () => productsApi.getRejected(params),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
+    placeholderData: (previousData) => previousData,
     enabled,
   });
 
