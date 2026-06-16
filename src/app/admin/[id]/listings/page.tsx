@@ -25,6 +25,7 @@ import {
   useListingsStatistics,
   useApproveListing,
   useRejectListing,
+  useSendProductToPending,
   useSetAvailability,
   usePendingProducts,
   useActiveProducts,
@@ -52,6 +53,8 @@ export default function ListingsPage() {
   const [disablingFromModalId, setDisablingFromModalId] = useState<
     string | null
   >(null);
+  const [sendingToPendingFromModalId, setSendingToPendingFromModalId] =
+    useState<string | null>(null);
   const [rejectingProductId, setRejectingProductId] = useState<string | null>(
     null,
   );
@@ -158,6 +161,7 @@ export default function ListingsPage() {
   // Mutations
   const approveMutation = useApproveListing();
   const rejectMutation = useRejectListing();
+  const sendToPendingMutation = useSendProductToPending();
   const setAvailabilityMutation = useSetAvailability();
 
   const handleApprove = (productId: string) => {
@@ -341,6 +345,46 @@ export default function ListingsPage() {
     );
   };
 
+  const handleModalSendToPending = (productId: string) => {
+    setSendingToPendingFromModalId(productId);
+    const queryKey = ["admin", "products", "active", activeListParams];
+    const previousData = queryClient.getQueryData(queryKey);
+
+    if (previousData) {
+      queryClient.setQueryData(queryKey, (oldData: any) => ({
+        ...oldData,
+        data: {
+          ...oldData.data,
+          products: oldData.data.products.filter(
+            (product: Product) => product.id !== productId,
+          ),
+          total: Math.max(0, (oldData.data.total || 1) - 1),
+        },
+      }));
+    }
+
+    sendToPendingMutation.mutate(productId, {
+      onSuccess: (response) => {
+        setSendingToPendingFromModalId(null);
+        setIsModalOpen(false);
+        setSelectedListing(null);
+        const message =
+          (response as any)?.message || "Product reverted to pending!";
+        toast.success(message);
+      },
+      onError: (error: any) => {
+        setSendingToPendingFromModalId(null);
+        if (previousData) {
+          queryClient.setQueryData(queryKey, previousData);
+        }
+        const errorMessage =
+          error?.response?.data?.message ||
+          "Failed to revert product to pending";
+        toast.error(errorMessage);
+      },
+    });
+  };
+
   const handleModalDisable = (productId: string) => {
     setDisablingFromModalId(productId);
     const queryKey = ["admin", "products", "active", activeListParams];
@@ -387,15 +431,6 @@ export default function ListingsPage() {
 
   return (
     <div className="min-h-screen">
-      {/* Modal for viewing details */}
-      {selectedListing && (
-        <ListingDetailModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          product={selectedListing}
-        />
-      )}
-
       {/* Rejection Modal */}
       {rejectingProductId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -721,9 +756,13 @@ export default function ListingsPage() {
           product={selectedListing}
           onApprove={handleModalApprove}
           onReject={handleModalReject}
+          onSendToPending={handleModalSendToPending}
           onDisable={handleModalDisable}
           isApproving={approvingFromModalId === selectedListing.id}
           isRejecting={rejectingFromModalId === selectedListing.id}
+          isSendingToPending={
+            sendingToPendingFromModalId === selectedListing.id
+          }
           isDisabling={disablingFromModalId === selectedListing.id}
         />
       )}

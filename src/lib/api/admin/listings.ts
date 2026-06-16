@@ -214,6 +214,13 @@ export const productsApi = {
       },
     ),
 
+  // PATCH /api/admin/products/:productId/pending
+  sendProductToPending: (productId: string) =>
+    apiFetch<{ success: true; message: string; data: any }>(
+      `/api/admin/products/${productId}/pending`,
+      { method: "PATCH" },
+    ),
+
   // 7. PATCH /api/admin/products/:productId/availability
   setAvailability: (productId: string, isAvailable: boolean) =>
     apiFetch<{ success: true; data: any }>(

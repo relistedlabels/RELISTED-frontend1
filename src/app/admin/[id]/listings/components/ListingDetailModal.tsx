@@ -17,6 +17,7 @@ import {
   Activity,
   Package,
   Loader,
+  Clock,
 } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { Product, ProductDetail } from "@/lib/api/admin/listings";
@@ -44,10 +45,23 @@ interface ListingDetailModalProps {
   product?: Product | ProductDetail;
   onApprove?: (productId: string) => void;
   onReject?: (productId: string, comment: string) => void;
+  onSendToPending?: (productId: string) => void;
   onDisable?: (productId: string) => void;
   isApproving?: boolean;
   isRejecting?: boolean;
+  isSendingToPending?: boolean;
   isDisabling?: boolean;
+}
+
+const SEND_TO_PENDING_STATUSES = new Set([
+  "APPROVED",
+  "AVAILABLE",
+  "UNAVAILABLE",
+  "ACTIVE",
+]);
+
+function canSendToPendingReview(status?: string): boolean {
+  return SEND_TO_PENDING_STATUSES.has(status?.toUpperCase() ?? "");
 }
 
 const DEFAULT_PRODUCT: Product = {
@@ -73,9 +87,11 @@ export default function ListingDetailModal({
   product = DEFAULT_PRODUCT,
   onApprove,
   onReject,
+  onSendToPending,
   onDisable,
   isApproving = false,
   isRejecting = false,
+  isSendingToPending = false,
   isDisabling = false,
 }: ListingDetailModalProps) {
   const [activeTab, setActiveTab] = React.useState<
@@ -83,6 +99,8 @@ export default function ListingDetailModal({
   >("details");
   const [showApproveModal, setShowApproveModal] = React.useState(false);
   const [showRejectModal, setShowRejectModal] = React.useState(false);
+  const [showSendToPendingModal, setShowSendToPendingModal] =
+    React.useState(false);
   const [showDisableModal, setShowDisableModal] = React.useState(false);
   const [rejectionComment, setRejectionComment] = React.useState("");
   const [showImageViewer, setShowImageViewer] = React.useState(false);
@@ -200,7 +218,7 @@ export default function ListingDetailModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50  z-40"
+            className="z-40 fixed inset-0 bg-black/50"
           />
 
           {/* Modal */}
@@ -209,14 +227,14 @@ export default function ListingDetailModal({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="fixed right-0 top-0 bottom-0 w-full md:w-3/4 bg-white z-50 overflow-y-auto shadow-lg"
+            className="top-0 right-0 bottom-0 z-50 fixed bg-white shadow-lg w-full md:w-3/4 overflow-y-auto"
           >
             {/* Header */}
-            <div className="sticky z-50 top-0 bg-white border-b border-gray-200 p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-start gap-4 flex-1">
+            <div className="top-0 z-50 sticky bg-white p-6 border-gray-200 border-b">
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex flex-1 items-start gap-4">
                   {isLoading ? (
-                    <div className="w-16 h-16 rounded bg-gray-200 flex items-center justify-center">
+                    <div className="flex justify-center items-center bg-gray-200 rounded w-16 h-16">
                       <Loader
                         size={24}
                         className="text-gray-400 animate-spin"
@@ -226,18 +244,18 @@ export default function ListingDetailModal({
                     <img
                       src={imagesToDisplay[0]}
                       alt={displayProduct.name}
-                      className="w-16 h-16 rounded object-cover"
+                      className="rounded w-16 h-16 object-cover"
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
                       }}
                     />
                   )}
                   <div className="flex-1">
-                    <Paragraph1 className="text-xs text-gray-500 mb-1">
+                    <Paragraph1 className="mb-1 text-gray-500 text-xs">
                       {(displayProduct as any).brand?.name || "Unknown Brand"}
                     </Paragraph1>
                     <div className="flex items-center gap-2">
-                      <Paragraph3 className="text-lg font-bold text-gray-900">
+                      <Paragraph3 className="font-bold text-gray-900 text-lg">
                         {displayProduct.name}
                       </Paragraph3>
                       <ItemTypeBadge listingType={priceInfo.listingType} />
@@ -254,7 +272,7 @@ export default function ListingDetailModal({
                   </span>
                   <button
                     onClick={onClose}
-                    className="text-gray-400 hover:text-gray-600 transition p-1"
+                    className="p-1 text-gray-400 hover:text-gray-600 transition"
                   >
                     <X size={24} />
                   </button>
@@ -262,12 +280,12 @@ export default function ListingDetailModal({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex w-fit items-center gap-2">
+              <div className="flex items-center gap-2 w-fit">
                 {/* Approve Button - Only show for Pending */}
                 {displayProduct.status?.toUpperCase() === "PENDING" && (
                   <button
                     onClick={() => setShowApproveModal(true)}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex flex-1 justify-center items-center gap-2 bg-gray-900 hover:bg-gray-800 disabled:opacity-50 px-3 py-2 rounded-lg font-medium text-white text-sm transition disabled:cursor-not-allowed"
                     disabled={isLoading}
                   >
                     <Check size={18} />
@@ -279,11 +297,22 @@ export default function ListingDetailModal({
                 {displayProduct.status?.toUpperCase() === "PENDING" && (
                   <button
                     onClick={() => setShowRejectModal(true)}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex flex-1 justify-center items-center gap-2 hover:bg-gray-50 disabled:opacity-50 px-3 py-2 border border-gray-300 rounded-lg font-medium text-gray-600 text-sm transition disabled:cursor-not-allowed"
                     disabled={isLoading}
                   >
                     <AlertCircle size={18} />
                     Reject
+                  </button>
+                )}
+
+                {canSendToPendingReview(displayProduct.status) && (
+                  <button
+                    onClick={() => setShowSendToPendingModal(true)}
+                    className="inline-flex flex justify-center items-center gap-2 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 px-3 py-2 border border-amber-300 rounded-lg font-medium text-amber-800 text-sm whitespace-nowrap transition disabled:cursor-not-allowed"
+                    disabled={isLoading || isSendingToPending}
+                  >
+                    <Clock size={18} />
+                    Revert to Pending
                   </button>
                 )}
 
@@ -292,7 +321,7 @@ export default function ListingDetailModal({
                   displayProduct.status?.toUpperCase() === "APPROVED") && (
                   <button
                     onClick={() => setShowDisableModal(true)}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex flex-1 justify-center items-center gap-2 hover:bg-gray-50 disabled:opacity-50 px-3 py-2 border border-gray-300 rounded-lg font-medium text-gray-600 text-sm transition disabled:cursor-not-allowed"
                     disabled={isLoading}
                   >
                     <Power size={18} />
@@ -309,7 +338,7 @@ export default function ListingDetailModal({
             </div>
 
             {/* Tabs */}
-            <div className="border-b border-gray-200 bg-white px-6">
+            <div className="bg-white px-6 border-gray-200 border-b">
               <div className="flex gap-8">
                 {[
                   { id: "details", label: "Product Details", icon: Package },
@@ -344,109 +373,109 @@ export default function ListingDetailModal({
                 <div className="space-y-6">
                   {/* Product Details Section */}
                   <div>
-                    <Paragraph3 className="text-base font-bold text-gray-900 mb-4">
+                    <Paragraph3 className="mb-4 font-bold text-gray-900 text-base">
                       Product Details
                     </Paragraph3>
 
-                    <div className="grid grid-cols-3 gap-4 mb-6">
+                    <div className="gap-4 grid grid-cols-3 mb-6">
                       {(displayProduct as any).brand && (
-                        <div className=" p-4 rounded-lg border border-gray-200">
-                          <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        <div className="p-4 border border-gray-200 rounded-lg">
+                          <Paragraph1 className="mb-2 font-semibold text-gray-500 text-xs uppercase tracking-wide">
                             Brand
                           </Paragraph1>
-                          <Paragraph1 className="text-sm text-gray-900 font-medium">
+                          <Paragraph1 className="font-medium text-gray-900 text-sm">
                             {(displayProduct as any).brand?.name || "Unknown"}
                           </Paragraph1>
                         </div>
                       )}
-                      <div className=" p-4 rounded-lg border border-gray-200">
-                        <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      <div className="p-4 border border-gray-200 rounded-lg">
+                        <Paragraph1 className="mb-2 font-semibold text-gray-500 text-xs uppercase tracking-wide">
                           Category
                         </Paragraph1>
-                        <Paragraph1 className="text-sm text-gray-900 font-medium">
+                        <Paragraph1 className="font-medium text-gray-900 text-sm">
                           {typeof displayProduct.category === "string"
                             ? displayProduct.category
                             : displayProduct.category?.name || "Uncategorized"}
                         </Paragraph1>
                       </div>
                       {(displayProduct as any).color && (
-                        <div className=" p-4 rounded-lg border border-gray-200">
-                          <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        <div className="p-4 border border-gray-200 rounded-lg">
+                          <Paragraph1 className="mb-2 font-semibold text-gray-500 text-xs uppercase tracking-wide">
                             Color
                           </Paragraph1>
-                          <Paragraph1 className="text-sm text-gray-900 font-medium">
+                          <Paragraph1 className="font-medium text-gray-900 text-sm">
                             {(displayProduct as any).color}
                           </Paragraph1>
                         </div>
                       )}
-                      <div className=" p-4 rounded-lg border border-gray-200">
-                        <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      <div className="p-4 border border-gray-200 rounded-lg">
+                        <Paragraph1 className="mb-2 font-semibold text-gray-500 text-xs uppercase tracking-wide">
                           Item Value
                         </Paragraph1>
-                        <Paragraph1 className="text-sm text-gray-900 font-medium">
+                        <Paragraph1 className="font-medium text-gray-900 text-sm">
                           ₦{displayProduct.originalValue?.toLocaleString() || 0}
                         </Paragraph1>
                       </div>
-                      <div className=" p-4 rounded-lg border border-gray-200">
-                        <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      <div className="p-4 border border-gray-200 rounded-lg">
+                        <Paragraph1 className="mb-2 font-semibold text-gray-500 text-xs uppercase tracking-wide">
                           {priceInfo.primary.label}
                         </Paragraph1>
-                        <Paragraph1 className="text-sm text-gray-900 font-medium">
+                        <Paragraph1 className="font-medium text-gray-900 text-sm">
                           ₦{priceInfo.primary.amount.toLocaleString()}
                         </Paragraph1>
                       </div>
                       {priceInfo.secondary ? (
-                        <div className=" p-4 rounded-lg border border-gray-200">
-                          <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        <div className="p-4 border border-gray-200 rounded-lg">
+                          <Paragraph1 className="mb-2 font-semibold text-gray-500 text-xs uppercase tracking-wide">
                             {priceInfo.secondary.label}
                           </Paragraph1>
-                          <Paragraph1 className="text-sm text-gray-900 font-medium">
+                          <Paragraph1 className="font-medium text-gray-900 text-sm">
                             ₦{priceInfo.secondary.amount.toLocaleString()}
                           </Paragraph1>
                         </div>
                       ) : null}
-                      <div className=" p-4 rounded-lg border border-gray-200">
-                        <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      <div className="p-4 border border-gray-200 rounded-lg">
+                        <Paragraph1 className="mb-2 font-semibold text-gray-500 text-xs uppercase tracking-wide">
                           Condition
                         </Paragraph1>
-                        <Paragraph1 className="text-sm text-gray-900 font-medium">
+                        <Paragraph1 className="font-medium text-gray-900 text-sm">
                           {displayProduct.condition}
                         </Paragraph1>
                       </div>
-                      <div className=" p-4 rounded-lg border border-gray-200">
-                        <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      <div className="p-4 border border-gray-200 rounded-lg">
+                        <Paragraph1 className="mb-2 font-semibold text-gray-500 text-xs uppercase tracking-wide">
                           Quantity
                         </Paragraph1>
-                        <Paragraph1 className="text-sm text-gray-900 font-medium">
+                        <Paragraph1 className="font-medium text-gray-900 text-sm">
                           {displayProduct.quantity}
                         </Paragraph1>
                       </div>
                       {(displayProduct as any).measurement && (
-                        <div className=" p-4 rounded-lg border border-gray-200">
-                          <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        <div className="p-4 border border-gray-200 rounded-lg">
+                          <Paragraph1 className="mb-2 font-semibold text-gray-500 text-xs uppercase tracking-wide">
                             Measurement
                           </Paragraph1>
-                          <Paragraph1 className="text-sm text-gray-900 font-medium">
+                          <Paragraph1 className="font-medium text-gray-900 text-sm">
                             {(displayProduct as any).measurement}
                           </Paragraph1>
                         </div>
                       )}
                       {(displayProduct as any).composition && (
-                        <div className=" p-4 rounded-lg border border-gray-200">
-                          <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        <div className="p-4 border border-gray-200 rounded-lg">
+                          <Paragraph1 className="mb-2 font-semibold text-gray-500 text-xs uppercase tracking-wide">
                             Composition
                           </Paragraph1>
-                          <Paragraph1 className="text-sm text-gray-900 font-medium">
+                          <Paragraph1 className="font-medium text-gray-900 text-sm">
                             {(displayProduct as any).composition}
                           </Paragraph1>
                         </div>
                       )}
                       {(displayProduct as any).material && (
-                        <div className=" p-4 rounded-lg border border-gray-200">
-                          <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        <div className="p-4 border border-gray-200 rounded-lg">
+                          <Paragraph1 className="mb-2 font-semibold text-gray-500 text-xs uppercase tracking-wide">
                             Material
                           </Paragraph1>
-                          <Paragraph1 className="text-sm text-gray-900 font-medium">
+                          <Paragraph1 className="font-medium text-gray-900 text-sm">
                             {(displayProduct as any).material}
                           </Paragraph1>
                         </div>
@@ -458,10 +487,10 @@ export default function ListingDetailModal({
                   {((displayProduct as any).description ||
                     displayProduct.subText) && (
                     <div>
-                      <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      <Paragraph1 className="mb-2 font-semibold text-gray-500 text-xs uppercase tracking-wide">
                         Description
                       </Paragraph1>
-                      <Paragraph1 className="text-sm text-gray-700 leading-relaxed">
+                      <Paragraph1 className="text-gray-700 text-sm leading-relaxed">
                         {(displayProduct as any).description ||
                           displayProduct.subText}
                       </Paragraph1>
@@ -470,7 +499,7 @@ export default function ListingDetailModal({
 
                   {/* Sub Categories */}
                   <div>
-                    <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                    <Paragraph1 className="mb-2 font-semibold text-gray-500 text-xs uppercase tracking-wide">
                       Sub Categories
                     </Paragraph1>
                     {subCategoryNames.length > 0 ? (
@@ -478,14 +507,14 @@ export default function ListingDetailModal({
                         {subCategoryNames.map((subCategory) => (
                           <span
                             key={subCategory}
-                            className="inline-flex items-center rounded-full border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700"
+                            className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-full font-medium text-gray-700 text-xs"
                           >
                             {subCategory}
                           </span>
                         ))}
                       </div>
                     ) : (
-                      <Paragraph1 className="text-sm text-gray-500">
+                      <Paragraph1 className="text-gray-500 text-sm">
                         No sub categories assigned
                       </Paragraph1>
                     )}
@@ -494,10 +523,10 @@ export default function ListingDetailModal({
                   {/* Warning */}
                   {(displayProduct as any).warning && (
                     <div>
-                      <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      <Paragraph1 className="mb-2 font-semibold text-gray-500 text-xs uppercase tracking-wide">
                         Warning
                       </Paragraph1>
-                      <Paragraph1 className="text-sm text-yellow-700 bg-yellow-50 p-3 rounded border border-red-200 leading-relaxed">
+                      <Paragraph1 className="bg-yellow-50 p-3 border border-red-200 rounded text-yellow-700 text-sm leading-relaxed">
                         {(displayProduct as any).warning}
                       </Paragraph1>
                     </div>
@@ -506,10 +535,10 @@ export default function ListingDetailModal({
                   {/* Care Instructions */}
                   {(displayProduct as any).careInstruction && (
                     <div>
-                      <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      <Paragraph1 className="mb-2 font-semibold text-gray-500 text-xs uppercase tracking-wide">
                         Care Instructions
                       </Paragraph1>
-                      <Paragraph1 className="text-sm text-gray-700 leading-relaxed">
+                      <Paragraph1 className="text-gray-700 text-sm leading-relaxed">
                         {(displayProduct as any).careInstruction}
                       </Paragraph1>
                     </div>
@@ -518,10 +547,10 @@ export default function ListingDetailModal({
                   {/* Care Steps */}
                   {(displayProduct as any).careSteps && (
                     <div>
-                      <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      <Paragraph1 className="mb-2 font-semibold text-gray-500 text-xs uppercase tracking-wide">
                         Care Steps
                       </Paragraph1>
-                      <Paragraph1 className="text-sm text-gray-700 leading-relaxed">
+                      <Paragraph1 className="text-gray-700 text-sm leading-relaxed">
                         {(displayProduct as any).careSteps}
                       </Paragraph1>
                     </div>
@@ -530,10 +559,10 @@ export default function ListingDetailModal({
                   {/* Styling Tip */}
                   {(displayProduct as any).stylingTip && (
                     <div>
-                      <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      <Paragraph1 className="mb-2 font-semibold text-gray-500 text-xs uppercase tracking-wide">
                         Styling Tip
                       </Paragraph1>
-                      <Paragraph1 className="text-sm text-gray-700 leading-relaxed">
+                      <Paragraph1 className="text-gray-700 text-sm leading-relaxed">
                         {(displayProduct as any).stylingTip}
                       </Paragraph1>
                     </div>
@@ -541,17 +570,17 @@ export default function ListingDetailModal({
 
                   {/* Product Images */}
                   <div>
-                    <Paragraph3 className="text-base font-bold text-gray-900 mb-4">
+                    <Paragraph3 className="mb-4 font-bold text-gray-900 text-base">
                       Product Images
                     </Paragraph3>
 
-                    <div className="grid grid-cols-4 gap-3 mb-4">
+                    <div className="gap-3 grid grid-cols-4 mb-4">
                       {imagesToDisplay.map((image, index) => (
                         <img
                           key={index}
                           src={image}
                           alt={`Product ${index + 1}`}
-                          className="w-full h-32 rounded object-cover cursor-pointer hover:opacity-80 transition"
+                          className="hover:opacity-80 rounded w-full h-32 object-cover transition cursor-pointer"
                           onClick={() => {
                             setSelectedImageIndex(index);
                             setShowImageViewer(true);
@@ -560,12 +589,12 @@ export default function ListingDetailModal({
                       ))}
                     </div>
 
-                    <div className="space-y-2 hidden">
-                      <button className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium text-sm">
+                    <div className="hidden space-y-2">
+                      <button className="flex justify-center items-center gap-2 hover:bg-gray-50 px-4 py-2 border border-gray-300 rounded-lg w-full font-medium text-gray-700 text-sm transition">
                         <span>👁️</span>
                         View Carousel Profile
                       </button>
-                      <button className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium text-sm">
+                      <button className="flex justify-center items-center gap-2 hover:bg-gray-50 px-4 py-2 border border-gray-300 rounded-lg w-full font-medium text-gray-700 text-sm transition">
                         <span>💬</span>
                         Message via Disputes
                       </button>
@@ -578,7 +607,7 @@ export default function ListingDetailModal({
                 <div className="space-y-6">
                   <ItemImageUploader />
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="gap-4 grid grid-cols-1 sm:grid-cols-2">
                     <BasicInformationForm />
                     <div className="space-y-4">
                       <TagSelector />
@@ -587,14 +616,14 @@ export default function ListingDetailModal({
                   </div>
 
                   {/* Save Button */}
-                  <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+                  <div className="flex justify-end gap-3 pt-6 border-gray-200 border-t">
                     <button
                       onClick={() => {
                         reset();
                         setActiveTab("details");
                       }}
                       disabled={updateProduct.isPending}
-                      className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="hover:bg-gray-50 disabled:opacity-50 px-6 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 text-sm transition disabled:cursor-not-allowed"
                     >
                       Cancel
                     </button>
@@ -624,7 +653,7 @@ export default function ListingDetailModal({
                     >
                       {updateProduct.isPending ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <div className="border-2 border-white border-t-transparent rounded-full w-4 h-4 animate-spin" />
                           Saving...
                         </>
                       ) : (
@@ -661,31 +690,31 @@ export default function ListingDetailModal({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onClick={() => setShowApproveModal(false)}
-                  className="fixed inset-0 bg-black/50 z-50"
+                  className="z-50 fixed inset-0 bg-black/50"
                 />
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: 10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: 10 }}
                   transition={{ type: "spring", duration: 0.3 }}
-                  className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-lg z-50 w-full max-w-md mx-4"
+                  className="top-1/2 left-1/2 z-50 fixed bg-white shadow-lg mx-4 rounded-xl w-full max-w-md -translate-x-1/2 -translate-y-1/2"
                 >
                   <button
                     onClick={() => setShowApproveModal(false)}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                    className="top-4 right-4 absolute text-gray-400 hover:text-gray-600"
                   >
                     <X size={24} />
                   </button>
                   <div className="p-8">
                     <div className="flex justify-center mb-6">
-                      <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+                      <div className="flex justify-center items-center bg-green-100 rounded-full w-16 h-16">
                         <CheckCircle size={32} className="text-green-600" />
                       </div>
                     </div>
-                    <Paragraph3 className="text-center text-gray-900 mb-2">
+                    <Paragraph3 className="mb-2 text-gray-900 text-center">
                       Approve Product?
                     </Paragraph3>
-                    <Paragraph1 className="text-center text-gray-700 mb-8">
+                    <Paragraph1 className="mb-8 text-gray-700 text-center">
                       Move "{displayProduct.name}" to active listings. This item
                       will be available for rental.
                     </Paragraph1>
@@ -693,7 +722,7 @@ export default function ListingDetailModal({
                       <button
                         onClick={() => setShowApproveModal(false)}
                         disabled={isApproving}
-                        className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 hover:bg-gray-50 disabled:opacity-50 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 transition disabled:cursor-not-allowed"
                       >
                         Cancel
                       </button>
@@ -706,11 +735,11 @@ export default function ListingDetailModal({
                           }
                         }}
                         disabled={isApproving}
-                        className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="flex flex-1 justify-center items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 px-4 py-3 rounded-lg font-medium text-white transition disabled:cursor-not-allowed"
                       >
                         {isApproving ? (
                           <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <div className="border-2 border-white border-t-transparent rounded-full w-4 h-4 animate-spin" />
                             Approving...
                           </>
                         ) : (
@@ -736,43 +765,43 @@ export default function ListingDetailModal({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onClick={() => setShowRejectModal(false)}
-                  className="fixed inset-0 bg-black/50 z-50"
+                  className="z-50 fixed inset-0 bg-black/50"
                 />
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: 10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: 10 }}
                   transition={{ type: "spring", duration: 0.3 }}
-                  className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-lg z-50 w-full max-w-md mx-4"
+                  className="top-1/2 left-1/2 z-50 fixed bg-white shadow-lg mx-4 rounded-xl w-full max-w-md -translate-x-1/2 -translate-y-1/2"
                 >
                   <button
                     onClick={() => setShowRejectModal(false)}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                    className="top-4 right-4 absolute text-gray-400 hover:text-gray-600"
                   >
                     <X size={24} />
                   </button>
                   <div className="p-8">
                     <div className="flex justify-center mb-6">
-                      <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+                      <div className="flex justify-center items-center bg-red-100 rounded-full w-16 h-16">
                         <XCircle size={32} className="text-red-600" />
                       </div>
                     </div>
-                    <Paragraph3 className="text-center text-gray-900 mb-2">
+                    <Paragraph3 className="mb-2 text-gray-900 text-center">
                       Reject Product?
                     </Paragraph3>
-                    <Paragraph1 className="text-center text-gray-600 mb-4">
+                    <Paragraph1 className="mb-4 text-gray-600 text-center">
                       "{displayProduct.name}" will be moved to rejected
                       listings.
                     </Paragraph1>
                     <div className="mb-6">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block mb-2 font-medium text-gray-700 text-sm">
                         Rejection Reason*
                       </label>
                       <textarea
                         value={rejectionComment}
                         onChange={(e) => setRejectionComment(e.target.value)}
                         placeholder="Enter reason for rejection..."
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 min-h-24 text-sm"
+                        className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 w-full min-h-24 text-sm"
                       />
                     </div>
                     <div className="flex gap-3">
@@ -782,7 +811,7 @@ export default function ListingDetailModal({
                           setRejectionComment("");
                         }}
                         disabled={isRejecting}
-                        className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 hover:bg-gray-50 disabled:opacity-50 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 transition disabled:cursor-not-allowed"
                       >
                         Cancel
                       </button>
@@ -796,17 +825,91 @@ export default function ListingDetailModal({
                           }
                         }}
                         disabled={!rejectionComment.trim() || isRejecting}
-                        className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="flex flex-1 justify-center items-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 px-4 py-3 rounded-lg font-medium text-white transition disabled:cursor-not-allowed"
                       >
                         {isRejecting ? (
                           <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <div className="border-2 border-white border-t-transparent rounded-full w-4 h-4 animate-spin" />
                             Rejecting...
                           </>
                         ) : (
                           <>
                             <XCircle size={18} />
                             Reject
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+
+          {/* Revert to Pending Confirmation Modal */}
+          <AnimatePresence>
+            {showSendToPendingModal && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setShowSendToPendingModal(false)}
+                  className="z-50 fixed inset-0 bg-black/50"
+                />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                  transition={{ type: "spring", duration: 0.3 }}
+                  className="top-1/2 left-1/2 z-50 fixed bg-white shadow-lg mx-4 rounded-xl w-full max-w-md -translate-x-1/2 -translate-y-1/2"
+                >
+                  <button
+                    onClick={() => setShowSendToPendingModal(false)}
+                    className="top-4 right-4 absolute text-gray-400 hover:text-gray-600"
+                  >
+                    <X size={24} />
+                  </button>
+                  <div className="p-8">
+                    <div className="flex justify-center mb-6">
+                      <div className="flex justify-center items-center bg-amber-100 rounded-full w-16 h-16">
+                        <Clock size={32} className="text-amber-600" />
+                      </div>
+                    </div>
+                    <Paragraph3 className="mb-2 text-gray-900 text-center">
+                      Revert to pending?
+                    </Paragraph3>
+                    <Paragraph1 className="mb-8 text-gray-700 text-center">
+                      "{displayProduct.name}" will be removed from active
+                      listings and moved back to the pending queue.
+                    </Paragraph1>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setShowSendToPendingModal(false)}
+                        disabled={isSendingToPending}
+                        className="flex-1 hover:bg-gray-50 disabled:opacity-50 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 transition disabled:cursor-not-allowed"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (onSendToPending) {
+                            onSendToPending(displayProduct.id);
+                            setShowSendToPendingModal(false);
+                          }
+                        }}
+                        disabled={isSendingToPending}
+                        className="flex flex-1 justify-center items-center gap-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 px-4 py-3 rounded-lg font-medium text-white whitespace-nowrap transition disabled:cursor-not-allowed"
+                      >
+                        {isSendingToPending ? (
+                          <>
+                            <div className="border-2 border-white border-t-transparent rounded-full w-4 h-4 animate-spin" />
+                            Reverting...
+                          </>
+                        ) : (
+                          <>
+                            <Clock size={18} />
+                            Revert to Pending
                           </>
                         )}
                       </button>
@@ -826,31 +929,31 @@ export default function ListingDetailModal({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onClick={() => setShowDisableModal(false)}
-                  className="fixed inset-0 bg-black/50 z-50"
+                  className="z-50 fixed inset-0 bg-black/50"
                 />
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: 10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: 10 }}
                   transition={{ type: "spring", duration: 0.3 }}
-                  className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-lg z-50 w-full max-w-md mx-4"
+                  className="top-1/2 left-1/2 z-50 fixed bg-white shadow-lg mx-4 rounded-xl w-full max-w-md -translate-x-1/2 -translate-y-1/2"
                 >
                   <button
                     onClick={() => setShowDisableModal(false)}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                    className="top-4 right-4 absolute text-gray-400 hover:text-gray-600"
                   >
                     <X size={24} />
                   </button>
                   <div className="p-8">
                     <div className="flex justify-center mb-6">
-                      <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center">
+                      <div className="flex justify-center items-center bg-orange-100 rounded-full w-16 h-16">
                         <Power size={32} className="text-orange-600" />
                       </div>
                     </div>
-                    <Paragraph3 className="text-center text-gray-900 mb-2">
+                    <Paragraph3 className="mb-2 text-gray-900 text-center">
                       Disable Product?
                     </Paragraph3>
-                    <Paragraph1 className="text-center text-gray-700 mb-8">
+                    <Paragraph1 className="mb-8 text-gray-700 text-center">
                       "{displayProduct.name}" will be removed from active
                       listings and no longer available for rental.
                     </Paragraph1>
@@ -858,7 +961,7 @@ export default function ListingDetailModal({
                       <button
                         onClick={() => setShowDisableModal(false)}
                         disabled={isDisabling}
-                        className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 hover:bg-gray-50 disabled:opacity-50 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 transition disabled:cursor-not-allowed"
                       >
                         Cancel
                       </button>
@@ -870,11 +973,11 @@ export default function ListingDetailModal({
                           }
                         }}
                         disabled={isDisabling}
-                        className="flex-1 px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="flex flex-1 justify-center items-center gap-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 px-4 py-3 rounded-lg font-medium text-white transition disabled:cursor-not-allowed"
                       >
                         {isDisabling ? (
                           <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <div className="border-2 border-white border-t-transparent rounded-full w-4 h-4 animate-spin" />
                             Disabling...
                           </>
                         ) : (
@@ -900,19 +1003,19 @@ export default function ListingDetailModal({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onClick={() => setShowImageViewer(false)}
-                  className="fixed inset-0 bg-black/80 z-[60]"
+                  className="z-[60] fixed inset-0 bg-black/80"
                 />
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ type: "spring", duration: 0.3 }}
-                  className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[61]"
+                  className="top-1/2 left-1/2 z-[61] fixed -translate-x-1/2 -translate-y-1/2"
                 >
                   {/* Close button */}
                   <button
                     onClick={() => setShowImageViewer(false)}
-                    className="absolute -top-12 right-0 text-white hover:text-gray-300 transition"
+                    className="-top-12 right-0 absolute text-white hover:text-gray-300 transition"
                   >
                     <X size={32} />
                   </button>
@@ -922,7 +1025,7 @@ export default function ListingDetailModal({
                     <img
                       src={imagesToDisplay[selectedImageIndex]}
                       alt={`Product image ${selectedImageIndex + 1}`}
-                      className="w-full h-auto rounded-lg object-contain"
+                      className="rounded-lg w-full h-auto object-contain"
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
                       }}
@@ -934,7 +1037,7 @@ export default function ListingDetailModal({
                         onClick={() =>
                           setSelectedImageIndex(selectedImageIndex - 1)
                         }
-                        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-16 bg-white/20 hover:bg-white/40 text-white p-3 rounded-lg transition"
+                        className="top-1/2 left-0 absolute bg-white/20 hover:bg-white/40 p-3 rounded-lg text-white transition -translate-x-16 -translate-y-1/2"
                       >
                         <ChevronLeft size={24} />
                       </button>
@@ -946,14 +1049,14 @@ export default function ListingDetailModal({
                         onClick={() =>
                           setSelectedImageIndex(selectedImageIndex + 1)
                         }
-                        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-16 bg-white/20 hover:bg-white/40 text-white p-3 rounded-lg transition"
+                        className="top-1/2 right-0 absolute bg-white/20 hover:bg-white/40 p-3 rounded-lg text-white transition -translate-y-1/2 translate-x-16"
                       >
                         <ChevronRight size={24} />
                       </button>
                     )}
 
                     {/* Image counter */}
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white px-3 py-2 rounded-lg text-sm">
+                    <div className="bottom-4 left-1/2 absolute bg-black/60 px-3 py-2 rounded-lg text-white text-sm -translate-x-1/2">
                       {selectedImageIndex + 1} / {imagesToDisplay.length}
                     </div>
                   </div>
