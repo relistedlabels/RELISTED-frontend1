@@ -183,10 +183,19 @@ export default function SearchModal() {
                                 setOpen(false);
                                 router.push(`/shop/product-details/${item.id}`);
                               }}
-                              className="p-3 flex justify-between items-start rounded-lg hover:bg-gray-100 cursor-pointer"
+                              className="p-3 flex items-center gap-3 rounded-lg hover:bg-gray-100 cursor-pointer transition"
                             >
-                              <div>
-                                <Paragraph1 className="font-medium">
+                              <div className="w-12 h-12 bg-gray-200 rounded-md overflow-hidden shrink-0">
+                                <Image
+                                  src={item.image || "/placeholder.jpg"}
+                                  alt={item.name}
+                                  width={48}
+                                  height={48}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <Paragraph1 className="font-medium truncate">
                                   {item.name}
                                 </Paragraph1>
                                 <Paragraph1 className="text-sm text-gray-500">
@@ -195,7 +204,7 @@ export default function SearchModal() {
                                   • ₦{item.price?.toLocaleString()}
                                 </Paragraph1>
                               </div>
-                              <ArrowRight className="rotate-225" />
+                              <ArrowRight className="rotate-225 shrink-0" />
                             </div>
                           ))}
                         </div>

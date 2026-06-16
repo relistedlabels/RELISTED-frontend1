@@ -29,12 +29,14 @@ export const useConfirmReturnReceipt = () => {
       return response.data;
     },
     onSuccess: (data, variables) => {
-      // Invalidate related queries to refresh data
       queryClient.invalidateQueries({
         queryKey: ["listers", "orders", variables.orderId],
       });
       queryClient.invalidateQueries({
         queryKey: ["listers", "orders"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["listers", "disputes"],
       });
     },
   });

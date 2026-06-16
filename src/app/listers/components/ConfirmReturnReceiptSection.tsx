@@ -78,22 +78,19 @@ const ConfirmReturnReceiptSection: React.FC<
           </div>
           <div className="flex-1 space-y-2">
             <Paragraph1 className="font-bold text-gray-900">
-              Confirm return receipt
+              Inspect returned item
             </Paragraph1>
             <Paragraph1 className="text-gray-700 text-sm">
               The renter has started a return. When you have the item in hand,
-              open <strong>Confirm Return Receipt</strong> below, review their
-              condition report, then record the actual condition. This step{" "}
-              <strong>completes the order</strong>: the renter&apos;s collateral
-              is released to them and your <strong>rental amount plus cleaning fee</strong>{" "}
-              is credited to your wallet (unless a dispute is open).
+              inspect it and record the actual condition below.
             </Paragraph1>
             <ol className="space-y-1 mt-2 text-gray-700 text-sm list-decimal list-inside">
               <li>Physically inspect the returned item.</li>
               <li>Compare with the renter&apos;s photos and notes on this page.</li>
               <li>
-                Tap the button and submit the actual condition (add notes or
-                photos if needed).
+                Choose <strong>Good/Fair</strong> to release funds, or{" "}
+                <strong>Poor</strong> to report damage and open a dispute
+                automatically.
               </li>
             </ol>
 
@@ -112,8 +109,8 @@ const ConfirmReturnReceiptSection: React.FC<
             >
               <Package size={18} />
               {confirmReturnMutation.isPending
-                ? "Confirming..."
-                : "Confirm Return Receipt"}
+                ? "Submitting..."
+                : "Inspect Returned Item"}
             </motion.button>
           </div>
         </div>

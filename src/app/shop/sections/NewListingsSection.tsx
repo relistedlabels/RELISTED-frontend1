@@ -110,44 +110,104 @@ export default function NewListingsSection() {
 
             {/* Pagination */}
             {pagination && pagination.totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-8">
-                <button
-                  onClick={() => handlePageChange(pagination.page - 1)}
-                  disabled={!pagination.hasPrevious}
-                  className="hover:bg-gray-50 disabled:opacity-50 px-4 py-2 border border-gray-300 rounded disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
+              <>
+                {/* Mobile: compact controls that fit narrow viewports */}
+                <div className="flex sm:hidden justify-between items-center gap-2 mt-8 w-full max-w-full">
+                  <button
+                    onClick={() => handlePageChange(pagination.page - 1)}
+                    disabled={!pagination.hasPrevious}
+                    className="hover:bg-gray-50 disabled:opacity-50 shrink-0 px-3 py-2 border border-gray-300 rounded text-sm disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <span className="px-2 py-2 text-gray-600 text-sm text-center">
+                    Page {pagination.page} of {pagination.totalPages}
+                  </span>
+                  <button
+                    onClick={() => handlePageChange(pagination.page + 1)}
+                    disabled={!pagination.hasNext}
+                    className="hover:bg-gray-50 disabled:opacity-50 shrink-0 px-3 py-2 border border-gray-300 rounded text-sm disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
 
-                {/* Page Numbers */}
-                {Array.from({ length: pagination.totalPages }).map(
-                  (_, index) => {
-                    const pageNum = index + 1;
-                    const isActive = pageNum === pagination.page;
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => handlePageChange(pageNum)}
-                        className={`px-3 py-2 rounded border ${
-                          isActive
-                            ? "bg-black text-white border-black"
-                            : "border-gray-300 hover:bg-gray-50"
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  },
-                )}
+                {/* Desktop: ellipsis pagination for many pages */}
+                <div className="hidden sm:flex justify-center items-center flex-wrap gap-2 mt-8 w-full max-w-full">
+                  <button
+                    onClick={() => handlePageChange(pagination.page - 1)}
+                    disabled={!pagination.hasPrevious}
+                    className="hover:bg-gray-50 disabled:opacity-50 px-4 py-2 border border-gray-300 rounded disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
 
-                <button
-                  onClick={() => handlePageChange(pagination.page + 1)}
-                  disabled={!pagination.hasNext}
-                  className="hover:bg-gray-50 disabled:opacity-50 px-4 py-2 border border-gray-300 rounded disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              </div>
+                  <div className="flex flex-wrap justify-center items-center gap-1">
+                    {Array.from(
+                      { length: pagination.totalPages },
+                      (_, index) => index + 1,
+                    ).map((pageNum) => {
+                      const showPage =
+                        pageNum === 1 ||
+                        pageNum === pagination.totalPages ||
+                        Math.abs(pageNum - pagination.page) <= 1;
+
+                      if (!showPage) {
+                        if (
+                          pageNum === 2 &&
+                          pagination.page > 3
+                        ) {
+                          return (
+                            <span
+                              key="ellipsis-start"
+                              className="px-2 py-2 text-gray-500"
+                            >
+                              ...
+                            </span>
+                          );
+                        }
+                        if (
+                          pageNum === pagination.totalPages - 1 &&
+                          pagination.page < pagination.totalPages - 2
+                        ) {
+                          return (
+                            <span
+                              key="ellipsis-end"
+                              className="px-2 py-2 text-gray-500"
+                            >
+                              ...
+                            </span>
+                          );
+                        }
+                        return null;
+                      }
+
+                      const isActive = pageNum === pagination.page;
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`px-3 py-2 rounded border ${
+                            isActive
+                              ? "bg-black text-white border-black"
+                              : "border-gray-300 hover:bg-gray-50"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() => handlePageChange(pagination.page + 1)}
+                    disabled={!pagination.hasNext}
+                    className="hover:bg-gray-50 disabled:opacity-50 px-4 py-2 border border-gray-300 rounded disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              </>
             )}
           </>
         )}

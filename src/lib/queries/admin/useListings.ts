@@ -168,6 +168,27 @@ export const useRejectListing = () => {
   });
 };
 
+export const useSendProductToPending = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (productId: string) =>
+      productsApi.sendProductToPending(productId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "listings"] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "listings", "statistics"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "listings", "detail"],
+      });
+    },
+    onError: (error) => {
+      console.error("Failed to send product to pending:", error);
+    },
+  });
+};
+
 export const useSetAvailability = () => {
   const queryClient = useQueryClient();
   return useMutation({
