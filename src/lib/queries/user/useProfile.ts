@@ -2,6 +2,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getProfile } from "@/lib/api/profile";
 import { FullProfile } from "@/types/profile";
+import { useUserStore } from "@/store/useUserStore";
 
 /**
  * Hook to fetch user profile data from server
@@ -9,12 +10,15 @@ import { FullProfile } from "@/types/profile";
  * Always fetches fresh data from server via React Query cache
  */
 export const useProfile = () => {
+  const token = useUserStore((s) => s.token);
+
   return useQuery<FullProfile>({
     queryKey: ["profile"],
     queryFn: async () => {
       return await getProfile();
     },
     retry: false,
+    enabled: token !== null,
   });
 };
 

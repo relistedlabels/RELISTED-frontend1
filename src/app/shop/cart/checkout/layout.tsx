@@ -11,7 +11,7 @@ import {
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useUserStore } from "@/store/useUserStore";
 
-export default function RentersLayout({ children }: { children: ReactNode }) {
+export default function CheckoutLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const returnUrl = useAuthReturnUrl();
   const hydrated = useUserStoreHydrated();
