@@ -10,6 +10,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
+import { addCalendarDaysLocal } from "@/lib/dates/formatDateOnlyLocal";
 import { isListerResaleOrder } from "@/lib/listers/listerOrderRow";
 import DispatchWindowsDisplay, {
   type DispatchWindow,
@@ -107,11 +108,14 @@ export default function OrderStatusDetails({
     latestItemEnd ||
     (items[0] as { rentalEndDate?: string })?.rentalEndDate;
   const returnDate = rentalEndDate
-    ? new Date(rentalEndDate).toLocaleDateString("en-NG", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
+    ? addCalendarDaysLocal(new Date(rentalEndDate), 1).toLocaleDateString(
+        "en-NG",
+        {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        },
+      )
     : null;
 
   const returnLegs = (

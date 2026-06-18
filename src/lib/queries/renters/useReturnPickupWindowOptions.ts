@@ -15,7 +15,7 @@ export type ReturnPickupWindowOptions = {
   suggested: ReturnPickupWindowOption;
   sameDayOptions: ReturnPickupWindowOption[];
   pickupAddressSummary: string | null;
-  /** True only when the checkout return window has passed (renter must pick a new slot). */
+  /** True when checkout slot ended or already started (renter must pick an available slot). */
   pickupWindowSelectable: boolean;
   /** Checkout slot when still valid; no re-selection needed. */
   bookedPickupWindow: ReturnPickupWindowOption | null;
