@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { rentersApi } from "@/lib/api/renters";
+import { useUserStore } from "@/store/useUserStore";
 
 export interface ShippingRate {
   name: string;
@@ -9,6 +10,8 @@ export interface ShippingRate {
 }
 
 export const useReturnShippingRates = (orderId?: string) => {
+  const token = useUserStore((s) => s.token);
+
   return useQuery({
     queryKey: ["renters", "orders", orderId, "return-shipping-rates"],
     queryFn: async () => {
@@ -17,7 +20,7 @@ export const useReturnShippingRates = (orderId?: string) => {
       const response = await rentersApi.getReturnShippingRates(orderId);
       return response.data;
     },
-    enabled: !!orderId,
+    enabled: !!orderId && token !== null,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };

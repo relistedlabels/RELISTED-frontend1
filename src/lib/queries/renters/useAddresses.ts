@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api/http";
+import { useUserStore } from "@/store/useUserStore";
 
 export interface Address {
   id: string;
@@ -14,6 +15,8 @@ export interface Address {
 }
 
 export const useAddresses = () => {
+  const token = useUserStore((s) => s.token);
+
   return useQuery({
     queryKey: ["renters", "addresses"],
     queryFn: async () => {
@@ -28,5 +31,6 @@ export const useAddresses = () => {
     staleTime: 5 * 60 * 1000,
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    enabled: token !== null,
   });
 };

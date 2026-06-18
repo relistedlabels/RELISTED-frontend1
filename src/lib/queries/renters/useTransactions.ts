@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { rentersApi } from "@/lib/api/renters";
+import { useUserStore } from "@/store/useUserStore";
 
 export const useTransactions = (
   page = 1,
@@ -7,8 +8,10 @@ export const useTransactions = (
   type: "deposit" | "debit" | "refund" | "withdrawal" | "all" = "all",
   status: "completed" | "pending" | "failed" | "all" = "all",
   sort: "newest" | "oldest" = "newest",
-) =>
-  useQuery({
+) => {
+  const token = useUserStore((s) => s.token);
+
+  return useQuery({
     queryKey: ["renters", "transactions", page, limit, type, status, sort],
     queryFn: async () => {
       const response = await rentersApi.getTransactions({
@@ -22,4 +25,6 @@ export const useTransactions = (
     },
     staleTime: 5 * 60 * 1000,
     retry: 1,
+    enabled: token !== null,
   });
+};

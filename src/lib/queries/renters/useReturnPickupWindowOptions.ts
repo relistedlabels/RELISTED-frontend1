@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { rentersApi } from "@/lib/api/renters";
+import { useUserStore } from "@/store/useUserStore";
 
 export type ReturnPickupWindowOption = {
   start: string;
@@ -26,6 +27,8 @@ export const useReturnPickupWindowOptions = (
   shipmentId?: string,
   enabled = true,
 ) => {
+  const token = useUserStore((s) => s.token);
+
   return useQuery({
     queryKey: [
       "renters",
@@ -42,7 +45,7 @@ export const useReturnPickupWindowOptions = (
       );
       return response.data as ReturnPickupWindowOptions;
     },
-    enabled: Boolean(orderId) && enabled,
+    enabled: Boolean(orderId) && enabled && token !== null,
     staleTime: 60_000,
   });
 };

@@ -1,8 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { rentersApi } from "@/lib/api/renters";
+import { useUserStore } from "@/store/useUserStore";
 
-export const useOrderDetails = (orderId: string) =>
-  useQuery({
+export const useOrderDetails = (orderId: string) => {
+  const token = useUserStore((s) => s.token);
+
+  return useQuery({
     queryKey: ["renters", "orders", orderId],
     queryFn: async () => {
       const response = await rentersApi.getOrderDetails(orderId);
@@ -10,11 +13,14 @@ export const useOrderDetails = (orderId: string) =>
     },
     staleTime: 5 * 60 * 1000,
     retry: 1,
-    enabled: !!orderId,
+    enabled: !!orderId && token !== null,
   });
+};
 
-export const useOrderProgress = (orderId: string) =>
-  useQuery({
+export const useOrderProgress = (orderId: string) => {
+  const token = useUserStore((s) => s.token);
+
+  return useQuery({
     queryKey: ["renters", "orders", orderId, "progress"],
     queryFn: async () => {
       const response = await rentersApi.getOrderProgress(orderId);
@@ -22,6 +28,7 @@ export const useOrderProgress = (orderId: string) =>
     },
     staleTime: 2 * 60 * 1000,
     retry: 1,
-    enabled: !!orderId,
+    enabled: !!orderId && token !== null,
     refetchInterval: 30 * 1000, // Poll every 30 seconds for updates
   });
+};
