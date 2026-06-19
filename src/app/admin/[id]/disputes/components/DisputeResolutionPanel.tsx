@@ -87,15 +87,17 @@ export function DisputeResolutionPanel({
     setCollateralAmountInput("");
   }, [disputeId]);
 
-  useEffect(() => {
-    const r = Math.round((refundPercent / 100) * caps.refundMax);
-    setRefundAmountInput(String(r));
-  }, [refundPercent, caps.refundMax]);
+  const setRefundFromPercent = (percent: number) => {
+    setRefundPercent(percent);
+    const amount = Math.round((percent / 100) * caps.refundMax);
+    setRefundAmountInput(String(amount));
+  };
 
-  useEffect(() => {
-    const c = Math.round((collateralPercent / 100) * caps.collateralMax);
-    setCollateralAmountInput(String(c));
-  }, [collateralPercent, caps.collateralMax]);
+  const setCollateralFromPercent = (percent: number) => {
+    setCollateralPercent(percent);
+    const amount = Math.round((percent / 100) * caps.collateralMax);
+    setCollateralAmountInput(String(amount));
+  };
 
   const setRefundFromAmount = (raw: string) => {
     setRefundAmountInput(raw);
@@ -162,6 +164,11 @@ export function DisputeResolutionPanel({
     initiator === "lister" || initiator === "unknown";
   const showRefundPrimary =
     initiator === "renter" || initiator === "unknown";
+
+  const noCompensationHint =
+    showRefundPrimary && showCollateralPrimary
+      ? "Set both amounts to 0 to close without compensation."
+      : "Set the amount to 0 to close without compensation.";
 
   return (
     <div className="bg-gray-50 p-4 border border-gray-200 rounded-lg">
@@ -244,10 +251,7 @@ export function DisputeResolutionPanel({
                 Resolve &amp; settle
               </Paragraph1>
               <Paragraph1 className="mb-3 text-gray-500 text-xs">
-                One action records resolution text and applies wallet/escrow
-                movements. Use{" "}
-                <span className="font-medium text-gray-700">0%</span> for both
-                sliders to close with no compensation.
+                Saves the resolution and settles funds. {noCompensationHint}
               </Paragraph1>
 
               <div className="mb-3 flex flex-wrap gap-2">
@@ -292,7 +296,7 @@ export function DisputeResolutionPanel({
                         disabled={caps.refundMax <= 0}
                         value={refundPercent}
                         onChange={(e) =>
-                          setRefundPercent(Number(e.target.value))
+                          setRefundFromPercent(Number(e.target.value))
                         }
                         className="flex-1 accent-gray-900"
                       />
@@ -332,7 +336,7 @@ export function DisputeResolutionPanel({
                         disabled={caps.collateralMax <= 0}
                         value={collateralPercent}
                         onChange={(e) =>
-                          setCollateralPercent(Number(e.target.value))
+                          setCollateralFromPercent(Number(e.target.value))
                         }
                         className="flex-1 accent-gray-900"
                       />

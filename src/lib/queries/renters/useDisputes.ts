@@ -1,8 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { rentersApi } from "@/lib/api/renters";
+import { useUserStore } from "@/store/useUserStore";
 
-export const useDisputeStats = () =>
-  useQuery({
+export const useDisputeStats = () => {
+  const token = useUserStore((s) => s.token);
+
+  return useQuery({
     queryKey: ["renters", "disputes", "stats"],
     queryFn: async () => {
       const response = await rentersApi.getDisputeStats();
@@ -10,15 +13,19 @@ export const useDisputeStats = () =>
     },
     staleTime: 5 * 60 * 1000,
     retry: 1,
+    enabled: token !== null,
   });
+};
 
 export const useDisputes = (
   status: "all" | "pending" | "in_review" | "resolved" = "all",
   page = 1,
   limit = 20,
   sort: "newest" | "oldest" = "newest",
-) =>
-  useQuery({
+) => {
+  const token = useUserStore((s) => s.token);
+
+  return useQuery({
     queryKey: ["renters", "disputes", status, page, limit, sort],
     queryFn: async () => {
       const response = await rentersApi.getDisputes({
@@ -31,10 +38,14 @@ export const useDisputes = (
     },
     staleTime: 5 * 60 * 1000,
     retry: 1,
+    enabled: token !== null,
   });
+};
 
-export const useDisputeDetails = (disputeId: string) =>
-  useQuery({
+export const useDisputeDetails = (disputeId: string) => {
+  const token = useUserStore((s) => s.token);
+
+  return useQuery({
     queryKey: ["renters", "disputes", disputeId],
     queryFn: async () => {
       const response = await rentersApi.getDisputeDetails(disputeId);
@@ -42,11 +53,14 @@ export const useDisputeDetails = (disputeId: string) =>
     },
     staleTime: 5 * 60 * 1000,
     retry: 1,
-    enabled: !!disputeId,
+    enabled: !!disputeId && token !== null,
   });
+};
 
-export const useDisputeOverview = (disputeId: string) =>
-  useQuery({
+export const useDisputeOverview = (disputeId: string) => {
+  const token = useUserStore((s) => s.token);
+
+  return useQuery({
     queryKey: ["renters", "disputes", disputeId, "overview"],
     queryFn: async () => {
       const response = await rentersApi.getDisputeOverview(disputeId);
@@ -54,11 +68,14 @@ export const useDisputeOverview = (disputeId: string) =>
     },
     staleTime: 5 * 60 * 1000,
     retry: 1,
-    enabled: !!disputeId,
+    enabled: !!disputeId && token !== null,
   });
+};
 
-export const useDisputeEvidence = (disputeId: string) =>
-  useQuery({
+export const useDisputeEvidence = (disputeId: string) => {
+  const token = useUserStore((s) => s.token);
+
+  return useQuery({
     queryKey: ["renters", "disputes", disputeId, "evidence"],
     queryFn: async () => {
       const response = await rentersApi.getDisputeEvidence(disputeId);
@@ -66,11 +83,14 @@ export const useDisputeEvidence = (disputeId: string) =>
     },
     staleTime: 5 * 60 * 1000,
     retry: 1,
-    enabled: !!disputeId,
+    enabled: !!disputeId && token !== null,
   });
+};
 
-export const useDisputeTimeline = (disputeId: string) =>
-  useQuery({
+export const useDisputeTimeline = (disputeId: string) => {
+  const token = useUserStore((s) => s.token);
+
+  return useQuery({
     queryKey: ["renters", "disputes", disputeId, "timeline"],
     queryFn: async () => {
       const response = await rentersApi.getDisputeTimeline(disputeId);
@@ -78,11 +98,14 @@ export const useDisputeTimeline = (disputeId: string) =>
     },
     staleTime: 5 * 60 * 1000,
     retry: 1,
-    enabled: !!disputeId,
+    enabled: !!disputeId && token !== null,
   });
+};
 
-export const useDisputeResolution = (disputeId: string) =>
-  useQuery({
+export const useDisputeResolution = (disputeId: string) => {
+  const token = useUserStore((s) => s.token);
+
+  return useQuery({
     queryKey: ["renters", "disputes", disputeId, "resolution"],
     queryFn: async () => {
       const response = await rentersApi.getDisputeResolution(disputeId);
@@ -90,11 +113,14 @@ export const useDisputeResolution = (disputeId: string) =>
     },
     staleTime: 5 * 60 * 1000,
     retry: 1,
-    enabled: !!disputeId,
+    enabled: !!disputeId && token !== null,
   });
+};
 
-export const useDisputeMessages = (disputeId: string) =>
-  useQuery({
+export const useDisputeMessages = (disputeId: string) => {
+  const token = useUserStore((s) => s.token);
+
+  return useQuery({
     queryKey: ["renters", "disputes", disputeId, "messages"],
     queryFn: async () => {
       const response = await rentersApi.getDisputeMessages(disputeId);
@@ -102,5 +128,6 @@ export const useDisputeMessages = (disputeId: string) =>
     },
     staleTime: 60 * 1000,
     retry: 1,
-    enabled: !!disputeId,
+    enabled: !!disputeId && token !== null,
   });
+};

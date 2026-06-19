@@ -3,6 +3,7 @@ import {
   getOrderSummaryApi,
   type ReturnPickupAddressPayload,
 } from "@/lib/api/cart";
+import { useUserStore } from "@/store/useUserStore";
 
 export type DeliveryAddressSummaryKey = {
   street?: string;
@@ -34,6 +35,8 @@ export function useCheckoutOrderSummary(
   returnPickup?: ReturnPickupAddressPayload,
   delivery?: DeliveryAddressSummaryKey,
 ) {
+  const token = useUserStore((s) => s.token);
+
   return useQuery({
     queryKey: checkoutOrderSummaryQueryKey(returnPickup, delivery),
     queryFn: () =>
@@ -45,5 +48,6 @@ export function useCheckoutOrderSummary(
       }),
     staleTime: 30_000,
     retry: 1,
+    enabled: token !== null,
   });
 }

@@ -1,8 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { rentersApi } from "@/lib/api/renters";
+import { useUserStore } from "@/store/useUserStore";
 
-export const useWalletBalance = () =>
-  useQuery({
+export const useWalletBalance = () => {
+  const token = useUserStore((s) => s.token);
+
+  return useQuery({
     queryKey: ["wallet", "wema", "balance"],
     queryFn: async () => {
       const response = await rentersApi.getWalletBalance();
@@ -10,4 +13,6 @@ export const useWalletBalance = () =>
     },
     staleTime: 2 * 60 * 1000, // 2 minutes - wallet balance can change
     retry: 1,
+    enabled: token !== null,
   });
+};

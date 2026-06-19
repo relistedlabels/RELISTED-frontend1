@@ -1,13 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { rentersApi } from "@/lib/api/renters";
+import { useUserStore } from "@/store/useUserStore";
 
-export const useVerificationsStatus = () =>
-  useQuery({
+export const useVerificationsStatus = () => {
+  const token = useUserStore((s) => s.token);
+
+  return useQuery({
     queryKey: ["renter-verifications-status"],
     queryFn: rentersApi.getVerificationsStatus,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 2,
+    enabled: token !== null,
   });
+};
 
 export const useUploadIdDocument = () => {
   const queryClient = useQueryClient();
