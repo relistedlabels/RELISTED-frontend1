@@ -1,7 +1,7 @@
 // components/PricingFields.tsx
 "use client";
 
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo, useEffect, useRef } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { ToolInfo } from "@/common/ui/ToolInfo";
 import { useProductDraftStore } from "@/store/useProductDraftStore";
@@ -24,17 +24,42 @@ export const PricingFields: React.FC = () => {
     [data.originalValue],
   );
 
+  const prevOriginalValueRef = useRef(data.originalValue);
+
+  // Only auto-fill suggestions when original value changes and the user has not
+  // customized rental/collateral away from the previous suggestion.
   useEffect(() => {
-    if (data.saleType !== "resale") {
+    if (data.saleType === "resale") return;
+
+    const prevOriginal = prevOriginalValueRef.current;
+    if (prevOriginal === data.originalValue) return;
+
+    const prevSuggestedDaily = Math.round((prevOriginal || 0) * 0.1);
+    const prevSuggestedCollateral = Math.round((prevOriginal || 0) * 0.3);
+    prevOriginalValueRef.current = data.originalValue;
+
+    const dailyStillSuggested =
+      data.dailyRentalPrice === 0 ||
+      data.dailyRentalPrice === prevSuggestedDaily;
+    const collateralStillSuggested =
+      data.collateralPrice === 0 ||
+      data.collateralPrice === prevSuggestedCollateral;
+
+    if (dailyStillSuggested) {
       setField("dailyRentalPrice", suggestedDailyRentalPrice);
     }
-  }, [suggestedDailyRentalPrice, setField, data.saleType]);
-
-  useEffect(() => {
-    if (data.saleType !== "resale") {
+    if (collateralStillSuggested) {
       setField("collateralPrice", suggestedCollateralPrice);
     }
-  }, [suggestedCollateralPrice, setField, data.saleType]);
+  }, [
+    data.originalValue,
+    data.saleType,
+    data.dailyRentalPrice,
+    data.collateralPrice,
+    suggestedDailyRentalPrice,
+    suggestedCollateralPrice,
+    setField,
+  ]);
 
   const isResaleOnly = data.saleType === "resale";
   const isRentOnly = data.saleType === "rent";

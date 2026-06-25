@@ -8,6 +8,7 @@ import BackHeader from "@/common/ui/BackHeader";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useCreateProduct, useUpdateProduct } from "@/lib/mutations";
 import { useProfile } from "@/lib/queries/user/useProfile";
+import { useUploader } from "@/context/UploaderContext";
 import { useProductDraftStore } from "@/store/useProductDraftStore";
 import PendingVerificationModal from "./PendingVerificationModal";
 
@@ -29,6 +30,7 @@ const UploadItemHeader: React.FC<UploadItemHeaderProps> = ({
 
   const { data } = useProductDraftStore();
   const reset = useProductDraftStore((state) => state.reset);
+  const { clearUploads } = useUploader();
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct(productId);
   const { data: profile } = useProfile();
@@ -109,6 +111,7 @@ const UploadItemHeader: React.FC<UploadItemHeaderProps> = ({
     mutation.mutate(data, {
       onSuccess: () => {
         reset();
+        clearUploads();
 
         if (isEditing) {
           toast.success("Product updated successfully!");
