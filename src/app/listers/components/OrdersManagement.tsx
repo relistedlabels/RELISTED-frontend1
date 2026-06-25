@@ -15,11 +15,13 @@ import {
   isListerAvailabilityPending,
 } from "@/lib/listers/listerOrderStatus";
 import {
+  isListerAvailabilityExpiredStatusRow,
   isListerAvailabilityRequestRow,
   isListerResaleOrder,
   shouldShowListerAvailabilityDeadlineUi,
 } from "@/lib/listers/listerOrderRow";
 import type { ListerOrdersSummary } from "@/lib/api/listers";
+import { useNudgeRenterForExpiredAvailability } from "@/lib/mutations/listers/useNudgeRenterForExpiredAvailability";
 
 type ListerTabKey = "all" | "pending" | "ongoing" | "completed" | "cancelled";
 
@@ -232,6 +234,7 @@ const OrdersManagement: React.FC = () => {
                       )
                     : "—";
                   const total = Number(row.totalAmount ?? 0);
+                  const showNudgeRenter = isListerAvailabilityExpiredStatusRow(row);
 
                   return (
                     <OrderCard
@@ -246,6 +249,7 @@ const OrdersManagement: React.FC = () => {
                         expiresAt,
                       }}
                       showDeadlineUi={showDeadlineUi}
+                      showNudgeRenter={showNudgeRenter}
                       isAvailabilityRequest={isAvail}
                       isResale={isResale}
                     />
@@ -289,11 +293,19 @@ const OrderCard: React.FC<{
     expiresAt?: string;
   };
   showDeadlineUi: boolean;
+  showNudgeRenter: boolean;
   isAvailabilityRequest: boolean;
   isResale: boolean;
-}> = ({ order, showDeadlineUi, isAvailabilityRequest, isResale }) => {
+}> = ({
+  order,
+  showDeadlineUi,
+  showNudgeRenter,
+  isAvailabilityRequest,
+  isResale,
+}) => {
   const [secondsRemaining, setSecondsRemaining] = useState(0);
   const [isExpired, setIsExpired] = useState(false);
+  const nudgeRenterMutation = useNudgeRenterForExpiredAvailability();
 
   const hasExpiresAt = Boolean(order.expiresAt?.trim());
 
@@ -422,19 +434,29 @@ const OrderCard: React.FC<{
           </Paragraph1>
         </div>
 
-        <Link
-          href={`/listers/orders/${order.id}`}
-          className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 ${
-            showDeadlineUi && isExpired
-              ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-              : "bg-[#33332D] text-white hover:bg-black"
-          }`}
-          onClick={(e) => {
-            if (showDeadlineUi && isExpired) e.preventDefault();
-          }}
-        >
-          View Details
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          {showNudgeRenter ? (
+            <button
+              type="button"
+              className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-sm font-bold border border-gray-300 bg-white text-black hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-60"
+              disabled={nudgeRenterMutation.isPending}
+              onClick={() =>
+                nudgeRenterMutation.mutate({
+                  orderId: order.id,
+                  intent: "now_available",
+                })
+              }
+            >
+              {nudgeRenterMutation.isPending ? "Sending..." : "Notify renter"}
+            </button>
+          ) : null}
+          <Link
+            href={`/listers/orders/${order.id}`}
+            className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-sm font-bold bg-[#33332D] text-white hover:bg-black transition-all active:scale-95 text-center"
+          >
+            View Details
+          </Link>
+        </div>
       </div>
 
       {/* Low Time Warning */}
@@ -451,8 +473,8 @@ const OrderCard: React.FC<{
       {showDeadlineUi && isExpired && (
         <div className="bg-red-50 -mx-4 -mb-4 px-4 py-3 pt-3 border-red-200 border-t rounded-b-2xl">
           <Paragraph1 className="font-bold text-red-700 text-xs">
-            ✕ This order&apos;s approval deadline has expired and will be
-            auto-cancelled.
+            Approval window expired. Open the order to approve, reject, or
+            notify the renter to try again.
           </Paragraph1>
         </div>
       )}

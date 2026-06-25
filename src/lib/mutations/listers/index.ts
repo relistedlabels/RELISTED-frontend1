@@ -16,3 +16,4 @@ export { useCreateDispute } from "./useCreateDispute";
 export { useAddListerAddress } from "./useAddListerAddress";
 export { useUploadNinDocument } from "./useUploadNinDocument";
 export { useSubmitBvn } from "./useSubmitBvn";
+export { useNudgeRenterForExpiredAvailability } from "./useNudgeRenterForExpiredAvailability";

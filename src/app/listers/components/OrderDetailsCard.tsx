@@ -1,19 +1,14 @@
 "use client";
 // ENDPOINTS: GET /api/listers/orders/:orderId, POST …/approve, POST …/reject, return actions, etc.
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  approveOrder,
-  nudgeRenterForExpiredAvailability,
-  rejectOrder,
-  rejectReturn,
-} from "@/lib/api/listers";
+import { approveOrder, rejectOrder, rejectReturn } from "@/lib/api/listers";
+import { useNudgeRenterForExpiredAvailability } from "@/lib/mutations/listers/useNudgeRenterForExpiredAvailability";
 
 import React, { useState, useEffect } from "react";
 import { useOrderDetails } from "@/lib/queries/listers/useOrderDetails";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import BackHeader from "@/common/ui/BackHeader";
 import OrderItemList from "./OrderItemList";
-import { toast } from "sonner";
 import ConfirmReturnReceiptSection from "./ConfirmReturnReceiptSection";
 import DispatchWindowsDisplay from "./DispatchWindowsDisplay";
 import RejectOrderModal from "./RejectOrderModal";
@@ -73,20 +68,7 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
     },
   });
 
-  const nudgeRenterMutation = useMutation({
-    mutationFn: (intent: "rerequest" | "now_available") =>
-      nudgeRenterForExpiredAvailability(orderId, intent),
-    onSuccess: (_, intent) => {
-      toast.success(
-        intent === "rerequest"
-          ? "The renter was emailed and notified in-app to send a new request from their cart."
-          : "The renter was emailed and notified in-app that you are ready for a new request.",
-      );
-    },
-    onError: (err: Error & { message?: string }) => {
-      toast.error(err?.message || "Could not notify the renter.");
-    },
-  });
+  const nudgeRenterMutation = useNudgeRenterForExpiredAvailability();
   // Use local state for orderId
   const [orderId, setOrderId] = useState(initialOrderId);
 
@@ -346,7 +328,12 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
                 <button
                   type="button"
                   className="flex-1 bg-white hover:bg-gray-100 px-4 py-2.5 rounded-lg font-bold text-black text-xs border border-gray-300"
-                  onClick={() => nudgeRenterMutation.mutate("rerequest")}
+                  onClick={() =>
+                    nudgeRenterMutation.mutate({
+                      orderId,
+                      intent: "rerequest",
+                    })
+                  }
                   disabled={nudgeRenterMutation.isPending}
                 >
                   Ask them to request approval again
@@ -354,7 +341,12 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
                 <button
                   type="button"
                   className="flex-1 bg-white hover:bg-gray-100 px-4 py-2.5 rounded-lg font-bold text-black text-xs border border-gray-300"
-                  onClick={() => nudgeRenterMutation.mutate("now_available")}
+                  onClick={() =>
+                    nudgeRenterMutation.mutate({
+                      orderId,
+                      intent: "now_available",
+                    })
+                  }
                   disabled={nudgeRenterMutation.isPending}
                 >
                   Say you are ready for a new request
