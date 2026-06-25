@@ -111,6 +111,7 @@ export default function OrderStatusDetails({
     ? addCalendarDaysLocal(new Date(rentalEndDate), 1).toLocaleDateString(
         "en-NG",
         {
+          timeZone: "Africa/Lagos",
           year: "numeric",
           month: "long",
           day: "numeric",

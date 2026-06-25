@@ -256,7 +256,13 @@ function sortDispatchAttemptLogs(logs: DispatchAttemptLog[] | undefined): Dispat
 function formatAttemptedAt(iso: string | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString();
+  return Number.isNaN(d.getTime())
+    ? "—"
+    : d.toLocaleString("en-NG", {
+        timeZone: "Africa/Lagos",
+        dateStyle: "medium",
+        timeStyle: "short",
+      });
 }
 
 function formatDispatchDurationMs(ms: number | null | undefined): string | null {
@@ -1176,7 +1182,14 @@ function ShipmentsPageInner() {
                   <Paragraph1 className="mb-1 text-gray-500 text-xs">Dispatched at</Paragraph1>
                   <Paragraph1 className="font-medium text-gray-900">
                     {displayShipment.dispatchedAt
-                      ? new Date(displayShipment.dispatchedAt).toLocaleString()
+                      ? new Date(displayShipment.dispatchedAt).toLocaleString(
+                          "en-NG",
+                          {
+                            timeZone: "Africa/Lagos",
+                            dateStyle: "medium",
+                            timeStyle: "short",
+                          },
+                        )
                       : "—"}
                   </Paragraph1>
                 </div>

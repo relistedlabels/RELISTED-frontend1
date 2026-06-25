@@ -76,10 +76,12 @@ export default function ProductCuratorDetails({
   const formatShortRange = (start?: string | null, end?: string | null) => {
     if (!start || !end) return null;
     const a = new Date(start).toLocaleDateString("en-NG", {
+      timeZone: "Africa/Lagos",
       month: "short",
       day: "numeric",
     });
     const b = new Date(end).toLocaleDateString("en-NG", {
+      timeZone: "Africa/Lagos",
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -90,6 +92,7 @@ export default function ProductCuratorDetails({
   const formatSingleDate = (d?: string | null) =>
     d
       ? new Date(d).toLocaleDateString("en-NG", {
+          timeZone: "Africa/Lagos",
           year: "numeric",
           month: "short",
           day: "numeric",

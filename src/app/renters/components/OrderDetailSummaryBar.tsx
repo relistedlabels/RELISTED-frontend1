@@ -36,6 +36,7 @@ export default function OrderDetailSummaryBar({
 
   const orderDate = orderData.createdAt
     ? new Date(orderData.createdAt).toLocaleDateString("en-NG", {
+        timeZone: "Africa/Lagos",
         month: "short",
         day: "numeric",
         year: "numeric",
