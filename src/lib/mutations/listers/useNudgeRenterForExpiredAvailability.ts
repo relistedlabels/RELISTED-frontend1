@@ -11,11 +11,9 @@ export function useNudgeRenterForExpiredAvailability() {
       orderId: string;
       intent?: "rerequest" | "now_available";
     }) => nudgeRenterForExpiredAvailability(orderId, intent),
-    onSuccess: (_, { intent }) => {
+    onSuccess: () => {
       toast.success(
-        intent === "rerequest"
-          ? "The renter was emailed and notified in-app to send a new request from their cart."
-          : "The renter was emailed and notified in-app that you are ready for a new request.",
+        "Renter notified by email and in-app that the item is available.",
       );
     },
     onError: (err: Error & { message?: string }) => {

@@ -447,7 +447,9 @@ const OrderCard: React.FC<{
                 })
               }
             >
-              {nudgeRenterMutation.isPending ? "Sending..." : "Notify renter"}
+              {nudgeRenterMutation.isPending
+                ? "Sending..."
+                : "Notify renter item is available"}
             </button>
           ) : null}
           <Link

@@ -315,43 +315,22 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
           availabilityNeedsListerAction &&
           !showApproveMessage &&
           !showRejectMessage && (
-            <div className="flex flex-col gap-3 mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-              <Paragraph1 className="font-bold text-black text-sm">
-                Nudge the renter
-              </Paragraph1>
-              <Paragraph3 className="text-gray-600 text-xs">
-                If you missed their window, send a short reminder by email and
-                in-app so they know whether to try again or that you are ready
-                for a new request.
-              </Paragraph3>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <button
-                  type="button"
-                  className="flex-1 bg-white hover:bg-gray-100 px-4 py-2.5 rounded-lg font-bold text-black text-xs border border-gray-300"
-                  onClick={() =>
-                    nudgeRenterMutation.mutate({
-                      orderId,
-                      intent: "rerequest",
-                    })
-                  }
-                  disabled={nudgeRenterMutation.isPending}
-                >
-                  Ask them to request approval again
-                </button>
-                <button
-                  type="button"
-                  className="flex-1 bg-white hover:bg-gray-100 px-4 py-2.5 rounded-lg font-bold text-black text-xs border border-gray-300"
-                  onClick={() =>
-                    nudgeRenterMutation.mutate({
-                      orderId,
-                      intent: "now_available",
-                    })
-                  }
-                  disabled={nudgeRenterMutation.isPending}
-                >
-                  Say you are ready for a new request
-                </button>
-              </div>
+            <div className="mt-6">
+              <button
+                type="button"
+                className="w-full sm:w-auto bg-white hover:bg-gray-100 px-6 py-2.5 rounded-lg font-bold text-black text-sm border border-gray-300"
+                onClick={() =>
+                  nudgeRenterMutation.mutate({
+                    orderId,
+                    intent: "now_available",
+                  })
+                }
+                disabled={nudgeRenterMutation.isPending}
+              >
+                {nudgeRenterMutation.isPending
+                  ? "Sending..."
+                  : "Notify renter item is available"}
+              </button>
             </div>
           )}
 
