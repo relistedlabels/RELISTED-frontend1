@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Package, Star } from "lucide-react";
+import { ChevronDown, Package } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { isListerResaleOrder } from "@/lib/listers/listerOrderRow";
 
@@ -23,21 +23,45 @@ function isResaleLine(line: { days?: number; rentalDays?: number; listingType?: 
   return false;
 }
 
+function formatShortRange(start?: string | null, end?: string | null) {
+  if (!start || !end) return null;
+  const a = new Date(start).toLocaleDateString("en-NG", {
+    timeZone: "Africa/Lagos",
+    month: "short",
+    day: "numeric",
+  });
+  const b = new Date(end).toLocaleDateString("en-NG", {
+    timeZone: "Africa/Lagos",
+    month: "short",
+    day: "numeric",
+  });
+  return `${a} – ${b}`;
+}
+
+function formatReturnDue(returnDueIso?: string | null, rentalEnd?: string | null) {
+  const fmt = (d: string) =>
+    new Date(d).toLocaleDateString("en-NG", {
+      timeZone: "Africa/Lagos",
+      month: "short",
+      day: "numeric",
+    });
+  if (returnDueIso) return fmt(returnDueIso);
+  if (!rentalEnd) return null;
+  const end = new Date(rentalEnd);
+  if (Number.isNaN(end.getTime())) return null;
+  const next = new Date(end.getTime());
+  next.setDate(next.getDate() + 1);
+  return fmt(next.toISOString());
+}
+
 export default function ProductCuratorDetails({
   orderData,
 }: ProductCuratorDetailsProps) {
-  if (!orderData) {
-    return (
-      <div className="text-center py-8 text-red-500">
-        <Paragraph1>No order data available</Paragraph1>
-      </div>
-    );
-  }
+  if (!orderData) return null;
 
   const items: Array<{
     id?: string;
     name?: string;
-    price?: number;
     imageUrl?: string | null;
     quantity?: number;
     rentalDays?: number;
@@ -66,71 +90,40 @@ export default function ProductCuratorDetails({
       }
     | undefined;
 
-  const listerInfo = {
-    name: orderData.lister?.businessName || "Lister",
-    avatar: orderData.lister?.imageUrl || "",
-    rating: orderData.lister?.rating || 0,
-    totalRentals: 0,
-  };
-
-  const formatShortRange = (start?: string | null, end?: string | null) => {
-    if (!start || !end) return null;
-    const a = new Date(start).toLocaleDateString("en-NG", {
-      timeZone: "Africa/Lagos",
-      month: "short",
-      day: "numeric",
-    });
-    const b = new Date(end).toLocaleDateString("en-NG", {
-      timeZone: "Africa/Lagos",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-    return `${a} to ${b}`;
-  };
-
-  const formatSingleDate = (d?: string | null) =>
-    d
-      ? new Date(d).toLocaleDateString("en-NG", {
-          timeZone: "Africa/Lagos",
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        })
-      : null;
-
-  /** Last calendar day of rental is often stored as `rentalEndDate`; return is due the following day. */
-  const formatReturnDueLabel = (
-    returnDueIso?: string | null,
-    rentalEnd?: string | null,
-  ) => {
-    if (returnDueIso) return formatSingleDate(returnDueIso);
-    if (!rentalEnd) return null;
-    const end = new Date(rentalEnd);
-    if (Number.isNaN(end.getTime())) return null;
-    const next = new Date(end.getTime());
-    next.setDate(next.getDate() + 1);
-    return formatSingleDate(next.toISOString());
-  };
+  const listerName = orderData.lister?.businessName || "Lister";
+  const listerAvatar = orderData.lister?.imageUrl || "";
 
   const collateralSum = items.reduce((s, l) => {
     if (isResaleLine(l)) return s;
     return s + Number(l.collateralFee ?? 0);
   }, 0);
 
-  const itemsSubtotalFromLines = items.reduce(
-    (s, l) =>
-      s + Number(l.rentalFee ?? 0) + Number(l.cleaningFee ?? 0),
-    0,
-  );
-  const itemsSubtotal =
+  const rentalSubtotalFromLines = items.reduce((s, l) => {
+    if (isResaleLine(l)) return s;
+    return s + Number(l.rentalFee ?? 0);
+  }, 0);
+  const cleaningFeesFromLines = items.reduce((s, l) => {
+    if (isResaleLine(l)) return s;
+    return s + Number(l.cleaningFee ?? 0);
+  }, 0);
+  const resaleSubtotalFromLines = items.reduce((s, l) => {
+    if (!isResaleLine(l)) return s;
+    return (
+      s +
+      Number(l.resalePrice ?? l.resaleListerAmount ?? l.rentalFee ?? 0)
+    );
+  }, 0);
+
+  const rentalSubtotal = mb?.rentalSubtotal ?? rentalSubtotalFromLines;
+  const cleaningFeesTotal = mb?.cleaningFeesTotal ?? cleaningFeesFromLines;
+  const resaleSubtotal = mb?.resaleSubtotal ?? resaleSubtotalFromLines;
+  const merchandiseTotal =
     mb && typeof mb.total === "number" && !Number.isNaN(mb.total)
       ? mb.total
-      : itemsSubtotalFromLines;
+      : rentalSubtotal + cleaningFeesTotal + resaleSubtotal;
 
-  /** Align service fee with `totalAmount` when legacy orders stored 10% of (rent+cleaning) instead of 10% of rent. */
   const sumWithStatedService =
-    itemsSubtotal +
+    merchandiseTotal +
     collateralSum +
     orderDeliveryFee +
     orderServiceFee +
@@ -140,164 +133,147 @@ export default function ProductCuratorDetails({
     serviceFeeDisplay = Math.max(
       0,
       orderTotalAmount -
-        itemsSubtotal -
+        merchandiseTotal -
         collateralSum -
         orderDeliveryFee -
         orderVatAmount,
     );
   }
   const sumFinal =
-    itemsSubtotal +
+    merchandiseTotal +
     collateralSum +
     orderDeliveryFee +
     serviceFeeDisplay +
     orderVatAmount;
   const otherAdjust = orderTotalAmount - sumFinal;
-
   const resaleOnlyOrder = isListerResaleOrder(orderData);
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/80">
-          <Paragraph1 className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-            Your items ({items.length})
+    <div className="space-y-2">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <div className="divide-y divide-gray-100">
+          {items.map((line, index) => {
+            const key =
+              line.id != null ? `${String(line.id)}-${index}` : `item-${index}`;
+            const start = line.rentalStartDate ?? orderData.rentalStartDate;
+            const end = line.rentalEndDate ?? orderData.rentalEndDate;
+            const days = Number(line.rentalDays ?? line.days ?? 0);
+            const resale = isResaleLine(line);
+            const periodLabel = formatShortRange(start, end);
+            const returnLabel = formatReturnDue(line.returnDueDate ?? null, end ?? null);
+
+            return (
+              <div key={key} className="flex gap-3 p-3">
+                <div className="relative h-16 w-14 shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                  {line.imageUrl ? (
+                    <img
+                      src={line.imageUrl}
+                      alt={line.name || "Product"}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-gray-400">
+                      <Package className="h-6 w-6" strokeWidth={1.25} />
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <Paragraph1 className="text-sm font-semibold text-gray-900">
+                    {line.name || "Item"}
+                  </Paragraph1>
+                  <Paragraph1 className="mt-0.5 text-xs text-gray-600">
+                    {resale
+                      ? "Purchase"
+                      : `Qty ${line.quantity ?? 1}${days > 0 ? ` · ${days} day${days === 1 ? "" : "s"}` : ""}`}
+                    {periodLabel ? ` · ${periodLabel}` : ""}
+                  </Paragraph1>
+                  {!resale && returnLabel ? (
+                    <Paragraph1 className="mt-0.5 text-xs font-medium text-gray-800">
+                      Return by {returnLabel}
+                    </Paragraph1>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center justify-between gap-3 border-t border-gray-100 bg-gray-50/80 px-3 py-2.5">
+          <Paragraph1 className="text-sm font-semibold text-gray-900">Total paid</Paragraph1>
+          <Paragraph1 className="text-sm font-bold tabular-nums text-gray-900">
+            {CURRENCY}
+            {formatCurrency(orderTotalAmount)}
           </Paragraph1>
         </div>
 
-        <div className="divide-y divide-gray-100">
-          {items.length === 0 ? (
-            <div className="p-4 text-sm text-gray-600">No line items</div>
-          ) : (
-            items.map((line, index) => {
-              const key =
-                line.id != null ? `${String(line.id)}-${index}` : `item-${index}`;
-              const start = line.rentalStartDate ?? orderData.rentalStartDate;
-              const end = line.rentalEndDate ?? orderData.rentalEndDate;
-              const days = Number(line.rentalDays ?? line.days ?? 0);
-              const resale = isResaleLine(line);
-              const linePrice = resale
-                ? Number(
-                    line.resalePrice ??
-                      line.resaleListerAmount ??
-                      line.rentalFee ??
-                      0,
-                  )
-                : Number(line.rentalFee ?? 0);
-              const periodLabel = formatShortRange(start, end);
-              const returnLabel = formatReturnDueLabel(
-                line.returnDueDate ?? null,
-                end ?? null,
-              );
-
-              return (
-                <div key={key} className="p-4 flex gap-3 sm:gap-4">
-                  <div className="relative w-20 h-24 shrink-0 rounded-lg bg-gray-100 overflow-hidden">
-                    {line.imageUrl ? (
-                      <img
-                        src={line.imageUrl}
-                        alt={line.name || "Product"}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <Package className="w-8 h-8" strokeWidth={1.25} />
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1 space-y-2">
-                    <Paragraph1 className="text-base font-semibold text-gray-900 leading-snug">
-                      {line.name || "Item"}
-                    </Paragraph1>
-                    <p className="text-xs text-gray-600 leading-relaxed">
-                      {resale ? (
-                        <>Purchase</>
-                      ) : (
-                        <>
-                          Qty {line.quantity ?? 1}
-                          {days > 0 ? (
-                            <>
-                              {" "}
-                              · {days} day{days === 1 ? "" : "s"}
-                              {typeof line.price === "number" && line.price > 0
-                                ? ` · ${CURRENCY}${formatCurrency(line.price)}/day`
-                                : null}
-                            </>
-                          ) : null}
-                        </>
-                      )}
-                    </p>
-                    {!resale && (periodLabel || returnLabel) && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-600">
-                        {periodLabel ? (
-                          <div>
-                            <span className="text-gray-400">Rental period</span>{" "}
-                            <span className="font-medium text-gray-800">
-                              {periodLabel}
-                            </span>
-                          </div>
-                        ) : null}
-                        {returnLabel ? (
-                          <div>
-                            <span className="text-gray-400">Return due</span>{" "}
-                            <span className="font-medium text-gray-800">
-                              {returnLabel}
-                            </span>
-                          </div>
-                        ) : null}
-                      </div>
-                    )}
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs pt-1 border-t border-gray-100">
-                      <span className="text-gray-500">
-                        {resale ? "Price" : "Rental"}{" "}
-                        <span className="font-semibold text-gray-900">
-                          {CURRENCY}
-                          {formatCurrency(linePrice)}
-                        </span>
-                      </span>
-                      {!resale && Number(line.cleaningFee) > 0 ? (
-                        <span className="text-gray-500">
-                          Cleaning{" "}
-                          <span className="font-semibold text-gray-900">
-                            {CURRENCY}
-                            {formatCurrency(line.cleaningFee)}
-                          </span>
-                        </span>
-                      ) : null}
-                      {!resale && Number(line.collateralFee) > 0 ? (
-                        <span className="text-gray-500">
-                          Collateral{" "}
-                          <span className="font-semibold text-gray-900">
-                            {CURRENCY}
-                            {formatCurrency(line.collateralFee)}
-                          </span>
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        <div className="px-4 py-3 border-t border-gray-100 bg-gray-50/60 space-y-2 text-sm">
-          <div className="flex justify-between gap-4 text-gray-600">
-            <span>Merchandise</span>
-            <span className="font-semibold text-gray-900 tabular-nums">
-              {CURRENCY}
-              {formatCurrency(itemsSubtotal)}
-            </span>
+        <div className="flex items-center gap-2.5 border-t border-gray-100 px-3 py-2.5">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200">
+            {listerAvatar ? (
+              <img src={listerAvatar} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <span className="text-[10px] font-bold text-gray-600">
+                {listerName.charAt(0) || "L"}
+              </span>
+            )}
           </div>
+          <Paragraph1 className="truncate text-sm font-medium text-gray-900">
+            {listerName}
+          </Paragraph1>
+        </div>
+      </div>
+
+      <details className="group overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3.5 py-3 text-sm font-semibold text-gray-900 marker:content-none [&::-webkit-details-marker]:hidden">
+          Payment breakdown
+          <ChevronDown
+            size={16}
+            className="shrink-0 text-gray-400 transition group-open:rotate-180"
+          />
+        </summary>
+        <div className="space-y-2 border-t border-gray-100 px-3.5 pb-3.5 pt-2 text-sm">
+          {!resaleOnlyOrder && rentalSubtotal > 0 ? (
+            <div className="flex justify-between gap-4 text-gray-600">
+              <span>Rental</span>
+              <span className="font-semibold tabular-nums text-gray-900">
+                {CURRENCY}
+                {formatCurrency(rentalSubtotal)}
+              </span>
+            </div>
+          ) : null}
+          {cleaningFeesTotal > 0 ? (
+            <div className="flex justify-between gap-4 text-gray-600">
+              <span>Cleaning</span>
+              <span className="font-semibold tabular-nums text-gray-900">
+                {CURRENCY}
+                {formatCurrency(cleaningFeesTotal)}
+              </span>
+            </div>
+          ) : null}
+          {resaleSubtotal > 0 ? (
+            <div className="flex justify-between gap-4 text-gray-600">
+              <span>{resaleOnlyOrder ? "Purchase" : "Resale items"}</span>
+              <span className="font-semibold tabular-nums text-gray-900">
+                {CURRENCY}
+                {formatCurrency(resaleSubtotal)}
+              </span>
+            </div>
+          ) : null}
+          {rentalSubtotal <= 0 &&
+          cleaningFeesTotal <= 0 &&
+          resaleSubtotal <= 0 &&
+          merchandiseTotal > 0 ? (
+            <div className="flex justify-between gap-4 text-gray-600">
+              <span>Merchandise</span>
+              <span className="font-semibold tabular-nums text-gray-900">
+                {CURRENCY}
+                {formatCurrency(merchandiseTotal)}
+              </span>
+            </div>
+          ) : null}
           {collateralSum > 0 ? (
             <div className="flex justify-between gap-4 text-gray-600">
-              <span className="leading-snug">
-                Collateral (held in escrow)
-                <span className="block text-[11px] font-normal text-gray-500 normal-case">
-                  Included in total paid; released after return.
-                </span>
-              </span>
-              <span className="font-semibold text-gray-900 tabular-nums shrink-0">
+              <span>Collateral (escrow)</span>
+              <span className="font-semibold tabular-nums text-gray-900">
                 {CURRENCY}
                 {formatCurrency(collateralSum)}
               </span>
@@ -305,7 +281,7 @@ export default function ProductCuratorDetails({
           ) : null}
           <div className="flex justify-between gap-4 text-gray-600">
             <span>{resaleOnlyOrder ? "Delivery" : "Delivery & return"}</span>
-            <span className="font-semibold text-gray-900 tabular-nums">
+            <span className="font-semibold tabular-nums text-gray-900">
               {CURRENCY}
               {formatCurrency(orderDeliveryFee)}
             </span>
@@ -313,7 +289,7 @@ export default function ProductCuratorDetails({
           {orderVatAmount > 0 ? (
             <div className="flex justify-between gap-4 text-gray-600">
               <span>VAT</span>
-              <span className="font-semibold text-gray-900 tabular-nums">
+              <span className="font-semibold tabular-nums text-gray-900">
                 {CURRENCY}
                 {formatCurrency(orderVatAmount)}
               </span>
@@ -321,7 +297,7 @@ export default function ProductCuratorDetails({
           ) : null}
           <div className="flex justify-between gap-4 text-gray-600">
             <span>Service fee</span>
-            <span className="font-semibold text-gray-900 tabular-nums">
+            <span className="font-semibold tabular-nums text-gray-900">
               {CURRENCY}
               {formatCurrency(serviceFeeDisplay)}
             </span>
@@ -329,64 +305,14 @@ export default function ProductCuratorDetails({
           {Math.abs(otherAdjust) > 1 ? (
             <div className="flex justify-between gap-4 text-gray-600">
               <span>Adjustments</span>
-              <span className="font-semibold text-gray-900 tabular-nums">
+              <span className="font-semibold tabular-nums text-gray-900">
                 {CURRENCY}
                 {formatCurrency(otherAdjust)}
               </span>
             </div>
           ) : null}
-          <div className="flex justify-between gap-4 pt-2 border-t border-gray-200 text-gray-900 font-semibold">
-            <span>Total paid</span>
-            <span className="tabular-nums">
-              {CURRENCY}
-              {formatCurrency(orderTotalAmount)}
-            </span>
-          </div>
         </div>
-      </div>
-
-      <div className="rounded-2xl border border-gray-200 bg-white p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-full bg-gray-200 overflow-hidden shrink-0 flex items-center justify-center">
-              {listerInfo.avatar ? (
-                <img
-                  src={listerInfo.avatar}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span className="text-sm font-bold text-gray-600">
-                  {listerInfo.name?.charAt(0) || "L"}
-                </span>
-              )}
-            </div>
-            <div className="min-w-0">
-              <Paragraph1 className="text-sm font-semibold text-gray-900 truncate">
-                {listerInfo.name}
-              </Paragraph1>
-              <div className="flex items-center gap-0.5 mt-0.5">
-                {Array(5)
-                  .fill(0)
-                  .map((_, i) => (
-                    <Star
-                      key={i}
-                      size={14}
-                      className={
-                        i < Math.floor(listerInfo.rating || 0)
-                          ? "text-yellow-400 fill-yellow-400"
-                          : "text-gray-300"
-                      }
-                    />
-                  ))}
-                <span className="ml-1 text-xs text-gray-600">
-                  {listerInfo.rating?.toFixed(1) || "0.0"}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      </details>
     </div>
   );
 }

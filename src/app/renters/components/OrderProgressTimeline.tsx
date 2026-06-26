@@ -1,5 +1,3 @@
-// ENDPOINTS: GET /api/renters/orders/:orderId/progress (preferred), else derive from order status
-
 "use client";
 
 import React, { useMemo, useState } from "react";
@@ -9,7 +7,6 @@ import {
   Truck,
   Home,
   RefreshCw,
-  Thermometer,
   Loader,
   CircleDot,
   ChevronDown,
@@ -20,12 +17,10 @@ import {
   isListerResaleOrder,
   orderHasRentalLines,
 } from "@/lib/listers/listerOrderRow";
-import { ReturnPackageItems, itemsForProgressGroup } from "@/lib/orders/returnPackageItems";
 
 interface TimelineStage {
   id: number;
   label: string;
-  description: string;
   icon: React.ElementType;
 }
 
@@ -80,15 +75,6 @@ interface OrderProgressTimelineProps {
   } | null;
 }
 
-function shipmentStatusLabel(status: string): string {
-  const s = String(status ?? "").toUpperCase();
-  if (s === "COMPLETED") return "Delivered";
-  if (s === "IN_TRANSIT") return "In transit";
-  if (s === "DISPATCHED" || s === "DISPATCHING") return "Booked with carrier";
-  if (s === "PENDING") return "Awaiting booking";
-  return s.replace(/_/g, " ").toLowerCase();
-}
-
 function formatLagosDate(iso: string | null | undefined): string | null {
   if (!iso?.trim()) return null;
   return new Date(iso).toLocaleDateString("en-NG", {
@@ -122,98 +108,112 @@ function milestoneIcon(milestone: string): React.ElementType {
 function ProgressBarInner({ percent, className }: { percent: number; className?: string }) {
   const clamped = Math.min(100, Math.max(0, percent));
   return (
-    <div className={`h-2 overflow-hidden rounded-full bg-gray-200 ${className ?? "mb-4"}`}>
+    <div className={`h-2 overflow-hidden rounded-full bg-gray-200 ${className ?? ""}`}>
       <div
-        className="bg-black h-full transition-all duration-500"
+        className="h-full bg-black transition-all duration-500"
         style={{ width: `${clamped}%` }}
       />
     </div>
   );
 }
 
-function TimelineRowView({ row, compact }: { row: TimelineRow; compact?: boolean }) {
+function legWindowLabel(leg: ShipmentLegDetail): string | null {
+  const window = leg.windowSummary?.trim();
+  if (window) return window;
+  return formatLagosDate(leg.scheduledDate);
+}
+
+function TimelineRowView({
+  row,
+  compact,
+  isLast,
+}: {
+  row: TimelineRow;
+  compact?: boolean;
+  isLast?: boolean;
+}) {
   const active = row.status === "current";
   const completed = row.status === "completed";
   const Icon = milestoneIcon(row.milestone);
-  const mb = compact ? "mb-4" : "mb-8";
-  const offset = compact ? "-left-10" : "-left-12";
-  const size = compact ? "h-6 w-6" : "h-8 w-8";
-  const iconPx = compact ? 12 : 16;
+  const circleSize = compact ? "h-7 w-7" : "h-8 w-8";
+  const railWidth = compact ? "w-7" : "w-8";
+  const iconPx = compact ? 13 : 16;
+  const timestamp = formatLagosDateTime(row.timestamp);
 
   return (
-    <div className={`relative ${mb}`}>
-      <div
-        className={`absolute top-0 ${offset} flex ${size} items-center justify-center rounded-full
-          ${
-            active
-              ? "bg-black text-white"
-              : completed
-                ? "bg-green-500 text-white"
-                : "bg-gray-200 text-gray-500"
-          }`}
-      >
-        {active ? <CircleDot size={iconPx} /> : <Icon size={iconPx} />}
+    <div className="flex gap-3">
+      <div className={`flex ${railWidth} shrink-0 flex-col items-center self-stretch`}>
+        <div
+          className={`relative z-10 flex ${circleSize} shrink-0 items-center justify-center rounded-full
+            ${
+              active
+                ? "bg-black text-white"
+                : completed
+                  ? "bg-green-500 text-white"
+                  : "bg-gray-200 text-gray-500"
+            }`}
+        >
+          {active ? <CircleDot size={iconPx} /> : <Icon size={iconPx} />}
+        </div>
+        {!isLast ? (
+          <div className="my-1 w-px flex-1 min-h-4 bg-gray-200" aria-hidden />
+        ) : null}
       </div>
-      <div>
+      <div className={`min-w-0 flex-1 pt-0.5 ${isLast ? "pb-0" : "pb-4"}`}>
         <Paragraph1
-          className={`font-semibold ${compact ? "text-sm" : "text-base"} ${
+          className={`font-semibold leading-snug ${compact ? "text-sm" : "text-base"} ${
             active ? "text-black" : completed ? "text-gray-800" : "text-gray-500"
           }`}
         >
           {row.label}
         </Paragraph1>
-        <Paragraph1 className={`mt-1 text-gray-600 ${compact ? "text-xs" : "text-sm"}`}>
-          {row.description}
-        </Paragraph1>
-        {row.timestamp ? (
-          <Paragraph1 className="mt-1 text-gray-400 text-xs">
-            {formatLagosDateTime(row.timestamp)}
-          </Paragraph1>
+        {timestamp ? (
+          <Paragraph1 className="mt-1 text-xs text-gray-400">{timestamp}</Paragraph1>
         ) : null}
       </div>
     </div>
   );
 }
 
-function LegTrackingBlock({
-  leg,
-  label,
+function TimelineList({
+  rows,
+  compact,
 }: {
-  leg: ShipmentLegDetail;
-  label: string;
+  rows: TimelineRow[];
+  compact?: boolean;
 }) {
-  const statusText = shipmentStatusLabel(leg.status);
-  const scheduledText = formatLagosDate(leg.scheduledDate);
+  return (
+    <div>
+      {rows.map((row, index) => (
+        <TimelineRowView
+          key={row.milestone}
+          row={row}
+          compact={compact}
+          isLast={index === rows.length - 1}
+        />
+      ))}
+    </div>
+  );
+}
+
+function ShipmentTrackingStrip({ leg }: { leg: ShipmentLegDetail }) {
+  const trackingId = leg.trackingId?.trim();
+  const trackingUrl = leg.providerTrackingUrl?.trim();
+  if (!trackingId && !trackingUrl) return null;
 
   return (
-    <div className="bg-white p-2.5 border border-gray-100 rounded-md">
-      <Paragraph1 className="text-xs font-bold text-gray-900">{label}</Paragraph1>
-      <Paragraph1 className="mt-1 text-xs text-gray-600">
-        <span className="font-bold text-gray-900">{statusText}</span>
-        {scheduledText ? ` · Scheduled ${scheduledText}` : null}
-      </Paragraph1>
-      {leg.windowSummary?.trim() ? (
-        <Paragraph1 className="mt-1 text-xs text-gray-600">
-          <span className="font-bold text-gray-900">Window</span>
-          {`: ${leg.windowSummary.trim()}`}
-        </Paragraph1>
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-gray-100 bg-white px-3 py-2.5">
+      {trackingId ? (
+        <Paragraph1 className="font-mono text-xs text-gray-700">{trackingId}</Paragraph1>
       ) : null}
-      {leg.trackingId?.trim() ? (
-        <Paragraph1 className="mt-1 text-xs text-gray-600">
-          <span className="font-bold text-gray-900">Tracking</span>
-          <span className="font-mono text-gray-800">
-            {`: ${leg.trackingId.trim()}`}
-          </span>
-        </Paragraph1>
-      ) : null}
-      {leg.providerTrackingUrl?.trim() ? (
+      {trackingUrl ? (
         <a
-          href={leg.providerTrackingUrl.trim()}
+          href={trackingUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block mt-1 font-semibold text-blue-700 text-xs underline"
+          className="text-xs font-semibold text-blue-700 underline"
         >
-          Track this shipment
+          Track shipment
         </a>
       ) : null}
     </div>
@@ -225,85 +225,75 @@ function ShipmentGroupCard({
   packageIndex,
   packageTotal,
   returnRequestStatus,
-  packageItems,
 }: {
   group: ShipmentProgressGroup;
   packageIndex: number;
   packageTotal: number;
   returnRequestStatus?: string | null;
-  packageItems?: Array<{ name: string; imageUrl?: string | null }>;
 }) {
-  const kindLabel = group.kind === "rental" ? "Rental" : "Purchase";
-  const [isOpen, setIsOpen] = useState(packageIndex === 1);
+  const multi = packageTotal > 1;
+  const [isOpen, setIsOpen] = useState(true);
+  const returnWindow =
+    group.return && group.return.status === "PENDING"
+      ? legWindowLabel(group.return)
+      : null;
 
   return (
     <details
-      className="group bg-gray-50 border border-gray-200 rounded-xl overflow-hidden"
+      className="group overflow-hidden rounded-xl border border-gray-200 bg-gray-50/80"
       open={isOpen}
       onToggle={(e) => setIsOpen(e.currentTarget.open)}
     >
-      <summary className="[&::-webkit-details-marker]:hidden flex justify-between items-start gap-2 p-4 marker:content-none cursor-pointer list-none">
-        <div className="flex-1 min-w-0 text-left">
-          <div className="space-y-1">
-            <Paragraph1 className="font-medium text-gray-500 text-xs uppercase tracking-wide">
-              {kindLabel}
-            </Paragraph1>
-            <Paragraph1 className="font-semibold text-gray-800 text-xs">
+      <summary className="flex cursor-pointer list-none items-start justify-between gap-3 p-4 marker:content-none [&::-webkit-details-marker]:hidden">
+        <div className="min-w-0 flex-1 text-left">
+          {multi ? (
+            <Paragraph1 className="mb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">
               Package {packageIndex} of {packageTotal}
             </Paragraph1>
-          </div>
-          <Paragraph1 className="mt-2 font-semibold text-gray-900 text-base">
+          ) : null}
+          <Paragraph1 className="text-base font-semibold leading-snug text-gray-900">
             {group.title}
           </Paragraph1>
-          {packageItems && packageItems.length > 0 ? (
-            <ReturnPackageItems items={packageItems} />
-          ) : null}
           {group.listerName ? (
-            <Paragraph1 className="text-gray-500 text-xs">
-              Seller: {group.listerName}
+            <Paragraph1 className="mt-1 text-sm text-gray-500">
+              {group.listerName}
             </Paragraph1>
           ) : null}
         </div>
-        <div className="flex items-center gap-2 pt-0.5 shrink-0">
-          <Paragraph1 className="font-semibold text-gray-900 text-sm">
+        <div className="flex shrink-0 flex-col items-end gap-1 pt-0.5">
+          <Paragraph1 className="text-sm font-semibold tabular-nums text-gray-900">
             {group.percentComplete}%
           </Paragraph1>
           <ChevronDown
             size={16}
-            className="text-gray-400 group-open:rotate-180 transition shrink-0"
+            className="text-gray-400 transition group-open:rotate-180"
             aria-hidden
           />
         </div>
       </summary>
 
-      <div className="px-4 pt-3 pb-4 border-gray-200 border-t">
-        <ProgressBarInner percent={group.percentComplete} className="mb-4" />
+      <div className="space-y-5 border-t border-gray-200 px-4 pb-5 pt-4">
+        <ProgressBarInner percent={group.percentComplete} />
 
-        <div className="relative pl-8 border-gray-200 border-l-2">
-          {group.timeline.map((row) => (
-            <TimelineRowView key={row.milestone} row={row} compact />
-          ))}
-        </div>
+        <TimelineList rows={group.timeline} compact />
 
-        {group.delivery ? (
-          <div className="mt-3">
-            <LegTrackingBlock
-              leg={group.delivery}
-              label={group.kind === "rental" ? "Delivery to you" : "Delivery"}
-            />
-          </div>
-        ) : null}
+        {group.delivery ? <ShipmentTrackingStrip leg={group.delivery} /> : null}
 
-        {group.return ? (
-          <div className="mt-2">
-            <LegTrackingBlock leg={group.return} label="Return to lister" />
-          </div>
+        {returnWindow && !returnRequestStatus ? (
+          <Paragraph1 className="text-sm text-gray-600">
+            Return window:{" "}
+            <span className="font-medium text-gray-900">{returnWindow}</span>
+          </Paragraph1>
         ) : null}
 
         {group.kind === "rental" && returnRequestStatus ? (
-          <Paragraph1 className="mt-2 text-slate-700 text-xs">
-            Return: {returnRequestStatus.replace(/_/g, " ").toLowerCase()}
+          <Paragraph1 className="text-sm font-medium text-gray-800">
+            Return {returnRequestStatus.replace(/_/g, " ").toLowerCase()}
           </Paragraph1>
+        ) : null}
+
+        {group.return && returnRequestStatus ? (
+          <ShipmentTrackingStrip leg={group.return} />
         ) : null}
       </div>
     </details>
@@ -360,78 +350,20 @@ export default function OrderProgressTimeline({
   const stages: TimelineStage[] = useMemo(() => {
     if (pureResale) {
       return [
-        {
-          id: 1,
-          label: "Order placed",
-          description: "Checkout completed and your purchase is locked in.",
-          icon: Package,
-        },
-        {
-          id: 2,
-          label: "Confirmed",
-          description:
-            "Payment received. We are coordinating pickup with the seller.",
-          icon: CheckCircle,
-        },
-        {
-          id: 3,
-          label: "In transit",
-          description: "Courier has picked up the item and it is on the way.",
-          icon: Truck,
-        },
-        {
-          id: 4,
-          label: "Delivered",
-          description: "Carrier confirmed delivery to your address.",
-          icon: Home,
-        },
+        { id: 1, label: "Order placed", icon: Package },
+        { id: 2, label: "Confirmed", icon: CheckCircle },
+        { id: 3, label: "In transit", icon: Truck },
+        { id: 4, label: "Delivered", icon: Home },
       ];
     }
     return [
-      {
-        id: 1,
-        label: "Lister accepted",
-        description: "The lister approved your rental dates.",
-        icon: CheckCircle,
-      },
-      {
-        id: 2,
-        label: "Rental confirmed",
-        description: "Your payment went through and your booking is confirmed.",
-        icon: Package,
-      },
-      {
-        id: 3,
-        label: "Processing order",
-        description:
-          "We are confirming carrier pickup for each seller. Nothing has shipped yet.",
-        icon: Loader,
-      },
-      {
-        id: 4,
-        label: "In transit",
-        description: "Carrier pickup is booked and your item is on the way.",
-        icon: Truck,
-      },
-      {
-        id: 5,
-        label: "With you",
-        description: "Rental period is active. Enjoy your rental.",
-        icon: Home,
-      },
-      {
-        id: 6,
-        label: "Return",
-        description:
-          "Return the item by the due date. Start a return in the app when ready.",
-        icon: RefreshCw,
-      },
-      {
-        id: 7,
-        label: "Returned",
-        description: "The item is back with the lister.",
-        icon: CheckCircle,
-      },
+      { id: 1, label: "Lister accepted", icon: CheckCircle },
+      { id: 2, label: "Rental confirmed", icon: Package },
+      { id: 3, label: "Processing", icon: Loader },
+      { id: 4, label: "In transit", icon: Truck },
+      { id: 5, label: "With you", icon: Home },
+      { id: 6, label: "Return", icon: RefreshCw },
+      { id: 7, label: "Returned", icon: CheckCircle },
     ];
   }, [pureResale]);
 
@@ -447,11 +379,6 @@ export default function OrderProgressTimeline({
     return Math.round(((currentStageId - 1) / (stages.length - 1)) * 100);
   }, [currentStageId, stages.length]);
 
-  const useApi = Boolean(progress?.timeline?.length);
-  const percentComplete = useApi
-    ? Math.min(100, Math.max(0, progress!.percentComplete))
-    : fallbackPercent;
-
   const returnRequestStatusByShipment = useMemo(() => {
     const map = new Map<string, string>();
     for (const rr of progress?.returnRequests ?? []) {
@@ -462,60 +389,47 @@ export default function OrderProgressTimeline({
 
   if (!orderData) {
     return (
-      <div className="bg-white p-6 border border-gray-300 rounded-xl">
-        <Paragraph1 className="text-gray-600">No progress data available.</Paragraph1>
-      </div>
+      <Paragraph1 className="text-sm text-gray-600">No progress data.</Paragraph1>
     );
   }
 
-  return (
-    <div>
-      <div className="flex flex-wrap justify-between items-baseline gap-2 mb-1">
-        <Paragraph1 className="font-semibold text-gray-900 text-sm">
-          Overall progress ({percentComplete}%)
-        </Paragraph1>
-        {progress?.summaryLabel ? (
-          <Paragraph1 className="text-gray-600 text-xs">
-            {progress.summaryLabel}
-          </Paragraph1>
-        ) : null}
-      </div>
+  if (useGroupProgress) {
+    const groupPercent =
+      shipmentGroups.length > 0
+        ? Math.round(
+            shipmentGroups.reduce((s, g) => s + g.percentComplete, 0) /
+              shipmentGroups.length,
+          )
+        : Math.min(100, Math.max(0, progress?.percentComplete ?? 0));
+    const headline =
+      progress?.summaryLabel ??
+      shipmentGroups[0]?.currentLabel ??
+      "In progress";
+    const singlePackage = shipmentGroups.length === 1;
 
-      <ProgressBarInner percent={percentComplete} className="mb-6" />
-
-      {useGroupProgress ? (
-        <div className="space-y-6">
-          {useApi && progress!.timeline.length > 0 ? (
-            <div className="relative pl-8 border-gray-200 border-l-2">
-              <div className="top-0 -left-4 absolute">
-                <Thermometer
-                  size={24}
-                  className="bg-white p-1 border border-gray-200 rounded-full text-gray-900"
-                />
-              </div>
-              {progress!.timeline.map((row) => (
-                <TimelineRowView key={row.milestone} row={row} />
-              ))}
+    return (
+      <div className="space-y-4">
+        {!singlePackage ? (
+          <>
+            <div className="flex items-baseline justify-between gap-3">
+              <Paragraph1 className="text-sm font-semibold text-gray-900">
+                {headline}
+              </Paragraph1>
+              <Paragraph1 className="text-xs tabular-nums text-gray-500">
+                {groupPercent}%
+              </Paragraph1>
             </div>
-          ) : null}
+            <ProgressBarInner percent={groupPercent} />
+          </>
+        ) : null}
 
-          <Paragraph1 className="font-semibold text-gray-900 text-sm">
-            Package progress
-          </Paragraph1>
-
+        <div className="space-y-4">
           {shipmentGroups.map((group, index) => (
             <ShipmentGroupCard
               key={group.id}
               group={group}
               packageIndex={index + 1}
               packageTotal={shipmentGroups.length}
-              packageItems={itemsForProgressGroup(
-                group,
-                orderData?.items as Array<{
-                  name?: string;
-                  imageUrl?: string | null;
-                }>,
-              )}
               returnRequestStatus={
                 hasRentals && group.kind === "rental" && group.return?.shipmentId
                   ? (returnRequestStatusByShipment.get(
@@ -526,61 +440,47 @@ export default function OrderProgressTimeline({
             />
           ))}
         </div>
-      ) : (
-        <div className="relative pl-8 border-gray-200 border-l-2">
-          <div className="top-0 -left-4 absolute">
-            <Thermometer
-              size={24}
-              className="bg-white p-1 border border-gray-200 rounded-full text-gray-900"
-            />
-          </div>
+      </div>
+    );
+  }
 
-          {useApi ? (
-            progress!.timeline.map((row) => (
-              <TimelineRowView key={row.milestone} row={row} />
-            ))
-          ) : (
-            stages.map((stage) => {
-              const active = stage.id === currentStageId;
-              const completed = stage.id < currentStageId;
-              const Icon = stage.icon;
-              return (
-                <div key={stage.id} className="relative mb-8">
-                  <div
-                    className={`absolute -left-12 top-0 flex h-8 w-8 items-center justify-center rounded-full
-                      ${
-                        active
-                          ? "bg-black text-white"
-                          : completed
-                            ? "bg-green-500 text-white"
-                            : "bg-gray-200 text-gray-500"
-                      }`}
-                  >
-                    {active && <Loader size={16} className="animate-spin" />}
-                    {!active && <Icon size={16} />}
-                  </div>
-                  <div>
-                    <Paragraph1
-                      className={`text-base font-semibold ${
-                        active
-                          ? "text-black"
-                          : completed
-                            ? "text-gray-800"
-                            : "text-gray-500"
-                      }`}
-                    >
-                      {stage.label}
-                    </Paragraph1>
-                    <Paragraph1 className="mt-1 text-gray-600 text-sm">
-                      {stage.description}
-                    </Paragraph1>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      )}
+  const useApi = Boolean(progress?.timeline?.length);
+  const percentComplete = useApi
+    ? Math.min(100, Math.max(0, progress!.percentComplete))
+    : fallbackPercent;
+
+  return (
+    <div>
+      <div className="mb-2 flex items-baseline justify-between gap-2">
+        <Paragraph1 className="text-sm font-semibold text-gray-900">Progress</Paragraph1>
+        <Paragraph1 className="text-xs tabular-nums text-gray-500">
+          {percentComplete}%
+        </Paragraph1>
+      </div>
+      <ProgressBarInner percent={percentComplete} className="mb-4" />
+
+      <TimelineList
+        rows={
+          useApi
+            ? progress!.timeline
+            : stages.map((stage) => {
+                const active = stage.id === currentStageId;
+                const completed = stage.id < currentStageId;
+                return {
+                  milestone: String(stage.id),
+                  label: stage.label,
+                  timestamp: null,
+                  status: active
+                    ? ("current" as const)
+                    : completed
+                      ? ("completed" as const)
+                      : ("pending" as const),
+                  description: "",
+                };
+              })
+        }
+        compact
+      />
     </div>
   );
 }

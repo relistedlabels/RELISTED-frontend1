@@ -4,19 +4,17 @@
 "use client";
 
 import React, { useEffect, useState, type ComponentProps } from "react";
-import { X, ArrowLeft } from "lucide-react";
+import { X, ArrowLeft, CheckCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { Paragraph1 } from "@/common/ui/Text";
 import ProductCuratorDetails from "./ProductCuratorDetails";
 import OrderProgressTimeline from "./OrderProgressTimeline";
 import OrderStatusDetails from "./OrderStatusDetails";
-import ReadyToReturnSection from "./ReadyToReturnSection";
-import type { ShipmentProgressGroup } from "./OrderProgressTimeline";
-import { itemsForProgressGroup } from "@/lib/orders/returnPackageItems";
 import OrderDetailSummaryBar from "./OrderDetailSummaryBar";
 import ResaleDeliveryConfirmBanner from "./ResaleDeliveryConfirmBanner";
 import RentalDeliveryConfirmBanner from "./RentalDeliveryConfirmBanner";
+import StartReturnAction from "./StartReturnAction";
 import {
   useOrderDetails,
   useOrderProgress,
@@ -33,6 +31,7 @@ import {
   rentalInspectionLabelFromOrder,
   shouldShowRenterRentalDeliveryConfirm,
 } from "@/lib/orders/rentalDeliveryConfirm";
+import { resolveRenterStartReturn } from "@/lib/orders/renterStartReturn";
 import { useConfirmResaleDelivery } from "@/lib/mutations/renters/useConfirmResaleDelivery";
 import { useConfirmRentalDelivery } from "@/lib/mutations/renters/useConfirmRentalDelivery";
 
@@ -90,49 +89,58 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
     : false;
   const rentalItemId = orderData ? firstRentalItemIdFromOrder(orderData) : null;
 
-  const rentalReturnGroups = (
-    (progressData?.shipmentGroups as ShipmentProgressGroup[] | undefined) ?? []
-  ).filter((g) => g.kind === "rental" && g.return?.shipmentId);
-  const orderItems = (orderData?.items as Array<{
-    name?: string;
-    imageUrl?: string | null;
-  }>) ?? [];
-  const returnLegByShipment = new Map(
-    (
-      (orderData?.returnLegDetails as Array<{
-        shipmentId: string;
-        items?: Array<{ name: string; imageUrl?: string | null }>;
-      }>) ?? []
-    ).map((leg) => [leg.shipmentId, leg.items ?? []]),
+  const returnRequests = (
+    progressData as {
+      returnRequests?: Array<{ shipmentId: string | null; status: string }>;
+    }
+  )?.returnRequests ?? [];
+
+  const returnSubmitted = returnRequests.some(
+    (rr) => rr.status && String(rr.status).toUpperCase() !== "REJECTED",
   );
-  const returnRequestByShipment = new Map(
-    (
-      (progressData as { returnRequests?: Array<{ shipmentId: string | null; status: string }> })
-        ?.returnRequests ?? []
-    )
-      .filter((rr) => rr.shipmentId)
-      .map((rr) => [rr.shipmentId as string, rr.status]),
-  );
+
+  const startReturn = orderData
+    ? resolveRenterStartReturn({
+        status: String(orderData.status ?? ""),
+        items: (orderData.items as Array<{
+          days?: number;
+          listingType?: string;
+        }>) ?? [],
+        shipments: (orderData.shipments as Array<{
+          id?: string;
+          type?: string;
+          status?: string;
+          listerId?: string | null;
+        }>) ?? [],
+        returnRequests,
+      })
+    : { showStartReturn: false, returnShipmentId: null };
+
+  const showFooterReturn =
+    !resaleOnlyOrder &&
+    startReturn.showStartReturn &&
+    !returnSubmitted &&
+    !!displayOrderId;
 
   const handleConfirmResale = (shipmentId: string) => {
     confirmResaleDelivery.mutate(
       { orderId: displayOrderId, shipmentId },
       {
-      onSuccess: (res) => {
-        toast.success(
-          res?.message ??
-            (res?.data?.orderCompleted
-              ? "Order completed. Thank you for confirming."
-              : "Delivery confirmed for this package."),
-        );
-      },
-      onError: (err) => {
-        toast.error(
-          err instanceof Error
-            ? err.message
-            : "Could not confirm delivery. Try again.",
-        );
-      },
+        onSuccess: (res) => {
+          toast.success(
+            res?.message ??
+              (res?.data?.orderCompleted
+                ? "Order completed. Thank you for confirming."
+                : "Delivery confirmed for this package."),
+          );
+        },
+        onError: (err) => {
+          toast.error(
+            err instanceof Error
+              ? err.message
+              : "Could not confirm delivery. Try again.",
+          );
+        },
       },
     );
   };
@@ -171,7 +179,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="fixed top-0 right-0 flex h-screen w-full flex-col overflow-y-auto hide-scrollbar bg-white px-4 shadow-2xl sm:w-114"
+            className="fixed top-0 right-0 flex h-screen w-full flex-col bg-white px-4 shadow-2xl sm:w-114"
             role="dialog"
             aria-modal="true"
             aria-label="Order details"
@@ -181,7 +189,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white pb-4 pt-6">
+            <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-gray-100 bg-white pb-4 pt-6">
               <button
                 type="button"
                 onClick={onClose}
@@ -203,7 +211,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
               </button>
             </div>
 
-            <div className="grow space-y-3 pb-24 pt-4">
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto hide-scrollbar py-4">
               {isLoading ? (
                 <div className="animate-pulse space-y-3">
                   <div className="h-14 rounded-xl bg-gray-200" />
@@ -224,7 +232,22 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
                         createdAt?: string;
                       }
                     }
+                    statusOverrideKey={
+                      showRentalConfirm ? "CONFIRM_DELIVERY" : undefined
+                    }
+                    statusOverrideLabel={
+                      showRentalConfirm ? "Confirm delivery" : undefined
+                    }
                   />
+
+                  {returnSubmitted ? (
+                    <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2.5">
+                      <CheckCircle size={16} className="shrink-0 text-green-600" />
+                      <Paragraph1 className="text-sm font-medium text-green-900">
+                        Return submitted
+                      </Paragraph1>
+                    </div>
+                  ) : null}
 
                   {showRentalConfirm ? (
                     <RentalDeliveryConfirmBanner
@@ -247,10 +270,10 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
                     />
                   ) : null}
 
-                  <div className="rounded-xl border border-gray-200 bg-white p-3">
+                  <div className="rounded-xl border border-gray-200 bg-white p-4">
                     {progressLoading ? (
                       <Paragraph1 className="mb-2 text-[10px] text-gray-400">
-                        Updating progress…
+                        Updating…
                       </Paragraph1>
                     ) : null}
                     <OrderProgressTimeline
@@ -259,86 +282,40 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
                     />
                   </div>
 
-                  <ProductCuratorDetails orderData={orderData} />
-
-                  <OrderStatusDetails orderData={orderData} />
-
-                  {!resaleOnlyOrder ? (
-                    rentalReturnGroups.length > 1 ? (
-                      <div className="space-y-4">
-                        {rentalReturnGroups.map((group) => (
-                          <ReadyToReturnSection
-                            key={group.return!.shipmentId}
-                            orderId={orderId}
-                            shipmentId={group.return!.shipmentId}
-                            listerLabel={group.listerName}
-                            items={
-                              returnLegByShipment.get(
-                                group.return!.shipmentId,
-                              ) ??
-                              itemsForProgressGroup(group, orderItems)
-                            }
-                            existingRequestStatus={
-                              returnRequestByShipment.get(
-                                group.return!.shipmentId,
-                              ) ?? null
-                            }
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <ReadyToReturnSection
-                        orderId={orderId}
-                        shipmentId={
-                          rentalReturnGroups[0]?.return?.shipmentId ??
-                          undefined
-                        }
-                        listerLabel={rentalReturnGroups[0]?.listerName}
-                        items={
-                          rentalReturnGroups[0]?.return?.shipmentId
-                            ? (returnLegByShipment.get(
-                                rentalReturnGroups[0].return!.shipmentId,
-                              ) ??
-                              itemsForProgressGroup(
-                                rentalReturnGroups[0],
-                                orderItems,
-                              ))
-                            : itemsForProgressGroup(
-                                rentalReturnGroups[0] ?? {
-                                  itemNames: [],
-                                },
-                                orderItems,
-                              )
-                        }
-                        existingRequestStatus={
-                          rentalReturnGroups[0]?.return?.shipmentId
-                            ? (returnRequestByShipment.get(
-                                rentalReturnGroups[0].return!.shipmentId,
-                              ) ?? null)
-                            : null
-                        }
-                      />
-                    )
-                  ) : null}
+                  <div className="space-y-2">
+                    <ProductCuratorDetails orderData={orderData} />
+                    <OrderStatusDetails orderData={orderData} />
+                  </div>
                 </>
               )}
             </div>
 
-            <div className="sticky bottom-0 border-t border-gray-100 bg-white py-3">
+            <div className="sticky bottom-0 shrink-0 border-t border-gray-100 bg-white py-3">
               <div className="flex gap-2">
+                {showFooterReturn ? (
+                  <StartReturnAction
+                    orderId={displayOrderId}
+                    shipmentId={startReturn.returnShipmentId}
+                    variant="footer"
+                  />
+                ) : null}
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-800 transition hover:bg-gray-50"
+                  className={`rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-800 transition hover:bg-gray-50 ${
+                    showFooterReturn ? "px-3" : "flex-1"
+                  }`}
                 >
                   Close
                 </button>
-                <a
-                  href="mailto:support@relisted.com"
-                  className="flex-1 rounded-lg bg-black px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-gray-900"
-                >
-                  Contact support
-                </a>
+                {!showFooterReturn ? (
+                  <a
+                    href="mailto:support@relisted.com"
+                    className="flex-1 rounded-lg bg-black px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-gray-900"
+                  >
+                    Contact support
+                  </a>
+                ) : null}
               </div>
             </div>
           </motion.div>
