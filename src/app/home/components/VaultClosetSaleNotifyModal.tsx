@@ -3,7 +3,7 @@
 import { useEffect, useId, useState } from "react";
 import { X } from "lucide-react";
 import { toast } from "sonner";
-import { registerVaultClosetSaleInterest } from "@/lib/api/vaultClosetSale";
+import { shopSaleApi } from "@/lib/api/shopSale";
 import { Paragraph1 } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
 
@@ -11,12 +11,16 @@ type Props = {
   open: boolean;
   onClose: () => void;
   defaultEmail?: string;
+  saleSlug: string;
+  saleHeadline?: string;
 };
 
 export default function VaultClosetSaleNotifyModal({
   open,
   onClose,
   defaultEmail = "",
+  saleSlug,
+  saleHeadline,
 }: Props) {
   const titleId = useId();
   const [email, setEmail] = useState("");
@@ -48,7 +52,7 @@ export default function VaultClosetSaleNotifyModal({
     }
     setSubmitting(true);
     try {
-      const res = await registerVaultClosetSaleInterest(trimmed);
+      const res = await shopSaleApi.registerInterest(saleSlug, trimmed);
       toast.success(res.message);
       onClose();
     } catch (err) {
@@ -57,6 +61,8 @@ export default function VaultClosetSaleNotifyModal({
       setSubmitting(false);
     }
   };
+
+  const headline = saleHeadline?.trim() || "this sale";
 
   return (
     <div
@@ -90,16 +96,15 @@ export default function VaultClosetSaleNotifyModal({
           </button>
         </div>
         <Paragraph1 className="mt-2 text-black/70">
-          We will email you when the Vault Closet sale is live. No account
-          required.
+          We will email you when {headline} is live. No account required.
         </Paragraph1>
         <form onSubmit={handleSubmit} className="space-y-4 mt-6">
           <div>
-            <label htmlFor="vault-sale-email" className="sr-only">
+            <label htmlFor="sale-waitlist-email" className="sr-only">
               Email
             </label>
             <input
-              id="vault-sale-email"
+              id="sale-waitlist-email"
               type="email"
               autoComplete="email"
               value={email}

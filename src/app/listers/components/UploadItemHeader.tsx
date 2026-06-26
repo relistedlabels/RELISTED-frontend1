@@ -30,7 +30,8 @@ const UploadItemHeader: React.FC<UploadItemHeaderProps> = ({
 
   const { data } = useProductDraftStore();
   const reset = useProductDraftStore((state) => state.reset);
-  const { clearUploads } = useUploader();
+  const { clearUploads, uploads } = useUploader();
+  const uploadsInProgress = uploads.some((u) => !u.done && !u.error);
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct(productId);
   const { data: profile } = useProfile();
@@ -57,6 +58,12 @@ const UploadItemHeader: React.FC<UploadItemHeaderProps> = ({
     if (mutation.isPending) return;
 
     setErrorMessage("");
+
+    if (uploadsInProgress) {
+      setErrorMessage("Please wait for all images to finish uploading.");
+      toast.error("Please wait for all images to finish uploading.");
+      return;
+    }
 
     // Validation: Check for minimum 2 images
     const imageAttachments = data.attachments.filter(
@@ -151,21 +158,23 @@ const UploadItemHeader: React.FC<UploadItemHeaderProps> = ({
 
         <button
           onClick={handleSubmit}
-          disabled={isPending}
+          disabled={isPending || uploadsInProgress}
           className={`w-full rounded-xl px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all active:scale-95 sm:w-fit ${
-            isPending
+            isPending || uploadsInProgress
               ? "cursor-not-allowed bg-gray-400"
               : "bg-[#33332D] hover:bg-black"
           }`}
         >
           <Paragraph1>
-            {isPending
-              ? isEditing
-                ? "Updating…"
-                : "Creating…"
-              : isEditing
-                ? "Save Changes"
-                : "Post Item"}
+            {uploadsInProgress
+              ? "Uploading images…"
+              : isPending
+                ? isEditing
+                  ? "Updating…"
+                  : "Creating…"
+                : isEditing
+                  ? "Save Changes"
+                  : "Post Item"}
           </Paragraph1>
         </button>
       </div>

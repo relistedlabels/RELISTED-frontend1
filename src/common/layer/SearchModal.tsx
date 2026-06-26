@@ -66,14 +66,14 @@ export default function SearchModal() {
       <AnimatePresence>
         {open && (
           <motion.div
-            className="fixed inset-0 z-900 h-screen w-full bg-black/0 flex items-start justify-center sm:pt-20"
+            className="z-900 fixed inset-0 flex justify-center items-start bg-black/0 sm:pt-20 w-full h-screen"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setOpen(false)}
           >
             <motion.div
-              className="bg-white text-black w-full shadow-2xl max-w-2xl h-screen sm:h-fit sm:rounded-sm p-5"
+              className="bg-white shadow-2xl p-5 sm:rounded-sm w-full max-w-2xl h-screen sm:h-fit text-black"
               initial={{ y: 40, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 40, opacity: 0 }}
@@ -81,14 +81,14 @@ export default function SearchModal() {
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex justify-between items-center mb-4">
                 <Paragraph1 className="font-bold uppercase">Search</Paragraph1>
                 <X className="cursor-pointer" onClick={() => setOpen(false)} />
               </div>
 
               {/* Search Input */}
               <div className="relative mb-6">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black" />
+                <Search className="top-1/2 left-3 absolute w-4 h-4 text-black -translate-y-1/2" />
                 <input
                   autoFocus
                   value={query}
@@ -98,11 +98,11 @@ export default function SearchModal() {
                       addSearch(query.trim());
                   }}
                   placeholder="Search products and brands..."
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-400 outline-none"
+                  className="py-3 pr-4 pl-10 border border-gray-400 rounded-xl outline-none w-full"
                 />
               </div>
 
-              <div className="flex flex-col h-[500px] sm:h-[400px] hide-scrollbar overflow-hidden overflow-y-auto">
+              <div className="flex flex-col h-[500px] sm:h-[400px] overflow-hidden overflow-y-auto hide-scrollbar">
                 {/* Recent Searches */}
                 {!query && recentSearches.length > 0 && (
                   <div className="mb-6">
@@ -120,9 +120,9 @@ export default function SearchModal() {
                         <div
                           key={i}
                           onClick={() => handleRecentSearchClick(item)}
-                          className="flex justify-between items-center py-1 hover:bg-gray-50 gap-2 text-gray-600 cursor-pointer hover:text-black"
+                          className="flex justify-between items-center gap-2 hover:bg-gray-50 py-1 text-gray-600 hover:text-black cursor-pointer"
                         >
-                          <div className="flex gap-2 items-center">
+                          <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4" />
                             <Paragraph1 className="text-black">
                               {item}
@@ -138,10 +138,10 @@ export default function SearchModal() {
                 {/* Recently Viewed */}
                 {!query && recentlyViewed.length > 0 && (
                   <div>
-                    <Paragraph1 className="text-gray-600 mb-3">
+                    <Paragraph1 className="mb-3 text-gray-600">
                       Recently Viewed
                     </Paragraph1>
-                    <div className="flex gap-4 hide-scrollbar overflow-x-auto">
+                    <div className="flex gap-4 overflow-x-auto hide-scrollbar">
                       {recentlyViewed.map((item) => (
                         <div
                           key={item.id}
@@ -171,7 +171,7 @@ export default function SearchModal() {
                     {/* Products Section */}
                     {!isLoading && !error && products.length > 0 && (
                       <div>
-                        <Paragraph1 className="text-gray-600 font-semibold mb-3">
+                        <Paragraph1 className="mb-3 font-semibold text-gray-600">
                           Similar Products ({products.length})
                         </Paragraph1>
                         <div className="space-y-2">
@@ -183,9 +183,9 @@ export default function SearchModal() {
                                 setOpen(false);
                                 router.push(`/shop/product-details/${item.id}`);
                               }}
-                              className="p-3 flex items-center gap-3 rounded-lg hover:bg-gray-100 cursor-pointer transition"
+                              className="flex items-center gap-3 hover:bg-gray-100 p-3 rounded-lg transition cursor-pointer"
                             >
-                              <div className="w-12 h-12 bg-gray-200 rounded-md overflow-hidden shrink-0">
+                              <div className="bg-gray-200 rounded-md w-12 h-12 overflow-hidden shrink-0">
                                 <Image
                                   src={item.image || "/placeholder.jpg"}
                                   alt={item.name}
@@ -198,7 +198,7 @@ export default function SearchModal() {
                                 <Paragraph1 className="font-medium truncate">
                                   {item.name}
                                 </Paragraph1>
-                                <Paragraph1 className="text-sm text-gray-500">
+                                <Paragraph1 className="text-gray-500 text-sm">
                                   By{" "}
                                   {item.lister?.split(" ").pop() || "New user"}{" "}
                                   • ₦{item.price?.toLocaleString()}
@@ -214,7 +214,7 @@ export default function SearchModal() {
                     {/* Listers Section */}
                     {!isLoading && !error && listers.length > 0 && (
                       <div>
-                        <Paragraph1 className="text-gray-600 font-semibold mb-3">
+                        <Paragraph1 className="mb-3 font-semibold text-gray-600">
                           Similar Listers ({listers.length})
                         </Paragraph1>
                         <div className="space-y-3">
@@ -226,9 +226,9 @@ export default function SearchModal() {
                                 if (query.trim()) addSearch(query.trim());
                                 setOpen(false);
                               }}
-                              className="p-3 flex items-center gap-3 rounded-lg hover:bg-gray-100 cursor-pointer transition"
+                              className="flex items-center gap-3 hover:bg-gray-100 p-3 rounded-lg transition cursor-pointer"
                             >
-                              <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden shrink-0">
+                              <div className="bg-gray-200 rounded-full w-12 h-12 overflow-hidden shrink-0">
                                 <Image
                                   src={
                                     lister.avatar ||
@@ -244,7 +244,7 @@ export default function SearchModal() {
                                 <Paragraph1 className="font-medium truncate">
                                   {lister.name}
                                 </Paragraph1>
-                                <Paragraph1 className="text-sm text-gray-500">
+                                <Paragraph1 className="text-gray-500 text-sm">
                                   Lister on RELISTED
                                 </Paragraph1>
                               </div>

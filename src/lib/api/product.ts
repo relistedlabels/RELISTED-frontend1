@@ -74,6 +74,14 @@ export type UserProduct = {
     slug: string;
     imageUrl: string | null;
   } | null;
+  activeSale?: {
+    slug: string;
+    headline: string;
+    preSaleMessage: string | null;
+    shopAccessEnabled: boolean;
+    phase: "upcoming" | "live" | "ended" | "off";
+    earliestDeliveryAt: string | null;
+  } | null;
 };
 
 export type ProductPayload = {
@@ -169,12 +177,14 @@ export const productApi = {
     sort?: string;
     closetId?: string;
     onlyWithCloset?: boolean;
+    sale?: string;
   }) => {
     const params = new URLSearchParams();
     if (filters?.closetId) params.append("closetId", filters.closetId);
     if (filters?.onlyWithCloset === true && !filters?.closetId) {
       params.append("onlyWithCloset", "true");
     }
+    if (filters?.sale) params.append("sale", filters.sale);
     if (filters?.search) params.append("search", filters.search);
     if (filters?.category?.length)
       params.append("category", filters.category.join(","));

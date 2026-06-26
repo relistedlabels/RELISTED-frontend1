@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { Loader2, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { Paragraph1 } from "@/common/ui/Text";
@@ -20,6 +20,10 @@ import {
   withdrawalShowsApprove,
   withdrawalShowsMarkPaid,
 } from "../utils/withdrawalAdminStatus";
+import AdminTablePagination, {
+  EMPTY_WALLET_PAGINATION,
+  useWalletTablePage,
+} from "./AdminTablePagination";
 
 interface WithdrawalRequestTableProps {
   searchQuery: string;
@@ -269,20 +273,20 @@ function WithdrawalRequestRow({
 export default function WithdrawalRequestTable({
   searchQuery,
 }: WithdrawalRequestTableProps) {
-  const withdrawalQuery = useWithdrawalRequests({ search: searchQuery });
-
-  const filteredData = useMemo(() => {
-    if (!withdrawalQuery.data?.data?.withdrawals) return [];
-    return withdrawalQuery.data.data.withdrawals.filter(
-      (item: any) =>
-        item.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.user.email.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
-  }, [withdrawalQuery.data, searchQuery]);
+  const { page, setPage, limit } = useWalletTablePage(searchQuery);
+  const withdrawalQuery = useWithdrawalRequests({
+    search: searchQuery,
+    page,
+    limit,
+  });
+  const withdrawals = withdrawalQuery.data?.data?.withdrawals ?? [];
+  const pagination =
+    withdrawalQuery.data?.data?.pagination ?? EMPTY_WALLET_PAGINATION;
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
+    <div>
+      <div className="overflow-x-auto">
+        <table className="w-full">
         <thead>
           <tr className="border-b border-gray-200 bg-gray-50">
             <th className="px-6 py-4 text-left">
@@ -324,14 +328,14 @@ export default function WithdrawalRequestTable({
                 <p className="text-gray-500">Loading withdrawal requests...</p>
               </td>
             </tr>
-          ) : filteredData.length === 0 ? (
+          ) : withdrawals.length === 0 ? (
             <tr>
               <td colSpan={6} className="px-6 py-8 text-center">
                 <p className="text-gray-500">No withdrawal requests found</p>
               </td>
             </tr>
           ) : (
-            filteredData.map((withdrawal: any) => (
+            withdrawals.map((withdrawal: any) => (
               <WithdrawalRequestRow
                 key={withdrawal.id}
                 withdrawal={withdrawal}
@@ -340,6 +344,12 @@ export default function WithdrawalRequestTable({
           )}
         </tbody>
       </table>
+      </div>
+      <AdminTablePagination
+        pagination={pagination}
+        onPageChange={setPage}
+        isLoading={withdrawalQuery.isFetching}
+      />
     </div>
   );
 }

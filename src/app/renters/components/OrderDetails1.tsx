@@ -16,6 +16,7 @@ import type { ShipmentProgressGroup } from "./OrderProgressTimeline";
 import { itemsForProgressGroup } from "@/lib/orders/returnPackageItems";
 import OrderDetailSummaryBar from "./OrderDetailSummaryBar";
 import ResaleDeliveryConfirmBanner from "./ResaleDeliveryConfirmBanner";
+import RentalDeliveryConfirmBanner from "./RentalDeliveryConfirmBanner";
 import {
   useOrderDetails,
   useOrderProgress,
@@ -25,7 +26,15 @@ import {
   shouldShowRenterResaleDeliveryConfirm,
 } from "@/lib/listers/listerOrderRow";
 import { confirmableResaleShipmentsFromOrder } from "@/lib/orders/resaleDeliveryConfirm";
+import {
+  canRaiseRentalDeliveryDisputeFromOrder,
+  confirmableRentalShipmentsFromOrder,
+  firstRentalItemIdFromOrder,
+  rentalInspectionLabelFromOrder,
+  shouldShowRenterRentalDeliveryConfirm,
+} from "@/lib/orders/rentalDeliveryConfirm";
 import { useConfirmResaleDelivery } from "@/lib/mutations/renters/useConfirmResaleDelivery";
+import { useConfirmRentalDelivery } from "@/lib/mutations/renters/useConfirmRentalDelivery";
 
 type RenterOrderProgressPayload = ComponentProps<
   typeof OrderProgressTimeline
@@ -51,6 +60,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
   progressLoading,
 }) => {
   const confirmResaleDelivery = useConfirmResaleDelivery();
+  const confirmRentalDelivery = useConfirmRentalDelivery();
 
   const resaleOnlyOrder = orderData
     ? isListerResaleOrder(orderData)
@@ -65,6 +75,20 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
   const confirmablePackages = orderData
     ? confirmableResaleShipmentsFromOrder(orderData)
     : [];
+  const showRentalConfirm =
+    !!orderData &&
+    !!displayOrderId &&
+    shouldShowRenterRentalDeliveryConfirm(orderData);
+  const confirmableRentalPackages = orderData
+    ? confirmableRentalShipmentsFromOrder(orderData)
+    : [];
+  const rentalInspectionLabel = orderData
+    ? rentalInspectionLabelFromOrder(orderData)
+    : "1 hour";
+  const canReportRentalIssue = orderData
+    ? canRaiseRentalDeliveryDisputeFromOrder(orderData)
+    : false;
+  const rentalItemId = orderData ? firstRentalItemIdFromOrder(orderData) : null;
 
   const rentalReturnGroups = (
     (progressData?.shipmentGroups as ShipmentProgressGroup[] | undefined) ?? []
@@ -109,6 +133,29 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
             : "Could not confirm delivery. Try again.",
         );
       },
+      },
+    );
+  };
+
+  const handleConfirmRental = (shipmentId: string) => {
+    confirmRentalDelivery.mutate(
+      { orderId: displayOrderId, shipmentId },
+      {
+        onSuccess: (res) => {
+          toast.success(
+            res?.message ??
+              (res?.data?.rentalActivated
+                ? "Rental confirmed. Enjoy your rental!"
+                : "Delivery confirmed for this package."),
+          );
+        },
+        onError: (err) => {
+          toast.error(
+            err instanceof Error
+              ? err.message
+              : "Could not confirm delivery. Try again.",
+          );
+        },
       },
     );
   };
@@ -178,6 +225,19 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
                       }
                     }
                   />
+
+                  {showRentalConfirm ? (
+                    <RentalDeliveryConfirmBanner
+                      packages={confirmableRentalPackages}
+                      inspectionLabel={rentalInspectionLabel}
+                      orderId={displayOrderId}
+                      orderDisplayId={displayOrderId}
+                      itemId={rentalItemId}
+                      canReportIssue={canReportRentalIssue}
+                      isPending={confirmRentalDelivery.isPending}
+                      onConfirm={handleConfirmRental}
+                    />
+                  ) : null}
 
                   {showResaleConfirm ? (
                     <ResaleDeliveryConfirmBanner

@@ -27,6 +27,8 @@ export const useProductsQuery = () => {
   const page = searchParams.get("page")
     ? parseInt(searchParams.get("page")!)
     : 1;
+  const sale = searchParams.get("sale") || undefined;
+  const onlyWithCloset = sale ? undefined : ONLY_WITH_CLOSET;
 
   const query = useQuery<any, Error, { products: any[]; pagination?: any }>({
     queryKey: [
@@ -35,7 +37,8 @@ export const useProductsQuery = () => {
         search,
         category,
         tags,
-        onlyWithCloset: ONLY_WITH_CLOSET,
+        sale,
+        onlyWithCloset,
         brand,
         size,
         minPrice,
@@ -51,7 +54,8 @@ export const useProductsQuery = () => {
         search,
         category: category.length > 0 ? category : undefined,
         tags,
-        onlyWithCloset: ONLY_WITH_CLOSET,
+        sale,
+        onlyWithCloset,
         brand: brand.length > 0 ? brand : undefined,
         size,
         minPrice,

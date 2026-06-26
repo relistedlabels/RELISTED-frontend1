@@ -1,6 +1,6 @@
 "use client";
 
-import { Upload, X } from "lucide-react";
+import { CheckCircle2, Loader2, Upload, X } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
@@ -63,8 +63,13 @@ export const ItemImageUploader: React.FC = () => {
 
     const statusUpdate: Record<string, string> = {};
     for (const upload of uploader.uploads) {
-      if (upload.done && upload.slotId && upload.url) {
-        statusUpdate[upload.slotId] = "saved ✅";
+      if (!upload.slotId) continue;
+      if (upload.error) {
+        statusUpdate[upload.slotId] = "Upload failed";
+      } else if (upload.done && upload.url) {
+        statusUpdate[upload.slotId] = "Saved";
+      } else if (!upload.done) {
+        statusUpdate[upload.slotId] = `Uploading ${upload.progress}%`;
       }
     }
     if (Object.keys(statusUpdate).length > 0) {
@@ -166,6 +171,14 @@ export const ItemImageUploader: React.FC = () => {
     };
   }, [tempPreviews]);
 
+  const uploadsInProgress = uploader.uploads.filter((u) => !u.done && !u.error);
+  const readyImageSlots = SLOTS.filter((slot) => {
+    if (slot.id === "video") return false;
+    const upload = uploader.uploads.find((u) => u.slotId === slot.id);
+    const attachment = attachments.find((att) => att.slotId === slot.id);
+    return Boolean(attachment?.url && (!upload || upload.done));
+  }).length;
+
   return (
     <div className="w-full rounded-xl border border-gray-200 p-4">
       <div className="mb-4 flex items-center justify-between">
@@ -176,6 +189,20 @@ export const ItemImageUploader: React.FC = () => {
           <Paragraph1 className="text-xs text-gray-500">
             Upload 2 to 3 high quality images and videos of your item
           </Paragraph1>
+          {uploadsInProgress.length > 0 ? (
+            <Paragraph1 className="mt-1 flex items-center gap-1.5 text-xs font-medium text-amber-700">
+              <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+              Uploading {uploadsInProgress.length} file
+              {uploadsInProgress.length === 1 ? "" : "s"}… wait before posting
+              your item.
+            </Paragraph1>
+          ) : readyImageSlots >= 2 ? (
+            <Paragraph1 className="mt-1 flex items-center gap-1.5 text-xs font-medium text-green-700">
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+              {readyImageSlots} image{readyImageSlots === 1 ? "" : "s"} saved
+              and ready to publish.
+            </Paragraph1>
+          ) : null}
         </div>
         <ToolInfo content="Upload clear, high-quality photos of your item from different angles. This helps potential buyers understand what they're getting." />
       </div>
@@ -188,13 +215,25 @@ export const ItemImageUploader: React.FC = () => {
             (u) => u.slotId === slot.id,
           );
 
-          const isUploading = currentUpload && !currentUpload.done;
+          const isUploading = currentUpload && !currentUpload.done && !currentUpload.error;
+          const uploadFailed = Boolean(currentUpload?.error);
+          const isReady = Boolean(
+            attachment?.url && (!currentUpload || currentUpload.done),
+          );
           const progress = currentUpload?.progress ?? 0;
 
           return (
             <label
               key={slot.id}
-              className={`group relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed h-[200px] border-gray-300 p-2 text-center transition hover:border-gray-400 ${
+              className={`group relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed h-[200px] p-2 text-center transition hover:border-gray-400 ${
+                uploadFailed
+                  ? "border-red-300 bg-red-50"
+                  : isReady
+                    ? "border-green-300 bg-green-50/40"
+                    : isUploading
+                      ? "border-amber-300 bg-amber-50/40"
+                      : "border-gray-300"
+              } ${
                 slot.id === "video"
                   ? "col-span-2 md:col-span-1 md:h-auto h-40"
                   : ""
@@ -234,12 +273,34 @@ export const ItemImageUploader: React.FC = () => {
                   )}
 
                   {isUploading && (
-                    <div className="absolute inset-0 flex items-center justify-center rounded bg-black/20">
-                      <div className="text-center">
-                        <div className="text-xs font-bold text-white">
-                          {progress}%
-                        </div>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center rounded bg-black/50 px-2">
+                      <Loader2 className="mb-1 h-5 w-5 animate-spin text-white" />
+                      <div className="text-xs font-semibold text-white">
+                        Uploading {progress}%
                       </div>
+                      <div className="mt-2 h-1.5 w-full max-w-[80px] overflow-hidden rounded-full bg-white/30">
+                        <div
+                          className="h-full rounded-full bg-white transition-all"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {uploadFailed && (
+                    <div className="absolute inset-0 flex items-center justify-center rounded bg-red-900/60 px-2">
+                      <span className="text-center text-xs font-medium text-white">
+                        Upload failed. Try again.
+                      </span>
+                    </div>
+                  )}
+
+                  {isReady && !isUploading && (
+                    <div className="absolute bottom-1 left-1 flex items-center gap-1 rounded bg-green-600 px-1.5 py-0.5">
+                      <CheckCircle2 className="h-3 w-3 text-white" />
+                      <span className="text-[10px] font-medium text-white">
+                        Saved
+                      </span>
                     </div>
                   )}
 
@@ -278,7 +339,7 @@ export const ItemImageUploader: React.FC = () => {
                   if (file) handleUpload(file, slot.id);
                   e.target.value = "";
                 }}
-                disabled={!!attachment || isUploading}
+                disabled={Boolean(attachment) || isUploading}
               />
             </label>
           );

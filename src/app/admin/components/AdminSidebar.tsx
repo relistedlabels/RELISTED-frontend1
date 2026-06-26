@@ -3,6 +3,7 @@
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import type React from "react";
 import { useState } from "react";
 import {
@@ -16,8 +17,11 @@ import {
   HiOutlineUsers,
   HiOutlineTruck,
   HiOutlineRectangleStack,
+  HiOutlineBuildingStorefront,
 } from "react-icons/hi2";
 import { Paragraph1 } from "@/common/ui/Text";
+import { settingsApi } from "@/lib/api/admin/settings";
+import { useAdminNavState } from "@/lib/queries/admin/useSettings";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
 
@@ -26,6 +30,7 @@ interface NavItem {
   label: string;
   icon: React.ElementType;
   getHref: (adminId: string) => string;
+  showNewBadge?: boolean;
 }
 
 const getNavItems = (): NavItem[] => [
@@ -48,6 +53,13 @@ const getNavItems = (): NavItem[] => [
     getHref: (id) => `/admin/${id}/listings`,
   },
   {
+    id: "shop",
+    label: "Shop",
+    icon: HiOutlineBuildingStorefront,
+    getHref: (id) => `/admin/${id}/shop`,
+    showNewBadge: true,
+  },
+  {
     id: "orders",
     label: "Orders",
     icon: HiOutlineShoppingCart,
@@ -60,10 +72,11 @@ const getNavItems = (): NavItem[] => [
     getHref: (id) => `/admin/${id}/shipments`,
   },
   {
-    id: "closets",
-    label: "Closets",
+    id: "sales",
+    label: "Sales",
     icon: HiOutlineRectangleStack,
-    getHref: (id) => `/admin/${id}/closets`,
+    getHref: (id) => `/admin/${id}/sales`,
+    showNewBadge: true,
   },
   {
     id: "wallet",
@@ -115,7 +128,10 @@ const getAvatarBgColor = (name: string): string => {
 };
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
+  const queryClient = useQueryClient();
   const { data: user } = useMe();
+  const { data: navState } = useAdminNavState();
+  const seenNavIds = navState?.data.seenNavIds ?? [];
   const pathname = usePathname();
   const params = useParams();
   const adminId = useAdminIdStore((state) => state.adminId);
@@ -124,6 +140,22 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
   const [isMobileExpanded, setIsMobileExpanded] = useState(false);
 
   const navItems = getNavItems();
+
+  const dismissNavBadge = (navId: string) => {
+    if (seenNavIds.includes(navId)) return;
+
+    queryClient.setQueryData(
+      ["admin", "settings", "nav-state"],
+      (prev: { success: true; data: { seenNavIds: string[] } } | undefined) =>
+        prev
+          ? {
+              ...prev,
+              data: { seenNavIds: [...prev.data.seenNavIds, navId] },
+            }
+          : prev,
+    );
+    void settingsApi.dismissNav(navId);
+  };
 
   const linkBaseClasses =
     "flex items-center w-full p-3 mb-2 rounded-xl transition-colors duration-200 group";
@@ -185,12 +217,17 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
             const href = item.getHref(resolvedAdminId);
             const isActive =
               pathname === href || pathname.startsWith(href + "/");
+            const showNewBadge =
+              item.showNewBadge && !seenNavIds.includes(item.id);
 
             return (
               <li key={item.id}>
                 <Link
                   href={href}
-                  onClick={() => setIsMobileExpanded(false)}
+                  onClick={() => {
+                    setIsMobileExpanded(false);
+                    if (showNewBadge) dismissNavBadge(item.id);
+                  }}
                   className={`${linkBaseClasses} ${
                     isActive ? activeLinkClasses : inactiveLinkClasses
                   } ${
@@ -198,7 +235,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
                   }`}
                 >
                   <item.icon
-                    className={`w-6 h-6 ${
+                    className={`w-6 h-6 shrink-0 ${
                       isActive ? "text-white" : "text-gray-500"
                     }`}
                   />
@@ -210,6 +247,20 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
                   >
                     {item.label}
                   </Paragraph1>
+
+                  {showNewBadge && (
+                    <span
+                      className={`ml-auto text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full ${
+                        isActive
+                          ? "bg-white text-black"
+                          : "bg-black text-white"
+                      } ${
+                        !isMobileExpanded ? "hidden lg:inline" : "inline"
+                      }`}
+                    >
+                      New
+                    </span>
+                  )}
                 </Link>
               </li>
             );

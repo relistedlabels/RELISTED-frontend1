@@ -4,11 +4,10 @@ import Script from "next/script";
 import { Toaster } from "sonner";
 import ApiTestComponent from "@/common/debug/ApiTestComponent";
 import { AuthStateMonitorProvider } from "@/common/layer/AuthStateMonitorProvider";
-import DesktopNavbar from "@/common/layer/DesktopNavbar";
+import SiteHeader from "@/common/layer/SiteHeader";
 import DevGuard from "@/common/layer/DevGuard";
 import { FavoritesInitializer } from "@/common/layer/FavoritesInitializer";
 import Footer from "@/common/layer/Footer";
-import MobileNavbar from "@/common/layer/MobileNavbar";
 import { UnauthorizedSignInRedirect } from "@/common/layer/UnauthorizedSignInRedirect";
 import { UploaderProvider } from "@/context/UploaderProvider";
 import QueryProvider from "@/lib/providers/query-provider";
@@ -91,8 +90,7 @@ export default function RootLayout({
             <UnauthorizedSignInRedirect />
             <FavoritesInitializer />
             <UploaderProvider>
-              <DesktopNavbar />
-              <MobileNavbar />
+              <SiteHeader />
 
               {/* <Header /> */}
               {children}

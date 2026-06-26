@@ -516,6 +516,22 @@ export const rentersApi = {
       body: JSON.stringify({ orderId, ...(shipmentId ? { shipmentId } : {}) }),
     }),
 
+  /** POST /order/rental/confirm — renter confirms one OUTBOUND rental shipment. */
+  confirmRentalDelivery: (orderId: string, shipmentId?: string) =>
+    apiFetch<{
+      success: boolean;
+      message?: string;
+      data?: {
+        orderId: string;
+        status: string;
+        shipmentId?: string | null;
+        rentalActivated?: boolean;
+      };
+    }>("/order/rental/confirm", {
+      method: "POST",
+      body: JSON.stringify({ orderId, ...(shipmentId ? { shipmentId } : {}) }),
+    }),
+
   getOrderProgress: (orderId: string) =>
     apiFetch<{
       success: boolean;
