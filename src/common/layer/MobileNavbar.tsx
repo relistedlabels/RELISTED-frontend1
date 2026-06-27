@@ -8,17 +8,14 @@ import Link from "next/link";
 import { Paragraph1 } from "../ui/Text";
 import Button from "../ui/Button";
 import RentalCartView from "./RentalCartView";
-import { usePathname } from "next/navigation";
 import SearchModal from "./SearchModal";
 import ShopDropdownMobile from "./ShopDropdownMobile";
-import { shouldShowNavBar } from "@/lib/navbarRoutes";
 import { MobileAuthActions } from "./MobileAuthActions";
 import { useFavoriteCountStore } from "@/store/useFavoriteCountStore";
 import { useCartCountStore } from "@/store/useCartCountStore";
 import { useCartItems } from "@/lib/queries/renters/useCartItems";
 import { useUserStore } from "@/store/useUserStore";
-import { usePublicSiteFeatures } from "@/lib/queries/site/useSiteFeatures";
-import { VAULT_CLOSET_DROPS_BROWSE_SHOP_HREF } from "@/lib/nav/vaultClosetDropsShop";
+import { MobileSalesNavLink } from "./SalesNavLink";
 
 function MobileNavbarContent() {
   const [open, setOpen] = useState(false);
@@ -28,10 +25,6 @@ function MobileNavbarContent() {
   const setCartCount = useCartCountStore((state) => state.setCartCount);
   const token = useUserStore((s) => s.token);
   const { data } = useCartItems();
-  const { data: siteFeaturesRes } = usePublicSiteFeatures();
-
-  const showClosetsNav =
-    siteFeaturesRes?.data?.headerClosetsShopNavEnabled !== false;
 
   useEffect(() => {
     if (!token) {
@@ -44,7 +37,7 @@ function MobileNavbarContent() {
   }, [token, data?.itemCount, setCartCount]);
 
   return (
-    <div className="fixed top-0 left-0 w-full bg-black text-white  px-4 py-5 z-50 xl:hidden">
+    <div className="xl:hidden bg-black text-white px-4 py-5 w-full">
       <div className="relative flex items-center">
         {/* LEFT - Toggle */}
         <button onClick={() => setOpen(true)} className="z-20">
@@ -142,14 +135,7 @@ function MobileNavbarContent() {
               <Link href="/how-it-works" onClick={() => setOpen(false)}>
                 <Paragraph1>How it works</Paragraph1>
               </Link>
-              {showClosetsNav ? (
-                <Link
-                  href={VAULT_CLOSET_DROPS_BROWSE_SHOP_HREF}
-                  onClick={() => setOpen(false)}
-                >
-                  <Paragraph1>Closets</Paragraph1>
-                </Link>
-              ) : null}
+              <MobileSalesNavLink onNavigate={() => setOpen(false)} />
               <Link href="/about" onClick={() => setOpen(false)}>
                 <Paragraph1>About</Paragraph1>
               </Link>
@@ -174,8 +160,5 @@ function MobileNavbarContent() {
 }
 
 export default function MobileNavbar() {
-  const pathname = usePathname();
-  if (!shouldShowNavBar(pathname)) return null;
-
   return <MobileNavbarContent />;
 }

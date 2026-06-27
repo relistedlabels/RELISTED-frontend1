@@ -41,6 +41,25 @@ export type FavoriteItem = {
   addedDate: string;
 };
 
+export type RenterDashboardOrder = {
+  orderId: string;
+  items: Array<{
+    id?: string;
+    name?: string;
+    listingType?: string;
+    days?: number;
+    rentalDays?: number;
+    imageUrl?: string | null;
+  }>;
+  totalAmount: number;
+  status: string;
+  date: string;
+  listerName: string;
+  image?: string | null;
+  showStartReturn?: boolean;
+  startReturnShipmentId?: string | null;
+};
+
 export type OrderListItem = {
   orderId: string;
   itemId: string;
@@ -491,7 +510,7 @@ export const rentersApi = {
   }) =>
     apiFetch<{
       success: boolean;
-      data: { orders: OrderListItem[]; total: number };
+      data: { orders: RenterDashboardOrder[]; total: number };
     }>("/api/renters/orders", { method: "GET", ...(params && { params }) }),
 
   getOrderDetails: (orderId: string) =>
@@ -512,6 +531,22 @@ export const rentersApi = {
         orderCompleted?: boolean;
       };
     }>("/order/resale/confirm", {
+      method: "POST",
+      body: JSON.stringify({ orderId, ...(shipmentId ? { shipmentId } : {}) }),
+    }),
+
+  /** POST /order/rental/confirm — renter confirms one OUTBOUND rental shipment. */
+  confirmRentalDelivery: (orderId: string, shipmentId?: string) =>
+    apiFetch<{
+      success: boolean;
+      message?: string;
+      data?: {
+        orderId: string;
+        status: string;
+        shipmentId?: string | null;
+        rentalActivated?: boolean;
+      };
+    }>("/order/rental/confirm", {
       method: "POST",
       body: JSON.stringify({ orderId, ...(shipmentId ? { shipmentId } : {}) }),
     }),

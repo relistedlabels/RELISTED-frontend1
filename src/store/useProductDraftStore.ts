@@ -188,6 +188,23 @@ export const useProductDraftStore = create<ProductDraftStore>()(
 
       reset: () => set({ data: initialState }),
     }),
-    { name: "product-draft-store" },
+    {
+      name: "product-draft-store",
+      partialize: (state) => ({
+        data: { ...state.data, attachments: [] },
+      }),
+      merge: (persisted, current) => {
+        const persistedState = persisted as ProductDraftStore | undefined;
+        if (!persistedState?.data) return current;
+        return {
+          ...current,
+          data: {
+            ...current.data,
+            ...persistedState.data,
+            attachments: [],
+          },
+        };
+      },
+    },
   ),
 );

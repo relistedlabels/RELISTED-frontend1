@@ -6,6 +6,10 @@ import { Lock, Unlock, AlertCircle } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useEscrows } from "@/lib/queries/admin/useWallets";
 import { usePublicUserById } from "@/lib/queries/user/usePublicUserById";
+import AdminTablePagination, {
+  EMPTY_WALLET_PAGINATION,
+  useWalletTablePage,
+} from "./AdminTablePagination";
 
 interface EscrowTableProps {
   searchQuery: string;
@@ -166,16 +170,16 @@ function EscrowRow({ escrow }: { escrow: any }) {
 }
 
 export default function EscrowTable({ searchQuery }: EscrowTableProps) {
-  const escrowsQuery = useEscrows({
-    search: searchQuery,
-    limit: 100,
-  });
-
+  const { page, setPage, limit } = useWalletTablePage(searchQuery);
+  const escrowsQuery = useEscrows({ search: searchQuery, page, limit });
   const escrows = escrowsQuery.data?.data?.escrows ?? [];
+  const pagination =
+    escrowsQuery.data?.data?.pagination ?? EMPTY_WALLET_PAGINATION;
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
+    <div>
+      <div className="overflow-x-auto">
+        <table className="w-full">
         <thead>
           <tr className="border-b border-gray-200 bg-gray-50">
             <th className="px-6 py-4 text-left">
@@ -245,6 +249,12 @@ export default function EscrowTable({ searchQuery }: EscrowTableProps) {
           )}
         </tbody>
       </table>
+      </div>
+      <AdminTablePagination
+        pagination={pagination}
+        onPageChange={setPage}
+        isLoading={escrowsQuery.isFetching}
+      />
     </div>
   );
 }

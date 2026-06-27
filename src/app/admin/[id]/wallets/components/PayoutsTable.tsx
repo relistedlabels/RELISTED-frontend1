@@ -1,9 +1,13 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { usePayouts } from "@/lib/queries/admin/useWallets";
 import { usePublicUserById } from "@/lib/queries/user/usePublicUserById";
+import AdminTablePagination, {
+  EMPTY_WALLET_PAGINATION,
+  useWalletTablePage,
+} from "./AdminTablePagination";
 
 interface PayoutsTableProps {
   searchQuery: string;
@@ -111,20 +115,16 @@ function PayoutRow({
 }
 
 export default function PayoutsTable({ searchQuery }: PayoutsTableProps) {
-  const payoutsQuery = usePayouts({ search: searchQuery });
-
-  const filteredData = useMemo(() => {
-    if (!payoutsQuery.data?.data?.payouts) return [];
-    return payoutsQuery.data.data.payouts.filter(
-      (item: any) =>
-        item.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.user.email.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
-  }, [payoutsQuery.data, searchQuery]);
+  const { page, setPage, limit } = useWalletTablePage(searchQuery);
+  const payoutsQuery = usePayouts({ search: searchQuery, page, limit });
+  const payouts = payoutsQuery.data?.data?.payouts ?? [];
+  const pagination =
+    payoutsQuery.data?.data?.pagination ?? EMPTY_WALLET_PAGINATION;
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
+    <div>
+      <div className="overflow-x-auto">
+        <table className="w-full">
         <thead>
           <tr className="border-b border-gray-200 bg-gray-50">
             <th className="px-6 py-4 text-left">
@@ -161,19 +161,25 @@ export default function PayoutsTable({ searchQuery }: PayoutsTableProps) {
                 <p className="text-gray-500">Loading payouts...</p>
               </td>
             </tr>
-          ) : filteredData.length === 0 ? (
+          ) : payouts.length === 0 ? (
             <tr>
               <td colSpan={5} className="px-6 py-8 text-center">
                 <p className="text-gray-500">No payouts found</p>
               </td>
             </tr>
           ) : (
-            filteredData.map((payout: any) => (
+            payouts.map((payout: any) => (
               <PayoutRow key={payout.id} payout={payout} />
             ))
           )}
         </tbody>
       </table>
+      </div>
+      <AdminTablePagination
+        pagination={pagination}
+        onPageChange={setPage}
+        isLoading={payoutsQuery.isFetching}
+      />
     </div>
   );
 }

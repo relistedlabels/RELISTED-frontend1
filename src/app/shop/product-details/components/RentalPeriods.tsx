@@ -56,6 +56,10 @@ import {
   lagosYmdMax,
   publicProductHasCloset,
 } from "@/lib/vaultClosetSaleDates";
+import {
+  getProductSaleEarliestDeliveryLagosYmd,
+  productHasActiveSale,
+} from "@/lib/shopSale/productSale";
 
 function cartLineIdFromAddCartPayload(payload: unknown): string | undefined {
   const walk = (v: unknown): string | undefined => {
@@ -179,7 +183,16 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
   const isClosetProduct = Boolean(
     closetProduct && publicProductHasCloset(closetProduct),
   );
-  const closetEarliestDeliveryYmd = getClosetEarliestDeliveryLagosYmd();
+  const isSaleProduct = productHasActiveSale(closetProduct);
+  const closetEarliestDeliveryYmd = useMemo(() => {
+    const saleYmd = getProductSaleEarliestDeliveryLagosYmd(closetProduct);
+    if (saleYmd) return saleYmd;
+    if (isClosetProduct || isSaleProduct) {
+      return getClosetEarliestDeliveryLagosYmd();
+    }
+    return undefined;
+  }, [closetProduct, isClosetProduct, isSaleProduct]);
+  const applyDeliveryFloor = Boolean(closetEarliestDeliveryYmd);
 
   const addCartItem = useAddCartItem();
 
@@ -192,11 +205,11 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
   const suggestedRentalCalendarStartYmd = useMemo(() => {
     void dispatchScheduleClock;
     let ymd = getSuggestedRentalCalendarStartYmd(DISPATCH_SLOT_MINUTES);
-    if (isClosetProduct) {
+    if (applyDeliveryFloor && closetEarliestDeliveryYmd) {
       ymd = lagosYmdMax(ymd, closetEarliestDeliveryYmd);
     }
     return ymd;
-  }, [dispatchScheduleClock, isClosetProduct, closetEarliestDeliveryYmd]);
+  }, [dispatchScheduleClock, applyDeliveryFloor, closetEarliestDeliveryYmd]);
 
   const rentalStartDateIso = useMemo(
     () => formatDateOnlyLocal(startDate),
@@ -216,9 +229,10 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
     if (!supportsRentalShipments || rentalDays <= 0) {
       return [];
     }
-    const closetOutboundMin = isClosetProduct
-      ? lagosYmdMax(rentalStartDateIso, closetEarliestDeliveryYmd)
-      : undefined;
+    const closetOutboundMin =
+      applyDeliveryFloor && closetEarliestDeliveryYmd
+        ? lagosYmdMax(rentalStartDateIso, closetEarliestDeliveryYmd)
+        : undefined;
     return buildDispatchWindowContexts([
       {
         type: "OUTBOUND",
@@ -227,8 +241,8 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
         durationMinutes: DISPATCH_SLOT_MINUTES,
         title: dispatchWindowMeta.OUTBOUND.title,
         subtitle: dispatchWindowMeta.OUTBOUND.description,
-        baseDateReason: isClosetProduct
-          ? "Earliest delivery is Monday 18 May"
+        baseDateReason: applyDeliveryFloor
+          ? "Earliest delivery follows the sale schedule"
           : undefined,
       },
       {
@@ -245,7 +259,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
     rentalStartDateIso,
     rentalEndDateIso,
     dispatchScheduleClock,
-    isClosetProduct,
+    applyDeliveryFloor,
     closetEarliestDeliveryYmd,
   ]);
 
@@ -569,9 +583,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                   collateralPrice={collateralPrice}
                   onChangeRentalDays={handleRentalDaysChange}
                   suggestedStartLagosYmd={suggestedRentalCalendarStartYmd}
-                  minSelectableLagosYmd={
-                    isClosetProduct ? closetEarliestDeliveryYmd : undefined
-                  }
+                  minSelectableLagosYmd={closetEarliestDeliveryYmd}
                 />
                 {dispatchContexts.length > 0 && (
                   <div className="space-y-3">

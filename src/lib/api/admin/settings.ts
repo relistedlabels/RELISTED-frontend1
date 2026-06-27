@@ -91,6 +91,21 @@ export interface AuditLog {
 }
 
 export const settingsApi = {
+  getNavState: () =>
+    apiFetch<{ success: true; data: { seenNavIds: string[] } }>(
+      `/api/admin/settings/nav-state`,
+    ),
+
+  dismissNav: (navId: string) =>
+    apiFetch<{ success: true; data: { seenNavIds: string[] } }>(
+      `/api/admin/settings/nav-state/dismiss`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ navId }),
+      },
+    ),
+
   getProfile: () =>
     apiFetch<{ success: true; data: AdminProfile }>(
       `/api/admin/settings/profile`,

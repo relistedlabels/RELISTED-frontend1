@@ -76,7 +76,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
     (windowOptionsLoading ? "Loading pickup address…" : "No pickup address on file");
 
   useEffect(() => {
-    if (!windowOptions) return;
+    if (!isOpen || !windowOptions) return;
     if (
       !windowOptions.pickupWindowSelectable &&
       windowOptions.bookedPickupWindow
@@ -94,7 +94,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
       }
       return windowOptions.suggested;
     });
-  }, [windowOptions]);
+  }, [isOpen, windowOptions]);
 
   useEffect(() => {
     setMounted(true);

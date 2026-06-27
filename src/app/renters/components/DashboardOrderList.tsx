@@ -6,7 +6,9 @@ import { useEffect, useState } from "react";
 import { Calendar, Package } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import OrderDetails from "./OrderDetails1";
+import DashboardStartReturnButton from "./DashboardStartReturnButton";
 import { useOrders } from "@/lib/queries/renters/useOrders";
+import { resolveRenterStartReturn } from "@/lib/orders/renterStartReturn";
 import { useSearchParams } from "next/navigation";
 import {
   getRenterOrderBadgeClassName,
@@ -124,8 +126,16 @@ export default function DashboardOrderList() {
       </div>
 
       <div className="space-y-4">
-        {filteredOrders.map((order) => (
-          <div
+        {filteredOrders.map((order) => {
+          const startReturn = resolveRenterStartReturn({
+            status: order.status,
+            items: order.items,
+            showStartReturn: order.showStartReturn,
+            startReturnShipmentId: order.startReturnShipmentId,
+          });
+
+          return (
+            <div
             key={order.orderId}
             className="bg-white p-4 rounded-sm border border-gray-300 "
           >
@@ -157,14 +167,23 @@ export default function DashboardOrderList() {
                     {formatCurrency(order.totalAmount)}
                   </Paragraph1>{" "}
                 </div>
-                <OrderDetails
-                  orderId={order.orderId}
-                  autoOpen={order.orderId === deepLinkedOrderId}
-                />
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                  {startReturn.showStartReturn ? (
+                    <DashboardStartReturnButton
+                      orderId={order.orderId}
+                      shipmentId={startReturn.returnShipmentId}
+                    />
+                  ) : null}
+                  <OrderDetails
+                    orderId={order.orderId}
+                    autoOpen={order.orderId === deepLinkedOrderId}
+                  />
+                </div>
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {filteredOrders.length === 0 && (

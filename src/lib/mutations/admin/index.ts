@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   adminSiteFeaturesApi,
+  adminShopSalesApi,
   adminVaultClosetSaleWaitlistApi,
   disputesApi,
   ordersApi,
@@ -348,6 +349,89 @@ export const useNotifyVaultClosetSaleWaitlist = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["admin", "vault-closet-sale-waitlist"],
+      });
+    },
+  });
+};
+
+export const useCreateShopSale = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: adminShopSalesApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "shop-sales"] });
+    },
+  });
+};
+
+export const useUpdateShopSale = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      saleId,
+      payload,
+    }: {
+      saleId: string;
+      payload: Parameters<typeof adminShopSalesApi.update>[1];
+    }) => adminShopSalesApi.update(saleId, payload),
+    onSuccess: (_, { saleId }) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "shop-sales"] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "shop-sales", saleId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["shop-sales"] });
+    },
+  });
+};
+
+export const useSetShopSaleEnabled = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      saleId,
+      isEnabled,
+    }: {
+      saleId: string;
+      isEnabled: boolean;
+    }) => adminShopSalesApi.setEnabled(saleId, isEnabled),
+    onSuccess: (_, { saleId }) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "shop-sales"] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "shop-sales", saleId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["shop-sales"] });
+    },
+  });
+};
+
+export const useSetShopSaleProducts = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      saleId,
+      productIds,
+    }: {
+      saleId: string;
+      productIds: string[];
+    }) => adminShopSalesApi.setProducts(saleId, productIds),
+    onSuccess: (_, { saleId }) => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "shop-sales", saleId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "shop-sales", "picker"],
+      });
+    },
+  });
+};
+
+export const useNotifyShopSaleWaitlist = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (saleId: string) => adminShopSalesApi.notifyWaitlist(saleId),
+    onSuccess: (_, saleId) => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "shop-sales", saleId, "waitlist"],
       });
     },
   });

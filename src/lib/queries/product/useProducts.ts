@@ -29,15 +29,21 @@ type ProductFilters = {
   closetId?: string;
   /** When true and closetId is unset: only products with any closet (closet drops). Ignored if closetId is set. */
   onlyWithCloset?: boolean;
+  /** Filter to a shop sale campaign (slug). */
+  sale?: string;
 };
 
-export const useProducts = (filters?: ProductFilters) =>
+export const useProducts = (
+  filters?: ProductFilters,
+  options?: { enabled?: boolean },
+) =>
   useQuery<UserProduct[]>({
     queryKey: ["products", filters],
     queryFn: async () => {
       const response = await productApi.getAll(filters);
       return response.data.products;
     },
+    enabled: options?.enabled ?? true,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,
   });

@@ -24,10 +24,8 @@ import { isInhouseManager } from "@/lib/inhouseManager";
 import { toast } from "sonner";
 import { useSubscribeProductNotifyWhenAvailable } from "@/lib/mutations/renters/useSubscribeProductNotifyWhenAvailable";
 import { usePublicSiteFeatures } from "@/lib/queries/site/useSiteFeatures";
-import {
-  publicProductHasCloset,
-  VAULT_CLOSET_SHOP_OFF_PRIMARY_CTA,
-} from "@/lib/vaultClosetSaleDates";
+import { publicProductHasCloset } from "@/lib/vaultClosetSaleDates";
+import { getProductPreSaleCta } from "@/lib/shopSale/productSale";
 
 // ============================================================================
 // API ENDPOINTS USED:
@@ -97,10 +95,10 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
   const closetShopNavEnabled =
     siteFeaturesRes?.data?.headerClosetsShopNavEnabled !== false;
   const closetPrimaryCtaOverride =
-    !closetShopNavEnabled &&
     product &&
-    publicProductHasCloset(product)
-      ? VAULT_CLOSET_SHOP_OFF_PRIMARY_CTA
+    (!closetShopNavEnabled || product.activeSale) &&
+    (publicProductHasCloset(product) || product.activeSale)
+      ? getProductPreSaleCta(product, { legacyClosetFallback: true })
       : undefined;
 
   // Fetch lister/curator details
