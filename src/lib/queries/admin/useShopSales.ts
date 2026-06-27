@@ -22,6 +22,18 @@ export function useAdminShopSalePicker(
     page?: number;
     limit?: number;
     saleId?: string;
+    category?: string;
+    brand?: string | string[];
+    tags?: string;
+    listingType?: string;
+    lister?: string | string[];
+    color?: string;
+    size?: string;
+    condition?: string;
+    material?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    inCloset?: boolean;
   },
   enabled = true,
 ) {

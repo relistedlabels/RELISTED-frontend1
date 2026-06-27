@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Copy } from "lucide-react";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import { FormSkeleton } from "@/common/ui/SkeletonLoaders";
 import {
@@ -25,7 +25,7 @@ import {
   isoToDatetimeLocal,
   phaseBadgeClass,
 } from "../lib/saleDateTime";
-import { buildSaleShopHref } from "@/lib/api/shopSale";
+import { buildSaleShopAbsoluteUrl, buildSaleShopHref } from "@/lib/api/shopSale";
 import {
   SHOP_SALE_NOTIFY_EMAIL_BODY_PLACEHOLDER,
   SHOP_SALE_NOTIFY_EMAIL_SUBJECT_PLACEHOLDER,
@@ -265,6 +265,17 @@ export default function SaleEditor({ adminId, saleId }: Props) {
     );
   };
 
+  const handleCopySaleLink = async () => {
+    if (!sale) return;
+    const url = buildSaleShopAbsoluteUrl(sale);
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Sale link copied to clipboard");
+    } catch {
+      toast.error("Could not copy link. Try again.");
+    }
+  };
+
   const saving =
     createSale.isPending ||
     updateSale.isPending ||
@@ -328,14 +339,24 @@ export default function SaleEditor({ adminId, saleId }: Props) {
             ) : null}
           </div>
           {!isNew && sale ? (
-            <a
-              href={buildSaleShopHref(sale)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 text-sm font-medium text-gray-700 underline hover:text-gray-900"
-            >
-              Preview shop page
-            </a>
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <a
+                href={buildSaleShopHref(sale)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 text-sm hover:bg-gray-50"
+              >
+                Preview shop page
+              </a>
+              <button
+                type="button"
+                onClick={handleCopySaleLink}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 rounded-lg font-medium text-white text-sm"
+              >
+                <Copy size={16} />
+                Copy sale link
+              </button>
+            </div>
           ) : null}
         </div>
       </div>

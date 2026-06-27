@@ -8,19 +8,20 @@ import { ParagraphLink1, Paragraph1 } from "../ui/Text";
 import { usePublicSiteFeatures } from "@/lib/queries/site/useSiteFeatures";
 import { useActiveShopSales } from "@/lib/queries/shop/useShopSale";
 import { buildSaleShopHref, saleNavLabel } from "@/lib/api/shopSale";
-import { VAULT_CLOSET_DROPS_BROWSE_SHOP_HREF } from "@/lib/nav/vaultClosetDropsShop";
 
 function useSalesNavSlot() {
   const { data: siteFeaturesRes } = usePublicSiteFeatures();
   const { data: activeRes } = useActiveShopSales();
-  const showSlot =
+  const closetsNavEnabled =
     siteFeaturesRes?.data?.headerClosetsShopNavEnabled !== false;
-  const sales = activeRes?.data ?? [];
-  return { showSlot, sales };
+  const sales = (activeRes?.data ?? []).filter(
+    (sale) => sale.phase === "upcoming" || sale.phase === "live",
+  );
+  return { closetsNavEnabled, sales };
 }
 
 export function DesktopSalesNavLink() {
-  const { showSlot, sales } = useSalesNavSlot();
+  const { closetsNavEnabled, sales } = useSalesNavSlot();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -38,15 +39,7 @@ export function DesktopSalesNavLink() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  if (!showSlot) return null;
-
-  if (sales.length === 0) {
-    return (
-      <Link href={VAULT_CLOSET_DROPS_BROWSE_SHOP_HREF}>
-        <ParagraphLink1>Closets</ParagraphLink1>
-      </Link>
-    );
-  }
+  if (!closetsNavEnabled || sales.length === 0) return null;
 
   if (sales.length === 1) {
     const sale = sales[0]!;
@@ -117,18 +110,10 @@ type MobileSalesNavLinkProps = {
 };
 
 export function MobileSalesNavLink({ onNavigate }: MobileSalesNavLinkProps) {
-  const { showSlot, sales } = useSalesNavSlot();
+  const { closetsNavEnabled, sales } = useSalesNavSlot();
   const [open, setOpen] = useState(false);
 
-  if (!showSlot) return null;
-
-  if (sales.length === 0) {
-    return (
-      <Link href={VAULT_CLOSET_DROPS_BROWSE_SHOP_HREF} onClick={onNavigate}>
-        <Paragraph1>Closets</Paragraph1>
-      </Link>
-    );
-  }
+  if (!closetsNavEnabled || sales.length === 0) return null;
 
   if (sales.length === 1) {
     const sale = sales[0]!;

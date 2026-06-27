@@ -1,6 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { productApi } from "@/lib/api/product";
 import { useSearchParams } from "next/navigation";
+import {
+  listingFiltersFromSearchParams,
+  pickerFiltersToApiParams,
+} from "@/lib/shop/listingFilters";
 
 export { CLOSET_DROPS_SHOP_TITLE, matchesClosetDropsShopTitle } from "@/lib/nav/vaultClosetDropsShop";
 
@@ -11,58 +15,45 @@ export const useProductsQuery = () => {
   const searchParams = useSearchParams();
 
   const search = searchParams.get("search") || undefined;
-  const category = searchParams.getAll("category");
-  const tags = searchParams.get("tags") || undefined;
-  const brand = searchParams.getAll("brand");
-  const size = searchParams.get("size") || undefined;
-  const minPrice = searchParams.get("minPrice")
-    ? parseInt(searchParams.get("minPrice")!)
-    : undefined;
-  const maxPrice = searchParams.get("maxPrice")
-    ? parseInt(searchParams.get("maxPrice")!)
-    : undefined;
-  const color = searchParams.get("color") || undefined;
-  const condition = searchParams.get("condition") || undefined;
-  const material = searchParams.get("material") || undefined;
   const page = searchParams.get("page")
     ? parseInt(searchParams.get("page")!)
     : 1;
   const sale = searchParams.get("sale") || undefined;
   const onlyWithCloset = sale ? undefined : ONLY_WITH_CLOSET;
 
+  const listingFilters = pickerFiltersToApiParams(
+    listingFiltersFromSearchParams(searchParams),
+  );
+
   const query = useQuery<any, Error, { products: any[]; pagination?: any }>({
     queryKey: [
       "products",
       {
         search,
-        category,
-        tags,
         sale,
         onlyWithCloset,
-        brand,
-        size,
-        minPrice,
-        maxPrice,
-        color,
-        condition,
-        material,
         page,
+        ...listingFilters,
       },
     ],
     queryFn: async () => {
       const response = await productApi.getAll({
         search,
-        category: category.length > 0 ? category : undefined,
-        tags,
+        category: listingFilters.category
+          ? listingFilters.category.split(",")
+          : undefined,
+        tags: listingFilters.tags,
         sale,
         onlyWithCloset,
-        brand: brand.length > 0 ? brand : undefined,
-        size,
-        minPrice,
-        maxPrice,
-        color,
-        condition,
-        material,
+        brand: listingFilters.brand,
+        listingType: listingFilters.listingType,
+        lister: listingFilters.lister,
+        size: listingFilters.size,
+        minPrice: listingFilters.minPrice,
+        maxPrice: listingFilters.maxPrice,
+        color: listingFilters.color,
+        condition: listingFilters.condition,
+        material: listingFilters.material,
         page,
         limit: 15,
       });

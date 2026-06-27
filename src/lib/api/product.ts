@@ -178,6 +178,8 @@ export const productApi = {
     closetId?: string;
     onlyWithCloset?: boolean;
     sale?: string;
+    listingType?: string;
+    lister?: string[];
   }) => {
     const params = new URLSearchParams();
     if (filters?.closetId) params.append("closetId", filters.closetId);
@@ -190,6 +192,10 @@ export const productApi = {
       params.append("category", filters.category.join(","));
     if (filters?.tags) params.append("tags", filters.tags);
     if (filters?.brand?.length) params.append("brand", filters.brand.join(","));
+    if (filters?.listingType) params.append("listingType", filters.listingType);
+    if (filters?.lister?.length) {
+      filters.lister.forEach((id) => params.append("lister", id));
+    }
     if (filters?.size) params.append("size", filters.size);
     if (filters?.minPrice !== undefined)
       params.append("minPrice", filters.minPrice.toString());
@@ -212,6 +218,25 @@ export const productApi = {
     return apiFetch<ProductsResponse>(url, {
       method: "GET",
     });
+  },
+
+  getFilterOptions: (params?: {
+    sale?: string;
+    closetId?: string;
+    onlyWithCloset?: boolean;
+  }) => {
+    const q = new URLSearchParams();
+    if (params?.sale) q.set("sale", params.sale);
+    if (params?.closetId) q.set("closetId", params.closetId);
+    if (params?.onlyWithCloset === true) q.set("onlyWithCloset", "true");
+    const queryString = q.toString();
+    const url = queryString
+      ? `/api/public/products/filter-options?${queryString}`
+      : "/api/public/products/filter-options";
+    return apiFetch<{
+      success: true;
+      data: import("@/lib/shop/listingFilterOptions").ListingFilterOptions;
+    }>(url, { method: "GET" });
   },
 
   // Public API - Get single product details

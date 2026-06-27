@@ -9,7 +9,7 @@ import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
 import { useAdminShopSales } from "@/lib/queries/admin/useShopSales";
 import {
   formatSalePhaseLabel,
-  isoToDatetimeLocal,
+  formatSaleScheduleDisplay,
   phaseBadgeClass,
 } from "./lib/saleDateTime";
 
@@ -111,9 +111,9 @@ export default function AdminSalesPage() {
                       </Paragraph1>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-700">
-                      <div>{isoToDatetimeLocal(sale.startsAt).replace("T", " ")}</div>
-                      <div className="text-gray-500 text-xs">
-                        to {isoToDatetimeLocal(sale.endsAt).replace("T", " ")}
+                      <div>{formatSaleScheduleDisplay(sale.startsAt)}</div>
+                      <div className="text-gray-500 text-xs mt-0.5">
+                        to {formatSaleScheduleDisplay(sale.endsAt)}
                       </div>
                     </td>
                     <td className="px-6 py-4 tabular-nums text-gray-900">

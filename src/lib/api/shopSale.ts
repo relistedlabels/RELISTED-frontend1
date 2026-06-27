@@ -58,6 +58,17 @@ export function buildSaleShopHref(sale: Pick<PublicShopSale, "slug" | "shopTitle
   return `/shop?${params.toString()}`;
 }
 
+/** Full public URL for sharing (uses current site origin in the browser). */
+export function buildSaleShopAbsoluteUrl(
+  sale: Pick<PublicShopSale, "slug" | "shopTitle" | "shopDescription">,
+  origin?: string,
+): string {
+  const base =
+    origin ??
+    (typeof window !== "undefined" ? window.location.origin : "");
+  return `${base}${buildSaleShopHref(sale)}`;
+}
+
 /** Label for header nav links. */
 export function saleNavLabel(
   sale: Pick<PublicShopSale, "shopTitle" | "headline">,

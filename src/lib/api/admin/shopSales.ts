@@ -52,6 +52,11 @@ export type AdminShopSalePickerProduct = {
   listingType: string;
   dailyPrice: number | null;
   resalePrice: number | null;
+  color: string;
+  size: string;
+  condition: string;
+  material: string | null;
+  tagNames: string[];
   inCloset: boolean;
   listerName: string;
   listerEmail: string;
@@ -134,12 +139,41 @@ export const adminShopSalesApi = {
     page?: number;
     limit?: number;
     saleId?: string;
+    category?: string;
+    brand?: string | string[];
+    tags?: string;
+    listingType?: string;
+    lister?: string | string[];
+    color?: string;
+    size?: string;
+    condition?: string;
+    material?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    inCloset?: boolean;
   }) => {
     const q = new URLSearchParams();
     if (params.search) q.set("search", params.search);
     if (params.page) q.set("page", String(params.page));
     if (params.limit) q.set("limit", String(params.limit));
     if (params.saleId) q.set("saleId", params.saleId);
+    if (params.category) q.set("category", params.category);
+    if (params.tags) q.set("tags", params.tags);
+    if (params.listingType) q.set("listingType", params.listingType);
+    if (params.color) q.set("color", params.color);
+    if (params.size) q.set("size", params.size);
+    if (params.condition) q.set("condition", params.condition);
+    if (params.material) q.set("material", params.material);
+    if (params.minPrice !== undefined) q.set("minPrice", String(params.minPrice));
+    if (params.maxPrice !== undefined) q.set("maxPrice", String(params.maxPrice));
+    if (params.inCloset === true) q.set("inCloset", "true");
+    if (params.inCloset === false) q.set("inCloset", "false");
+    if (Array.isArray(params.brand)) {
+      params.brand.forEach((brand) => q.append("brand", brand));
+    }
+    if (Array.isArray(params.lister)) {
+      params.lister.forEach((id) => q.append("lister", id));
+    }
     return apiFetch<{
       success: true;
       data: {
@@ -150,6 +184,12 @@ export const adminShopSalesApi = {
       };
     }>(`/api/admin/shop-sales/picker/products?${q.toString()}`);
   },
+
+  getPickerFilterOptions: () =>
+    apiFetch<{
+      success: true;
+      data: import("@/lib/shop/listingFilterOptions").ListingFilterOptions;
+    }>("/api/admin/shop-sales/picker/filter-options", { method: "GET" }),
 
   waitlist: (saleId: string, page = 1, limit = 20) =>
     apiFetch<{

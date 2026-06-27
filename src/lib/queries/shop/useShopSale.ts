@@ -5,7 +5,8 @@ export function useActiveShopSales() {
   return useQuery({
     queryKey: ["shop-sales", "active"],
     queryFn: () => shopSaleApi.listActive(),
-    staleTime: 60_000,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
   });
 }
 

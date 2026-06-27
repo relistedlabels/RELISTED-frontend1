@@ -15,6 +15,22 @@ export function datetimeLocalToIso(value: string): string {
   return d.toISOString();
 }
 
+/** Human-readable schedule label for admin tables and summaries. */
+export function formatSaleScheduleDisplay(
+  iso: string | null | undefined,
+): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(d);
+}
+
 export function formatSalePhaseLabel(
   phase: "off" | "upcoming" | "live" | "ended",
 ): string {

@@ -5,6 +5,16 @@ import { Search, X } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
 import { useAdminShopSalePicker } from "@/lib/queries/admin/useShopSales";
+import ListingFilterPanel, {
+  ListingFilterButton,
+} from "@/app/shop/components/ListingFilterPanel";
+import {
+  pickerFiltersToApiParams,
+  type ListingFilterValues,
+} from "@/lib/shop/listingFilters";
+import { countActiveListingFilters } from "@/lib/shop/countActiveListingFilters";
+import type { AdminShopSalePickerProduct } from "@/lib/api/admin/shopSales";
+import { listingPriceDisplay } from "@/lib/product/listingPriceDisplay";
 
 type Props = {
   saleId?: string;
@@ -14,6 +24,85 @@ type Props = {
 
 const PAGE_SIZE = 15;
 
+const TABLE_COLUMN_COUNT = 12;
+
+function cell(value?: string | null) {
+  return value?.trim() || "—";
+}
+
+function formatListingType(value: string) {
+  return value.replace(/_/g, " ");
+}
+
+function PickerPriceCell({
+  product,
+}: {
+  product: {
+    listingType: string;
+    dailyPrice: number | null;
+    resalePrice: number | null;
+  };
+}) {
+  const { listingType, primary, secondary } = listingPriceDisplay(product);
+
+  if (listingType === "RESALE") {
+    return (
+      <span className="text-gray-900">
+        {primary.amount > 0 ? `₦${primary.amount.toLocaleString()}` : "—"}
+      </span>
+    );
+  }
+
+  if (listingType === "RENT_OR_RESALE" && secondary) {
+    return (
+      <div className="flex items-end gap-2">
+        <div className="text-right">
+          <Paragraph1 className="text-[10px] uppercase tracking-wide text-gray-400 leading-none mb-1">
+            Rent
+          </Paragraph1>
+          <Paragraph1 className="text-gray-900 leading-none">
+            {primary.amount > 0
+              ? `₦${primary.amount.toLocaleString()}/day`
+              : "—"}
+          </Paragraph1>
+        </div>
+        <span className="text-gray-300 pb-0.5" aria-hidden>
+          |
+        </span>
+        <div className="text-right">
+          <Paragraph1 className="text-[10px] uppercase tracking-wide text-gray-400 leading-none mb-1">
+            Resale
+          </Paragraph1>
+          <Paragraph1 className="text-gray-900 leading-none">
+            {secondary.amount > 0
+              ? `₦${secondary.amount.toLocaleString()}`
+              : "—"}
+          </Paragraph1>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <Paragraph1 className="text-[10px] uppercase tracking-wide text-gray-400 leading-none mb-1">
+        Rent
+      </Paragraph1>
+      <Paragraph1 className="text-gray-900 leading-none">
+        {primary.amount > 0 ? `₦${primary.amount.toLocaleString()}/day` : "—"}
+      </Paragraph1>
+    </div>
+  );
+}
+
+const EMPTY_FILTERS: ListingFilterValues = {
+  category: [],
+  tags: [],
+  brand: [],
+  lister: [],
+  listingTypes: [],
+};
+
 export default function SaleItemPicker({
   saleId,
   selectedIds,
@@ -21,22 +110,35 @@ export default function SaleItemPicker({
 }: Props) {
   const [search, setSearch] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] =
+    useState<ListingFilterValues>(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
 
   useEffect(() => {
     setPage(1);
-  }, [appliedSearch]);
+  }, [appliedSearch, appliedFilters]);
 
-  const { data, isLoading, isError } = useAdminShopSalePicker({
-    search: appliedSearch || undefined,
-    page,
-    limit: PAGE_SIZE,
-    saleId,
-  });
+  const pickerParams = useMemo(
+    () => ({
+      search: appliedSearch || undefined,
+      page,
+      limit: PAGE_SIZE,
+      saleId,
+      ...pickerFiltersToApiParams(appliedFilters),
+    }),
+    [appliedSearch, appliedFilters, page, saleId],
+  );
+
+  const { data, isLoading, isError } = useAdminShopSalePicker(pickerParams);
 
   const products = data?.data?.products ?? [];
   const totalPages = data?.data?.totalPages ?? 1;
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const activeFilterCount = useMemo(
+    () => countActiveListingFilters(appliedFilters),
+    [appliedFilters],
+  );
 
   const toggle = (id: string) => {
     if (selectedSet.has(id)) {
@@ -86,30 +188,48 @@ export default function SaleItemPicker({
         </div>
       </div>
 
-      <form
-        className="flex gap-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          setAppliedSearch(search.trim());
-        }}
-      >
-        <div className="flex flex-1 items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg min-w-0">
-          <Search className="w-4 h-4 text-gray-400 shrink-0" aria-hidden />
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search listings..."
-            className="flex-1 bg-transparent outline-none min-w-0 text-sm"
-          />
-        </div>
-        <button
-          type="submit"
-          className="shrink-0 bg-gray-900 hover:bg-gray-800 px-4 py-2 rounded-lg font-medium text-white text-sm"
+      <div className="flex flex-col sm:flex-row gap-2">
+        <form
+          className="flex flex-1 gap-2 min-w-0"
+          onSubmit={(e) => {
+            e.preventDefault();
+            setAppliedSearch(search.trim());
+          }}
         >
-          Search
-        </button>
-      </form>
+          <div className="flex flex-1 items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg min-w-0">
+            <Search className="w-4 h-4 text-gray-400 shrink-0" aria-hidden />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search listings..."
+              className="flex-1 bg-transparent outline-none min-w-0 text-sm"
+            />
+          </div>
+          <button
+            type="submit"
+            className="shrink-0 bg-gray-900 hover:bg-gray-800 px-4 py-2 rounded-lg font-medium text-white text-sm"
+          >
+            Search
+          </button>
+        </form>
+        <ListingFilterButton
+          onClick={() => setFiltersOpen(true)}
+          activeCount={activeFilterCount}
+          className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm font-medium hover:bg-gray-50 flex items-center gap-1 shrink-0"
+        />
+      </div>
+
+      <ListingFilterPanel
+        mode="controlled"
+        isOpen={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        value={appliedFilters}
+        onApply={setAppliedFilters}
+        onClear={() => setAppliedFilters(EMPTY_FILTERS)}
+        hideSearch
+        filterOptionsScope="admin-picker"
+      />
 
       {selectedIds.length > 0 ? (
         <div className="flex flex-wrap gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg max-h-32 overflow-y-auto">
@@ -132,34 +252,61 @@ export default function SaleItemPicker({
           Could not load listings. Try again.
         </Paragraph1>
       ) : isLoading ? (
-        <TableSkeleton rows={6} columns={4} />
+        <TableSkeleton rows={6} columns={TABLE_COLUMN_COUNT} />
       ) : (
         <div className="border border-gray-200 rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-[1100px]">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-4 py-3 w-10" />
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 text-xs uppercase">
+                  <th className="px-3 py-3 w-10" />
+                  <th className="px-3 py-3 text-left font-semibold text-gray-600 text-xs uppercase whitespace-nowrap">
                     Listing
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 text-xs uppercase">
+                  <th className="px-3 py-3 text-left font-semibold text-gray-600 text-xs uppercase whitespace-nowrap">
+                    Brand
+                  </th>
+                  <th className="px-3 py-3 text-left font-semibold text-gray-600 text-xs uppercase whitespace-nowrap">
+                    Category
+                  </th>
+                  <th className="px-3 py-3 text-left font-semibold text-gray-600 text-xs uppercase whitespace-nowrap">
+                    Subcategories
+                  </th>
+                  <th className="px-3 py-3 text-left font-semibold text-gray-600 text-xs uppercase whitespace-nowrap">
                     Lister
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 text-xs uppercase">
+                  <th className="px-3 py-3 text-left font-semibold text-gray-600 text-xs uppercase whitespace-nowrap">
                     Type
+                  </th>
+                  <th className="px-3 py-3 text-left font-semibold text-gray-600 text-xs uppercase whitespace-nowrap">
+                    Size
+                  </th>
+                  <th className="px-3 py-3 text-left font-semibold text-gray-600 text-xs uppercase whitespace-nowrap">
+                    Color
+                  </th>
+                  <th className="px-3 py-3 text-left font-semibold text-gray-600 text-xs uppercase whitespace-nowrap">
+                    Condition
+                  </th>
+                  <th className="px-3 py-3 text-left font-semibold text-gray-600 text-xs uppercase whitespace-nowrap">
+                    Material
+                  </th>
+                  <th className="px-3 py-3 text-left font-semibold text-gray-600 text-xs uppercase whitespace-nowrap">
+                    Price
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {products.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-10 text-center text-gray-500">
+                    <td
+                      colSpan={TABLE_COLUMN_COUNT}
+                      className="px-4 py-10 text-center text-gray-500"
+                    >
                       No listings match your search.
                     </td>
                   </tr>
                 ) : (
-                  products.map((p) => {
+                  products.map((p: AdminShopSalePickerProduct) => {
                     const checked = selectedSet.has(p.id);
                     return (
                       <tr
@@ -167,7 +314,7 @@ export default function SaleItemPicker({
                         className={`border-b border-gray-100 last:border-0 cursor-pointer hover:bg-gray-50 ${checked ? "bg-gray-50/80" : ""}`}
                         onClick={() => toggle(p.id)}
                       >
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-3">
                           <input
                             type="checkbox"
                             checked={checked}
@@ -177,7 +324,7 @@ export default function SaleItemPicker({
                             aria-label={`Select ${p.name}`}
                           />
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-3 min-w-[180px]">
                           <div className="flex items-center gap-3 min-w-0">
                             {p.imageUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
@@ -189,23 +336,43 @@ export default function SaleItemPicker({
                             ) : (
                               <div className="w-10 h-10 rounded bg-gray-100 shrink-0" />
                             )}
-                            <div className="min-w-0">
-                              <Paragraph1 className="font-medium text-gray-900 truncate">
-                                {p.name}
-                              </Paragraph1>
-                              <Paragraph1 className="text-gray-500 text-xs truncate">
-                                {[p.brandName, p.categoryName]
-                                  .filter(Boolean)
-                                  .join(" · ") || "—"}
-                              </Paragraph1>
-                            </div>
+                            <Paragraph1 className="font-medium text-gray-900 truncate">
+                              {p.name}
+                            </Paragraph1>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-gray-700">
+                        <td className="px-3 py-3 text-gray-700 whitespace-nowrap">
+                          {cell(p.brandName)}
+                        </td>
+                        <td className="px-3 py-3 text-gray-700 whitespace-nowrap">
+                          {cell(p.categoryName)}
+                        </td>
+                        <td
+                          className="px-3 py-3 text-gray-700 max-w-[140px] truncate"
+                          title={p.tagNames.join(", ")}
+                        >
+                          {p.tagNames.length > 0 ? p.tagNames.join(", ") : "—"}
+                        </td>
+                        <td className="px-3 py-3 text-gray-700 whitespace-nowrap">
                           {p.listerName}
                         </td>
-                        <td className="px-4 py-3 text-gray-600">
-                          {p.listingType.replace(/_/g, " ")}
+                        <td className="px-3 py-3 text-gray-600 whitespace-nowrap">
+                          {formatListingType(p.listingType)}
+                        </td>
+                        <td className="px-3 py-3 text-gray-700 whitespace-nowrap">
+                          {cell(p.size)}
+                        </td>
+                        <td className="px-3 py-3 text-gray-700 whitespace-nowrap">
+                          {cell(p.color)}
+                        </td>
+                        <td className="px-3 py-3 text-gray-700 whitespace-nowrap">
+                          {cell(p.condition)}
+                        </td>
+                        <td className="px-3 py-3 text-gray-700 whitespace-nowrap">
+                          {cell(p.material)}
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          <PickerPriceCell product={p} />
                         </td>
                       </tr>
                     );
