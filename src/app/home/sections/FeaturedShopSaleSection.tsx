@@ -62,7 +62,7 @@ export default function FeaturedShopSaleSection() {
     : formatSaleAvailabilityLabel(sale.startsAt, sale.endsAt);
   const sectionDescription =
     sale.shopDescription?.trim() ||
-    "Celebrity wardrobes. Limited drops. Shop it before it disappears.";
+    "Limited drops. Shop it before it disappears.";
 
   if (isLoading) {
     return (
