@@ -290,12 +290,12 @@ export default function ListingFilterPanel({
                         >
                           <input
                             type="checkbox"
-                            checked={localFilters.category.includes(cat.id)}
+                            checked={listOrEmpty(localFilters.category).includes(cat.id)}
                             onChange={(e) =>
                               setLocalFilters({
                                 ...localFilters,
                                 category: toggleList(
-                                  localFilters.category,
+                                  listOrEmpty(localFilters.category),
                                   cat.id,
                                   e.target.checked,
                                 ),
@@ -346,12 +346,12 @@ export default function ListingFilterPanel({
                         >
                           <input
                             type="checkbox"
-                            checked={localFilters.tags.includes(tag.name)}
+                            checked={listOrEmpty(localFilters.tags).includes(tag.name)}
                             onChange={(e) =>
                               setLocalFilters({
                                 ...localFilters,
                                 tags: toggleList(
-                                  localFilters.tags,
+                                  listOrEmpty(localFilters.tags),
                                   tag.name,
                                   e.target.checked,
                                 ),
@@ -404,12 +404,12 @@ export default function ListingFilterPanel({
                         >
                           <input
                             type="checkbox"
-                            checked={localFilters.brand.includes(brand.name)}
+                            checked={listOrEmpty(localFilters.brand).includes(brand.name)}
                             onChange={(e) =>
                               setLocalFilters({
                                 ...localFilters,
                                 brand: toggleList(
-                                  localFilters.brand,
+                                  listOrEmpty(localFilters.brand),
                                   brand.name,
                                   e.target.checked,
                                 ),
@@ -462,12 +462,12 @@ export default function ListingFilterPanel({
                         >
                           <input
                             type="checkbox"
-                            checked={localFilters.lister.includes(user.id)}
+                            checked={listOrEmpty(localFilters.lister).includes(user.id)}
                             onChange={(e) =>
                               setLocalFilters({
                                 ...localFilters,
                                 lister: toggleList(
-                                  localFilters.lister,
+                                  listOrEmpty(localFilters.lister),
                                   user.id,
                                   e.target.checked,
                                 ),

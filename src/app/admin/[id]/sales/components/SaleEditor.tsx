@@ -46,7 +46,20 @@ function defaultSchedule() {
   };
 }
 
-const defaultForm = (): ShopSaleFormPayload & { slug: string } => {
+type SaleEditorForm = ShopSaleFormPayload & {
+  slug: string;
+} & Required<
+  Pick<
+    ShopSaleFormPayload,
+    | "isEnabled"
+    | "bannerEnabled"
+    | "waitlistEnabled"
+    | "shopAccessEnabled"
+    | "showCountdown"
+  >
+>;
+
+const defaultForm = (): SaleEditorForm => {
   const schedule = defaultSchedule();
   return {
     internalName: "",
@@ -126,7 +139,7 @@ export default function SaleEditor({ adminId, saleId }: Props) {
   const setProducts = useSetShopSaleProducts();
 
   const [tab, setTab] = useState<Tab>("details");
-  const [form, setForm] = useState(defaultForm);
+  const [form, setForm] = useState<SaleEditorForm>(defaultForm);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [dirtyProducts, setDirtyProducts] = useState(false);
 
