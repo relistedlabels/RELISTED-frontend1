@@ -19,17 +19,29 @@ import type { ShopSaleFormPayload } from "@/lib/api/admin/shopSales";
 import { toast } from "sonner";
 import SaleItemPicker from "./SaleItemPicker";
 import SaleWaitlistCard from "./SaleWaitlistCard";
+import SaleDateTimePicker from "./SaleDateTimePicker";
 import {
   datetimeLocalToIso,
+  formatSaleBannerDateLine,
   formatSalePhaseLabel,
   isoToDatetimeLocal,
   phaseBadgeClass,
+  splitDatetimeLocal,
 } from "../lib/saleDateTime";
 import { buildSaleShopAbsoluteUrl, buildSaleShopHref } from "@/lib/api/shopSale";
 import {
   SHOP_SALE_NOTIFY_EMAIL_BODY_PLACEHOLDER,
   SHOP_SALE_NOTIFY_EMAIL_SUBJECT_PLACEHOLDER,
 } from "../lib/shopSaleEmailDefaults";
+import {
+  saleFieldWrapClass,
+  saleFieldWideWrapClass,
+  saleInputClass,
+  saleInputMonoClass,
+  saleReadonlyBoxClass,
+  saleTextareaClass,
+  saleTextareaMonoClass,
+} from "../lib/saleFormStyles";
 
 type Tab = "details" | "listings" | "waitlist";
 
@@ -65,7 +77,7 @@ const defaultForm = (): SaleEditorForm => {
     internalName: "",
     slug: "",
     headline: "",
-    subheadline: "",
+    subheadline: formatSaleBannerDateLine(schedule.startsAt, schedule.endsAt),
     shopTitle: "",
     shopDescription: "",
     preSaleMessage: "",
@@ -142,10 +154,18 @@ export default function SaleEditor({ adminId, saleId }: Props) {
   const [form, setForm] = useState<SaleEditorForm>(defaultForm);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [dirtyProducts, setDirtyProducts] = useState(false);
+  const [subheadlineManual, setSubheadlineManual] = useState(false);
 
   useEffect(() => {
     const sale = data?.data;
     if (!sale) return;
+    const startsAt = isoToDatetimeLocal(sale.startsAt);
+    const endsAt = isoToDatetimeLocal(sale.endsAt);
+    const autoLine = formatSaleBannerDateLine(startsAt, endsAt);
+    setSubheadlineManual(
+      Boolean(sale.subheadline?.trim()) &&
+        sale.subheadline.trim() !== autoLine,
+    );
     setForm({
       internalName: sale.internalName,
       slug: sale.slug,
@@ -168,6 +188,15 @@ export default function SaleEditor({ adminId, saleId }: Props) {
     setSelectedProductIds(sale.products.map((p) => p.id));
     setDirtyProducts(false);
   }, [data]);
+
+  useEffect(() => {
+    if (subheadlineManual) return;
+    const line = formatSaleBannerDateLine(form.startsAt, form.endsAt);
+    if (!line) return;
+    setForm((prev) =>
+      prev.subheadline === line ? prev : { ...prev, subheadline: line },
+    );
+  }, [form.startsAt, form.endsAt, subheadlineManual]);
 
   const setField = <K extends keyof typeof form>(
     key: K,
@@ -207,6 +236,10 @@ export default function SaleEditor({ adminId, saleId }: Props) {
     }
     if (!form.startsAt || !form.endsAt) {
       toast.error("Set a start and end date.");
+      return false;
+    }
+    if (new Date(form.endsAt).getTime() <= new Date(form.startsAt).getTime()) {
+      toast.error("End date and time must be after the start.");
       return false;
     }
     return true;
@@ -297,6 +330,7 @@ export default function SaleEditor({ adminId, saleId }: Props) {
 
   const sale = data?.data;
   const phase = sale?.phase ?? (form.isEnabled ? "upcoming" : "off");
+  const scheduleEndMinDate = splitDatetimeLocal(form.startsAt)?.date;
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "details", label: "Details" },
@@ -405,7 +439,7 @@ export default function SaleEditor({ adminId, saleId }: Props) {
         <div className="space-y-6">
           <section className="bg-white p-5 sm:p-6 border border-gray-200 rounded-lg space-y-4">
             <h3 className="font-semibold text-gray-900">Basics</h3>
-            <label className="block">
+            <label className={`block ${saleFieldWrapClass}`}>
               <span className="text-sm font-medium text-gray-700">
                 Internal name
               </span>
@@ -416,10 +450,10 @@ export default function SaleEditor({ adminId, saleId }: Props) {
                 type="text"
                 value={form.internalName}
                 onChange={(e) => setField("internalName", e.target.value)}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                className={saleInputClass}
               />
             </label>
-            <label className="block">
+            <label className={`block ${saleFieldWrapClass}`}>
               <span className="text-sm font-medium text-gray-700">
                 Link slug (optional)
               </span>
@@ -431,54 +465,57 @@ export default function SaleEditor({ adminId, saleId }: Props) {
                 value={form.slug}
                 onChange={(e) => setField("slug", e.target.value)}
                 placeholder="may-closet-drop"
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono"
+                className={saleInputMonoClass}
               />
             </label>
           </section>
 
-          <section className="bg-white p-5 sm:p-6 border border-gray-200 rounded-lg space-y-4">
-            <h3 className="font-semibold text-gray-900">Schedule</h3>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <label className="block">
-                <span className="text-sm font-medium text-gray-700">Starts</span>
-                <input
-                  type="datetime-local"
-                  value={form.startsAt}
-                  onChange={(e) => setField("startsAt", e.target.value)}
-                  className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm font-medium text-gray-700">Ends</span>
-                <input
-                  type="datetime-local"
-                  value={form.endsAt}
-                  onChange={(e) => setField("endsAt", e.target.value)}
-                  className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                />
-              </label>
+          <section className="bg-white p-5 sm:p-6 border border-gray-200 rounded-lg space-y-5">
+            <div>
+              <h3 className="font-semibold text-gray-900">Schedule</h3>
+              <Paragraph1 className="mt-1 text-gray-500 text-sm">
+                Choose when the sale opens and closes.
+              </Paragraph1>
             </div>
-            <label className="block">
-              <span className="text-sm font-medium text-gray-700">
-                Earliest delivery (optional)
-              </span>
-              <span className="block text-xs text-gray-500 mt-0.5">
-                Earliest date renters can schedule delivery for sale items.
-              </span>
-              <input
-                type="datetime-local"
-                value={form.earliestDeliveryAt ?? ""}
-                onChange={(e) =>
-                  setField("earliestDeliveryAt", e.target.value)
-                }
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              />
-            </label>
+            <div className="space-y-4">
+              <div>
+                <span className="text-sm font-medium text-gray-700">Starts</span>
+                <SaleDateTimePicker
+                  id="sale-starts-at"
+                  value={form.startsAt}
+                  onChange={(v) => setField("startsAt", v)}
+                />
+              </div>
+              <div>
+                <span className="text-sm font-medium text-gray-700">Ends</span>
+                <SaleDateTimePicker
+                  id="sale-ends-at"
+                  value={form.endsAt}
+                  minDate={scheduleEndMinDate}
+                  onChange={(v) => setField("endsAt", v)}
+                />
+              </div>
+              <div>
+                <span className="text-sm font-medium text-gray-700">
+                  Earliest delivery
+                  <span className="font-normal text-gray-500"> (optional)</span>
+                </span>
+                <Paragraph1 className="mt-0.5 text-gray-500 text-xs">
+                  Earliest date renters can schedule delivery for sale items.
+                </Paragraph1>
+                <SaleDateTimePicker
+                  id="sale-earliest-delivery"
+                  value={form.earliestDeliveryAt ?? ""}
+                  minDate={scheduleEndMinDate}
+                  onChange={(v) => setField("earliestDeliveryAt", v)}
+                />
+              </div>
+            </div>
           </section>
 
           <section className="bg-white p-5 sm:p-6 border border-gray-200 rounded-lg space-y-4">
             <h3 className="font-semibold text-gray-900">What shoppers see</h3>
-            <label className="block">
+            <label className={`block ${saleFieldWrapClass}`}>
               <span className="text-sm font-medium text-gray-700">
                 Banner headline
               </span>
@@ -487,22 +524,56 @@ export default function SaleEditor({ adminId, saleId }: Props) {
                 value={form.headline}
                 onChange={(e) => setField("headline", e.target.value)}
                 placeholder="Shop the summer sale"
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                className={saleInputClass}
               />
             </label>
-            <label className="block">
-              <span className="text-sm font-medium text-gray-700">
-                Date line on banner
+            <div className={saleFieldWrapClass}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-sm font-medium text-gray-700">
+                  Date line on banner
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (subheadlineManual) {
+                      const line = formatSaleBannerDateLine(
+                        form.startsAt,
+                        form.endsAt,
+                      );
+                      if (line) setField("subheadline", line);
+                      setSubheadlineManual(false);
+                      return;
+                    }
+                    setSubheadlineManual(true);
+                  }}
+                  className="text-xs font-medium text-gray-600 underline hover:text-gray-900"
+                >
+                  {subheadlineManual
+                    ? "Use schedule dates"
+                    : "Write custom date line"}
+                </button>
+              </div>
+              <span className="block text-xs text-gray-500 mt-0.5">
+                {subheadlineManual
+                  ? "Custom text shown under the banner headline."
+                  : "Filled automatically from the schedule above."}
               </span>
-              <input
-                type="text"
-                value={form.subheadline ?? ""}
-                onChange={(e) => setField("subheadline", e.target.value)}
-                placeholder="June 1st - June 3rd"
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              />
-            </label>
-            <label className="block">
+              {subheadlineManual ? (
+                <input
+                  type="text"
+                  value={form.subheadline ?? ""}
+                  onChange={(e) => setField("subheadline", e.target.value)}
+                  placeholder="June 1st - June 3rd"
+                  className={saleInputClass}
+                />
+              ) : (
+                <div className={saleReadonlyBoxClass}>
+                  {formatSaleBannerDateLine(form.startsAt, form.endsAt) ||
+                    "Set start and end dates above"}
+                </div>
+              )}
+            </div>
+            <label className={`block ${saleFieldWrapClass}`}>
               <span className="text-sm font-medium text-gray-700">
                 Shop page title
               </span>
@@ -511,10 +582,10 @@ export default function SaleEditor({ adminId, saleId }: Props) {
                 value={form.shopTitle}
                 onChange={(e) => setField("shopTitle", e.target.value)}
                 placeholder="Summer Sale"
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                className={saleInputClass}
               />
             </label>
-            <label className="block">
+            <label className={`block ${saleFieldWideWrapClass}`}>
               <span className="text-sm font-medium text-gray-700">
                 Shop page description
               </span>
@@ -523,10 +594,10 @@ export default function SaleEditor({ adminId, saleId }: Props) {
                 onChange={(e) => setField("shopDescription", e.target.value)}
                 rows={2}
                 placeholder="Limited pieces. Shop before they are gone."
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-y"
+                className={saleTextareaClass}
               />
             </label>
-            <label className="block">
+            <label className={`block ${saleFieldWideWrapClass}`}>
               <span className="text-sm font-medium text-gray-700">
                 Message before sale opens
               </span>
@@ -538,10 +609,10 @@ export default function SaleEditor({ adminId, saleId }: Props) {
                 value={form.preSaleMessage ?? ""}
                 onChange={(e) => setField("preSaleMessage", e.target.value)}
                 placeholder="Available from June 1st - June 3rd"
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                className={saleInputClass}
               />
             </label>
-            <label className="block">
+            <label className={`block ${saleFieldWideWrapClass}`}>
               <span className="text-sm font-medium text-gray-700">
                 Email subject when notifying waitlist
               </span>
@@ -550,10 +621,10 @@ export default function SaleEditor({ adminId, saleId }: Props) {
                 value={form.notifyEmailSubject ?? ""}
                 onChange={(e) => setField("notifyEmailSubject", e.target.value)}
                 placeholder={SHOP_SALE_NOTIFY_EMAIL_SUBJECT_PLACEHOLDER}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                className={saleInputClass}
               />
             </label>
-            <label className="block">
+            <label className={`block ${saleFieldWideWrapClass}`}>
               <span className="text-sm font-medium text-gray-700">
                 Email message
               </span>
@@ -566,7 +637,7 @@ export default function SaleEditor({ adminId, saleId }: Props) {
                 onChange={(e) => setField("notifyEmailBody", e.target.value)}
                 rows={8}
                 placeholder={SHOP_SALE_NOTIFY_EMAIL_BODY_PLACEHOLDER}
-                className="mt-1.5 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-y font-mono"
+                className={saleTextareaMonoClass}
               />
             </label>
           </section>
