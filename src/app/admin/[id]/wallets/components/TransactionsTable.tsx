@@ -1,11 +1,14 @@
 "use client";
 // ENDPOINTS: GET /api/admin/wallets/transactions?search=&page=1&limit=20&type=&status=
 
-import React, { useMemo } from "react";
+import React from "react";
 import { ArrowUpRight, ArrowDownLeft, Send } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useWalletTransactions } from "@/lib/queries/admin/useWallets";
-import { usePublicUserById } from "@/lib/queries/user/usePublicUserById";
+import AdminTablePagination, {
+  EMPTY_WALLET_PAGINATION,
+  useWalletTablePage,
+} from "./AdminTablePagination";
 
 interface TransactionsTableProps {
   searchQuery: string;
@@ -171,23 +174,20 @@ function TransactionRow({ transaction }: { transaction: any }) {
 export default function TransactionsTable({
   searchQuery,
 }: TransactionsTableProps) {
-  const transactionsQuery = useWalletTransactions({ search: searchQuery });
-
-  const filteredData = useMemo(() => {
-    if (!transactionsQuery.data?.data?.transactions) return [];
-    return transactionsQuery.data.data.transactions.filter(
-      (item: any) =>
-        (item.wallet?.user?.name
-          ?.toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-          item.id?.toLowerCase().includes(searchQuery.toLowerCase())) ??
-        false,
-    );
-  }, [transactionsQuery.data, searchQuery]);
+  const { page, setPage, limit } = useWalletTablePage(searchQuery);
+  const transactionsQuery = useWalletTransactions({
+    search: searchQuery,
+    page,
+    limit,
+  });
+  const transactions = transactionsQuery.data?.data?.transactions ?? [];
+  const pagination =
+    transactionsQuery.data?.data?.pagination ?? EMPTY_WALLET_PAGINATION;
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
+    <div>
+      <div className="overflow-x-auto">
+        <table className="w-full">
         <thead>
           <tr className="border-b border-gray-200 bg-gray-50">
             <th className="px-6 py-4 text-left">
@@ -239,19 +239,25 @@ export default function TransactionsTable({
                 <p className="text-gray-500">Loading transactions...</p>
               </td>
             </tr>
-          ) : filteredData.length === 0 ? (
+          ) : transactions.length === 0 ? (
             <tr>
               <td colSpan={8} className="px-6 py-8 text-center">
                 <p className="text-gray-500">No transactions found</p>
               </td>
             </tr>
           ) : (
-            filteredData.map((transaction: any) => (
+            transactions.map((transaction: any) => (
               <TransactionRow key={transaction.id} transaction={transaction} />
             ))
           )}
         </tbody>
       </table>
+      </div>
+      <AdminTablePagination
+        pagination={pagination}
+        onPageChange={setPage}
+        isLoading={transactionsQuery.isFetching}
+      />
     </div>
   );
 }

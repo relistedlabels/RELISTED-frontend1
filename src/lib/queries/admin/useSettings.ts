@@ -1,6 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { settingsApi } from "@/lib/api/admin/";
 
+export const useAdminNavState = () =>
+  useQuery({
+    queryKey: ["admin", "settings", "nav-state"],
+    queryFn: () => settingsApi.getNavState(),
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+
 export const useAdminProfile = () =>
   useQuery({
     queryKey: ["admin", "settings", "profile"],

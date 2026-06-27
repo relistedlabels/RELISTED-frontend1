@@ -7,6 +7,7 @@ export { settingsApi } from "./settings";
 export { adminClosetsApi } from "./closets";
 export { adminVaultClosetSaleWaitlistApi } from "./vaultClosetSaleWaitlist";
 export { adminSiteFeaturesApi } from "./siteFeatures";
+export { adminShopSalesApi } from "./shopSales";
 
 // Type exports
 export type {

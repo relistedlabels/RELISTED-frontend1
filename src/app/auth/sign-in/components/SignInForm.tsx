@@ -77,7 +77,7 @@ const SignInForm: React.FC = () => {
           }}
         >
           {() => (
-            <Form className="space-y-5">
+            <Form className="space-y-5 p-3">
               {/* Email */}
               <div>
                 <Paragraph1 className="mb-2 font-medium text-sm">

@@ -38,8 +38,8 @@ import {
   getClosetEarliestDeliveryLagosYmd,
   lagosYmdMax,
   publicProductHasCloset,
-  VAULT_CLOSET_SHOP_OFF_PRIMARY_CTA,
 } from "@/lib/vaultClosetSaleDates";
+import { getProductPreSaleCta } from "@/lib/shopSale/productSale";
 import { getTodayInLagos } from "@/lib/checkout/dispatchWindows";
 
 interface UserProfileProps {
@@ -101,10 +101,10 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
     siteFeaturesRes?.data?.headerClosetsShopNavEnabled !== false;
   const closetPrimaryCtaOverride = useMemo(
     () =>
-      !closetShopNavEnabled &&
       product &&
-      publicProductHasCloset(product)
-        ? VAULT_CLOSET_SHOP_OFF_PRIMARY_CTA
+      (!closetShopNavEnabled || product.activeSale) &&
+      (publicProductHasCloset(product) || product.activeSale)
+        ? getProductPreSaleCta(product, { legacyClosetFallback: true })
         : undefined,
     [closetShopNavEnabled, product],
   );

@@ -41,8 +41,15 @@ export function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Restrict admins to /admin routes only
-  if (userRole === "ADMIN" && !pathname.startsWith("/admin")) {
+  const isPublicShopRoute =
+    pathname === "/shop" || pathname.startsWith("/shop/");
+
+  // Restrict admins to /admin routes only (public shop allowed for sale preview)
+  if (
+    userRole === "ADMIN" &&
+    !pathname.startsWith("/admin") &&
+    !isPublicShopRoute
+  ) {
     return NextResponse.redirect(new URL("/admin/k340eol21/orders", req.url));
   }
 
@@ -64,6 +71,7 @@ export const config = {
     "/auth/:path*",
     "/listers/:path*",
     "/renters/:path*",
+    "/shop",
     "/shop/:path*",
     "/home/:path*",
     "/dressers/:path*",

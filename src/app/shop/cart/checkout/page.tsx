@@ -43,6 +43,10 @@ import {
   lagosYmdMax,
   publicProductHasCloset,
 } from "@/lib/vaultClosetSaleDates";
+import {
+  checkoutItemInActiveSale,
+  getCheckoutItemEarliestDeliveryLagosYmd,
+} from "@/lib/shopSale/productSale";
 
 const RETURN_PICKUP_SUMMARY_DEBOUNCE_MS = 1000;
 
@@ -500,9 +504,20 @@ export default function CheckoutPage() {
 
     if (resaleItems.length > 0) {
       const savedResaleWindow = pickResaleWindowFromCheckoutItem(resaleItems[0]);
-      const hasClosetResale = resaleItems.some(checkoutItemHasCloset);
+      const hasClosetResale = resaleItems.some(
+        (item) =>
+          checkoutItemHasCloset(item) || checkoutItemInActiveSale(item),
+      );
+      const saleMinYmd = resaleItems.reduce<string | undefined>((acc, item) => {
+        const ymd = getCheckoutItemEarliestDeliveryLagosYmd(item);
+        if (!ymd) return acc;
+        return acc ? lagosYmdMax(acc, ymd) : ymd;
+      }, undefined);
       const closetResaleMinYmd = hasClosetResale
-        ? lagosYmdMax(getTodayInLagos(), getClosetEarliestDeliveryLagosYmd())
+        ? lagosYmdMax(
+            getTodayInLagos(),
+            saleMinYmd ?? getClosetEarliestDeliveryLagosYmd(),
+          )
         : undefined;
 
       let resaleSuggested: DerivedDispatchWindow;

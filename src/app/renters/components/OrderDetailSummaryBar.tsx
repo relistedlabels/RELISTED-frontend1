@@ -15,6 +15,7 @@ const STATUS_STYLES: Record<string, string> = {
   COMPLETED: "bg-gray-100 text-gray-700",
   CANCELLED: "bg-red-50 text-red-800",
   RETURNED: "bg-gray-100 text-gray-700",
+  CONFIRM_DELIVERY: "bg-amber-50 text-amber-950",
 };
 
 interface OrderDetailSummaryBarProps {
@@ -23,14 +24,22 @@ interface OrderDetailSummaryBarProps {
     status?: string;
     createdAt?: string;
   };
+  /** When delivery confirm is pending, show this instead of raw order status. */
+  statusOverrideKey?: string;
+  statusOverrideLabel?: string;
 }
 
 export default function OrderDetailSummaryBar({
   orderData,
+  statusOverrideKey,
+  statusOverrideLabel,
 }: OrderDetailSummaryBarProps) {
   const statusRaw = String(orderData.status ?? "");
-  const statusKey = normalizeRenterOrderStatusKey(statusRaw);
-  const statusLabel = getRenterOrderStatusLabel(statusRaw);
+  const statusKey = statusOverrideKey
+    ? normalizeRenterOrderStatusKey(statusOverrideKey)
+    : normalizeRenterOrderStatusKey(statusRaw);
+  const statusLabel =
+    statusOverrideLabel ?? getRenterOrderStatusLabel(statusRaw);
   const badgeClass =
     STATUS_STYLES[statusKey] ?? "bg-gray-100 text-gray-700";
 

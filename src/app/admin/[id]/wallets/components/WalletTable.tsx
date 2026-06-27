@@ -1,13 +1,17 @@
 "use client";
 // ENDPOINTS: GET /api/admin/wallets?search=&page=1&limit=20, GET /api/public/users/:userId
 
-import React, { useMemo } from "react";
+import React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useWallets } from "@/lib/queries/admin/useWallets";
 import { usePublicUserById } from "@/lib/queries/user/usePublicUserById";
+import AdminTablePagination, {
+  EMPTY_WALLET_PAGINATION,
+  useWalletTablePage,
+} from "./AdminTablePagination";
 
 interface WalletTableProps {
   searchQuery: string;
@@ -158,21 +162,16 @@ function WalletRow({
 export default function WalletTable({ searchQuery }: WalletTableProps) {
   const params = useParams<{ id: string }>();
   const adminSegment = params?.id ?? "";
-  const walletsQuery = useWallets({ search: searchQuery });
-
-  const filteredData = useMemo(() => {
-    if (!walletsQuery.data?.data?.wallets) return [];
-    const q = searchQuery.toLowerCase();
-    return walletsQuery.data.data.wallets.filter((item: any) => {
-      const name = item.user?.name?.toLowerCase() ?? "";
-      const email = item.user?.email?.toLowerCase() ?? "";
-      return name.includes(q) || email.includes(q);
-    });
-  }, [walletsQuery.data, searchQuery]);
+  const { page, setPage, limit } = useWalletTablePage(searchQuery);
+  const walletsQuery = useWallets({ search: searchQuery, page, limit });
+  const wallets = walletsQuery.data?.data?.wallets ?? [];
+  const pagination =
+    walletsQuery.data?.data?.pagination ?? EMPTY_WALLET_PAGINATION;
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
+    <div>
+      <div className="overflow-x-auto">
+        <table className="w-full">
         <thead>
           <tr className="border-b border-gray-200 bg-gray-50">
             <th className="px-6 py-4 text-left">
@@ -224,14 +223,14 @@ export default function WalletTable({ searchQuery }: WalletTableProps) {
                 <p className="text-gray-500">Loading wallets...</p>
               </td>
             </tr>
-          ) : filteredData.length === 0 ? (
+          ) : wallets.length === 0 ? (
             <tr>
               <td colSpan={8} className="px-6 py-8 text-center">
                 <p className="text-gray-500">No wallets found</p>
               </td>
             </tr>
           ) : (
-            filteredData.map((wallet: any) => (
+            wallets.map((wallet: any) => (
               <WalletRow
                 key={wallet.id}
                 wallet={wallet}
@@ -241,6 +240,12 @@ export default function WalletTable({ searchQuery }: WalletTableProps) {
           )}
         </tbody>
       </table>
+      </div>
+      <AdminTablePagination
+        pagination={pagination}
+        onPageChange={setPage}
+        isLoading={walletsQuery.isFetching}
+      />
     </div>
   );
 }

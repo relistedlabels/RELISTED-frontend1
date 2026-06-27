@@ -83,11 +83,8 @@ function PackageConfirmCard({
               ) : null}
             </div>
             <Paragraph1 className="text-xs leading-relaxed text-gray-700">
-              {label} was delivered. Confirm if everything looks good, or report
-              an issue within {inspectionLabel}.
-              {deadlineLabel
-                ? ` Report by ${deadlineLabel}.`
-                : " After that window you cannot open a delivery dispute."}
+              Delivered. Confirm within {inspectionLabel}
+              {deadlineLabel ? ` (by ${deadlineLabel})` : ""}.
             </Paragraph1>
             <div className="flex flex-col gap-2 sm:flex-row">
               <button
