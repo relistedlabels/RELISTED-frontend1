@@ -162,10 +162,8 @@ export default function SaleEditor({ adminId, saleId }: Props) {
     const startsAt = isoToDatetimeLocal(sale.startsAt);
     const endsAt = isoToDatetimeLocal(sale.endsAt);
     const autoLine = formatSaleBannerDateLine(startsAt, endsAt);
-    setSubheadlineManual(
-      Boolean(sale.subheadline?.trim()) &&
-        sale.subheadline.trim() !== autoLine,
-    );
+    const subheadline = sale.subheadline?.trim() ?? "";
+    setSubheadlineManual(Boolean(subheadline) && subheadline !== autoLine);
     setForm({
       internalName: sale.internalName,
       slug: sale.slug,
