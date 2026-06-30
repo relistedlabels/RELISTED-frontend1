@@ -143,14 +143,16 @@ function ActiveListingsTable({
                 <td className="py-4 px-6">
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      product.status === "APPROVED"
+                      product.status === "APPROVED" ||
+                      product.status === "AVAILABLE"
                         ? "bg-green-100 text-green-700"
                         : product.status === "RENTED"
                           ? "bg-yellow-100 text-yellow-700"
                           : "bg-gray-100 text-gray-700"
                     }`}
                   >
-                    {product.status === "APPROVED"
+                    {product.status === "APPROVED" ||
+                    product.status === "AVAILABLE"
                       ? "Available"
                       : product.status === "RENTED"
                         ? "Out for Rent"
