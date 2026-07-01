@@ -52,26 +52,26 @@ function ActiveListingsTable({
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-gray-200 bg-gray-50">
-            <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+          <tr className="bg-gray-50 border-gray-200 border-b">
+            <th className="px-6 py-4 font-semibold text-gray-600 text-xs text-left uppercase tracking-wide">
               IMAGE
             </th>
-            <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+            <th className="px-6 py-4 font-semibold text-gray-600 text-xs text-left uppercase tracking-wide">
               ITEM NAME
             </th>
-            <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+            <th className="px-6 py-4 font-semibold text-gray-600 text-xs text-left uppercase tracking-wide">
               CATEGORY
             </th>
-            <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+            <th className="px-6 py-4 font-semibold text-gray-600 text-xs text-left uppercase tracking-wide">
               CURATOR
             </th>
-            <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+            <th className="px-6 py-4 font-semibold text-gray-600 text-xs text-left uppercase tracking-wide">
               AVAILABILITY
             </th>
-            <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+            <th className="px-6 py-4 font-semibold text-gray-600 text-xs text-left uppercase tracking-wide">
               PRICE
             </th>
-            <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+            <th className="px-6 py-4 font-semibold text-gray-600 text-xs text-left uppercase tracking-wide">
               ACTIONS
             </th>
           </tr>
@@ -89,20 +89,20 @@ function ActiveListingsTable({
             return (
               <tr
                 key={safeProduct.id}
-                className="border-b border-gray-200 hover:bg-gray-50 transition"
+                className="hover:bg-gray-50 border-gray-200 border-b transition"
               >
-                <td className="py-4 px-6">
+                <td className="px-6 py-4">
                   <AdminListingThumb
                     url={listingThumbnailUrl(product)}
                     alt={safeProduct.name}
                   />
                 </td>
-                <td className="py-4 px-6">
+                <td className="px-6 py-4">
                   <Paragraph1 className="font-medium text-gray-900">
                     {safeProduct.name}
                   </Paragraph1>
                   {(safeProduct as any).brand && (
-                    <Paragraph1 className="text-xs text-gray-500 mt-1">
+                    <Paragraph1 className="mt-1 text-gray-500 text-xs">
                       {typeof (safeProduct as any).brand === "object"
                         ? (safeProduct as any).brand.name
                         : (safeProduct as any).brand}
@@ -116,31 +116,31 @@ function ActiveListingsTable({
                     </div>
                   )}
                 </td>
-                <td className="py-4 px-6">
-                  <Paragraph1 className="text-sm text-gray-900">
+                <td className="px-6 py-4">
+                  <Paragraph1 className="text-gray-900 text-sm">
                     {typeof safeProduct.category === "object" &&
                     safeProduct.category
                       ? (safeProduct.category as any)?.name || "N/A"
                       : (safeProduct.category as string) || "N/A"}
                   </Paragraph1>
                 </td>
-                <td className="py-4 px-6">
+                <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
                     <AdminCuratorAvatar
                       url={curatorAvatarUrl(safeProduct)}
                       name={safeProduct.curator?.name}
                     />
                     <div>
-                      <Paragraph1 className="text-sm text-gray-900">
+                      <Paragraph1 className="text-gray-900 text-sm">
                         {safeProduct.curator?.name || "Unknown"}
                       </Paragraph1>
-                      <span className="block text-xs text-green-600 font-medium">
+                      <span className="block font-medium text-green-600 text-xs">
                         Verified
                       </span>
                     </div>
                   </div>
                 </td>
-                <td className="py-4 px-6">
+                <td className="px-6 py-4">
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-semibold ${
                       product.status === "APPROVED" ||
@@ -155,11 +155,11 @@ function ActiveListingsTable({
                     product.status === "AVAILABLE"
                       ? "Available"
                       : product.status === "RENTED"
-                        ? "Out for Rent"
+                        ? "Rented"
                         : "Inactive"}
                   </span>
                 </td>
-                <td className="py-4 px-6">
+                <td className="px-6 py-4">
                   {(() => {
                     const price = listingPriceDisplay(safeProduct as typeof safeProduct & { listingType?: string; resalePrice?: number });
                     return (
@@ -168,7 +168,7 @@ function ActiveListingsTable({
                           ₦{price.primary.amount.toLocaleString()}
                         </Paragraph1>
                         {price.secondary ? (
-                          <Paragraph1 className="text-xs text-gray-600 mt-1">
+                          <Paragraph1 className="mt-1 text-gray-600 text-xs">
                             {price.secondary.label}: ₦
                             {price.secondary.amount.toLocaleString()}
                           </Paragraph1>
@@ -177,14 +177,14 @@ function ActiveListingsTable({
                     );
                   })()}
                 </td>
-                <td className="py-4 px-6 flex gap-2">
-                  <button className="px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-sm">
+                <td className="flex gap-2 px-6 py-4">
+                  <button className="flex justify-center items-center gap-2 hover:bg-gray-50 px-3 py-2 border border-gray-300 rounded-lg font-medium text-gray-600 text-sm transition">
                     <Power size={18} />
                     Deactivate
                   </button>
                   <button
                     onClick={() => onView(product)}
-                    className="px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-sm"
+                    className="flex justify-center items-center gap-2 hover:bg-gray-50 px-3 py-2 border border-gray-300 rounded-lg font-medium text-gray-600 text-sm transition"
                   >
                     <Eye size={18} />
                     View
