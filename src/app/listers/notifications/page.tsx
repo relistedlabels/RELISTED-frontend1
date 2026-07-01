@@ -111,7 +111,7 @@ export default function NotificationsPage() {
                               rel="noopener noreferrer"
                               className="text-blue-600 text-xs hover:underline"
                             >
-                              Track on Topship
+                              Track shipment
                             </a>
                           )}
                         </div>

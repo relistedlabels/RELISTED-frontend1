@@ -146,7 +146,7 @@ const CuratorAboutDetails: React.FC<CuratorAboutDetailsProps> = ({
                 </Paragraph1> */}
                 <Paragraph1 className="text-sm text-gray-600 bg-gray-50 p-3 rounded mb-3 leading-relaxed">
                   Items must be returned on the agreed rental end date through
-                  our logistics partner Topship. The vendor will inspect the
+                  our delivery partners. The vendor will inspect the
                   item's condition upon return. Your collateral will be released
                   if no issues are identified. We evaluate returns based on
                   acceptable wear (light wrinkles, minor fabric softening)
@@ -171,11 +171,11 @@ const CuratorAboutDetails: React.FC<CuratorAboutDetailsProps> = ({
                   {user.shopPolicies.deliveryTime}
                 </Paragraph1> */}
                 <Paragraph1 className="text-sm text-gray-600 bg-gray-50 p-3 rounded mb-3 leading-relaxed">
-                  Once your rental request is confirmed, Topship will collect
+                  Once your rental request is confirmed, our delivery partners will collect
                   the item from the vendor and deliver it to you. Delivery
                   timelines depend on your location and our logistics schedules.
-                  The vendor ships through our trusted logistics provider
-                  Topship, which handles all item collection and delivery. We
+                  The vendor ships through our trusted logistics providers,
+                  which handle item collection and delivery. We
                   are not responsible for delays caused by third-party logistics
                   providers, but we work to ensure smooth transfers.
                 </Paragraph1>
