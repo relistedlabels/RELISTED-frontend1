@@ -186,7 +186,7 @@ const FILTER_SELECT_WRAP_CLASS = "w-[9.5rem] shrink-0";
 const FULFILLMENT_FILTER_OPTIONS = [
   { value: "all", label: "All fulfillment" },
   { value: "manual", label: "Relisted dispatch" },
-  { value: "automated", label: "Carrier (Topship)" },
+  { value: "automated", label: "Carrier booking" },
 ] as const;
 
 const TYPE_FILTER_OPTIONS = TYPE_FILTERS.map((t) => ({
@@ -619,7 +619,7 @@ function ShipmentsPageInner() {
                   <Paragraph1 className="mb-2 font-medium text-gray-700 text-sm">By month</Paragraph1>
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-gray-200 border-b text-left text-gray-500 text-xs uppercase">
+                      <tr className="border-gray-200 border-b text-gray-500 text-xs text-left uppercase">
                         <th className="py-2 pr-2">Month</th>
                         <th className="py-2 pr-2">Shipments</th>
                         <th className="py-2">Cost</th>
@@ -649,7 +649,7 @@ function ShipmentsPageInner() {
                   </Paragraph1>
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-gray-200 border-b text-left text-gray-500 text-xs uppercase">
+                      <tr className="border-gray-200 border-b text-gray-500 text-xs text-left uppercase">
                         <th className="py-2 pr-2">
                           {costProvider !== "all" || costCourier !== "all" ? "Courier" : "Provider"}
                         </th>
@@ -686,10 +686,10 @@ function ShipmentsPageInner() {
       <div className="bg-white mb-6 border border-gray-200 rounded-lg overflow-hidden">
         <div className="px-5 py-4 border-gray-200 border-b">
           <div className="flex flex-wrap items-end gap-3">
-            <AdminFilterField label="Search" className="flex-1 basis-[12rem] min-w-[12rem]">
+            <AdminFilterField label="Search" className="flex-1 min-w-[12rem] basis-[12rem]">
               <div className="relative">
                 <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                  className="top-1/2 left-3 absolute w-4 h-4 text-gray-400 -translate-y-1/2 pointer-events-none"
                   aria-hidden
                 />
                 <input
@@ -867,7 +867,7 @@ function ShipmentsPageInner() {
                               {getShipmentLegDisplayLabel(shipment.type)}
                             </span>
                             {shipment.manualFulfillment && (
-                              <span className="inline-block bg-amber-100 px-2 py-0.5 rounded font-medium text-amber-900 text-[10px] tracking-wide uppercase">
+                              <span className="inline-block bg-amber-100 px-2 py-0.5 rounded font-medium text-[10px] text-amber-900 uppercase tracking-wide">
                                 Relisted dispatch
                               </span>
                             )}
@@ -1125,7 +1125,7 @@ function ShipmentsPageInner() {
                     Relisted dispatch
                   </Paragraph1>
                   <Paragraph1 className="text-amber-900 text-sm leading-relaxed">
-                    This order did not get an automated Topship quote. Arrange pickup or a rider using the addresses below, then mark the shipment as dispatched. The customer is notified with any tracking reference or link you add.
+                    This leg uses Relisted dispatch, so no carrier is booked automatically. Arrange pickup or delivery using the addresses below, then mark the shipment as dispatched. The customer is notified with any tracking reference or link you add.
                   </Paragraph1>
                 </div>
               )}

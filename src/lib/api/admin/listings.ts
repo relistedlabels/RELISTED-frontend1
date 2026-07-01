@@ -6,6 +6,7 @@ export interface ProductStats {
   getApprovedProducts: { count: number; products?: any[] };
   getRejectedProducts: { count: number; products?: any[] };
   getActiveProducts: { count: number; products?: any[] };
+  getRentedProducts?: { count: number; products?: any[] };
 }
 
 export interface ListingCategory {
@@ -193,6 +194,17 @@ export const productsApi = {
     if (params.search?.trim()) searchParams.set("search", params.search.trim());
     return apiFetch<{ success: true; data: PaginatedProductsResponse }>(
       `/api/admin/products/rejected?${searchParams.toString()}`,
+    );
+  },
+
+  // 4b. GET /api/admin/products/rented
+  getRented: (params: { page?: number; count?: number; search?: string }) => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("page", String(params.page ?? 1));
+    searchParams.set("limit", String(params.count ?? 20));
+    if (params.search?.trim()) searchParams.set("search", params.search.trim());
+    return apiFetch<{ success: true; data: PaginatedProductsResponse }>(
+      `/api/admin/products/rented?${searchParams.toString()}`,
     );
   },
 

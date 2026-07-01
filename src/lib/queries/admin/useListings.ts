@@ -61,6 +61,19 @@ export const useActiveProducts = (
     enabled,
   });
 
+export const useRentedProducts = (
+  params: { page?: number; count?: number; search?: string },
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: ["admin", "products", "rented", params],
+    queryFn: () => productsApi.getRented(params),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    placeholderData: (previousData) => previousData,
+    enabled,
+  });
+
 // Approved products use the same endpoint as active for now
 export const useApprovedProducts = (params: {
   page?: number;

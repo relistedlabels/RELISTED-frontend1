@@ -14,7 +14,7 @@ const DeliveryAndReturnDetails: React.FC = () => {
           DELIVERY:
         </Paragraph1>
         <ul className="space-y-1 text-sm text-gray-700 list-disc list-inside">
-          <li>Managed by Topship logistics partner</li>
+          <li>Managed by our delivery partners</li>
           <li>Delivery timelines depend on location and logistics schedules</li>
           <li>Nationwide coverage available</li>
         </ul>
@@ -26,7 +26,7 @@ const DeliveryAndReturnDetails: React.FC = () => {
           RETURNS:
         </Paragraph1>
         <ul className="space-y-1 text-sm text-gray-700 list-disc list-inside">
-          <li>Return through Topship by the rental end date</li>
+          <li>Return through our delivery partner by the rental end date</li>
           <li>Vendor verifies item condition upon return</li>
           <li>Collateral released if no damage is identified</li>
           <li>Late returns: 10% of collateral deducted per day</li>

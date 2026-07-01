@@ -23,7 +23,6 @@ import RentalDurationSelector from "./RentalDurationSelector";
 import RentalSummaryCard from "./RentalSummaryCard";
 import { useSubmitRentalRequest } from "@/lib/mutations/renters/useRentalRequestMutations";
 
-import RentalCartView from "../../cart/components/RentalCartView";
 import { useAddCartItem } from "@/lib/mutations/renters/useAddCartItem";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useAddresses } from "@/lib/queries/renters/useAddresses";
@@ -770,18 +769,45 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
 
               {/* Footer */}
               <div className="bottom-0 sticky flex justify-between gap-4 bg-white mt-auto py-2">
-                <button className="flex-1 hover:bg-gray-50 px-4 py-3 border border-gray-300 rounded-lg font-semibold text-sm transition">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 hover:bg-gray-50 px-4 py-3 border border-gray-300 rounded-lg font-semibold text-sm transition"
+                >
                   <Paragraph1>Shop More </Paragraph1>
                 </button>
 
-                <Link
-                  href="/shop/cart"
-                  className="flex flex-1 justify-center items-center gap-1 bg-black px-4 py- border rounded-lg w-full text-white transition cursor-pointer"
-                >
-                  <Paragraph1> View cart</Paragraph1>
-                </Link>
-
-                {/* <RentalCartView /> */}
+                {summaryData !== null ? (
+                  <Link
+                    href="/shop/cart"
+                    className="flex flex-1 justify-center items-center gap-1 bg-black px-4 py- border rounded-lg w-full text-white transition cursor-pointer"
+                  >
+                    <Paragraph1>View cart</Paragraph1>
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleCheckAvailability}
+                    disabled={isChecking || countdownActive}
+                    className={`flex flex-1 justify-center items-center gap-1 px-4 py-3 border rounded-lg w-full font-semibold text-sm transition ${
+                      isChecking || countdownActive
+                        ? "bg-gray-400 text-white cursor-not-allowed opacity-70"
+                        : "bg-black text-white hover:bg-gray-900"
+                    }`}
+                  >
+                    {isChecking ? (
+                      <>
+                        <Loader2
+                          className="w-4 h-4 animate-spin shrink-0"
+                          aria-hidden
+                        />
+                        <Paragraph1>Checking…</Paragraph1>
+                      </>
+                    ) : (
+                      <Paragraph1>Send request</Paragraph1>
+                    )}
+                  </button>
+                )}
               </div>
             </motion.div>
           </motion.div>

@@ -97,7 +97,7 @@ const TYPE_FILTER_OPTIONS = TYPE_FILTERS.map((t) => ({
 const FULFILLMENT_FILTER_OPTIONS = [
   { value: "all", label: "All fulfillment" },
   { value: "manual", label: "Relisted dispatch" },
-  { value: "automated", label: "Carrier (Topship)" },
+  { value: "automated", label: "Carrier booking" },
 ] as const;
 
 const ORDER_STATUS_FILTER_OPTIONS = ORDER_STATUS_FILTERS.map((status) => ({
