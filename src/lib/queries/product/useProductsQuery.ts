@@ -55,7 +55,7 @@ export const useProductsQuery = () => {
         condition: listingFilters.condition,
         material: listingFilters.material,
         page,
-        limit: 15,
+        limit: 20,
       });
 
       return {
