@@ -8,10 +8,62 @@ import Filters from "../components/Filters";
 import { primaryProductHeroImage } from "@/lib/product/primaryProductHeroImage";
 import { useProductsQuery } from "@/lib/queries/product/useProductsQuery";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
 
+type PaginationItem = number | "ellipsis";
+
+function getPaginationItems(
+  page: number,
+  totalPages: number,
+  siblings: number,
+  maxShowAll: number,
+): PaginationItem[] {
+  if (totalPages <= 1) return [];
+
+  if (totalPages <= maxShowAll) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+
+  const items: PaginationItem[] = [1];
+  const rangeStart = Math.max(2, page - siblings);
+  const rangeEnd = Math.min(totalPages - 1, page + siblings);
+
+  if (rangeStart > 2) {
+    items.push("ellipsis");
+  }
+
+  for (let i = rangeStart; i <= rangeEnd; i++) {
+    items.push(i);
+  }
+
+  if (rangeEnd < totalPages - 1) {
+    items.push("ellipsis");
+  }
+
+  items.push(totalPages);
+  return items;
+}
+
 export default function NewListingsSection() {
+  const [paginationConfig, setPaginationConfig] = useState({
+    siblings: 4,
+    maxShowAll: 10,
+  });
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const update = () =>
+      setPaginationConfig(
+        mq.matches
+          ? { siblings: 2, maxShowAll: 8 }
+          : { siblings: 4, maxShowAll: 10 },
+      );
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -67,7 +119,7 @@ export default function NewListingsSection() {
       <div className="mx-auto container">
         {/* Top Bar */}
         <div
-          className="mb-2 sm:mb-6 flex items-center justify-end gap-4"
+          className="flex justify-end items-center gap-4 mb-2 sm:mb-6"
         >
           <div className="hidden sm:flex items-center gap-4">
             <Filters />
@@ -110,104 +162,59 @@ export default function NewListingsSection() {
 
             {/* Pagination */}
             {pagination && pagination.totalPages > 1 && (
-              <>
-                {/* Mobile: compact controls that fit narrow viewports */}
-                <div className="flex sm:hidden justify-between items-center gap-2 mt-8 w-full max-w-full">
-                  <button
-                    onClick={() => handlePageChange(pagination.page - 1)}
-                    disabled={!pagination.hasPrevious}
-                    className="hover:bg-gray-50 disabled:opacity-50 shrink-0 px-3 py-2 border border-gray-300 rounded text-sm disabled:cursor-not-allowed"
-                  >
-                    Previous
-                  </button>
-                  <span className="px-2 py-2 text-gray-600 text-sm text-center">
-                    Page {pagination.page} of {pagination.totalPages}
-                  </span>
-                  <button
-                    onClick={() => handlePageChange(pagination.page + 1)}
-                    disabled={!pagination.hasNext}
-                    className="hover:bg-gray-50 disabled:opacity-50 shrink-0 px-3 py-2 border border-gray-300 rounded text-sm disabled:cursor-not-allowed"
-                  >
-                    Next
-                  </button>
-                </div>
+              <div className="flex flex-nowrap justify-center items-center gap-1 sm:gap-2 mt-8 w-full min-w-0 max-w-full">
+                <button
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  disabled={!pagination.hasPrevious}
+                  className="hover:bg-gray-50 disabled:opacity-50 px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded text-sm disabled:cursor-not-allowed shrink-0"
+                >
+                  <span className="sm:hidden">Prev</span>
+                  <span className="hidden sm:inline">Previous</span>
+                </button>
 
-                {/* Desktop: ellipsis pagination for many pages */}
-                <div className="hidden sm:flex justify-center items-center flex-wrap gap-2 mt-8 w-full max-w-full">
-                  <button
-                    onClick={() => handlePageChange(pagination.page - 1)}
-                    disabled={!pagination.hasPrevious}
-                    className="hover:bg-gray-50 disabled:opacity-50 px-4 py-2 border border-gray-300 rounded disabled:cursor-not-allowed"
-                  >
-                    Previous
-                  </button>
-
-                  <div className="flex flex-wrap justify-center items-center gap-1">
-                    {Array.from(
-                      { length: pagination.totalPages },
-                      (_, index) => index + 1,
-                    ).map((pageNum) => {
-                      const showPage =
-                        pageNum === 1 ||
-                        pageNum === pagination.totalPages ||
-                        Math.abs(pageNum - pagination.page) <= 1;
-
-                      if (!showPage) {
-                        if (
-                          pageNum === 2 &&
-                          pagination.page > 3
-                        ) {
-                          return (
-                            <span
-                              key="ellipsis-start"
-                              className="px-2 py-2 text-gray-500"
-                            >
-                              ...
-                            </span>
-                          );
-                        }
-                        if (
-                          pageNum === pagination.totalPages - 1 &&
-                          pagination.page < pagination.totalPages - 2
-                        ) {
-                          return (
-                            <span
-                              key="ellipsis-end"
-                              className="px-2 py-2 text-gray-500"
-                            >
-                              ...
-                            </span>
-                          );
-                        }
-                        return null;
-                      }
-
-                      const isActive = pageNum === pagination.page;
+                <div className="flex flex-nowrap justify-center items-center gap-0.5 sm:gap-1 min-w-0 overflow-x-auto">
+                  {getPaginationItems(
+                    pagination.page,
+                    pagination.totalPages,
+                    paginationConfig.siblings,
+                    paginationConfig.maxShowAll,
+                  ).map((item, index) => {
+                    if (item === "ellipsis") {
                       return (
-                        <button
-                          key={pageNum}
-                          onClick={() => handlePageChange(pageNum)}
-                          className={`px-3 py-2 rounded border ${
-                            isActive
-                              ? "bg-black text-white border-black"
-                              : "border-gray-300 hover:bg-gray-50"
-                          }`}
+                        <span
+                          key={`ellipsis-${index}`}
+                          className="px-1 sm:px-2 py-1.5 sm:py-2 text-gray-500 text-sm"
                         >
-                          {pageNum}
-                        </button>
+                          ...
+                        </span>
                       );
-                    })}
-                  </div>
+                    }
 
-                  <button
-                    onClick={() => handlePageChange(pagination.page + 1)}
-                    disabled={!pagination.hasNext}
-                    className="hover:bg-gray-50 disabled:opacity-50 px-4 py-2 border border-gray-300 rounded disabled:cursor-not-allowed"
-                  >
-                    Next
-                  </button>
+                    const isActive = item === pagination.page;
+                    return (
+                      <button
+                        key={item}
+                        onClick={() => handlePageChange(item)}
+                        className={`shrink-0 min-w-7 sm:min-w-0 px-1.5 sm:px-3 py-1.5 sm:py-2 rounded border text-sm ${
+                          isActive
+                            ? "bg-black text-white border-black"
+                            : "border-gray-300 hover:bg-gray-50"
+                        }`}
+                      >
+                        {item}
+                      </button>
+                    );
+                  })}
                 </div>
-              </>
+
+                <button
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  disabled={!pagination.hasNext}
+                  className="hover:bg-gray-50 disabled:opacity-50 px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded text-sm disabled:cursor-not-allowed shrink-0"
+                >
+                  Next
+                </button>
+              </div>
             )}
           </>
         )}
