@@ -8,6 +8,7 @@ import { useUsers } from "@/lib/queries/user/useUsers";
 import { UserCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import Link from "next/link";
 import Image from "next/image";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 export default function AllListersPage() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -137,10 +138,15 @@ export default function AllListersPage() {
                     {/* Profile Image */}
                     <div className="relative w-full h-[150px] sm:h-[150px] overflow-hidden rounded-full [40px] mb-4 bg-gray-200">
                       <Image
-                        src={user.avatar || "/images/default-avatar.jpg"}
+                        src={
+                          cloudinaryOptimizedImageUrl(user.avatar, {
+                            preset: "card",
+                          }) || "/images/default-avatar.jpg"
+                        }
                         alt={user.name || "Lister"}
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        unoptimized
                       />
                       {/* Overlay on hover */}
                       <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">

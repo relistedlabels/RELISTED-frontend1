@@ -41,6 +41,7 @@ import {
 } from "@/lib/vaultClosetSaleDates";
 import { getProductPreSaleCta } from "@/lib/shopSale/productSale";
 import { getTodayInLagos } from "@/lib/checkout/dispatchWindows";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 interface UserProfileProps {
   name: string;
@@ -60,7 +61,11 @@ const UserProfile: React.FC<UserProfileProps> = ({
       {/* Placeholder for User Image */}
       <div className="flex justify-center items-center bg-gray-200 rounded-full w-10 h-10 overflow-hidden">
         {avatar ? (
-          <img src={avatar} alt={name} className="w-full h-full object-cover" />
+          <img
+            src={cloudinaryOptimizedImageUrl(avatar, { preset: "thumb" })}
+            alt={name}
+            className="w-full h-full object-cover"
+          />
         ) : (
           <span className="text-gray-500 text-xl">👤</span>
         )}

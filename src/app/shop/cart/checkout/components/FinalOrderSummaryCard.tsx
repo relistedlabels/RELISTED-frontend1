@@ -22,6 +22,7 @@ import { useListerProfile } from "@/lib/queries/shop/useListerProfile";
 import { toast } from "sonner";
 import { isResaleItem } from "@/lib/listers/listerOrderRow";
 import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 import type {
   DispatchWindowSelectionMap,
   DispatchWindowsPayload,
@@ -106,10 +107,12 @@ const ListerOrderCard = memo(
         <div className="space-y-4 pb-6 border-gray-200 border-b">
           {group.items.map((item) => {
             const product = item.productDetail || {};
-            const productImageUrl =
+            const productImageUrl = cloudinaryOptimizedImageUrl(
               firstProductAttachmentImageUrl(product.attachments?.uploads) ||
-              item.productImage ||
-              "";
+                item.productImage ||
+                "",
+              { preset: "thumb" },
+            );
 
             return (
               <div
@@ -123,6 +126,7 @@ const ListerOrderCard = memo(
                       alt={product.name || item.productName}
                       fill
                       className="object-cover"
+                      unoptimized
                     />
                   )}
                 </div>

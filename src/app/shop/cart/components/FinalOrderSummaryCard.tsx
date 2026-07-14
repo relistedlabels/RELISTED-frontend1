@@ -12,6 +12,7 @@ import { useListerProfile } from "@/lib/queries/shop/useListerProfile";
 import { isResaleItem } from "@/lib/listers/listerOrderRow";
 import { isLineRentalApproved } from "@/lib/cart/rentalRequestUi";
 import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 const CURRENCY = "₦";
 
@@ -107,10 +108,12 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
             item.isResale === true || isResaleItem(item);
           const isApproved = isLineRentalApproved(item.status);
           // Try productDetail image, fallback to rental request image
-          const productImageUrl =
+          const productImageUrl = cloudinaryOptimizedImageUrl(
             firstProductAttachmentImageUrl(product.attachments?.uploads) ||
-            item.productImage ||
-            "";
+              item.productImage ||
+              "",
+            { preset: "thumb" },
+          );
           const rowKey =
             item.requestId ||
             item.cartItemId ||
@@ -126,6 +129,7 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
                     alt={product.name || item.productName}
                     fill
                     className="object-cover"
+                    unoptimized
                   />
                 ) : null}
               </div>

@@ -20,6 +20,7 @@ import { useProfile as useRenterProfile } from "@/lib/queries/renters/useProfile
 import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { Paragraph1 } from "../ui/Text";
 import LogoutConfirmModal from "./LogoutConfirmModal";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 interface MobileAuthActionsProps {
   onClose?: () => void;
@@ -139,7 +140,9 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
             <div className="flex justify-center items-center bg-gradient-to-br from-gray-600 to-gray-800 rounded-full w-10 h-10 overflow-hidden">
               {userAvatar ? (
                 <img
-                  src={userAvatar}
+                  src={cloudinaryOptimizedImageUrl(userAvatar, {
+                    preset: "thumb",
+                  })}
                   alt={user.name}
                   className="w-full h-full object-cover"
                 />

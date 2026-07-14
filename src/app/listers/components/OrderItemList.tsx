@@ -12,6 +12,7 @@ import {
   normalizeListerOrderStatusKey,
 } from "@/lib/listers/listerOrderStatus";
 import { isResaleItem } from "@/lib/listers/listerOrderRow";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 // --- Types & Mock Data ---
 interface OrderedItem {
@@ -82,11 +83,16 @@ const OrderItemList: React.FC<OrderItemListProps> = ({
                   <div className="relative bg-gray-50 rounded-lg w-12 sm:w-16 h-16 overflow-hidden shrink-0">
                     <div className="absolute inset-0 bg-[#F6F6F6]" />
                     <Image
-                      src={item.image || ORDER_ITEM_IMAGE_FALLBACK}
+                      src={
+                        cloudinaryOptimizedImageUrl(item.image, {
+                          preset: "thumb",
+                        }) || ORDER_ITEM_IMAGE_FALLBACK
+                      }
                       alt={item.name ?? "Order item"}
                       fill
                       sizes="(max-width: 640px) 48px, 64px"
                       className="object-contain"
+                      unoptimized
                     />
                   </div>
                   <div className="flex flex-col">

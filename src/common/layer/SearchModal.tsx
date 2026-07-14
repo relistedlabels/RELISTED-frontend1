@@ -10,6 +10,7 @@ import { usePublicSearch } from "@/lib/queries/search/usePublicSearch";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 export default function SearchModal() {
   const [open, setOpen] = useState(false);
@@ -187,11 +188,16 @@ export default function SearchModal() {
                             >
                               <div className="bg-gray-200 rounded-md w-12 h-12 overflow-hidden shrink-0">
                                 <Image
-                                  src={item.image || "/placeholder.jpg"}
+                                  src={
+                                    cloudinaryOptimizedImageUrl(item.image, {
+                                      preset: "thumb",
+                                    }) || "/placeholder.jpg"
+                                  }
                                   alt={item.name}
                                   width={48}
                                   height={48}
                                   className="w-full h-full object-cover"
+                                  unoptimized
                                 />
                               </div>
                               <div className="flex-1 min-w-0">
@@ -231,13 +237,15 @@ export default function SearchModal() {
                               <div className="bg-gray-200 rounded-full w-12 h-12 overflow-hidden shrink-0">
                                 <Image
                                   src={
-                                    lister.avatar ||
-                                    "/images/default-avatar.jpg"
+                                    cloudinaryOptimizedImageUrl(lister.avatar, {
+                                      preset: "thumb",
+                                    }) || "/images/default-avatar.jpg"
                                   }
                                   alt={lister.name}
                                   width={48}
                                   height={48}
                                   className="w-full h-full object-cover"
+                                  unoptimized
                                 />
                               </div>
                               <div className="flex-1 min-w-0">

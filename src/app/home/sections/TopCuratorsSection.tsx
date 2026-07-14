@@ -158,7 +158,7 @@ export default function TopCuratorsSection() {
                 key={`${curator.name}-${index}`}
                 className="min-w-[200px] sm:min-w-[345px] h-[270px] sm:h-[435px] overflow-hidden relative shadow-md "
                 style={{
-                  backgroundImage: `url("${cloudinaryOptimizedImageUrl(curator.image, { maxWidth: 900 })}")`,
+                  backgroundImage: `url("${cloudinaryOptimizedImageUrl(curator.image, { preset: "card" })}")`,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                 }}

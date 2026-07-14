@@ -1,6 +1,7 @@
 "use client";
 
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 export interface OrderItemDetail {
   id: string;
@@ -41,7 +42,9 @@ export default function OrderItemsSection({
           >
             {item.image ? (
               <img
-                src={item.image}
+                src={cloudinaryOptimizedImageUrl(item.image, {
+                  preset: "thumb",
+                })}
                 alt={item.name}
                 className="w-16 h-16 rounded-lg object-cover shrink-0"
               />

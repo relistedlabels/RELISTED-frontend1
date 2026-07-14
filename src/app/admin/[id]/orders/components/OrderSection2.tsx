@@ -3,6 +3,7 @@
 
 import React from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 const defaultAvatar = (name: string) =>
   `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`;
@@ -44,7 +45,11 @@ export default function OrderSection2({
       </Paragraph3>
       <div className="flex items-start gap-3">
         <img
-          src={person.avatar || defaultAvatar(person.name)}
+          src={
+            person.avatar
+              ? cloudinaryOptimizedImageUrl(person.avatar, { preset: "thumb" })
+              : defaultAvatar(person.name)
+          }
           alt={person.name}
           className="w-12 h-12 rounded-full object-cover shrink-0"
         />

@@ -17,6 +17,7 @@ import {
 import type { CartCheckoutLine } from "../types";
 import { isResaleItem } from "@/lib/listers/listerOrderRow";
 import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 // --- Formatting Helper (for thousands separator) ---
 const formatCurrency = (amount: number): string => {
@@ -316,8 +317,9 @@ export default function CheckoutProductList({
             originalValue?: number;
             collateralPrice?: number;
           };
-          const thumbUrl = firstProductAttachmentImageUrl(
-            product.attachments?.uploads,
+          const thumbUrl = cloudinaryOptimizedImageUrl(
+            firstProductAttachmentImageUrl(product.attachments?.uploads),
+            { preset: "thumb" },
           );
           const deposit = item.isResale
             ? 0
@@ -360,6 +362,7 @@ export default function CheckoutProductList({
                       alt={product.name || item.productName || "Product"}
                       fill
                       className="object-cover"
+                      unoptimized
                     />
                   ) : null}
                 </div>

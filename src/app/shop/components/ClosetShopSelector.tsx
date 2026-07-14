@@ -7,11 +7,12 @@ import { Paragraph1 } from "@/common/ui/Text";
 import { usePublicClosets } from "@/lib/queries/closet/usePublicClosets";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { PublicClosetDetail } from "@/lib/api/closet";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 function closetThumb(closet: PublicClosetDetail): string | null {
-  if (closet.imageUrl?.trim()) return closet.imageUrl.trim();
-  if (closet.owner.avatar?.trim()) return closet.owner.avatar.trim();
-  return null;
+  const raw = closet.imageUrl?.trim() || closet.owner.avatar?.trim() || null;
+  if (!raw) return null;
+  return cloudinaryOptimizedImageUrl(raw, { preset: "thumb" }) || null;
 }
 
 function closetLabel(closet: PublicClosetDetail): string {

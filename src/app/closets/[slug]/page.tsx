@@ -8,6 +8,7 @@ import { Header1Plus, Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import { closetApi } from "@/lib/api/closet";
 import { primaryProductHeroImage } from "@/lib/product/primaryProductHeroImage";
 import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 export default function PublicClosetPage() {
   const params = useParams();
@@ -68,7 +69,9 @@ export default function PublicClosetPage() {
           {meta.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={meta.imageUrl}
+              src={cloudinaryOptimizedImageUrl(meta.imageUrl, {
+                preset: "thumb",
+              })}
               alt=""
               className="border border-gray-200 rounded-full w-20 h-20 object-cover"
             />

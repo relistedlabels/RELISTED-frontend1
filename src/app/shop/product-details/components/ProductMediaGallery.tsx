@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, X, Play } from "lucide-react";
 import { usePublicProductById } from "@/lib/queries/product/usePublicProductById";
 import { orderedProductImageUrls } from "@/lib/product/sortProductAttachmentUploads";
 import { CardGridSkeleton } from "@/common/ui/SkeletonLoaders";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 interface ProductMediaGalleryProps {
   productId: string;
@@ -64,7 +65,9 @@ const ProductMediaGallery: React.FC<ProductMediaGalleryProps> = ({
           {activeItem.type === "image" ? (
             <motion.img
               key={activeItem.src}
-              src={activeItem.src}
+              src={cloudinaryOptimizedImageUrl(activeItem.src, {
+                preset: "detail",
+              })}
               alt="Product"
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -127,7 +130,7 @@ const ProductMediaGallery: React.FC<ProductMediaGalleryProps> = ({
             }`}
           >
             <img
-              src={item.src}
+              src={cloudinaryOptimizedImageUrl(item.src, { preset: "thumb" })}
               alt={`Thumbnail ${idx + 1}`}
               className="w-full h-full object-cover"
             />
@@ -157,7 +160,9 @@ const ProductMediaGallery: React.FC<ProductMediaGalleryProps> = ({
               </button>
 
               <img
-                src={activeItem.src}
+                src={cloudinaryOptimizedImageUrl(activeItem.src, {
+                  preset: "detail",
+                })}
                 alt="Product fullscreen"
                 className="w-full h-auto max-h-screen object-contain"
               />
