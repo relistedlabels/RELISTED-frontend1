@@ -104,9 +104,9 @@ function DetailRow({
   value: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1 py-3 border-gray-100 border-b last:border-0 sm:flex-row sm:justify-between sm:gap-4">
-      <Paragraph1 className="shrink-0 text-gray-500 text-sm">{label}</Paragraph1>
-      <div className="sm:text-right text-gray-900 text-sm">{value}</div>
+    <div className="flex sm:flex-row flex-col sm:justify-between gap-1 sm:gap-4 py-3 border-gray-100 last:border-0 border-b">
+      <Paragraph1 className="text-gray-500 text-sm shrink-0">{label}</Paragraph1>
+      <div className="text-gray-900 text-sm sm:text-right">{value}</div>
     </div>
   );
 }
@@ -125,26 +125,11 @@ function PersonBlock({
     <DetailRow
       label={label}
       value={
-        <div className="flex sm:justify-end items-center gap-2">
-          <div className="flex justify-center items-center bg-gray-200 rounded-full w-8 h-8 overflow-hidden shrink-0">
-            {person.avatar ? (
-              <img
-                src={person.avatar}
-                alt={person.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="font-semibold text-gray-600 text-xs">
-                {person.name.slice(0, 2).toUpperCase()}
-              </span>
-            )}
-          </div>
-          <div>
-            <Paragraph1 className="font-medium text-sm">{person.name}</Paragraph1>
-            <Paragraph1 className="text-gray-500 text-xs">
-              {person.email || "No email"}
-            </Paragraph1>
-          </div>
+        <div>
+          <Paragraph1 className="font-medium text-sm">{person.name}</Paragraph1>
+          <Paragraph1 className="text-gray-500 text-xs">
+            {person.email || "No email"}
+          </Paragraph1>
         </div>
       }
     />
@@ -210,12 +195,12 @@ export default function RequestDetailModal({
             transition={{ duration: 0.3, ease: "easeOut" }}
             className="top-0 right-0 bottom-0 z-50 fixed flex flex-col bg-white shadow-lg w-full md:w-[520px]"
           >
-            <div className="shrink-0 bg-white p-6 border-gray-200 border-b">
+            <div className="bg-white p-6 border-gray-200 border-b shrink-0">
               <div className="flex justify-between items-start gap-4">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="shrink-0 -ml-1 p-1 text-gray-400 hover:text-gray-600 transition"
+                  className="-ml-1 p-1 text-gray-400 hover:text-gray-600 transition shrink-0"
                 >
                   <X size={20} />
                 </button>
@@ -223,7 +208,7 @@ export default function RequestDetailModal({
                   <Paragraph3 className="mb-1 font-bold text-gray-900 text-lg">
                     Request details
                   </Paragraph3>
-                  <Paragraph1 className="text-gray-500 text-xs font-mono">
+                  <Paragraph1 className="font-mono text-gray-500 text-xs">
                     {requestId}
                   </Paragraph1>
                 </div>
@@ -249,7 +234,7 @@ export default function RequestDetailModal({
                       url={request.product?.image ?? null}
                       alt={request.product?.name}
                     />
-                    <div className="min-w-0 flex-1">
+                    <div className="flex-1 min-w-0">
                       <Paragraph2 className="font-semibold text-gray-900">
                         {request.product?.name || "Unknown item"}
                       </Paragraph2>
@@ -314,6 +299,8 @@ export default function RequestDetailModal({
                         label="Expires"
                         value={formatDateTime(request.expiresAt)}
                       />
+                      <PersonBlock label="Renter" person={request.requester} />
+                      <PersonBlock label="Lister" person={request.lister} />
                       {request.rejectionReason && (
                         <DetailRow
                           label="Rejection reason"
@@ -325,31 +312,26 @@ export default function RequestDetailModal({
 
                   <div>
                     <Paragraph3 className="mb-2 font-semibold text-gray-900">
-                      People
+                      Shipment Windows
                     </Paragraph3>
                     <div className="bg-gray-50 px-4 rounded-xl">
-                      <PersonBlock label="Renter" person={request.requester} />
-                      <PersonBlock label="Lister" person={request.lister} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Paragraph3 className="mb-2 font-semibold text-gray-900">
-                      Windows
-                    </Paragraph3>
-                    <div className="bg-gray-50 px-4 rounded-xl">
-                      <DetailRow
-                        label="Outbound delivery"
-                        value={formatWindow(request.windows.outbound)}
-                      />
-                      <DetailRow
-                        label="Return pickup"
-                        value={formatWindow(request.windows.return)}
-                      />
-                      <DetailRow
-                        label="Resale delivery"
-                        value={formatWindow(request.windows.resale)}
-                      />
+                      {request.requestType === "rental" ? (
+                        <>
+                          <DetailRow
+                            label="Rental delivery"
+                            value={formatWindow(request.windows.outbound)}
+                          />
+                          <DetailRow
+                            label="Return pickup"
+                            value={formatWindow(request.windows.return)}
+                          />
+                        </>
+                      ) : (
+                        <DetailRow
+                          label="Resale delivery"
+                          value={formatWindow(request.windows.resale)}
+                        />
+                      )}
                     </div>
                   </div>
                 </>
@@ -357,7 +339,7 @@ export default function RequestDetailModal({
             </div>
 
             {request && (
-              <div className="shrink-0 bg-white px-6 pt-4 pb-6 sm:pb-8 border-gray-200 border-t shadow-[0_-4px_12px_rgba(0,0,0,0.04)]">
+              <div className="bg-white shadow-[0_-4px_12px_rgba(0,0,0,0.04)] px-6 pt-4 pb-6 sm:pb-8 border-gray-200 border-t shrink-0">
                 {(actionError || actionSuccess) && (
                   <div
                     className={`mb-3 rounded-lg px-3 py-2 text-sm ${
@@ -378,7 +360,7 @@ export default function RequestDetailModal({
                       nudgeMutation.reset();
                       resendMutation.mutate(request.id);
                     }}
-                    className="flex justify-center items-center gap-2 bg-black hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2.5 rounded-lg font-medium text-white text-sm transition"
+                    className="flex justify-center items-center gap-2 bg-black hover:bg-gray-800 disabled:opacity-40 px-4 py-2.5 rounded-lg font-medium text-white text-sm transition disabled:cursor-not-allowed"
                   >
                     <RefreshCw size={16} />
                     {resendMutation.isPending
@@ -396,7 +378,7 @@ export default function RequestDetailModal({
                         intent: "now_available",
                       });
                     }}
-                    className="flex justify-center items-center gap-2 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2.5 border border-gray-200 rounded-lg font-medium text-gray-800 text-sm transition"
+                    className="flex justify-center items-center gap-2 hover:bg-gray-50 disabled:opacity-40 px-4 py-2.5 border border-gray-200 rounded-lg font-medium text-gray-800 text-sm transition disabled:cursor-not-allowed"
                   >
                     <Bell size={16} />
                     {nudgeMutation.isPending
