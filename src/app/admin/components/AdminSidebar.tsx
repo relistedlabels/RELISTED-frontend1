@@ -18,6 +18,7 @@ import {
   HiOutlineTruck,
   HiOutlineRectangleStack,
   HiOutlineBuildingStorefront,
+  HiOutlineClipboardDocumentList,
 } from "react-icons/hi2";
 import { Paragraph1 } from "@/common/ui/Text";
 import { settingsApi } from "@/lib/api/admin/settings";
@@ -57,6 +58,13 @@ const getNavItems = (): NavItem[] => [
     label: "Shop",
     icon: HiOutlineBuildingStorefront,
     getHref: (id) => `/admin/${id}/shop`,
+    showNewBadge: true,
+  },
+  {
+    id: "requests",
+    label: "Requests",
+    icon: HiOutlineClipboardDocumentList,
+    getHref: (id) => `/admin/${id}/requests`,
     showNewBadge: true,
   },
   {
