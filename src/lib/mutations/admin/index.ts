@@ -3,6 +3,7 @@ import {
   adminSiteFeaturesApi,
   adminShopSalesApi,
   adminVaultClosetSaleWaitlistApi,
+  availabilityRequestsApi,
   disputesApi,
   ordersApi,
   settingsApi,
@@ -432,6 +433,46 @@ export const useNotifyShopSaleWaitlist = () => {
     onSuccess: (_, saleId) => {
       queryClient.invalidateQueries({
         queryKey: ["admin", "shop-sales", saleId, "waitlist"],
+      });
+    },
+  });
+};
+
+export const useNudgeAvailabilityRequestRenter = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      requestId,
+      intent,
+    }: {
+      requestId: string;
+      intent: "rerequest" | "now_available";
+    }) => availabilityRequestsApi.nudgeRenter(requestId, intent),
+    onSuccess: (_, { requestId }) => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "availability-requests", requestId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "availability-requests"],
+      });
+    },
+  });
+};
+
+export const useResendAvailabilityRequestToLister = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (requestId: string) =>
+      availabilityRequestsApi.resendToLister(requestId),
+    onSuccess: (_, requestId) => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "availability-requests", requestId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "availability-requests"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "availability-requests", "stats"],
       });
     },
   });

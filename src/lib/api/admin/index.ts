@@ -8,6 +8,7 @@ export { adminClosetsApi } from "./closets";
 export { adminVaultClosetSaleWaitlistApi } from "./vaultClosetSaleWaitlist";
 export { adminSiteFeaturesApi } from "./siteFeatures";
 export { adminShopSalesApi } from "./shopSales";
+export { availabilityRequestsApi } from "./availabilityRequests";
 
 // Type exports
 export type {
@@ -50,3 +51,9 @@ export type {
   AdminClosetProductRow,
 } from "./closets";
 export type { AdminSiteFeatures } from "./siteFeatures";
+export type {
+  AvailabilityRequest,
+  AvailabilityRequestStats,
+  AvailabilityRequestStatus,
+  AvailabilityRequestType,
+} from "./availabilityRequests";
