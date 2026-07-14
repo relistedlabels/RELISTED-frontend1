@@ -130,6 +130,11 @@ function PersonBlock({
           <Paragraph1 className="text-gray-500 text-xs">
             {person.email || "No email"}
           </Paragraph1>
+          {person.phone?.trim() ? (
+            <Paragraph1 className="text-gray-500 text-xs">
+              {person.phone.trim()}
+            </Paragraph1>
+          ) : null}
         </div>
       }
     />
