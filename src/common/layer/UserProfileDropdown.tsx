@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import LogoutConfirmModal from "./LogoutConfirmModal";
 import { useLogout } from "@/lib/mutations";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 interface UserProfileDropdownProps {
   userName: string | null;
@@ -116,7 +117,7 @@ export default function UserProfileDropdown({
         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold flex-shrink-0">
           {userAvatar ? (
             <img
-              src={userAvatar}
+              src={cloudinaryOptimizedImageUrl(userAvatar, { preset: "thumb" })}
               alt={userName || "User"}
               className="w-full h-full rounded-full object-cover"
             />

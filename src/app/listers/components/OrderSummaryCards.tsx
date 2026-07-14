@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { Calendar } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { isResaleItem } from "@/lib/listers/listerOrderRow";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 interface OrderSummaryCardsProps {
   orderData?: any;
@@ -48,10 +49,15 @@ const OrderSummaryCards: React.FC<OrderSummaryCardsProps> = ({
             {/* Image Container */}
             <div className="relative bg-[#F6F6F6] rounded-xl w-32 h-44 overflow-hidden shrink-0">
               <Image
-                src={product.image || "/products/p4.jpg"}
+                src={
+                  cloudinaryOptimizedImageUrl(product.image, {
+                    preset: "card",
+                  }) || "/products/p4.jpg"
+                }
                 alt={product.name || "Product"}
                 fill
                 className="object-cover"
+                unoptimized
               />
             </div>
 

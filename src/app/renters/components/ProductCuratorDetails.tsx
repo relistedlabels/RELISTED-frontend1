@@ -4,6 +4,7 @@ import React from "react";
 import { ChevronDown, Package } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { isListerResaleOrder } from "@/lib/listers/listerOrderRow";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 const formatCurrency = (amount: number | undefined): string => {
   if (amount === undefined || amount === null) return "0";
@@ -167,7 +168,9 @@ export default function ProductCuratorDetails({
                 <div className="relative h-16 w-14 shrink-0 overflow-hidden rounded-lg bg-gray-100">
                   {line.imageUrl ? (
                     <img
-                      src={line.imageUrl}
+                      src={cloudinaryOptimizedImageUrl(line.imageUrl, {
+                        preset: "thumb",
+                      })}
                       alt={line.name || "Product"}
                       className="h-full w-full object-cover"
                     />
@@ -209,7 +212,13 @@ export default function ProductCuratorDetails({
         <div className="flex items-center gap-2.5 border-t border-gray-100 px-3 py-2.5">
           <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200">
             {listerAvatar ? (
-              <img src={listerAvatar} alt="" className="h-full w-full object-cover" />
+              <img
+                src={cloudinaryOptimizedImageUrl(listerAvatar, {
+                  preset: "thumb",
+                })}
+                alt=""
+                className="h-full w-full object-cover"
+              />
             ) : (
               <span className="text-[10px] font-bold text-gray-600">
                 {listerName.charAt(0) || "L"}

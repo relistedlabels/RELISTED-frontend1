@@ -26,6 +26,7 @@ import { useSubscribeProductNotifyWhenAvailable } from "@/lib/mutations/renters/
 import { usePublicSiteFeatures } from "@/lib/queries/site/useSiteFeatures";
 import { publicProductHasCloset } from "@/lib/vaultClosetSaleDates";
 import { getProductPreSaleCta } from "@/lib/shopSale/productSale";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 // ============================================================================
 // API ENDPOINTS USED:
@@ -55,7 +56,11 @@ const UserProfile: React.FC<UserProfileProps> = ({
       {/* Placeholder for User Image */}
       <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
         {avatar ? (
-          <img src={avatar} alt={name} className="w-full h-full object-cover" />
+          <img
+            src={cloudinaryOptimizedImageUrl(avatar, { preset: "thumb" })}
+            alt={name}
+            className="w-full h-full object-cover"
+          />
         ) : (
           <span className="text-xl text-gray-500">👤</span>
         )}

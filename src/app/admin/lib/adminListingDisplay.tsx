@@ -2,6 +2,7 @@
 
 import React from "react";
 import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 /** Admin product rows return Prisma-shaped payloads from GET /api/admin/products/*. */
 export function listingThumbnailUrl(product: {
@@ -57,7 +58,7 @@ export function AdminListingThumb({
   }
   return (
     <img
-      src={url}
+      src={cloudinaryOptimizedImageUrl(url, { preset: "thumb" })}
       alt={alt || "Product"}
       className="w-16 h-16 rounded object-cover"
       onError={(e) => {
@@ -82,7 +83,7 @@ export function AdminCuratorAvatar({
     >
       {url ? (
         <img
-          src={url}
+          src={cloudinaryOptimizedImageUrl(url, { preset: "thumb" })}
           alt={name || "Curator"}
           className="w-full h-full object-cover"
           onError={(e) => {

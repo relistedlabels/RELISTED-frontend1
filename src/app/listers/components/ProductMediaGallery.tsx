@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, X, Play } from "lucide-react";
 import { useProductDetailsStore } from "@/store/useProductDetailsStore";
 import { sortProductAttachmentUploads } from "@/lib/product/sortProductAttachmentUploads";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 interface MediaItem {
   type: "image" | "video";
@@ -52,7 +53,9 @@ const ProductMediaGallery: React.FC = () => {
           {activeItem.type === "image" ? (
             <motion.img
               key={activeItem.src}
-              src={activeItem.src}
+              src={cloudinaryOptimizedImageUrl(activeItem.src, {
+                preset: "detail",
+              })}
               alt="Product"
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -92,7 +95,7 @@ const ProductMediaGallery: React.FC = () => {
             >
               {item.type === "image" ? (
                 <img
-                  src={item.src}
+                  src={cloudinaryOptimizedImageUrl(item.src, { preset: "thumb" })}
                   alt="Thumbnail"
                   className="w-full h-full object-cover"
                 />
@@ -134,7 +137,9 @@ const ProductMediaGallery: React.FC = () => {
               {activeItem.type === "image" ? (
                 <motion.img
                   key={activeItem.src}
-                  src={activeItem.src}
+                  src={cloudinaryOptimizedImageUrl(activeItem.src, {
+                    preset: "detail",
+                  })}
                   alt="Preview"
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}

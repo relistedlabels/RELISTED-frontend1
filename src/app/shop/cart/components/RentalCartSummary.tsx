@@ -14,6 +14,7 @@ import {
   rentalLineIsEffectivelyExpired,
   shouldShowRentalRequestTimer,
 } from "@/lib/cart/rentalRequestUi";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 // --- Formatting Helper (for thousands separator) ---
 const formatCurrency = (amount: number): string => {
@@ -132,10 +133,13 @@ export default function RentalCartSummary() {
             <div className="relative bg-gray-200 border border-gray-100 rounded-md w-16 h-16 overflow-hidden shrink-0">
               {item.productImage && (
                 <Image
-                  src={item.productImage}
+                  src={cloudinaryOptimizedImageUrl(item.productImage, {
+                    preset: "thumb",
+                  })}
                   alt={item.productName}
                   fill
                   className="object-cover"
+                  unoptimized
                 />
               )}
             </div>

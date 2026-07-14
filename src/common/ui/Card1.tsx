@@ -10,7 +10,7 @@ interface Card1Props {
 }
 
 export default function Card1({ image, name, role }: Card1Props) {
-  const heroSrc = cloudinaryOptimizedImageUrl(image, { maxWidth: 800 });
+  const heroSrc = cloudinaryOptimizedImageUrl(image, { preset: "card" });
   return (
     <div className="min-w-[260px] max-w-[260px] overflow-hidden bg-white  ">
       {/* Image as background */}

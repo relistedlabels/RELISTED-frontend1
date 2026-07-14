@@ -108,9 +108,9 @@ export default function ProductCard({
   };
 
   const isDimmed = isSold || isRentedOut;
-  const heroSrc = cloudinaryOptimizedImageUrl(image, { maxWidth: 800 });
+  const heroSrc = cloudinaryOptimizedImageUrl(image, { preset: "card" });
   const closetSrc = closetImage
-    ? cloudinaryOptimizedImageUrl(closetImage, { maxWidth: 128 })
+    ? cloudinaryOptimizedImageUrl(closetImage, { preset: "thumb" })
     : null;
 
   return (
@@ -194,6 +194,7 @@ export default function ProductCard({
                     alt={closetOwner}
                     fill
                     className="object-cover"
+                    unoptimized
                   />
                 ) : (
                   <span className="flex justify-center items-center w-full h-full font-bold text-[9px] text-gray-600">

@@ -1,6 +1,7 @@
 "use client";
 
 import { Paragraph1 } from "@/common/ui/Text";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 export type ReturnPackageItem = { name: string; imageUrl?: string | null };
 
@@ -20,7 +21,9 @@ export function ReturnPackageItems({
         >
           {item.imageUrl ? (
             <img
-              src={item.imageUrl}
+              src={cloudinaryOptimizedImageUrl(item.imageUrl, {
+                preset: "thumb",
+              })}
               alt={item.name}
               className="h-14 w-14 shrink-0 rounded-md object-cover"
             />

@@ -12,6 +12,7 @@ import {
 } from "react-icons/hi2";
 import * as Yup from "yup";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { isPublicBrowseRoute } from "@/lib/auth/signInRedirectPaths";
 import { useLogin, useResendOtp } from "@/lib/mutations";
 import { useUserStore } from "@/store/useUserStore";
 import SocialSignInOptions from "./SocialSignInOptions";
@@ -64,9 +65,17 @@ const SignInForm: React.FC = () => {
                 } else {
                   const params = new URLSearchParams(window.location.search);
                   const redirectUrl = params.get("redirect");
-                  if (redirectUrl) {
+                  const isLister = state.role === "LISTER";
+                  const honorRedirect =
+                    redirectUrl &&
+                    !(
+                      isLister &&
+                      isPublicBrowseRoute(redirectUrl.split("?")[0] || "")
+                    );
+
+                  if (honorRedirect) {
                     window.location.href = redirectUrl;
-                  } else if (state.role === "LISTER") {
+                  } else if (isLister) {
                     window.location.href = "/listers/dashboard";
                   } else {
                     window.location.href = "/";
