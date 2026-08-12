@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 import { OnboardingShell } from "./OnboardingShell";
 import { OnboardingHowItWorksSteps } from "./OnboardingHowItWorksSteps";
+import { OnboardingInfoPanel } from "./OnboardingInfoPanel";
 import { RenterRentOrBuyCards } from "./RenterRentOrBuyCards";
 import { OnboardingPreferenceChips } from "./OnboardingPreferenceChips";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
@@ -115,21 +116,13 @@ export function RenterOnboardingFlow() {
       ) : null}
 
       {step === 3 ? (
-        <div className="space-y-4">
-          <div className="flex justify-center items-center bg-blue-50 mx-auto border border-blue-200 rounded-full w-14 h-14">
-            <ShieldCheck className="w-7 h-7 text-blue-600" />
-          </div>
-          <Paragraph1 className="text-gray-600 text-sm text-center leading-relaxed">
-            Add BVN and ID now, or verify at checkout.
-          </Paragraph1>
-          <button
-            type="button"
-            onClick={() => router.push("/renters/account")}
-            className="py-3 border-2 border-gray-800 rounded-lg w-full font-semibold text-gray-900 text-sm hover:bg-gray-50 transition"
-          >
-            Verify now
-          </button>
-        </div>
+        <OnboardingInfoPanel
+          icon={ShieldCheck}
+          body="We verify renters so listers can share with confidence."
+          footnote="Add BVN and ID in Account, or verify at checkout when you are ready."
+          iconClassName="w-7 h-7 text-blue-600"
+          iconWrapClassName="bg-blue-50 border-blue-200"
+        />
       ) : null}
 
       {step === 4 ? (

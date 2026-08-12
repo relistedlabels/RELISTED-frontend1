@@ -6,26 +6,27 @@ import { onboardingStepIconMap } from "./onboardingStepIcons";
 
 export function ListerSaleTypeCards() {
   return (
-    <div className="gap-3 grid grid-cols-1 sm:grid-cols-3">
+    <div className="space-y-3">
       {listerSaleTypeOptions.map((option) => {
         const Icon = onboardingStepIconMap[option.icon];
         return (
           <div
             key={option.id}
-            className="flex flex-col items-center p-4 border-2 border-gray-200 rounded-lg text-center"
+            className="p-4 border-2 border-gray-200 rounded-xl"
           >
-            <div className="flex justify-center items-center bg-gray-100 mb-3 rounded-full w-10 h-10">
-              <Icon className="w-5 h-5 text-gray-800" aria-hidden />
+            <div className="flex items-start gap-3">
+              <div className="flex flex-shrink-0 justify-center items-center bg-gray-100 rounded-full w-10 h-10">
+                <Icon className="w-5 h-5 text-gray-800" aria-hidden />
+              </div>
+              <div className="min-w-0">
+                <Paragraph1 className="font-semibold text-gray-900 text-sm leading-snug">
+                  {option.title}
+                </Paragraph1>
+                <Paragraph3 className="mt-1 text-gray-600 text-xs leading-relaxed">
+                  {option.description}
+                </Paragraph3>
+              </div>
             </div>
-            <Paragraph1 className="font-semibold text-[15px]">
-              {option.title}
-            </Paragraph1>
-            <Paragraph3 className="mt-1 text-gray-500 text-xs">
-              {option.subtitle}
-            </Paragraph3>
-            <Paragraph3 className="mt-2 text-gray-600 text-xs leading-relaxed">
-              {option.description}
-            </Paragraph3>
           </div>
         );
       })}
