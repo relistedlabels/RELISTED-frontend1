@@ -1,36 +1,39 @@
 "use client";
 
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
-
-type Step = {
-  title: string;
-  description: string;
-};
+import type { OnboardingStep } from "@/lib/onboarding/copy";
+import { onboardingStepIconMap } from "./onboardingStepIcons";
 
 type OnboardingHowItWorksStepsProps = {
-  steps: readonly Step[];
+  steps: readonly OnboardingStep[];
 };
 
 export function OnboardingHowItWorksSteps({
   steps,
 }: OnboardingHowItWorksStepsProps) {
   return (
-    <div className="space-y-4">
-      {steps.map((step, index) => (
-        <div key={step.title} className="flex gap-3">
-          <div className="flex flex-shrink-0 justify-center items-center bg-black rounded-full w-8 h-8">
-            <span className="font-bold text-white text-sm">{index + 1}</span>
+    <div className="space-y-3">
+      {steps.map((step) => {
+        const Icon = onboardingStepIconMap[step.icon];
+        return (
+          <div
+            key={step.title}
+            className="flex items-start gap-3 p-3 border border-gray-100 rounded-xl"
+          >
+            <div className="flex flex-shrink-0 justify-center items-center bg-black rounded-full w-9 h-9">
+              <Icon className="w-4 h-4 text-white" aria-hidden />
+            </div>
+            <div className="pt-0.5 min-w-0">
+              <Paragraph1 className="mb-0.5 font-semibold text-gray-900 text-sm">
+                {step.title}
+              </Paragraph1>
+              <Paragraph3 className="text-gray-600 text-xs leading-relaxed">
+                {step.description}
+              </Paragraph3>
+            </div>
           </div>
-          <div className="pt-0.5">
-            <Paragraph1 className="mb-0.5 font-semibold text-gray-900 text-sm">
-              {step.title}
-            </Paragraph1>
-            <Paragraph3 className="text-gray-600 text-xs leading-relaxed">
-              {step.description}
-            </Paragraph3>
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

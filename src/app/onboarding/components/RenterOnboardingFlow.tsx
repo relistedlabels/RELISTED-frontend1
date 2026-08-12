@@ -21,25 +21,23 @@ import { useUserStore } from "@/store/useUserStore";
 const stepMeta = [
   {
     title: "Welcome to RELISTED",
-    subtitle:
-      "Discover pieces to rent or buy from trusted listers across Africa.",
+    subtitle: "Rent or buy from trusted listers.",
   },
   {
     title: "Rent or Buy",
-    subtitle: "Two simple ways to shop. On each item, you choose one action.",
+    subtitle: "On each item, pick one action.",
   },
   {
     title: "How It Works",
-    subtitle: "From browse to return or keep, here is your flow.",
+    subtitle: "Browse, choose, then return or keep.",
   },
   {
     title: "Stay Protected",
-    subtitle:
-      "We verify renters so listers can share with confidence. Verification applies to rentals and purchases.",
+    subtitle: "Quick verification keeps rentals and purchases secure.",
   },
   {
     title: "Find Your Next Fit",
-    subtitle: "Your wardrobe possibilities are endless. Where should we start?",
+    subtitle: "Where should we start?",
   },
 ] as const;
 
@@ -105,8 +103,7 @@ export function RenterOnboardingFlow() {
             />
           </div>
           <Paragraph1 className="text-gray-600 text-sm text-center leading-relaxed">
-            Rent for the moment. Buy what you love. Join a community redefining
-            how fashion is worn.
+            Rent for the moment. Buy what you love.
           </Paragraph1>
         </div>
       ) : null}
@@ -123,8 +120,7 @@ export function RenterOnboardingFlow() {
             <ShieldCheck className="w-7 h-7 text-blue-600" />
           </div>
           <Paragraph1 className="text-gray-600 text-sm text-center leading-relaxed">
-            Add BVN and ID now, or we will prompt you at checkout before your
-            first rental or purchase.
+            Add BVN and ID now, or verify at checkout.
           </Paragraph1>
           <button
             type="button"

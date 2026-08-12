@@ -8,6 +8,7 @@ import { ListerSaleTypeCards } from "./ListerSaleTypeCards";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import {
   LISTER_ONBOARDING_STEPS,
+  listerFirstListingSteps,
   listerHowItWorksSteps,
 } from "@/lib/onboarding/copy";
 import { useOnboardingProgress } from "@/lib/onboarding/useOnboardingProgress";
@@ -17,45 +18,27 @@ import { useUserStore } from "@/store/useUserStore";
 const stepMeta = [
   {
     title: "Welcome, Lister",
-    subtitle:
-      "Share pieces to rent, sell, or both, and earn from your wardrobe.",
+    subtitle: "Rent, sell, or both. Earn from your wardrobe.",
   },
   {
     title: "How You Can List",
-    subtitle: "Choose a sale type for each item when you upload.",
+    subtitle: "Pick a sale type for each item.",
   },
   {
     title: "Your Earning Loop",
-    subtitle: "List, fulfill orders, and get paid securely.",
+    subtitle: "List, ship, get paid.",
   },
   {
     title: "Look Trustworthy",
-    subtitle:
-      "Renters book from people, not just products. A photo and brand name go a long way.",
+    subtitle: "A photo and brand name help renters trust you.",
   },
   {
     title: "Create Your First Listing",
-    subtitle: "Start earning from your wardrobe today.",
+    subtitle: "Three quick steps to go live.",
   },
   {
     title: "Get Paid Securely",
-    subtitle:
-      "Verify your identity and link a bank account so earnings reach you after each sale or rental.",
-  },
-] as const;
-
-const firstListingSteps = [
-  {
-    title: "Add Photos",
-    description: "Upload clear, well-lit photos of your item.",
-  },
-  {
-    title: "Choose Sale Type",
-    description: "Pick rent, resale, or both, then set your prices.",
-  },
-  {
-    title: "Go Live",
-    description: "Submit for review and start receiving requests.",
+    subtitle: "Verify and link a bank account for payouts.",
   },
 ] as const;
 
@@ -146,12 +129,11 @@ export function ListerOnboardingFlow() {
       {step === 0 ? (
         <div className="space-y-4">
           <div className="bg-[#3A3A32] p-6 rounded-xl text-white">
-            <Paragraph1 className="mb-4 font-semibold text-lg">
+            <Paragraph1 className="mb-2 font-semibold text-lg">
               Turn your closet into income
             </Paragraph1>
             <Paragraph3 className="text-gray-300 text-sm leading-relaxed">
-              Share your best pieces, earn from every rental or sale, and join a
-              community redefining how fashion is experienced.
+              List pieces, fulfill orders, and earn on your terms.
             </Paragraph3>
           </div>
           <div className="rounded-xl w-full h-40 overflow-hidden">
@@ -176,8 +158,7 @@ export function ListerOnboardingFlow() {
             <Camera className="w-8 h-8 text-gray-700" />
           </div>
           <Paragraph1 className="text-gray-600 text-sm text-center leading-relaxed">
-            Update your profile photo and business name in settings so renters
-            trust your closet.
+            Add a profile photo and brand name in settings.
           </Paragraph1>
           <button
             type="button"
@@ -190,7 +171,7 @@ export function ListerOnboardingFlow() {
       ) : null}
 
       {step === 4 ? (
-        <OnboardingHowItWorksSteps steps={firstListingSteps} />
+        <OnboardingHowItWorksSteps steps={listerFirstListingSteps} />
       ) : null}
 
       {step === 5 ? (
@@ -210,8 +191,7 @@ export function ListerOnboardingFlow() {
             </div>
           </div>
           <Paragraph1 className="text-gray-600 text-sm text-center leading-relaxed">
-            Set up payouts in settings so earnings reach you after each completed
-            rental or sale.
+            Set up payouts in settings after each completed order.
           </Paragraph1>
           <button
             type="button"

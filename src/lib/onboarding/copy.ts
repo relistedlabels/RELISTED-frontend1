@@ -1,59 +1,97 @@
-export const renterHowItWorksSteps = [
+export type OnboardingStepIcon =
+  | "search"
+  | "choice"
+  | "return"
+  | "upload"
+  | "ship"
+  | "wallet"
+  | "camera"
+  | "tag"
+  | "sparkles";
+
+export type OnboardingStep = {
+  title: string;
+  description: string;
+  icon: OnboardingStepIcon;
+};
+
+export const renterHowItWorksSteps: readonly OnboardingStep[] = [
   {
     title: "Browse",
-    description:
-      "Explore curated pieces from trusted listers. Filter by rent or buy to find what you need.",
+    description: "Find pieces to rent or buy.",
+    icon: "search",
   },
   {
     title: "Rent or Buy",
-    description:
-      "On each item, choose to rent for an occasion or buy it outright. One listing, one action.",
+    description: "Pick one action on each item.",
+    icon: "choice",
   },
   {
     title: "Return or Keep",
-    description:
-      "Send rentals back when you're done. Purchases are delivered to you and yours to keep.",
+    description: "Return rentals. Keep your purchases.",
+    icon: "return",
   },
-] as const;
+];
 
-export const listerHowItWorksSteps = [
+export const listerHowItWorksSteps: readonly OnboardingStep[] = [
   {
     title: "List Your Pieces",
-    description:
-      "Upload photos and set how each item is offered: rent only, resale only, or both.",
+    description: "Add photos and choose rent, resale, or both.",
+    icon: "upload",
   },
   {
     title: "Approve & Ship",
-    description:
-      "Approve requests, then ship rentals out and back, or send resale purchases once.",
+    description: "Approve requests, then ship rentals or resale purchases out.",
+    icon: "ship",
   },
   {
     title: "Earn Securely",
-    description:
-      "Get paid to your wallet after each completed rental or sale. Verification keeps everyone safe.",
+    description: "Get paid to your wallet after each order.",
+    icon: "wallet",
   },
-] as const;
+];
 
 export const listerSaleTypeOptions = [
   {
     id: "rent",
     title: "Rent",
     subtitle: "Rent only",
-    description: "Allow customers to rent this item for set dates.",
+    description: "Rent by the day.",
+    icon: "choice" as const,
   },
   {
     id: "resale",
     title: "Resale",
     subtitle: "Sell permanently",
-    description: "List this item for a one-time purchase.",
+    description: "Sell it outright.",
+    icon: "tag" as const,
   },
   {
     id: "rent-resale",
     title: "Rent & Resale",
     subtitle: "Rent or sell",
-    description: "Let customers rent or purchase the same item.",
+    description: "Offer both options.",
+    icon: "sparkles" as const,
   },
 ] as const;
+
+export const listerFirstListingSteps: readonly OnboardingStep[] = [
+  {
+    title: "Add Photos",
+    description: "Upload clear photos of your item.",
+    icon: "camera",
+  },
+  {
+    title: "Choose Sale Type",
+    description: "Pick rent, resale, or both.",
+    icon: "tag",
+  },
+  {
+    title: "Go Live",
+    description: "Submit and start getting requests.",
+    icon: "sparkles",
+  },
+];
 
 export const RENTER_ONBOARDING_STEPS = 5;
 export const LISTER_ONBOARDING_STEPS = 6;
