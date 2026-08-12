@@ -1,0 +1,44 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, master, staging]
+  pull_request:
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Unit tests
+        run: bun run test
+
+  e2e-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: bun run e2e:install
+
+      - name: Smoke e2e tests (frontend only, no backend)
+        env:
+          CI: true
+          PLAYWRIGHT_BUNDLED: "1"
+          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
+        run: bun run e2e:smoke

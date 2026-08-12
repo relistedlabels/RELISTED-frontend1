@@ -23,6 +23,12 @@ import { toast } from "sonner";
 import { isResaleItem } from "@/lib/listers/listerOrderRow";
 import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
 import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
+import {
+  computeCheckoutGrandTotal,
+  computeDisplayOutboundShipping,
+  computeDisplayReturnShipping,
+  computeListerSubtotal,
+} from "@/lib/checkout/checkoutSummaryTotals";
 import type {
   DispatchWindowSelectionMap,
   DispatchWindowsPayload,
@@ -243,12 +249,7 @@ const ListerOrderCard = memo(
                 <Paragraph1 className="font-extrabold text-gray-900 text-lg">
                   {CURRENCY}
                   {formatCurrency(
-                    (hasResaleItems ? listerBreakdown.purchaseTotal : 0) +
-                      (hasRentalItems ? listerBreakdown.rentalTotal : 0) +
-                      (hasRentalItems ? listerBreakdown.collateralTotal : 0) +
-                      (hasRentalItems ? listerBreakdown.cleaningTotal : 0) +
-                      listerBreakdown.outboundShippingCost +
-                      listerBreakdown.returnShippingCost,
+                    computeListerSubtotal(listerBreakdown),
                   )}
                 </Paragraph1>
               </div>
@@ -368,53 +369,47 @@ export default function FinalOrderSummaryCard({
   const usePerBucketReturn =
     hasReturnShippingLeg && returnShippingByBucket.length > 0;
 
-  const displayOutboundShipping = useMemo(() => {
-    if (!usePerBucketOutbound) {
-      return selectedTierData?.totalShippingCost ?? summaryOutboundShipping;
-    }
-    return outboundShippingByBucket.reduce((sum, b) => {
-      const pick =
-        selectedOutboundTierByBucket[b.bucketIndex] ??
-        b.shippingTiers[0]?.name ??
-        "";
-      const row = b.shippingTiers.find((t) => t.name === pick);
-      if (row) return sum + row.totalShippingCost;
-      const fb = shipmentBucketsMeta.find((sb) => sb.bucketIndex === b.bucketIndex);
-      return sum + (fb?.outboundShippingCost ?? 0);
-    }, 0);
-  }, [
-    usePerBucketOutbound,
-    outboundShippingByBucket,
-    selectedOutboundTierByBucket,
-    shipmentBucketsMeta,
-    selectedTierData,
-    summaryOutboundShipping,
-  ]);
+  const displayOutboundShipping = useMemo(
+    () =>
+      computeDisplayOutboundShipping({
+        usePerBucket: usePerBucketOutbound,
+        outboundShippingByBucket,
+        selectedOutboundTierByBucket,
+        shipmentBucketsMeta,
+        selectedTierTotal: selectedTierData?.totalShippingCost,
+        summaryOutboundTotal: summaryOutboundShipping,
+      }),
+    [
+      usePerBucketOutbound,
+      outboundShippingByBucket,
+      selectedOutboundTierByBucket,
+      shipmentBucketsMeta,
+      selectedTierData,
+      summaryOutboundShipping,
+    ],
+  );
 
-  const displayReturnShipping = useMemo(() => {
-    if (!hasReturnShippingLeg) return summaryReturnShipping;
-    if (usePerBucketReturn) {
-      return returnShippingByBucket.reduce((sum, b) => {
-        const pick =
-          selectedReturnTierByBucket[b.bucketIndex] ??
-          b.shippingTiers[0]?.name ??
-          "";
-        const row = b.shippingTiers.find((t) => t.name === pick);
-        if (row) return sum + row.totalShippingCost;
-        const fb = shipmentBucketsMeta.find((sb) => sb.bucketIndex === b.bucketIndex);
-        return sum + (fb?.returnShippingCost ?? 0);
-      }, 0);
-    }
-    return selectedReturnTierData?.totalShippingCost ?? summaryReturnShipping;
-  }, [
-    hasReturnShippingLeg,
-    usePerBucketReturn,
-    returnShippingByBucket,
-    selectedReturnTierByBucket,
-    shipmentBucketsMeta,
-    selectedReturnTierData,
-    summaryReturnShipping,
-  ]);
+  const displayReturnShipping = useMemo(
+    () =>
+      computeDisplayReturnShipping({
+        hasReturnShippingLeg,
+        usePerBucketReturn,
+        returnShippingByBucket,
+        selectedReturnTierByBucket,
+        shipmentBucketsMeta,
+        selectedReturnTierTotal: selectedReturnTierData?.totalShippingCost,
+        summaryReturnTotal: summaryReturnShipping,
+      }),
+    [
+      hasReturnShippingLeg,
+      usePerBucketReturn,
+      returnShippingByBucket,
+      selectedReturnTierByBucket,
+      shipmentBucketsMeta,
+      selectedReturnTierData,
+      summaryReturnShipping,
+    ],
+  );
 
   const handleCheckout = async () => {
     if (!isAgree) {
@@ -777,14 +772,11 @@ export default function FinalOrderSummaryCard({
                       <Paragraph1 className="font-extrabold text-gray-900 text-2xl">
                         {CURRENCY}
                         {formatCurrency(
-                          (orderSummary.data.summary.purchaseTotal ?? 0) +
-                            (orderSummary.data.summary.rentalTotal ?? 0) +
-                            (orderSummary.data.summary.collateralTotal ?? 0) +
-                            (orderSummary.data.summary.cleaningTotal ?? 0) +
-                            displayOutboundShipping +
-                            displayReturnShipping +
-                            (orderSummary.data.summary.serviceCharge ?? 0) +
-                            (orderSummary.data.summary.vatAmount ?? 0),
+                          computeCheckoutGrandTotal(
+                            orderSummary.data.summary,
+                            displayOutboundShipping,
+                            displayReturnShipping,
+                          ),
                         )}
                       </Paragraph1>
                     </div>
