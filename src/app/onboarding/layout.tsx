@@ -6,9 +6,9 @@ export default function OnboardingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative min-h-screen">
+    <div className="relative isolate min-h-[100dvh] w-full overflow-hidden">
       <OnboardingBackdrop />
-      <div className="relative z-10">{children}</div>
+      <div className="relative z-10 min-h-[100dvh]">{children}</div>
     </div>
   );
 }
