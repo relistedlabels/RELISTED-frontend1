@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useProfile } from "@/lib/queries/user/useProfile";
+import { resolvePostAuthDestination } from "@/lib/onboarding/onboardingGate";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
+import { useUserStore } from "@/store/useUserStore";
 
 export default function OAuthCallback() {
   const qc = useQueryClient();
@@ -36,12 +38,14 @@ export default function OAuthCallback() {
       return;
     }
 
-    if (user.role === "LISTER") {
-      router.replace("/listers/inventory");
-      return;
-    }
-
-    router.replace("/shop");
+    const userId = useUserStore.getState().userId;
+    router.replace(
+      resolvePostAuthDestination({
+        role: user.role,
+        userId,
+        honorRedirect: false,
+      }),
+    );
   }, [adminId, profile, profileLoading, router, user, userLoading]);
 
   return null;

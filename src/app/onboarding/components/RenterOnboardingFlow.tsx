@@ -62,6 +62,15 @@ export function RenterOnboardingFlow() {
     router.replace(shopPathForPreference(shopPreference));
   };
 
+  const skipTour = () => {
+    markOnboardingComplete(userId, "renter");
+    router.replace(shopPathForPreference(shopPreference));
+  };
+
+  const skipVerification = () => {
+    goNext();
+  };
+
   if (!hydrated) {
     return (
       <div className="flex justify-center items-center bg-[#fafaf8] min-h-screen">
@@ -81,8 +90,9 @@ export function RenterOnboardingFlow() {
       onBack={isFirstStep ? undefined : goBack}
       onNext={isLastStep ? finish : goNext}
       nextLabel={isLastStep ? "Start Shopping" : "Continue"}
-      onSkip={step === 3 ? goNext : undefined}
+      onSkip={step === 3 ? skipVerification : undefined}
       skipLabel="Skip for now"
+      onSkipTour={skipTour}
       showBack={!isFirstStep}
     >
       {step === 0 ? (

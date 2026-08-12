@@ -19,6 +19,8 @@ type OnboardingShellProps = {
   showBack?: boolean;
   showNext?: boolean;
   footer?: ReactNode;
+  onSkipTour?: () => void;
+  skipTourLabel?: string;
 };
 
 export function OnboardingShell({
@@ -35,12 +37,23 @@ export function OnboardingShell({
   showBack = true,
   showNext = true,
   footer,
+  onSkipTour,
+  skipTourLabel = "Skip tour",
 }: OnboardingShellProps) {
   const progress = ((step + 1) / totalSteps) * 100;
 
   return (
     <div className="flex flex-col justify-center items-center bg-[#fafaf8] p-4 min-h-screen font-sans">
-      <div className="bg-white shadow-xl p-6 md:p-10 rounded-3xl w-full max-w-[600px] min-h-[min(720px,90vh)] flex flex-col">
+      <div className="bg-white shadow-xl p-6 md:p-10 rounded-3xl w-full max-w-[600px] min-h-[min(720px,90vh)] flex flex-col relative">
+        {onSkipTour ? (
+          <button
+            type="button"
+            onClick={onSkipTour}
+            className="top-6 right-6 absolute font-medium text-gray-500 text-xs hover:text-gray-800 transition"
+          >
+            {skipTourLabel}
+          </button>
+        ) : null}
         <div className="flex flex-col items-center mb-6 text-center">
           <img src="/images/logo1.svg" alt="RELISTED" className="mb-4 w-10 h-10" />
           <Paragraph3 className="mb-1 font-bold text-gray-500 text-xs uppercase tracking-widest">

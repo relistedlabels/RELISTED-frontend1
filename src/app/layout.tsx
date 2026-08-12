@@ -9,6 +9,7 @@ import DevGuard from "@/common/layer/DevGuard";
 import { FavoritesInitializer } from "@/common/layer/FavoritesInitializer";
 import Footer from "@/common/layer/Footer";
 import { UnauthorizedSignInRedirect } from "@/common/layer/UnauthorizedSignInRedirect";
+import { OnboardingRedirectGuard } from "@/common/layer/OnboardingRedirectGuard";
 import { UploaderProvider } from "@/context/UploaderProvider";
 import QueryProvider from "@/lib/providers/query-provider";
 import { Header } from "./Header";
@@ -88,6 +89,7 @@ export default function RootLayout({
         <QueryProvider>
           <AuthStateMonitorProvider>
             <UnauthorizedSignInRedirect />
+            <OnboardingRedirectGuard />
             <FavoritesInitializer />
             <UploaderProvider>
               <SiteHeader />

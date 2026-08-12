@@ -76,6 +76,11 @@ export function ListerOnboardingFlow() {
     router.replace("/listers/dashboard");
   };
 
+  const skipTour = () => {
+    markOnboardingComplete(userId, "lister");
+    router.replace("/listers/dashboard");
+  };
+
   if (!hydrated) {
     return (
       <div className="flex justify-center items-center bg-[#fafaf8] min-h-screen">
@@ -103,6 +108,7 @@ export function ListerOnboardingFlow() {
       }
       onSkip={step === 5 ? finish : undefined}
       skipLabel="Go to dashboard"
+      onSkipTour={skipTour}
       showBack={!isFirstStep}
       footer={
         step === 4 ? (
