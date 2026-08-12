@@ -43,8 +43,8 @@ export function OnboardingShell({
   const progress = ((step + 1) / totalSteps) * 100;
 
   return (
-    <div className="flex flex-col justify-center items-center bg-[#fafaf8] p-4 min-h-screen font-sans">
-      <div className="bg-white shadow-xl p-6 md:p-10 rounded-3xl w-full max-w-[600px] min-h-[min(720px,90vh)] flex flex-col relative">
+    <div className="flex flex-col justify-center items-center p-4 min-h-screen font-sans">
+      <div className="relative flex flex-col bg-white/88 backdrop-blur-xl p-6 md:p-10 border border-white/80 rounded-3xl w-full max-w-[600px] min-h-[min(720px,90vh)] shadow-[0_24px_80px_-20px_rgba(27,31,38,0.18)]">
         {onSkipTour ? (
           <button
             type="button"

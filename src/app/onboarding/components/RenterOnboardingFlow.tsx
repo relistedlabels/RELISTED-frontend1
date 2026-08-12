@@ -72,7 +72,7 @@ export function RenterOnboardingFlow() {
 
   if (!hydrated) {
     return (
-      <div className="flex justify-center items-center bg-[#fafaf8] min-h-screen">
+      <div className="flex justify-center items-center min-h-screen">
         <Paragraph3 className="text-gray-500 text-sm">Loading...</Paragraph3>
       </div>
     );
