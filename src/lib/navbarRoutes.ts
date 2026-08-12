@@ -20,6 +20,7 @@ export const PUBLIC_NAVBAR_ROUTES = [
  */
 export const HIDDEN_NAVBAR_ROUTES = [
   "/auth",
+  "/onboarding",
   "/listers",
   "/admin",
   "/waitlist",

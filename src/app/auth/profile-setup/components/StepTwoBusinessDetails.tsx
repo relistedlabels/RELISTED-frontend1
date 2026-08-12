@@ -89,7 +89,7 @@ const StepTwoBusinessDetails: React.FC<StepTwoBusinessDetailsProps> = ({
         setTimeout(() => {
           const redirectUrl = returnUrl
             ? decodeURIComponent(returnUrl)
-            : "/listers/dashboard";
+            : "/onboarding/lister";
           router.replace(redirectUrl);
         }, 1500);
       },

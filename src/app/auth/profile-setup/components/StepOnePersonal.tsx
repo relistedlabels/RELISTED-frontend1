@@ -93,10 +93,9 @@ const StepOnePersonal: React.FC<StepOnePersonalProps> = ({
           });
 
           setTimeout(() => {
-            // If returnUrl is provided, decode and navigate to it; otherwise go to shop
             const redirectUrl = returnUrl
               ? decodeURIComponent(returnUrl)
-              : "/shop";
+              : "/onboarding/renter";
             router.replace(redirectUrl);
           }, 1500);
         },
