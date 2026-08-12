@@ -74,6 +74,22 @@ const orderSummaryBody = {
 };
 
 async function mockCheckoutApis(page: import("@playwright/test").Page) {
+  await page.route("**/auth/user**", async (route) => {
+    if (route.request().method() !== "GET") {
+      return route.continue();
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        id: "renter-e2e",
+        email: "renter@e2e.test",
+        name: "E2E Renter",
+        role: "RENTER",
+      }),
+    });
+  });
+
   await page.route("**/cart-items**", async (route) => {
     await route.fulfill({
       status: 200,
@@ -115,14 +131,29 @@ async function mockCheckoutApis(page: import("@playwright/test").Page) {
       body: JSON.stringify({
         success: true,
         data: {
-          requests: [
+          rentalRequests: [
             {
-              id: "req-e2e-1",
+              requestId: "req-e2e-1",
               cartItemId: "ci-e2e-1",
               productId: "prod-e2e-1",
-              status: "ACCEPTED",
+              productName: "Silk dress",
+              productImage: "",
+              listerId: "lister-e2e",
+              listerName: "Ada",
+              rentalStartDate: "2026-06-20T08:00:00+01:00",
+              rentalEndDate: "2026-06-23T17:00:00+01:00",
               rentalDays: 3,
+              rentalPrice: 30000,
+              deliveryFee: 0,
+              cleaningFee: 4000,
               totalPrice: 30000,
+              currency: "NGN",
+              autoPay: false,
+              status: "approved",
+              requestCreatedAt: new Date().toISOString(),
+              expiresAt: new Date(Date.now() + 86_400_000).toISOString(),
+              timeRemainingSeconds: 86_400,
+              timeRemainingMinutes: 1_440,
               product: { name: "Silk dress", listingType: "RENTAL" },
             },
           ],
@@ -132,7 +163,7 @@ async function mockCheckoutApis(page: import("@playwright/test").Page) {
     });
   });
 
-  await page.route("**/profile**", async (route) => {
+  await page.route("**/profile/user-profile**", async (route) => {
     if (route.request().method() !== "GET") {
       return route.continue();
     }
@@ -140,14 +171,54 @@ async function mockCheckoutApis(page: import("@playwright/test").Page) {
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
-        id: "profile-e2e",
-        userId: "renter-e2e",
-        phoneNumber: "+2348000000000",
-        address: {
-          street: "12 Test St",
-          city: "Lagos",
-          state: "Lagos",
-          country: "Nigeria",
+        data: {
+          id: "profile-e2e",
+          userId: "renter-e2e",
+          phoneNumber: "+2348000000000",
+          address: {
+            street: "12 Test St",
+            city: "Lagos",
+            state: "Lagos",
+            country: "Nigeria",
+          },
+        },
+      }),
+    });
+  });
+
+  await page.route("**/api/public/products/**", async (route) => {
+    if (route.request().method() !== "GET") {
+      return route.continue();
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: {
+          id: "prod-e2e-1",
+          name: "Silk dress",
+          listingType: "RENTAL",
+          dailyPrice: 10000,
+          curatorId: "lister-e2e",
+          attachments: { uploads: [] },
+        },
+      }),
+    });
+  });
+
+  await page.route("**/api/public/users/**", async (route) => {
+    if (route.request().method() !== "GET") {
+      return route.continue();
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: {
+          id: "lister-e2e",
+          name: "Ada",
         },
       }),
     });
@@ -171,12 +242,14 @@ test.describe("Checkout (mocked API)", () => {
 
     await page.goto("/shop/cart/checkout", { waitUntil: "domcontentloaded" });
 
-    await expect(page.getByText("CHECKOUT")).toBeVisible({ timeout: 15_000 });
+    await expect(
+      page.getByRole("heading", { name: "CHECKOUT" }),
+    ).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("PAYMENT BREAKDOWN")).toBeVisible({
       timeout: 15_000,
     });
     await expect(page.getByText("Grand Total:")).toBeVisible();
-    await expect(page.getByText("99,250")).toBeVisible();
+    await expect(page.getByText("₦99,250", { exact: true })).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Complete Order" }),
     ).toBeVisible();

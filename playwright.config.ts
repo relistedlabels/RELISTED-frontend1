@@ -43,5 +43,10 @@ export default defineConfig({
     url: "http://localhost:3000",
     reuseExistingServer: !isCi,
     timeout: 120_000,
+    env: {
+      ...process.env,
+      NEXT_PUBLIC_API_BASE_URL:
+        process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:3999",
+    },
   },
 });

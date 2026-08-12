@@ -40,5 +40,5 @@ jobs:
         env:
           CI: true
           PLAYWRIGHT_BUNDLED: "1"
-          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
+          NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:3999
         run: bun run e2e:smoke
