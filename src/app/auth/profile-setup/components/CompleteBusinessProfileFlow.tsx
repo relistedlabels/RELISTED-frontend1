@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 
 // Import your step components
@@ -11,9 +12,10 @@ import StepFourPayment from "./StepFourPayment";
 
 const MAX_STEPS = 2;
 
-const CompleteBusinessProfileFlow: React.FC<{ returnUrl?: string | null }> = ({
-  returnUrl,
-}) => {
+const CompleteBusinessProfileFlow: React.FC<{
+  returnUrl?: string | null;
+  isUpgrade?: boolean;
+}> = ({ returnUrl, isUpgrade = false }) => {
   const [currentStep, setCurrentStep] = useState(1);
 
   const handleNextStep = () => {
@@ -75,12 +77,21 @@ const CompleteBusinessProfileFlow: React.FC<{ returnUrl?: string | null }> = ({
         <div className="mb-8 text-center flex flex-col items-center">
           <img src="/images/logo1.svg" alt="Logo" className="h-10 w-10 mb-4" />
           <Paragraph2 className="text-3xl font-bold text-black mb-1">
-            Complete Your Profile{" "}
+            {isUpgrade ? "Become a Lister" : "Complete Your Profile"}
           </Paragraph2>
           <Paragraph1 className="text-base text-gray-600 max-w-[400px] leading-relaxed">
-            Let’s verify your details so you can start listing and earning from
-            your wardrobe.
+            {isUpgrade
+              ? "You need a lister account to access this area. Set up your business profile to start listing and earning."
+              : "Let's verify your details so you can start listing and earning from your wardrobe."}
           </Paragraph1>
+          {isUpgrade && (
+            <Link
+              href="/shop"
+              className="mt-4 text-sm text-gray-500 underline underline-offset-2 hover:text-gray-700"
+            >
+              Continue shopping instead
+            </Link>
+          )}
         </div>
 
         {/* Step Indicator & Progress Bar */}
