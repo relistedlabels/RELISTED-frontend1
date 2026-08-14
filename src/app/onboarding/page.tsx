@@ -19,7 +19,7 @@ export default function OnboardingIndexPage() {
 
   return (
     <div className="flex justify-center items-center min-h-screen">
-      <Paragraph3 className="text-gray-500 text-sm">Loading onboarding...</Paragraph3>
+      <Paragraph3 className="text-gray-500 text-base">Loading onboarding...</Paragraph3>
     </div>
   );
 }

@@ -7,7 +7,8 @@ export type OnboardingStepIcon =
   | "wallet"
   | "camera"
   | "tag"
-  | "sparkles";
+  | "sparkles"
+  | "account";
 
 export type OnboardingStep = {
   title: string;
@@ -17,18 +18,18 @@ export type OnboardingStep = {
 
 export const renterHowItWorksSteps: readonly OnboardingStep[] = [
   {
-    title: "Browse",
-    description: "Find pieces to rent or buy.",
-    icon: "search",
+    title: "Pay from your wallet",
+    description: "Checkout uses rental fee plus a security deposit.",
+    icon: "wallet",
   },
   {
-    title: "Rent or Buy",
-    description: "Pick one action on each item.",
+    title: "Deposit is locked",
+    description: "Your security deposit shows as Locked Balance while the item is out.",
     icon: "choice",
   },
   {
-    title: "Return or Keep",
-    description: "Return rentals. Keep your purchases.",
+    title: "Return the item",
+    description: "After the lister approves, your deposit returns to Available Balance.",
     icon: "return",
   },
 ];
@@ -75,23 +76,97 @@ export const listerSaleTypeOptions = [
   },
 ] as const;
 
-export const listerFirstListingSteps: readonly OnboardingStep[] = [
+export const renterRentOrBuyOptions = [
   {
-    title: "Add Photos",
-    description: "Upload clear photos of your item.",
+    id: "rent",
+    title: "Rent",
+    description: "Pick dates, wear it, return when done.",
+    icon: "choice" as const,
+  },
+  {
+    id: "buy",
+    title: "Buy",
+    description: "Purchase outright. Yours to keep.",
+    icon: "tag" as const,
+  },
+] as const;
+
+export const renterVerificationSteps: readonly OnboardingStep[] = [
+  {
+    title: "Open Verifications",
+    description: "My Account → Verifications tab.",
+    icon: "account",
+  },
+  {
+    title: "Add your ID",
+    description: "Upload your document and ID number.",
     icon: "camera",
   },
+  {
+    title: "Submit your BVN",
+    description: "Enter your 11-digit BVN.",
+    icon: "sparkles",
+  },
+];
+
+export const renterWalletSteps: readonly OnboardingStep[] = [
+  {
+    title: "Open Wallet",
+    description: "Find Wallet in your dashboard sidebar.",
+    icon: "wallet",
+  },
+  {
+    title: "Fund Wallet",
+    description: "Tap Fund Wallet and transfer to your virtual account.",
+    icon: "sparkles",
+  },
+  {
+    title: "After return",
+    description: "Deposit returns to Available Balance. Disputes are under My Orders.",
+    icon: "return",
+  },
+];
+
+export const listerPayoutSteps: readonly OnboardingStep[] = [
+  {
+    title: "Open Wallet",
+    description: "Find Wallet in your lister dashboard sidebar.",
+    icon: "wallet",
+  },
+  {
+    title: "Withdraw",
+    description: "Tap Withdraw to link a bank account for payouts.",
+    icon: "sparkles",
+  },
+  {
+    title: "Add bank details",
+    description: "Enter the account where you want to receive earnings.",
+    icon: "account",
+  },
+];
+
+export const listerFirstListingSteps: readonly OnboardingStep[] = [
   {
     title: "Choose Sale Type",
     description: "Pick rent, resale, or both.",
     icon: "tag",
   },
   {
+    title: "Add Photos",
+    description: "Upload clear photos of your item.",
+    icon: "camera",
+  },
+  {
+    title: "Basic Info and Category",
+    description: "Add item details and pick a category.",
+    icon: "upload",
+  },
+  {
     title: "Go Live",
-    description: "Submit and start getting requests.",
+    description: "Review and post your listing.",
     icon: "sparkles",
   },
 ];
 
-export const RENTER_ONBOARDING_STEPS = 5;
+export const RENTER_ONBOARDING_STEPS = 6;
 export const LISTER_ONBOARDING_STEPS = 6;

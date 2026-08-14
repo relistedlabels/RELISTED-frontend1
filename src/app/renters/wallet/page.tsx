@@ -9,6 +9,7 @@ import UserDashboardLayout from "../components/UserDashboardLayout";
 import DashboardOrderList from "../components/DashboardOrderList";
 import ExampleUserWalletDashboard from "../components/UserWalletDashboard";
 import ExampleAllTransactionsList from "../components/Transaction";
+import { OnboardingTaskMount } from "@/app/onboarding/components/OnboardingTaskMount";
 
 function page() {
   const path = [
@@ -24,6 +25,7 @@ function page() {
         <Breadcrumbs items={path} />{" "}
       </div>
       <UserDashboardLayout>
+        <OnboardingTaskMount />
         <div>
           <ExampleUserWalletDashboard />
           <ExampleAllTransactionsList />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Camera, ShieldCheck, Wallet } from "lucide-react";
+import { Camera, Wallet } from "lucide-react";
 import { OnboardingShell } from "./OnboardingShell";
 import { OnboardingHowItWorksSteps } from "./OnboardingHowItWorksSteps";
 import { OnboardingInfoPanel } from "./OnboardingInfoPanel";
@@ -11,9 +11,17 @@ import {
   LISTER_ONBOARDING_STEPS,
   listerFirstListingSteps,
   listerHowItWorksSteps,
+  listerPayoutSteps,
 } from "@/lib/onboarding/copy";
 import { useOnboardingProgress } from "@/lib/onboarding/useOnboardingProgress";
-import { markOnboardingComplete } from "@/lib/onboarding/onboardingStorage";
+import {
+  buildOnboardingTaskUrl,
+  listerFirstListingOnboardingTask,
+  listerPayoutsOnboardingTask,
+  listerProfileOnboardingTask,
+  type OnboardingTask,
+} from "@/lib/onboarding/onboardingTasks";
+import { markOnboardingComplete, startOnboardingTask } from "@/lib/onboarding/onboardingStorage";
 import { useUserStore } from "@/store/useUserStore";
 
 const stepMeta = [
@@ -31,15 +39,16 @@ const stepMeta = [
   },
   {
     title: "Look Trustworthy",
-    subtitle: "A photo and brand name help renters trust you.",
+    subtitle:
+      "Add a photo, business name, and verify your ID and BVN for your public profile.",
   },
   {
     title: "Create Your First Listing",
-    subtitle: "Three quick steps to go live.",
+    subtitle: "Four quick steps to go live.",
   },
   {
     title: "Get Paid Securely",
-    subtitle: "Verify and link a bank account for payouts.",
+    subtitle: "Link a bank account to receive withdrawals.",
   },
 ] as const;
 
@@ -65,10 +74,24 @@ export function ListerOnboardingFlow() {
     router.replace("/listers/dashboard");
   };
 
+  const startOnboardingDetour = (task: OnboardingTask) => {
+    startOnboardingTask(userId, "lister", {
+      taskId: task.id,
+      currentStep: step,
+      resumeStepAfterTask: task.resumeStep,
+    });
+    router.push(buildOnboardingTaskUrl(task, 0));
+  };
+
+  const startProfileTask = () => startOnboardingDetour(listerProfileOnboardingTask);
+  const startFirstListingTask = () =>
+    startOnboardingDetour(listerFirstListingOnboardingTask);
+  const startPayoutsTask = () => startOnboardingDetour(listerPayoutsOnboardingTask);
+
   if (!hydrated) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <Paragraph3 className="text-gray-500 text-sm">Loading...</Paragraph3>
+        <Paragraph3 className="text-gray-500 text-base">Loading...</Paragraph3>
       </div>
     );
   }
@@ -84,8 +107,6 @@ export function ListerOnboardingFlow() {
       onBack={isFirstStep ? undefined : goBack}
       onNext={isLastStep ? finish : goNext}
       nextLabel={isLastStep ? "Go to Dashboard" : "Continue"}
-      onSkip={step === 5 ? finish : undefined}
-      skipLabel="Go to dashboard"
       onSkipTour={skipTour}
       showBack={!isFirstStep}
     >
@@ -95,7 +116,7 @@ export function ListerOnboardingFlow() {
             <Paragraph1 className="mb-2 font-semibold text-lg">
               Turn your closet into income
             </Paragraph1>
-            <Paragraph3 className="text-gray-300 text-sm leading-relaxed">
+            <Paragraph3 className="text-gray-300 text-base leading-relaxed">
               List pieces, fulfill orders, and earn on your terms.
             </Paragraph3>
           </div>
@@ -116,39 +137,46 @@ export function ListerOnboardingFlow() {
       ) : null}
 
       {step === 3 ? (
-        <OnboardingInfoPanel
-          icon={Camera}
-          body="Add a profile photo and brand name so renters trust your closet."
-          footnote="You can update this anytime in Settings after the tour."
-        />
+        <div className="space-y-4">
+          <OnboardingInfoPanel icon={Camera} />
+          <button
+            type="button"
+            onClick={startProfileTask}
+            className="hover:bg-gray-50 py-3 border-2 border-gray-800 rounded-lg w-full font-semibold text-gray-900 text-base transition"
+          >
+            Update profile
+          </button>
+        </div>
       ) : null}
 
       {step === 4 ? (
-        <OnboardingHowItWorksSteps steps={listerFirstListingSteps} />
+        <div className="space-y-4">
+          <OnboardingHowItWorksSteps steps={listerFirstListingSteps} />
+          <button
+            type="button"
+            onClick={startFirstListingTask}
+            className="hover:bg-gray-50 py-3 border-2 border-gray-800 rounded-lg w-full font-semibold text-gray-900 text-base transition"
+          >
+            Create listing
+          </button>
+        </div>
       ) : null}
 
       {step === 5 ? (
         <div className="space-y-4">
-          <div className="gap-3 grid grid-cols-2">
-            <div className="flex flex-col items-center bg-gray-50 p-4 border border-gray-200 rounded-xl text-center">
-              <ShieldCheck className="mb-2 w-6 h-6 text-blue-600" />
-              <Paragraph3 className="font-semibold text-gray-900 text-xs">
-                Verify identity
-              </Paragraph3>
-            </div>
-            <div className="flex flex-col items-center bg-gray-50 p-4 border border-gray-200 rounded-xl text-center">
-              <Wallet className="mb-2 w-6 h-6 text-gray-800" />
-              <Paragraph3 className="font-semibold text-gray-900 text-xs">
-                Link bank account
-              </Paragraph3>
-            </div>
-          </div>
-          <Paragraph1 className="text-gray-600 text-sm text-center leading-relaxed">
-            Verify your identity and link a bank account to receive payouts.
-          </Paragraph1>
-          <Paragraph3 className="text-gray-500 text-xs text-center leading-relaxed">
-            Set this up in Settings whenever you are ready.
-          </Paragraph3>
+          <OnboardingInfoPanel
+            icon={Wallet}
+            iconClassName="w-7 h-7 text-gray-800"
+            iconWrapClassName="bg-gray-50 border-gray-200"
+          />
+          <OnboardingHowItWorksSteps steps={listerPayoutSteps} />
+          <button
+            type="button"
+            onClick={startPayoutsTask}
+            className="hover:bg-gray-50 py-3 border-2 border-gray-800 rounded-lg w-full font-semibold text-gray-900 text-base transition"
+          >
+            Set up payouts
+          </button>
         </div>
       ) : null}
     </OnboardingShell>

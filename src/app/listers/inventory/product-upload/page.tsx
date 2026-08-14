@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { Suspense } from "react";
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import DashboardLayout from "../../components/DashboardLayout";
 import UploadItemHeader from "../../components/UploadItemHeader";
@@ -10,6 +11,7 @@ import { TagSelector } from "../../components/TagSelector";
 import { ItemDescription } from "../../components/ItemDescription";
 import { SaleTypeSelector } from "../../components/SaleTypeSelector";
 import { AnimatedFormContent } from "../../components/AnimatedFormContent";
+import { OnboardingTaskMount } from "@/app/onboarding/components/OnboardingTaskMount";
 import { useUploader } from "@/context/UploaderContext";
 import { useProductDraftStore } from "@/store/useProductDraftStore";
 import { useProductDraftStoreHydrated } from "@/hooks/useProductDraftStoreHydrated";
@@ -36,6 +38,9 @@ export default function Page() {
 
   return (
     <DashboardLayout>
+      <Suspense fallback={null}>
+        <OnboardingTaskMount />
+      </Suspense>
       <div className="mb-4  ">
         <Breadcrumbs items={path} />
       </div>
@@ -52,7 +57,7 @@ export default function Page() {
           <div>
             <ItemImageUploader />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4" data-onboarding-target="lister-listing-details">
             <BasicInformationForm />
             <div className="space-y-4">
               <TagSelector />

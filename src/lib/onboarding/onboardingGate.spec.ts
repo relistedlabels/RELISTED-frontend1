@@ -15,6 +15,26 @@ describe("shouldBypassOnboardingForPath", () => {
     expect(shouldBypassOnboardingForPath("/shop/cart/checkout")).toBe(true);
   });
 
+  test("bypasses lister and renter task routes during an active onboarding task", () => {
+    expect(
+      shouldBypassOnboardingForPath("/listers/settings", { hasActiveTask: true }),
+    ).toBe(true);
+    expect(
+      shouldBypassOnboardingForPath("/listers/inventory/product-upload", {
+        hasActiveTask: true,
+      }),
+    ).toBe(true);
+    expect(
+      shouldBypassOnboardingForPath("/listers/wallet", { hasActiveTask: true }),
+    ).toBe(true);
+    expect(
+      shouldBypassOnboardingForPath("/renters/account", { hasActiveTask: true }),
+    ).toBe(true);
+    expect(
+      shouldBypassOnboardingForPath("/renters/wallet", { hasActiveTask: true }),
+    ).toBe(true);
+  });
+
   test("does not bypass normal app routes", () => {
     expect(shouldBypassOnboardingForPath("/shop")).toBe(false);
     expect(shouldBypassOnboardingForPath("/listers/dashboard")).toBe(false);

@@ -30,13 +30,13 @@ export function OnboardingPreferenceChips({
             key={option.id}
             type="button"
             onClick={() => onChange(option.id)}
-            className={`px-4 py-2 border-2 rounded-full font-medium text-sm transition ${
+            className={`px-4 py-2 border-2 rounded-full font-medium text-base transition ${
               selected
                 ? "border-black bg-black text-white"
                 : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
             }`}
           >
-            <Paragraph3 className="text-inherit text-sm">{option.label}</Paragraph3>
+            <Paragraph3 className="text-inherit text-base">{option.label}</Paragraph3>
           </button>
         );
       })}

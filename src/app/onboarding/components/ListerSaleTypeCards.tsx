@@ -19,10 +19,10 @@ export function ListerSaleTypeCards() {
                 <Icon className="w-5 h-5 text-gray-800" aria-hidden />
               </div>
               <div className="min-w-0">
-                <Paragraph1 className="font-semibold text-gray-900 text-sm leading-snug">
+                <Paragraph1 className="font-semibold text-gray-900 text-base leading-snug">
                   {option.title}
                 </Paragraph1>
-                <Paragraph3 className="mt-1 text-gray-600 text-xs leading-relaxed">
+                <Paragraph3 className="mt-1 text-gray-600 text-base leading-relaxed">
                   {option.description}
                 </Paragraph3>
               </div>

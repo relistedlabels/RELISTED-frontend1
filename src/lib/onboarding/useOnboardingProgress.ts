@@ -28,9 +28,12 @@ export function useOnboardingProgress(role: OnboardingRole, totalSteps: number) 
 
   const persist = useCallback(
     (next: Partial<OnboardingProgress>) => {
+      const existing = readOnboardingProgress(userId, role);
       const progress: OnboardingProgress = {
         step,
         shopPreference,
+        activeTask: existing?.activeTask ?? null,
+        resumeStepAfterTask: existing?.resumeStepAfterTask ?? null,
         ...next,
       };
       writeOnboardingProgress(userId, role, progress);

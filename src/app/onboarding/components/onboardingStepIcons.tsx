@@ -8,6 +8,7 @@ import {
   Sparkles,
   Tag,
   Truck,
+  Users,
   Wallet,
 } from "lucide-react";
 import type { OnboardingStepIcon } from "@/lib/onboarding/copy";
@@ -22,6 +23,7 @@ export const onboardingStepIconMap: Record<OnboardingStepIcon, LucideIcon> = {
   camera: Camera,
   tag: Tag,
   sparkles: Sparkles,
+  account: Users,
 };
 
 export const onboardingTrustIcon = ShieldCheck;

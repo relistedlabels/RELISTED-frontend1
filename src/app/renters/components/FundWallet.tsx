@@ -3,6 +3,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { X, ArrowLeft, Copy, RotateCcw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
@@ -13,6 +14,10 @@ import { useVerificationsStatus } from "@/lib/queries/renters/useVerifications";
 import { isRenterVerifiedForFundWallet } from "@/lib/renters/fundWalletVerification";
 import VerificationModal from "@/app/shop/cart/checkout/components/VerificationModal";
 import { toast } from "sonner";
+import {
+  buildOnboardingTaskUrl,
+  renterWalletOnboardingTask,
+} from "@/lib/onboarding/onboardingTasks";
 
 // --------------------
 // Slide-in Filter Panel
@@ -26,6 +31,10 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
   isOpen,
   onClose,
 }) => {
+  const searchParams = useSearchParams();
+  const onboardingOverlayZ = searchParams.get("onboardingTask")
+    ? "z-[130]"
+    : "z-99";
   const { data: profileResponse, isLoading, refetch } = useProfile();
   // Same hook + cache as Account Verifications so invalidation after verify updates this UI
   const {
@@ -159,7 +168,7 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="z-99 fixed inset-0 bg-black/70 backdrop-blur-sm"
+          className={`${onboardingOverlayZ} fixed inset-0 bg-black/70 backdrop-blur-sm`}
           onClick={onClose}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -200,7 +209,10 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
             </div>
 
             {/* Content */}
-            <div className="space-y-6 pt-6 pb-20 grow">
+            <div
+              className="space-y-6 pt-6 pb-20 grow"
+              data-onboarding-target="renter-fund-wallet-details"
+            >
               {/* Verification messages */}
               {verificationSubmittedAt && countdown > 0 && (
                 <div className="bg-blue-50 p-4 border border-blue-200 rounded-lg">
@@ -420,13 +432,41 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
 // Main Component
 // --------------------
 const FundWallet: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const onboardingTask = searchParams.get("onboardingTask");
+  const taskStep = searchParams.get("taskStep");
+  const isFundWalletTourStep =
+    onboardingTask === "renter-wallet" && taskStep === "1";
+  const [isOpen, setIsOpen] = useState(isFundWalletTourStep);
+
+  useEffect(() => {
+    if (isFundWalletTourStep) {
+      setIsOpen(true);
+    }
+  }, [isFundWalletTourStep]);
+
+  useEffect(() => {
+    if (onboardingTask === "renter-wallet" && taskStep === "2") {
+      setIsOpen(false);
+    }
+  }, [onboardingTask, taskStep]);
+
+  const handleFundWalletClick = () => {
+    setIsOpen(true);
+
+    if (onboardingTask === "renter-wallet" && taskStep === "0") {
+      router.replace(buildOnboardingTaskUrl(renterWalletOnboardingTask, 1));
+    }
+  };
 
   return (
     <>
       {/* Toggle Button */}
       <button
-        onClick={() => setIsOpen(true)}
+        type="button"
+        data-onboarding-target="renter-fund-wallet-button"
+        onClick={handleFundWalletClick}
         className="flex flex-1 justify-center items-center space-x-2 bg-white hover:bg-gray-100 px-4 py-3 rounded-lg font-semibold text-black text-sm transition duration-150"
       >
         <FaPlus className="w-4 h-4" />

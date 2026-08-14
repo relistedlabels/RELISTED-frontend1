@@ -1,5 +1,6 @@
 import {
   type OnboardingRole,
+  hasActiveOnboardingTask,
   isOnboardingComplete,
 } from "./onboardingStorage";
 
@@ -28,7 +29,27 @@ const BYPASS_PREFIXES = [
   "/dev",
 ] as const;
 
-export function shouldBypassOnboardingForPath(pathname: string): boolean {
+const ACTIVE_TASK_BYPASS_PREFIXES = [
+  "/listers/settings",
+  "/listers/inventory/product-upload",
+  "/listers/wallet",
+  "/renters/account",
+  "/renters/wallet",
+] as const;
+
+export function shouldBypassOnboardingForPath(
+  pathname: string,
+  options?: {
+    hasActiveTask?: boolean;
+  },
+): boolean {
+  if (
+    options?.hasActiveTask &&
+    ACTIVE_TASK_BYPASS_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+  ) {
+    return true;
+  }
+
   return BYPASS_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
@@ -101,9 +122,18 @@ export function shouldRedirectToOnboarding(options: {
 
   if (!isAuthenticated) return null;
   if (role === "ADMIN") return null;
-  if (shouldBypassOnboardingForPath(pathname)) return null;
 
   const onboardingRole = authRoleToOnboardingRole(role);
+  if (
+    onboardingRole &&
+    hasActiveOnboardingTask(userId, onboardingRole) &&
+    shouldBypassOnboardingForPath(pathname, { hasActiveTask: true })
+  ) {
+    return null;
+  }
+
+  if (shouldBypassOnboardingForPath(pathname)) return null;
+
   if (!onboardingRole) return null;
   if (isOnboardingComplete(userId, onboardingRole)) return null;
 

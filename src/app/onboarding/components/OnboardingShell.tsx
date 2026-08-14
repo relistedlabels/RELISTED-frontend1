@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { ONBOARDING_SECONDARY_TEXT } from "@/lib/onboarding/onboardingTypography";
 
 type OnboardingShellProps = {
   step: number;
@@ -49,14 +50,14 @@ export function OnboardingShell({
           <button
             type="button"
             onClick={onSkipTour}
-            className="top-6 right-6 absolute font-medium text-gray-500 text-xs hover:text-gray-800 transition"
+            className="top-6 right-6 absolute font-medium text-gray-500 text-base hover:text-gray-800 transition"
           >
             {skipTourLabel}
           </button>
         ) : null}
         <div className="flex flex-col items-center mb-6 text-center">
           <img src="/images/logo1.svg" alt="RELISTED" className="mb-4 w-10 h-10" />
-          <Paragraph3 className="mb-1 font-bold text-gray-500 text-xs uppercase tracking-widest">
+          <Paragraph3 className="mb-1 font-bold text-gray-500 text-base uppercase tracking-widest">
             Step {step + 1} of {totalSteps}
           </Paragraph3>
           <div className="bg-gray-200 mb-4 rounded-full w-full h-2">
@@ -83,7 +84,9 @@ export function OnboardingShell({
                 {title}
               </h1>
               {subtitle ? (
-                <Paragraph1 className="mx-auto max-w-md text-gray-600 text-sm leading-relaxed">
+                <Paragraph1
+                  className={`mx-auto max-w-md text-gray-600 ${ONBOARDING_SECONDARY_TEXT}`}
+                >
                   {subtitle}
                 </Paragraph1>
               ) : null}
@@ -100,7 +103,7 @@ export function OnboardingShell({
                 <button
                   type="button"
                   onClick={onBack}
-                  className="flex flex-1 justify-center items-center gap-1 hover:bg-gray-50 py-3 border border-gray-200 rounded-lg font-medium text-gray-700 text-sm transition"
+                  className="flex flex-1 justify-center items-center gap-1 hover:bg-gray-50 py-3 border border-gray-200 rounded-lg font-medium text-gray-700 text-base transition"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   Back
@@ -110,7 +113,7 @@ export function OnboardingShell({
                 <button
                   type="button"
                   onClick={onNext}
-                  className="flex-1 bg-[#231F20] hover:bg-gray-800 py-3 rounded-lg font-semibold text-white text-sm transition"
+                  className="flex-1 bg-[#231F20] hover:bg-gray-800 py-3 rounded-lg font-semibold text-white text-base transition"
                 >
                   {nextLabel}
                 </button>
@@ -120,7 +123,7 @@ export function OnboardingShell({
               <button
                 type="button"
                 onClick={onSkip}
-                className="py-1 font-medium text-gray-500 text-sm hover:text-gray-800 transition"
+                className="py-1 font-medium text-gray-500 text-base hover:text-gray-800 transition"
               >
                 {skipLabel}
               </button>

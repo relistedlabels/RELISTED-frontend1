@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Paragraph1 } from "@/common/ui/Text";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 
@@ -111,8 +111,11 @@ const BusinessDetailsContent: React.FC = () => (
 );
 
 const AccountTabs: React.FC = () => {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabKey>("profile");
+  const onboardingTask = searchParams.get("onboardingTask");
 
   // Set active tab from URL query parameter on mount
   useEffect(() => {
@@ -121,6 +124,16 @@ const AccountTabs: React.FC = () => {
       setActiveTab(tabParam as TabKey);
     }
   }, [searchParams]);
+
+  const handleTabChange = (tabKey: TabKey) => {
+    setActiveTab(tabKey);
+
+    if (onboardingTask) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("tab", tabKey);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }
+  };
 
   const contentMap: Record<TabKey, React.ReactNode> = {
     profile: <ProfileContent key="profile" />,
@@ -141,7 +154,14 @@ const AccountTabs: React.FC = () => {
             return (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
+                data-onboarding-target={
+                  tab.key === "business"
+                    ? "lister-business-tab"
+                    : tab.key === "verifications"
+                      ? "lister-verifications-tab"
+                      : undefined
+                }
+                onClick={() => handleTabChange(tab.key)}
                 className={`
                   py-2 px-4 sm:px-6 w-full relative z-10 text-sm font-semibold transition-colors duration-300
                   ${

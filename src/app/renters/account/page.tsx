@@ -4,8 +4,8 @@ import React from "react";
 
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import UserDashboardLayout from "../components/UserDashboardLayout";
-import DashboardOrderList from "../components/DashboardOrderList";
 import AccountTabs from "../components/AccountTabs";
+import { RenterAccountOnboardingTask } from "./RenterAccountOnboardingTask";
 
 function page() {
   const path = [
@@ -21,6 +21,7 @@ function page() {
         <Breadcrumbs items={path} />{" "}
       </div>
       <UserDashboardLayout>
+        <RenterAccountOnboardingTask />
         <div>
           <AccountTabs />
         </div>

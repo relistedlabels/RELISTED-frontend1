@@ -180,7 +180,10 @@ export const ItemImageUploader: React.FC = () => {
   }).length;
 
   return (
-    <div className="w-full rounded-xl border border-gray-200 p-4">
+    <div
+      className="w-full rounded-xl border border-gray-200 p-4"
+      data-onboarding-target="lister-listing-photos"
+    >
       <div className="mb-4 flex items-center justify-between">
         <div>
           <Paragraph3 className="text-sm font-semibold text-black">
