@@ -87,7 +87,7 @@ const defaultForm = (): SaleEditorForm => {
     isEnabled: false,
     bannerEnabled: true,
     waitlistEnabled: true,
-    shopAccessEnabled: false,
+    shopAccessEnabled: true,
     showCountdown: true,
     notifyEmailSubject: "",
     notifyEmailBody: "",
@@ -225,7 +225,7 @@ export default function SaleEditor({ adminId, saleId }: Props) {
 
   const validate = () => {
     if (!form.internalName.trim()) {
-      toast.error("Give this sale a name your team will recognize.");
+      toast.error("Give this campaign a name your team will recognize.");
       return false;
     }
     if (!form.headline.trim() || !form.shopTitle.trim()) {
@@ -251,7 +251,7 @@ export default function SaleEditor({ adminId, saleId }: Props) {
       createSale.mutate(payload, {
         onSuccess: (res) => {
           const id = res.data?.id;
-          toast.success("Sale created.");
+          toast.success("Campaign created.");
           if (id && (dirtyProducts || selectedProductIds.length > 0)) {
             setProducts.mutate(
               { saleId: id, productIds: selectedProductIds },
@@ -264,7 +264,7 @@ export default function SaleEditor({ adminId, saleId }: Props) {
             router.replace(`/admin/${adminId}/sales/${id}`);
           }
         },
-        onError: () => toast.error("Could not create sale. Try again."),
+        onError: () => toast.error("Could not create campaign. Try again."),
       });
       return;
     }
@@ -280,7 +280,7 @@ export default function SaleEditor({ adminId, saleId }: Props) {
 
   const handleSaveListings = () => {
     if (isNew) {
-      toast.error("Save the sale details first.");
+      toast.error("Save the campaign details first.");
       setTab("details");
       return;
     }
@@ -303,8 +303,8 @@ export default function SaleEditor({ adminId, saleId }: Props) {
       { saleId: saleId!, isEnabled: enabled },
       {
         onSuccess: () =>
-          toast.success(enabled ? "Sale is now on." : "Sale is now off."),
-        onError: () => toast.error("Could not update sale status."),
+          toast.success(enabled ? "Campaign is now on." : "Campaign is now off."),
+        onError: () => toast.error("Could not update campaign status."),
       },
     );
   };
@@ -314,7 +314,7 @@ export default function SaleEditor({ adminId, saleId }: Props) {
     const url = buildSaleShopAbsoluteUrl(sale);
     try {
       await navigator.clipboard.writeText(url);
-      toast.success("Sale link copied to clipboard");
+      toast.success("Campaign link copied to clipboard");
     } catch {
       toast.error("Could not copy link. Try again.");
     }
@@ -343,12 +343,12 @@ export default function SaleEditor({ adminId, saleId }: Props) {
   if (!isNew && isError) {
     return (
       <div className="p-8 text-center bg-white border border-gray-200 rounded-lg">
-        <Paragraph1 className="text-red-600">Could not load this sale.</Paragraph1>
+        <Paragraph1 className="text-red-600">Could not load this campaign.</Paragraph1>
         <Link
           href={`/admin/${adminId}/sales`}
           className="inline-block mt-4 text-gray-700 underline text-sm"
         >
-          Back to sales
+          Back to campaigns
         </Link>
       </div>
     );
@@ -362,12 +362,12 @@ export default function SaleEditor({ adminId, saleId }: Props) {
           className="inline-flex items-center gap-1 mb-3 text-gray-600 hover:text-gray-900 text-sm"
         >
           <ChevronLeft size={16} />
-          All sales
+          All campaigns
         </Link>
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
             <Paragraph2 className="font-extrabold text-gray-900 text-2xl tracking-tight">
-              {isNew ? "New sale" : form.internalName || "Edit sale"}
+              {isNew ? "New campaign" : form.internalName || "Edit campaign"}
             </Paragraph2>
             {!isNew && sale ? (
               <div className="flex flex-wrap items-center gap-2 mt-2">
@@ -399,7 +399,7 @@ export default function SaleEditor({ adminId, saleId }: Props) {
                 className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 rounded-lg font-medium text-white text-sm"
               >
                 <Copy size={16} />
-                Copy sale link
+                Copy campaign link
               </button>
             </div>
           ) : null}
@@ -408,7 +408,7 @@ export default function SaleEditor({ adminId, saleId }: Props) {
 
       <div className="bg-white mb-6 p-4 sm:p-5 border border-gray-200 rounded-lg">
         <ToggleRow
-          label="Sale is on"
+          label="Campaign is on"
           description="Turn off anytime to pause the banner, shop access, and countdown without losing your settings."
           checked={form.isEnabled}
           onChange={handleQuickToggle}
@@ -472,7 +472,7 @@ export default function SaleEditor({ adminId, saleId }: Props) {
             <div>
               <h3 className="font-semibold text-gray-900">Schedule</h3>
               <Paragraph1 className="mt-1 text-gray-500 text-sm">
-                Choose when the sale opens and closes.
+                Choose when the campaign opens and closes.
               </Paragraph1>
             </div>
             <div className="space-y-4">
@@ -499,7 +499,7 @@ export default function SaleEditor({ adminId, saleId }: Props) {
                   <span className="font-normal text-gray-500"> (optional)</span>
                 </span>
                 <Paragraph1 className="mt-0.5 text-gray-500 text-xs">
-                  Earliest date renters can schedule delivery for sale items.
+                  Earliest date renters can schedule delivery for campaign items.
                 </Paragraph1>
                 <SaleDateTimePicker
                   id="sale-earliest-delivery"
@@ -521,7 +521,7 @@ export default function SaleEditor({ adminId, saleId }: Props) {
                 type="text"
                 value={form.headline}
                 onChange={(e) => setField("headline", e.target.value)}
-                placeholder="Shop the summer sale"
+                placeholder="Shop the summer campaign"
                 className={saleInputClass}
               />
             </label>
@@ -579,7 +579,7 @@ export default function SaleEditor({ adminId, saleId }: Props) {
                 type="text"
                 value={form.shopTitle}
                 onChange={(e) => setField("shopTitle", e.target.value)}
-                placeholder="Summer Sale"
+                placeholder="Summer Campaign"
                 className={saleInputClass}
               />
             </label>
@@ -597,7 +597,7 @@ export default function SaleEditor({ adminId, saleId }: Props) {
             </label>
             <label className={`block ${saleFieldWideWrapClass}`}>
               <span className="text-sm font-medium text-gray-700">
-                Message before sale opens
+                Message before campaign opens
               </span>
               <span className="block text-xs text-gray-500 mt-0.5">
                 Shown on product pages when shopping is not open yet.
@@ -662,7 +662,7 @@ export default function SaleEditor({ adminId, saleId }: Props) {
             />
             <ToggleRow
               label="Waitlist signups"
-              description="Allow visitors to leave their email before the sale opens."
+              description="Allow visitors to leave their email before the campaign opens."
               checked={form.waitlistEnabled}
               onChange={(v) => setField("waitlistEnabled", v)}
             />
@@ -675,7 +675,7 @@ export default function SaleEditor({ adminId, saleId }: Props) {
               onClick={handleSaveDetails}
               className="bg-gray-900 hover:bg-gray-800 disabled:opacity-50 px-6 py-2.5 rounded-lg font-medium text-white text-sm"
             >
-              {saving ? "Saving…" : isNew ? "Create sale" : "Save changes"}
+              {saving ? "Saving…" : isNew ? "Create campaign" : "Save changes"}
             </button>
           </div>
         </div>
@@ -716,7 +716,7 @@ export default function SaleEditor({ adminId, saleId }: Props) {
       {tab === "waitlist" && isNew ? (
         <div className="bg-white p-8 border border-gray-200 rounded-lg text-center">
           <Paragraph1 className="text-gray-600 text-sm">
-            Create and save the sale first to see waitlist signups.
+            Create and save the campaign first to see waitlist signups.
           </Paragraph1>
         </div>
       ) : null}

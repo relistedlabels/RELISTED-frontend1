@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Search, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { ChevronDown, Search } from "lucide-react";
+import { toast } from "sonner";
 import { Paragraph1 } from "@/common/ui/Text";
 import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
 import { useAdminShopSalePicker } from "@/lib/queries/admin/useShopSales";
@@ -13,7 +14,10 @@ import {
   type ListingFilterValues,
 } from "@/lib/shop/listingFilters";
 import { countActiveListingFilters } from "@/lib/shop/countActiveListingFilters";
-import type { AdminShopSalePickerProduct } from "@/lib/api/admin/shopSales";
+import {
+  adminShopSalesApi,
+  type AdminShopSalePickerProduct,
+} from "@/lib/api/admin/shopSales";
 import { listingPriceDisplay } from "@/lib/product/listingPriceDisplay";
 
 type Props = {
@@ -103,6 +107,31 @@ const EMPTY_FILTERS: ListingFilterValues = {
   listingTypes: [],
 };
 
+function mergeUniqueIds(current: string[], next: string[]) {
+  return [...new Set([...current, ...next])];
+}
+
+function SelectionMenuItem({
+  children,
+  onClick,
+  disabled,
+}: {
+  children: ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="w-full px-3 py-2 text-left text-sm font-normal text-gray-700 hover:bg-gray-50 disabled:text-gray-400 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function SaleItemPicker({
   saleId,
   selectedIds,
@@ -114,31 +143,85 @@ export default function SaleItemPicker({
   const [appliedFilters, setAppliedFilters] =
     useState<ListingFilterValues>(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
+  const [selectMenuOpen, setSelectMenuOpen] = useState(false);
+  const [selectAllMatchingLoading, setSelectAllMatchingLoading] = useState(false);
+  const [matchingSelection, setMatchingSelection] = useState<{
+    filterKey: string;
+    ids: Set<string>;
+  } | null>(null);
+  const selectMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setPage(1);
   }, [appliedSearch, appliedFilters]);
 
-  const pickerParams = useMemo(
+  const filterParams = useMemo(
     () => ({
       search: appliedSearch || undefined,
-      page,
-      limit: PAGE_SIZE,
-      saleId,
       ...pickerFiltersToApiParams(appliedFilters),
     }),
-    [appliedSearch, appliedFilters, page, saleId],
+    [appliedSearch, appliedFilters],
   );
 
-  const { data, isLoading, isError } = useAdminShopSalePicker(pickerParams);
+  const filterKey = useMemo(() => JSON.stringify(filterParams), [filterParams]);
 
-  const products = data?.data?.products ?? [];
-  const totalPages = data?.data?.totalPages ?? 1;
-  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  useEffect(() => {
+    setMatchingSelection(null);
+  }, [filterKey]);
+
   const activeFilterCount = useMemo(
     () => countActiveListingFilters(appliedFilters),
     [appliedFilters],
   );
+
+  const shouldPinSelected =
+    !appliedSearch.trim() && activeFilterCount === 0 && selectedIds.length > 0;
+
+  const pickerParams = useMemo(
+    () => ({
+      ...filterParams,
+      page,
+      limit: PAGE_SIZE,
+      saleId,
+      prioritizeIds:
+        shouldPinSelected && page === 1 ? selectedIds : undefined,
+    }),
+    [filterParams, page, saleId, shouldPinSelected, selectedIds],
+  );
+
+  const { data, isLoading, isError } = useAdminShopSalePicker(pickerParams);
+
+  const displayProducts = data?.data?.products ?? [];
+  const total = data?.data?.total ?? 0;
+  const totalPages = data?.data?.totalPages ?? 1;
+  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+
+  useEffect(() => {
+    if (!selectMenuOpen) return;
+    const handleClick = (event: MouseEvent) => {
+      if (
+        selectMenuRef.current &&
+        !selectMenuRef.current.contains(event.target as Node)
+      ) {
+        setSelectMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [selectMenuOpen]);
+
+  const pageIds = useMemo(
+    () => displayProducts.map((product) => product.id),
+    [displayProducts],
+  );
+  const selectedOnPageCount = useMemo(
+    () => pageIds.filter((id) => selectedSet.has(id)).length,
+    [pageIds, selectedSet],
+  );
+  const allOnPageSelected =
+    pageIds.length > 0 && selectedOnPageCount === pageIds.length;
+  const someOnPageSelected =
+    selectedOnPageCount > 0 && selectedOnPageCount < pageIds.length;
 
   const toggle = (id: string) => {
     if (selectedSet.has(id)) {
@@ -149,12 +232,71 @@ export default function SaleItemPicker({
   };
 
   const selectAllOnPage = () => {
-    const next = new Set(selectedIds);
-    for (const p of products) next.add(p.id);
-    onChange([...next]);
+    onChange(mergeUniqueIds(selectedIds, pageIds));
   };
 
-  const clearAll = () => onChange([]);
+  const deselectAllOnPage = () => {
+    const pageIdSet = new Set(pageIds);
+    onChange(selectedIds.filter((id) => !pageIdSet.has(id)));
+  };
+
+  const selectAllMatching = async () => {
+    setSelectAllMatchingLoading(true);
+    try {
+      const response = await adminShopSalesApi.listMatchingProductIds(filterParams);
+      const ids = response.data.productIds;
+      onChange(mergeUniqueIds(selectedIds, ids));
+      setMatchingSelection({
+        filterKey,
+        ids: new Set(ids),
+      });
+      toast.success(
+        `Added ${ids.length} listing${ids.length === 1 ? "" : "s"} to selection`,
+      );
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Could not select all matching listings";
+      toast.error(message);
+    } finally {
+      setSelectAllMatchingLoading(false);
+      setSelectMenuOpen(false);
+    }
+  };
+
+  const deselectAllMatching = async () => {
+    setSelectMenuOpen(false);
+    if (matchingSelection?.filterKey === filterKey) {
+      onChange(selectedIds.filter((id) => !matchingSelection.ids.has(id)));
+      setMatchingSelection(null);
+      return;
+    }
+
+    setSelectAllMatchingLoading(true);
+    try {
+      const response = await adminShopSalesApi.listMatchingProductIds(filterParams);
+      const matchingIds = new Set(response.data.productIds);
+      onChange(selectedIds.filter((id) => !matchingIds.has(id)));
+    } catch {
+      toast.error("Could not update selection");
+    } finally {
+      setSelectAllMatchingLoading(false);
+    }
+  };
+
+  const clearAll = () => {
+    onChange([]);
+    setMatchingSelection(null);
+    setSelectMenuOpen(false);
+  };
+
+  const handleHeaderCheckboxChange = () => {
+    if (allOnPageSelected) {
+      deselectAllOnPage();
+    } else {
+      selectAllOnPage();
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -167,24 +309,6 @@ export default function SaleItemPicker({
           <Paragraph1 className="text-gray-500 text-sm">
             Search by item name, lister, brand, or category.
           </Paragraph1>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={selectAllOnPage}
-            className="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-700 text-sm hover:bg-gray-50"
-          >
-            Add all on this page
-          </button>
-          {selectedIds.length > 0 ? (
-            <button
-              type="button"
-              onClick={clearAll}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-700 text-sm hover:bg-gray-50"
-            >
-              Clear all
-            </button>
-          ) : null}
         </div>
       </div>
 
@@ -231,22 +355,6 @@ export default function SaleItemPicker({
         filterOptionsScope="admin-picker"
       />
 
-      {selectedIds.length > 0 ? (
-        <div className="flex flex-wrap gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg max-h-32 overflow-y-auto">
-          {selectedIds.map((id) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => toggle(id)}
-              className="inline-flex items-center gap-1 bg-white px-2 py-1 border border-gray-200 rounded-full text-xs text-gray-700 hover:bg-gray-100"
-            >
-              <span className="font-mono">{id.slice(0, 8)}…</span>
-              <X className="w-3 h-3" aria-hidden />
-            </button>
-          ))}
-        </div>
-      ) : null}
-
       {isError ? (
         <Paragraph1 className="text-red-600 text-sm">
           Could not load listings. Try again.
@@ -259,7 +367,76 @@ export default function SaleItemPicker({
             <table className="w-full text-sm min-w-[1100px]">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-3 py-3 w-10" />
+                  <th className="px-3 py-3 w-11">
+                    <div className="relative inline-flex items-center" ref={selectMenuRef}>
+                      <input
+                        type="checkbox"
+                        checked={allOnPageSelected}
+                        ref={(el) => {
+                          if (el) el.indeterminate = someOnPageSelected;
+                        }}
+                        onChange={handleHeaderCheckboxChange}
+                        className="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                        aria-label="Select all listings on this page"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setSelectMenuOpen((open) => !open)}
+                        className="ml-0.5 p-0.5 rounded text-gray-500 hover:text-gray-800 hover:bg-gray-200/80"
+                        aria-label="More selection options"
+                        aria-expanded={selectMenuOpen}
+                      >
+                        <ChevronDown size={14} strokeWidth={2} />
+                      </button>
+                      {selectMenuOpen ? (
+                        <div
+                          role="menu"
+                          className="absolute left-0 top-full z-20 mt-1.5 w-52 rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+                        >
+                          <SelectionMenuItem
+                            onClick={() => {
+                              selectAllOnPage();
+                              setSelectMenuOpen(false);
+                            }}
+                          >
+                            Select current page
+                          </SelectionMenuItem>
+                          <SelectionMenuItem
+                            onClick={selectAllMatching}
+                            disabled={selectAllMatchingLoading || total === 0}
+                          >
+                            Select all results ({total})
+                          </SelectionMenuItem>
+                          <SelectionMenuItem
+                            onClick={() => {
+                              deselectAllOnPage();
+                              setSelectMenuOpen(false);
+                            }}
+                            disabled={selectedOnPageCount === 0}
+                          >
+                            Deselect current page
+                          </SelectionMenuItem>
+                          <SelectionMenuItem
+                            onClick={deselectAllMatching}
+                            disabled={
+                              selectAllMatchingLoading ||
+                              total === 0 ||
+                              selectedIds.length === 0
+                            }
+                          >
+                            Deselect all results ({total})
+                          </SelectionMenuItem>
+                          <div className="my-1 border-t border-gray-100" />
+                          <SelectionMenuItem
+                            onClick={clearAll}
+                            disabled={selectedIds.length === 0}
+                          >
+                            Clear selection
+                          </SelectionMenuItem>
+                        </div>
+                      ) : null}
+                    </div>
+                  </th>
                   <th className="px-3 py-3 text-left font-semibold text-gray-600 text-xs uppercase whitespace-nowrap">
                     Listing
                   </th>
@@ -296,7 +473,7 @@ export default function SaleItemPicker({
                 </tr>
               </thead>
               <tbody>
-                {products.length === 0 ? (
+                {displayProducts.length === 0 ? (
                   <tr>
                     <td
                       colSpan={TABLE_COLUMN_COUNT}
@@ -306,7 +483,7 @@ export default function SaleItemPicker({
                     </td>
                   </tr>
                 ) : (
-                  products.map((p: AdminShopSalePickerProduct) => {
+                  displayProducts.map((p: AdminShopSalePickerProduct) => {
                     const checked = selectedSet.has(p.id);
                     return (
                       <tr

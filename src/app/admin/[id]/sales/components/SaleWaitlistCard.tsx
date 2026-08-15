@@ -54,7 +54,7 @@ export default function SaleWaitlistCard({ saleId, waitlistEnabled }: Props) {
   const handleNotify = () => {
     if (
       !window.confirm(
-        `Send the "sale is live" email to ${total} subscriber${total === 1 ? "" : "s"}?`,
+        `Send the "campaign is live" email to ${total} subscriber${total === 1 ? "" : "s"}?`,
       )
     ) {
       return;
@@ -97,8 +97,8 @@ export default function SaleWaitlistCard({ saleId, waitlistEnabled }: Props) {
               </div>
               <p className="mt-1 text-sm text-gray-600 leading-relaxed">
                 {waitlistEnabled
-                  ? "People who asked to be notified before the sale opens."
-                  : "Waitlist is turned off for this sale."}
+                  ? "People who asked to be notified before the campaign opens."
+                  : "Waitlist is turned off for this campaign."}
               </p>
             </div>
           </div>

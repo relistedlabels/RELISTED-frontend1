@@ -27,7 +27,7 @@ export default function AdminSalesPage() {
     isError && error instanceof Error
       ? error.message
       : isError
-        ? "Failed to load sales"
+        ? "Failed to load campaigns"
         : null;
 
   return (
@@ -35,11 +35,11 @@ export default function AdminSalesPage() {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
         <div>
           <Paragraph2 className="mb-1 font-extrabold text-gray-900 text-2xl tracking-tight">
-            Sales
+            Campaigns
           </Paragraph2>
           <Paragraph1 className="text-gray-600 max-w-2xl">
-            Create timed sales with a custom banner, shop page, and hand-picked
-            listings. Turn a sale on or off anytime.
+            Create timed campaigns with a custom banner, shop page, and hand-picked
+            listings. Turn a campaign on or off anytime.
           </Paragraph1>
         </div>
         <Link
@@ -47,7 +47,7 @@ export default function AdminSalesPage() {
           className="inline-flex items-center gap-2 shrink-0 bg-gray-900 hover:bg-gray-800 px-4 py-2.5 rounded-lg font-medium text-white text-sm"
         >
           <Plus size={18} />
-          New sale
+          New campaign
         </Link>
       </div>
 
@@ -60,14 +60,14 @@ export default function AdminSalesPage() {
       ) : sales.length === 0 ? (
         <div className="bg-white p-12 border border-gray-200 rounded-lg text-center">
           <Paragraph1 className="text-gray-600 mb-4">
-            No sales yet. Create your first campaign to get started.
+            No campaigns yet. Create your first campaign to get started.
           </Paragraph1>
           <Link
             href={`/admin/${adminId}/sales/new`}
             className="inline-flex items-center gap-2 bg-gray-900 hover:bg-gray-800 px-4 py-2 rounded-lg font-medium text-white text-sm"
           >
             <Plus size={18} />
-            New sale
+            New campaign
           </Link>
         </div>
       ) : (
@@ -77,7 +77,7 @@ export default function AdminSalesPage() {
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                    Sale
+                    Campaign
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
                     Schedule
