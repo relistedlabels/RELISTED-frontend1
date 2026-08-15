@@ -2,7 +2,7 @@
 
 import { useParams, usePathname, useRouter } from "next/navigation";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import BackHeader from "@/common/ui/BackHeader";
 import { Paragraph1 } from "@/common/ui/Text";
@@ -157,6 +157,7 @@ const UploadItemHeader: React.FC<UploadItemHeaderProps> = ({
         )}
 
         <button
+          data-onboarding-target="lister-listing-submit"
           onClick={handleSubmit}
           disabled={isPending || uploadsInProgress}
           className={`w-full rounded-xl px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all active:scale-95 sm:w-fit ${
@@ -180,10 +181,12 @@ const UploadItemHeader: React.FC<UploadItemHeaderProps> = ({
       </div>
 
       {/* Pending Verification Modal */}
-      <PendingVerificationModal
-        isOpen={isVerificationModalOpen}
-        onClose={() => setIsVerificationModalOpen(false)}
-      />
+      <Suspense fallback={null}>
+        <PendingVerificationModal
+          isOpen={isVerificationModalOpen}
+          onClose={() => setIsVerificationModalOpen(false)}
+        />
+      </Suspense>
     </div>
   );
 };

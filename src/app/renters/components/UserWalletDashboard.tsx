@@ -165,13 +165,15 @@ const UserWalletDashboard: React.FC = () => {
               isDark={false}
             />
 
-            <BalanceCard
-              title="Locked Balance"
-              amount={`₦${(balance.lockedBalance ?? 0).toLocaleString()}`}
-              icon={<img src="/icons/lock1.png" className="h-[70px] w-auto" />}
-              note="Locked in active rentals"
-              isDark={true}
-            />
+            <div data-onboarding-target="renter-locked-balance">
+              <BalanceCard
+                title="Locked Balance"
+                amount={`₦${(balance.lockedBalance ?? 0).toLocaleString()}`}
+                icon={<img src="/icons/lock1.png" className="h-[70px] w-auto" />}
+                note="Security deposit held during active rentals"
+                isDark={true}
+              />
+            </div>
           </div>
         </div>
       </div>

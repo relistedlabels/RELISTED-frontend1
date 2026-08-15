@@ -50,7 +50,10 @@ function ProfileSetUp() {
             <CompleteProfileFlow returnUrl={returnUrl} />
           )}
           {shouldShowListerFlow && (
-            <CompleteBusinessProfileFlow returnUrl={returnUrl} />
+            <CompleteBusinessProfileFlow
+              returnUrl={returnUrl}
+              isUpgrade={upgrade === "lister"}
+            />
           )}
         </motion.div>
       </motion.div>

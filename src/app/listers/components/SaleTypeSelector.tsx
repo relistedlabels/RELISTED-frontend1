@@ -30,7 +30,10 @@ export const SaleTypeSelector: React.FC = () => {
   ];
 
   return (
-    <div className="w-full rounded-xl border border-gray-200 p-4">
+    <div
+      className="w-full rounded-xl border border-gray-200 p-4"
+      data-onboarding-target="lister-listing-sale-type"
+    >
       <div className="mb-4">
         <div className="flex items-center gap-2">
           <Paragraph3 className="text-sm font-semibold text-black">

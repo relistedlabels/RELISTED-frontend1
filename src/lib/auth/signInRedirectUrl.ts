@@ -17,3 +17,16 @@ export function useAuthReturnUrl(): string {
 export function buildSignInUrl(returnUrl: string): string {
   return `/auth/sign-in?redirect=${encodeURIComponent(returnUrl)}`;
 }
+
+export function buildListerProfileSetupUrl(returnUrl: string): string {
+  const params = new URLSearchParams({
+    upgrade: "lister",
+    returnUrl,
+  });
+  return `/auth/profile-setup?${params.toString()}`;
+}
+
+export function buildProfileSetupUrl(returnUrl: string): string {
+  const params = new URLSearchParams({ returnUrl });
+  return `/auth/profile-setup?${params.toString()}`;
+}

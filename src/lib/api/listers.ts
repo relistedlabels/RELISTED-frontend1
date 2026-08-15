@@ -1205,7 +1205,7 @@ export async function updateBusinessProfile(
   message: string;
   data: { businessProfile: BusinessProfile };
 }> {
-  return apiFetch("/api/listers/profile", {
+  return apiFetch("/api/listers/profile/business", {
     method: "PUT",
     body: JSON.stringify(data),
   });
@@ -1223,6 +1223,16 @@ export interface UpdateListerProfilePayload {
   phone?: string;
   bvn?: string;
   nin?: string;
+  businessInfo?: {
+    businessName?: string;
+    businessCategory?: string;
+    businessDescription?: string;
+    businessEmail?: string;
+    businessPhone?: string;
+    businessAddress?: string;
+    website?: string;
+    businessRegistrationNumber?: string;
+  };
   /** @deprecated Prefer bankAccountInfo when the API syncs BankAccount rows. */
   bankAccount?: {
     bankName: string;

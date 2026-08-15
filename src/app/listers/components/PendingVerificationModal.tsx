@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -16,6 +17,9 @@ export default function PendingVerificationModal({
   onClose,
 }: PendingVerificationModalProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const overlayZ = searchParams.get("onboardingTask") ? "z-[130]" : "z-40";
+  const modalZ = searchParams.get("onboardingTask") ? "z-[140]" : "z-50";
 
   const handleCheckVerification = () => {
     // Route to settings page with verification tab query parameter
@@ -34,7 +38,7 @@ export default function PendingVerificationModal({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
+            className={`fixed inset-0 bg-black/30 backdrop-blur-sm ${overlayZ}`}
           />
 
           {/* Modal Content */}
@@ -48,7 +52,7 @@ export default function PendingVerificationModal({
               type: "spring",
               bounce: 0.25,
             }}
-            className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-8 shadow-2xl"
+            className={`fixed left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-8 shadow-2xl ${modalZ}`}
           >
             {/* Close Button */}
             <button

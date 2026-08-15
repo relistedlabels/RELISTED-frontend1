@@ -81,15 +81,15 @@ const StepTwoBusinessDetails: React.FC<StepTwoBusinessDetailsProps> = ({
         // Set user role to LISTER
         setUser({ role: "LISTER" });
 
-        toast.success(`Welcome, ${businessName}! 🎉`, {
+        toast.success(`Welcome, ${businessName}!`, {
           description:
-            "You're all set to browse rentals and snag great finds — happy shopping!",
+            "Your lister profile is ready. You can start listing and earning from your wardrobe.",
           duration: 4000,
         });
         setTimeout(() => {
           const redirectUrl = returnUrl
             ? decodeURIComponent(returnUrl)
-            : "/listers/dashboard";
+            : "/onboarding/lister";
           router.replace(redirectUrl);
         }, 1500);
       },

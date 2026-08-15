@@ -340,8 +340,8 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
           {/* <TiTick className="w-5 h-5 text-green-600 mt-0.5 shrink-0" /> */}
           <img src="/icons/safe1.svg" alt="safe" />
           <Paragraph1 className=" text-gray-700 leading-snug">
-            Your deposit is secure and fully refunded after item return and
-            approval.
+            Your security deposit is held as Locked Balance and returns to
+            your Available Balance after return is approved.
           </Paragraph1>
         </div>
 

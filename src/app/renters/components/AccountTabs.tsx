@@ -1,9 +1,7 @@
-// ENDPOINTS: GET /api/renters/profile, PUT /api/renters/profile, GET /api/renters/profile/addresses, POST /api/renters/profile/addresses, POST /api/renters/profile/avatar, GET /api/renters/verifications/status, POST /api/renters/security/password, GET /api/renters/notifications/preferences, PUT /api/renters/notifications/preferences
-
 "use client";
 
-import React, { useState } from "react";
-import { Paragraph1 } from "@/common/ui/Text";
+import React, { useState, useEffect } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 
 // Components
@@ -26,7 +24,6 @@ const ACCOUNT_TABS: Tab[] = [
   { key: "security", label: "Security" },
 ];
 
-// --- Animation Variants ---
 const tabContentVariants: Variants = {
   initial: { opacity: 0, y: 10 },
   enter: {
@@ -41,7 +38,6 @@ const tabContentVariants: Variants = {
   },
 };
 
-// --- Content Wrappers with Motion ---
 const ProfileContent: React.FC = () => (
   <motion.div
     variants={tabContentVariants}
@@ -91,7 +87,28 @@ const SecurityContent: React.FC = () => (
 );
 
 const AccountTabs: React.FC = () => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabKey>("profile");
+  const onboardingTask = searchParams.get("onboardingTask");
+
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam && ACCOUNT_TABS.some((t) => t.key === tabParam)) {
+      setActiveTab(tabParam as TabKey);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (tabKey: TabKey) => {
+    setActiveTab(tabKey);
+
+    if (onboardingTask) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("tab", tabKey);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }
+  };
 
   const contentMap: Record<TabKey, React.ReactNode> = {
     profile: <ProfileContent key="profile" />,
@@ -102,7 +119,6 @@ const AccountTabs: React.FC = () => {
 
   return (
     <div className="font-sans">
-      {/* Tab Navigation Bar */}
       <div className="relative hide-scrollbar mb-6 w-[340px] overflow-hidden sm:w-full overflow-x-auto bg-white border p-1 border-gray-200 rounded-lg">
         <div className="flex justify-between md:justify-between gap-3 md:gap-0 w-max md:w-full px-1 md:px-0 py-1 relative">
           {ACCOUNT_TABS.map((tab) => {
@@ -111,7 +127,13 @@ const AccountTabs: React.FC = () => {
             return (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
+                type="button"
+                data-onboarding-target={
+                  tab.key === "verifications"
+                    ? "renter-verifications-tab"
+                    : undefined
+                }
+                onClick={() => handleTabChange(tab.key)}
                 className={`
                   py-2 px-4 sm:px-6 w-full relative z-10 text-sm font-semibold transition-colors duration-300
                   ${
@@ -121,10 +143,9 @@ const AccountTabs: React.FC = () => {
                   }
                 `}
               >
-                {/* Framer Motion Shared Layout Indicator */}
                 {isActive && (
                   <motion.div
-                    layoutId="active-tab-indicator"
+                    layoutId="renter-active-tab-indicator"
                     className="absolute inset-0 bg-black rounded-lg -z-10"
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                   />
@@ -136,7 +157,6 @@ const AccountTabs: React.FC = () => {
         </div>
       </div>
 
-      {/* Content Area with AnimatePresence */}
       <div className="pb-10">
         <AnimatePresence mode="wait">{contentMap[activeTab]}</AnimatePresence>
       </div>

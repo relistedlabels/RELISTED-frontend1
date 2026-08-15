@@ -1,7 +1,8 @@
 // ENDPOINTS: GET /api/listers/profile/business, PUT /api/listers/profile/business
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Paragraph1 } from "@/common/ui/Text";
 import { toast } from "sonner";
 import {
@@ -15,10 +16,23 @@ import {
 } from "react-icons/hi2";
 import { useBusinessProfile } from "@/lib/queries/listers/useBusinessProfile";
 import { useUpdateBusinessProfile } from "@/lib/mutations/listers/useUpdateBusinessProfile";
+import type { UpdateBusinessProfilePayload } from "@/lib/api/listers";
 
 const BusinessDetailsForm: React.FC = () => {
+  const searchParams = useSearchParams();
   const { data } = useBusinessProfile();
   const updateBusinessProfileMutation = useUpdateBusinessProfile();
+  const businessProfile = data?.data.businessProfile;
+
+  const isOnboardingProfileTask =
+    searchParams.get("onboardingTask") === "lister-profile";
+  const isOnboardingBusinessStep = useMemo(
+    () =>
+      isOnboardingProfileTask &&
+      (searchParams.get("tab") === "business" ||
+        searchParams.get("taskStep") === "2"),
+    [isOnboardingProfileTask, searchParams],
+  );
 
   const [formData, setFormData] = useState({
     businessName: "",
@@ -34,9 +48,16 @@ const BusinessDetailsForm: React.FC = () => {
 
   const [isEditing, setIsEditing] = useState(false);
 
+  useEffect(() => {
+    if (isOnboardingBusinessStep) {
+      setIsEditing(true);
+    }
+  }, [isOnboardingBusinessStep]);
+
+  const fieldsEnabled = isEditing || isOnboardingBusinessStep;
+
   // Populate from backend /listers/profile/business when available
   useEffect(() => {
-    const businessProfile = data?.data.businessProfile;
     if (!businessProfile) return;
 
     setFormData((prev) => ({
@@ -52,42 +73,56 @@ const BusinessDetailsForm: React.FC = () => {
       taxId: businessProfile.taxId || "",
       businessRegistration: businessProfile.businessRegistration || "",
     }));
-  }, [data]);
+  }, [businessProfile]);
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSave = () => {
-    const businessProfile = data?.data.businessProfile;
-    if (!businessProfile) return;
+    if (!formData.businessName.trim()) {
+      toast.error("Please enter a business name.");
+      return;
+    }
 
-    updateBusinessProfileMutation.mutate(
-      {
-        businessName: formData.businessName || businessProfile.businessName,
-        businessCategory:
-          formData.businessCategory || businessProfile.businessCategory,
-        businessDescription:
-          formData.businessDescription || businessProfile.businessDescription,
-        businessEmail: formData.businessEmail || businessProfile.businessEmail,
-        businessPhone: formData.businessPhone || businessProfile.businessPhone,
-        businessAddress:
-          formData.businessAddress || businessProfile.businessAddress,
-        website: formData.website || businessProfile.website,
-      },
-      {
+    const payload: UpdateBusinessProfilePayload = {
+      businessName: formData.businessName.trim(),
+    };
+
+    if (formData.businessCategory.trim()) {
+      payload.businessCategory = formData.businessCategory;
+    }
+    if (formData.businessDescription.trim()) {
+      payload.businessDescription = formData.businessDescription.trim();
+    }
+    if (formData.businessEmail.trim()) {
+      payload.businessEmail = formData.businessEmail.trim();
+    }
+    if (formData.businessPhone.trim()) {
+      payload.businessPhone = formData.businessPhone.trim();
+    }
+    if (formData.businessAddress.trim()) {
+      payload.businessAddress = formData.businessAddress.trim();
+    }
+    if (formData.website.trim()) {
+      payload.website = formData.website.trim();
+    }
+
+    updateBusinessProfileMutation.mutate(payload, {
         onSuccess: () => {
-          setIsEditing(false);
+          if (!isOnboardingProfileTask) {
+            setIsEditing(false);
+          }
           toast.success("Business details updated successfully!", {
             description: "Your business information has been saved.",
             duration: 4000,
           });
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
           const errorMessage =
-            error?.response?.data?.message ||
-            error?.message ||
-            "Failed to update business details. Please try again.";
+            error instanceof Error
+              ? error.message
+              : "Failed to update business details. Please try again.";
           toast.error("Update Failed", {
             description: errorMessage,
             duration: 4000,
@@ -108,7 +143,7 @@ const BusinessDetailsForm: React.FC = () => {
         {/* Business Name & Category */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Business Name */}
-          <div>
+          <div data-onboarding-target="lister-business-name">
             <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
               Business Name *
             </Paragraph1>
@@ -120,7 +155,7 @@ const BusinessDetailsForm: React.FC = () => {
                 onChange={(e) =>
                   handleInputChange("businessName", e.target.value)
                 }
-                disabled={!isEditing}
+                disabled={!fieldsEnabled}
                 placeholder="Your business name"
                 className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition disabled:bg-gray-50 disabled:text-gray-600 disabled:cursor-not-allowed"
               />
@@ -139,7 +174,7 @@ const BusinessDetailsForm: React.FC = () => {
                 onChange={(e) =>
                   handleInputChange("businessCategory", e.target.value)
                 }
-                disabled={!isEditing}
+                disabled={!fieldsEnabled}
                 className="w-full p-3 pl-10 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-black focus:border-black transition disabled:bg-gray-50 disabled:text-gray-600 disabled:cursor-not-allowed appearance-none"
               >
                 <option>Fashion & Accessories</option>
@@ -164,7 +199,7 @@ const BusinessDetailsForm: React.FC = () => {
               onChange={(e) =>
                 handleInputChange("businessDescription", e.target.value)
               }
-              disabled={!isEditing}
+                disabled={!fieldsEnabled}
               placeholder="Describe your business and what you offer..."
               className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition disabled:bg-gray-50 disabled:text-gray-600 disabled:cursor-not-allowed min-h-[100px]"
             />
@@ -190,7 +225,7 @@ const BusinessDetailsForm: React.FC = () => {
                 onChange={(e) =>
                   handleInputChange("businessEmail", e.target.value)
                 }
-                disabled={!isEditing}
+                disabled={!fieldsEnabled}
                 placeholder="business@example.com"
                 className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition disabled:bg-gray-50 disabled:text-gray-600 disabled:cursor-not-allowed"
               />
@@ -210,7 +245,7 @@ const BusinessDetailsForm: React.FC = () => {
                 onChange={(e) =>
                   handleInputChange("businessPhone", e.target.value)
                 }
-                disabled={!isEditing}
+                disabled={!fieldsEnabled}
                 placeholder="+234 (0) 907 123 4567"
                 className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition disabled:bg-gray-50 disabled:text-gray-600 disabled:cursor-not-allowed"
               />
@@ -231,7 +266,7 @@ const BusinessDetailsForm: React.FC = () => {
               onChange={(e) =>
                 handleInputChange("businessAddress", e.target.value)
               }
-              disabled={!isEditing}
+                disabled={!fieldsEnabled}
               placeholder="Business street address"
               className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition disabled:bg-gray-50 disabled:text-gray-600 disabled:cursor-not-allowed"
             />
@@ -255,7 +290,7 @@ const BusinessDetailsForm: React.FC = () => {
                 type="url"
                 value={formData.website}
                 onChange={(e) => handleInputChange("website", e.target.value)}
-                disabled={!isEditing}
+                disabled={!fieldsEnabled}
                 placeholder="www.yourbusiness.com"
                 className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition disabled:bg-gray-50 disabled:text-gray-600 disabled:cursor-not-allowed"
               />
@@ -273,7 +308,7 @@ const BusinessDetailsForm: React.FC = () => {
                 type="text"
                 value={formData.taxId}
                 onChange={(e) => handleInputChange("taxId", e.target.value)}
-                disabled={!isEditing}
+                disabled={!fieldsEnabled}
                 placeholder="Tax identification number"
                 className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition disabled:bg-gray-50 disabled:text-gray-600 disabled:cursor-not-allowed"
               />
@@ -297,7 +332,7 @@ const BusinessDetailsForm: React.FC = () => {
               onChange={(e) =>
                 handleInputChange("businessRegistration", e.target.value)
               }
-              disabled={!isEditing}
+                disabled={!fieldsEnabled}
               placeholder="CAC or registration number"
               className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition disabled:bg-gray-50 disabled:text-gray-600 disabled:cursor-not-allowed"
             />
@@ -309,8 +344,11 @@ const BusinessDetailsForm: React.FC = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-col gap-3 sm:flex-row justify-end pt-8 mt-8 border-t border-gray-200">
-        {!isEditing ? (
+      <div
+        className="flex flex-col gap-3 sm:flex-row justify-end pt-8 mt-8 border-t border-gray-200"
+        data-onboarding-target="lister-business-save"
+      >
+        {!fieldsEnabled ? (
           <button
             onClick={() => setIsEditing(true)}
             className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition duration-150"
@@ -319,13 +357,15 @@ const BusinessDetailsForm: React.FC = () => {
           </button>
         ) : (
           <>
-            <button
-              onClick={() => setIsEditing(false)}
-              disabled={updateBusinessProfileMutation.isPending}
-              className="px-6 py-2 text-sm font-semibold text-black border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Cancel
-            </button>
+            {!isOnboardingBusinessStep ? (
+              <button
+                onClick={() => setIsEditing(false)}
+                disabled={updateBusinessProfileMutation.isPending}
+                className="px-6 py-2 text-sm font-semibold text-black border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+            ) : null}
             <button
               onClick={handleSave}
               disabled={updateBusinessProfileMutation.isPending}

@@ -851,8 +851,9 @@ export default function FinalOrderSummaryCard({
                       <div className="flex items-start gap-2 bg-green-50 mt-4 p-3 border border-green-200 rounded-md text-green-700 text-xs">
                         <CheckCircle size={16} className="mt-0.5 shrink-0" />
                         <Paragraph1 className="text-green-700">
-                          Your <strong>deposit is secure</strong> and fully
-                          refunded after item return and approval.
+                          Your <strong>security deposit</strong> is held as
+                          Locked Balance and returns to your Available Balance
+                          after return is approved.
                         </Paragraph1>
                       </div>
                     )}
