@@ -323,7 +323,9 @@ export function OnboardingTaskTour({
   }, []);
 
   const finishTour = () => {
-    completeOnboardingTask(userId, "lister");
+    if (task) {
+      completeOnboardingTask(userId, task.role);
+    }
     router.replace(returnPath);
   };
 
@@ -337,9 +339,18 @@ export function OnboardingTaskTour({
   function renderCardContent() {
     return (
       <>
-        <Paragraph3 className="mb-1 pr-6 font-medium text-gray-500 text-base">
-          {taskStep + 1} of {steps.length}
-        </Paragraph3>
+        <div className="flex items-center gap-3 mb-1 pr-6">
+          <button
+            type="button"
+            onClick={finishTour}
+            className="font-medium text-gray-500 text-sm hover:text-gray-800 transition shrink-0"
+          >
+            Skip tour
+          </button>
+          <Paragraph3 className="font-medium text-gray-500 text-base">
+            {taskStep + 1} of {steps.length}
+          </Paragraph3>
+        </div>
         <Paragraph1 className="mb-1 font-semibold text-gray-900 text-base">
           {currentStep.title}
         </Paragraph1>
@@ -371,14 +382,6 @@ export function OnboardingTaskTour({
             {isLastStep ? "Continue tour" : "Next"}
           </button>
         </div>
-
-        <button
-          type="button"
-          onClick={finishTour}
-          className="mt-3 py-1 w-full font-medium text-gray-500 hover:text-gray-800 text-base transition"
-        >
-          Skip and return to onboarding
-        </button>
       </>
     );
   }
