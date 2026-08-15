@@ -340,6 +340,9 @@ export function OnboardingTaskTour({
     return (
       <>
         <div className="flex items-center gap-3 mb-1 pr-6">
+          <Paragraph3 className="font-medium text-gray-500 text-base">
+            {taskStep + 1} of {steps.length}
+          </Paragraph3>
           <button
             type="button"
             onClick={finishTour}
@@ -347,9 +350,6 @@ export function OnboardingTaskTour({
           >
             Skip tour
           </button>
-          <Paragraph3 className="font-medium text-gray-500 text-base">
-            {taskStep + 1} of {steps.length}
-          </Paragraph3>
         </div>
         <Paragraph1 className="mb-1 font-semibold text-gray-900 text-base">
           {currentStep.title}
