@@ -4,6 +4,7 @@ export type PrioritizedBrand = {
   id: string;
   name: string;
   isShopPrioritized: boolean;
+  shopPriorityOrder: number | null;
 };
 
 export type PrioritizedBrandsResponse = {

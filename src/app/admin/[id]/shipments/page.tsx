@@ -52,6 +52,7 @@ import {
   AdminListingThumb,
   listingThumbnailUrl,
 } from "@/app/admin/lib/adminListingDisplay";
+import ReturnRequestSection from "@/app/admin/components/ReturnRequestSection";
 import {
   AdminComboBox,
   AdminFilterField,
@@ -1153,6 +1154,13 @@ function ShipmentsPageInner() {
                     </ul>
                   </div>
                 )}
+
+              {displayShipment.type === "RETURN" && (
+                <ReturnRequestSection
+                  returnRequest={displayShipment.returnRequest}
+                  visible
+                />
+              )}
 
               <div className="gap-4 grid grid-cols-1 sm:grid-cols-2">
                 <div>

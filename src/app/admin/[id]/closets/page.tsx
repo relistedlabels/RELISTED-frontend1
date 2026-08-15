@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-/** Legacy route: closet admin list moved to Sales. */
+/** Legacy route: closet admin list moved to Campaigns. */
 export default function AdminClosetsRedirectPage() {
   const params = useParams();
   const router = useRouter();
