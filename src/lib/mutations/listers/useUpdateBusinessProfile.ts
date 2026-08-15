@@ -14,6 +14,9 @@ export function useUpdateBusinessProfile() {
       queryClient.invalidateQueries({
         queryKey: ["listers", "businessProfile"],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["listers", "profile"],
+      });
     },
   });
 }

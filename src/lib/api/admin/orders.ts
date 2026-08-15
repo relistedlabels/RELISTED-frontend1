@@ -49,6 +49,26 @@ export interface Return {
   itemName: string;
 }
 
+export interface AdminReturnRequest {
+  id: string;
+  status: string;
+  statusLabel: string;
+  itemCondition: string;
+  damageNotes: string | null;
+  imageUrls: string[];
+  listerCondition: string | null;
+  listerDamageNotes: string | null;
+  listerConfirmationImages: string[];
+  trackingNumber: string | null;
+  pickupAddress: string | null;
+  pickupWindowStart: string | null;
+  pickupWindowEnd: string | null;
+  createdAt: string;
+  updatedAt: string;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+}
+
 export interface OrderPerson {
   id: string;
   name: string;
@@ -112,6 +132,7 @@ export interface OrderDetail {
     cleaningFee: number;
     listerId: string;
   }>;
+  returnRequest?: AdminReturnRequest | null;
 }
 
 export interface OrderStats {

@@ -13,6 +13,7 @@ import {
 import * as Yup from "yup";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { isPublicBrowseRoute } from "@/lib/auth/signInRedirectPaths";
+import { resolvePostAuthDestination } from "@/lib/onboarding/onboardingGate";
 import { useLogin, useResendOtp } from "@/lib/mutations";
 import { useUserStore } from "@/store/useUserStore";
 import SocialSignInOptions from "./SocialSignInOptions";
@@ -66,20 +67,20 @@ const SignInForm: React.FC = () => {
                   const params = new URLSearchParams(window.location.search);
                   const redirectUrl = params.get("redirect");
                   const isLister = state.role === "LISTER";
-                  const honorRedirect =
+                  const honorRedirect = Boolean(
                     redirectUrl &&
-                    !(
-                      isLister &&
-                      isPublicBrowseRoute(redirectUrl.split("?")[0] || "")
-                    );
+                      !(
+                        isLister &&
+                        isPublicBrowseRoute(redirectUrl.split("?")[0] || "")
+                      ),
+                  );
 
-                  if (honorRedirect) {
-                    window.location.href = redirectUrl;
-                  } else if (isLister) {
-                    window.location.href = "/listers/dashboard";
-                  } else {
-                    window.location.href = "/";
-                  }
+                  window.location.href = resolvePostAuthDestination({
+                    role: state.role,
+                    userId: state.userId,
+                    redirectUrl,
+                    honorRedirect,
+                  });
                 }
               },
             });

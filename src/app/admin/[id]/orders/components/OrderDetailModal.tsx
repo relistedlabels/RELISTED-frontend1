@@ -11,6 +11,7 @@ import OrderItemsSection from "./OrderItemsSection";
 import { useOrderById } from "@/lib/queries/admin/useOrders";
 import type { OrderDetail } from "@/lib/api/admin/orders";
 import { getAdminOrderStatusLabel } from "@/lib/orders/shipmentAndOrderLabels";
+import ReturnRequestSection from "../../../components/ReturnRequestSection";
 
 interface OrderDetailModalProps {
   isOpen: boolean;
@@ -163,6 +164,8 @@ export default function OrderDetailModal({
                     items={order.items_details ?? []}
                     formatMoney={formatMoney}
                   />
+
+                  <ReturnRequestSection returnRequest={order.returnRequest} />
 
                   <OrderSection3
                     subtotal={formatMoney(order.payment?.subtotal ?? 0)}

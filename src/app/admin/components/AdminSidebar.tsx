@@ -81,7 +81,7 @@ const getNavItems = (): NavItem[] => [
   },
   {
     id: "sales",
-    label: "Sales",
+    label: "Campaigns",
     icon: HiOutlineRectangleStack,
     getHref: (id) => `/admin/${id}/sales`,
     showNewBadge: true,

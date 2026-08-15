@@ -2,7 +2,8 @@
 
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { X, ChevronLeft, ArrowLeft, ChevronDown, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1, Paragraph2, Header3, Paragraph3 } from "@/common/ui/Text";
@@ -22,6 +23,10 @@ import { useUpdateListerProfile } from "@/lib/mutations/listers/useUpdateListerP
 import { resolveRenterBankByName } from "@/lib/renters/renterBankOptions";
 import { useNgBankOptions } from "@/lib/queries/useNgBankOptions";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  buildOnboardingTaskUrl,
+  listerPayoutsOnboardingTask,
+} from "@/lib/onboarding/onboardingTasks";
 
 // --------------------
 // Slide-in Filter Panel
@@ -170,7 +175,9 @@ const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
 // Slide-in Filter Panel
 // --------------------
 const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
+  const searchParams = useSearchParams();
   const [isEditBankOpen, setIsEditBankOpen] = useState(false);
+  const onboardingOverlayZ = searchParams.get("onboardingTask") ? "z-[130]" : "z-99";
   const [bankName, setBankName] = useState("");
   const [bankSearchQuery, setBankSearchQuery] = useState("");
   const [isBankDropdownOpen, setIsBankDropdownOpen] = useState(false);
@@ -242,6 +249,19 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
     setBankError("");
     setIsEditBankOpen(true);
   };
+
+  useEffect(() => {
+    if (
+      !isOpen ||
+      searchParams.get("onboardingTask") !== "lister-payouts" ||
+      searchParams.get("taskStep") !== "1" ||
+      isEditBankOpen
+    ) {
+      return;
+    }
+
+    handleEditBank();
+  }, [isOpen, searchParams, isEditBankOpen, bankAccount?.bankName, bankAccount?.accountNumber, bankAccount?.accountName]);
 
   const handleSubmitBank = () => {
     console.log("[LISTER BANK] Starting bank account creation", {
@@ -333,7 +353,7 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="z-99 fixed inset-0 bg-black/70 backdrop--blur-sm"
+          className={`${onboardingOverlayZ} fixed inset-0 bg-black/70 backdrop--blur-sm`}
           onClick={closePanel}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -410,6 +430,7 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-blue-50 p-4 border border-blue-200 rounded-lg"
+                data-onboarding-target="lister-bank-account"
               >
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-2">
@@ -670,13 +691,35 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
 // Main Component
 // --------------------
 const Withdraw: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const onboardingTask = searchParams.get("onboardingTask");
+  const taskStep = searchParams.get("taskStep");
+  const isPayoutBankStep =
+    onboardingTask === "lister-payouts" && taskStep === "1";
+  const [isOpen, setIsOpen] = useState(isPayoutBankStep);
+
+  useEffect(() => {
+    if (isPayoutBankStep) {
+      setIsOpen(true);
+    }
+  }, [isPayoutBankStep]);
+
+  const handleWithdrawClick = () => {
+    setIsOpen(true);
+
+    if (onboardingTask === "lister-payouts" && taskStep === "0") {
+      router.replace(buildOnboardingTaskUrl(listerPayoutsOnboardingTask, 1));
+    }
+  };
 
   return (
     <>
       {/* Toggle Button */}
       <button
-        onClick={() => setIsOpen(true)}
+        type="button"
+        data-onboarding-target="lister-withdraw-button"
+        onClick={handleWithdrawClick}
         className="flex flex-1 justify-center items-center space-x-1 bg-[#333333] hover:bg-[#444444] px-4 py-3 rounded-lg font-semibold text-white text-sm transition duration-150"
       >
         <Paragraph1>Withdraw</Paragraph1>

@@ -34,6 +34,7 @@ export function useAdminShopSalePicker(
     minPrice?: number;
     maxPrice?: number;
     inCloset?: boolean;
+    prioritizeIds?: string[];
   },
   enabled = true,
 ) {

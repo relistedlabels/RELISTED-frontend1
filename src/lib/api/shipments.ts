@@ -1,4 +1,5 @@
 import { apiFetch } from "./http";
+import type { AdminReturnRequest } from "./admin/orders";
 
 /** Mirrors Prisma `ShipmentStatus` from relisted-backend */
 export type ShipmentStatus =
@@ -78,6 +79,7 @@ export interface Shipment {
   updatedAt: string;
   order?: ShipmentOrderSummary;
   attemptLogs?: DispatchAttemptLog[];
+  returnRequest?: AdminReturnRequest | null;
 }
 
 export interface ShipmentsListData {

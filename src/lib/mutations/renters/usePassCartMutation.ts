@@ -1,45 +1,18 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { passCartApi } from "@/lib/api/cart";
-import type {
-  DispatchWindowsPayload,
-} from "@/lib/checkout/dispatchWindows";
-import type { ReturnPickupAddressPayload } from "@/lib/api/cart";
+import {
+  buildPassCartPayload,
+  type PassCartMutationInput,
+} from "@/lib/checkout/buildPassCartPayload";
 
-type PassCartMutationInput = {
-  tierName: string;
-  returnTierName?: string;
-  outboundPricingByBucket?: Array<{ bucketIndex: number; pricingTier: string }>;
-  returnPricingByBucket?: Array<{ bucketIndex: number; pricingTier: string }>;
-  dispatchWindows?: DispatchWindowsPayload;
-  returnPickupAddress?: ReturnPickupAddressPayload;
-};
+export type { PassCartMutationInput };
 
 export const usePassCart = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      tierName,
-      returnTierName,
-      outboundPricingByBucket,
-      returnPricingByBucket,
-      dispatchWindows,
-      returnPickupAddress,
-    }: PassCartMutationInput) =>
-      passCartApi({
-        pricingTier: tierName,
-        ...(returnTierName != null && returnTierName !== ""
-          ? { returnPricingTier: returnTierName }
-          : {}),
-        ...(outboundPricingByBucket != null && outboundPricingByBucket.length > 0
-          ? { outboundPricingByBucket }
-          : {}),
-        ...(returnPricingByBucket != null && returnPricingByBucket.length > 0
-          ? { returnPricingByBucket }
-          : {}),
-        dispatchWindows,
-        returnPickupAddress,
-      }),
+    mutationFn: (input: PassCartMutationInput) =>
+      passCartApi(buildPassCartPayload(input)),
     onSuccess: () => {
       // Clear all cart-related caches
       queryClient.invalidateQueries({ queryKey: ["cart", "items"] });

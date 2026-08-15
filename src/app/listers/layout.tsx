@@ -5,6 +5,8 @@ import { ReactNode, useEffect } from "react";
 import FullPageLoader from "@/common/ui/FullPageLoader";
 import { useUserStoreHydrated } from "@/hooks/useUserStoreHydrated";
 import {
+  buildListerProfileSetupUrl,
+  buildProfileSetupUrl,
   buildSignInUrl,
   useAuthReturnUrl,
 } from "@/lib/auth/signInRedirectUrl";
@@ -19,8 +21,9 @@ export default function CuratorsLayout({ children }: { children: ReactNode }) {
   const { sessionToken, requiresMfa, token } = useUserStore();
 
   const { data: user, isLoading: userLoading } = useMe();
+  const userRole = user?.role;
   const { data: listerProfile, isLoading: listerProfileLoading } =
-    useListerProfile();
+    useListerProfile(userRole !== "RENTER");
 
   useEffect(() => {
     if (!hydrated) return;
@@ -41,13 +44,16 @@ export default function CuratorsLayout({ children }: { children: ReactNode }) {
       // Check user and profile
       if (!user) {
         router.replace(buildSignInUrl(returnUrl));
+      } else if (userRole === "RENTER") {
+        router.replace(buildListerProfileSetupUrl(returnUrl));
       } else if (!listerProfile) {
-        router.replace("/auth/profile-setup");
+        router.replace(buildProfileSetupUrl(returnUrl));
       }
     }
   }, [
     hydrated,
     user,
+    userRole,
     listerProfile,
     userLoading,
     listerProfileLoading,
@@ -67,11 +73,11 @@ export default function CuratorsLayout({ children }: { children: ReactNode }) {
     return <FullPageLoader />;
   }
 
-  if (userLoading || listerProfileLoading) {
+  if (userLoading || (userRole !== "RENTER" && listerProfileLoading)) {
     return <FullPageLoader />;
   }
 
-  if (!user || !listerProfile) {
+  if (!user || userRole === "RENTER" || !listerProfile) {
     return <FullPageLoader />;
   }
 

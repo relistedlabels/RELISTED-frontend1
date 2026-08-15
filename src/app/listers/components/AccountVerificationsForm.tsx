@@ -442,7 +442,10 @@ const AccountVerificationsForm: React.FC = () => {
       </Paragraph1>
 
       {/* Identification Section */}
-      <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
+      <div
+        className="flex flex-wrap justify-between items-center gap-2 mb-4"
+        data-onboarding-target="lister-id-section"
+      >
         <Paragraph1 className="text-gray-900 text-lg">
           Identification
         </Paragraph1>
@@ -588,7 +591,10 @@ const AccountVerificationsForm: React.FC = () => {
       )}
 
       {/* Bank Verification */}
-      <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
+      <div
+        className="flex flex-wrap justify-between items-center gap-2 mb-4"
+        data-onboarding-target="lister-bvn-section"
+      >
         <Paragraph1 className="font-bold text-gray-900 text-lg">
           Bank Verification Number
         </Paragraph1>

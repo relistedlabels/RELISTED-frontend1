@@ -3,6 +3,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
@@ -21,21 +22,26 @@ import { useListerAddresses } from "@/lib/queries/listers/useListerAddresses";
 import { useUpdateListerProfile } from "@/lib/mutations/listers/useUpdateListerProfile";
 import { useAddListerAddress } from "@/lib/mutations/listers/useAddListerAddress";
 import { useUpdateListerAddress } from "@/lib/mutations/listers/useUpdateListerAddress";
-import { uploadListerAvatar, type AddAddressPayload } from "@/lib/api/listers";
+import { useUploadListerAvatar } from "@/lib/mutations/listers/useUploadListerAvatar";
+import { type AddAddressPayload } from "@/lib/api/listers";
 import { StateSelect } from "@/app/auth/profile-setup/components/StateSelect";
 import { CityLGASelect } from "@/app/auth/profile-setup/components/CityLGASelect";
+import { toast } from "sonner";
 
 const AccountProfileDetails: React.FC = () => {
+  const searchParams = useSearchParams();
+  const modalOverlayZ = searchParams.get("onboardingTask") ? "z-[130]" : "z-50";
   const { data: profileResponse } = useListerProfile();
   const { data: addressesResponse } = useListerAddresses();
   const updateProfileMutation = useUpdateListerProfile();
   const addAddressMutation = useAddListerAddress();
   const updateAddressMutation = useUpdateListerAddress();
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const uploadAvatarMutation = useUploadListerAvatar();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { data } = useListerProfile();
   const profile = data?.data.profile;
   const avatar = profile?.profileImage ?? null;
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   const [updateStatus, setUpdateStatus] = useState<
     "idle" | "success" | "error"
@@ -99,6 +105,22 @@ const AccountProfileDetails: React.FC = () => {
     }
   }, [profileResponse, addressesResponse]);
 
+  useEffect(() => {
+    if (avatar) {
+      setAvatarPreview(avatar);
+    }
+  }, [avatar]);
+
+  useEffect(() => {
+    return () => {
+      if (avatarPreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview]);
+
+  const displayedAvatar = avatarPreview ?? avatar;
+
   const addressesList = addressesResponse?.data.addresses ?? [];
   const primaryAddress =
     addressesList.find((address) => address.isDefault) ||
@@ -138,25 +160,55 @@ const AccountProfileDetails: React.FC = () => {
     fileInputRef.current?.click();
   };
 
-  const handleAvatarChange: React.ChangeEventHandler<HTMLInputElement> = async (
+  const handleAvatarChange: React.ChangeEventHandler<HTMLInputElement> = (
     event,
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file.");
+      event.target.value = "";
+      return;
+    }
+
+    if (avatarPreview?.startsWith("blob:")) {
+      URL.revokeObjectURL(avatarPreview);
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setAvatarPreview(previewUrl);
+
     const formDataUpload = new FormData();
     formDataUpload.append("avatar", file);
-    setIsUploadingAvatar(true);
-    try {
-      await uploadListerAvatar(formDataUpload);
-      setUpdateStatus("success");
-      setTimeout(() => setUpdateStatus("idle"), 3000);
-    } catch {
-      setUpdateStatus("error");
-      setTimeout(() => setUpdateStatus("idle"), 3000);
-    } finally {
-      setIsUploadingAvatar(false);
-    }
+
+    uploadAvatarMutation.mutate(formDataUpload, {
+      onSuccess: (response) => {
+        const uploadedImage = response.data.profileImage;
+        if (uploadedImage) {
+          if (previewUrl.startsWith("blob:")) {
+            URL.revokeObjectURL(previewUrl);
+          }
+          setAvatarPreview(uploadedImage);
+        }
+        toast.success("Profile photo updated.");
+        setUpdateStatus("success");
+        setTimeout(() => setUpdateStatus("idle"), 3000);
+      },
+      onError: (error: unknown) => {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to upload profile photo. Please try again.";
+        toast.error(message);
+        setAvatarPreview(avatar);
+        setUpdateStatus("error");
+        setTimeout(() => setUpdateStatus("idle"), 3000);
+      },
+      onSettled: () => {
+        event.target.value = "";
+      },
+    });
   };
 
   const handleNewAddressChange = (
@@ -259,12 +311,33 @@ const AccountProfileDetails: React.FC = () => {
   return (
     <div className="font-sans">
       {/* Profile Header and Image Upload */}
-      <div className="flex flex-col bg-[#3A3A32] p-6 items-center mb-6 rounded-lg">
+      <div
+        className={`flex flex-col bg-[#3A3A32] p-6 items-center mb-6 rounded-lg ${
+          uploadAvatarMutation.isPending
+            ? "cursor-wait opacity-90"
+            : "cursor-pointer hover:bg-[#44443a] transition"
+        }`}
+        data-onboarding-target="lister-avatar"
+        role="button"
+        tabIndex={uploadAvatarMutation.isPending ? -1 : 0}
+        aria-label="Upload profile photo"
+        aria-disabled={uploadAvatarMutation.isPending}
+        onClick={() => {
+          if (uploadAvatarMutation.isPending) return;
+          handleAvatarClick();
+        }}
+        onKeyDown={(event) => {
+          if (uploadAvatarMutation.isPending) return;
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            handleAvatarClick();
+          }
+        }}
+      >
         <div className="relative w-28 h-28  flex items-center justify-center overflow-hidden">
-          {/* Profile Picture or Placeholder (no avatar URL yet from API) */}
-          {avatar ? (
+          {displayedAvatar ? (
             <img
-              src={avatar}
+              src={displayedAvatar}
               alt="profile"
               className="w-full rounded-full h-full object-cover"
             />
@@ -274,13 +347,12 @@ const AccountProfileDetails: React.FC = () => {
             </div>
           )}
           {/* Upload Button Overlay */}
-          <button
-            type="button"
-            onClick={handleAvatarClick}
-            className="absolute bottom-0 right-0 w-8 h-8 bg-black rounded-full flex items-center justify-center cursor-pointer border-2 border-white hover:bg-gray-800 transition"
+          <span
+            className="absolute bottom-0 right-0 w-8 h-8 bg-black rounded-full flex items-center justify-center border-2 border-white pointer-events-none"
+            aria-hidden
           >
             <HiOutlineCamera className="w-4 h-4 text-white" />
-          </button>
+          </span>
 
           <input
             ref={fileInputRef}
@@ -291,7 +363,7 @@ const AccountProfileDetails: React.FC = () => {
           />
         </div>
         <Paragraph1 className="text-sm text-center mt-4 text-white">
-          {isUploadingAvatar
+          {uploadAvatarMutation.isPending
             ? "Uploading profile photo..."
             : "Upload a profile photo (Max 2MB)"}
         </Paragraph1>
@@ -491,7 +563,7 @@ const AccountProfileDetails: React.FC = () => {
         <AnimatePresence>
           {isAddingAddress && (
             <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+              className={`fixed inset-0 flex items-center justify-center bg-black/40 ${modalOverlayZ}`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -630,7 +702,7 @@ const AccountProfileDetails: React.FC = () => {
         <AnimatePresence>
           {editingAddressId && (
             <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+              className={`fixed inset-0 flex items-center justify-center bg-black/40 ${modalOverlayZ}`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}

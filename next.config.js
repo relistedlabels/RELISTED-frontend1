@@ -1,5 +1,7 @@
 // next.config.js
 
+const path = require("path");
+
 const nextConfig = {
   images: {
     remotePatterns: [
@@ -61,6 +63,16 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: "20mb",
     },
+  },
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "import-in-the-middle": path.resolve(
+        __dirname,
+        "node_modules/import-in-the-middle",
+      ),
+    };
+    return config;
   },
 };
 
