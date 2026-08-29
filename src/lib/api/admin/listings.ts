@@ -1,4 +1,5 @@
 import { apiFetch } from "../http";
+import { buildProductAvailabilityPath } from "../../admin/listingDeactivate";
 
 export interface ProductStats {
   getTotalProducts: { count: number };
@@ -233,10 +234,10 @@ export const productsApi = {
       { method: "PATCH" },
     ),
 
-  // 7. PATCH /api/admin/products/:productId/availability
+  // 7. PATCH /product/:productId/availability
   setAvailability: (productId: string, isAvailable: boolean) =>
     apiFetch<{ success: true; data: any }>(
-      `/api/admin/products/${productId}/availability`,
+      buildProductAvailabilityPath(productId),
       {
         method: "PATCH",
         body: JSON.stringify({ isAvailable }),
