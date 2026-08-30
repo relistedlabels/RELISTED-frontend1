@@ -212,7 +212,8 @@ export const useSetAvailability = () => {
       productId: string;
       isAvailable: boolean;
     }) => productsApi.setAvailability(productId, isAvailable),
-    onSuccess: (data) => {
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "listings"] });
       queryClient.invalidateQueries({
         queryKey: ["admin", "listings", "statistics"],

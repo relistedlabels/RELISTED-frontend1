@@ -10,12 +10,15 @@ import {
 } from "@/app/admin/lib/adminListingDisplay";
 import ItemTypeBadge from "./ItemTypeBadge";
 import { listingPriceDisplay } from "@/lib/product/listingPriceDisplay";
+import { canDeactivateListing } from "@/lib/admin/listingDeactivate";
 
 interface ActiveListingsTableProps {
   products: Product[];
   isLoading: boolean;
   error: unknown;
   onView: (product: Product) => void;
+  onDeactivate?: (productId: string) => void;
+  deactivatingProductId?: string | null;
 }
 
 function ActiveListingsTable({
@@ -23,6 +26,8 @@ function ActiveListingsTable({
   isLoading,
   error,
   onView,
+  onDeactivate,
+  deactivatingProductId,
 }: ActiveListingsTableProps) {
   if (isLoading && products.length === 0) {
     return (
@@ -178,10 +183,19 @@ function ActiveListingsTable({
                   })()}
                 </td>
                 <td className="flex gap-2 px-6 py-4">
-                  <button className="flex justify-center items-center gap-2 hover:bg-gray-50 px-3 py-2 border border-gray-300 rounded-lg font-medium text-gray-600 text-sm transition">
-                    <Power size={18} />
-                    Deactivate
-                  </button>
+                  {onDeactivate && canDeactivateListing(product.status) ? (
+                    <button
+                      type="button"
+                      onClick={() => onDeactivate(product.id)}
+                      disabled={deactivatingProductId === product.id}
+                      className="flex justify-center items-center gap-2 hover:bg-gray-50 disabled:opacity-50 px-3 py-2 border border-gray-300 rounded-lg font-medium text-gray-600 text-sm transition disabled:cursor-not-allowed"
+                    >
+                      <Power size={18} />
+                      {deactivatingProductId === product.id
+                        ? "Deactivating..."
+                        : "Deactivate"}
+                    </button>
+                  ) : null}
                   <button
                     onClick={() => onView(product)}
                     className="flex justify-center items-center gap-2 hover:bg-gray-50 px-3 py-2 border border-gray-300 rounded-lg font-medium text-gray-600 text-sm transition"

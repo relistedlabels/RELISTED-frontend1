@@ -38,6 +38,7 @@ import DeleteProductButton from "./DeleteProductButton";
 import { CategorySelector } from "@/app/listers/components/CategorySelector";
 import ItemTypeBadge from "./ItemTypeBadge";
 import { listingPriceDisplay } from "@/lib/product/listingPriceDisplay";
+import { canDeactivateListing } from "@/lib/admin/listingDeactivate";
 
 interface ListingDetailModalProps {
   isOpen: boolean;
@@ -316,18 +317,16 @@ export default function ListingDetailModal({
                   </button>
                 )}
 
-                {/* Disable Button - Only show for Active/Approved */}
-                {/* {(displayProduct.status?.toUpperCase() === "ACTIVE" ||
-                  displayProduct.status?.toUpperCase() === "APPROVED") && (
+                {canDeactivateListing(displayProduct.status) && (
                   <button
                     onClick={() => setShowDisableModal(true)}
                     className="flex flex-1 justify-center items-center gap-2 hover:bg-gray-50 disabled:opacity-50 px-3 py-2 border border-gray-300 rounded-lg font-medium text-gray-600 text-sm transition disabled:cursor-not-allowed"
-                    disabled={isLoading}
+                    disabled={isLoading || isDisabling}
                   >
                     <Power size={18} />
-                    Disable
+                    Deactivate
                   </button>
-                )} */}
+                )}
 
                 <DeleteProductButton
                   productId={displayProduct.id}

@@ -54,6 +54,9 @@ export default function ListingsPage() {
   const [disablingFromModalId, setDisablingFromModalId] = useState<
     string | null
   >(null);
+  const [deactivatingProductId, setDeactivatingProductId] = useState<
+    string | null
+  >(null);
   const [sendingToPendingFromModalId, setSendingToPendingFromModalId] =
     useState<string | null>(null);
   const [rejectingProductId, setRejectingProductId] = useState<string | null>(
@@ -403,8 +406,15 @@ export default function ListingsPage() {
     });
   };
 
-  const handleModalDisable = (productId: string) => {
-    setDisablingFromModalId(productId);
+  const deactivateProduct = (
+    productId: string,
+    callbacks: {
+      onStart: () => void;
+      onSuccess: () => void;
+      onError: () => void;
+    },
+  ) => {
+    callbacks.onStart();
     const queryKey = ["admin", "products", "active", activeListParams];
     const previousData = queryClient.getQueryData(queryKey);
 
@@ -428,23 +438,51 @@ export default function ListingsPage() {
       },
       {
         onSuccess: (response) => {
-          setDisablingFromModalId(null);
-          setIsModalOpen(false);
+          callbacks.onSuccess();
           const message =
-            (response as any)?.message || "Product disabled successfully!";
+            (response as any)?.message || "Product deactivated successfully!";
           toast.success(message);
         },
         onError: (error: any) => {
-          setDisablingFromModalId(null);
+          callbacks.onError();
           if (previousData) {
             queryClient.setQueryData(queryKey, previousData);
           }
           const errorMessage =
-            error?.response?.data?.message || "Failed to disable product";
+            error?.response?.data?.message || "Failed to deactivate product";
           toast.error(errorMessage);
         },
       },
     );
+  };
+
+  const handleModalDisable = (productId: string) => {
+    deactivateProduct(productId, {
+      onStart: () => setDisablingFromModalId(productId),
+      onSuccess: () => {
+        setDisablingFromModalId(null);
+        setIsModalOpen(false);
+      },
+      onError: () => setDisablingFromModalId(null),
+    });
+  };
+
+  const handleDeactivate = (productId: string) => {
+    const product = activeProducts.find((item) => item.id === productId);
+    const productName = product?.name || "this listing";
+    if (
+      !window.confirm(
+        `Deactivate "${productName}"? It will be hidden from the shop.`,
+      )
+    ) {
+      return;
+    }
+
+    deactivateProduct(productId, {
+      onStart: () => setDeactivatingProductId(productId),
+      onSuccess: () => setDeactivatingProductId(null),
+      onError: () => setDeactivatingProductId(null),
+    });
   };
 
   return (
@@ -657,6 +695,8 @@ export default function ListingsPage() {
                   setSelectedListing(product);
                   setIsModalOpen(true);
                 }}
+                onDeactivate={handleDeactivate}
+                deactivatingProductId={deactivatingProductId}
               />
             )}
             {activeTab === "Rented" && (
