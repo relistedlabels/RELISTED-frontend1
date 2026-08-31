@@ -449,7 +449,9 @@ export default function ListingsPage() {
             queryClient.setQueryData(queryKey, previousData);
           }
           const errorMessage =
-            error?.response?.data?.message || "Failed to deactivate product";
+            error?.message ||
+            error?.response?.data?.message ||
+            "Failed to deactivate product";
           toast.error(errorMessage);
         },
       },
