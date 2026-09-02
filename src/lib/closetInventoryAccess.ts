@@ -5,8 +5,10 @@ import { INHOUSE_USER_ID } from "@/lib/inhouseManager";
  * Add to `.env.local`: `NEXT_PUBLIC_CLOSET_INVENTORY_ALL_LISTERS=true`
  * Omit or set `false` in production so only allowlisted IDs apply.
  */
-function isClosetInventoryOpenForAllListers(): boolean {
-  const v = process.env.NEXT_PUBLIC_CLOSET_INVENTORY_ALL_LISTERS?.trim();
+export function isClosetInventoryOpenForAllListersFlag(
+  envValue: string | undefined,
+): boolean {
+  const v = envValue?.trim();
   return v === "1" || v?.toLowerCase() === "true";
 }
 
@@ -16,19 +18,30 @@ function isClosetInventoryOpenForAllListers(): boolean {
  * Set `NEXT_PUBLIC_CLOSET_INVENTORY_USER_IDS` to a comma-separated list of user UUIDs.
  * If unset or empty, defaults to the single ID from `inhouseManager` (`INHOUSE_USER_ID`).
  */
-function allowlistedClosetInventoryUserIds(): string[] {
-  const raw = process.env.NEXT_PUBLIC_CLOSET_INVENTORY_USER_IDS;
-  if (raw !== undefined && raw.trim() !== "") {
-    return raw
+export function parseClosetInventoryAllowlist(
+  envUserIds: string | undefined,
+  fallbackUserId: string,
+): string[] {
+  if (envUserIds !== undefined && envUserIds.trim() !== "") {
+    return envUserIds
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
   }
-  return [INHOUSE_USER_ID];
+  return [fallbackUserId];
 }
 
 export function isClosetInventoryLister(userId: string | undefined): boolean {
   if (!userId) return false;
-  if (isClosetInventoryOpenForAllListers()) return true;
-  return allowlistedClosetInventoryUserIds().includes(userId);
+  if (
+    isClosetInventoryOpenForAllListersFlag(
+      process.env.NEXT_PUBLIC_CLOSET_INVENTORY_ALL_LISTERS,
+    )
+  ) {
+    return true;
+  }
+  return parseClosetInventoryAllowlist(
+    process.env.NEXT_PUBLIC_CLOSET_INVENTORY_USER_IDS,
+    INHOUSE_USER_ID,
+  ).includes(userId);
 }

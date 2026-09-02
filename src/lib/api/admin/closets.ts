@@ -61,6 +61,8 @@ function buildClosetListParams(params: {
   return q ? `?${q}` : "";
 }
 
+export { buildClosetListParams };
+
 export const adminClosetsApi = {
   list: (params: { page?: number; limit?: number; search?: string } = {}) =>
     apiFetch<{
