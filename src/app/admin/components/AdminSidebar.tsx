@@ -19,12 +19,14 @@ import {
   HiOutlineRectangleStack,
   HiOutlineBuildingStorefront,
   HiOutlineClipboardDocumentList,
+  HiOutlineArchiveBox,
 } from "react-icons/hi2";
 import { Paragraph1 } from "@/common/ui/Text";
 import { settingsApi } from "@/lib/api/admin/settings";
 import { useAdminNavState } from "@/lib/queries/admin/useSettings";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
+import { getAdminNavItemDefinitions } from "@/lib/admin/adminNavItems";
 
 interface NavItem {
   id: string;
@@ -34,77 +36,26 @@ interface NavItem {
   showNewBadge?: boolean;
 }
 
-const getNavItems = (): NavItem[] => [
-  {
-    id: "overview",
-    label: "Overview",
-    icon: HiOutlineHome,
-    getHref: (id) => `/admin/${id}/dashboard`,
-  },
-  {
-    id: "users",
-    label: "Users",
-    icon: HiOutlineUsers,
-    getHref: (id) => `/admin/${id}/users`,
-  },
-  {
-    id: "listings",
-    label: "Listings",
-    icon: HiOutlineCube,
-    getHref: (id) => `/admin/${id}/listings`,
-  },
-  {
-    id: "shop",
-    label: "Shop",
-    icon: HiOutlineBuildingStorefront,
-    getHref: (id) => `/admin/${id}/shop`,
-    showNewBadge: true,
-  },
-  {
-    id: "requests",
-    label: "Requests",
-    icon: HiOutlineClipboardDocumentList,
-    getHref: (id) => `/admin/${id}/requests`,
-    showNewBadge: true,
-  },
-  {
-    id: "orders",
-    label: "Orders",
-    icon: HiOutlineShoppingCart,
-    getHref: (id) => `/admin/${id}/orders`,
-  },
-  {
-    id: "shipments",
-    label: "Shipments",
-    icon: HiOutlineTruck,
-    getHref: (id) => `/admin/${id}/shipments`,
-  },
-  {
-    id: "sales",
-    label: "Campaigns",
-    icon: HiOutlineRectangleStack,
-    getHref: (id) => `/admin/${id}/sales`,
-    showNewBadge: true,
-  },
-  {
-    id: "wallet",
-    label: "Payments & balances",
-    icon: HiOutlineCreditCard,
-    getHref: (id) => `/admin/${id}/wallets`,
-  },
-  {
-    id: "dispute",
-    label: "Dispute",
-    icon: HiOutlineFolder,
-    getHref: (id) => `/admin/${id}/disputes`,
-  },
-  {
-    id: "settings",
-    label: "Settings",
-    icon: HiOutlineCog6Tooth,
-    getHref: (id) => `/admin/${id}/settings`,
-  },
-];
+const ADMIN_NAV_ICONS: Record<string, React.ElementType> = {
+  overview: HiOutlineHome,
+  users: HiOutlineUsers,
+  listings: HiOutlineCube,
+  shop: HiOutlineBuildingStorefront,
+  requests: HiOutlineClipboardDocumentList,
+  orders: HiOutlineShoppingCart,
+  shipments: HiOutlineTruck,
+  closets: HiOutlineArchiveBox,
+  sales: HiOutlineRectangleStack,
+  wallet: HiOutlineCreditCard,
+  dispute: HiOutlineFolder,
+  settings: HiOutlineCog6Tooth,
+};
+
+const getNavItems = (): NavItem[] =>
+  getAdminNavItemDefinitions().map((item) => ({
+    ...item,
+    icon: ADMIN_NAV_ICONS[item.id] ?? HiOutlineHome,
+  }));
 
 interface AdminSidebarProps {
   onLogout: () => void;
