@@ -1517,9 +1517,7 @@ function ShipmentsPageInner() {
                       <Paragraph1 className="text-gray-600 text-sm">
                         {displayShipment.manualFulfillment
                           ? "Book with a carrier instead of fulfilling manually."
-                          : shipmentScheduledInFuture
-                            ? "Book now and pull the dispatch window forward."
-                            : "Load fresh rates or retry with the current tier."}
+                          : "Book now or fetch rates for scheduled window" }
                       </Paragraph1>
 
                       {shipmentScheduledInFuture && (
