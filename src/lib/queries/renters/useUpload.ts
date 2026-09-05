@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
+import { prepareFileForUpload } from "@/lib/media/compressImageForUpload";
 import { apiFetch } from "@/lib/api/http";
 import { uploadFile } from "@/lib/api/upload";
 
@@ -59,8 +60,9 @@ export function useDisputeUpload(params: {
 
   return useMutation({
     mutationFn: async (file: File) => {
+      const prepared = await prepareFileForUpload(file);
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", prepared);
 
       return apiFetch<DisputeUploadResponse>(
         `/api/${role}/disputes/${disputeId}/uploads`,
