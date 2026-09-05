@@ -12,6 +12,8 @@ interface ReturnRequestSectionProps {
   returnRequest: AdminReturnRequest | null | undefined;
   /** When false, hide the section entirely (e.g. non-return shipments). */
   visible?: boolean;
+  /** Drop outer card chrome when nested inside another panel. */
+  embedded?: boolean;
 }
 
 const conditionBadgeClass =
@@ -70,14 +72,17 @@ function PhotoGrid({ urls, label }: { urls: string[]; label: string }) {
 export default function ReturnRequestSection({
   returnRequest,
   visible = true,
+  embedded = false,
 }: ReturnRequestSectionProps) {
   if (!visible) return null;
 
-  return (
-    <div className="bg-gray-50 p-6 border border-gray-200 rounded-lg">
-      <Paragraph3 className="mb-4 font-bold text-gray-900 text-base">
-        Return request
-      </Paragraph3>
+  const content = (
+    <>
+      {!embedded ? (
+        <Paragraph3 className="mb-4 font-bold text-gray-900 text-base">
+          Return request
+        </Paragraph3>
+      ) : null}
 
       {!returnRequest ? (
         <Paragraph1 className="text-gray-600 text-sm leading-relaxed">
@@ -220,6 +225,12 @@ export default function ReturnRequestSection({
           )}
         </div>
       )}
-    </div>
+    </>
+  );
+
+  if (embedded) return content;
+
+  return (
+    <div className="bg-gray-50 p-6 border border-gray-200 rounded-lg">{content}</div>
   );
 }

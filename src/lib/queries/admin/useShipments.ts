@@ -9,6 +9,9 @@ import {
   redispatchShipment,
   completeManualShipment,
   markManualShipmentDelivered,
+  getShipmentRatePreview,
+  dispatchShipmentNow,
+  reconcileManualShipment,
   type ShipmentStatus,
   type ShipmentType,
 } from "@/lib/api/shipments";
@@ -118,6 +121,69 @@ export const useMarkManualShipmentDelivered = () => {
   return useMutation({
     mutationFn: (shipmentId: string) => markManualShipmentDelivered(shipmentId),
     onSuccess: (_data, shipmentId) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "shipments"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "shipment", shipmentId] });
+    },
+  });
+};
+
+export const useShipmentRatePreview = (
+  shipmentId: string,
+  forImmediate: boolean,
+  enabled: boolean,
+) => {
+  return useQuery({
+    queryKey: ["admin", "shipment", shipmentId, "rate-preview", forImmediate],
+    queryFn: () => getShipmentRatePreview(shipmentId, forImmediate),
+    enabled: enabled && !!shipmentId,
+  });
+};
+
+export const useDispatchShipmentNow = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      shipmentId,
+      pricingTier,
+      updateWindow,
+    }: {
+      shipmentId: string;
+      pricingTier?: string;
+      updateWindow?: boolean;
+    }) => dispatchShipmentNow(shipmentId, { pricingTier, updateWindow }),
+    onSuccess: (_data, { shipmentId }) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "shipments"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "shipment", shipmentId] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "shipment", shipmentId, "rate-preview"],
+      });
+    },
+  });
+};
+
+export const useReconcileManualShipment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      shipmentId,
+      trackingId,
+      trackingUrl,
+      actualFulfillmentCostKobo,
+      adminReconcileNote,
+    }: {
+      shipmentId: string;
+      trackingId?: string;
+      trackingUrl?: string;
+      actualFulfillmentCostKobo?: number;
+      adminReconcileNote?: string;
+    }) =>
+      reconcileManualShipment(shipmentId, {
+        trackingId,
+        trackingUrl,
+        actualFulfillmentCostKobo,
+        adminReconcileNote,
+      }),
+    onSuccess: (_data, { shipmentId }) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "shipments"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "shipment", shipmentId] });
     },

@@ -73,6 +73,9 @@ export interface Shipment {
   pickupId?: string | null;
   deliveryLocation?: string | null;
   manualFulfillment?: boolean;
+  reconciledAsManualAt?: string | null;
+  actualFulfillmentCostKobo?: number | null;
+  adminReconcileNote?: string | null;
   dispatchAttempts: number;
   dispatchedAt?: string | null;
   createdAt: string;
@@ -255,5 +258,81 @@ export const markManualShipmentDelivered = async (
   return apiFetch<{ success: boolean; message: string }>(
     `/shipments/${shipmentId}/manual-delivered`,
     { method: "POST" },
+  );
+};
+
+export interface ShipmentRateTier {
+  pricingTier: string;
+  name: string;
+  shipmentChargeKobo: number;
+  pickupChargeKobo: number;
+  vatChargeKobo: number;
+  totalCostKobo: number;
+  deltaKobo: number;
+  description?: string;
+}
+
+export interface ShipmentRatePreviewData {
+  tiers: ShipmentRateTier[];
+  warnings: Array<{
+    provider: string;
+    message: string;
+    leg: "outbound" | "return";
+  }>;
+  renterChargedKobo: number;
+  quoteWindowStart: string;
+  storedWindowStart: string | null;
+  forImmediate: boolean;
+}
+
+export const getShipmentRatePreview = async (
+  shipmentId: string,
+  forImmediate = false,
+): Promise<{ success: boolean; data: ShipmentRatePreviewData }> => {
+  const qs = forImmediate ? "?forImmediate=true" : "";
+  return apiFetch<{ success: boolean; data: ShipmentRatePreviewData }>(
+    `/shipments/${shipmentId}/rate-preview${qs}`,
+    { method: "GET" },
+  );
+};
+
+export const dispatchShipmentNow = async (
+  shipmentId: string,
+  body?: { pricingTier?: string; updateWindow?: boolean },
+): Promise<{ success: boolean; message: string }> => {
+  return apiFetch<{ success: boolean; message: string }>(
+    `/shipments/${shipmentId}/dispatch-now`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        pricingTier: body?.pricingTier,
+        updateWindow: body?.updateWindow,
+      }),
+    },
+  );
+};
+
+export const reconcileManualShipment = async (
+  shipmentId: string,
+  body?: {
+    trackingId?: string;
+    trackingUrl?: string;
+    actualFulfillmentCostKobo?: number;
+    adminReconcileNote?: string;
+  },
+): Promise<{ success: boolean; message: string }> => {
+  return apiFetch<{ success: boolean; message: string }>(
+    `/shipments/${shipmentId}/reconcile-manual`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        trackingId: body?.trackingId,
+        trackingUrl: body?.trackingUrl,
+        actualFulfillmentCostKobo: body?.actualFulfillmentCostKobo,
+        adminReconcileNote: body?.adminReconcileNote,
+      }),
+    },
   );
 };
