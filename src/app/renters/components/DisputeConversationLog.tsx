@@ -18,6 +18,10 @@ import { useSendDisputeMessage } from "@/lib/mutations/renters/useDisputeMutatio
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useDisputeMessages } from "@/lib/queries/renters/useDisputes";
 import { useDisputeUpload } from "@/lib/queries/renters/useUpload";
+import {
+  MAX_SOURCE_IMAGE_BYTES,
+  formatUploadLimitMb,
+} from "@/lib/media/uploadLimits";
 
 type DisputeMessageType = "user" | "admin" | "status";
 
@@ -386,7 +390,7 @@ const DisputeConversationLog: React.FC<{
 
   const handleFilePick = (files: File[]) => {
     if (!canUpload) return;
-    const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+    const maxSourceMb = formatUploadLimitMb(MAX_SOURCE_IMAGE_BYTES);
     const ALLOWED_TYPES = new Set([
       "image/jpeg",
       "image/jpg",
@@ -400,8 +404,10 @@ const DisputeConversationLog: React.FC<{
         toast.error("Invalid image type. Allowed: JPEG, PNG, WebP, GIF");
         return false;
       }
-      if (file.size > MAX_IMAGE_SIZE) {
-        toast.error("Image too large. Maximum size is 10MB");
+      if (file.size > MAX_SOURCE_IMAGE_BYTES) {
+        toast.error(
+          `Image too large. Maximum size is ${maxSourceMb}MB before compression.`,
+        );
         return false;
       }
       return true;

@@ -181,11 +181,8 @@ const AccountProfileDetails: React.FC = () => {
       };
       reader.readAsDataURL(file);
 
-      // Upload to server
-      const formData = new FormData();
-      formData.append("avatar", file);
-
-      uploadAvatarMutation.mutate(formData, {
+      // Upload to server (normalized to JPEG before send)
+      uploadAvatarMutation.mutate(file, {
         onSuccess: () => {
           toast.success("Profile photo updated successfully!");
           // Refetch profile query since profileImage is in the profile response

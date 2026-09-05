@@ -1,3 +1,4 @@
+import { createUploadFormData } from "../upload";
 import { apiFetch } from "../http";
 
 export interface AdminProfile {
@@ -118,11 +119,13 @@ export const settingsApi = {
       body: JSON.stringify({ name, email, phone }),
     }),
 
-  updateProfilePhoto: (formData: FormData) =>
-    apiFetch(`/api/admin/settings/profile/photo`, {
+  updateProfilePhoto: async (file: File) => {
+    const formData = await createUploadFormData(file, "file");
+    return apiFetch(`/api/admin/settings/profile/photo`, {
       method: "PUT",
       body: formData,
-    }),
+    });
+  },
 
   updatePassword: (
     currentPassword: string,
