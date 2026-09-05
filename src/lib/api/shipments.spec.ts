@@ -12,6 +12,7 @@ const {
   getShipmentRatePreview,
   dispatchShipmentNow,
   reconcileManualShipment,
+  switchShipmentToManual,
 } = await import("./shipments");
 
 describe("getShipmentRatePreview", () => {
@@ -131,6 +132,44 @@ describe("reconcileManualShipment", () => {
           trackingId: undefined,
           trackingUrl: undefined,
           actualFulfillmentCostKobo: undefined,
+          adminReconcileNote: undefined,
+        }),
+      },
+    );
+  });
+});
+
+describe("switchShipmentToManual", () => {
+  beforeEach(() => {
+    apiFetchMock.mockClear();
+  });
+
+  test("POSTs switch-to-manual with optional note", async () => {
+    await switchShipmentToManual("ship-1", {
+      adminReconcileNote: "Ops rider",
+    });
+
+    expect(apiFetchMock).toHaveBeenCalledWith(
+      "/shipments/ship-1/switch-to-manual",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          adminReconcileNote: "Ops rider",
+        }),
+      },
+    );
+  });
+
+  test("POSTs switch-to-manual with undefined note when omitted", async () => {
+    await switchShipmentToManual("ship-2");
+
+    expect(apiFetchMock).toHaveBeenCalledWith(
+      "/shipments/ship-2/switch-to-manual",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           adminReconcileNote: undefined,
         }),
       },

@@ -17,8 +17,17 @@ export type ShipmentType = "OUTBOUND" | "RETURN" | "RESALE";
 /** List view (`GET /shipments`) — partial `order`. Detail (`GET /shipments/:id`) adds `id`, `orderItems`. */
 export interface ShipmentOrderLineItem {
   id?: string;
+  days?: number | null;
   product?: {
     name: string | null;
+    color?: string | null;
+    condition?: string | null;
+    measurement?: string | null;
+    material?: string | null;
+    composition?: string | null;
+    listingType?: string | null;
+    brand?: { name: string | null } | null;
+    category?: { name: string | null } | null;
     attachments?: {
       uploads?: Array<{
         id?: string;
@@ -331,6 +340,22 @@ export const reconcileManualShipment = async (
         trackingId: body?.trackingId,
         trackingUrl: body?.trackingUrl,
         actualFulfillmentCostKobo: body?.actualFulfillmentCostKobo,
+        adminReconcileNote: body?.adminReconcileNote,
+      }),
+    },
+  );
+};
+
+export const switchShipmentToManual = async (
+  shipmentId: string,
+  body?: { adminReconcileNote?: string },
+): Promise<{ success: boolean; message: string }> => {
+  return apiFetch<{ success: boolean; message: string }>(
+    `/shipments/${shipmentId}/switch-to-manual`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         adminReconcileNote: body?.adminReconcileNote,
       }),
     },
