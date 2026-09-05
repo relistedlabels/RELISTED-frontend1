@@ -12,6 +12,7 @@ import {
   getShipmentRatePreview,
   dispatchShipmentNow,
   reconcileManualShipment,
+  switchShipmentToManual,
   type ShipmentStatus,
   type ShipmentType,
 } from "@/lib/api/shipments";
@@ -181,6 +182,26 @@ export const useReconcileManualShipment = () => {
         trackingId,
         trackingUrl,
         actualFulfillmentCostKobo,
+        adminReconcileNote,
+      }),
+    onSuccess: (_data, { shipmentId }) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "shipments"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "shipment", shipmentId] });
+    },
+  });
+};
+
+export const useSwitchShipmentToManual = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      shipmentId,
+      adminReconcileNote,
+    }: {
+      shipmentId: string;
+      adminReconcileNote?: string;
+    }) =>
+      switchShipmentToManual(shipmentId, {
         adminReconcileNote,
       }),
     onSuccess: (_data, { shipmentId }) => {

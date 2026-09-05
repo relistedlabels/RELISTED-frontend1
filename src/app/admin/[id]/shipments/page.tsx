@@ -37,6 +37,7 @@ import {
   useShipmentRatePreview,
   useDispatchShipmentNow,
   useReconcileManualShipment,
+  useSwitchShipmentToManual,
 } from "@/lib/queries/admin/useShipments";
 import type {
   DispatchAttemptLog,
@@ -208,18 +209,64 @@ const ADMIN_PRIMARY_BTN =
 const ADMIN_SECONDARY_BTN =
   "bg-white hover:bg-gray-50 disabled:opacity-50 px-4 py-2 border border-gray-200 rounded-lg font-medium text-gray-800 text-sm transition";
 
+function formatListingTypeLabel(value?: string | null): string | null {
+  if (!value) return null;
+  return value
+    .toLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function shipmentLineItemMetadata(
+  line: ShipmentOrderLineItem,
+): Array<{ label: string; value: string }> {
+  const product = line.product;
+  if (!product) return [];
+
+  const rows: Array<{ label: string; value: string } | null> = [
+    product.brand?.name ? { label: "Brand", value: product.brand.name } : null,
+    product.category?.name
+      ? { label: "Category", value: product.category.name }
+      : null,
+    product.color ? { label: "Color", value: product.color } : null,
+    product.condition ? { label: "Condition", value: product.condition } : null,
+    product.measurement ? { label: "Size", value: product.measurement } : null,
+    product.material ? { label: "Material", value: product.material } : null,
+    product.composition
+      ? { label: "Composition", value: product.composition }
+      : null,
+    product.listingType
+      ? {
+          label: "Listing type",
+          value: formatListingTypeLabel(product.listingType) ?? product.listingType,
+        }
+      : null,
+    line.days && line.days > 0
+      ? {
+          label: "Rental days",
+          value: `${line.days} day${line.days === 1 ? "" : "s"}`,
+        }
+      : null,
+  ];
+
+  return rows.filter((row): row is { label: string; value: string } => row != null);
+}
+
 function ShipmentModalSection({
   title,
   summary,
+  defaultOpen = false,
   children,
 }: {
   title: string;
   summary?: string;
+  defaultOpen?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <details className="group border border-gray-100 rounded-lg">
-      <summary className="[&::-webkit-details-marker]:hidden flex items-center justify-between gap-3 p-3.5 cursor-pointer list-none">
+    <details className="group border border-gray-100 rounded-lg" open={defaultOpen}>
+      <summary className="[&::-webkit-details-marker]:hidden flex justify-between items-center gap-3 p-3.5 cursor-pointer list-none">
         <div className="min-w-0">
           <Paragraph1 className="font-medium text-gray-900 text-sm">{title}</Paragraph1>
           {summary ? (
@@ -228,7 +275,7 @@ function ShipmentModalSection({
         </div>
         <ChevronDown
           size={16}
-          className="text-gray-400 group-open:rotate-180 shrink-0 transition"
+          className="text-gray-400 group-open:rotate-180 transition shrink-0"
         />
       </summary>
       <div className="space-y-4 px-3.5 pb-3.5 border-gray-100 border-t">{children}</div>
@@ -514,6 +561,7 @@ function ShipmentsPageInner() {
   const markManualDelivered = useMarkManualShipmentDelivered();
   const dispatchShipmentNow = useDispatchShipmentNow();
   const reconcileManualShipment = useReconcileManualShipment();
+  const switchShipmentToManual = useSwitchShipmentToManual();
 
   const detailQuery = useShipment(selectedShipment?.id ?? "", {
     enabled: Boolean(isDetailModalOpen && selectedShipment?.id),
@@ -568,6 +616,29 @@ function ShipmentsPageInner() {
           end: displayShipment.scheduledWindowEnd,
         })
       : null;
+
+  const scheduledRateQuoteDetail =
+    dispatchWindowLabel ??
+    (displayShipment?.scheduledDate
+      ? formatLagosDate(displayShipment.scheduledDate, { includeWeekday: true })
+      : "Original scheduled date");
+
+  const shipmentDetailsSummary = useMemo(() => {
+    if (!displayShipment) return undefined;
+    const parts = [
+      formatAdminPricingTier(displayShipment.pricingTier),
+      displayShipment.pickupPartner,
+    ].filter(Boolean);
+    return parts.length > 0 ? parts.join(" · ") : undefined;
+  }, [displayShipment]);
+
+  const deliveryWindowSummary = useMemo(() => {
+    if (dispatchWindowLabel) return dispatchWindowLabel;
+    if (displayShipment?.scheduledDate) {
+      return formatLagosDate(displayShipment.scheduledDate, { includeWeekday: true });
+    }
+    return undefined;
+  }, [dispatchWindowLabel, displayShipment?.scheduledDate]);
 
   const dispatchedAtLabel = displayShipment?.dispatchedAt
     ? new Date(displayShipment.dispatchedAt).toLocaleString("en-NG", {
@@ -732,13 +803,15 @@ function ShipmentsPageInner() {
       shipmentScheduledInFuture ||
       displayShipment.status === "DISPATCH_FAILED");
 
-  const showReconcileManualPanel =
+  const showSwitchToManualPanel =
     displayShipment &&
     !displayShipment.manualFulfillment &&
     !displayShipment.reconciledAsManualAt &&
     (displayShipment.status === "PENDING" ||
       displayShipment.status === "DISPATCHING" ||
       displayShipment.status === "DISPATCH_FAILED");
+
+  const showReconcileManualPanel = showSwitchToManualPanel;
 
   const showMarkManualDispatchedPanel =
     Boolean(
@@ -756,15 +829,36 @@ function ShipmentsPageInner() {
 
   const showOpsPanel =
     showCarrierBookingPanel ||
-    showReconcileManualPanel ||
+    showSwitchToManualPanel ||
     showMarkManualDispatchedPanel ||
     showMarkDeliveredPanel;
+
+  const handleSwitchToManual = async () => {
+    if (!displayShipment?.id) return;
+    if (
+      !window.confirm(
+        "Switch this leg to Relisted dispatch? Carrier booking will be skipped. Mark dispatched when the item is on the way.",
+      )
+    ) {
+      return;
+    }
+    try {
+      await switchShipmentToManual.mutateAsync({
+        shipmentId: displayShipment.id,
+        adminReconcileNote: reconcileNote.trim() || undefined,
+      });
+      toast.success("Switched to Relisted dispatch");
+      await detailQuery.refetch();
+    } catch {
+      toast.error("Could not switch to Relisted dispatch");
+    }
+  };
 
   const handleReconcileManual = async () => {
     if (!displayShipment?.id) return;
     if (
       !window.confirm(
-        "Mark this leg as dispatched in-house? The carrier won't be booked. What the renter paid stays the same.",
+        "Mark this leg as dispatched in-house now? The carrier will not be used. What the renter paid stays the same.",
       )
     ) {
       return;
@@ -1324,12 +1418,12 @@ function ShipmentsPageInner() {
                       {getStatusLabel(displayShipment.status, displayShipment.type)}
                     </span>
                     {displayShipment.reconciledAsManualAt ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-medium">
+                      <span className="inline-flex items-center bg-gray-100 px-2 py-0.5 rounded-full font-medium text-gray-700 text-xs">
                         Manually dispatched
                       </span>
                     ) : null}
                     {displayShipment.manualFulfillment && !displayShipment.reconciledAsManualAt ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-medium">
+                      <span className="inline-flex items-center bg-amber-100 px-2 py-0.5 rounded-full font-medium text-amber-900 text-xs">
                         Relisted dispatch
                       </span>
                     ) : null}
@@ -1358,25 +1452,25 @@ function ShipmentsPageInner() {
               <div className="space-y-2 bg-gray-50 p-4 border border-gray-100 rounded-lg text-sm">
                 {dispatchWindowLabel ? (
                   <div className="flex gap-2">
-                    <span className="text-gray-500 shrink-0 w-20">Window</span>
+                    <span className="w-20 text-gray-500 shrink-0">Window</span>
                     <span className="text-gray-900">{dispatchWindowLabel}</span>
                   </div>
                 ) : null}
                 {dispatchedAtLabel ? (
                   <div className="flex gap-2">
-                    <span className="text-gray-500 shrink-0 w-20">Dispatched</span>
+                    <span className="w-20 text-gray-500 shrink-0">Dispatched</span>
                     <span className="text-gray-900">{dispatchedAtLabel}</span>
                   </div>
                 ) : null}
                 <div className="flex gap-2">
-                  <span className="text-gray-500 shrink-0 w-20">Carrier</span>
+                  <span className="w-20 text-gray-500 shrink-0">Carrier</span>
                   <span className="text-gray-900 break-all">
                     {formatAdminPricingTier(displayShipment.pricingTier)}
                   </span>
                 </div>
                 {displayShipment.trackingId || displayShipment.providerTrackingUrl ? (
                   <div className="flex gap-2">
-                    <span className="text-gray-500 shrink-0 w-20">Tracking</span>
+                    <span className="w-20 text-gray-500 shrink-0">Tracking</span>
                     <span className="text-gray-900">
                       {displayShipment.trackingId ? (
                         <span className="break-all">{displayShipment.trackingId}</span>
@@ -1429,18 +1523,51 @@ function ShipmentsPageInner() {
                       </Paragraph1>
 
                       {shipmentScheduledInFuture && (
-                        <label className="flex items-center gap-2 text-gray-700 text-sm">
-                          <input
-                            type="checkbox"
-                            checked={rateForImmediate}
-                            onChange={(e) => {
-                              setRateForImmediate(e.target.checked);
-                              setSelectedCarrierTier(null);
-                            }}
-                            className="border-gray-300 rounded"
-                          />
-                          Quote for today
-                        </label>
+                        <fieldset className="space-y-2">
+                          <legend className="mb-1 font-medium text-gray-700 text-sm">
+                           Get shipping rates for                           
+                           </legend>
+                          <div className="space-y-2">
+                            <label className="flex items-start gap-2.5 text-gray-700 text-sm cursor-pointer">
+                              <input
+                                type="radio"
+                                name={`rate-quote-${displayShipment.id}`}
+                                checked={rateForImmediate}
+                                onChange={() => {
+                                  setRateForImmediate(true);
+                                  setSelectedCarrierTier(null);
+                                }}
+                                className="mt-0.5 border-gray-300"
+                              />
+                              <span>
+                                <span className="font-medium text-gray-900">Today</span>
+                                <span className="block text-gray-500 text-xs">
+                                  Get it delivered today
+                                </span>
+                              </span>
+                            </label>
+                            <label className="flex items-start gap-2.5 text-gray-700 text-sm cursor-pointer">
+                              <input
+                                type="radio"
+                                name={`rate-quote-${displayShipment.id}`}
+                                checked={!rateForImmediate}
+                                onChange={() => {
+                                  setRateForImmediate(false);
+                                  setSelectedCarrierTier(null);
+                                }}
+                                className="mt-0.5 border-gray-300"
+                              />
+                              <span>
+                                <span className="font-medium text-gray-900">
+                                  Original scheduled window
+                                </span>
+                                <span className="block text-gray-500 text-xs">
+                                  Get it delivered on {scheduledRateQuoteDetail}
+                                </span>
+                              </span>
+                            </label>
+                          </div>
+                        </fieldset>
                       )}
 
                       <div className="flex flex-wrap gap-2">
@@ -1559,94 +1686,117 @@ function ShipmentsPageInner() {
                     </div>
                   )}
 
-                  {showCarrierBookingPanel && showReconcileManualPanel && (
+                  {showCarrierBookingPanel && showSwitchToManualPanel && (
                     <div className="border-gray-200 border-t" />
                   )}
 
-                  {showReconcileManualPanel && (
-                    <details className="group">
-                      <summary className="[&::-webkit-details-marker]:hidden font-medium text-gray-800 text-sm cursor-pointer list-none">
-                        <span className="inline-flex items-center gap-1.5">
-                          <ChevronDown
-                            size={16}
-                            className="text-gray-500 group-open:rotate-180 transition"
-                          />
-                          Booked in-house instead?
-                        </span>
-                      </summary>
-                      <div className="space-y-3 mt-3 pl-5">
-                        <Paragraph1 className="text-gray-500 text-xs">
-                          Use when you arranged delivery yourself. No change to what the renter paid.
-                        </Paragraph1>
-                        <div className="gap-3 grid grid-cols-1 sm:grid-cols-2">
-                          <label className="block">
-                            <Paragraph1 className="mb-1 text-gray-500 text-xs">
-                              Reference
-                            </Paragraph1>
-                            <input
-                              type="text"
-                              value={reconcileTrackingRef}
-                              onChange={(e) => setReconcileTrackingRef(e.target.value)}
-                              className={ADMIN_FIELD_INPUT_CLASS}
-                              placeholder="Optional"
+                  {showSwitchToManualPanel && (
+                    <div className="space-y-3">
+                      <Paragraph1 className="text-gray-600 text-sm">
+                        Fulfilling in-house instead of the carrier?
+                      </Paragraph1>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void handleSwitchToManual();
+                        }}
+                        disabled={switchShipmentToManual.isPending}
+                        className={ADMIN_SECONDARY_BTN}
+                      >
+                        {switchShipmentToManual.isPending
+                          ? "Switching…"
+                          : "Switch to Relisted dispatch"}
+                      </button>
+                      <Paragraph1 className="text-gray-500 text-xs">
+                        Stops carrier booking and keeps this leg pending until you mark
+                        dispatched. What the renter paid stays the same.
+                      </Paragraph1>
+
+                      <details className="group pt-1">
+                        <summary className="[&::-webkit-details-marker]:hidden font-medium text-gray-800 text-sm cursor-pointer list-none">
+                          <span className="inline-flex items-center gap-1.5">
+                            <ChevronDown
+                              size={16}
+                              className="text-gray-500 group-open:rotate-180 transition"
                             />
-                          </label>
-                          <label className="block">
-                            <Paragraph1 className="mb-1 text-gray-500 text-xs">
-                              Tracking URL
-                            </Paragraph1>
-                            <input
-                              type="url"
-                              value={reconcileTrackingUrl}
-                              onChange={(e) => setReconcileTrackingUrl(e.target.value)}
-                              className={ADMIN_FIELD_INPUT_CLASS}
-                              placeholder="https://…"
-                            />
-                          </label>
-                          <label className="block">
-                            <Paragraph1 className="mb-1 text-gray-500 text-xs">
-                              Actual cost (NGN)
-                            </Paragraph1>
-                            <input
-                              type="number"
-                              min="0"
-                              step="1"
-                              value={reconcileActualCostNgn}
-                              onChange={(e) => setReconcileActualCostNgn(e.target.value)}
-                              className={ADMIN_FIELD_INPUT_CLASS}
-                              placeholder="Optional"
-                            />
-                          </label>
-                          <label className="block sm:col-span-2">
-                            <Paragraph1 className="mb-1 text-gray-500 text-xs">
-                              Internal note
-                            </Paragraph1>
-                            <textarea
-                              value={reconcileNote}
-                              onChange={(e) => setReconcileNote(e.target.value)}
-                              rows={2}
-                              className={ADMIN_FIELD_INPUT_CLASS}
-                              placeholder="Optional"
-                            />
-                          </label>
+                            Already sent in-house?
+                          </span>
+                        </summary>
+                        <div className="space-y-3 mt-3 pl-5">
+                          <Paragraph1 className="text-gray-500 text-xs">
+                            Use when the item is already on the way and you want to mark
+                            dispatched now without waiting on the carrier.
+                          </Paragraph1>
+                          <div className="gap-3 grid grid-cols-1 sm:grid-cols-2">
+                            <label className="block">
+                              <Paragraph1 className="mb-1 text-gray-500 text-xs">
+                                Reference
+                              </Paragraph1>
+                              <input
+                                type="text"
+                                value={reconcileTrackingRef}
+                                onChange={(e) => setReconcileTrackingRef(e.target.value)}
+                                className={ADMIN_FIELD_INPUT_CLASS}
+                                placeholder="Optional"
+                              />
+                            </label>
+                            <label className="block">
+                              <Paragraph1 className="mb-1 text-gray-500 text-xs">
+                                Tracking URL
+                              </Paragraph1>
+                              <input
+                                type="url"
+                                value={reconcileTrackingUrl}
+                                onChange={(e) => setReconcileTrackingUrl(e.target.value)}
+                                className={ADMIN_FIELD_INPUT_CLASS}
+                                placeholder="https://…"
+                              />
+                            </label>
+                            <label className="block">
+                              <Paragraph1 className="mb-1 text-gray-500 text-xs">
+                                Actual cost (NGN)
+                              </Paragraph1>
+                              <input
+                                type="number"
+                                min="0"
+                                step="1"
+                                value={reconcileActualCostNgn}
+                                onChange={(e) => setReconcileActualCostNgn(e.target.value)}
+                                className={ADMIN_FIELD_INPUT_CLASS}
+                                placeholder="Optional"
+                              />
+                            </label>
+                            <label className="block sm:col-span-2">
+                              <Paragraph1 className="mb-1 text-gray-500 text-xs">
+                                Internal note
+                              </Paragraph1>
+                              <textarea
+                                value={reconcileNote}
+                                onChange={(e) => setReconcileNote(e.target.value)}
+                                rows={2}
+                                className={ADMIN_FIELD_INPUT_CLASS}
+                                placeholder="Optional"
+                              />
+                            </label>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void handleReconcileManual();
+                            }}
+                            disabled={reconcileManualShipment.isPending}
+                            className={ADMIN_PRIMARY_BTN}
+                          >
+                            {reconcileManualShipment.isPending
+                              ? "Saving…"
+                              : "Mark dispatched"}
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            void handleReconcileManual();
-                          }}
-                          disabled={reconcileManualShipment.isPending}
-                          className={ADMIN_PRIMARY_BTN}
-                        >
-                          {reconcileManualShipment.isPending
-                            ? "Saving…"
-                            : "Mark dispatched"}
-                        </button>
-                      </div>
-                    </details>
+                      </details>
+                    </div>
                   )}
 
-                  {(showCarrierBookingPanel || showReconcileManualPanel) &&
+                  {(showCarrierBookingPanel || showSwitchToManualPanel) &&
                     (showMarkManualDispatchedPanel || showMarkDeliveredPanel) && (
                     <div className="border-gray-200 border-t" />
                   )}
@@ -1711,20 +1861,45 @@ function ShipmentsPageInner() {
               )}
 
               {shipmentItemSummary ? (
-                <ShipmentModalSection title="Items" summary={shipmentItemSummary}>
-                  <ul className="space-y-2">
+                <ShipmentModalSection
+                  title="Items"
+                  summary={shipmentItemSummary}
+                  defaultOpen
+                >
+                  <ul className="space-y-4">
                     {shipmentItems.map((line) => {
                       const name = line.product?.name ?? "Item";
                       const thumb = shipmentLineItemThumbnailUrl(line);
+                      const metadata = shipmentLineItemMetadata(line);
                       return (
                         <li
                           key={line.id ?? name}
-                          className="flex items-center gap-3 text-gray-800 text-sm"
+                          className="bg-gray-50 p-3 border border-gray-100 rounded-lg"
                         >
-                          <div className="w-12 h-12 shrink-0">
-                            <AdminListingThumb url={thumb} alt={name} />
+                          <div className="flex items-start gap-3">
+                            <div className="w-14 h-14 shrink-0">
+                              <AdminListingThumb url={thumb} alt={name} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <Paragraph1 className="font-medium text-gray-900 text-sm">
+                                {name}
+                              </Paragraph1>
+                              {metadata.length > 0 ? (
+                                <dl className="gap-x-4 gap-y-1.5 grid grid-cols-1 sm:grid-cols-2 mt-2">
+                                  {metadata.map((row) => (
+                                    <div key={row.label}>
+                                      <dt className="text-gray-500 text-xs">{row.label}</dt>
+                                      <dd className="text-gray-800 text-sm">{row.value}</dd>
+                                    </div>
+                                  ))}
+                                </dl>
+                              ) : (
+                                <Paragraph1 className="mt-1 text-gray-500 text-xs">
+                                  No listing details available
+                                </Paragraph1>
+                              )}
+                            </div>
                           </div>
-                          <span className="font-medium text-gray-900">{name}</span>
                         </li>
                       );
                     })}
@@ -1732,27 +1907,106 @@ function ShipmentsPageInner() {
                 </ShipmentModalSection>
               ) : null}
 
-              {displayShipment.type === "RETURN" ? (
-                <ShipmentModalSection title="Return request" summary={returnRequestSummary}>
-                  <ReturnRequestSection
-                    returnRequest={displayShipment.returnRequest}
-                    visible
-                    embedded
-                  />
-                </ShipmentModalSection>
-              ) : null}
+              <ShipmentModalSection title="Shipment details" summary={shipmentDetailsSummary}>
+                <div className="space-y-4">
+                  <div className="gap-4 grid grid-cols-1 sm:grid-cols-2">
+                    <DetailField label="Carrier / tier">
+                      <Paragraph1 className="font-medium text-gray-900 text-sm break-all">
+                        {formatAdminPricingTier(displayShipment.pricingTier)}
+                      </Paragraph1>
+                    </DetailField>
+                    <DetailField label="Pickup partner">
+                      <Paragraph1 className="font-medium text-gray-900 text-sm">
+                        {displayShipment.pickupPartner ?? "—"}
+                      </Paragraph1>
+                    </DetailField>
+                    <DetailField label="Delivery address" className="sm:col-span-2">
+                      <Paragraph1 className="font-medium text-gray-900 text-sm">
+                        {formatCheckoutDeliveryStreetLine(displayShipment)}
+                      </Paragraph1>
+                    </DetailField>
+                    <DetailField label="Partner pickup booking" className="sm:col-span-2">
+                      <Paragraph1 className="font-medium text-gray-900 text-sm break-all">
+                        {displayShipment.pickupId ?? "—"}
+                      </Paragraph1>
+                    </DetailField>
+                    {(displayShipment.trackingId || displayShipment.providerTrackingUrl) && (
+                      <DetailField label="Tracking" className="sm:col-span-2">
+                        <Paragraph1 className="font-medium text-gray-900 text-sm">
+                          {displayShipment.trackingId ? (
+                            <span className="break-all">{displayShipment.trackingId}</span>
+                          ) : null}
+                          {displayShipment.providerTrackingUrl ? (
+                            <a
+                              href={displayShipment.providerTrackingUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`inline-flex items-center gap-1 text-blue-600 hover:underline${displayShipment.trackingId ? " ml-2" : ""}`}
+                            >
+                              <ExternalLink size={14} />
+                              Track
+                            </a>
+                          ) : null}
+                        </Paragraph1>
+                      </DetailField>
+                    )}
+                    <DetailField label="Dispatch attempts (latest run)">
+                      <Paragraph1 className="font-medium text-gray-900 text-sm">
+                        {displayShipment.dispatchAttempts ?? 0}
+                      </Paragraph1>
+                      <Paragraph1 className="mt-0.5 text-gray-500 text-xs">
+                        Resets after Redispatch.
+                      </Paragraph1>
+                    </DetailField>
+                    <DetailField label="Charged (NGN)">
+                      <Paragraph1 className="font-medium text-gray-900 text-sm">
+                        {koboToNaira(displayShipment.shipmentCharge)}
+                        {showPickupFeeRow
+                          ? ` · pickup ${koboToNaira(displayShipment.pickupCharge)}`
+                          : ""}
+                        {` · VAT ${koboToNaira(displayShipment.vatCharge)}`}
+                      </Paragraph1>
+                    </DetailField>
+                    {displayShipment.actualFulfillmentCostKobo != null ? (
+                      <DetailField label="Actual cost (NGN)">
+                        <Paragraph1 className="font-medium text-gray-900 text-sm">
+                          {koboToNaira(displayShipment.actualFulfillmentCostKobo)}
+                        </Paragraph1>
+                      </DetailField>
+                    ) : null}
+                    {displayShipment.adminReconcileNote ? (
+                      <DetailField label="Internal note" className="sm:col-span-2">
+                        <Paragraph1 className="font-medium text-gray-900 text-sm">
+                          {displayShipment.adminReconcileNote}
+                        </Paragraph1>
+                      </DetailField>
+                    ) : null}
+                  </div>
 
-              <ShipmentModalSection
-                title="Scheduling & carrier details"
-                summary={
-                  [
-                    dispatchWindowLabel,
-                    formatAdminPricingTier(displayShipment.pricingTier),
-                  ]
-                    .filter(Boolean)
-                    .join(" · ") || undefined
-                }
-              >
+                  <div className="space-y-3 pt-1 border-gray-100 border-t">
+                    <div>
+                      <Paragraph1 className="flex items-center gap-1 mb-1.5 text-gray-500 text-xs">
+                        <Package size={12} />
+                        {detailPartyLabels.pickupHeading}
+                      </Paragraph1>
+                      <Paragraph1 className="bg-gray-50 p-3 border border-gray-100 rounded-lg text-gray-800 text-sm">
+                        {formatAddress(displayShipment.pickupAddress)}
+                      </Paragraph1>
+                    </div>
+                    <div>
+                      <Paragraph1 className="flex items-center gap-1 mb-1.5 text-gray-500 text-xs">
+                        <Truck size={12} />
+                        {detailPartyLabels.deliveryHeading}
+                      </Paragraph1>
+                      <Paragraph1 className="bg-gray-50 p-3 border border-gray-100 rounded-lg text-gray-800 text-sm">
+                        {formatAddress(displayShipment.deliveryAddress)}
+                      </Paragraph1>
+                    </div>
+                  </div>
+                </div>
+              </ShipmentModalSection>
+
+              <ShipmentModalSection title="Delivery window" summary={deliveryWindowSummary}>
                 <div className="gap-4 grid grid-cols-1 sm:grid-cols-2">
                   <DetailField label="Scheduled date (Lagos)">
                     <Paragraph1 className="font-medium text-gray-900 text-sm">
@@ -1773,79 +2027,18 @@ function ShipmentsPageInner() {
                       {dispatchedAtLabel ?? "—"}
                     </Paragraph1>
                   </DetailField>
-                  <DetailField label="Pickup partner">
-                    <Paragraph1 className="font-medium text-gray-900 text-sm">
-                      {displayShipment.pickupPartner ?? "—"}
-                    </Paragraph1>
-                  </DetailField>
-                  <DetailField label="Delivery address" className="sm:col-span-2">
-                    <Paragraph1 className="font-medium text-gray-900 text-sm">
-                      {formatCheckoutDeliveryStreetLine(displayShipment)}
-                    </Paragraph1>
-                  </DetailField>
-                  <DetailField label="Partner pickup booking" className="sm:col-span-2">
-                    <Paragraph1 className="font-medium text-gray-900 text-sm break-all">
-                      {displayShipment.pickupId ?? "—"}
-                    </Paragraph1>
-                  </DetailField>
-                  <DetailField label="Dispatch attempts (latest run)">
-                    <Paragraph1 className="font-medium text-gray-900 text-sm">
-                      {displayShipment.dispatchAttempts ?? 0}
-                    </Paragraph1>
-                    <Paragraph1 className="mt-0.5 text-gray-500 text-xs">
-                      Resets after Redispatch.
-                    </Paragraph1>
-                  </DetailField>
-                  <DetailField label="Charged (NGN)">
-                    <Paragraph1 className="font-medium text-gray-900 text-sm">
-                      {koboToNaira(displayShipment.shipmentCharge)}
-                      {showPickupFeeRow
-                        ? ` · pickup ${koboToNaira(displayShipment.pickupCharge)}`
-                        : ""}
-                      {` · VAT ${koboToNaira(displayShipment.vatCharge)}`}
-                    </Paragraph1>
-                  </DetailField>
-                  {displayShipment.actualFulfillmentCostKobo != null ? (
-                    <DetailField label="Actual cost (NGN)">
-                      <Paragraph1 className="font-medium text-gray-900 text-sm">
-                        {koboToNaira(displayShipment.actualFulfillmentCostKobo)}
-                      </Paragraph1>
-                    </DetailField>
-                  ) : null}
                 </div>
               </ShipmentModalSection>
 
-              <ShipmentModalSection
-                title="Pickup & delivery"
-                summary={
-                  displayShipment.type === "RETURN"
-                    ? "Renter → lister"
-                    : displayShipment.type === "RESALE"
-                      ? "Lister → buyer"
-                      : "Lister → renter"
-                }
-              >
-                <div className="space-y-3">
-                  <div>
-                    <Paragraph1 className="flex items-center gap-1 mb-1.5 text-gray-500 text-xs">
-                      <Package size={12} />
-                      {detailPartyLabels.pickupHeading}
-                    </Paragraph1>
-                    <Paragraph1 className="bg-gray-50 p-3 border border-gray-100 rounded-lg text-gray-800 text-sm">
-                      {formatAddress(displayShipment.pickupAddress)}
-                    </Paragraph1>
-                  </div>
-                  <div>
-                    <Paragraph1 className="flex items-center gap-1 mb-1.5 text-gray-500 text-xs">
-                      <Truck size={12} />
-                      {detailPartyLabels.deliveryHeading}
-                    </Paragraph1>
-                    <Paragraph1 className="bg-gray-50 p-3 border border-gray-100 rounded-lg text-gray-800 text-sm">
-                      {formatAddress(displayShipment.deliveryAddress)}
-                    </Paragraph1>
-                  </div>
-                </div>
-              </ShipmentModalSection>
+              {displayShipment.type === "RETURN" ? (
+                <ShipmentModalSection title="Return request" summary={returnRequestSummary}>
+                  <ReturnRequestSection
+                    returnRequest={displayShipment.returnRequest}
+                    visible
+                    embedded
+                  />
+                </ShipmentModalSection>
+              ) : null}
 
               <ShipmentModalSection title="Dispatch history" summary={dispatchHistorySummary}>
                 {sortedDispatchAttemptLogs.length === 0 ? (
