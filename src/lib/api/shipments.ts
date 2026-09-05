@@ -260,7 +260,7 @@ export const completeManualShipment = async (
   );
 };
 
-/** POST /shipments/:id/manual-delivered — admin marks Relisted dispatch leg delivered. */
+/** POST /shipments/:id/manual-delivered — admin marks a dispatched leg completed. */
 export const markManualShipmentDelivered = async (
   shipmentId: string,
 ): Promise<{ success: boolean; message: string }> => {
