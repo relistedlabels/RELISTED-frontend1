@@ -179,10 +179,7 @@ const AccountProfileDetails: React.FC = () => {
     const previewUrl = URL.createObjectURL(file);
     setAvatarPreview(previewUrl);
 
-    const formDataUpload = new FormData();
-    formDataUpload.append("avatar", file);
-
-    uploadAvatarMutation.mutate(formDataUpload, {
+    uploadAvatarMutation.mutate(file, {
       onSuccess: (response) => {
         const uploadedImage = response.data.profileImage;
         if (uploadedImage) {

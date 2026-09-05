@@ -69,9 +69,7 @@ export default function ProfileImageUploadModal({
     }
     setIsUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("avatar", selectedFile);
-      await uploadListerAvatar(formData);
+      await uploadListerAvatar(selectedFile);
       queryClient.invalidateQueries({ queryKey: ["listers", "profile"] });
       onNext();
     } catch (error: any) {

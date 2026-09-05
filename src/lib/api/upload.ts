@@ -1,7 +1,18 @@
+import { prepareFileForUpload } from "@/lib/media/compressImageForUpload";
 import { apiFetch, getAuthToken } from "./http";
 import axios from "axios";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+export async function createUploadFormData(
+  file: File,
+  fieldName = "file",
+): Promise<FormData> {
+  const prepared = await prepareFileForUpload(file);
+  const formData = new FormData();
+  formData.append(fieldName, prepared);
+  return formData;
+}
 
 export const uploadFile = async ({
   file,
@@ -12,8 +23,9 @@ export const uploadFile = async ({
   id: string;
   onProgress?: (percent: number) => void;
 }) => {
+  const prepared = await prepareFileForUpload(file);
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append("file", prepared);
   const token = getAuthToken();
   const response = await axios.post(`${BASE_URL}/upload/${id}`, formData, {
     headers: {

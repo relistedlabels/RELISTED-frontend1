@@ -7,6 +7,11 @@ import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { ToolInfo } from "@/common/ui/ToolInfo";
 import { useUploader } from "@/context/UploaderContext";
 import {
+  MAX_SOURCE_IMAGE_BYTES,
+  MAX_UPLOAD_VIDEO_BYTES,
+  formatUploadLimitMb,
+} from "@/lib/media/uploadLimits";
+import {
   listingAttachmentsSameOrder,
   orderListingAttachments,
 } from "@/lib/product/attachmentSlotOrder";
@@ -102,10 +107,10 @@ export const ItemImageUploader: React.FC = () => {
     (file: File, slotId: string) => {
       console.log(`🚀 Starting upload for slot: ${slotId}, file: ${file.name}`);
 
-      // Validate file size (30MB for videos, 7MB for images)
+      // Videos are not compressed. Images are compressed before upload.
       const maxFileSize =
-        slotId === "video" ? 30 * 1024 * 1024 : 7 * 1024 * 1024;
-      const maxMB = slotId === "video" ? 30 : 7;
+        slotId === "video" ? MAX_UPLOAD_VIDEO_BYTES : MAX_SOURCE_IMAGE_BYTES;
+      const maxMB = formatUploadLimitMb(maxFileSize);
       if (file.size > maxFileSize) {
         console.error(`❌ File size exceeds ${maxMB}MB limit`);
         setUploadStatus((prev) => ({

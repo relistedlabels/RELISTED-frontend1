@@ -158,8 +158,7 @@ export const useUpdateAdminPassword = () => {
 export const useUpdateProfilePhoto = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (formData: FormData) =>
-      settingsApi.updateProfilePhoto(formData),
+    mutationFn: (file: File) => settingsApi.updateProfilePhoto(file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user", "profile"] });
     },

@@ -2,9 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useUploader } from "@/context/UploaderContext";
+import {
+  MAX_SOURCE_IMAGE_BYTES,
+  formatUploadLimitMb,
+} from "@/lib/media/uploadLimits";
 
-/** Same limit as product images (non-video slots) in `ItemImageUploader`. */
-const MAX_IMAGE_BYTES = 7 * 1024 * 1024;
+/** Large phone photos are compressed before upload. */
 
 export const CLOSET_AVATAR_SLOT_CREATE = "closet-avatar-create";
 export const CLOSET_AVATAR_SLOT_EDIT = "closet-avatar-edit";
@@ -71,8 +74,10 @@ export function useClosetImageUpload(options: {
 
   const handleFile = useCallback(
     (file: File) => {
-      if (file.size > MAX_IMAGE_BYTES) {
-        setUploadStatus(`error: file too large (max 7MB)`);
+      if (file.size > MAX_SOURCE_IMAGE_BYTES) {
+        setUploadStatus(
+          `error: file too large (max ${formatUploadLimitMb(MAX_SOURCE_IMAGE_BYTES)}MB)`,
+        );
         return;
       }
 

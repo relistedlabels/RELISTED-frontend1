@@ -1,3 +1,4 @@
+import { createUploadFormData } from "./upload";
 import { apiFetch } from "./http";
 import type { DispatchWindowsPayload } from "@/lib/checkout/dispatchWindows";
 
@@ -379,12 +380,14 @@ export const rentersApi = {
     ),
 
   // POST /api/renters/profile/avatar
-  uploadProfileAvatar: (formData: FormData) =>
-    apiFetch<{
+  uploadProfileAvatar: async (file: File) => {
+    const formData = await createUploadFormData(file, "avatar");
+    return apiFetch<{
       success: boolean;
       message: string;
       data: { profileImage: string; uploadedAt: string };
-    }>("/api/renters/profile/avatar", { method: "POST", body: formData }),
+    }>("/api/renters/profile/avatar", { method: "POST", body: formData });
+  },
 
   // GET /api/renters/profile/avatar
   getProfileAvatar: () =>

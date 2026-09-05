@@ -1,3 +1,4 @@
+import { createUploadFormData } from "./upload";
 import { apiFetch } from "./http";
 
 // ============================================================================
@@ -1147,8 +1148,9 @@ export interface AvatarUploadResponse {
 }
 
 export async function uploadListerAvatar(
-  formData: FormData,
+  file: File,
 ): Promise<AvatarUploadResponse> {
+  const formData = await createUploadFormData(file, "avatar");
   return apiFetch("/api/listers/profile/avatar", {
     method: "POST",
     body: formData,

@@ -33,9 +33,7 @@ export default function ChangePhotoModal({
   const handleUpload = async () => {
     if (file) {
       try {
-        const formData = new FormData();
-        formData.append("file", file);
-        await uploadMutation.mutateAsync(formData);
+        await uploadMutation.mutateAsync(file);
         setPreview(null);
         setFile(null);
         onClose();
