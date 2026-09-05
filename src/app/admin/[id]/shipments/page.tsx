@@ -1,6 +1,6 @@
 // ENDPOINTS: GET /shipments, GET /shipments/costs, GET /shipments/:id, GET /shipments/:id/tracking,
 // GET /orders/:orderId/shipments, POST /shipments/:id/cancel, POST /shipments/:id/redispatch,
-// POST /shipments/:id/manual-complete, POST /shipments/:id/manual-delivered (Relisted dispatch),
+// POST /shipments/:id/manual-complete, POST /shipments/:id/manual-delivered (mark leg completed),
 // GET /shipments/:id/rate-preview, POST /shipments/:id/dispatch-now,
 // POST /shipments/:id/reconcile-manual
 
@@ -860,21 +860,33 @@ function ShipmentsPageInner() {
     }
   };
 
-  const handleMarkManualDelivered = async () => {
+  const handleMarkCompleted = async () => {
     if (!displayShipment?.id) return;
+    const carrierBooked = Boolean(
+      !displayShipment.manualFulfillment &&
+        (displayShipment.providerShipmentId || displayShipment.reconciledAsManualAt),
+    );
+    const dispatchFailed = displayShipment.status === "DISPATCH_FAILED";
+    const pendingUndispatched = displayShipment.status === "PENDING";
     if (
       !window.confirm(
-        "Mark this leg as delivered? The order status will update and the buyer can confirm receipt (or auto-complete after the inspection period).",
+        dispatchFailed
+          ? "Mark this leg as completed? Carrier booking failed or was never finished, but use this if the item was still delivered. Order status will update."
+          : pendingUndispatched
+            ? "Mark this leg as completed? Use when delivery happened without dispatch in the system. Order status will update."
+            : carrierBooked
+              ? "Mark this leg as completed? Use when delivery happened but carrier tracking has not caught up. Order status and downstream steps will update."
+              : "Mark this leg as completed? Order status will update and the buyer can confirm receipt where applicable.",
       )
     ) {
       return;
     }
     try {
       await markManualDelivered.mutateAsync(displayShipment.id);
-      toast.success("Marked as delivered. Order status updated.");
+      toast.success("Marked as completed. Order status updated.");
       await detailQuery.refetch();
     } catch {
-      toast.error("Could not mark as delivered");
+      toast.error("Could not mark as completed");
     }
   };
 
@@ -943,18 +955,29 @@ function ShipmentsPageInner() {
           displayShipment.status === "DISPATCHING"),
     );
 
-  const showMarkDeliveredPanel =
+  const showMarkCompletedPanel =
     Boolean(
-      displayShipment?.manualFulfillment &&
-        (displayShipment.status === "DISPATCHED" ||
+      displayShipment &&
+        (displayShipment.status === "PENDING" ||
+          displayShipment.status === "DISPATCH_FAILED" ||
+          displayShipment.status === "DISPATCHED" ||
           displayShipment.status === "IN_TRANSIT"),
     );
+
+  const markCompletedDescription =
+    displayShipment?.status === "DISPATCH_FAILED"
+      ? "Carrier booking failed or was never completed. Mark completed if the item was still delivered."
+      : displayShipment?.status === "PENDING"
+        ? "Mark completed if the item was delivered without going through dispatch."
+        : displayShipment?.manualFulfillment
+          ? "Mark completed when the item was delivered."
+          : "Mark completed when delivery happened but carrier tracking has not updated.";
 
   const showOpsPanel =
     showCarrierBookingPanel ||
     showSwitchToManualPanel ||
     showMarkManualDispatchedPanel ||
-    showMarkDeliveredPanel;
+    showMarkCompletedPanel;
 
   const handleSwitchToManual = async () => {
     if (!displayShipment?.id) return;
@@ -1923,18 +1946,27 @@ function ShipmentsPageInner() {
                       </div>
                     )}
 
-                    {showMarkDeliveredPanel && (
-                      <div className="flex justify-end p-3.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            void handleMarkManualDelivered();
-                          }}
-                          disabled={markManualDelivered.isPending}
-                          className={ADMIN_PRIMARY_BTN}
+                    {showMarkCompletedPanel && (
+                      <div className="p-3.5">
+                        <AdminOpsBlock
+                          title="Complete leg"
+                          description={markCompletedDescription}
                         >
-                          {markManualDelivered.isPending ? "Saving…" : "Mark delivered"}
-                        </button>
+                          <div className="flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                void handleMarkCompleted();
+                              }}
+                              disabled={markManualDelivered.isPending}
+                              className={ADMIN_PRIMARY_BTN}
+                            >
+                              {markManualDelivered.isPending
+                                ? "Saving…"
+                                : "Mark completed"}
+                            </button>
+                          </div>
+                        </AdminOpsBlock>
                       </div>
                     )}
                   </div>
