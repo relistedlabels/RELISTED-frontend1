@@ -65,6 +65,7 @@ import {
   AdminComboBox,
   AdminFilterField,
 } from "@/app/admin/components/AdminComboBox";
+import ActionConfirmModal from "@/common/layer/ActionConfirmModal";
 
 const PROVIDER_LABELS: Record<string, string> = {
   all: "All",
@@ -187,6 +188,40 @@ function isShipmentScheduledInFuture(shipment: Shipment): boolean {
     ? new Date(shipment.scheduledWindowStart).getTime()
     : new Date(shipment.scheduledDate).getTime();
   return start > now;
+}
+
+type ShipmentConfirmAction =
+  | { type: "cancel"; shipmentId: string }
+  | { type: "redispatch"; shipmentId: string }
+  | { type: "markCompleted" }
+  | { type: "dispatchNow"; pricingTier?: string }
+  | { type: "switchToManual" }
+  | { type: "reconcileManual" };
+
+function getDispatchNowConfirmCopy(options: {
+  shipmentScheduledInFuture: boolean;
+  rateForImmediate: boolean;
+  scheduledRateQuoteDetail: string;
+}): { title: string; description: string; actionLabel: string } {
+  if (!options.shipmentScheduledInFuture) {
+    return {
+      title: "Book with carrier",
+      description: "Start carrier booking for this shipment now?",
+      actionLabel: "Book with carrier",
+    };
+  }
+  if (options.rateForImmediate) {
+    return {
+      title: "Book for today",
+      description: "Book this shipment for delivery today?",
+      actionLabel: "Book for today",
+    };
+  }
+  return {
+    title: "Book for scheduled window",
+    description: `Book this shipment for ${options.scheduledRateQuoteDetail}?`,
+    actionLabel: "Book for scheduled window",
+  };
 }
 
 function formatShipmentRowCost(
@@ -562,6 +597,9 @@ function ShipmentsPageInner() {
   const [reconcileTrackingRef, setReconcileTrackingRef] = useState("");
   const [reconcileTrackingUrl, setReconcileTrackingUrl] = useState("");
   const [reconcileActualCostNgn, setReconcileActualCostNgn] = useState("");
+  const [pendingConfirm, setPendingConfirm] = useState<ShipmentConfirmAction | null>(
+    null,
+  );
   const [reconcileNote, setReconcileNote] = useState("");
   const [costProvider, setCostProvider] = useState("all");
   const [costCourier, setCostCourier] = useState("all");
@@ -815,30 +853,12 @@ function ShipmentsPageInner() {
     [total, listData?.page, currentPage, limit, totalPages],
   );
 
-  const handleCancelShipment = async (shipmentId: string) => {
-    if (window.confirm("Cancel this shipment? Only pending shipments can be cancelled.")) {
-      try {
-        await cancelShipment.mutateAsync(shipmentId);
-        toast.success("Shipment cancelled");
-      } catch {
-        toast.error("Could not cancel shipment");
-      }
-    }
+  const handleCancelShipment = (shipmentId: string) => {
+    setPendingConfirm({ type: "cancel", shipmentId });
   };
 
-  const handleRedispatchShipment = async (shipmentId: string) => {
-    if (
-      window.confirm(
-        "Queue a manual redispatch? This is only for shipments that failed dispatch.",
-      )
-    ) {
-      try {
-        await redispatchShipment.mutateAsync(shipmentId);
-        toast.success("Redispatch queued");
-      } catch {
-        toast.error("Could not redispatch");
-      }
-    }
+  const handleRedispatchShipment = (shipmentId: string) => {
+    setPendingConfirm({ type: "redispatch", shipmentId });
   };
 
   const handleViewDetails = (shipment: Shipment) => {
@@ -860,34 +880,9 @@ function ShipmentsPageInner() {
     }
   };
 
-  const handleMarkCompleted = async () => {
+  const handleMarkCompleted = () => {
     if (!displayShipment?.id) return;
-    const carrierBooked = Boolean(
-      !displayShipment.manualFulfillment &&
-        (displayShipment.providerShipmentId || displayShipment.reconciledAsManualAt),
-    );
-    const dispatchFailed = displayShipment.status === "DISPATCH_FAILED";
-    const pendingUndispatched = displayShipment.status === "PENDING";
-    if (
-      !window.confirm(
-        dispatchFailed
-          ? "Mark this leg as completed? Carrier booking failed or was never finished, but use this if the item was still delivered. Order status will update."
-          : pendingUndispatched
-            ? "Mark this leg as completed? Use when delivery happened without dispatch in the system. Order status will update."
-            : carrierBooked
-              ? "Mark this leg as completed? Use when delivery happened but carrier tracking has not caught up. Order status and downstream steps will update."
-              : "Mark this leg as completed? Order status will update and the buyer can confirm receipt where applicable.",
-      )
-    ) {
-      return;
-    }
-    try {
-      await markManualDelivered.mutateAsync(displayShipment.id);
-      toast.success("Marked as completed. Order status updated.");
-      await detailQuery.refetch();
-    } catch {
-      toast.error("Could not mark as completed");
-    }
+    setPendingConfirm({ type: "markCompleted" });
   };
 
   const handleLoadCarrierRates = () => {
@@ -899,7 +894,7 @@ function ShipmentsPageInner() {
     setRatePreviewOpen(true);
   };
 
-  const handleDispatchNow = async (options?: { pricingTier?: string }) => {
+  const handleDispatchNow = (options?: { pricingTier?: string }) => {
     if (!displayShipment?.id) return;
     const needsTier = displayShipment.manualFulfillment;
     const tier = options?.pricingTier ?? selectedCarrierTier ?? undefined;
@@ -907,23 +902,7 @@ function ShipmentsPageInner() {
       toast.error("Select a carrier rate first");
       return;
     }
-    const confirmed = shipmentScheduledInFuture
-      ? window.confirm(
-          "Book this shipment now? The dispatch window will be pulled forward to the current slot.",
-        )
-      : window.confirm("Queue carrier booking for this shipment now?");
-    if (!confirmed) return;
-    try {
-      await dispatchShipmentNow.mutateAsync({
-        shipmentId: displayShipment.id,
-        pricingTier: tier,
-        updateWindow: shipmentScheduledInFuture,
-      });
-      toast.success("Carrier booking queued");
-      setIsDetailModalOpen(false);
-    } catch {
-      toast.error("Could not queue carrier booking");
-    }
+    setPendingConfirm({ type: "dispatchNow", pricingTier: tier });
   };
 
   const selectableCarrierTiers = carrierTiers.filter(
@@ -968,7 +947,7 @@ function ShipmentsPageInner() {
     displayShipment?.status === "DISPATCH_FAILED"
       ? "Carrier booking failed or was never completed. Mark completed if the item was still delivered."
       : displayShipment?.status === "PENDING"
-        ? "Mark completed if the item was delivered without going through dispatch."
+        ? "Mark completed if the item was delivered before booking finished here."
         : displayShipment?.manualFulfillment
           ? "Mark completed when the item was delivered."
           : "Mark completed when delivery happened but carrier tracking has not updated.";
@@ -979,36 +958,13 @@ function ShipmentsPageInner() {
     showMarkManualDispatchedPanel ||
     showMarkCompletedPanel;
 
-  const handleSwitchToManual = async () => {
+  const handleSwitchToManual = () => {
     if (!displayShipment?.id) return;
-    if (
-      !window.confirm(
-        "Switch this leg to Relisted dispatch? Carrier booking will be skipped. Mark dispatched when the item is on the way.",
-      )
-    ) {
-      return;
-    }
-    try {
-      await switchShipmentToManual.mutateAsync({
-        shipmentId: displayShipment.id,
-        adminReconcileNote: reconcileNote.trim() || undefined,
-      });
-      toast.success("Switched to Relisted dispatch");
-      await detailQuery.refetch();
-    } catch {
-      toast.error("Could not switch to Relisted dispatch");
-    }
+    setPendingConfirm({ type: "switchToManual" });
   };
 
-  const handleReconcileManual = async () => {
+  const handleReconcileManual = () => {
     if (!displayShipment?.id) return;
-    if (
-      !window.confirm(
-        "Mark this leg as dispatched in-house now? The carrier will not be used. What the renter paid stays the same.",
-      )
-    ) {
-      return;
-    }
     const parsedCost = reconcileActualCostNgn.trim()
       ? Math.round(Number.parseFloat(reconcileActualCostNgn) * 100)
       : undefined;
@@ -1019,19 +975,164 @@ function ShipmentsPageInner() {
       toast.error("Enter a valid actual cost in NGN, or leave it blank");
       return;
     }
+    setPendingConfirm({ type: "reconcileManual" });
+  };
+
+  const executePendingConfirm = async () => {
+    if (!pendingConfirm) return;
+
     try {
-      await reconcileManualShipment.mutateAsync({
-        shipmentId: displayShipment.id,
-        ...parseAdminTrackingFields(reconcileTrackingRef, reconcileTrackingUrl),
-        actualFulfillmentCostKobo: parsedCost,
-        adminReconcileNote: reconcileNote.trim() || undefined,
-      });
-      toast.success("Marked as dispatched. Customer notified.");
-      await detailQuery.refetch();
+      switch (pendingConfirm.type) {
+        case "cancel":
+          await cancelShipment.mutateAsync(pendingConfirm.shipmentId);
+          toast.success("Shipment cancelled");
+          break;
+        case "redispatch":
+          await redispatchShipment.mutateAsync(pendingConfirm.shipmentId);
+          toast.success("Carrier booking restarted");
+          break;
+        case "markCompleted":
+          if (!displayShipment?.id) return;
+          await markManualDelivered.mutateAsync(displayShipment.id);
+          toast.success("Marked as completed. Order status updated.");
+          await detailQuery.refetch();
+          break;
+        case "dispatchNow": {
+          if (!displayShipment?.id) return;
+          const dispatchResult = await dispatchShipmentNow.mutateAsync({
+            shipmentId: displayShipment.id,
+            pricingTier: pendingConfirm.pricingTier,
+            updateWindow: shipmentScheduledInFuture ? rateForImmediate : undefined,
+          });
+          toast.success(dispatchResult.message);
+          setIsDetailModalOpen(false);
+          break;
+        }
+        case "switchToManual":
+          if (!displayShipment?.id) return;
+          await switchShipmentToManual.mutateAsync({
+            shipmentId: displayShipment.id,
+            adminReconcileNote: reconcileNote.trim() || undefined,
+          });
+          toast.success("Switched to Relisted dispatch");
+          await detailQuery.refetch();
+          break;
+        case "reconcileManual": {
+          if (!displayShipment?.id) return;
+          const parsedCost = reconcileActualCostNgn.trim()
+            ? Math.round(Number.parseFloat(reconcileActualCostNgn) * 100)
+            : undefined;
+          await reconcileManualShipment.mutateAsync({
+            shipmentId: displayShipment.id,
+            ...parseAdminTrackingFields(reconcileTrackingRef, reconcileTrackingUrl),
+            actualFulfillmentCostKobo: parsedCost,
+            adminReconcileNote: reconcileNote.trim() || undefined,
+          });
+          toast.success("Marked as dispatched. Customer notified.");
+          await detailQuery.refetch();
+          break;
+        }
+      }
+      setPendingConfirm(null);
     } catch {
-      toast.error("Could not mark as dispatched");
+      const errorMessages: Record<ShipmentConfirmAction["type"], string> = {
+        cancel: "Could not cancel shipment",
+        redispatch: "Could not redispatch",
+        markCompleted: "Could not mark as completed",
+        dispatchNow: "Could not start carrier booking",
+        switchToManual: "Could not switch to Relisted dispatch",
+        reconcileManual: "Could not mark as dispatched",
+      };
+      toast.error(errorMessages[pendingConfirm.type]);
     }
   };
+
+  const confirmModalProps = useMemo(() => {
+    if (!pendingConfirm) return null;
+
+    switch (pendingConfirm.type) {
+      case "cancel":
+        return {
+          title: "Cancel shipment",
+          description:
+            "Cancel this shipment? Only pending shipments can be cancelled.",
+          actionLabel: "Cancel shipment",
+          actionType: "negative" as const,
+        };
+      case "redispatch":
+        return {
+          title: "Retry carrier booking",
+          description:
+            "Try carrier booking again? Use this only when the previous booking failed.",
+          actionLabel: "Retry booking",
+          actionType: "update" as const,
+        };
+      case "markCompleted": {
+        const carrierBooked = Boolean(
+          displayShipment &&
+            !displayShipment.manualFulfillment &&
+            (displayShipment.providerShipmentId ||
+              displayShipment.reconciledAsManualAt),
+        );
+        const dispatchFailed = displayShipment?.status === "DISPATCH_FAILED";
+        const pendingUndispatched = displayShipment?.status === "PENDING";
+        const description = dispatchFailed
+          ? "Carrier booking failed or was never finished, but use this if the item was still delivered. Order status will update."
+          : pendingUndispatched
+            ? "Use when the item was delivered but booking never completed here. Order status will update."
+            : carrierBooked
+              ? "Use when delivery happened but carrier tracking has not caught up. Order status and downstream steps will update."
+              : "Order status will update and the buyer can confirm receipt where applicable.";
+        return {
+          title: "Mark as completed",
+          description,
+          actionLabel: "Mark completed",
+          actionType: "update" as const,
+        };
+      }
+      case "dispatchNow":
+        return {
+          ...getDispatchNowConfirmCopy({
+            shipmentScheduledInFuture,
+            rateForImmediate,
+            scheduledRateQuoteDetail,
+          }),
+          actionType: "positive" as const,
+        };
+      case "switchToManual":
+        return {
+          title: "Switch to Relisted dispatch",
+          description:
+            "Handle this leg in-house. Mark dispatched when the item is on the way.",
+          actionLabel: "Switch to Relisted dispatch",
+          actionType: "update" as const,
+        };
+      case "reconcileManual":
+        return {
+          title: "Mark dispatched in-house",
+          description:
+            "The carrier will not be used. What the renter paid stays the same.",
+          actionLabel: "Mark dispatched",
+          actionType: "update" as const,
+        };
+      default:
+        return null;
+    }
+  }, [
+    pendingConfirm,
+    displayShipment,
+    shipmentScheduledInFuture,
+    rateForImmediate,
+    scheduledRateQuoteDetail,
+  ]);
+
+  const confirmModalLoading =
+    cancelShipment.isPending ||
+    redispatchShipment.isPending ||
+    markManualDelivered.isPending ||
+    dispatchShipmentNow.isPending ||
+    switchShipmentToManual.isPending ||
+    reconcileManualShipment.isPending;
 
   return (
     <div className="min-h-screen">
@@ -1432,7 +1533,7 @@ function ShipmentsPageInner() {
                                 }}
                                 disabled={redispatchShipment.isPending}
                                 className="hover:bg-blue-50 disabled:opacity-50 p-2 rounded-lg text-blue-600 transition"
-                                title="Redispatch (failed only)"
+                                title="Retry booking (failed only)"
                               >
                                 <RefreshCw size={16} />
                               </button>
@@ -1704,10 +1805,10 @@ function ShipmentsPageInner() {
                                 className={ADMIN_PRIMARY_BTN}
                               >
                                 {dispatchShipmentNow.isPending
-                                  ? "Queueing…"
+                                  ? "Booking…"
                                   : shipmentScheduledInFuture
                                     ? "Dispatch now"
-                                    : "Retry dispatch"}
+                                    : "Retry booking"}
                               </button>
                             )}
                           </div>
@@ -1786,7 +1887,7 @@ function ShipmentsPageInner() {
                                     className={ADMIN_PRIMARY_BTN}
                                   >
                                     {dispatchShipmentNow.isPending
-                                      ? "Queueing…"
+                                      ? "Booking…"
                                       : "Book selected rate"}
                                   </button>
                                 </div>
@@ -1816,8 +1917,8 @@ function ShipmentsPageInner() {
                               : "Switch to Relisted dispatch"}
                           </button>
                           <Paragraph1 className="text-gray-500 text-xs">
-                            Keeps this leg pending until you mark dispatched. What the renter
-                            paid stays the same.
+                            Mark dispatched when the item is on the way. What the renter paid
+                            stays the same.
                           </Paragraph1>
                         </AdminOpsBlock>
 
@@ -2058,7 +2159,7 @@ function ShipmentsPageInner() {
                         {displayShipment.dispatchAttempts ?? 0}
                       </Paragraph1>
                       <Paragraph1 className="mt-0.5 text-gray-500 text-xs">
-                        Resets after Redispatch.
+                        Cleared when you retry booking.
                       </Paragraph1>
                     </DetailField>
                     <DetailField label="Charged (NGN)">
@@ -2195,7 +2296,7 @@ function ShipmentsPageInner() {
                     disabled={redispatchShipment.isPending}
                     className={`flex-1 ${ADMIN_PRIMARY_BTN}`}
                   >
-                    {redispatchShipment.isPending ? "Queueing…" : "Redispatch"}
+                    {redispatchShipment.isPending ? "Booking…" : "Retry booking"}
                   </button>
                 )}
                 {displayShipment.status === "PENDING" && (
@@ -2215,6 +2316,20 @@ function ShipmentsPageInner() {
           </div>
         </div>
       )}
+
+      <ActionConfirmModal
+        isOpen={pendingConfirm != null && confirmModalProps != null}
+        onClose={() => setPendingConfirm(null)}
+        title={confirmModalProps?.title ?? ""}
+        description={confirmModalProps?.description ?? ""}
+        actionType={confirmModalProps?.actionType ?? "positive"}
+        actionLabel={confirmModalProps?.actionLabel ?? "Confirm"}
+        cancelLabel="Go back"
+        onConfirm={() => {
+          void executePendingConfirm();
+        }}
+        isLoading={confirmModalLoading}
+      />
     </div>
   );
 }
