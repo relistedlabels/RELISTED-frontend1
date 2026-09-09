@@ -113,32 +113,14 @@ function isHttpUrl(value: string): boolean {
   return /^https?:\/\//i.test(value.trim());
 }
 
-/** Maps admin reference + URL/rider input to API tracking fields. */
-function parseAdminTrackingFields(
-  reference: string,
+/** Maps admin URL/rider input to API tracking fields. */
+function parseAdminTrackingContact(
   urlOrRider: string,
 ): { trackingId?: string; trackingUrl?: string } {
-  const ref = reference.trim();
   const contact = urlOrRider.trim();
-
-  if (!ref && !contact) return {};
-
-  if (contact && isHttpUrl(contact)) {
-    return {
-      ...(ref ? { trackingId: ref } : {}),
-      trackingUrl: contact,
-    };
-  }
-
-  if (contact && !ref) {
-    return { trackingId: contact };
-  }
-
-  if (contact && ref) {
-    return { trackingId: ref, trackingUrl: contact };
-  }
-
-  return { trackingId: ref };
+  if (!contact) return {};
+  if (isHttpUrl(contact)) return { trackingUrl: contact };
+  return { trackingId: contact };
 }
 
 function ShipmentTrackingContact({
@@ -391,28 +373,6 @@ function ShipmentModalSection({
   );
 }
 
-function AdminOpsBlock({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-3">
-      <div>
-        <Paragraph1 className="font-medium text-gray-900 text-sm">{title}</Paragraph1>
-        {description ? (
-          <Paragraph1 className="mt-0.5 text-gray-500 text-xs">{description}</Paragraph1>
-        ) : null}
-      </div>
-      {children}
-    </div>
-  );
-}
-
 function RateQuoteOptionCard({
   selected,
   onSelect,
@@ -439,6 +399,49 @@ function RateQuoteOptionCard({
       <Paragraph1 className="font-medium text-gray-900 text-sm">{title}</Paragraph1>
       <Paragraph1 className="mt-0.5 text-gray-500 text-xs">{description}</Paragraph1>
     </button>
+  );
+}
+
+function ShipmentActionCard({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-3 bg-gray-50 p-3 border border-gray-100 rounded-lg">
+      <div>
+        <Paragraph1 className="font-medium text-gray-900 text-sm">{title}</Paragraph1>
+        <Paragraph1 className="mt-0.5 text-gray-500 text-xs">{description}</Paragraph1>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function ManualTrackingField({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="block">
+      <Paragraph1 className="mb-1 text-gray-500 text-xs">
+        Tracking URL or rider number
+      </Paragraph1>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={ADMIN_FIELD_INPUT_CLASS}
+        placeholder={ADMIN_TRACKING_CONTACT_PLACEHOLDER}
+      />
+    </label>
   );
 }
 
@@ -587,14 +590,12 @@ function ShipmentsPageInner() {
   const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [manualTrackingRef, setManualTrackingRef] = useState("");
   const [manualTrackingUrl, setManualTrackingUrl] = useState("");
   const [ratePreviewOpen, setRatePreviewOpen] = useState(false);
   const [rateForImmediate, setRateForImmediate] = useState(true);
   const [selectedCarrierTier, setSelectedCarrierTier] = useState<string | null>(
     null,
   );
-  const [reconcileTrackingRef, setReconcileTrackingRef] = useState("");
   const [reconcileTrackingUrl, setReconcileTrackingUrl] = useState("");
   const [reconcileActualCostNgn, setReconcileActualCostNgn] = useState("");
   const [pendingConfirm, setPendingConfirm] = useState<ShipmentConfirmAction | null>(
@@ -748,12 +749,10 @@ function ShipmentsPageInner() {
 
   useEffect(() => {
     if (!displayShipment?.id) return;
-    setManualTrackingRef("");
     setManualTrackingUrl("");
     setRatePreviewOpen(false);
     setSelectedCarrierTier(null);
     setRateForImmediate(true);
-    setReconcileTrackingRef("");
     setReconcileTrackingUrl("");
     setReconcileActualCostNgn("");
     setReconcileNote("");
@@ -871,7 +870,7 @@ function ShipmentsPageInner() {
     try {
       await completeManualShipment.mutateAsync({
         shipmentId: displayShipment.id,
-        ...parseAdminTrackingFields(manualTrackingRef, manualTrackingUrl),
+        ...parseAdminTrackingContact(manualTrackingUrl),
       });
       toast.success("Marked as dispatched. Customer notified.");
       setIsDetailModalOpen(false);
@@ -925,8 +924,6 @@ function ShipmentsPageInner() {
       displayShipment.status === "DISPATCHING" ||
       displayShipment.status === "DISPATCH_FAILED");
 
-  const showReconcileManualPanel = showSwitchToManualPanel;
-
   const showMarkManualDispatchedPanel =
     Boolean(
       displayShipment?.manualFulfillment &&
@@ -951,12 +948,6 @@ function ShipmentsPageInner() {
         : displayShipment?.manualFulfillment
           ? "Mark completed when the item was delivered."
           : "Mark completed when delivery happened but carrier tracking has not updated.";
-
-  const showOpsPanel =
-    showCarrierBookingPanel ||
-    showSwitchToManualPanel ||
-    showMarkManualDispatchedPanel ||
-    showMarkCompletedPanel;
 
   const handleSwitchToManual = () => {
     if (!displayShipment?.id) return;
@@ -1024,7 +1015,7 @@ function ShipmentsPageInner() {
             : undefined;
           await reconcileManualShipment.mutateAsync({
             shipmentId: displayShipment.id,
-            ...parseAdminTrackingFields(reconcileTrackingRef, reconcileTrackingUrl),
+            ...parseAdminTrackingContact(reconcileTrackingUrl),
             actualFulfillmentCostKobo: parsedCost,
             adminReconcileNote: reconcileNote.trim() || undefined,
           });
@@ -1735,343 +1726,275 @@ function ShipmentsPageInner() {
                 ) : null}
               </div>
 
-              {showOpsPanel && (
-                <div className="bg-white border border-gray-100 rounded-lg overflow-hidden">
-                  <div className="px-3.5 py-3 border-gray-100 border-b">
-                    <Paragraph1 className="font-medium text-gray-900 text-sm">Admin actions</Paragraph1>
+              {showCarrierBookingPanel && (
+                <ShipmentModalSection
+                  title="Carrier booking"
+                  summary={
+                    displayShipment.manualFulfillment
+                      ? "Use a carrier for this leg."
+                      : "Fetch rates or book dispatch."
+                  }
+                  defaultOpen
+                >
+                  {shipmentScheduledInFuture && (
+                    <div
+                      role="radiogroup"
+                      aria-label="Rate quote window"
+                      className="gap-2 grid grid-cols-1 sm:grid-cols-2"
+                    >
+                      <RateQuoteOptionCard
+                        selected={rateForImmediate}
+                        onSelect={() => {
+                          setRateForImmediate(true);
+                          setSelectedCarrierTier(null);
+                        }}
+                        title="Today"
+                        description="Get it delivered today"
+                      />
+                      <RateQuoteOptionCard
+                        selected={!rateForImmediate}
+                        onSelect={() => {
+                          setRateForImmediate(false);
+                          setSelectedCarrierTier(null);
+                        }}
+                        title="Scheduled window"
+                        description={`Get it delivered on ${scheduledRateQuoteDetail}`}
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={handleLoadCarrierRates}
+                      disabled={ratesLoading}
+                      className={ADMIN_SECONDARY_BTN}
+                    >
+                      {ratesLoading ? (
+                        <span className="inline-flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
+                          Loading…
+                        </span>
+                      ) : (
+                        "Fetch rates"
+                      )}
+                    </button>
+                    {!displayShipment.manualFulfillment && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void handleDispatchNow();
+                        }}
+                        disabled={dispatchShipmentNow.isPending}
+                        className={ADMIN_PRIMARY_BTN}
+                      >
+                        {dispatchShipmentNow.isPending
+                          ? "Booking…"
+                          : shipmentScheduledInFuture
+                            ? "Dispatch now"
+                            : "Retry booking"}
+                      </button>
+                    )}
                   </div>
 
-                  <div className="divide-y divide-gray-100">
-                    {showCarrierBookingPanel && (
-                      <div className="p-3.5">
-                        <AdminOpsBlock
-                          title="Carrier booking"
-                          description={
-                            displayShipment.manualFulfillment
-                              ? "Use a carrier for this leg."
-                              : "Fetch rates or book dispatch."
-                          }
-                        >
-                          {shipmentScheduledInFuture && (
-                            <div
-                              role="radiogroup"
-                              aria-label="Rate quote window"
-                              className="gap-2 grid grid-cols-1 sm:grid-cols-2"
+                  {ratePreviewOpen && ratesLoading && (
+                    <div className="flex items-center gap-2 text-gray-500 text-sm">
+                      <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
+                      Fetching carrier rates…
+                    </div>
+                  )}
+
+                  {ratePreviewOpen && !ratesLoading && ratePreviewQuery.isError && (
+                    <Paragraph1 className="text-red-700 text-sm">
+                      Could not fetch rates.
+                    </Paragraph1>
+                  )}
+
+                  {ratePreview && !ratesLoading && (
+                    <div className="space-y-3 pt-1">
+                      <Paragraph1 className="text-gray-500 text-xs">
+                        Renter paid {koboToNaira(ratePreview.renterChargedKobo)}
+                        {ratePreview.forImmediate ? " · today" : ""}
+                      </Paragraph1>
+                      {ratePreview.warnings.length > 0 && (
+                        <ul className="space-y-1 text-amber-900 text-xs">
+                          {ratePreview.warnings.map((w) => (
+                            <li key={`${w.provider}-${w.message}`}>{w.message}</li>
+                          ))}
+                        </ul>
+                      )}
+                      {selectableCarrierTiers.length === 0 ? (
+                        <Paragraph1 className="text-gray-500 text-sm">
+                          No carrier rates available.
+                        </Paragraph1>
+                      ) : (
+                        <div className="gap-2 grid grid-cols-1 sm:grid-cols-2">
+                          {selectableCarrierTiers.map((tier: ShipmentRateTier) => (
+                            <label
+                              key={tier.pricingTier}
+                              className={`flex items-start gap-2.5 p-3 border rounded-lg cursor-pointer transition ${
+                                selectedCarrierTier === tier.pricingTier
+                                  ? "border-gray-900 bg-gray-50 ring-1 ring-gray-900"
+                                  : "border-gray-200 bg-white hover:border-gray-300"
+                              }`}
                             >
-                              <RateQuoteOptionCard
-                                selected={rateForImmediate}
-                                onSelect={() => {
-                                  setRateForImmediate(true);
-                                  setSelectedCarrierTier(null);
-                                }}
-                                title="Today"
-                                description="Get it delivered today"
+                              <input
+                                type="radio"
+                                name="carrier-tier"
+                                checked={selectedCarrierTier === tier.pricingTier}
+                                onChange={() => setSelectedCarrierTier(tier.pricingTier)}
+                                className="sr-only"
                               />
-                              <RateQuoteOptionCard
-                                selected={!rateForImmediate}
-                                onSelect={() => {
-                                  setRateForImmediate(false);
-                                  setSelectedCarrierTier(null);
-                                }}
-                                title="Scheduled window"
-                                description={`Get it delivered on ${scheduledRateQuoteDetail}`}
-                              />
-                            </div>
-                          )}
-
-                          <div className="flex flex-wrap justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={handleLoadCarrierRates}
-                              disabled={ratesLoading}
-                              className={ADMIN_SECONDARY_BTN}
-                            >
-                              {ratesLoading ? (
-                                <span className="inline-flex items-center gap-2">
-                                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
-                                  Loading…
-                                </span>
-                              ) : (
-                                "Fetch rates"
-                              )}
-                            </button>
-                            {!displayShipment.manualFulfillment && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  void handleDispatchNow();
-                                }}
-                                disabled={dispatchShipmentNow.isPending}
-                                className={ADMIN_PRIMARY_BTN}
-                              >
-                                {dispatchShipmentNow.isPending
-                                  ? "Booking…"
-                                  : shipmentScheduledInFuture
-                                    ? "Dispatch now"
-                                    : "Retry booking"}
-                              </button>
-                            )}
-                          </div>
-
-                          {ratePreviewOpen && ratesLoading && (
-                            <div className="flex items-center gap-2 text-gray-500 text-sm">
-                              <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
-                              Fetching carrier rates…
-                            </div>
-                          )}
-
-                          {ratePreviewOpen && !ratesLoading && ratePreviewQuery.isError && (
-                            <Paragraph1 className="text-red-700 text-sm">
-                              Could not fetch rates.
-                            </Paragraph1>
-                          )}
-
-                          {ratePreview && !ratesLoading && (
-                            <div className="space-y-3 pt-1">
-                              <Paragraph1 className="text-gray-500 text-xs">
-                                Renter paid {koboToNaira(ratePreview.renterChargedKobo)}
-                                {ratePreview.forImmediate ? " · today" : ""}
-                              </Paragraph1>
-                              {ratePreview.warnings.length > 0 && (
-                                <ul className="space-y-1 text-amber-900 text-xs">
-                                  {ratePreview.warnings.map((w) => (
-                                    <li key={`${w.provider}-${w.message}`}>{w.message}</li>
-                                  ))}
-                                </ul>
-                              )}
-                              {selectableCarrierTiers.length === 0 ? (
-                                <Paragraph1 className="text-gray-500 text-sm">
-                                  No carrier rates available.
+                              <div className="flex-1 min-w-0">
+                                <Paragraph1 className="font-medium text-gray-900 text-sm">
+                                  {tier.name}
                                 </Paragraph1>
-                              ) : (
-                                <div className="gap-2 grid grid-cols-1 sm:grid-cols-2">
-                                  {selectableCarrierTiers.map((tier: ShipmentRateTier) => (
-                                    <label
-                                      key={tier.pricingTier}
-                                      className={`flex items-start gap-2.5 p-3 border rounded-lg cursor-pointer transition ${
-                                        selectedCarrierTier === tier.pricingTier
-                                          ? "border-gray-900 bg-gray-50 ring-1 ring-gray-900"
-                                          : "border-gray-200 bg-white hover:border-gray-300"
-                                      }`}
-                                    >
-                                      <input
-                                        type="radio"
-                                        name="carrier-tier"
-                                        checked={selectedCarrierTier === tier.pricingTier}
-                                        onChange={() => setSelectedCarrierTier(tier.pricingTier)}
-                                        className="sr-only"
-                                      />
-                                      <div className="flex-1 min-w-0">
-                                        <Paragraph1 className="font-medium text-gray-900 text-sm">
-                                          {tier.name}
-                                        </Paragraph1>
-                                        <Paragraph1 className="text-gray-500 text-xs">
-                                          {koboToNaira(tier.totalCostKobo)} ·{" "}
-                                          {formatRateDelta(tier.deltaKobo)}
-                                        </Paragraph1>
-                                      </div>
-                                    </label>
-                                  ))}
-                                </div>
-                              )}
-                              {selectableCarrierTiers.length > 0 && (
-                                <div className="flex justify-end">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      void handleDispatchNow();
-                                    }}
-                                    disabled={
-                                      dispatchShipmentNow.isPending || !selectedCarrierTier
-                                    }
-                                    className={ADMIN_PRIMARY_BTN}
-                                  >
-                                    {dispatchShipmentNow.isPending
-                                      ? "Booking…"
-                                      : "Book selected rate"}
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </AdminOpsBlock>
-                      </div>
-                    )}
-
-                    {showSwitchToManualPanel && (
-                      <div className="space-y-3 p-3.5">
-                        <AdminOpsBlock
-                          title="Alternative fulfillment"
-                          description="Handle this leg in-house instead of the carrier."
+                                <Paragraph1 className="text-gray-500 text-xs">
+                                  {koboToNaira(tier.totalCostKobo)} ·{" "}
+                                  {formatRateDelta(tier.deltaKobo)}
+                                </Paragraph1>
+                              </div>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                      {selectableCarrierTiers.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void handleDispatchNow();
+                          }}
+                          disabled={dispatchShipmentNow.isPending || !selectedCarrierTier}
+                          className={ADMIN_PRIMARY_BTN}
                         >
-                          <button
-                            type="button"
-                            onClick={() => {
-                              void handleSwitchToManual();
-                            }}
-                            disabled={switchShipmentToManual.isPending}
-                            className={ADMIN_SECONDARY_BTN}
-                          >
-                            {switchShipmentToManual.isPending
-                              ? "Switching…"
-                              : "Switch to Relisted dispatch"}
-                          </button>
-                          <Paragraph1 className="text-gray-500 text-xs">
-                            Mark dispatched when the item is on the way. What the renter paid
-                            stays the same.
-                          </Paragraph1>
-                        </AdminOpsBlock>
+                          {dispatchShipmentNow.isPending ? "Booking…" : "Book selected rate"}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </ShipmentModalSection>
+              )}
 
-                        <ShipmentModalSection
-                          title="Already sent in-house?"
-                          summary="Mark dispatched without waiting on the carrier"
-                        >
-                          <Paragraph1 className="text-gray-500 text-xs">
-                            Use when the item is already on the way.
-                          </Paragraph1>
-                          <div className="gap-3 grid grid-cols-1 sm:grid-cols-2">
-                            <label className="block">
-                              <Paragraph1 className="mb-1 text-gray-500 text-xs">
-                                Reference
-                              </Paragraph1>
-                              <input
-                                type="text"
-                                value={reconcileTrackingRef}
-                                onChange={(e) => setReconcileTrackingRef(e.target.value)}
-                                className={ADMIN_FIELD_INPUT_CLASS}
-                                placeholder="Optional"
-                              />
-                            </label>
-                            <label className="block">
-                              <Paragraph1 className="mb-1 text-gray-500 text-xs">
-                                Tracking URL or rider number
-                              </Paragraph1>
-                              <input
-                                type="text"
-                                value={reconcileTrackingUrl}
-                                onChange={(e) => setReconcileTrackingUrl(e.target.value)}
-                                className={ADMIN_FIELD_INPUT_CLASS}
-                                placeholder={ADMIN_TRACKING_CONTACT_PLACEHOLDER}
-                              />
-                            </label>
-                            <label className="block">
-                              <Paragraph1 className="mb-1 text-gray-500 text-xs">
-                                Actual cost (NGN)
-                              </Paragraph1>
-                              <input
-                                type="number"
-                                min="0"
-                                step="1"
-                                value={reconcileActualCostNgn}
-                                onChange={(e) => setReconcileActualCostNgn(e.target.value)}
-                                className={ADMIN_FIELD_INPUT_CLASS}
-                                placeholder="Optional"
-                              />
-                            </label>
-                            <label className="block sm:col-span-2">
-                              <Paragraph1 className="mb-1 text-gray-500 text-xs">
-                                Internal note
-                              </Paragraph1>
-                              <textarea
-                                value={reconcileNote}
-                                onChange={(e) => setReconcileNote(e.target.value)}
-                                rows={2}
-                                className={ADMIN_FIELD_INPUT_CLASS}
-                                placeholder="Optional"
-                              />
-                            </label>
-                          </div>
-                          <div className="flex justify-end">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                void handleReconcileManual();
-                              }}
-                              disabled={reconcileManualShipment.isPending}
-                              className={ADMIN_PRIMARY_BTN}
-                            >
-                              {reconcileManualShipment.isPending
-                                ? "Saving…"
-                                : "Mark dispatched"}
-                            </button>
-                          </div>
-                        </ShipmentModalSection>
-                      </div>
-                    )}
+              {showSwitchToManualPanel && (
+                <ShipmentModalSection
+                  title="Relisted dispatch"
+                  summary="Handle this leg in-house instead of the carrier"
+                  defaultOpen={!showCarrierBookingPanel}
+                >
+                  <div className="space-y-3">
+                    <ShipmentActionCard
+                      title="Switch to Relisted dispatch"
+                      description="What the renter paid stays the same. Mark dispatched when the item is on the way."
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void handleSwitchToManual();
+                        }}
+                        disabled={switchShipmentToManual.isPending}
+                        className={ADMIN_SECONDARY_BTN}
+                      >
+                        {switchShipmentToManual.isPending
+                          ? "Switching…"
+                          : "Switch to Relisted dispatch"}
+                      </button>
+                    </ShipmentActionCard>
 
-                    {showMarkManualDispatchedPanel && (
-                      <div className="p-3.5">
-                        <AdminOpsBlock
-                          title="Relisted dispatch"
-                          description="Mark dispatched when the item is on the way."
-                        >
-                          <div className="gap-3 grid grid-cols-1 sm:grid-cols-2">
-                            <label className="block">
-                              <Paragraph1 className="mb-1 text-gray-500 text-xs">
-                                Reference
-                              </Paragraph1>
-                              <input
-                                type="text"
-                                value={manualTrackingRef}
-                                onChange={(e) => setManualTrackingRef(e.target.value)}
-                                className={ADMIN_FIELD_INPUT_CLASS}
-                                placeholder="Optional"
-                              />
-                            </label>
-                            <label className="block">
-                              <Paragraph1 className="mb-1 text-gray-500 text-xs">
-                                Tracking URL or rider number
-                              </Paragraph1>
-                              <input
-                                type="text"
-                                value={manualTrackingUrl}
-                                onChange={(e) => setManualTrackingUrl(e.target.value)}
-                                className={ADMIN_FIELD_INPUT_CLASS}
-                                placeholder={ADMIN_TRACKING_CONTACT_PLACEHOLDER}
-                              />
-                            </label>
-                          </div>
-                          <div className="flex justify-end">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                void handleMarkManualDispatched();
-                              }}
-                              disabled={completeManualShipment.isPending}
-                              className={ADMIN_PRIMARY_BTN}
-                            >
-                              {completeManualShipment.isPending ? "Saving…" : "Mark dispatched"}
-                            </button>
-                          </div>
-                        </AdminOpsBlock>
-                      </div>
-                    )}
-
-                    {showMarkCompletedPanel && (
-                      <div className="p-3.5">
-                        <AdminOpsBlock
-                          title="Complete leg"
-                          description={markCompletedDescription}
-                        >
-                          <div className="flex justify-end">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                void handleMarkCompleted();
-                              }}
-                              disabled={markManualDelivered.isPending}
-                              className={ADMIN_PRIMARY_BTN}
-                            >
-                              {markManualDelivered.isPending
-                                ? "Saving…"
-                                : "Mark completed"}
-                            </button>
-                          </div>
-                        </AdminOpsBlock>
-                      </div>
-                    )}
+                    <ShipmentActionCard
+                      title="Already on the way?"
+                      description="Mark dispatched now without waiting on the carrier."
+                    >
+                      <ManualTrackingField
+                        value={reconcileTrackingUrl}
+                        onChange={setReconcileTrackingUrl}
+                      />
+                      <details className="group">
+                        <summary className="text-gray-500 text-xs cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                          Cost or internal note (optional)
+                        </summary>
+                        <div className="gap-3 grid grid-cols-1 sm:grid-cols-2 mt-3">
+                          <label className="block">
+                            <Paragraph1 className="mb-1 text-gray-500 text-xs">
+                              Actual cost (NGN)
+                            </Paragraph1>
+                            <input
+                              type="number"
+                              min="0"
+                              step="1"
+                              value={reconcileActualCostNgn}
+                              onChange={(e) => setReconcileActualCostNgn(e.target.value)}
+                              className={ADMIN_FIELD_INPUT_CLASS}
+                              placeholder="Optional"
+                            />
+                          </label>
+                          <label className="block sm:col-span-2">
+                            <Paragraph1 className="mb-1 text-gray-500 text-xs">
+                              Internal note
+                            </Paragraph1>
+                            <textarea
+                              value={reconcileNote}
+                              onChange={(e) => setReconcileNote(e.target.value)}
+                              rows={2}
+                              className={ADMIN_FIELD_INPUT_CLASS}
+                              placeholder="Optional"
+                            />
+                          </label>
+                        </div>
+                      </details>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void handleReconcileManual();
+                        }}
+                        disabled={reconcileManualShipment.isPending}
+                        className={ADMIN_PRIMARY_BTN}
+                      >
+                        {reconcileManualShipment.isPending ? "Saving…" : "Mark dispatched"}
+                      </button>
+                    </ShipmentActionCard>
                   </div>
-                </div>
+                </ShipmentModalSection>
+              )}
+
+              {showMarkManualDispatchedPanel && (
+                <ShipmentModalSection
+                  title="Relisted dispatch"
+                  summary="Mark dispatched when the item is on the way"
+                  defaultOpen
+                >
+                  <ManualTrackingField
+                    value={manualTrackingUrl}
+                    onChange={setManualTrackingUrl}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleMarkManualDispatched();
+                    }}
+                    disabled={completeManualShipment.isPending}
+                    className={ADMIN_PRIMARY_BTN}
+                  >
+                    {completeManualShipment.isPending ? "Saving…" : "Mark dispatched"}
+                  </button>
+                </ShipmentModalSection>
+              )}
+
+              {showMarkCompletedPanel && (
+                <ShipmentModalSection
+                  title="Complete leg"
+                  summary={markCompletedDescription}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleMarkCompleted();
+                    }}
+                    disabled={markManualDelivered.isPending}
+                    className={ADMIN_PRIMARY_BTN}
+                  >
+                    {markManualDelivered.isPending ? "Saving…" : "Mark completed"}
+                  </button>
+                </ShipmentModalSection>
               )}
 
               {shipmentItemSummary ? (
