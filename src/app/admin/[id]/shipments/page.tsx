@@ -911,9 +911,6 @@ function ShipmentsPageInner() {
   const showCarrierBookingPanel =
     displayShipment &&
     (displayShipment.status === "PENDING" ||
-      displayShipment.status === "DISPATCH_FAILED") &&
-    (displayShipment.manualFulfillment ||
-      shipmentScheduledInFuture ||
       displayShipment.status === "DISPATCH_FAILED");
 
   const showSwitchToManualPanel =
@@ -1852,6 +1849,14 @@ function ShipmentsPageInner() {
                                 <Paragraph1 className="text-gray-500 text-xs">
                                   {koboToNaira(tier.totalCostKobo)} ·{" "}
                                   {formatRateDelta(tier.deltaKobo)}
+                                </Paragraph1>
+                                {tier.description ? (
+                                  <Paragraph1 className="text-gray-500 text-xs">
+                                    {tier.description}
+                                  </Paragraph1>
+                                ) : null}
+                                <Paragraph1 className="text-gray-400 text-[11px] font-mono truncate">
+                                  {tier.pricingTier}
                                 </Paragraph1>
                               </div>
                             </label>
