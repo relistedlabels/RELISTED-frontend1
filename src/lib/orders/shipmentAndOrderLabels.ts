@@ -55,13 +55,13 @@ export function getShipmentStatusLabel(
   if (t === "RETURN") {
     switch (s) {
       case "PENDING":
-        return "Return pickup not scheduled yet";
+        return "Return not scheduled";
       case "DISPATCHING":
         return "Booking with carrier";
       case "DISPATCHED":
         return "Return pickup scheduled";
       case "IN_TRANSIT":
-        return "Return on the way to lister";
+        return "Return in transit";
       case "COMPLETED":
         return "Delivered to lister";
       case "DISPATCH_FAILED":
@@ -79,7 +79,7 @@ export function getShipmentStatusLabel(
     case "DISPATCHING":
       return "Dispatching";
     case "DISPATCHED":
-      return "Scheduled for dispatch";
+      return "Dispatch scheduled";
     case "IN_TRANSIT":
       return "In transit";
     case "COMPLETED":

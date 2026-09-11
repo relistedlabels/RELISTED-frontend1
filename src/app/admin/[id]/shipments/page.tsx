@@ -34,7 +34,7 @@ import {
   useRedispatchShipment,
   useCompleteManualShipment,
   useMarkManualShipmentDelivered,
-  useShipmentRatePreview,
+  useAdminShipmentRatePreview,
   useDispatchShipmentNow,
   useReconcileManualShipment,
   useSwitchShipmentToManual,
@@ -49,7 +49,13 @@ import type {
 } from "@/lib/api/shipments";
 import { getShipment } from "@/lib/api/shipments";
 import { formatLagosDate, formatWindowRange } from "@/lib/checkout/dispatchWindows";
-import { formatAdminPricingTier } from "@/lib/admin/shipmentDisplay";
+import {
+  ADMIN_SHIPMENT_CHIP_CLASS,
+  ADMIN_RATE_PREVIEW_PROVIDER_LABEL,
+  formatAdminPricingTier,
+  formatShippingQuoteWarningMessage,
+  RELISTED_DISPATCH_BADGE_CLASS,
+} from "@/lib/admin/shipmentDisplay";
 import {
   getShipmentLegDisplayLabel,
   getShipmentPartyRowLabels,
@@ -140,8 +146,15 @@ function ShipmentTrackingContact({
   if (!id && !contact) return null;
 
   return (
-    <>
-      {id ? <span className="break-all">{id}</span> : null}
+    <span className="inline-flex min-w-0 max-w-full items-center gap-2 whitespace-nowrap">
+      {id ? (
+        <span
+          className="truncate font-mono text-xs text-gray-900 tabular-nums"
+          title={id}
+        >
+          {id}
+        </span>
+      ) : null}
       {contact ? (
         isHttpUrl(contact) ? (
           <a
@@ -149,16 +162,16 @@ function ShipmentTrackingContact({
             target="_blank"
             rel="noopener noreferrer"
             onClick={linkOnClick}
-            className={`${linkClassName}${id ? " ml-2" : ""}`}
+            className={`${linkClassName} shrink-0`}
           >
             <ExternalLink size={14} />
             Track
           </a>
         ) : (
-          <span className={`text-gray-900${id ? " ml-2" : ""}`}>{contact}</span>
+          <span className="shrink-0 text-gray-900">{contact}</span>
         )
       ) : null}
-    </>
+    </span>
   );
 }
 
@@ -234,23 +247,47 @@ const getStatusLabel = (
 const getStatusColor = (status: ShipmentStatus): string => {
   switch (status) {
     case "PENDING":
-      return "bg-gray-100 text-gray-700";
+      return "bg-gray-100 text-gray-800";
     case "DISPATCHING":
-      return "bg-blue-100 text-blue-700";
+      return "bg-blue-100 text-blue-800";
     case "DISPATCH_FAILED":
-      return "bg-red-100 text-red-700";
+      return "bg-red-100 text-red-800";
     case "DISPATCHED":
-      return "bg-indigo-100 text-indigo-700";
+      return "bg-indigo-100 text-indigo-900";
     case "IN_TRANSIT":
-      return "bg-purple-100 text-purple-700";
+      return "bg-purple-100 text-purple-900";
     case "COMPLETED":
-      return "bg-green-100 text-green-700";
+      return "bg-green-100 text-green-900";
     case "CANCELLED":
-      return "bg-gray-200 text-gray-600";
+      return "bg-gray-200 text-gray-700";
     default:
-      return "bg-gray-100 text-gray-700";
+      return "bg-gray-100 text-gray-800";
   }
 };
+
+function ShipmentStatusBadge({
+  status,
+  type,
+}: {
+  status: ShipmentStatus;
+  type?: ShipmentType;
+}) {
+  const StatusIcon = getStatusIcon(status);
+  const label = getStatusLabel(status, type);
+  return (
+    <span
+      className={`${ADMIN_SHIPMENT_CHIP_CLASS} gap-1.5 ${getStatusColor(status)}`}
+      title={label}
+    >
+      <StatusIcon
+        size={13}
+        className={`shrink-0 ${status === "DISPATCHING" ? "animate-spin" : ""}`}
+        aria-hidden
+      />
+      {label}
+    </span>
+  );
+}
 
 const getStatusIcon = (status: ShipmentStatus) => {
   switch (status) {
@@ -736,16 +773,22 @@ function ShipmentsPageInner() {
     ? isShipmentScheduledInFuture(displayShipment)
     : false;
 
-  const ratePreviewQuery = useShipmentRatePreview(
+  const ratePreviewEnabled = Boolean(
+    isDetailModalOpen && ratePreviewOpen && displayShipment?.id,
+  );
+  const ratePreviewQuery = useAdminShipmentRatePreview(
     displayShipment?.id ?? "",
     rateForImmediate,
-    Boolean(isDetailModalOpen && ratePreviewOpen && displayShipment?.id),
+    ratePreviewEnabled,
   );
   const ratePreview = ratePreviewQuery.data?.data;
   const carrierTiers = ratePreview?.tiers ?? [];
-  const ratesLoading =
-    ratePreviewOpen &&
-    (ratePreviewQuery.isLoading || ratePreviewQuery.isFetching);
+  const rateProviderStatus = ratePreviewQuery.providerStatus;
+  const ratesSourcesLoading =
+    ratePreviewOpen && ratePreviewQuery.sourcesLoading;
+  const anyRateProviderLoading =
+    ratePreviewOpen && ratePreviewQuery.anyProviderLoading;
+  const ratesLoading = ratesSourcesLoading || anyRateProviderLoading;
 
   useEffect(() => {
     if (!displayShipment?.id) return;
@@ -1366,12 +1409,12 @@ function ShipmentsPageInner() {
                         Item
                       </Paragraph1>
                     </th>
-                    <th className="px-5 py-3 text-left">
+                    <th className="px-5 py-3 min-w-[9rem] text-left">
                       <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                         Reference
                       </Paragraph1>
                     </th>
-                    <th className="px-5 py-3 text-left">
+                    <th className="px-5 py-3 min-w-[11rem] text-left">
                       <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                         Order
                       </Paragraph1>
@@ -1381,7 +1424,7 @@ function ShipmentsPageInner() {
                         Type
                       </Paragraph1>
                     </th>
-                    <th className="px-5 py-3 text-left">
+                    <th className="px-5 py-3 min-w-[11.5rem] text-left">
                       <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                         Status
                       </Paragraph1>
@@ -1396,7 +1439,7 @@ function ShipmentsPageInner() {
                         Cost
                       </Paragraph1>
                     </th>
-                    <th className="px-5 py-3 text-left">
+                    <th className="px-5 py-3 min-w-[10.5rem] text-left">
                       <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
                         Tracking
                       </Paragraph1>
@@ -1415,7 +1458,6 @@ function ShipmentsPageInner() {
                 </thead>
                 <tbody>
                   {shipments.map((shipment) => {
-                    const StatusIcon = getStatusIcon(shipment.status);
                     const humanOrderId = shipment.order?.orderId ?? "—";
                     const itemThumb = firstShipmentItemThumbnail(shipment);
                     const firstItemName =
@@ -1438,44 +1480,41 @@ function ShipmentsPageInner() {
                             />
                           </div>
                         </td>
-                        <td className="px-5 py-3">
-                          <span title={shipment.id}>
-                            <Paragraph1 className="font-medium text-gray-900 text-sm">
-                              {shortenId(shipment.id)}
-                            </Paragraph1>
+                        <td className="px-5 py-3 whitespace-nowrap">
+                          <span
+                            className="font-medium font-mono text-gray-900 text-xs tabular-nums"
+                            title={shipment.id}
+                          >
+                            {shortenId(shipment.id)}
                           </span>
                         </td>
-                        <td className="px-5 py-3">
-                          <Paragraph1 className="font-medium text-gray-900 text-sm">
+                        <td className="px-5 py-3 max-w-[14rem] whitespace-nowrap">
+                          <span
+                            className="block truncate font-medium text-gray-900 text-sm"
+                            title={humanOrderId !== "—" ? humanOrderId : undefined}
+                          >
                             {humanOrderId}
-                          </Paragraph1>
+                          </span>
                         </td>
-                        <td className="px-5 py-3">
-                          <div className="flex flex-col items-start gap-1">
-                            <span className="inline-block bg-gray-100 px-3 py-1 rounded-full font-semibold text-gray-700 text-xs">
+                        <td className="px-5 py-3 min-w-[9.5rem]">
+                          <div className="flex flex-col items-start gap-1.5">
+                            <span
+                              className={`${ADMIN_SHIPMENT_CHIP_CLASS} bg-gray-100 text-gray-800`}
+                            >
                               {getShipmentLegDisplayLabel(shipment.type)}
                             </span>
-                            {shipment.manualFulfillment && (
-                              <span className="inline-block bg-amber-100 px-2 py-0.5 rounded font-medium text-[10px] text-amber-900 uppercase tracking-wide">
+                            {shipment.manualFulfillment ? (
+                              <span className={RELISTED_DISPATCH_BADGE_CLASS}>
                                 Relisted dispatch
                               </span>
-                            )}
+                            ) : null}
                           </div>
                         </td>
-                        <td className="px-5 py-3">
-                          <span
-                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                              shipment.status,
-                            )}`}
-                          >
-                            <StatusIcon
-                              size={12}
-                              className={
-                                shipment.status === "DISPATCHING" ? "animate-spin" : undefined
-                              }
-                            />
-                            {getStatusLabel(shipment.status, shipment.type)}
-                          </span>
+                        <td className="px-5 py-3 min-w-[11.5rem]">
+                          <ShipmentStatusBadge
+                            status={shipment.status}
+                            type={shipment.type}
+                          />
                         </td>
                         <td className="px-5 py-3">
                           <Paragraph1 className="text-gray-700 text-sm">
@@ -1489,18 +1528,19 @@ function ShipmentsPageInner() {
                             {formatShipmentRowCost(shipment)}
                           </Paragraph1>
                         </td>
-                        <td className="px-5 py-3">
+                        <td
+                          className="px-5 py-3 max-w-[13rem] whitespace-nowrap"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           {shipment.trackingId || shipment.providerTrackingUrl ? (
-                            <div className="flex items-center gap-2">
-                              <ShipmentTrackingContact
-                                trackingId={shipment.trackingId}
-                                providerTrackingUrl={shipment.providerTrackingUrl}
-                                linkClassName="text-blue-600 hover:text-blue-800"
-                                linkOnClick={(e) => e.stopPropagation()}
-                              />
-                            </div>
+                            <ShipmentTrackingContact
+                              trackingId={shipment.trackingId}
+                              providerTrackingUrl={shipment.providerTrackingUrl}
+                              linkClassName="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline"
+                              linkOnClick={(e) => e.stopPropagation()}
+                            />
                           ) : (
-                            <Paragraph1 className="text-gray-500 text-sm">—</Paragraph1>
+                            <span className="text-gray-500 text-sm">—</span>
                           )}
                         </td>
                         <td className="px-5 py-3">
@@ -1628,27 +1668,26 @@ function ShipmentsPageInner() {
             <div className="p-5 border-gray-200 border-b">
               <div className="flex justify-between items-start gap-4">
                 <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2
-                      id="shipment-detail-title"
-                      className="font-bold text-gray-900 text-lg leading-tight"
-                    >
-                      {getShipmentLegDisplayLabel(displayShipment.type)}
-                    </h2>
-                    <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusColor(
-                        displayShipment.status,
-                      )}`}
-                    >
-                      {getStatusLabel(displayShipment.status, displayShipment.type)}
-                    </span>
+                  <h2
+                    id="shipment-detail-title"
+                    className="font-bold text-gray-900 text-lg leading-tight"
+                  >
+                    {getShipmentLegDisplayLabel(displayShipment.type)}
+                  </h2>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <ShipmentStatusBadge
+                      status={displayShipment.status}
+                      type={displayShipment.type}
+                    />
                     {displayShipment.reconciledAsManualAt ? (
-                      <span className="inline-flex items-center bg-gray-100 px-2 py-0.5 rounded-full font-medium text-gray-700 text-xs">
+                      <span
+                        className={`${ADMIN_SHIPMENT_CHIP_CLASS} bg-gray-100 text-gray-800`}
+                      >
                         Manually dispatched
                       </span>
                     ) : null}
                     {displayShipment.manualFulfillment && !displayShipment.reconciledAsManualAt ? (
-                      <span className="inline-flex items-center bg-amber-100 px-2 py-0.5 rounded-full font-medium text-amber-900 text-xs">
+                      <span className={RELISTED_DISPATCH_BADGE_CLASS}>
                         Relisted dispatch
                       </span>
                     ) : null}
@@ -1794,37 +1833,65 @@ function ShipmentsPageInner() {
                     )}
                   </div>
 
-                  {ratePreviewOpen && ratesLoading && (
+                  {ratePreviewOpen && ratesSourcesLoading && (
                     <div className="flex items-center gap-2 text-gray-500 text-sm">
                       <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
-                      Fetching carrier rates…
+                      Preparing rate sources…
                     </div>
                   )}
 
-                  {ratePreviewOpen && !ratesLoading && ratePreviewQuery.isError && (
+                  {ratePreviewOpen &&
+                    !ratesSourcesLoading &&
+                    ratePreviewQuery.isError && (
                     <Paragraph1 className="text-red-700 text-sm">
                       Could not fetch rates.
                     </Paragraph1>
                   )}
 
-                  {ratePreview && !ratesLoading && (
+                  {ratePreviewOpen && !ratesSourcesLoading && (
                     <div className="space-y-3 pt-1">
-                      <Paragraph1 className="text-gray-500 text-xs">
-                        Renter paid {koboToNaira(ratePreview.renterChargedKobo)}
-                        {ratePreview.forImmediate ? " · today" : ""}
-                      </Paragraph1>
-                      {ratePreview.warnings.length > 0 && (
+                      {ratePreview && (
+                        <Paragraph1 className="text-gray-500 text-xs">
+                          Renter paid {koboToNaira(ratePreview.renterChargedKobo)}
+                          {ratePreview.forImmediate ? " · today" : ""}
+                        </Paragraph1>
+                      )}
+                      {rateProviderStatus.some((p) => p.loading) && (
+                        <ul className="space-y-1.5">
+                          {rateProviderStatus
+                            .filter((p) => p.loading)
+                            .map((p) => (
+                              <li
+                                key={p.provider}
+                                className="flex items-center gap-2 text-gray-500 text-xs"
+                              >
+                                <Loader2
+                                  className="w-3.5 h-3.5 shrink-0 animate-spin"
+                                  aria-hidden
+                                />
+                                Loading{" "}
+                                {ADMIN_RATE_PREVIEW_PROVIDER_LABEL[p.provider] ??
+                                  p.provider}
+                                …
+                              </li>
+                            ))}
+                        </ul>
+                      )}
+                      {ratePreview && ratePreview.warnings.length > 0 && (
                         <ul className="space-y-1 text-amber-900 text-xs">
                           {ratePreview.warnings.map((w) => (
-                            <li key={`${w.provider}-${w.message}`}>{w.message}</li>
+                            <li key={`${w.provider}-${w.message}`}>
+                              {formatShippingQuoteWarningMessage(w)}
+                            </li>
                           ))}
                         </ul>
                       )}
-                      {selectableCarrierTiers.length === 0 ? (
+                      {selectableCarrierTiers.length === 0 &&
+                      !anyRateProviderLoading ? (
                         <Paragraph1 className="text-gray-500 text-sm">
                           No carrier rates available.
                         </Paragraph1>
-                      ) : (
+                      ) : selectableCarrierTiers.length > 0 ? (
                         <div className="gap-2 grid grid-cols-1 sm:grid-cols-2">
                           {selectableCarrierTiers.map((tier: ShipmentRateTier) => (
                             <label
@@ -1850,19 +1917,11 @@ function ShipmentsPageInner() {
                                   {koboToNaira(tier.totalCostKobo)} ·{" "}
                                   {formatRateDelta(tier.deltaKobo)}
                                 </Paragraph1>
-                                {tier.description ? (
-                                  <Paragraph1 className="text-gray-500 text-xs">
-                                    {tier.description}
-                                  </Paragraph1>
-                                ) : null}
-                                <Paragraph1 className="text-gray-400 text-[11px] font-mono truncate">
-                                  {tier.pricingTier}
-                                </Paragraph1>
                               </div>
                             </label>
                           ))}
                         </div>
-                      )}
+                      ) : null}
                       {selectableCarrierTiers.length > 0 && (
                         <button
                           type="button"

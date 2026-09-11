@@ -45,6 +45,15 @@ describe("getShipmentRatePreview", () => {
     expect(path).toBe("/shipments/ship-3/rate-preview");
     expect(path).not.toContain("forImmediate");
   });
+
+  test("GETs rate-preview with provider when requested", async () => {
+    await getShipmentRatePreview("ship-4", false, "shipbubble");
+
+    expect(apiFetchMock).toHaveBeenCalledWith(
+      "/shipments/ship-4/rate-preview?provider=shipbubble",
+      { method: "GET" },
+    );
+  });
 });
 
 describe("dispatchShipmentNow", () => {
