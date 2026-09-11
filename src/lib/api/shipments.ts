@@ -281,6 +281,12 @@ export interface ShipmentRateTier {
   description?: string;
 }
 
+export type AdminRatePreviewProvider =
+  | "shipbubble"
+  | "topship"
+  | "chowdeck_relay"
+  | "tship";
+
 export interface ShipmentRatePreviewData {
   tiers: ShipmentRateTier[];
   warnings: Array<{
@@ -294,12 +300,31 @@ export interface ShipmentRatePreviewData {
   forImmediate: boolean;
 }
 
+export interface ShipmentRatePreviewProviderData extends ShipmentRatePreviewData {
+  provider: AdminRatePreviewProvider;
+  available: boolean;
+}
+
+export const getShipmentRatePreviewSources = async (): Promise<{
+  success: boolean;
+  data: { providers: AdminRatePreviewProvider[] };
+}> => {
+  return apiFetch<{ success: boolean; data: { providers: AdminRatePreviewProvider[] } }>(
+    "/shipments/rate-preview/sources",
+    { method: "GET" },
+  );
+};
+
 export const getShipmentRatePreview = async (
   shipmentId: string,
   forImmediate = false,
-): Promise<{ success: boolean; data: ShipmentRatePreviewData }> => {
-  const qs = forImmediate ? "?forImmediate=true" : "";
-  return apiFetch<{ success: boolean; data: ShipmentRatePreviewData }>(
+  provider?: AdminRatePreviewProvider,
+): Promise<{ success: boolean; data: ShipmentRatePreviewProviderData }> => {
+  const params = new URLSearchParams();
+  if (forImmediate) params.set("forImmediate", "true");
+  if (provider) params.set("provider", provider);
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  return apiFetch<{ success: boolean; data: ShipmentRatePreviewProviderData }>(
     `/shipments/${shipmentId}/rate-preview${qs}`,
     { method: "GET" },
   );
