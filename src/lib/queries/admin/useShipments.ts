@@ -1,4 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useQueries,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { useMemo } from "react";
 import {
   getShipments,
   getShipmentCosts,
@@ -10,9 +16,11 @@ import {
   completeManualShipment,
   markManualShipmentDelivered,
   getShipmentRatePreview,
+  getShipmentRatePreviewSources,
   dispatchShipmentNow,
   reconcileManualShipment,
   switchShipmentToManual,
+  type ShipmentRatePreviewData,
   type ShipmentStatus,
   type ShipmentType,
 } from "@/lib/api/shipments";
@@ -138,6 +146,89 @@ export const useShipmentRatePreview = (
     queryFn: () => getShipmentRatePreview(shipmentId, forImmediate),
     enabled: enabled && !!shipmentId,
   });
+};
+
+/** Fetches each carrier source separately so fast providers are not blocked by slow ones. */
+export const useAdminShipmentRatePreview = (
+  shipmentId: string,
+  forImmediate: boolean,
+  enabled: boolean,
+) => {
+  const sourcesQuery = useQuery({
+    queryKey: ["admin", "rate-preview-sources"],
+    queryFn: () => getShipmentRatePreviewSources(),
+    staleTime: 60_000,
+    enabled,
+  });
+
+  const providers = sourcesQuery.data?.data?.providers ?? [];
+
+  const providerQueries = useQueries({
+    queries: providers.map((provider) => ({
+      queryKey: [
+        "admin",
+        "shipment",
+        shipmentId,
+        "rate-preview",
+        provider,
+        forImmediate,
+      ] as const,
+      queryFn: () => getShipmentRatePreview(shipmentId, forImmediate, provider),
+      enabled: enabled && !!shipmentId && providers.length > 0,
+    })),
+  });
+
+  const merged = useMemo(() => {
+    const tiers: ShipmentRatePreviewData["tiers"] = [];
+    const warnings: ShipmentRatePreviewData["warnings"] = [];
+    let meta: ShipmentRatePreviewData | undefined;
+
+    for (const q of providerQueries) {
+      const slice = q.data?.data;
+      if (!slice?.available) continue;
+      if (slice.tiers?.length) tiers.push(...slice.tiers);
+      if (slice.warnings?.length) warnings.push(...slice.warnings);
+      if (!meta) {
+        meta = {
+          tiers: [],
+          warnings: [],
+          renterChargedKobo: slice.renterChargedKobo,
+          quoteWindowStart: slice.quoteWindowStart,
+          storedWindowStart: slice.storedWindowStart,
+          forImmediate: slice.forImmediate,
+        };
+      }
+    }
+
+    if (!meta) return undefined;
+    return { ...meta, tiers, warnings };
+  }, [providerQueries.map((q) => q.dataUpdatedAt).join("|")]);
+
+  const providerStatus = providers.map((provider, index) => {
+    const q = providerQueries[index];
+    return {
+      provider,
+      loading: Boolean(q?.isLoading || q?.isFetching),
+      error: Boolean(q?.isError),
+    };
+  });
+
+  const refetchAll = async () => {
+    await sourcesQuery.refetch();
+    await Promise.all(providerQueries.map((q) => q.refetch()));
+  };
+
+  const anyProviderLoading = providerStatus.some((p) => p.loading);
+  const sourcesLoading = sourcesQuery.isLoading || sourcesQuery.isFetching;
+
+  return {
+    data: merged ? { success: true as const, data: merged } : undefined,
+    providerStatus,
+    sourcesLoading,
+    anyProviderLoading,
+    isError: sourcesQuery.isError || providerQueries.some((q) => q.isError),
+    refetch: refetchAll,
+  };
 };
 
 export const useDispatchShipmentNow = () => {

@@ -4,6 +4,7 @@ import { apiFetch } from "./http";
 export type ProductUpload = {
   id: string;
   url: string;
+  displayOrder?: number | null;
 };
 
 export type ProductAttachment = {
