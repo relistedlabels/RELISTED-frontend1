@@ -63,7 +63,7 @@ export function getShipmentStatusLabel(
       case "IN_TRANSIT":
         return "Return in transit";
       case "COMPLETED":
-        return "Delivered to lister";
+        return "Completed";
       case "DISPATCH_FAILED":
         return "Dispatch failed";
       case "CANCELLED":
