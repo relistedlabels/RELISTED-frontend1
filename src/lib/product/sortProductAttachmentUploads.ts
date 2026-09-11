@@ -1,6 +1,7 @@
 /**
  * Stable gallery order: matches backend `Upload.displayOrder` (0 = hero), then `id`.
- * Use whenever reading `product.attachments.uploads` from any API.
+ * When `displayOrder` is omitted (e.g. list API), keep the server array order
+ * (already sorted by displayOrder + createdAt in Prisma).
  */
 export type ProductAttachmentUploadLike = {
   id?: string;
@@ -13,6 +14,12 @@ export function sortProductAttachmentUploads<T extends ProductAttachmentUploadLi
   uploads: T[] | null | undefined,
 ): T[] {
   if (!uploads?.length) return [];
+  const hasDisplayOrder = uploads.some(
+    (u) => typeof u.displayOrder === "number",
+  );
+  if (!hasDisplayOrder) {
+    return [...uploads];
+  }
   return [...uploads].sort((a, b) => {
     const ao = typeof a.displayOrder === "number" ? a.displayOrder : 0;
     const bo = typeof b.displayOrder === "number" ? b.displayOrder : 0;
