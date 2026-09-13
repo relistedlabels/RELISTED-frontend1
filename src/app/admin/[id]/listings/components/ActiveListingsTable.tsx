@@ -1,5 +1,5 @@
 import React from "react";
-import { Eye, Power } from "lucide-react";
+import { Eye, Power, Check, Square, RotateCcw } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { Product } from "@/lib/api/admin/listings";
 import {
@@ -19,6 +19,12 @@ interface ActiveListingsTableProps {
   onView: (product: Product) => void;
   onDeactivate?: (productId: string) => void;
   deactivatingProductId?: string | null;
+  onReactivate?: (productId: string) => void;
+  reactivatingProductId?: string | null;
+  emptyMessage?: string;
+  selectedIds?: Set<string>;
+  onSelectionChange?: (selectedIds: Set<string>) => void;
+  showSelection?: boolean;
 }
 
 function ActiveListingsTable({
@@ -28,7 +34,34 @@ function ActiveListingsTable({
   onView,
   onDeactivate,
   deactivatingProductId,
+  onReactivate,
+  reactivatingProductId,
+  emptyMessage = "No active products found",
+  selectedIds = new Set(),
+  onSelectionChange,
+  showSelection = false,
 }: ActiveListingsTableProps) {
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = new Set(products.map((p) => p.id));
+      onSelectionChange?.(allIds);
+    } else {
+      onSelectionChange?.(new Set());
+    }
+  };
+
+  const handleSelectOne = (productId: string, checked: boolean) => {
+    const newSelected = new Set(selectedIds);
+    if (checked) {
+      newSelected.add(productId);
+    } else {
+      newSelected.delete(productId);
+    }
+    onSelectionChange?.(newSelected);
+  };
+
+  const allSelected = products.length > 0 && products.every((p) => selectedIds.has(p.id));
+  const someSelected = selectedIds.size > 0 && !allSelected;
   if (isLoading && products.length === 0) {
     return (
       <div className="p-8 text-center">
@@ -48,7 +81,7 @@ function ActiveListingsTable({
   if (products.length === 0) {
     return (
       <div className="p-8 text-center">
-        <p className="text-gray-500">No active products found</p>
+        <p className="text-gray-500">{emptyMessage}</p>
       </div>
     );
   }
@@ -58,6 +91,19 @@ function ActiveListingsTable({
       <table className="w-full">
         <thead>
           <tr className="bg-gray-50 border-gray-200 border-b">
+            {showSelection && (
+              <th className="px-6 py-4 font-semibold text-gray-600 text-xs text-left uppercase tracking-wide w-12">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  ref={(input) => {
+                    if (input) input.indeterminate = someSelected;
+                  }}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  className="h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
+                />
+              </th>
+            )}
             <th className="px-6 py-4 font-semibold text-gray-600 text-xs text-left uppercase tracking-wide">
               IMAGE
             </th>
@@ -96,6 +142,16 @@ function ActiveListingsTable({
                 key={safeProduct.id}
                 className="hover:bg-gray-50 border-gray-200 border-b transition"
               >
+                {showSelection && (
+                  <td className="px-6 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(safeProduct.id)}
+                      onChange={(e) => handleSelectOne(safeProduct.id, e.target.checked)}
+                      className="h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
+                    />
+                  </td>
+                )}
                 <td className="px-6 py-4">
                   <AdminListingThumb
                     url={listingThumbnailUrl(product)}
@@ -183,6 +239,19 @@ function ActiveListingsTable({
                   })()}
                 </td>
                 <td className="flex gap-2 px-6 py-4">
+                  {onReactivate ? (
+                    <button
+                      type="button"
+                      onClick={() => onReactivate(product.id)}
+                      disabled={reactivatingProductId === product.id}
+                      className="flex justify-center items-center gap-2 hover:bg-gray-50 disabled:opacity-50 px-3 py-2 border border-gray-300 rounded-lg font-medium text-gray-600 text-sm transition disabled:cursor-not-allowed"
+                    >
+                      <RotateCcw size={18} />
+                      {reactivatingProductId === product.id
+                        ? "Reactivating..."
+                        : "Reactivate"}
+                    </button>
+                  ) : null}
                   {onDeactivate && canDeactivateListing(product.status) ? (
                     <button
                       type="button"

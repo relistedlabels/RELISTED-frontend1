@@ -10,6 +10,8 @@ import {
   XCircle,
   ChevronLeft,
   ChevronRight,
+  Power,
+  RotateCcw,
 } from "lucide-react";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import { useQueryClient } from "@tanstack/react-query";
@@ -21,6 +23,12 @@ import ActiveListingsTable from "./components/ActiveListingsTable";
 import SoldListingsTable from "./components/SoldListingsTable";
 import RejectedListingsTable from "./components/RejectedListingsTable";
 import ManagementPanel from "./components/ManagementPanel";
+import ListingFilterPanel, {
+  ListingFilterButton,
+} from "@/app/shop/components/ListingFilterPanel";
+import type { ListingFilterValues } from "@/lib/shop/listingFilters";
+import { pickerFiltersToApiParams } from "@/lib/shop/listingFilters";
+import { countActiveListingFilters } from "@/lib/shop/countActiveListingFilters";
 import {
   useListingsStatistics,
   useApproveListing,
@@ -30,11 +38,20 @@ import {
   usePendingProducts,
   useActiveProducts,
   useRentedProducts,
+  useInactiveProducts,
   useRejectedProducts,
+  useBulkDeactivate,
+  useBulkReactivate,
 } from "@/lib/queries/admin/useListings";
 import { Product, ProductDetail } from "@/lib/api/admin/listings";
 
-type TabType = "Pending" | "Active" | "Rented" | "Sold" | "Rejected";
+type TabType =
+  | "Pending"
+  | "Active"
+  | "Rented"
+  | "Sold"
+  | "Inactive"
+  | "Rejected";
 
 const LIST_PAGE_SIZE = 20;
 
@@ -45,16 +62,20 @@ export default function ListingsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedListing, setSelectedListing] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [listingFilters, setListingFilters] = useState<ListingFilterValues>({});
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [approvingFromModalId, setApprovingFromModalId] = useState<
     string | null
   >(null);
   const [rejectingFromModalId, setRejectingFromModalId] = useState<
     string | null
   >(null);
-  const [disablingFromModalId, setDisablingFromModalId] = useState<
+
+  const [deactivatingProductId, setDeactivatingProductId] = useState<
     string | null
   >(null);
-  const [deactivatingProductId, setDeactivatingProductId] = useState<
+  const [reactivatingProductId, setReactivatingProductId] = useState<
     string | null
   >(null);
   const [sendingToPendingFromModalId, setSendingToPendingFromModalId] =
@@ -72,6 +93,7 @@ export default function ListingsPage() {
   const [activePage, setActivePage] = useState(1);
   const [rentedPage, setRentedPage] = useState(1);
   const [soldPage, setSoldPage] = useState(1);
+  const [inactivePage, setInactivePage] = useState(1);
   const [rejectedPage, setRejectedPage] = useState(1);
 
   // Fetch all statistics from API
@@ -88,7 +110,19 @@ export default function ListingsPage() {
     console.error("Failed to load product statistics:", statsError);
   }
 
-  const TABS: TabType[] = ["Pending", "Active", "Rented", "Sold", "Rejected"];
+  const TABS: TabType[] = [
+    "Pending",
+    "Active",
+    "Rented",
+    "Sold",
+    "Inactive",
+    "Rejected",
+  ];
+
+  const supportsBulkSelection =
+    activeTab === "Active" ||
+    activeTab === "Inactive" ||
+    activeTab === "Rejected";
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 350);
@@ -100,48 +134,68 @@ export default function ListingsPage() {
     setActivePage(1);
     setRentedPage(1);
     setSoldPage(1);
+    setInactivePage(1);
     setRejectedPage(1);
-  }, [debouncedSearch]);
+  }, [debouncedSearch, listingFilters]);
+
+  const listingFilterParams = useMemo(
+    () => pickerFiltersToApiParams(listingFilters),
+    [listingFilters],
+  );
 
   const pendingListParams = useMemo(
     () => ({
       page: pendingPage,
       count: LIST_PAGE_SIZE,
       search: debouncedSearch || undefined,
+      ...listingFilterParams,
     }),
-    [pendingPage, debouncedSearch],
+    [pendingPage, debouncedSearch, listingFilterParams],
   );
   const activeListParams = useMemo(
     () => ({
       page: activePage,
       count: LIST_PAGE_SIZE,
       search: debouncedSearch || undefined,
+      ...listingFilterParams,
     }),
-    [activePage, debouncedSearch],
+    [activePage, debouncedSearch, listingFilterParams],
   );
   const rentedListParams = useMemo(
     () => ({
       page: rentedPage,
       count: LIST_PAGE_SIZE,
       search: debouncedSearch || undefined,
+      ...listingFilterParams,
     }),
-    [rentedPage, debouncedSearch],
+    [rentedPage, debouncedSearch, listingFilterParams],
   );
   const soldListParams = useMemo(
     () => ({
       page: soldPage,
       count: LIST_PAGE_SIZE,
       search: debouncedSearch || undefined,
+      ...listingFilterParams,
     }),
-    [soldPage, debouncedSearch],
+    [soldPage, debouncedSearch, listingFilterParams],
+  );
+  const inactiveListParams = useMemo(
+    () => ({
+      page: inactivePage,
+      count: LIST_PAGE_SIZE,
+      search: debouncedSearch || undefined,
+      ...listingFilterParams,
+    }),
+    [inactivePage, debouncedSearch, listingFilterParams],
   );
   const rejectedListParams = useMemo(
     () => ({
       page: rejectedPage,
       count: LIST_PAGE_SIZE,
       search: debouncedSearch || undefined,
+      ...listingFilterParams,
     }),
-    [rejectedPage, debouncedSearch],
+    [rejectedPage, debouncedSearch, listingFilterParams],
   );
 
   const { data: pendingResponse, isLoading: pendingLoading } =
@@ -158,6 +212,8 @@ export default function ListingsPage() {
     soldListParams,
     activeTab === "Sold",
   );
+  const { data: inactiveResponse, isLoading: inactiveLoading } =
+    useInactiveProducts(inactiveListParams, activeTab === "Inactive");
   const { data: rejectedResponse, isLoading: rejectedLoading } =
     useRejectedProducts(rejectedListParams, activeTab === "Rejected");
 
@@ -165,6 +221,7 @@ export default function ListingsPage() {
   const activeProducts = activeResponse?.data?.products || [];
   const rentedProducts = rentedResponse?.data?.products || [];
   const soldProducts = soldResponse?.data?.products || [];
+  const inactiveProducts = inactiveResponse?.data?.products || [];
   const rejectedProducts = rejectedResponse?.data?.products || [];
 
   // Pagination data
@@ -176,6 +233,8 @@ export default function ListingsPage() {
   const rentedTotalPages = rentedResponse?.data?.totalPages || 1;
   const soldTotal = soldResponse?.data?.total || 0;
   const soldTotalPages = soldResponse?.data?.totalPages || 1;
+  const inactiveTotal = inactiveResponse?.data?.total || 0;
+  const inactiveTotalPages = inactiveResponse?.data?.totalPages || 1;
   const rejectedTotal = rejectedResponse?.data?.total || 0;
   const rejectedTotalPages = rejectedResponse?.data?.totalPages || 1;
 
@@ -184,6 +243,8 @@ export default function ListingsPage() {
   const rejectMutation = useRejectListing();
   const sendToPendingMutation = useSendProductToPending();
   const setAvailabilityMutation = useSetAvailability();
+  const bulkDeactivateMutation = useBulkDeactivate();
+  const bulkReactivateMutation = useBulkReactivate();
 
   const handleApprove = (productId: string) => {
     setApprovingProductId(productId);
@@ -406,69 +467,6 @@ export default function ListingsPage() {
     });
   };
 
-  const deactivateProduct = (
-    productId: string,
-    callbacks: {
-      onStart: () => void;
-      onSuccess: () => void;
-      onError: () => void;
-    },
-  ) => {
-    callbacks.onStart();
-    const queryKey = ["admin", "products", "active", activeListParams];
-    const previousData = queryClient.getQueryData(queryKey);
-
-    if (previousData) {
-      queryClient.setQueryData(queryKey, (oldData: any) => ({
-        ...oldData,
-        data: {
-          ...oldData.data,
-          products: oldData.data.products.filter(
-            (product: Product) => product.id !== productId,
-          ),
-          total: Math.max(0, (oldData.data.total || 1) - 1),
-        },
-      }));
-    }
-
-    setAvailabilityMutation.mutate(
-      {
-        productId,
-        isAvailable: false,
-      },
-      {
-        onSuccess: (response) => {
-          callbacks.onSuccess();
-          const message =
-            (response as any)?.message || "Product deactivated successfully!";
-          toast.success(message);
-        },
-        onError: (error: any) => {
-          callbacks.onError();
-          if (previousData) {
-            queryClient.setQueryData(queryKey, previousData);
-          }
-          const errorMessage =
-            error?.message ||
-            error?.response?.data?.message ||
-            "Failed to deactivate product";
-          toast.error(errorMessage);
-        },
-      },
-    );
-  };
-
-  const handleModalDisable = (productId: string) => {
-    deactivateProduct(productId, {
-      onStart: () => setDisablingFromModalId(productId),
-      onSuccess: () => {
-        setDisablingFromModalId(null);
-        setIsModalOpen(false);
-      },
-      onError: () => setDisablingFromModalId(null),
-    });
-  };
-
   const handleDeactivate = (productId: string) => {
     const product = activeProducts.find((item) => item.id === productId);
     const productName = product?.name || "this listing";
@@ -480,15 +478,120 @@ export default function ListingsPage() {
       return;
     }
 
-    deactivateProduct(productId, {
-      onStart: () => setDeactivatingProductId(productId),
-      onSuccess: () => setDeactivatingProductId(null),
-      onError: () => setDeactivatingProductId(null),
+    setDeactivatingProductId(productId);
+    bulkDeactivateMutation.mutate([productId], {
+      onSuccess: (response) => {
+        setDeactivatingProductId(null);
+        toast.success(response.message || 'Listing deactivated successfully');
+      },
+      onError: (error: any) => {
+        setDeactivatingProductId(null);
+        const errorMessage =
+          error?.response?.data?.message || error?.message || 'Failed to deactivate listing';
+        toast.error(errorMessage);
+      },
+    });
+  };
+
+  const handleBulkDeactivate = () => {
+    if (selectedIds.size === 0) return;
+    
+    if (
+      !window.confirm(
+        `Deactivate ${selectedIds.size} listing${selectedIds.size > 1 ? 's' : ''}? You can reactivate them from the Inactive tab.`,
+      )
+    ) {
+      return;
+    }
+
+    bulkDeactivateMutation.mutate(Array.from(selectedIds), {
+      onSuccess: (response) => {
+        toast.success(response.message || 'Listings deactivated successfully');
+        setSelectedIds(new Set());
+      },
+      onError: (error: any) => {
+        const errorMessage =
+          error?.response?.data?.message || error?.message || 'Failed to deactivate listings';
+        toast.error(errorMessage);
+      },
+    });
+  };
+
+  const handleFilterApply = (filters: ListingFilterValues) => {
+    setListingFilters(filters);
+  };
+
+  const handleFilterClear = () => {
+    setListingFilters({});
+    setSelectedIds(new Set());
+  };
+
+  const handleBulkReactivate = () => {
+    if (selectedIds.size === 0) return;
+    
+    if (
+      !window.confirm(
+        `Reactivate ${selectedIds.size} listing${selectedIds.size > 1 ? 's' : ''}?`,
+      )
+    ) {
+      return;
+    }
+
+    bulkReactivateMutation.mutate(Array.from(selectedIds), {
+      onSuccess: (response) => {
+        toast.success(response.message || 'Listings reactivated successfully');
+        setSelectedIds(new Set());
+      },
+      onError: (error: any) => {
+        const errorMessage =
+          error?.response?.data?.message || error?.message || 'Failed to reactivate listings';
+        toast.error(errorMessage);
+      },
+    });
+  };
+
+  const handleReactivate = (productId: string) => {
+    const product =
+      inactiveProducts.find((item) => item.id === productId) ??
+      rejectedProducts.find((item) => item.id === productId);
+    const productName = product?.name || "this listing";
+    if (
+      !window.confirm(
+        `Reactivate "${productName}"?`,
+      )
+    ) {
+      return;
+    }
+
+    setReactivatingProductId(productId);
+    bulkReactivateMutation.mutate([productId], {
+      onSuccess: (response) => {
+        setReactivatingProductId(null);
+        toast.success(response.message || 'Listing reactivated successfully');
+      },
+      onError: (error: any) => {
+        setReactivatingProductId(null);
+        const errorMessage =
+          error?.response?.data?.message || error?.message || 'Failed to reactivate listing';
+        toast.error(errorMessage);
+      },
     });
   };
 
   return (
     <div className="min-h-screen">
+      {/* Filter Panel */}
+      <ListingFilterPanel
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        mode="controlled"
+        value={listingFilters}
+        onApply={handleFilterApply}
+        onClear={handleFilterClear}
+        hideSearch
+        filterOptionsScope="admin-picker"
+      />
+
       {/* Rejection Modal */}
       {rejectingProductId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -547,9 +650,32 @@ export default function ListingsPage() {
 
         {/* Category Dropdown and Export */}
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium text-sm text-gray-700 bg-white">
-            All Categories
-          </button>
+          <ListingFilterButton
+            onClick={() => setIsFilterOpen(true)}
+            activeCount={countActiveListingFilters(listingFilters)}
+          />
+          {supportsBulkSelection && selectedIds.size > 0 && (
+            <>
+              {activeTab === "Active" && (
+                <button
+                  onClick={handleBulkDeactivate}
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium text-sm"
+                >
+                  <Power size={18} />
+                  Deactivate ({selectedIds.size})
+                </button>
+              )}
+              {(activeTab === "Inactive" || activeTab === "Rejected") && (
+                <button
+                  onClick={handleBulkReactivate}
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium text-sm"
+                >
+                  <RotateCcw size={18} />
+                  Reactivate ({selectedIds.size})
+                </button>
+              )}
+            </>
+          )}
           <button className="flex- hidden items-center justify-center gap-2 px-4 py-2 border border-gray-800 text-gray-900 rounded-lg hover:bg-gray-50 transition font-medium text-sm bg-white">
             <Download size={18} />
             Export
@@ -655,6 +781,7 @@ export default function ListingsPage() {
               key={tab}
               onClick={() => {
                 setActiveTab(tab);
+                setSelectedIds(new Set());
               }}
               className={`py-4 px-0 font-medium text-sm transition-colors border-b-2 ${
                 activeTab === tab
@@ -699,6 +826,9 @@ export default function ListingsPage() {
                 }}
                 onDeactivate={handleDeactivate}
                 deactivatingProductId={deactivatingProductId}
+                selectedIds={selectedIds}
+                onSelectionChange={setSelectedIds}
+                showSelection={supportsBulkSelection}
               />
             )}
             {activeTab === "Rented" && (
@@ -723,6 +853,23 @@ export default function ListingsPage() {
                 }}
               />
             )}
+            {activeTab === "Inactive" && (
+              <ActiveListingsTable
+                products={inactiveProducts}
+                isLoading={inactiveLoading}
+                error={null}
+                emptyMessage="No inactive listings found"
+                onView={(product: Product) => {
+                  setSelectedListing(product);
+                  setIsModalOpen(true);
+                }}
+                onReactivate={handleReactivate}
+                reactivatingProductId={reactivatingProductId}
+                selectedIds={selectedIds}
+                onSelectionChange={setSelectedIds}
+                showSelection={supportsBulkSelection}
+              />
+            )}
             {activeTab === "Rejected" && (
               <RejectedListingsTable
                 products={rejectedProducts}
@@ -732,6 +879,11 @@ export default function ListingsPage() {
                   setSelectedListing(product);
                   setIsModalOpen(true);
                 }}
+                onReactivate={handleReactivate}
+                reactivatingProductId={reactivatingProductId}
+                selectedIds={selectedIds}
+                onSelectionChange={setSelectedIds}
+                showSelection={supportsBulkSelection}
               />
             )}
           </>
@@ -744,6 +896,7 @@ export default function ListingsPage() {
           (activeTab === "Active" && activeTotal > 0) ||
           (activeTab === "Rented" && rentedTotal > 0) ||
           (activeTab === "Sold" && soldTotal > 0) ||
+          (activeTab === "Inactive" && inactiveTotal > 0) ||
           (activeTab === "Rejected" && rejectedTotal > 0)) && (
           <div className="mt-6 flex items-center justify-between">
             <Paragraph1 className="text-sm text-gray-600">
@@ -755,6 +908,8 @@ export default function ListingsPage() {
                 `Page ${rentedPage} of ${rentedTotalPages} • ${rentedTotal} rented products`}
               {activeTab === "Sold" &&
                 `Page ${soldPage} of ${soldTotalPages} • ${soldTotal} sold products`}
+              {activeTab === "Inactive" &&
+                `Page ${inactivePage} of ${inactiveTotalPages} • ${inactiveTotal} inactive listings`}
               {activeTab === "Rejected" &&
                 `Page ${rejectedPage} of ${rejectedTotalPages} • ${rejectedTotal} rejected products`}
             </Paragraph1>
@@ -770,6 +925,8 @@ export default function ListingsPage() {
                     setRentedPage(rentedPage - 1);
                   if (activeTab === "Sold" && soldPage > 1)
                     setSoldPage(soldPage - 1);
+                  if (activeTab === "Inactive" && inactivePage > 1)
+                    setInactivePage(inactivePage - 1);
                   if (activeTab === "Rejected" && rejectedPage > 1)
                     setRejectedPage(rejectedPage - 1);
                 }}
@@ -778,6 +935,7 @@ export default function ListingsPage() {
                   (activeTab === "Active" && activePage <= 1) ||
                   (activeTab === "Rented" && rentedPage <= 1) ||
                   (activeTab === "Sold" && soldPage <= 1) ||
+                  (activeTab === "Inactive" && inactivePage <= 1) ||
                   (activeTab === "Rejected" && rejectedPage <= 1)
                 }
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium text-sm text-gray-700 bg-white"
@@ -799,6 +957,11 @@ export default function ListingsPage() {
                   if (activeTab === "Sold" && soldPage < soldTotalPages)
                     setSoldPage(soldPage + 1);
                   if (
+                    activeTab === "Inactive" &&
+                    inactivePage < inactiveTotalPages
+                  )
+                    setInactivePage(inactivePage + 1);
+                  if (
                     activeTab === "Rejected" &&
                     rejectedPage < rejectedTotalPages
                   )
@@ -810,6 +973,8 @@ export default function ListingsPage() {
                   (activeTab === "Active" && activePage >= activeTotalPages) ||
                   (activeTab === "Rented" && rentedPage >= rentedTotalPages) ||
                   (activeTab === "Sold" && soldPage >= soldTotalPages) ||
+                  (activeTab === "Inactive" &&
+                    inactivePage >= inactiveTotalPages) ||
                   (activeTab === "Rejected" &&
                     rejectedPage >= rejectedTotalPages)
                 }
@@ -837,13 +1002,11 @@ export default function ListingsPage() {
           onApprove={handleModalApprove}
           onReject={handleModalReject}
           onSendToPending={handleModalSendToPending}
-          onDisable={handleModalDisable}
           isApproving={approvingFromModalId === selectedListing.id}
           isRejecting={rejectingFromModalId === selectedListing.id}
           isSendingToPending={
             sendingToPendingFromModalId === selectedListing.id
           }
-          isDisabling={disablingFromModalId === selectedListing.id}
         />
       )}
     </div>
