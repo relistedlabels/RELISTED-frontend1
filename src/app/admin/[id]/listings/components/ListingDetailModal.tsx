@@ -47,11 +47,9 @@ interface ListingDetailModalProps {
   onApprove?: (productId: string) => void;
   onReject?: (productId: string, comment: string) => void;
   onSendToPending?: (productId: string) => void;
-  onDisable?: (productId: string) => void;
   isApproving?: boolean;
   isRejecting?: boolean;
   isSendingToPending?: boolean;
-  isDisabling?: boolean;
 }
 
 const SEND_TO_PENDING_STATUSES = new Set([
@@ -89,11 +87,9 @@ export default function ListingDetailModal({
   onApprove,
   onReject,
   onSendToPending,
-  onDisable,
   isApproving = false,
   isRejecting = false,
   isSendingToPending = false,
-  isDisabling = false,
 }: ListingDetailModalProps) {
   const [activeTab, setActiveTab] = React.useState<
     "details" | "edit" | "rental-history" | "availability" | "activity"
@@ -102,7 +98,6 @@ export default function ListingDetailModal({
   const [showRejectModal, setShowRejectModal] = React.useState(false);
   const [showSendToPendingModal, setShowSendToPendingModal] =
     React.useState(false);
-  const [showDisableModal, setShowDisableModal] = React.useState(false);
   const [rejectionComment, setRejectionComment] = React.useState("");
   const [showImageViewer, setShowImageViewer] = React.useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = React.useState(0);
@@ -314,17 +309,6 @@ export default function ListingDetailModal({
                   >
                     <Clock size={18} />
                     Revert to Pending
-                  </button>
-                )}
-
-                {canDeactivateListing(displayProduct.status) && (
-                  <button
-                    onClick={() => setShowDisableModal(true)}
-                    className="flex flex-1 justify-center items-center gap-2 hover:bg-gray-50 disabled:opacity-50 px-3 py-2 border border-gray-300 rounded-lg font-medium text-gray-600 text-sm transition disabled:cursor-not-allowed"
-                    disabled={isLoading || isDisabling}
-                  >
-                    <Power size={18} />
-                    Deactivate
                   </button>
                 )}
 
@@ -909,80 +893,6 @@ export default function ListingDetailModal({
                           <>
                             <Clock size={18} />
                             Revert to Pending
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
-
-          {/* Disable Confirmation Modal */}
-          <AnimatePresence>
-            {showDisableModal && (
-              <>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  onClick={() => setShowDisableModal(false)}
-                  className="z-50 fixed inset-0 bg-black/50"
-                />
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                  transition={{ type: "spring", duration: 0.3 }}
-                  className="top-1/2 left-1/2 z-50 fixed bg-white shadow-lg mx-4 rounded-xl w-full max-w-md -translate-x-1/2 -translate-y-1/2"
-                >
-                  <button
-                    onClick={() => setShowDisableModal(false)}
-                    className="top-4 right-4 absolute text-gray-400 hover:text-gray-600"
-                  >
-                    <X size={24} />
-                  </button>
-                  <div className="p-8">
-                    <div className="flex justify-center mb-6">
-                      <div className="flex justify-center items-center bg-orange-100 rounded-full w-16 h-16">
-                        <Power size={32} className="text-orange-600" />
-                      </div>
-                    </div>
-                    <Paragraph3 className="mb-2 text-gray-900 text-center">
-                      Disable Product?
-                    </Paragraph3>
-                    <Paragraph1 className="mb-8 text-gray-700 text-center">
-                      "{displayProduct.name}" will be removed from active
-                      listings and no longer available for rental.
-                    </Paragraph1>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => setShowDisableModal(false)}
-                        disabled={isDisabling}
-                        className="flex-1 hover:bg-gray-50 disabled:opacity-50 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 transition disabled:cursor-not-allowed"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (onDisable) {
-                            onDisable(displayProduct.id);
-                            setShowDisableModal(false);
-                          }
-                        }}
-                        disabled={isDisabling}
-                        className="flex flex-1 justify-center items-center gap-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 px-4 py-3 rounded-lg font-medium text-white transition disabled:cursor-not-allowed"
-                      >
-                        {isDisabling ? (
-                          <>
-                            <div className="border-2 border-white border-t-transparent rounded-full w-4 h-4 animate-spin" />
-                            Disabling...
-                          </>
-                        ) : (
-                          <>
-                            <Power size={18} />
-                            Disable
                           </>
                         )}
                       </button>

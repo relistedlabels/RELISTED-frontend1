@@ -8,6 +8,7 @@ export interface ProductStats {
   getRejectedProducts: { count: number; products?: any[] };
   getActiveProducts: { count: number; products?: any[] };
   getRentedProducts?: { count: number; products?: any[] };
+  getInactiveProducts?: { count: number; products?: any[] };
 }
 
 export interface ListingCategory {
@@ -140,21 +141,56 @@ export interface PaginatedProductsResponse {
   totalPages: number;
 }
 
-interface ListParams {
-  status?: string;
+export type AdminProductListParams = {
+  page?: number;
+  count?: number;
   search?: string;
   category?: string;
-  page?: number;
-  limit?: number;
+  brand?: string | string[];
+  tags?: string;
+  listingType?: string;
+  lister?: string | string[];
+  color?: string;
+  size?: string;
+  condition?: string;
+  material?: string;
+  minPrice?: number;
+  maxPrice?: number;
+};
+
+function appendAdminProductListParams(
+  searchParams: URLSearchParams,
+  params: AdminProductListParams,
+) {
+  searchParams.set("page", String(params.page ?? 1));
+  searchParams.set("limit", String(params.count ?? 20));
+  if (params.search?.trim()) {
+    searchParams.set("search", params.search.trim());
+  }
+  if (params.category) searchParams.set("category", params.category);
+  if (params.tags) searchParams.set("tags", params.tags);
+  if (params.listingType) searchParams.set("listingType", params.listingType);
+  if (params.color) searchParams.set("color", params.color);
+  if (params.size) searchParams.set("size", params.size);
+  if (params.condition) searchParams.set("condition", params.condition);
+  if (params.material) searchParams.set("material", params.material);
+  if (params.minPrice !== undefined) {
+    searchParams.set("minPrice", String(params.minPrice));
+  }
+  if (params.maxPrice !== undefined) {
+    searchParams.set("maxPrice", String(params.maxPrice));
+  }
+  if (Array.isArray(params.brand)) {
+    params.brand.forEach((brand) => searchParams.append("brand", brand));
+  }
+  if (Array.isArray(params.lister)) {
+    params.lister.forEach((id) => searchParams.append("lister", id));
+  }
 }
 
-function buildListParams(params: ListParams): string {
+function buildAdminProductListQuery(params: AdminProductListParams): string {
   const searchParams = new URLSearchParams();
-  if (params.status) searchParams.append("status", params.status);
-  if (params.search) searchParams.append("search", params.search);
-  if (params.category) searchParams.append("category", params.category);
-  if (params.page) searchParams.append("page", params.page.toString());
-  if (params.limit) searchParams.append("limit", params.limit.toString());
+  appendAdminProductListParams(searchParams, params);
   return searchParams.toString();
 }
 
@@ -166,48 +202,34 @@ export const productsApi = {
     ),
 
   // 2. GET /api/admin/products/pending
-  getPending: (params: { page?: number; count?: number; search?: string }) => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("page", String(params.page ?? 1));
-    searchParams.set("limit", String(params.count ?? 20));
-    if (params.search?.trim()) searchParams.set("search", params.search.trim());
-    return apiFetch<{ success: true; data: PaginatedProductsResponse }>(
-      `/api/admin/products/pending?${searchParams.toString()}`,
-    );
-  },
+  getPending: (params: AdminProductListParams) =>
+    apiFetch<{ success: true; data: PaginatedProductsResponse }>(
+      `/api/admin/products/pending?${buildAdminProductListQuery(params)}`,
+    ),
 
   // 3. GET /api/admin/products/active
-  getActive: (params: { page?: number; count?: number; search?: string }) => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("page", String(params.page ?? 1));
-    searchParams.set("limit", String(params.count ?? 20));
-    if (params.search?.trim()) searchParams.set("search", params.search.trim());
-    return apiFetch<{ success: true; data: PaginatedProductsResponse }>(
-      `/api/admin/products/active?${searchParams.toString()}`,
-    );
-  },
+  getActive: (params: AdminProductListParams) =>
+    apiFetch<{ success: true; data: PaginatedProductsResponse }>(
+      `/api/admin/products/active?${buildAdminProductListQuery(params)}`,
+    ),
 
   // 4. GET /api/admin/products/rejected
-  getRejected: (params: { page?: number; count?: number; search?: string }) => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("page", String(params.page ?? 1));
-    searchParams.set("limit", String(params.count ?? 20));
-    if (params.search?.trim()) searchParams.set("search", params.search.trim());
-    return apiFetch<{ success: true; data: PaginatedProductsResponse }>(
-      `/api/admin/products/rejected?${searchParams.toString()}`,
-    );
-  },
+  getRejected: (params: AdminProductListParams) =>
+    apiFetch<{ success: true; data: PaginatedProductsResponse }>(
+      `/api/admin/products/rejected?${buildAdminProductListQuery(params)}`,
+    ),
 
   // 4b. GET /api/admin/products/rented
-  getRented: (params: { page?: number; count?: number; search?: string }) => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("page", String(params.page ?? 1));
-    searchParams.set("limit", String(params.count ?? 20));
-    if (params.search?.trim()) searchParams.set("search", params.search.trim());
-    return apiFetch<{ success: true; data: PaginatedProductsResponse }>(
-      `/api/admin/products/rented?${searchParams.toString()}`,
-    );
-  },
+  getRented: (params: AdminProductListParams) =>
+    apiFetch<{ success: true; data: PaginatedProductsResponse }>(
+      `/api/admin/products/rented?${buildAdminProductListQuery(params)}`,
+    ),
+
+  // 4c. GET /api/admin/products/inactive
+  getInactive: (params: AdminProductListParams) =>
+    apiFetch<{ success: true; data: PaginatedProductsResponse }>(
+      `/api/admin/products/inactive?${buildAdminProductListQuery(params)}`,
+    ),
 
   // 5. PATCH /api/admin/products/:productId/approve
   approveProduct: (productId: string) =>
@@ -357,4 +379,26 @@ export const productsApi = {
     apiFetch<{ success: true; message: string }>(`/brands/${brandId}`, {
       method: "DELETE",
     }),
+
+  // 28. POST /api/admin/products/bulk/deactivate
+  bulkDeactivate: (productIds: string[]) =>
+    apiFetch<{ success: true; message: string; count: number }>(
+      "/api/admin/products/bulk/deactivate",
+      {
+        method: "POST",
+        body: JSON.stringify({ productIds }),
+        headers: { "Content-Type": "application/json" },
+      },
+    ),
+
+  // 29. POST /api/admin/products/bulk/reactivate
+  bulkReactivate: (productIds: string[]) =>
+    apiFetch<{ success: true; message: string; count: number }>(
+      "/api/admin/products/bulk/reactivate",
+      {
+        method: "POST",
+        body: JSON.stringify({ productIds }),
+        headers: { "Content-Type": "application/json" },
+      },
+    ),
 };

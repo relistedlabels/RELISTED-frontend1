@@ -1,18 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   productsApi,
+  type AdminProductListParams,
   ListingCategory,
   ListingTag,
   ListingBrand,
 } from "../../api/admin/listings";
-
-interface ListParams {
-  status?: string;
-  search?: string;
-  category?: string;
-  page?: number;
-  limit?: number;
-}
 
 // --- Listings Statistics ---
 
@@ -36,7 +29,7 @@ export const useListingCategories = () =>
 // These replace the old generic listing query with status-specific endpoints matching the new API
 
 export const usePendingProducts = (
-  params: { page?: number; count?: number; search?: string },
+  params: AdminProductListParams,
   enabled = true,
 ) =>
   useQuery({
@@ -49,7 +42,7 @@ export const usePendingProducts = (
   });
 
 export const useActiveProducts = (
-  params: { page?: number; count?: number; search?: string },
+  params: AdminProductListParams,
   enabled = true,
 ) =>
   useQuery({
@@ -62,12 +55,25 @@ export const useActiveProducts = (
   });
 
 export const useRentedProducts = (
-  params: { page?: number; count?: number; search?: string },
+  params: AdminProductListParams,
   enabled = true,
 ) =>
   useQuery({
     queryKey: ["admin", "products", "rented", params],
     queryFn: () => productsApi.getRented(params),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    placeholderData: (previousData) => previousData,
+    enabled,
+  });
+
+export const useInactiveProducts = (
+  params: AdminProductListParams,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: ["admin", "products", "inactive", params],
+    queryFn: () => productsApi.getInactive(params),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     placeholderData: (previousData) => previousData,
@@ -87,11 +93,7 @@ export const useApprovedProducts = (params: {
   });
 
 export const useRejectedProducts = (
-  params: {
-    page?: number;
-    count?: number;
-    search?: string;
-  },
+  params: AdminProductListParams,
   enabled = true,
 ) =>
   useQuery({
@@ -398,6 +400,44 @@ export const useCreateBrand = () => {
     },
     onError: (error) => {
       console.error("Failed to create brand:", error);
+    },
+  });
+};
+
+// --- Bulk Operations ---
+
+export const useBulkDeactivate = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (productIds: string[]) =>
+      productsApi.bulkDeactivate(productIds),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "listings"] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "listings", "statistics"],
+      });
+    },
+    onError: (error) => {
+      console.error("Failed to bulk deactivate:", error);
+    },
+  });
+};
+
+export const useBulkReactivate = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (productIds: string[]) =>
+      productsApi.bulkReactivate(productIds),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "listings"] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "listings", "statistics"],
+      });
+    },
+    onError: (error) => {
+      console.error("Failed to bulk reactivate:", error);
     },
   });
 };
