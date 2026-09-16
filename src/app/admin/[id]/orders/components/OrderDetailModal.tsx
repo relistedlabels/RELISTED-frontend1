@@ -1,14 +1,17 @@
 // ENDPOINTS: GET /api/admin/orders/:orderId
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import { toast } from "sonner";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import OrderSection2 from "./OrderSection2";
 import OrderSection3 from "./OrderSection3";
 import OrderItemsSection from "./OrderItemsSection";
+import CancelOrderModal from "./CancelOrderModal";
 import { useOrderById } from "@/lib/queries/admin/useOrders";
+import { useCancelOrder } from "@/lib/mutations/admin";
 import type { OrderDetail } from "@/lib/api/admin/orders";
 import { getAdminOrderStatusLabel } from "@/lib/orders/shipmentAndOrderLabels";
 import ReturnRequestSection from "../../../components/ReturnRequestSection";
@@ -54,17 +57,43 @@ const getStatusColor = (statusLabel: string) => {
   }
 };
 
+const CANCELLABLE_STATUSES = new Set(["CONFIRMED", "PROCESSING", "ACCEPTED"]);
+
 export default function OrderDetailModal({
   isOpen,
   onClose,
   orderId,
 }: OrderDetailModalProps) {
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const { data, isLoading, isError } = useOrderById(orderId ?? "", isOpen);
+  const cancelOrder = useCancelOrder();
   const order = data?.data as OrderDetail | undefined;
 
   const statusLabel = order
     ? getAdminOrderStatusLabel(order.status)
     : "—";
+  const canCancel =
+    !!order && CANCELLABLE_STATUSES.has(String(order.status).toUpperCase());
+
+  const handleCancelOrder = async (reason: string) => {
+    if (!orderId) return;
+    try {
+      const response = await cancelOrder.mutateAsync({
+        orderId,
+        reason,
+        notifyParties: true,
+      });
+      toast.success(
+        response?.message ?? "Order cancelled. Refund sent to renter wallet.",
+      );
+      setCancelModalOpen(false);
+      onClose();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Could not cancel this order.";
+      toast.error(message);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -104,15 +133,26 @@ export default function OrderDetailModal({
                   </Paragraph1>
                 </div>
 
-                {!isLoading && order && (
-                  <span
-                    className={`inline-block px-3 py-1 rounded-full text-xs font-semibold shrink-0 ${getStatusColor(
-                      statusLabel,
-                    )}`}
-                  >
-                    {statusLabel}
-                  </span>
-                )}
+                <div className="flex items-center gap-2 shrink-0">
+                  {!isLoading && order && (
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
+                        statusLabel,
+                      )}`}
+                    >
+                      {statusLabel}
+                    </span>
+                  )}
+                  {canCancel && (
+                    <button
+                      type="button"
+                      onClick={() => setCancelModalOpen(true)}
+                      className="px-3 py-1 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition"
+                    >
+                      Cancel order
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -202,6 +242,13 @@ export default function OrderDetailModal({
               )}
             </div>
           </motion.div>
+          <CancelOrderModal
+            isOpen={cancelModalOpen}
+            onClose={() => setCancelModalOpen(false)}
+            orderId={orderId}
+            onConfirm={handleCancelOrder}
+            isLoading={cancelOrder.isPending}
+          />
         </>
       )}
     </AnimatePresence>
