@@ -143,6 +143,24 @@ export interface OrderStats {
   totalRevenue: number;
 }
 
+export interface CancelOrderResponse {
+  success: true;
+  message: string;
+  data: {
+    orderId: string;
+    status: string;
+    refundAmount: number;
+    refundStatus: string;
+    notificationsSent: {
+      renter: boolean;
+      lister: boolean;
+      admin?: boolean;
+      adminCount?: number;
+    };
+    cancelledAt: string;
+  };
+}
+
 interface OrderListParams {
   page?: number;
   limit?: number;
@@ -230,7 +248,7 @@ export const ordersApi = {
     reason: string,
     notifyParties: boolean = true,
   ) =>
-    apiFetch(`/api/admin/orders/${orderId}/cancel`, {
+    apiFetch<CancelOrderResponse>(`/api/admin/orders/${orderId}/cancel`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ reason, notifyParties }),
