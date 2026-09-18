@@ -5,6 +5,14 @@ import React, { useState } from "react";
 import { X, ArrowLeft } from "lucide-react";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { buttonPrimary } from "@/common/ui/buttonClasses";
+import {
+  slidePanelBackdrop,
+  slidePanelFooter,
+  slidePanelHeader,
+  slidePanelSheet,
+  slidePanelTitle,
+} from "@/common/ui/dashboardClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import OrderSummaryCards from "./OrderSummaryCards";
 import OrderProgress from "./OrderProgress";
@@ -50,14 +58,14 @@ const OrderPreviewPanel: React.FC<OrderPreviewPanelProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="z-99 fixed inset-0 bg-black/70 backdrop--blur-sm"
+          className={slidePanelBackdrop}
           onClick={onClose}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="top-0 right-0 fixed flex flex-col bg-white shadow-2xl px-4 w-full sm:w-114 h-screen overflow-y-auto hide-scrollbar"
+            className={slidePanelSheet}
             role="dialog"
             aria-modal="true"
             aria-label="Order preview"
@@ -68,7 +76,7 @@ const OrderPreviewPanel: React.FC<OrderPreviewPanelProps> = ({
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="top-0 z-10 sticky flex justify-between items-center bg-white pt-6 pb-4 border-gray-100 border-b">
+            <div className={slidePanelHeader}>
               <button
                 onClick={onClose}
                 className="xl:hidden p-1 rounded-full text-gray-500 hover:text-black transition"
@@ -77,9 +85,7 @@ const OrderPreviewPanel: React.FC<OrderPreviewPanelProps> = ({
                 <ArrowLeft size={20} />
               </button>
 
-              <Paragraph1 className="font-bold text-gray-800 uppercase tracking-widest">
-                Order preview
-              </Paragraph1>
+              <Paragraph1 className={slidePanelTitle}>Order preview</Paragraph1>
               <button
                 onClick={onClose}
                 className="p-1 rounded-full text-gray-500 hover:text-black transition"
@@ -172,7 +178,7 @@ const OrderPreviewPanel: React.FC<OrderPreviewPanelProps> = ({
               />
             </div>
 
-            <div className="bottom-0 sticky flex flex-col gap-4 bg-white mt-auto py-2 border-gray-200 border-t text-black">
+            <div className={`${slidePanelFooter} flex flex-col gap-4`}>
               {Boolean(orderData?.approvalRequired) &&
                 !orderData?.canApprove &&
                 !orderData?.canReject && (
@@ -198,10 +204,10 @@ const OrderPreviewPanel: React.FC<OrderPreviewPanelProps> = ({
 
                 <button
                   disabled={!orderData?.canApprove}
-                  className={`flex-1 px-4 py-3 justify-center font-semibold border rounded-lg transition ${
+                  className={`flex-1 ${
                     orderData?.canApprove
-                      ? "bg-black/80 text-white hover:bg-gray-900"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      ? buttonPrimary
+                      : "cursor-not-allowed rounded-lg bg-gray-200 px-4 py-3 font-semibold text-gray-400"
                   }`}
                 >
                   <Paragraph1>Approve Order</Paragraph1>

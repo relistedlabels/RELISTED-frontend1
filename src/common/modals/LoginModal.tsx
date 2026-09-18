@@ -7,7 +7,8 @@ import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import { useLogin } from "@/lib/mutations/auth/useLogin";
 import { Paragraph1, Header2 } from "@/common/ui/Text";
-import Button from "@/common/ui/Button";
+import { buttonPrimaryFull, buttonSecondary } from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -77,7 +78,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          className={dialogBackdrop}
           variants={backdropVariants}
           initial="hidden"
           animate="visible"
@@ -85,7 +86,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
           onClick={onClose}
         >
           <motion.div
-            className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+            className={`${dialogCard} max-h-[90vh] overflow-y-auto p-0 rounded-lg`}
             variants={modalVariants}
             initial="hidden"
             animate="visible"
@@ -206,7 +207,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
                         <button
                           type="submit"
                           disabled={isSubmitting || loginMutation.isPending}
-                          className="w-full bg-black text-white py-2 rounded-lg font-semibold hover:bg-gray-900 disabled:bg-gray-400 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
+                          className={`${buttonPrimaryFull} disabled:bg-gray-400`}
                         >
                           {isSubmitting || loginMutation.isPending ? (
                             <>
@@ -247,7 +248,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
                     {/* Redirect to signup page */}
                     <a
                       href="/auth/create-account"
-                      className="w-full bg-black text-white py-2 rounded-lg font-semibold hover:bg-gray-900 transition flex items-center justify-center"
+                      className={buttonPrimaryFull}
                     >
                       Go to Sign Up
                     </a>
@@ -255,7 +256,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
                     {/* Back to Login */}
                     <button
                       onClick={() => setShowSignUp(false)}
-                      className="w-full border border-gray-300 text-gray-900 py-2 rounded-lg font-semibold hover:bg-gray-50 transition"
+                      className={buttonSecondary}
                     >
                       Back to Log In
                     </button>

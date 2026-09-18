@@ -479,7 +479,7 @@ const RaiseDisputeForm: React.FC<RaiseDisputeFormProps> = ({
         type="button"
         onClick={handleSubmit}
         disabled={raiseDisputeMutation.isPending}
-        className="bg-black hover:bg-gray-800 disabled:opacity-50 py-3 rounded-lg w-full font-semibold text-white text-lg transition duration-150"
+        className="inline-flex w-full items-center justify-center rounded-lg bg-black px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {raiseDisputeMutation.isPending ? "Submitting..." : "Submit Dispute"}
       </button>

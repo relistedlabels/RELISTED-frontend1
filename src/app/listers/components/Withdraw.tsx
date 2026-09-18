@@ -6,6 +6,18 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { X, ChevronLeft, ArrowLeft, ChevronDown, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  buttonPrimary,
+  buttonPrimaryFull,
+  buttonSecondary,
+} from "@/common/ui/buttonClasses";
+import {
+  slidePanelBackdrop,
+  slidePanelFooter,
+  slidePanelHeader,
+  slidePanelSheet,
+  slidePanelTitle,
+} from "@/common/ui/dashboardClasses";
 import { Paragraph1, Paragraph2, Header3, Paragraph3 } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
 import { FaPlus } from "react-icons/fa";
@@ -163,7 +175,7 @@ const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
       <button
         onClick={handleWithdraw}
         disabled={withdrawMutation.isPending || !bankAccount?.id}
-        className="bg-black hover:bg-gray-900 disabled:opacity-50 py-3 rounded-lg w-full font-semibold text-white transition"
+        className={buttonPrimaryFull}
       >
         {withdrawMutation.isPending ? "Processing..." : "Withdraw Now"}
       </button>
@@ -353,14 +365,14 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className={`${onboardingOverlayZ} fixed inset-0 bg-black/70 backdrop--blur-sm`}
+          className={`${onboardingOverlayZ} ${slidePanelBackdrop}`}
           onClick={closePanel}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="top-0 right-0 fixed flex flex-col bg-white shadow-2xl px-4 w-full sm:w-114 h-screen overflow-y-auto text-gray-900 hide-scrollbar"
+            className={`${slidePanelSheet} text-gray-900`}
             role="dialog"
             aria-modal="true"
             aria-label="Product Withdraw"
@@ -372,7 +384,7 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="top-0 z-10 sticky flex justify-between items-center bg-white pt-6 pb-4 border-gray-100 border-b">
+            <div className={slidePanelHeader}>
               <button
                 onClick={closePanel}
                 className="xl:hidden p-1 rounded-full text-gray-500 hover:text-black transition"
@@ -381,9 +393,7 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
                 <ArrowLeft size={20} />
               </button>
 
-              <Paragraph1 className="font-bold text-gray-800 uppercase tracking-widest">
-                WITHDRAW FUNDS{" "}
-              </Paragraph1>
+              <Paragraph1 className={slidePanelTitle}>Withdraw funds</Paragraph1>
               <button
                 onClick={closePanel}
                 className="p-1 rounded-full text-gray-500 hover:text-black transition"
@@ -668,16 +678,13 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
             </div>
 
             {/* Footer */}
-            <div className="hidden bottom-0 sticky flex- justify-between gap-4 bg-white mt-auto py-2 text-black">
-              <button
-                onClick={closePanel}
-                className="flex-1 hover:bg-gray-50 px-4 py-3 border border-gray-300 rounded-lg font-semibold transition"
-              >
-                <Paragraph1>Cancel </Paragraph1>
+            <div className={`${slidePanelFooter} hidden flex gap-3`}>
+              <button type="button" onClick={closePanel} className={`${buttonSecondary} flex-1`}>
+                Cancel
               </button>
 
-              <button className="flex-1 bg-black hover:bg-gray-900 px-4 py-3 border rounded-lg font-semibold text-white transition">
-                <Paragraph1>Proceed </Paragraph1>
+              <button type="button" className={`${buttonPrimary} flex-1`}>
+                Proceed
               </button>
             </div>
           </motion.div>
@@ -720,7 +727,7 @@ const Withdraw: React.FC = () => {
         type="button"
         data-onboarding-target="lister-withdraw-button"
         onClick={handleWithdrawClick}
-        className="flex flex-1 justify-center items-center space-x-1 bg-[#333333] hover:bg-[#444444] px-4 py-3 rounded-lg font-semibold text-white text-sm transition duration-150"
+        className={`${buttonPrimary} flex-1 py-3`}
       >
         <Paragraph1>Withdraw</Paragraph1>
         <HiOutlineArrowDownRight className="ml-1 w-4 h-4" />

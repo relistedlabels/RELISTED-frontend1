@@ -7,6 +7,14 @@ import React, { useEffect, useState, type ComponentProps } from "react";
 import { X, ArrowLeft, CheckCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
+import {
+  slidePanelBackdrop,
+  slidePanelFooter,
+  slidePanelHeader,
+  slidePanelSheet,
+  slidePanelTitle,
+} from "@/common/ui/dashboardClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import ProductCuratorDetails from "./ProductCuratorDetails";
 import OrderProgressTimeline from "./OrderProgressTimeline";
@@ -172,14 +180,14 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-99 bg-black/70 backdrop-blur-sm"
+          className={slidePanelBackdrop}
           onClick={onClose}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="fixed top-0 right-0 flex h-screen w-full flex-col bg-white px-4 shadow-2xl sm:w-114"
+            className={slidePanelSheet}
             role="dialog"
             aria-modal="true"
             aria-label="Order details"
@@ -189,7 +197,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-gray-100 bg-white pb-4 pt-6">
+            <div className={slidePanelHeader}>
               <button
                 type="button"
                 onClick={onClose}
@@ -198,9 +206,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
               >
                 <ArrowLeft size={20} />
               </button>
-              <Paragraph1 className="font-bold uppercase tracking-widest text-gray-800">
-                Order details
-              </Paragraph1>
+              <Paragraph1 className={slidePanelTitle}>Order details</Paragraph1>
               <button
                 type="button"
                 onClick={onClose}
@@ -290,7 +296,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
               )}
             </div>
 
-            <div className="sticky bottom-0 shrink-0 border-t border-gray-100 bg-white py-3">
+            <div className={slidePanelFooter}>
               <div className="flex gap-2">
                 {showFooterReturn ? (
                   <StartReturnAction
@@ -302,16 +308,14 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
                 <button
                   type="button"
                   onClick={onClose}
-                  className={`rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-800 transition hover:bg-gray-50 ${
-                    showFooterReturn ? "px-3" : "flex-1"
-                  }`}
+                  className={`${buttonSecondary} ${showFooterReturn ? "" : "flex-1"}`}
                 >
                   Close
                 </button>
                 {!showFooterReturn ? (
                   <a
                     href="mailto:support@relisted.com"
-                    className="flex-1 rounded-lg bg-black px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-gray-900"
+                    className={`${buttonPrimary} flex-1`}
                   >
                     Contact support
                   </a>
@@ -346,9 +350,9 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, autoOpen }) => {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="w-full rounded-sm bg-black px-4 py-2 text-white transition-colors hover:bg-gray-800 sm:w-fit"
+        className={`${buttonPrimary} w-full sm:w-auto`}
       >
-        <Paragraph1>View details</Paragraph1>
+        View details
       </button>
 
       <OrderDetailsPanel

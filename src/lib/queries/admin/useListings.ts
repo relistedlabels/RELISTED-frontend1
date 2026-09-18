@@ -396,6 +396,9 @@ export const useCreateBrand = () => {
     mutationFn: (name: string) => productsApi.createBrand(name),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "brands", "all"] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "shop-settings", "visible-brands"],
+      });
       queryClient.invalidateQueries({ queryKey: ["admin", "listings"] });
     },
     onError: (error) => {

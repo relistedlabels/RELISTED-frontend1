@@ -3,6 +3,13 @@
 import React, { useState } from "react";
 import { X, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { buttonPrimary } from "@/common/ui/buttonClasses";
+import {
+  slidePanelBackdrop,
+  slidePanelHeader,
+  slidePanelSheet,
+  slidePanelTitle,
+} from "@/common/ui/dashboardClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import { FaPlus } from "react-icons/fa";
 import RaiseDisputeForm from "./RaiseDisputeForm";
@@ -28,14 +35,14 @@ const RaiseDisputePanel: React.FC<RaiseDisputePanelProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="z-99 fixed inset-0 bg-black/70 backdrop--blur-sm"
+          className={slidePanelBackdrop}
           onClick={onClose}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="top-0 right-0 fixed flex flex-col bg-white shadow-2xl px-4 w-full sm:w-114 h-screen overflow-y-auto hide-scrollbar"
+            className={slidePanelSheet}
             role="dialog"
             aria-modal="true"
             aria-label="Product RaiseDispute"
@@ -47,7 +54,7 @@ const RaiseDisputePanel: React.FC<RaiseDisputePanelProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="top-0 z-10 sticky flex justify-between items-center bg-white pt-6 pb-4 border-gray-100 border-b">
+            <div className={slidePanelHeader}>
               <button
                 onClick={onClose}
                 className="xl:hidden p-1 rounded-full text-gray-500 hover:text-black transition"
@@ -56,9 +63,7 @@ const RaiseDisputePanel: React.FC<RaiseDisputePanelProps> = ({
                 <ArrowLeft size={20} />
               </button>
 
-              <Paragraph1 className="font-bold text-gray-800 uppercase tracking-widest">
-                Raise a Dispute{" "}
-              </Paragraph1>
+              <Paragraph1 className={slidePanelTitle}>Raise a dispute</Paragraph1>
               <button
                 onClick={onClose}
                 className="p-1 rounded-full text-gray-500 hover:text-black transition"
@@ -90,11 +95,12 @@ const RaiseDispute: React.FC = () => {
       {/* Toggle Button */}
 
       <button
+        type="button"
         onClick={() => setIsOpen(true)}
-        className="flex items-center space-x-2 bg-black hover:bg-gray-800 shadow-md px-4 py-3 rounded-lg font-semibold text-white text-sm whitespace-nowrap transition duration-150"
+        className={`${buttonPrimary} whitespace-nowrap shadow-sm`}
       >
-        <FaPlus className="w-3 h-3" />
-        <Paragraph1>Raise New Dispute</Paragraph1>
+        <FaPlus className="h-3.5 w-3.5" aria-hidden />
+        Raise new dispute
       </button>
 
       {/* Filter Panel */}

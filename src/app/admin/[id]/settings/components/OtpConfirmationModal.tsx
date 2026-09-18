@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 
 interface OtpConfirmationModalProps {
   isOpen: boolean;
@@ -40,8 +42,8 @@ export default function OtpConfirmationModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full">
+    <div className={dialogBackdrop}>
+      <div className={`${dialogCard} p-0 overflow-hidden`}>
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <Paragraph2 className="text-gray-900">Verify with OTP</Paragraph2>
           <button
@@ -92,14 +94,14 @@ export default function OtpConfirmationModal({
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
+              className={`${buttonSecondary} flex-1`}
             >
               <Paragraph1>Cancel</Paragraph1>
             </button>
             <button
               onClick={handleVerify}
               disabled={loading || !otp}
-              className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`${buttonPrimary} flex-1 disabled:cursor-not-allowed`}
             >
               <Paragraph1>{loading ? "Verifying..." : "Verify OTP"}</Paragraph1>
             </button>

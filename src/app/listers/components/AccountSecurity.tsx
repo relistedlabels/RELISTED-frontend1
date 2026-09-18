@@ -3,6 +3,7 @@
 "use client";
 
 import React, { useRef, useState } from "react";
+import { buttonPrimary, buttonPrimaryFull } from "@/common/ui/buttonClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import { HiOutlineEye, HiOutlineXMark } from "react-icons/hi2";
 import { AnimatePresence, motion } from "framer-motion";
@@ -178,7 +179,7 @@ const AccountSecurity: React.FC = () => {
           <button
             type="submit"
             disabled={changePasswordMutation.isPending}
-            className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={buttonPrimary}
           >
             {changePasswordMutation.isPending
               ? "Updating..."
@@ -268,7 +269,7 @@ const AccountSecurity: React.FC = () => {
                 <button
                   type="submit"
                   disabled={verifyOtpMutation.isPending}
-                  className="w-full py-3 font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={buttonPrimaryFull}
                 >
                   {verifyOtpMutation.isPending ? "Verifying..." : "Verify OTP"}
                 </button>

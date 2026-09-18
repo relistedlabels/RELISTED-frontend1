@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import Link from "next/link";
 import { useOrder } from "@/lib/queries/renters/useOrders";
+import { buttonPrimary } from "@/common/ui/buttonClasses";
 
 export default function OrderSuccessfulScreen() {
   const searchParams = useSearchParams();
@@ -27,7 +28,7 @@ export default function OrderSuccessfulScreen() {
         </Paragraph1>
         <Link
           href="/renters/orders"
-          className="bg-black hover:bg-gray-900 mt-4 px-8 py-3 rounded-lg font-semibold text-white transition-colors"
+          className={`${buttonPrimary} mt-4 px-8 py-3`}
         >
           <Paragraph1>View My Orders</Paragraph1>
         </Link>
@@ -138,7 +139,7 @@ export default function OrderSuccessfulScreen() {
       <div className="flex flex-col gap-3 w-full max-w-md">
         <Link
           href="/renters/orders"
-          className="bg-black hover:bg-gray-900 shadow-lg px-8 py-3 rounded-lg font-semibold text-white transition-colors"
+          className={`${buttonPrimary} shadow-lg px-8 py-3`}
         >
           <Paragraph1>View My Orders</Paragraph1>
         </Link>

@@ -6,8 +6,15 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { X, ArrowLeft, Copy, RotateCcw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  slidePanelBackdrop,
+  slidePanelHeader,
+  slidePanelSheet,
+  slidePanelTitle,
+} from "@/common/ui/dashboardClasses";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
+import { buttonPrimary, buttonPrimaryFull } from "@/common/ui/buttonClasses";
 import { FaPlus } from "react-icons/fa";
 import { useProfile } from "@/lib/queries/renters/useProfile";
 import { useVerificationsStatus } from "@/lib/queries/renters/useVerifications";
@@ -168,14 +175,14 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className={`${onboardingOverlayZ} fixed inset-0 bg-black/70 backdrop-blur-sm`}
+          className={`${onboardingOverlayZ} ${slidePanelBackdrop}`}
           onClick={onClose}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="top-0 right-0 fixed flex flex-col bg-white shadow-2xl px-4 w-full sm:w-114 h-screen overflow-y-auto hide-scrollbar"
+            className={slidePanelSheet}
             role="dialog"
             aria-modal="true"
             aria-label="Fund Wallet"
@@ -187,7 +194,7 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="top-0 z-10 sticky flex justify-between items-center bg-white pt-6 pb-4 border-gray-100 border-b">
+            <div className={slidePanelHeader}>
               <button
                 onClick={onClose}
                 className="xl:hidden p-1 rounded-full text-gray-500 hover:text-black transition"
@@ -196,9 +203,7 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
                 <ArrowLeft size={20} />
               </button>
 
-              <Paragraph1 className="font-bold text-gray-800 uppercase tracking-widest">
-                Fund your wallet
-              </Paragraph1>
+              <Paragraph1 className={slidePanelTitle}>Fund your wallet</Paragraph1>
               <button
                 onClick={onClose}
                 className="p-1 rounded-full text-gray-500 hover:text-black transition"
@@ -250,7 +255,7 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
                   {verificationSubmittedAt && countdown === 0 && (
                     <button
                       onClick={checkVerificationStatus}
-                      className="bg-black hover:bg-gray-900 px-4 py-2 rounded-lg w-full font-semibold text-white text-sm transition"
+                      className={buttonPrimaryFull}
                     >
                       Check Verification Status
                     </button>
@@ -263,7 +268,7 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
                         verificationModalDismissedRef.current = false;
                         setIsVerificationModalOpen(true);
                       }}
-                      className="bg-black hover:bg-gray-900 px-4 py-2 rounded-lg w-full font-semibold text-white text-sm transition"
+                      className={buttonPrimaryFull}
                     >
                       Verify Identity
                     </button>
@@ -394,7 +399,7 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
                     <button
                       // onClick={onClose}
                       onClick={handleRefresh}
-                      className="flex-1 bg-black hover:bg-gray-900 px-4 py-3 rounded-lg font-semibold text-white transition"
+                      className={`${buttonPrimary} flex-1 py-3`}
                     >
                       <Paragraph1>Done</Paragraph1>
                     </button>
@@ -418,8 +423,6 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
                 setIsVerificationModalOpen(false);
               }}
               onVerified={handleVerificationComplete}
-              currentBvn={profileResponse?.bvn || ""}
-              currentNin={profileResponse?.nin}
             />
           </motion.div>
         </motion.div>

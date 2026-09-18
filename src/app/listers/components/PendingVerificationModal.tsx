@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import { buttonSecondary } from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 
 interface PendingVerificationModalProps {
   isOpen: boolean;
@@ -30,18 +32,14 @@ export default function PendingVerificationModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          {/* Backdrop with blur */}
-          <motion.div
+        <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className={`fixed inset-0 bg-black/30 backdrop-blur-sm ${overlayZ}`}
-          />
-
-          {/* Modal Content */}
+            className={`${dialogBackdrop} ${overlayZ}`}
+          >
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -52,7 +50,8 @@ export default function PendingVerificationModal({
               type: "spring",
               bounce: 0.25,
             }}
-            className={`fixed left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-8 shadow-2xl ${modalZ}`}
+            className={`${dialogCard} relative rounded-2xl p-8 ${modalZ}`}
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
             <button
@@ -141,12 +140,12 @@ export default function PendingVerificationModal({
             {/* Cancel Button */}
             <button
               onClick={onClose}
-              className="mt-3 w-full rounded-xl border border-gray-300 px-6 py-3 text-gray-700 font-semibold hover:bg-gray-50 transition-all"
+              className={`${buttonSecondary} mt-3 w-full rounded-xl px-6 py-3`}
             >
               Maybe Later
             </button>
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );

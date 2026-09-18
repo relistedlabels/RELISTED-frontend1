@@ -27,6 +27,28 @@ export const HIDDEN_NAVBAR_ROUTES = [
   "/dev",
 ];
 
+/** Routes where mobile bottom tab bar is shown (shopping experience). */
+export const MOBILE_BOTTOM_NAV_ROUTES = [
+  "/",
+  "/shop",
+  "/renters/account",
+  "/renters/orders",
+  "/renters/wallet",
+  "/style-spotlight",
+  "/how-it-works",
+  "/lister-profile",
+];
+
+export const shouldShowMobileBottomNav = (pathname: string): boolean => {
+  if (pathname.startsWith("/shop/availability")) return true;
+  for (const route of MOBILE_BOTTOM_NAV_ROUTES) {
+    if (pathname === route || pathname.startsWith(route + "/")) {
+      return true;
+    }
+  }
+  return false;
+};
+
 /**
  * Check if navbar/footer should be visible on current route
  */

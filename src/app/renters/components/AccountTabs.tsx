@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence, Variants } from "framer-motion";
+import { segmentContainer } from "@/common/ui/dashboardClasses";
 
 // Components
 import AccountProfileDetails from "./AccountProfileDetails";
@@ -119,7 +120,7 @@ const AccountTabs: React.FC = () => {
 
   return (
     <div className="font-sans">
-      <div className="relative hide-scrollbar mb-6 w-[340px] overflow-hidden sm:w-full overflow-x-auto bg-white border p-1 border-gray-200 rounded-lg">
+      <div className={`${segmentContainer} hide-scrollbar relative mb-6 w-[340px] overflow-x-auto sm:w-full`}>
         <div className="flex justify-between md:justify-between gap-3 md:gap-0 w-max md:w-full px-1 md:px-0 py-1 relative">
           {ACCOUNT_TABS.map((tab) => {
             const isActive = tab.key === activeTab;

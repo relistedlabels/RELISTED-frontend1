@@ -51,10 +51,10 @@ const UserProfile: React.FC<UserProfileProps> = ({
   avatar,
   userId,
 }) => (
-  <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200  mt-4">
+  <div className="flex justify-between items-center bg-white mt-4 p-4 border border-gray-200 rounded-xl">
     <div className="flex items-center space-x-3">
       {/* Placeholder for User Image */}
-      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+      <div className="flex justify-center items-center bg-gray-200 rounded-full w-10 h-10 overflow-hidden">
         {avatar ? (
           <img
             src={cloudinaryOptimizedImageUrl(avatar, { preset: "thumb" })}
@@ -62,28 +62,28 @@ const UserProfile: React.FC<UserProfileProps> = ({
             className="w-full h-full object-cover"
           />
         ) : (
-          <span className="text-xl text-gray-500">👤</span>
+          <span className="text-gray-500 text-xl">👤</span>
         )}
       </div>
       <div>
-        <Paragraph1 className="text-sm font-semibold text-gray-900">
+        <Paragraph1 className="font-semibold text-gray-900 text-sm">
           {name.toUpperCase()}{" "}
           {isInhouseManager(userId) && (
-            <span className=" text-gray-500">- Managed by Relisted</span>
+            <span className="text-gray-500">- Managed by Relisted</span>
           )}
         </Paragraph1>
-        <div className="flex items-center  text-yellow-500">
+        <div className="flex items-center text-yellow-500">
           <span aria-label={`${rating} star rating`}>
             {"★".repeat(Math.floor(rating))}
             {"☆".repeat(5 - Math.floor(rating))}
           </span>
-          <span className="text-gray-600 ml-1 text-[10px]">{rating}</span>
+          <span className="ml-1 text-[10px] text-gray-600">{rating}</span>
         </div>
       </div>
     </div>
     <a
       href={`/lister-profile/${userId}`}
-      className=" font-semibold text-gray-900 hover:text-gray-700"
+      className="font-semibold text-gray-900 hover:text-gray-700"
     >
       VIEW PROFILE
     </a>
@@ -182,52 +182,52 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
 
   return (
     <div className="font-sans">
-      <div className=" p-4 py-6 border border-gray-200 bg-[#FBFBFB] rounded-xl ">
+      <div className="bg-[#FBFBFB] p-4 py-6 border border-gray-200 rounded-xl">
         {/* Rental and Item Value Section */}
         <div className="space-y-4 mb-6">
-          {/* Rental Fee */}
-          <div className="flex items-center justify-between">
+          {/* Rental fee (1-day default; longer stays chosen in the panel) */}
+          <div className="flex justify-between items-center">
             <div className="flex items-center space-x-2 text-gray-700">
               <HiOutlineBuildingStorefront className="w-5 h-5" />
-              <Paragraph1 className="text-sm">Daily Rental</Paragraph1>
+              <Paragraph1 className="text-sm">Rent for</Paragraph1>
             </div>
-            <Paragraph1 className="text-lg font-bold text-gray-900">
-              ₦{product.dailyPrice.toLocaleString()}
-            </Paragraph1>
+            <div className="text-right">
+              <Paragraph1 className="font-bold text-gray-900 text-lg">
+                ₦{product.dailyPrice.toLocaleString()}
+              </Paragraph1>
+              <Paragraph1 className="text-gray-600 text-sm">1-day rental</Paragraph1>
+            </div>
           </div>
 
-          {/* Item Value */}
-          <div className="flex items-center justify-between">
+          {/* Refundable security deposit */}
+          <div className="flex justify-between items-center">
             <div className="flex items-center space-x-2 text-gray-700">
               <HiOutlineTag className="w-5 h-5" />
-              <Paragraph1 className="text-sm">Security Deposit:</Paragraph1>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Paragraph1 className="text-sm text-gray-500">
-                (Refundable)
-              </Paragraph1>
-              <Paragraph1 className="text-lg font-bold text-gray-900">
-                ₦{collateralPrice.toLocaleString()}
+              <Paragraph1 className="text-sm">
+                Refundable security deposit
               </Paragraph1>
             </div>
+            <Paragraph1 className="font-bold text-gray-900 text-lg">
+              ₦{collateralPrice.toLocaleString()}
+            </Paragraph1>
           </div>
         </div>
 
         {/* Rental Duration Selection */}
         <div className="mb-6">
-          <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
+          <Paragraph1 className="mb-2 font-medium text-gray-900 text-sm">
             Rental Duration
           </Paragraph1>
           {soldOut ? (
             <div className="flex gap-2 mb-4">
-              <Paragraph1 className="flex-1 text-sm text-gray-600 py-4 px-3 bg-gray-50 rounded-lg border border-gray-200 leading-relaxed">
+              <Paragraph1 className="flex-1 bg-gray-50 px-3 py-4 border border-gray-200 rounded-lg text-gray-600 text-sm leading-relaxed">
                 This listing is sold out and is no longer available to rent.
               </Paragraph1>
               <button
                 type="button"
                 onClick={handleFavoriteClick}
                 disabled={addFavorite.isPending || removeFavorite.isPending}
-                className="self-start p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 disabled:opacity-50 bg-white shrink-0"
+                className="self-start bg-white hover:bg-gray-50 disabled:opacity-50 p-3 border border-gray-300 rounded-lg transition duration-150 shrink-0"
                 aria-label={
                   isFavorited ? "Remove from favorites" : "Add to favorites"
                 }
@@ -240,12 +240,12 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
               </button>
             </div>
           ) : rentedOut ? (
-            <div className="mb-4 space-y-3">
-              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3">
-                <Paragraph1 className="text-sm font-semibold text-amber-950">
+            <div className="space-y-3 mb-4">
+              <div className="bg-amber-50 px-3 py-3 border border-amber-200 rounded-lg">
+                <Paragraph1 className="font-semibold text-amber-950 text-sm">
                   Currently out on rental
                 </Paragraph1>
-                <Paragraph1 className="text-sm text-amber-900/90 mt-1 leading-relaxed">
+                <Paragraph1 className="mt-1 text-amber-900/90 text-sm leading-relaxed">
                   You can&apos;t book new dates until the item is returned. Tap
                   below to hear when it&apos;s available again.
                 </Paragraph1>
@@ -262,7 +262,7 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
                       void handleNotifyWhenAvailable();
                     }}
                     disabled={subscribeNotify.isPending}
-                    className="flex w-full justify-center items-center gap-2 hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed px-4 py-3 border-2 border-gray-800 rounded-lg font-semibold text-gray-800 transition duration-150"
+                    className="flex justify-center items-center gap-2 hover:bg-gray-50 disabled:opacity-60 px-4 py-3 border-2 border-gray-800 rounded-lg w-full font-semibold text-gray-800 transition duration-150 disabled:cursor-not-allowed"
                   >
                     <Bell className="w-5 h-5 shrink-0" />
                     {notifySignedUp
@@ -277,7 +277,7 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="rounded-lg border border-blue-200 bg-blue-50 p-3"
+                        className="bg-blue-50 p-3 border border-blue-200 rounded-lg"
                       >
                         <Paragraph1 className="text-blue-900 text-sm leading-relaxed">
                           We&apos;ll email your Relisted account when this item
@@ -291,7 +291,7 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
                   type="button"
                   onClick={handleFavoriteClick}
                   disabled={addFavorite.isPending || removeFavorite.isPending}
-                  className="self-start p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 disabled:opacity-50 bg-white shrink-0"
+                  className="self-start bg-white hover:bg-gray-50 disabled:opacity-50 p-3 border border-gray-300 rounded-lg transition duration-150 shrink-0"
                   aria-label={
                     isFavorited ? "Remove from favorites" : "Add to favorites"
                   }
@@ -318,7 +318,7 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
               <button
                 onClick={handleFavoriteClick}
                 disabled={addFavorite.isPending || removeFavorite.isPending}
-                className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 disabled:opacity-50 bg-white"
+                className="bg-white hover:bg-gray-50 disabled:opacity-50 p-3 border border-gray-300 rounded-lg transition duration-150"
                 aria-label={
                   isFavorited ? "Remove from favorites" : "Add to favorites"
                 }
@@ -336,17 +336,17 @@ const RentalDetailsCard: React.FC<RentalDetailsCardProps> = ({ productId }) => {
         {/* Action Buttons */}
 
         {/* Security / Deposit Info */}
-        <div className="p-3 bg-white border border-gray-200 rounded-lg flex items-start space-x-2 mb-4">
-          {/* <TiTick className="w-5 h-5 text-green-600 mt-0.5 shrink-0" /> */}
+        <div className="flex items-start space-x-2 bg-white mb-4 p-3 border border-gray-200 rounded-lg">
+          {/* <TiTick className="mt-0.5 w-5 h-5 text-green-600 shrink-0" /> */}
           <img src="/icons/safe1.svg" alt="safe" />
-          <Paragraph1 className=" text-gray-700 leading-snug">
-            Your security deposit is held as Locked Balance and returns to
-            your Available Balance after return is approved.
+          <Paragraph1 className="text-gray-700 leading-snug">
+            Your refundable security deposit is returned to your wallet after the item is
+            returned and checked.
           </Paragraph1>
         </div>
 
         {/* Cleaning Fees Note */}
-        <Paragraph1 className=" text-center text-gray-500 mt-2 pb-2">
+        <Paragraph1 className="mt-2 pb-2 text-gray-500 text-center">
           Delivery and cleaning fees calculated at checkout
         </Paragraph1>
       </div>

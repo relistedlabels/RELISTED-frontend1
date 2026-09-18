@@ -1,46 +1,38 @@
 "use client";
 
-import React from "react";
 import { motion } from "framer-motion";
-import { Header1, SpecialH1 } from "@/common/ui/Text";
+import { Header1, FashionLead } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
 import HeroVideo from "./HeroVideo";
 import { useUserStore } from "@/store/useUserStore";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useListerProfile } from "@/lib/queries/listers/useListerProfile";
 
+const RENT_SHOP_HREF = "/shop?listingType=RENTAL,RENT_OR_RESALE";
+const BUY_SHOP_HREF = "/shop?listingType=RESALE,RENT_OR_RESALE";
+
 export default function EndlessStyleHero() {
   const token = useUserStore((s) => s.token);
   const role = useUserStore((s) => s.role);
-  const setUser = useUserStore((s) => s.setUser);
   const { data: user } = useMe();
-  const { data: listerProfile } = useListerProfile();
+  const { data: listerProfile } = useListerProfile(role === "LISTER");
 
-  // Handle List Items click - set role to LISTER if needed
-  const handleListItemsClick = () => {
+  const handleListerClick = () => {
     if (!token || !user) {
-      // Not logged in, navigate to create account
       window.location.href = "/auth/create-account";
       return;
     }
-
-    // If user is a lister with completed profile, go to dashboard
     if (role === "LISTER" && listerProfile) {
       window.location.href = "/listers/dashboard";
       return;
     }
-
-    // Navigate to profile-setup with returnUrl to indicate upgrade intent
-    // The backend will handle role validation and upgrade if needed
     window.location.href = "/auth/profile-setup?upgrade=lister";
   };
 
   return (
-    <section className="relative bg-black w-full h-screen overflow-hidden">
-      {/* Background Video */}
+    <section className="relative bg-black w-full min-h-[100dvh] min-h-[100svh] xl:min-h-screen overflow-hidden">
       <HeroVideo />
 
-      {/* Dark Overlay */}
       <motion.div
         className="absolute inset-0 bg-black/60"
         initial={{ opacity: 0 }}
@@ -48,14 +40,14 @@ export default function EndlessStyleHero() {
         transition={{ duration: 1 }}
       />
 
-      {/* Center Content */}
       <motion.div
-        className="absolute inset-0 flex flex-col justify-center items-center px-6 pt-10 text-white text-center"
+        className="absolute inset-0 flex flex-col justify-center items-center px-6 pt-16 pb-24 text-white text-center"
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1.1, ease: "easeOut" }}
       >
         <motion.div
+          className="max-w-4xl"
           initial="hidden"
           animate="visible"
           variants={{
@@ -63,32 +55,34 @@ export default function EndlessStyleHero() {
             visible: { transition: { staggerChildren: 0.25 } },
           }}
         >
-          {/* Title */}
           <motion.div
+            className="mb-6 sm:mb-8"
             variants={{
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0 },
             }}
             transition={{ duration: 0.8 }}
           >
-            <Header1>Endless Style</Header1>
+            <Header1 className="!text-[52px] sm:!text-[100px] !leading-[1.08] sm:!leading-[1.05] pb-1">
+              Your wardrobe just got bigger.
+            </Header1>
           </motion.div>
 
-          {/* Sub Text */}
           <motion.div
-            className="-mt-2 sm:-mt-1 mb-4 text-[58px] md:text-[58px] italic"
+            className="mb-6 sm:mb-8 max-w-lg mx-auto"
             variants={{
-              hidden: { opacity: 0, y: 20, scale: 0.8 },
-              visible: { opacity: 1, y: 0, scale: 1 },
+              hidden: { opacity: 0, y: 20 },
+              visible: { opacity: 1, y: 0 },
             }}
-            transition={{ duration: 0.9, ease: "easeOut" }}
+            transition={{ duration: 0.9 }}
           >
-            <SpecialH1>short plans, long compliments</SpecialH1>
+            <FashionLead className="text-white/90 text-base sm:text-lg xl:text-xl leading-relaxed tracking-wide">
+              Rent or shop pre-loved fashion from wardrobes you love.
+            </FashionLead>
           </motion.div>
 
-          {/* Buttons */}
           <motion.div
-            className="flex sm:flex-row flex-col justify-center items-center gap-4"
+            className="flex flex-row justify-center items-center gap-3 sm:gap-4 w-full max-w-sm mx-auto origin-center xl:scale-[1.2]"
             variants={{
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0 },
@@ -96,21 +90,37 @@ export default function EndlessStyleHero() {
             transition={{ duration: 1 }}
           >
             <Button
-              text="Find Your Next Fit"
+              text="RENT"
               isLink={true}
-              href="/shop"
+              href={RENT_SHOP_HREF}
               backgroundColor="bg-white"
               color="text-black hover:text-white"
               border="border border-white"
             />
-
             <Button
-              text="List Items"
-              onClick={handleListItemsClick}
+              text="SHOP RESALE"
+              isLink={true}
+              href={BUY_SHOP_HREF}
               backgroundColor="bg-transparent"
               border="border border-white"
               color="text-white"
             />
+          </motion.div>
+
+          <motion.div
+            className="mt-5"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: { opacity: 1 },
+            }}
+          >
+            <button
+              type="button"
+              onClick={handleListerClick}
+              className="text-sm text-white/80 underline underline-offset-4 hover:text-white transition-colors"
+            >
+              Want to list your items?
+            </button>
           </motion.div>
         </motion.div>
       </motion.div>

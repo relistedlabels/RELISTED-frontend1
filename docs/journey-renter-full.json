@@ -1,0 +1,1402 @@
+[
+  {
+    "label": "A. Signed in as renter@gmail.com",
+    "url": "http://localhost:3000/onboarding/renter",
+    "excerpt": "Skip tour STEP 1 OF 6 Welcome to RELISTED Rent or buy from trusted listers. Rent for the moment. Buy what you love. Continue",
+    "buttons": [
+      {
+        "tag": "button",
+        "text": "Skip tour",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Continue",
+        "href": ""
+      }
+    ]
+  },
+  {
+    "label": "B. Product detail (logged in)",
+    "url": "http://localhost:3000/shop/product-details/295fe193-b867-43ce-92f6-e7405eb0520b",
+    "excerpt": "Shop Style Spotlight How it works 0 3 K King o Home Shop Product detail 1 of 2 new brand 2 Tailored Wide-Leg Trousers 180 White / 6-UK ★★★★☆ 4.5 (0 Reviews) White Size 6-UK Like New Size Guide Rent Buy Prefer to own it? Switch to Resale. Daily Rental ₦105 Security Deposit: (Refundable) ₦80 Rental Duration Rent now Your security deposit is held as Locked Balance and returns to your Available Balance after return is approved. Delivery and cleaning fees calculated at checkout 👤 KING LISTER ★★★★☆ 4.5 VIEW PROFILE PRODUCT DETAILS Elegant tailored wide-leg trousers in White. Size 6-UK. Perfect for events and special occasions. DESIGNER: new brand 2 COMPOSITION: Cotton MEASUREMENTS: 6-UK COLOR: White PRODUCT CARE PROFESSIONAL CLEANING INCLUDED: We handle all cleaning before and after your rental. WHILE WEARING: • Avoid contact with makeup and oils • Handle delicate beadwork with care • Avoid sitting on rough surfaces REVIEWS Failed to load reviews. DELIVERY & RETURN DELIVERY: Managed by our delivery partners Delivery timelines depend on location and logistics schedules Nationwide coverage available RETURNS: Return through our delivery partner by the rental end date Vendor verifies item condition upon return Collateral released if no damage is identified Late returns: 10% of collateral deducted per day Professional dry cleaning is included in the rental cost and arranged by the vendor after return. YOU MIGHT ALSO LIKE RENTED BRAND rental Item Size: M Rent from ₦10 RRP: ₦100 brand Statement Jumpsuit 178 Size: L Rent from ₦355 Buy ₦3,140 RRP: ₦10,790 brand Silk Evening Gown 175 Size: 12-UK Rent from ₦280 Buy ₦2,240 RRP: ₦9,740 brand Embellished Crop Top 172 Size: 6-UK Rent from ₦205 Buy ₦1,840 RRP: ₦9,190 brand Beaded Cocktail Dress 169 Size: M Rent from ₦130 Buy ₦1,440 RRP: ₦8,640 brand Structured Blazer 166 Size: 10-UK Rent from ₦355 Buy ₦2,940 RRP: ₦9,990 brand Linen Co-ord Set 163 Size: 4-UK Buy ₦2,540 RRP: ₦9,440 brand Tailored Wide-Leg Trousers 160 Size: S Rent from ₦205 Buy ₦1,640 RRP: ₦8,390 brand Pleated Midi Skirt 157 Size: 8-UK Buy ₦1,240 RRP: ₦7,840 brand Velvet Mini Dress 154 Size: L Buy ₦3,240 RRP: ₦9,690 brand Satin Wrap Dress 151 Size: 12-UK Rent from ₦280 Buy ₦2,340 RRP: ₦8,640 brand Statement Jumpsuit 148 Size: 6-UK Rent from ₦205 Buy ₦1,940 RRP: ₦8,090 brand Silk Evening Gown 145 Size: M Rent from ₦130 Buy ₦1,040 RRP: ₦7,040 brand Embellished Crop ",
+    "buttons": [
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop?title=Shop&description=Browse+all+collections"
+      },
+      {
+        "tag": "a",
+        "text": "Style Spotlight",
+        "href": "/style-spotlight"
+      },
+      {
+        "tag": "a",
+        "text": "How it works",
+        "href": "/how-it-works"
+      },
+      {
+        "tag": "a",
+        "text": "",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/renters/favorites"
+      },
+      {
+        "tag": "a",
+        "text": "3",
+        "href": "/shop/cart"
+      },
+      {
+        "tag": "button",
+        "text": "KKing o",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop"
+      },
+      {
+        "tag": "button",
+        "text": "Size Guide",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Rent",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Buy",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Rent now",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "VIEW PROFILE",
+        "href": "/lister-profile/57f34818-0499-429f-9e6f-f0db2f61fc1a"
+      },
+      {
+        "tag": "button",
+        "text": "PRODUCT DETAILS",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "PRODUCT CARE",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "REVIEWS",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "DELIVERY & RETURN",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "About",
+        "href": "/about"
+      },
+      {
+        "tag": "a",
+        "text": "Contact",
+        "href": "/contact-us"
+      },
+      {
+        "tag": "a",
+        "text": "Privacy Policy",
+        "href": "/privacy-policy"
+      },
+      {
+        "tag": "a",
+        "text": "Terms & Conditions",
+        "href": "/terms-and-conditions"
+      },
+      {
+        "tag": "a",
+        "text": "Browse all",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "All Listers",
+        "href": "/listers-marketplace"
+      },
+      {
+        "tag": "a",
+        "text": "Support",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Support%20Request"
+      },
+      {
+        "tag": "a",
+        "text": "Partnerships",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Partnership%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Press",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Press%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Careers",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Career%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Instagram",
+        "href": "https://www.instagram.com/relistedlabels?igsh=ZDZybGdwaGY5YWs5"
+      },
+      {
+        "tag": "a",
+        "text": "TikTok",
+        "href": "https://www.tiktok.com/@relistedlabels?_r=1&_t=ZS-94Ux8kvQOwf"
+      },
+      {
+        "tag": "button",
+        "text": "SUBSCRIBE",
+        "href": ""
+      }
+    ]
+  },
+  {
+    "label": "C. Choose rental period panel",
+    "url": "http://localhost:3000/shop/product-details/295fe193-b867-43ce-92f6-e7405eb0520b",
+    "excerpt": "Shop Style Spotlight How it works 0 3 K King o Home Shop Product detail 1 of 2 new brand 2 Tailored Wide-Leg Trousers 180 White / 6-UK ★★★★☆ 4.5 (0 Reviews) White Size 6-UK Like New Size Guide Rent Buy Prefer to own it? Switch to Resale. Daily Rental ₦105 Security Deposit: (Refundable) ₦80 Rental Duration Rent now CHOOSE RENTAL PERIOD RENTAL DURATION 1 Day ₦105 2 Days ₦210 3 Days ₦315 Custom ₦315 September 2026 SUN MON TUE WED THU FRI SAT 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 Selected range Unavailable Book drop-off & pickup DELIVERY TO YOU Sat, Sep 12 9:42 AM – 10:42 AM WAT Earliest delivery PICKUP FROM YOU Tue, Sep 15 8:00 AM – 9:00 AM WAT Earliest delivery CHANGE THEM ANYTIME BEFORE CHECKOUT Check Availability Shop More Send request Your security deposit is held as Locked Balance and returns to your Available Balance after return is approved. Delivery and cleaning fees calculated at checkout 👤 KING LISTER ★★★★☆ 4.5 VIEW PROFILE PRODUCT DETAILS Elegant tailored wide-leg trousers in White. Size 6-UK. Perfect for events and special occasions. DESIGNER: new brand 2 COMPOSITION: Cotton MEASUREMENTS: 6-UK COLOR: White PRODUCT CARE PROFESSIONAL CLEANING INCLUDED: We handle all cleaning before and after your rental. WHILE WEARING: • Avoid contact with makeup and oils • Handle delicate beadwork with care • Avoid sitting on rough surfaces REVIEWS Failed to load reviews. DELIVERY & RETURN DELIVERY: Managed by our delivery partners Delivery timelines depend on location and logistics schedules Nationwide coverage available RETURNS: Return through our delivery partner by the rental end date Vendor verifies item condition upon return Collateral released if no damage is identified Late returns: 10% of collateral deducted per day Professional dry cleaning is included in the rental cost and arranged by the vendor after return. YOU MIGHT ALSO LIKE RENTED BRAND rental Item Size: M Rent from ₦10 RRP: ₦100 brand Statement Jumpsuit 178 Size: L Rent from ₦355 Buy ₦3,140 RRP: ₦10,790 brand Silk Evening Gown 175 Size: 12-UK Rent from ₦280 Buy ₦2,240 RRP: ₦9,740 brand Embellished Crop Top 172 Size: 6-UK Rent from ₦205 Buy ₦1,840 RRP: ₦9,190 brand Beaded Cocktail Dress 169 Size: M Rent from ₦130 Buy ₦1,440 RRP: ₦8,640 brand Structured Blazer 166 Size: 10-UK Rent from ₦355 Buy ₦2,940 RRP: ₦9,990 brand Linen Co-ord Set 163 Size: 4-UK Buy ₦2,",
+    "buttons": [
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop?title=Shop&description=Browse+all+collections"
+      },
+      {
+        "tag": "a",
+        "text": "Style Spotlight",
+        "href": "/style-spotlight"
+      },
+      {
+        "tag": "a",
+        "text": "How it works",
+        "href": "/how-it-works"
+      },
+      {
+        "tag": "a",
+        "text": "",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/renters/favorites"
+      },
+      {
+        "tag": "a",
+        "text": "3",
+        "href": "/shop/cart"
+      },
+      {
+        "tag": "button",
+        "text": "KKing o",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop"
+      },
+      {
+        "tag": "button",
+        "text": "Size Guide",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Rent",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Buy",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Rent now",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "1 Day ₦105",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "2 Days ₦210",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "3 Days ₦315",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Custom ₦315",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "1",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "2",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "3",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "4",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "5",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "6",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "7",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "8",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "9",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "10",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "11",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "12",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "13",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "14",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "15",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "16",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "17",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "18",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "19",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "20",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "21",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "22",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "23",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "24",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "25",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "26",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "27",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "28",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "29",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "30",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Book drop-off & pickup",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Check Availability",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Shop More",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Send request",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "VIEW PROFILE",
+        "href": "/lister-profile/57f34818-0499-429f-9e6f-f0db2f61fc1a"
+      },
+      {
+        "tag": "button",
+        "text": "PRODUCT DETAILS",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "PRODUCT CARE",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "REVIEWS",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "DELIVERY & RETURN",
+        "href": ""
+      }
+    ]
+  },
+  {
+    "label": "D. After Check Availability",
+    "url": "http://localhost:3000/shop/product-details/295fe193-b867-43ce-92f6-e7405eb0520b",
+    "excerpt": "Shop Style Spotlight How it works 0 3 K King o Home Shop Product detail 1 of 2 new brand 2 Tailored Wide-Leg Trousers 180 White / 6-UK ★★★★☆ 4.5 (0 Reviews) White Size 6-UK Like New Size Guide Rent Buy Prefer to own it? Switch to Resale. Daily Rental ₦105 Security Deposit: (Refundable) ₦80 Rental Duration Rent now CHOOSE RENTAL PERIOD RENTAL DURATION 1 Day ₦105 2 Days ₦210 3 Days ₦315 Custom ₦315 September 2026 SUN MON TUE WED THU FRI SAT 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 Selected range Unavailable Book drop-off & pickup DELIVERY TO YOU Sat, Sep 12 9:42 AM – 10:42 AM WAT Earliest delivery PICKUP FROM YOU Tue, Sep 15 8:00 AM – 9:00 AM WAT Earliest delivery CHANGE THEM ANYTIME BEFORE CHECKOUT Check Availability Shop More Send request Your security deposit is held as Locked Balance and returns to your Available Balance after return is approved. Delivery and cleaning fees calculated at checkout 👤 KING LISTER ★★★★☆ 4.5 VIEW PROFILE PRODUCT DETAILS Elegant tailored wide-leg trousers in White. Size 6-UK. Perfect for events and special occasions. DESIGNER: new brand 2 COMPOSITION: Cotton MEASUREMENTS: 6-UK COLOR: White PRODUCT CARE PROFESSIONAL CLEANING INCLUDED: We handle all cleaning before and after your rental. WHILE WEARING: • Avoid contact with makeup and oils • Handle delicate beadwork with care • Avoid sitting on rough surfaces REVIEWS Failed to load reviews. DELIVERY & RETURN DELIVERY: Managed by our delivery partners Delivery timelines depend on location and logistics schedules Nationwide coverage available RETURNS: Return through our delivery partner by the rental end date Vendor verifies item condition upon return Collateral released if no damage is identified Late returns: 10% of collateral deducted per day Professional dry cleaning is included in the rental cost and arranged by the vendor after return. YOU MIGHT ALSO LIKE RENTED BRAND rental Item Size: M Rent from ₦10 RRP: ₦100 brand Statement Jumpsuit 178 Size: L Rent from ₦355 Buy ₦3,140 RRP: ₦10,790 brand Silk Evening Gown 175 Size: 12-UK Rent from ₦280 Buy ₦2,240 RRP: ₦9,740 brand Embellished Crop Top 172 Size: 6-UK Rent from ₦205 Buy ₦1,840 RRP: ₦9,190 brand Beaded Cocktail Dress 169 Size: M Rent from ₦130 Buy ₦1,440 RRP: ₦8,640 brand Structured Blazer 166 Size: 10-UK Rent from ₦355 Buy ₦2,940 RRP: ₦9,990 brand Linen Co-ord Set 163 Size: 4-UK Buy ₦2,",
+    "buttons": [
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop?title=Shop&description=Browse+all+collections"
+      },
+      {
+        "tag": "a",
+        "text": "Style Spotlight",
+        "href": "/style-spotlight"
+      },
+      {
+        "tag": "a",
+        "text": "How it works",
+        "href": "/how-it-works"
+      },
+      {
+        "tag": "a",
+        "text": "",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/renters/favorites"
+      },
+      {
+        "tag": "a",
+        "text": "3",
+        "href": "/shop/cart"
+      },
+      {
+        "tag": "button",
+        "text": "KKing o",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop"
+      },
+      {
+        "tag": "button",
+        "text": "Size Guide",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Rent",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Buy",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Rent now",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "1 Day ₦105",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "2 Days ₦210",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "3 Days ₦315",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Custom ₦315",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "1",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "2",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "3",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "4",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "5",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "6",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "7",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "8",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "9",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "10",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "11",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "12",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "13",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "14",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "15",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "16",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "17",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "18",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "19",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "20",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "21",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "22",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "23",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "24",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "25",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "26",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "27",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "28",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "29",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "30",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Book drop-off & pickup",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Check Availability",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Shop More",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Send request",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "VIEW PROFILE",
+        "href": "/lister-profile/57f34818-0499-429f-9e6f-f0db2f61fc1a"
+      },
+      {
+        "tag": "button",
+        "text": "PRODUCT DETAILS",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "PRODUCT CARE",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "REVIEWS",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "DELIVERY & RETURN",
+        "href": ""
+      }
+    ]
+  },
+  {
+    "label": "E. DB lister approve",
+    "requestId": "1341849f-1e5a-4bae-a273-92b170453478"
+  },
+  {
+    "label": "F. Cart after approval",
+    "url": "http://localhost:3000/shop/cart",
+    "excerpt": "Shop Style Spotlight How it works 0 3 K King o Home Shop Your Cart YOUR CART Product Name Unit Price Deposit Subtotal Status VELVET MINI DRESS 30 Size: S Color: Black Duration: 3 Days ₦205 ₦80 ₦615 ⚠ Approval expired Request approval again SILK EVENING GOWN 21 Size: S Color: Black Duration: 3 Days ₦280 ₦80 ₦840 ⚠ Approval expired Request approval again TAILORED WIDE-LEG TROUSERS 180 Size: S Color: Black Duration: 3 Days ₦105 ₦80 ₦315 ✓ Approved ℹ Items require curator approval before checkout. If expired request again. CHECKOUT SUMMARY Totals and checkout apply to approved items only. SUMMARY From King lister TAILORED WIDE-LEG TROUSERS 180 Duration: 3 Days Approved ₦315 Subtotal: ₦315 Approved total ₦315 Sum of approved rental items above, before shipping or final taxes if any. Proceed to Checkout Your security deposit is held as Locked Balance and returns to your Available Balance after return is approved. NAVIGATION Home About Contact Privacy Policy Terms & Conditions SHOP Browse all All Listers SUPPORT & CONTACT Support Partnerships Press Careers SOCIAL Instagram TikTok SUBSCRIBE TO NEWSLETTER SUBSCRIBE Copyright © 2026, RELISTED Labels",
+    "buttons": [
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop?title=Shop&description=Browse+all+collections"
+      },
+      {
+        "tag": "a",
+        "text": "Style Spotlight",
+        "href": "/style-spotlight"
+      },
+      {
+        "tag": "a",
+        "text": "How it works",
+        "href": "/how-it-works"
+      },
+      {
+        "tag": "a",
+        "text": "",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/renters/favorites"
+      },
+      {
+        "tag": "a",
+        "text": "3",
+        "href": "/shop/cart"
+      },
+      {
+        "tag": "button",
+        "text": "KKing o",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop"
+      },
+      {
+        "tag": "button",
+        "text": "Request approval again",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Request approval again",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "Proceed to Checkout",
+        "href": "/shop/cart/checkout"
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "About",
+        "href": "/about"
+      },
+      {
+        "tag": "a",
+        "text": "Contact",
+        "href": "/contact-us"
+      },
+      {
+        "tag": "a",
+        "text": "Privacy Policy",
+        "href": "/privacy-policy"
+      },
+      {
+        "tag": "a",
+        "text": "Terms & Conditions",
+        "href": "/terms-and-conditions"
+      },
+      {
+        "tag": "a",
+        "text": "Browse all",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "All Listers",
+        "href": "/listers-marketplace"
+      },
+      {
+        "tag": "a",
+        "text": "Support",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Support%20Request"
+      },
+      {
+        "tag": "a",
+        "text": "Partnerships",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Partnership%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Press",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Press%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Careers",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Career%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Instagram",
+        "href": "https://www.instagram.com/relistedlabels?igsh=ZDZybGdwaGY5YWs5"
+      },
+      {
+        "tag": "a",
+        "text": "TikTok",
+        "href": "https://www.tiktok.com/@relistedlabels?_r=1&_t=ZS-94Ux8kvQOwf"
+      },
+      {
+        "tag": "button",
+        "text": "SUBSCRIBE",
+        "href": ""
+      }
+    ]
+  },
+  {
+    "label": "G. Checkout loaded",
+    "url": "http://localhost:3000/shop/cart/checkout",
+    "excerpt": "Shop Style Spotlight How it works 0 3 K King o Home Shop Your Cart Checkout CHECKOUT These items are reserved for 14:49 — complete payment to secure these items CONTACT King o renter@gmail.com +234802424242444 DELIVERY ADDRESS 1 adebiyi street off aina ajob, Ogba, Lagos, Nigeria Update Same as billing address DELIVERY SHIPPING Courier from the lister to your delivery address. Bubble Express (via Shipbubble) Same-day Same-day courier pickup via Shipbubble Shipping ₦591 Richard Express (via Shipbubble) Same-day Same-day courier pickup via Shipbubble Shipping ₦818 Chowdeck (via TShip) Same-day Shipping partner Orders placed after 11:00am WAT (Lagos time) may be delivered the next day. Shipping ₦5,160 RETURN PICKUP Share where the courier should collect items at rental wrap-up. We'll lock this in alongside your pickup window. Use delivery address Custom pickup spot 1 adebiyi street off aina ajob, Ogba RETURN SHIPPING Courier from your return pickup location back to the lister. Options depend on that address. Bubble Express (via Shipbubble) Same-day Same-day courier pickup via Shipbubble Shipping ₦591 Richard Express (via Shipbubble) Same-day Same-day courier pickup via Shipbubble Shipping ₦818 GIG Logistics (via TShip) Shipping partner Shipping ₦3,844 Chowdeck (via TShip) Same-day Shipping partner Orders placed after 11:00am WAT (Lagos time) may be delivered the next day. Shipping ₦5,590 DISPATCH WINDOWS Windows below match your checkout quote (each rental schedule may have its own outbound and return slot). Order from King lister · Tailored Wide-Leg Trousers 180 Ships from Ikoyi, Lagos RENTAL DELIVERY Sat, Sep 12, 9:39 AM – 10:39 AM WAT RETURN PICKUP Tue, Sep 15, 8:00 AM – 9:00 AM WAT PAYMENT Available Balance ₦49,712,712 Fund Wallet Return pickup details Using your delivery address Courier collects from the same location as your drop-off. ORDER SUMMARY From - King lister TAILORED WIDE-LEG TROUSERS 180 Duration: 3 Days ₦315 Rental Amount ₦315 Security Deposit ₦80 Cleaning Fees ₦4,000 Delivery fee ₦591 Return fee ₦591 Subtotal: ₦5,577 PAYMENT BREAKDOWN Rental Amount ₦315 Security Deposit ₦80 Cleaning Fees ₦4,000 Delivery fee ₦591 Return fee ₦591 Service Charge ₦32 VAT ₦24 Grand Total: ₦5,633 Delivery shipping is chosen per seller location; return shipping is chosen per rental return. Complete Order Your security deposit is held as Locked Balance and returns to y",
+    "buttons": [
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop?title=Shop&description=Browse+all+collections"
+      },
+      {
+        "tag": "a",
+        "text": "Style Spotlight",
+        "href": "/style-spotlight"
+      },
+      {
+        "tag": "a",
+        "text": "How it works",
+        "href": "/how-it-works"
+      },
+      {
+        "tag": "a",
+        "text": "",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/renters/favorites"
+      },
+      {
+        "tag": "a",
+        "text": "3",
+        "href": "/shop/cart"
+      },
+      {
+        "tag": "button",
+        "text": "KKing o",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "Your Cart",
+        "href": "/shop/cart"
+      },
+      {
+        "tag": "button",
+        "text": "Update",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Use delivery address",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Custom pickup spot",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Fund Wallet",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Complete Order",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "About",
+        "href": "/about"
+      },
+      {
+        "tag": "a",
+        "text": "Contact",
+        "href": "/contact-us"
+      },
+      {
+        "tag": "a",
+        "text": "Privacy Policy",
+        "href": "/privacy-policy"
+      },
+      {
+        "tag": "a",
+        "text": "Terms & Conditions",
+        "href": "/terms-and-conditions"
+      },
+      {
+        "tag": "a",
+        "text": "Browse all",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "All Listers",
+        "href": "/listers-marketplace"
+      },
+      {
+        "tag": "a",
+        "text": "Support",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Support%20Request"
+      },
+      {
+        "tag": "a",
+        "text": "Partnerships",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Partnership%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Press",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Press%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Careers",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Career%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Instagram",
+        "href": "https://www.instagram.com/relistedlabels?igsh=ZDZybGdwaGY5YWs5"
+      },
+      {
+        "tag": "a",
+        "text": "TikTok",
+        "href": "https://www.tiktok.com/@relistedlabels?_r=1&_t=ZS-94Ux8kvQOwf"
+      },
+      {
+        "tag": "button",
+        "text": "SUBSCRIBE",
+        "href": ""
+      }
+    ]
+  },
+  {
+    "label": "H. After Complete Order",
+    "url": "http://localhost:3000/shop/cart/checkout",
+    "excerpt": "Shop Style Spotlight How it works 0 3 K King o Home Shop Your Cart Checkout CHECKOUT These items are reserved for 14:39 — complete payment to secure these items CONTACT King o renter@gmail.com +234802424242444 DELIVERY ADDRESS 1 adebiyi street off aina ajob, Ogba, Lagos, Nigeria Update Same as billing address DELIVERY SHIPPING Courier from the lister to your delivery address. Bubble Express (via Shipbubble) Same-day Same-day courier pickup via Shipbubble Shipping ₦591 Richard Express (via Shipbubble) Same-day Same-day courier pickup via Shipbubble Shipping ₦818 Chowdeck (via TShip) Same-day Shipping partner Orders placed after 11:00am WAT (Lagos time) may be delivered the next day. Shipping ₦5,160 RETURN PICKUP Share where the courier should collect items at rental wrap-up. We'll lock this in alongside your pickup window. Use delivery address Custom pickup spot 1 adebiyi street off aina ajob, Ogba RETURN SHIPPING Courier from your return pickup location back to the lister. Options depend on that address. Bubble Express (via Shipbubble) Same-day Same-day courier pickup via Shipbubble Shipping ₦591 Richard Express (via Shipbubble) Same-day Same-day courier pickup via Shipbubble Shipping ₦818 GIG Logistics (via TShip) Shipping partner Shipping ₦3,844 Chowdeck (via TShip) Same-day Shipping partner Orders placed after 11:00am WAT (Lagos time) may be delivered the next day. Shipping ₦5,590 DISPATCH WINDOWS Windows below match your checkout quote (each rental schedule may have its own outbound and return slot). Order from King lister · Tailored Wide-Leg Trousers 180 Ships from Ikoyi, Lagos RENTAL DELIVERY Sat, Sep 12, 9:39 AM – 10:39 AM WAT RETURN PICKUP Tue, Sep 15, 8:00 AM – 9:00 AM WAT PAYMENT Available Balance ₦49,712,712 Fund Wallet Return pickup details Using your delivery address Courier collects from the same location as your drop-off. ORDER SUMMARY From - King lister TAILORED WIDE-LEG TROUSERS 180 Duration: 3 Days ₦315 Rental Amount ₦315 Security Deposit ₦80 Cleaning Fees ₦4,000 Delivery fee ₦591 Return fee ₦591 Subtotal: ₦5,577 PAYMENT BREAKDOWN Rental Amount ₦315 Security Deposit ₦80 Cleaning Fees ₦4,000 Delivery fee ₦591 Return fee ₦591 Service Charge ₦32 VAT ₦24 Grand Total: ₦5,633 Delivery shipping is chosen per seller location; return shipping is chosen per rental return. Processing... Your security deposit is held as Locked Balance and returns to yo",
+    "buttons": [
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop?title=Shop&description=Browse+all+collections"
+      },
+      {
+        "tag": "a",
+        "text": "Style Spotlight",
+        "href": "/style-spotlight"
+      },
+      {
+        "tag": "a",
+        "text": "How it works",
+        "href": "/how-it-works"
+      },
+      {
+        "tag": "a",
+        "text": "",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/renters/favorites"
+      },
+      {
+        "tag": "a",
+        "text": "3",
+        "href": "/shop/cart"
+      },
+      {
+        "tag": "button",
+        "text": "KKing o",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "Your Cart",
+        "href": "/shop/cart"
+      },
+      {
+        "tag": "button",
+        "text": "Update",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Use delivery address",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Custom pickup spot",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Fund Wallet",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Processing...",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "About",
+        "href": "/about"
+      },
+      {
+        "tag": "a",
+        "text": "Contact",
+        "href": "/contact-us"
+      },
+      {
+        "tag": "a",
+        "text": "Privacy Policy",
+        "href": "/privacy-policy"
+      },
+      {
+        "tag": "a",
+        "text": "Terms & Conditions",
+        "href": "/terms-and-conditions"
+      },
+      {
+        "tag": "a",
+        "text": "Browse all",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "All Listers",
+        "href": "/listers-marketplace"
+      },
+      {
+        "tag": "a",
+        "text": "Support",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Support%20Request"
+      },
+      {
+        "tag": "a",
+        "text": "Partnerships",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Partnership%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Press",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Press%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Careers",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Career%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Instagram",
+        "href": "https://www.instagram.com/relistedlabels?igsh=ZDZybGdwaGY5YWs5"
+      },
+      {
+        "tag": "a",
+        "text": "TikTok",
+        "href": "https://www.tiktok.com/@relistedlabels?_r=1&_t=ZS-94Ux8kvQOwf"
+      },
+      {
+        "tag": "button",
+        "text": "SUBSCRIBE",
+        "href": ""
+      }
+    ]
+  },
+  {
+    "label": "I. My orders",
+    "url": "http://localhost:3000/renters/orders",
+    "excerpt": "Shop Style Spotlight How it works 0 2 K King o Home Dashboard Orders My Orders Wallet Favourites My Disputes My Account Log out My Orders Ongoing Completed ORD-1789202566757-560 Confirmed 1 item(s) Unknown 9/12/2026 Total Amount ₦5,633 View details ORD-TEST-MANUAL-FUTURE-004 Confirmed 1 item(s) Unknown 9/10/2026 Total Amount ₦650,000 View details ORD-TEST-MANUAL-FUTURE-003 Confirmed 1 item(s) Unknown 9/9/2026 Total Amount ₦650,000 View details ORD-TEST-MANUAL-FUTURE-002 Confirmed 1 item(s) Unknown 9/9/2026 Total Amount ₦650,000 View details ORD-TEST-MANUAL-FUTURE-001 Confirmed 1 item(s) Unknown 9/9/2026 Total Amount ₦650,000 View details ORD-TEST-SWITCH-MANUAL-001 Confirmed 1 item(s) Unknown 9/5/2026 Total Amount ₦650,000 View details ORD-1782389116077-314 Return Due 1 item(s) Unknown 6/25/2026 Total Amount ₦5,725 View details NAVIGATION Home About Contact Privacy Policy Terms & Conditions SHOP Browse all All Listers SUPPORT & CONTACT Support Partnerships Press Careers SOCIAL Instagram TikTok SUBSCRIBE TO NEWSLETTER SUBSCRIBE Copyright © 2026, RELISTED Labels",
+    "buttons": [
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop?title=Shop&description=Browse+all+collections"
+      },
+      {
+        "tag": "a",
+        "text": "Style Spotlight",
+        "href": "/style-spotlight"
+      },
+      {
+        "tag": "a",
+        "text": "How it works",
+        "href": "/how-it-works"
+      },
+      {
+        "tag": "a",
+        "text": "",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/renters/favorites"
+      },
+      {
+        "tag": "a",
+        "text": "2",
+        "href": "/shop/cart"
+      },
+      {
+        "tag": "button",
+        "text": "KKing o",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "Dashboard",
+        "href": "/renters/orders"
+      },
+      {
+        "tag": "a",
+        "text": "My Orders",
+        "href": "/renters/orders"
+      },
+      {
+        "tag": "a",
+        "text": "Wallet",
+        "href": "/renters/wallet"
+      },
+      {
+        "tag": "a",
+        "text": "Favourites",
+        "href": "/renters/favorites"
+      },
+      {
+        "tag": "a",
+        "text": "My Disputes",
+        "href": "/renters/dispute"
+      },
+      {
+        "tag": "a",
+        "text": "My Account",
+        "href": "/renters/account"
+      },
+      {
+        "tag": "button",
+        "text": "Log out",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Ongoing",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Completed",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "View details",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "View details",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "View details",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "View details",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "View details",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "View details",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "View details",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "About",
+        "href": "/about"
+      },
+      {
+        "tag": "a",
+        "text": "Contact",
+        "href": "/contact-us"
+      },
+      {
+        "tag": "a",
+        "text": "Privacy Policy",
+        "href": "/privacy-policy"
+      },
+      {
+        "tag": "a",
+        "text": "Terms & Conditions",
+        "href": "/terms-and-conditions"
+      },
+      {
+        "tag": "a",
+        "text": "Browse all",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "All Listers",
+        "href": "/listers-marketplace"
+      },
+      {
+        "tag": "a",
+        "text": "Support",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Support%20Request"
+      },
+      {
+        "tag": "a",
+        "text": "Partnerships",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Partnership%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Press",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Press%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Careers",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Career%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Instagram",
+        "href": "https://www.instagram.com/relistedlabels?igsh=ZDZybGdwaGY5YWs5"
+      },
+      {
+        "tag": "a",
+        "text": "TikTok",
+        "href": "https://www.tiktok.com/@relistedlabels?_r=1&_t=ZS-94Ux8kvQOwf"
+      },
+      {
+        "tag": "button",
+        "text": "SUBSCRIBE",
+        "href": ""
+      }
+    ]
+  }
+]

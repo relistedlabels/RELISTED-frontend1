@@ -73,7 +73,7 @@ export default function HeroVideo() {
       poster="/videos/hero1-poster.jpg"
       preload={srcReady ? "metadata" : "none"}
       className={`
-        absolute inset-0 w-full h-full object-cover sm:object-contain
+        absolute inset-0 w-full h-full object-cover xl:object-contain
         transition-opacity duration-1000 ease-in-out
         ${fade ? "opacity-0" : "opacity-100"}
       `}
