@@ -13,6 +13,8 @@ import {
 import { formatLagosTime } from "@/lib/checkout/dispatchWindows";
 import { rentersApi } from "@/lib/api/renters";
 import { toast } from "sonner";
+import { buttonPrimary, buttonPrimaryFull } from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 
 interface ReadyToReturnModalProps {
   isOpen: boolean;
@@ -240,14 +242,14 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="z-[9999] fixed inset-0 flex justify-center items-center bg-black/50 backdrop-blur-sm p-4"
+          className={`${dialogBackdrop} z-[9999]`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={handleClose}
         >
           <motion.div
-            className="bg-white shadow-2xl rounded-lg w-full max-w-md max-h-[90vh] md:max-h-[85vh] lg:max-h-[80vh] overflow-y-auto scroll-smooth"
+            className={`${dialogCard} max-h-[90vh] md:max-h-[85vh] lg:max-h-[80vh] overflow-y-auto scroll-smooth rounded-lg p-0`}
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
@@ -412,7 +414,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                         windowOptionsError ||
                         !selectedPickupWindow
                       }
-                      className="flex-1 bg-black hover:bg-gray-900 disabled:bg-gray-400 px-4 py-3 rounded-lg font-semibold text-white text-sm transition disabled:cursor-not-allowed"
+                      className={`${buttonPrimary} flex-1 py-3 disabled:bg-gray-400`}
                     >
                       Continue
                     </button>
@@ -559,7 +561,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                         uploadedImages.length === 0 ||
                         !selectedPickupWindow
                       }
-                      className="flex-1 bg-black hover:bg-gray-900 disabled:bg-gray-400 px-4 py-3 rounded-lg font-semibold text-white text-sm transition disabled:cursor-not-allowed"
+                      className={`${buttonPrimary} flex-1 py-3 disabled:bg-gray-400`}
                     >
                       {isLoading || externalIsLoading
                         ? "Processing..."
@@ -618,7 +620,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
 
                   <button
                     onClick={() => setCurrentStep("review")}
-                    className="bg-black hover:bg-gray-900 px-4 py-3 rounded-lg w-full font-semibold text-white text-sm transition"
+                    className={buttonPrimaryFull}
                   >
                     Continue to Review
                   </button>
@@ -693,7 +695,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                     <button
                       onClick={handleSubmitReview}
                       disabled={rating === 0 || isSubmittingReview}
-                      className="flex justify-center bg-black hover:bg-gray-900 disabled:bg-gray-400 px-4 py-3 rounded-lg w-full font-semibold text-white text-sm transition disabled:cursor-not-allowed"
+                      className={`${buttonPrimaryFull} disabled:bg-gray-400`}
                     >
                       {isSubmittingReview ? "Submitting..." : "Submit Review"}
                     </button>
@@ -734,7 +736,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
 
                   <button
                     onClick={handleSuccessClose}
-                    className="bg-black hover:bg-gray-900 px-4 py-3 rounded-lg w-full font-semibold text-white text-sm transition"
+                    className={buttonPrimaryFull}
                   >
                     Done
                   </button>

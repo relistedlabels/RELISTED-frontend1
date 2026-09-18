@@ -141,3 +141,31 @@ export const resendOtp = (data: { email: string }) =>
     method: "POST",
     body: JSON.stringify(data),
   }).then((raw) => unwrapResponse(raw));
+
+export const requestMagicLink = (data: { email: string; redirect?: string }) =>
+  apiFetch("/auth/magic-link/request", {
+    method: "POST",
+    body: JSON.stringify(data),
+  }).then((raw) =>
+    unwrapResponse<{ success: boolean; message: string }>(raw),
+  );
+
+export const consumeMagicLink = (code: string) =>
+  apiFetch("/auth/magic-link/consume", {
+    method: "POST",
+    body: JSON.stringify({ code }),
+  }).then((raw) =>
+    unwrapResponse<{
+      token: string;
+      user: {
+        id: string;
+        email: string;
+        role: string;
+        name: string;
+        isVerified?: boolean;
+        passwordSetAt?: string | null;
+      };
+      requiresMfa?: boolean;
+      passwordNotSet?: boolean;
+    }>(raw),
+  );

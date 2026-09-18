@@ -5,6 +5,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
   HiOutlineUser,
@@ -312,7 +314,7 @@ const AccountProfileDetails: React.FC = () => {
         className={`flex flex-col bg-[#3A3A32] p-6 items-center mb-6 rounded-lg ${
           uploadAvatarMutation.isPending
             ? "cursor-wait opacity-90"
-            : "cursor-pointer hover:bg-[#44443a] transition"
+            : "cursor-pointer hover:bg-gray-800 transition"
         }`}
         data-onboarding-target="lister-avatar"
         role="button"
@@ -551,7 +553,7 @@ const AccountProfileDetails: React.FC = () => {
         <button
           type="button"
           onClick={() => setIsAddingAddress((prev) => !prev)}
-          className="flex items-center justify-center space-x-1 px-4 py-2 text-sm font-semibold text-black border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150"
+          className={buttonSecondary}
         >
           <HiOutlinePlus className="w-4 h-4" />
           <span>{isAddingAddress ? "Cancel" : "Change Address"}</span>
@@ -560,7 +562,7 @@ const AccountProfileDetails: React.FC = () => {
         <AnimatePresence>
           {isAddingAddress && (
             <motion.div
-              className={`fixed inset-0 flex items-center justify-center bg-black/40 ${modalOverlayZ}`}
+              className={`${dialogBackdrop} ${modalOverlayZ}`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -571,7 +573,7 @@ const AccountProfileDetails: React.FC = () => {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                className="relative w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 text-left shadow-xl"
+                className={`${dialogCard} relative text-left`}
                 style={{ zIndex: 60 }}
               >
                 <button
@@ -684,7 +686,7 @@ const AccountProfileDetails: React.FC = () => {
                 <button
                   type="submit"
                   disabled={addAddressMutation.isPending}
-                  className="mt-1 inline-flex w-full items-center justify-center rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  className={`${buttonPrimary} mt-1 w-full`}
                 >
                   {addAddressMutation.isPending
                     ? "Saving address..."
@@ -699,7 +701,7 @@ const AccountProfileDetails: React.FC = () => {
         <AnimatePresence>
           {editingAddressId && (
             <motion.div
-              className={`fixed inset-0 flex items-center justify-center bg-black/40 ${modalOverlayZ}`}
+              className={`${dialogBackdrop} ${modalOverlayZ}`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -710,7 +712,7 @@ const AccountProfileDetails: React.FC = () => {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                className="relative w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 text-left shadow-xl"
+                className={`${dialogCard} relative text-left`}
                 style={{ zIndex: 60 }}
               >
                 <button
@@ -821,7 +823,7 @@ const AccountProfileDetails: React.FC = () => {
                 <button
                   type="submit"
                   disabled={updateAddressMutation.isPending}
-                  className="mt-1 inline-flex w-full items-center justify-center rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  className={`${buttonPrimary} mt-1 w-full`}
                 >
                   {updateAddressMutation.isPending
                     ? "Saving changes..."
@@ -835,7 +837,7 @@ const AccountProfileDetails: React.FC = () => {
           type="button"
           onClick={handleUpdateProfile}
           disabled={updateProfileMutation.isPending}
-          className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+          className={buttonPrimary}
         >
           {updateProfileMutation.isPending ? "Updating..." : "Update Profile"}
         </button>

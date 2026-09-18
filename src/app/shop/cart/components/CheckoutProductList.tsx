@@ -18,6 +18,7 @@ import type { CartCheckoutLine } from "../types";
 import { isResaleItem } from "@/lib/listers/listerOrderRow";
 import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
 import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
+import { formatRentalDuration } from "@/lib/rental/formatRentalDuration";
 
 // --- Formatting Helper (for thousands separator) ---
 const formatCurrency = (amount: number): string => {
@@ -380,7 +381,8 @@ export default function CheckoutProductList({
                     </Paragraph1>
                   ) : (
                     <Paragraph1 className="mt-1 text-gray-600 text-xs leading-snug">
-                      Duration: <strong>{item.rentalDays} Days</strong>
+                      Duration:{" "}
+                      <strong>{formatRentalDuration(item.rentalDays)}</strong>
                     </Paragraph1>
                   )}
                   {/* Mobile Status Display */}

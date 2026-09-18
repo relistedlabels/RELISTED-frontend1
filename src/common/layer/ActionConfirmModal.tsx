@@ -4,6 +4,12 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import {
+  buttonDestructive,
+  buttonPrimary,
+  buttonSecondary,
+} from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 
 export type ActionType = "positive" | "negative" | "delete" | "update";
 
@@ -32,15 +38,15 @@ export default function ActionConfirmModal({
   isLoading = false,
   children,
 }: ActionConfirmModalProps) {
-  const getActionButtonColor = (type: ActionType) => {
+  const getConfirmButtonClass = (type: ActionType) => {
     switch (type) {
       case "negative":
       case "delete":
-        return "bg-red-600 hover:bg-red-700 text-white";
+        return buttonDestructive;
       case "positive":
       case "update":
       default:
-        return "bg-gray-900 hover:bg-gray-800 text-white";
+        return buttonPrimary;
     }
   };
 
@@ -54,18 +60,16 @@ export default function ActionConfirmModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed h-screen inset-0 bg-black/50 z-40"
-          />
-
-          {/* Modal */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 h-screen z-50 flex items-center justify-center p-4"
+            className={dialogBackdrop}
           >
-            <div className="bg-white rounded-lg shadow-lg max-w-md w-full">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className={`${dialogCard} p-0 overflow-hidden shadow-lg`}
+              onClick={(e) => e.stopPropagation()}
+            >
               {/* Header */}
               <div className="flex items-start justify-between p-6 border-b border-gray-200">
                 <div className="flex-1">
@@ -94,21 +98,19 @@ export default function ActionConfirmModal({
                 <button
                   onClick={onClose}
                   disabled={isLoading}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium text-sm disabled:opacity-50"
+                  className={`${buttonSecondary} disabled:cursor-not-allowed`}
                 >
                   {cancelLabel}
                 </button>
                 <button
                   onClick={onConfirm}
                   disabled={isLoading}
-                  className={`px-6 py-2 rounded-lg font-medium text-sm transition disabled:opacity-50 ${getActionButtonColor(
-                    actionType,
-                  )}`}
+                  className={`${getConfirmButtonClass(actionType)} disabled:cursor-not-allowed`}
                 >
                   {isLoading ? "Loading..." : actionLabel}
                 </button>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         </>
       )}

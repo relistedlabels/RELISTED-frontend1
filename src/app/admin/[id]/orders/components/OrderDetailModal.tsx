@@ -6,6 +6,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import {
+  slidePanelBackdrop,
+  slidePanelSheet,
+} from "@/common/ui/dashboardClasses";
 import OrderSection2 from "./OrderSection2";
 import OrderSection3 from "./OrderSection3";
 import OrderItemsSection from "./OrderItemsSection";
@@ -104,7 +108,7 @@ export default function OrderDetailModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="z-40 fixed inset-0 bg-black/50"
+            className={slidePanelBackdrop}
           />
 
           <motion.div
@@ -112,7 +116,7 @@ export default function OrderDetailModal({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="top-0 right-0 bottom-0 z-50 fixed bg-white shadow-lg w-full md:w-3/4 overflow-y-auto"
+            className={`${slidePanelSheet} z-50 md:w-3/4`}
           >
             <div className="top-0 sticky bg-white p-6 border-gray-200 border-b">
               <div className="flex justify-between items-start gap-4">

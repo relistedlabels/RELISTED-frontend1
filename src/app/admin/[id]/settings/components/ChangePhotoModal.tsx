@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { X, Upload, ImageIcon, Loader2 } from "lucide-react";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 import { useUpdateProfilePhoto } from "@/lib/mutations/admin";
 
 interface ChangePhotoModalProps {
@@ -46,8 +48,8 @@ export default function ChangePhotoModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full">
+    <div className={dialogBackdrop}>
+      <div className={`${dialogCard} p-0 overflow-hidden`}>
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <Paragraph2 className="text-gray-900">
             Change Profile Photo
@@ -103,14 +105,14 @@ export default function ChangePhotoModal({
             <button
               onClick={onClose}
               disabled={uploadMutation.isPending}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`${buttonSecondary} flex-1 disabled:cursor-not-allowed`}
             >
               <Paragraph1>Cancel</Paragraph1>
             </button>
             <button
               onClick={handleUpload}
               disabled={!file || uploadMutation.isPending}
-              className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className={`${buttonPrimary} flex-1 disabled:cursor-not-allowed`}
             >
               {uploadMutation.isPending ? (
                 <>

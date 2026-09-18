@@ -100,7 +100,7 @@ const ProductDetailsTabsClient: React.FC<ProductDetailsTabsClientProps> = ({
       {hasRent && hasResale && (
         <div className="mb-6 text-[12px] text-gray-500 text-center">
           {activeTab === "rent" ? (
-            <p>Prefer to own it? Switch to Resale.</p>
+            <p>Prefer to own it? Switch to Buy.</p>
           ) : (
             <p>Prefer to rent? Switch to Rent.</p>
           )}

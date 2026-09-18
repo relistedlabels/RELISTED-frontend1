@@ -4,6 +4,10 @@ import React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, RefreshCw, X } from "lucide-react";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import {
+  slidePanelBackdrop,
+  slidePanelSheet,
+} from "@/common/ui/dashboardClasses";
 import { AdminListingThumb } from "@/app/admin/lib/adminListingDisplay";
 import type { AvailabilityRequest } from "@/lib/api/admin/availabilityRequests";
 import { useAvailabilityRequestById } from "@/lib/queries/admin/useAvailabilityRequests";
@@ -190,7 +194,7 @@ export default function RequestDetailModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="z-40 fixed inset-0 bg-black/50"
+            className={slidePanelBackdrop}
           />
 
           <motion.div
@@ -198,7 +202,7 @@ export default function RequestDetailModal({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="top-0 right-0 bottom-0 z-50 fixed flex flex-col bg-white shadow-lg w-full md:w-[520px]"
+            className={`${slidePanelSheet} z-50 flex flex-col md:w-[520px]`}
           >
             <div className="bg-white p-6 border-gray-200 border-b shrink-0">
               <div className="flex justify-between items-start gap-4">

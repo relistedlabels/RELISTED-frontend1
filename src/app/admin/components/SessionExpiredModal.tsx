@@ -6,6 +6,8 @@ import { useSessionStore } from "@/store/useSessionStore";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { Clock, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 
 export default function SessionExpiredModal() {
   const router = useRouter();
@@ -36,14 +38,14 @@ export default function SessionExpiredModal() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
+          className={`${dialogBackdrop} z-[9999]`}
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: "spring", damping: 20 }}
-            className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-2xl"
+            className={`${dialogCard} p-8 mx-4 shadow-2xl`}
           >
             <div className="flex flex-col items-center text-center">
               {/* Icon */}
@@ -97,7 +99,7 @@ export default function SessionExpiredModal() {
                   }
                   setSessionExpired(false);
                 }}
-                className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition font-medium w-full"
+                className={buttonPrimaryFull}
               >
                 Sign In Now
               </button>

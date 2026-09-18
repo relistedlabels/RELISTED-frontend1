@@ -28,6 +28,7 @@ import { useMe } from "@/lib/queries/auth/useMe";
 import { useWallet } from "@/lib/queries/renters/useWallet";
 import { useProfile } from "@/lib/queries/user/useProfile";
 import ChangeAddress from "./ChangeAddress";
+import { formatDeliveryAddressLine } from "@/lib/checkout/deliveryAddress";
 import FundWallet from "./FundWallet";
 import DispatchWindowsScheduler from "./DispatchWindowsScheduler";
 import type { DispatchWindowContext } from "@/lib/checkout/dispatchWindows";
@@ -36,6 +37,7 @@ import type {
   DispatchWindowSelectionMap,
   ShipmentDispatchType,
 } from "@/lib/checkout/dispatchWindows";
+import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
 
 const TOPSHIP_CITIES = [
   "Abule Egba",
@@ -117,9 +119,18 @@ interface CheckoutContactAndPaymentProps {
   checkoutBlockingIssues?: string[];
   /** GET /order/summary failed (shown above shipping so renters know what to do). */
   orderSummaryError?: string | null;
+  hasDeliveryAddress?: boolean;
+  dispatchReschedules?: Array<{
+    cartItemId?: string;
+    productName?: string;
+    outboundSummary?: string;
+    priceUnchanged?: boolean;
+  }>;
   /** Optional carrier quote failures (summary still loads with fallback tiers). */
   shippingQuoteWarnings?: ShippingQuoteWarning[];
   onRefetchOrderSummary?: () => void;
+  /** After delivery address is saved to profile (refetch profile + order summary). */
+  onAddressSaved?: () => void;
   /** Quote-based dispatch: one optional heading per shipment bucket, then rental/return rows. */
   summaryDispatchPreview?: Array<{
     groupHeading: string | null;
@@ -148,7 +159,7 @@ const SAME_DAY_TIER_KEYWORDS = [
   "via shipbubble",
 ];
 const SAME_DAY_CUTOFF_DISCLAIMER =
-  "Orders placed after 11:00am WAT (Lagos time) may be delivered the next day.";
+  "Orders placed after 11:00am may be delivered the next day.";
 
 const isShipbubbleShippingTierName = (tierName: string) =>
   tierName.toLowerCase().includes("via shipbubble");
@@ -192,45 +203,6 @@ const DispatchWindowsQuoteSkeleton = () => (
     ))}
   </div>
 );
-
-// === Reservation Timer Component ===
-const ReservationTimer = () => {
-  const [timeLeft, setTimeLeft] = useState<string>("15:00");
-
-  useEffect(() => {
-    const expiryTime = new Date(Date.now() + 15 * 60 * 1000);
-
-    const updateTimer = () => {
-      const now = Date.now();
-      const expiryTimeMs = expiryTime.getTime();
-      const distance = expiryTimeMs - now;
-
-      if (distance <= 0) {
-        setTimeLeft("0:00");
-        return;
-      }
-
-      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-      setTimeLeft(`${minutes}:${seconds.toString().padStart(2, "0")}`);
-    };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="flex items-center gap-3 bg-amber-50 mb-6 p-4 border border-amber-200 rounded-xl">
-      <Clock className="w-6 h-6 text-amber-700 shrink-0" />
-      <Paragraph1 className="font-medium text-amber-900">
-        These items are reserved for{" "}
-        <span className="font-bold">{timeLeft}</span> — complete payment to
-        secure these items
-      </Paragraph1>
-    </div>
-  );
-};
 
 // === Delivery Tier Helper Function ===
 const getDeliveryTierDetails = (
@@ -287,8 +259,11 @@ export default function CheckoutContactAndPayment({
   onReturnPickupChange,
   checkoutBlockingIssues = [],
   orderSummaryError = null,
+  hasDeliveryAddress = false,
+  dispatchReschedules = [],
   shippingQuoteWarnings = [],
   onRefetchOrderSummary,
+  onAddressSaved,
   summaryDispatchPreview,
   multiListerRentalCart = false,
   isResaleOnly = false,
@@ -507,9 +482,6 @@ export default function CheckoutContactAndPayment({
                     </span>
                   )}
                 </div>
-                <Paragraph1 className="mt-1 text-gray-600 text-xs">
-                  {tierDetails.description}
-                </Paragraph1>
                 {showSameDayCutoffDisclaimer(tier.name) && (
                   <Paragraph1 className="mt-2 text-amber-700 text-xs">
                     {SAME_DAY_CUTOFF_DISCLAIMER}
@@ -628,9 +600,8 @@ export default function CheckoutContactAndPayment({
 
   if (!user) return <ContactSkeleton />;
 
-  const deliveryAddress = profile?.address
-    ? `${profile.address.street}, ${profile.address.city}, ${profile.address.state}, ${profile.address.country}`
-    : "No address set";
+  const deliveryAddress =
+    formatDeliveryAddressLine(profile?.address) ?? "No address set";
 
   const walletData = walletResponse?.wallet?.balance;
   const availableBalance = walletData?.availableBalance || 0;
@@ -647,21 +618,31 @@ export default function CheckoutContactAndPayment({
 
   return (
     <div className="space-y-6 bg-gray-50">
-      {/* Payment expiring timer */}
-      <ReservationTimer />
+      {hasDeliveryAddress && dispatchReschedules.length > 0 ? (
+        <div className="space-y-2 bg-amber-50 p-4 border border-amber-200 rounded-xl">
+          {dispatchReschedules.map((entry) => (
+            <Paragraph1
+              key={entry.cartItemId ?? entry.productName ?? entry.outboundSummary}
+              className="text-amber-900 text-sm leading-relaxed"
+            >
+              Your delivery time has passed
+              {entry.outboundSummary
+                ? `. New earliest slot: ${entry.outboundSummary}.`
+                : "."}{" "}
+              Confirm below or pick another.
+              {entry.priceUnchanged ? " Price unchanged." : ""}
+            </Paragraph1>
+          ))}
+        </div>
+      ) : null}
 
-      {orderSummaryError ? (
+      {hasDeliveryAddress && orderSummaryError ? (
         <div className="space-y-3 bg-amber-50 p-4 border border-amber-200 rounded-xl">
           <Paragraph1 className="font-semibold text-amber-950 text-sm">
             Could not load payment summary
           </Paragraph1>
           <Paragraph1 className="text-amber-900 text-sm whitespace-pre-wrap">
             {orderSummaryError}
-          </Paragraph1>
-          <Paragraph1 className="text-amber-900 text-sm">
-            Go to your cart and use Request approval again so delivery windows
-            reset to the next available slots, or open the product page to pick
-            dates and send a new request.
           </Paragraph1>
           <div className="flex flex-wrap gap-2">
             {onRefetchOrderSummary ? (
@@ -697,10 +678,6 @@ export default function CheckoutContactAndPayment({
               </li>
             ))}
           </ul>
-          <Paragraph1 className="text-amber-900 text-xs">
-            You can still checkout using the options shown below. Update your
-            profile phone or address if a carrier rejected them.
-          </Paragraph1>
         </div>
       ) : null}
 
@@ -734,39 +711,59 @@ export default function CheckoutContactAndPayment({
         </Paragraph1>
         <hr className="mb-3 text-gray-300" />
 
-        {/* Address Row */}
-        <div className="flex justify-between items-start mb-4">
-          <div className="flex items-start gap-3">
-            <Home size={30} className="mt-0.5 text-gray-700 shrink-0" />
-            <Paragraph1 className="max-w-[70%] text-gray-900 leading-snug">
-              {deliveryAddress}
-            </Paragraph1>
-          </div>
-          <ChangeAddress onAddressSaved={onRefetchOrderSummary} />
-        </div>
-        <hr className="mb-3 text-gray-300" />
+        {hasDeliveryAddress ? (
+          <>
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-start gap-3">
+                <Home size={30} className="mt-0.5 text-gray-700 shrink-0" />
+                <Paragraph1 className="max-w-[70%] text-gray-900 leading-snug">
+                  {deliveryAddress}
+                </Paragraph1>
+              </div>
+              <ChangeAddress onAddressSaved={onAddressSaved ?? onRefetchOrderSummary} />
+            </div>
+            <hr className="mb-3 text-gray-300" />
 
-        {/* Same as Billing Checkbox */}
-        <label className="flex items-center space-x-2 mt-2 text-gray-700 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={isSameAsBilling}
-            onChange={() => setIsSameAsBilling(!isSameAsBilling)}
-            className="hidden" // Hide default checkbox
-          />
-          <span
-            className={`w-6 h-6 rounded border ${
-              isSameAsBilling
-                ? "bg-black border-black"
-                : "bg-white border-gray-400"
-            } flex items-center justify-center`}
-          >
-            {isSameAsBilling && <Check size={18} className="text-white" />}
-          </span>
-          <Paragraph1>Same as billing address</Paragraph1>
-        </label>
+            <label className="flex items-center space-x-2 mt-2 text-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isSameAsBilling}
+                onChange={() => setIsSameAsBilling(!isSameAsBilling)}
+                className="hidden"
+              />
+              <span
+                className={`w-6 h-6 rounded border ${
+                  isSameAsBilling
+                    ? "bg-black border-black"
+                    : "bg-white border-gray-400"
+                } flex items-center justify-center`}
+              >
+                {isSameAsBilling && <Check size={18} className="text-white" />}
+              </span>
+              <Paragraph1>Same as billing address</Paragraph1>
+            </label>
+          </>
+        ) : (
+          <div className="flex justify-between items-start gap-4">
+            <div className="flex items-start gap-3">
+              <Home size={30} className="mt-0.5 text-gray-700 shrink-0" />
+              <div>
+                <Paragraph1 className="text-gray-900 leading-snug">
+                  No delivery address yet
+                </Paragraph1>
+              </div>
+            </div>
+            <ChangeAddress
+              buttonLabel="Add address"
+              panelTitle="Add delivery address"
+              onAddressSaved={onAddressSaved ?? onRefetchOrderSummary}
+            />
+          </div>
+        )}
       </div>
 
+      {hasDeliveryAddress ? (
+        <>
       {/* 3. DELIVERY / OUTBOUND SHIPPING */}
       <div className="bg-white p-4 border border-gray-100 rounded-xl">
         <div className="flex justify-between items-start gap-3">
@@ -776,18 +773,6 @@ export default function CheckoutContactAndPayment({
                 ? "DELIVERY SHIPPING"
                 : "SHIPPING METHOD"}
             </Paragraph1>
-            {showReturnShippingTierPicker ? (
-              <Paragraph1 className="mt-1 text-gray-600 text-xs">
-                Courier from the lister to your delivery address.
-                {usePerBucketOutbound && outboundBuckets.length > 1 ? (
-                  <>
-                    {" "}
-                    Each seller location has its own courier options and
-                    pricing.
-                  </>
-                ) : null}
-              </Paragraph1>
-            ) : null}
           </div>
           <Truck size={24} className="text-gray-400" />
         </div>
@@ -862,10 +847,6 @@ export default function CheckoutContactAndPayment({
             <div>
               <Paragraph1 className="font-bold text-gray-800 tracking-wider">
                 RETURN PICKUP
-              </Paragraph1>
-              <Paragraph1 className="text-gray-600 text-sm">
-                Share where the courier should collect items at rental wrap-up.
-                We'll lock this in alongside your pickup window.
               </Paragraph1>
             </div>
             <Compass size={22} className="text-amber-500" />
@@ -1008,24 +989,11 @@ export default function CheckoutContactAndPayment({
                 type="button"
                 onClick={handleSaveReturnPickup}
                 disabled={returnPickupErrors.length > 0 || savingPickup}
-                className="flex justify-center items-center gap-2 bg-gray-900 hover:bg-black disabled:opacity-50 shadow-md hover:shadow-lg mt-2 px-4 py-3.5 rounded-xl focus-visible:outline-2 focus-visible:outline-gray-900 focus-visible:outline-offset-2 w-full font-semibold text-white text-sm transition-all"
+                className={`${buttonPrimaryFull} mt-2 gap-2 py-3.5 shadow-md hover:shadow-lg focus-visible:outline-2 focus-visible:outline-gray-900 focus-visible:outline-offset-2`}
               >
                 <Check className="w-4 h-4 shrink-0" aria-hidden />
                 {savingPickup ? "Saving..." : "Save pickup spot"}
               </button>
-
-              <div className="bg-gray-50 p-4 border border-gray-200 rounded-2xl">
-                <Paragraph1 className="font-semibold text-gray-900 text-sm">
-                  Pickup summary
-                </Paragraph1>
-                <Paragraph1 className="text-gray-600 text-sm">
-                  {returnPickupForm.contactName} — {returnPickupForm.street} ·{" "}
-                  {returnPickupForm.city}, {returnPickupForm.state}
-                </Paragraph1>
-                <Paragraph1 className="mt-1 text-gray-500 text-xs">
-                  Phone: {returnPickupForm.phoneNumber || "—"}
-                </Paragraph1>
-              </div>
             </div>
           )}
         </div>
@@ -1038,16 +1006,6 @@ export default function CheckoutContactAndPayment({
             <div>
               <Paragraph1 className="font-bold text-gray-800 tracking-wider">
                 RETURN SHIPPING
-              </Paragraph1>
-              <Paragraph1 className="mt-1 text-gray-600 text-xs">
-                Courier from your return pickup location back to the lister.
-                Options depend on that address.
-                {usePerBucketReturn && returnBuckets.length > 1 ? (
-                  <>
-                    {" "}
-                    Each rental return is priced separately by destination.
-                  </>
-                ) : null}
               </Paragraph1>
             </div>
             <Truck size={24} className="text-gray-400" />
@@ -1121,15 +1079,6 @@ export default function CheckoutContactAndPayment({
           <Paragraph1 className="mb-4 font-bold text-gray-800 tracking-wider">
             {isResaleOnly ? "DELIVERY OPTIONS" : "DISPATCH WINDOWS"}
           </Paragraph1>
-          <Paragraph1 className="mb-4 text-gray-600 text-sm">
-            {isResaleOnly
-              ? "The delivery slot below is the one we will use for this purchase."
-              : showQuoteDispatchLoading
-                ? "Loading windows that match your quote. Each lister or schedule can have its own delivery and return slot."
-                : hasSummaryDispatchPreview
-                  ? "Windows below match your checkout quote (each rental schedule may have its own outbound and return slot)."
-                  : "These windows were selected when you created your approval request."}
-          </Paragraph1>
           {hasSummaryDispatchPreview ? (
             <div className="space-y-3 bg-linear-to-b from-neutral-50 to-neutral-50/40 p-3 sm:p-4 border border-gray-100 rounded-xl">
               {(summaryDispatchPreview ?? []).map((group, gi) => (
@@ -1185,13 +1134,13 @@ export default function CheckoutContactAndPayment({
             />
           )}
           {checkoutBlockingIssues.length > 0 && (
-            <div className="bg-red-50 mt-4 p-3 border border-red-200 rounded-lg">
-              <Paragraph1 className="font-semibold text-red-700 text-xs uppercase tracking-wide">
-                Action needed before payment
+            <div className="bg-amber-50 mt-4 p-3 border border-amber-200 rounded-lg">
+              <Paragraph1 className="font-semibold text-amber-900 text-xs uppercase tracking-wide">
+                Before you pay
               </Paragraph1>
               <div className="space-y-1 mt-1">
                 {checkoutBlockingIssues.map((issue) => (
-                  <Paragraph1 key={issue} className="text-red-700 text-xs">
+                  <Paragraph1 key={issue} className="text-amber-900 text-xs">
                     {issue}
                   </Paragraph1>
                 ))}
@@ -1235,6 +1184,8 @@ export default function CheckoutContactAndPayment({
           <FundWallet />
         </div>
       </div>
+        </>
+      ) : null}
     </div>
   );
 }

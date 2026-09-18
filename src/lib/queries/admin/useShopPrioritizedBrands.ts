@@ -18,8 +18,12 @@ export const useSetPrioritizedShopBrands = () => {
       queryClient.invalidateQueries({
         queryKey: ["admin", "shop-settings", "prioritized-brands"],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "shop-settings", "visible-brands"],
+      });
       queryClient.invalidateQueries({ queryKey: ["admin", "brands", "all"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["brands"] });
     },
   });
 };

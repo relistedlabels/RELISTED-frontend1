@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { X } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { buttonSecondary } from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 
 interface RejectOrderModalProps {
   isOpen: boolean;
@@ -46,8 +48,8 @@ const RejectOrderModal: React.FC<RejectOrderModalProps> = ({
   };
 
   return (
-    <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/50">
-      <div className="bg-white shadow-xl mx-4 p-6 rounded-2xl w-full max-w-md">
+    <div className={`${dialogBackdrop} z-50`}>
+      <div className={`${dialogCard} mx-4 rounded-2xl p-6`}>
         <div className="flex justify-between items-start mb-6">
           <Paragraph3 className="font-bold text-black text-lg">
             Reject Order
@@ -102,7 +104,7 @@ const RejectOrderModal: React.FC<RejectOrderModalProps> = ({
               type="button"
               onClick={handleClose}
               disabled={isRejecting}
-              className="flex-1 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 px-6 py-3 rounded-lg font-bold text-black text-sm transition-colors"
+              className={`${buttonSecondary} flex-1 px-6 py-3 font-bold disabled:opacity-50`}
             >
               Cancel
             </button>

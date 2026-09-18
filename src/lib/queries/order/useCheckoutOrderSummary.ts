@@ -34,8 +34,10 @@ export function checkoutOrderSummaryQueryKey(
 export function useCheckoutOrderSummary(
   returnPickup?: ReturnPickupAddressPayload,
   delivery?: DeliveryAddressSummaryKey,
+  options?: { enabled?: boolean },
 ) {
   const token = useUserStore((s) => s.token);
+  const enabled = options?.enabled !== false && token !== null;
 
   return useQuery({
     queryKey: checkoutOrderSummaryQueryKey(returnPickup, delivery),
@@ -48,6 +50,6 @@ export function useCheckoutOrderSummary(
       }),
     staleTime: 30_000,
     retry: 1,
-    enabled: token !== null,
+    enabled,
   });
 }

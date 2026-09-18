@@ -13,7 +13,7 @@ export function useNudgeRenterForExpiredAvailability() {
     }) => nudgeRenterForExpiredAvailability(orderId, intent),
     onSuccess: () => {
       toast.success(
-        "Renter notified by email and in-app that the item is available.",
+        "Renter notified with a link to check availability again.",
       );
     },
     onError: (err: Error & { message?: string }) => {

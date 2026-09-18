@@ -54,7 +54,7 @@ const ProductInfoTabs: React.FC = () => {
               {isActive && (
                 <motion.div
                   layoutId="activeTabPill"
-                  className="absolute inset-0 bg-[#33332D] rounded-lg z-[-1]"
+                  className="absolute inset-0 bg-black rounded-lg z-[-1]"
                   transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                 />
               )}

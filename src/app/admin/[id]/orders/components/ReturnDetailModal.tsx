@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 import type { Return } from "@/lib/api/admin/orders";
 
 interface ReturnDetailModalProps {
@@ -42,14 +43,14 @@ const ReturnDetailModal: React.FC<ReturnDetailModalProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          className={dialogBackdrop}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
           <motion.div
-            className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            className={`${dialogCard} max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl`}
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}

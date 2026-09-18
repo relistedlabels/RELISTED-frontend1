@@ -13,6 +13,8 @@ import { isResaleItem } from "@/lib/listers/listerOrderRow";
 import { isLineRentalApproved } from "@/lib/cart/rentalRequestUi";
 import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
 import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
+import { formatRentalDuration } from "@/lib/rental/formatRentalDuration";
+import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
 
 const CURRENCY = "₦";
 
@@ -146,7 +148,8 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
                     </>
                   ) : (
                     <>
-                      Duration: <strong>{item.rentalDays} Days</strong>
+                      Duration:{" "}
+                      <strong>{formatRentalDuration(item.rentalDays)}</strong>
                     </>
                   )}
                 </Paragraph1>
@@ -356,7 +359,7 @@ export function FinalOrderSummaryCard({
         {/* Proceed Button */}
         <Link
           href="/shop/cart/checkout"
-          className="flex justify-center bg-black hover:bg-gray-800 py-3 rounded-lg w-full font-semibold text-white transition-colors"
+          className={buttonPrimaryFull}
         >
           <Paragraph1>Proceed to Checkout</Paragraph1>
         </Link>
@@ -365,8 +368,8 @@ export function FinalOrderSummaryCard({
         <div className="flex items-start gap-2 bg-green-50 mt-4 p-3 border border-green-200 rounded-md text-green-700 text-xs">
           <CheckCircle size={16} className="mt-0.5 shrink-0" />
           <Paragraph1 className="text-green-700">
-            Your <strong>security deposit</strong> is held as Locked Balance
-            and returns to your Available Balance after return is approved.
+            Your <strong>refundable security deposit</strong> is returned to your wallet after
+            the item is returned and checked.
           </Paragraph1>
         </div>
       </div>

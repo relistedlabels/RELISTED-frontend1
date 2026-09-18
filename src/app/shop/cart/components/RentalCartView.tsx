@@ -3,6 +3,14 @@
 import React, { useState } from "react";
 import { X, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
+import {
+  slidePanelBackdrop,
+  slidePanelFooter,
+  slidePanelHeader,
+  slidePanelSheet,
+  slidePanelTitle,
+} from "@/common/ui/dashboardClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import RentalCartSummary from "./RentalCartSummary";
 import { useCart } from "@/lib/queries/renters/useCart";
@@ -29,14 +37,14 @@ const RentalCartViewPanel: React.FC<RentalCartViewPanelProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-99 bg-black/70 backdrop--blur-sm"
+          className={slidePanelBackdrop}
           onClick={onClose}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="fixed top-0 right-0 h-screen hide-scrollbar overflow-y-auto bg-white shadow-2xl px-4  flex flex-col w-full sm:w-114"
+            className={slidePanelSheet}
             role="dialog"
             aria-modal="true"
             aria-label="Shopping Cart"
@@ -48,7 +56,7 @@ const RentalCartViewPanel: React.FC<RentalCartViewPanelProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex justify-between sticky top-0 items-center pb-4 border-b border-gray-100 pt-6 z-10  bg-white">
+            <div className={slidePanelHeader}>
               <button
                 onClick={onClose}
                 className="text-gray-500 xl:hidden hover:text-black p-1 rounded-full transition"
@@ -57,9 +65,7 @@ const RentalCartViewPanel: React.FC<RentalCartViewPanelProps> = ({
                 <ArrowLeft size={20} />
               </button>
 
-              <Paragraph1 className=" font-bold uppercase tracking-widest text-gray-800">
-                Your Cart
-              </Paragraph1>
+              <Paragraph1 className={slidePanelTitle}>Your Cart</Paragraph1>
               <button
                 onClick={onClose}
                 className="text-gray-500  hover:text-black p-1 rounded-full transition"
@@ -76,18 +82,12 @@ const RentalCartViewPanel: React.FC<RentalCartViewPanelProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="mt-auto py-2 text-black bg-white flex flex-col gap-4 sticky bottom-0">
-              <Link
-                href="/shop/cart"
-                className="flex-1 flex justify-center px-4 py-3 text-sm font-semibold border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-              >
+            <div className={`${slidePanelFooter} flex flex-col gap-4`}>
+              <Link href="/shop/cart" className={`${buttonSecondary} w-full`}>
                 <Paragraph1>View Full Cart </Paragraph1>
               </Link>
 
-              <button
-                onClick={onClose}
-                className="flex-1 px-4 py-3 text-sm font-semibold bg-black text-white rounded-lg hover:bg-gray-900 transition flex items-center justify-center gap-2"
-              >
+              <button type="button" onClick={onClose} className={`${buttonPrimary} w-full`}>
                 <Paragraph1>Continue Shopping</Paragraph1>
               </button>
             </div>

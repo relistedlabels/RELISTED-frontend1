@@ -8,6 +8,7 @@ import { Paragraph1 } from "@/common/ui/Text";
 import { useSubmitRentalRequest } from "@/lib/mutations/renters/useRentalRequestMutations";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { getLagosDateString, getTodayInLagos } from "@/lib/checkout/dispatchWindows";
+import { formatRentalDuration } from "@/lib/rental/formatRentalDuration";
 import { useUserStore } from "@/store/useUserStore";
 
 // ============================================================================
@@ -222,9 +223,9 @@ const RentalDurationSelector = ({
   minSelectableLagosYmd,
 }: RentalDurationSelectorProps) => {
   const [selectedDuration, setSelectedDuration] = useState<number | "custom">(
-    3,
+    1,
   );
-  const [customDays, setCustomDays] = useState<number>(3);
+  const [customDays, setCustomDays] = useState<number>(1);
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [showCustomInput, setShowCustomInput] = useState(false);
 
@@ -256,12 +257,10 @@ const RentalDurationSelector = ({
   const _token = useUserStore((state) => state.token);
   const _userId = useUserStore((state) => state.userId);
 
-  // Check auth status
   const { isLoading: isCheckingAuth, isError: authError } = useMe();
   const _submitRentalRequest = useSubmitRentalRequest();
 
-  // Show loading state while checking auth
-  if (isCheckingAuth) {
+  if (_token && isCheckingAuth) {
     return (
       <div className="py-6">
         <Paragraph1 className="mb-4 font-bold text-gray-800 text-xl tracking-wider">
@@ -330,7 +329,7 @@ const RentalDurationSelector = ({
               `}
           >
             <Paragraph1>
-              {days === 1 ? "1 Day" : `${days} Days`} <br /> ₦
+              {formatRentalDuration(days)} <br /> ₦
               {(days * dailyPrice).toLocaleString()}
             </Paragraph1>
           </button>

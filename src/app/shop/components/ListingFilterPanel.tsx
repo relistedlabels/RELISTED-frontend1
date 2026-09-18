@@ -5,6 +5,14 @@ import { Search, SlidersVertical, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type React from "react";
 import { useEffect, useState } from "react";
+import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
+import {
+  slidePanelBackdrop,
+  slidePanelFooter,
+  slidePanelHeader,
+  slidePanelSheet,
+  slidePanelTitle,
+} from "@/common/ui/dashboardClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useListingFilterOptions } from "@/lib/queries/product/useListingFilterOptions";
 import {
@@ -200,14 +208,14 @@ export default function ListingFilterPanel({
     <AnimatePresence>
       {isOpen ? (
         <motion.div
-          className="fixed inset-0 z-99 bg-black/70 backdrop--blur-sm"
+          className={slidePanelBackdrop}
           onClick={onClose}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="fixed top-0 right-0 h-screen hide-scrollbar overflow-y-auto bg-white shadow-2xl px-4 flex flex-col w-full sm:w-94"
+            className={slidePanelSheet}
             role="dialog"
             aria-modal="true"
             aria-label="Product Filters"
@@ -218,10 +226,8 @@ export default function ListingFilterPanel({
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between sticky top-0 items-center pb-4 border-b border-gray-100 pt-6 z-10 bg-white">
-              <Paragraph1 className="font-bold tracking-widest text-gray-800">
-                FILTERS
-              </Paragraph1>
+            <div className={slidePanelHeader}>
+              <Paragraph1 className={slidePanelTitle}>FILTERS</Paragraph1>
               <button
                 type="button"
                 onClick={onClose}
@@ -686,18 +692,18 @@ export default function ListingFilterPanel({
               />
             </div>
 
-            <div className="mt-auto py-2 bg-white flex justify-between gap-4 sticky bottom-0">
+            <div className={`${slidePanelFooter} flex gap-4`}>
               <button
                 type="button"
                 onClick={handleClearFilters}
-                className="flex-1 px-4 py-3 text-sm font-semibold border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                className={`${buttonSecondary} flex-1`}
               >
                 <Paragraph1>Clear Filters</Paragraph1>
               </button>
               <button
                 type="button"
                 onClick={handleApplyFilters}
-                className="flex-1 px-4 py-3 text-sm font-semibold bg-black text-white rounded-lg hover:bg-gray-800 transition flex items-center justify-center gap-2"
+                className={`${buttonPrimary} flex flex-1 items-center justify-center gap-2`}
               >
                 <SlidersVertical size={16} />
                 <Paragraph1>Apply Filters</Paragraph1>

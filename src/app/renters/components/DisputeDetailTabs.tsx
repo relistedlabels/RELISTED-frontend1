@@ -3,7 +3,12 @@
 "use client";
 
 import { CheckCircle, Clock, FileText, XCircle } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
+import {
+  segmentTabActive,
+  segmentTabIdle,
+} from "@/common/ui/buttonClasses";
+import { segmentContainer } from "@/common/ui/dashboardClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
   useDisputeDetails,
@@ -37,8 +42,6 @@ const DISPUTE_TABS: Tab[] = [
 
 const DisputeDetailTabs: React.FC<{ disputeId: string }> = ({ disputeId }) => {
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
-  const [indicatorStyle, setIndicatorStyle] = useState({});
-  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const { data: dispute } = useDisputeDetails(disputeId);
   const { data: overview } = useDisputeOverview(disputeId);
@@ -77,19 +80,6 @@ const DisputeDetailTabs: React.FC<{ disputeId: string }> = ({ disputeId }) => {
 
   const otherPartyName =
     listerNameFromOrders || dispute?.listerName || overview?.curator || null;
-
-  // Effect to calculate and set the indicator position (simulating Framer Motion layout)
-  useEffect(() => {
-    const activeIndex = DISPUTE_TABS.findIndex((tab) => tab.key === activeTab);
-    const activeRef = tabRefs.current[activeIndex];
-
-    if (activeRef) {
-      setIndicatorStyle({
-        width: activeRef.offsetWidth,
-        transform: `translateX(${activeRef.offsetLeft}px)`,
-      });
-    }
-  }, [activeTab]);
 
   const contentMap: Record<TabKey, React.ReactNode> = {
     overview: overview ? (
@@ -154,30 +144,16 @@ const DisputeDetailTabs: React.FC<{ disputeId: string }> = ({ disputeId }) => {
 
   return (
     <div className="font-sans">
-      {/* Tab Navigation Bar */}
-      <div className="inline-flex relative bg-white mb-6 p-1 border border-gray-200 rounded-full">
-        {/* Animated Indicator (Simulating Motion) */}
-        <div
-          className="top-0 left-0 absolute bg-black rounded-full h-full transition-all duration-300 ease-in-out b -600"
-          style={indicatorStyle}
-        ></div>
-
-        {DISPUTE_TABS.map((tab, index) => {
+      <div className={`${segmentContainer} mb-6 max-w-full overflow-x-auto`}>
+        {DISPUTE_TABS.map((tab) => {
           const isActive = tab.key === activeTab;
-
           return (
             <button
               type="button"
               key={tab.key}
-              ref={(el) => {
-                tabRefs.current[index] = el;
-              }}
               onClick={() => setActiveTab(tab.key)}
-              // z-10 ensures the text/button is above the indicator
-              className={`py-1 sm:px-4 px-3 relative z-4 text-center text-sm font-semibold transition duration-300 ${
-                isActive
-                  ? "text-white" // Active Tab Style
-                  : "text-gray-700 hover:text-gray-900" // Inactive Tab Style
+              className={`whitespace-nowrap px-4 py-2 sm:px-5 ${
+                isActive ? segmentTabActive : segmentTabIdle
               }`}
             >
               {tab.label}

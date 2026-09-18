@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1, Header2 } from "@/common/ui/Text";
+import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 import { toast } from "sonner";
 
 interface ConfirmPaidModalProps {
@@ -74,7 +76,7 @@ export default function ConfirmPaidModal({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          className={dialogBackdrop}
           variants={backdropVariants}
           initial="hidden"
           animate="visible"
@@ -82,7 +84,7 @@ export default function ConfirmPaidModal({
           onClick={onClose}
         >
           <motion.div
-            className="bg-white rounded-lg shadow-xl max-w-md w-full"
+            className={`${dialogCard} p-0 overflow-hidden shadow-xl`}
             variants={modalVariants}
             initial="hidden"
             animate="visible"
@@ -170,14 +172,14 @@ export default function ConfirmPaidModal({
                 <button
                   onClick={handleClose}
                   disabled={isLoading}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-900 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={`${buttonSecondary} flex-1 disabled:cursor-not-allowed`}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleConfirm}
                   disabled={isLoading || !trackingId.trim()}
-                  className="flex-1 px-4 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className={`${buttonPrimary} flex-1 disabled:cursor-not-allowed`}
                 >
                   {isLoading ? (
                     <>

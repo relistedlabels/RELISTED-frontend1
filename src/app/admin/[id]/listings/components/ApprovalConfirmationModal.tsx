@@ -4,6 +4,8 @@ import React from "react";
 import { X, CheckCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1, Header3 } from "@/common/ui/Text";
+import { buttonSecondary } from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 import { Product } from "@/lib/api/admin/listings";
 import { listingThumbnailUrl } from "@/app/admin/lib/adminListingDisplay";
 import { listingPriceDisplay } from "@/lib/product/listingPriceDisplay";
@@ -28,22 +30,20 @@ export const ApprovalConfirmationModal: React.FC<
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onCancel}
-            className="fixed inset-0 bg-black/50 z-50"
-          />
-
-          {/* Modal */}
+            className={dialogBackdrop}
+          >
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ type: "spring", duration: 0.3 }}
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-lg z-50 w-full max-w-md mx-4"
+            className={`${dialogCard} relative mx-4 shadow-lg`}
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Close button */}
             <button
@@ -112,7 +112,7 @@ export const ApprovalConfirmationModal: React.FC<
                 <button
                   onClick={onCancel}
                   disabled={isLoading}
-                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={`${buttonSecondary} flex-1 py-3 disabled:cursor-not-allowed`}
                 >
                   Cancel
                 </button>
@@ -135,6 +135,7 @@ export const ApprovalConfirmationModal: React.FC<
                 </button>
               </div>
             </div>
+          </motion.div>
           </motion.div>
         </>
       )}

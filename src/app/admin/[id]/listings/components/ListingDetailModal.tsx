@@ -20,6 +20,13 @@ import {
   Clock,
 } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { buttonSecondary } from "@/common/ui/buttonClasses";
+import {
+  dialogBackdrop,
+  dialogCard,
+  slidePanelBackdrop,
+  slidePanelSheet,
+} from "@/common/ui/dashboardClasses";
 import { Product, ProductDetail } from "@/lib/api/admin/listings";
 import AvailabilityTab from "./AvailabilityTab";
 import RentalHistoryTab from "./RentalHistoryTab";
@@ -214,7 +221,7 @@ export default function ListingDetailModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="z-40 fixed inset-0 bg-black/50"
+            className={slidePanelBackdrop}
           />
 
           {/* Modal */}
@@ -223,7 +230,7 @@ export default function ListingDetailModal({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="top-0 right-0 bottom-0 z-50 fixed bg-white shadow-lg w-full md:w-3/4 overflow-y-auto"
+            className={`${slidePanelSheet} z-50 md:w-3/4`}
           >
             {/* Header */}
             <div className="top-0 z-50 sticky bg-white p-6 border-gray-200 border-b">
@@ -673,14 +680,15 @@ export default function ListingDetailModal({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onClick={() => setShowApproveModal(false)}
-                  className="z-50 fixed inset-0 bg-black/50"
-                />
+                  className={`${dialogBackdrop} z-[60]`}
+                >
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: 10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: 10 }}
                   transition={{ type: "spring", duration: 0.3 }}
-                  className="top-1/2 left-1/2 z-50 fixed bg-white shadow-lg mx-4 rounded-xl w-full max-w-md -translate-x-1/2 -translate-y-1/2"
+                  className={`${dialogCard} relative mx-4 shadow-lg`}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <button
                     onClick={() => setShowApproveModal(false)}
@@ -705,7 +713,7 @@ export default function ListingDetailModal({
                       <button
                         onClick={() => setShowApproveModal(false)}
                         disabled={isApproving}
-                        className="flex-1 hover:bg-gray-50 disabled:opacity-50 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 transition disabled:cursor-not-allowed"
+                        className={`${buttonSecondary} flex-1 py-3 disabled:cursor-not-allowed`}
                       >
                         Cancel
                       </button>
@@ -735,6 +743,7 @@ export default function ListingDetailModal({
                     </div>
                   </div>
                 </motion.div>
+                </motion.div>
               </>
             )}
           </AnimatePresence>
@@ -748,14 +757,15 @@ export default function ListingDetailModal({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onClick={() => setShowRejectModal(false)}
-                  className="z-50 fixed inset-0 bg-black/50"
-                />
+                  className={`${dialogBackdrop} z-[60]`}
+                >
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: 10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: 10 }}
                   transition={{ type: "spring", duration: 0.3 }}
-                  className="top-1/2 left-1/2 z-50 fixed bg-white shadow-lg mx-4 rounded-xl w-full max-w-md -translate-x-1/2 -translate-y-1/2"
+                  className={`${dialogCard} relative mx-4 shadow-lg`}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <button
                     onClick={() => setShowRejectModal(false)}
@@ -794,7 +804,7 @@ export default function ListingDetailModal({
                           setRejectionComment("");
                         }}
                         disabled={isRejecting}
-                        className="flex-1 hover:bg-gray-50 disabled:opacity-50 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 transition disabled:cursor-not-allowed"
+                        className={`${buttonSecondary} flex-1 py-3 disabled:cursor-not-allowed`}
                       >
                         Cancel
                       </button>
@@ -825,6 +835,7 @@ export default function ListingDetailModal({
                     </div>
                   </div>
                 </motion.div>
+                </motion.div>
               </>
             )}
           </AnimatePresence>
@@ -838,14 +849,15 @@ export default function ListingDetailModal({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onClick={() => setShowSendToPendingModal(false)}
-                  className="z-50 fixed inset-0 bg-black/50"
-                />
+                  className={`${dialogBackdrop} z-[60]`}
+                >
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: 10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: 10 }}
                   transition={{ type: "spring", duration: 0.3 }}
-                  className="top-1/2 left-1/2 z-50 fixed bg-white shadow-lg mx-4 rounded-xl w-full max-w-md -translate-x-1/2 -translate-y-1/2"
+                  className={`${dialogCard} relative mx-4 shadow-lg`}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <button
                     onClick={() => setShowSendToPendingModal(false)}
@@ -870,7 +882,7 @@ export default function ListingDetailModal({
                       <button
                         onClick={() => setShowSendToPendingModal(false)}
                         disabled={isSendingToPending}
-                        className="flex-1 hover:bg-gray-50 disabled:opacity-50 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 transition disabled:cursor-not-allowed"
+                        className={`${buttonSecondary} flex-1 py-3 disabled:cursor-not-allowed`}
                       >
                         Cancel
                       </button>
@@ -898,6 +910,7 @@ export default function ListingDetailModal({
                       </button>
                     </div>
                   </div>
+                </motion.div>
                 </motion.div>
               </>
             )}

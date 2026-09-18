@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Truck } from "lucide-react";
+import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
 import ReadyToReturnModal from "./ReadyToReturnModal";
 import { useInitiateReturn } from "@/lib/queries/renters/useInitiateReturn";
 
@@ -37,16 +38,12 @@ export default function StartReturnAction({
     });
   };
 
-  const label = initiateReturnMutation.isPending
-    ? "Processing…"
-    : variant === "dashboard"
-      ? "Start Return Process"
-      : "Start Return";
+  const label = initiateReturnMutation.isPending ? "Processing…" : "Start return";
 
   const base =
     variant === "footer"
-      ? "flex flex-1 items-center justify-center gap-2 rounded-lg bg-black px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-60"
-      : "flex w-full items-center justify-center gap-2 rounded-sm border border-black bg-white px-4 py-2 text-black transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit";
+      ? `${buttonPrimary} flex-1`
+      : `${buttonSecondary} w-full sm:w-auto`;
 
   return (
     <>

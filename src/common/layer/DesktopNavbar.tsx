@@ -4,19 +4,17 @@ import React, { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { Heart, ShoppingBagIcon } from "lucide-react";
+import { Package, ShoppingBagIcon } from "lucide-react";
 import { Paragraph1, ParagraphLink1 } from "../ui/Text";
 import ShopDropdown from "./ShopDropdown";
 import SearchModal from "./SearchModal";
 import { AuthActions } from "./AuthActions";
-import { useFavoriteCountStore } from "@/store/useFavoriteCountStore";
 import { useCartCountStore } from "@/store/useCartCountStore";
 import { useCartItems } from "@/lib/queries/renters/useCartItems";
 import { useUserStore } from "@/store/useUserStore";
 import { DesktopSalesNavLink } from "./SalesNavLink";
 
 function DesktopNavbarContent() {
-  const favoriteCount = useFavoriteCountStore((state) => state.favoriteCount);
   const cartCount = useCartCountStore((state) => state.cartCount);
   const setCartCount = useCartCountStore((state) => state.setCartCount);
   const token = useUserStore((s) => s.token);
@@ -56,12 +54,9 @@ function DesktopNavbarContent() {
         <div className="flex items-center space-x-6 text-sm font-light">
           <SearchModal />
 
-          <Link
-            href="/renters/favorites"
-            className="flex items-center space-x-1"
-          >
-            <Heart className="w-5 h-5" />
-            <span>{favoriteCount}</span>
+          <Link href="/renters/orders" className="flex items-center gap-1.5">
+            <Package className="w-5 h-5" />
+            <ParagraphLink1>Orders</ParagraphLink1>
           </Link>
 
           <Link href="/shop/cart" className="flex items-center space-x-1">

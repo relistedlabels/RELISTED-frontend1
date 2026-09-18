@@ -12,6 +12,7 @@ import {
 } from "react-icons/hi2";
 import * as Yup from "yup";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
 import { useLogin, useResendOtp } from "@/lib/mutations";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { useUserStore } from "@/store/useUserStore";
@@ -148,7 +149,7 @@ export default function AdminSignInForm() {
               <button
                 type="submit"
                 disabled={login.isPending}
-                className="bg-black disabled:opacity-50 py-4 rounded-lg w-full font-semibold text-white"
+                className={`${buttonPrimaryFull} py-4`}
               >
                 {login.isPending ? "Signing in..." : "Sign in"}
               </button>

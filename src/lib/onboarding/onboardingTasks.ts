@@ -131,24 +131,18 @@ export const renterVerificationOnboardingTask = {
   label: "Verification setup",
   role: "renter" as const,
   basePath: "/renters/account",
-  resumeStep: 4,
+  resumeStep: 3,
   steps: [
     {
       target: '[data-onboarding-target="renter-verifications-tab"]',
       title: "Open Verifications",
-      body: "Tap Verifications to add your ID and BVN.",
+      body: "Tap Verifications to add your ID.",
       tab: "profile",
     },
     {
       target: '[data-onboarding-target="renter-id-section"]',
       title: "Add your ID",
       body: "Upload a valid ID document and enter your ID number.",
-      tab: "verifications",
-    },
-    {
-      target: '[data-onboarding-target="renter-bvn-section"]',
-      title: "Submit your BVN",
-      body: "Enter your 11-digit BVN to complete verification.",
       tab: "verifications",
     },
   ] satisfies OnboardingTaskStep[],

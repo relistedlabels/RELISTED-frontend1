@@ -25,7 +25,7 @@ export function getAdminNavItemDefinitions(): AdminNavItemDefinition[] {
     },
     {
       id: "shop",
-      label: "Shop",
+      label: "Brands",
       getHref: (id) => `/admin/${id}/shop`,
       showNewBadge: true,
     },

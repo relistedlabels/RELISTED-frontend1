@@ -161,7 +161,7 @@ const AddNewBankAccountForm: React.FC = () => {
         type="button"
         onClick={handleSubmit}
         disabled={addBankAccountMutation.isPending}
-        className="w-full p-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-900 disabled:opacity-50 transition"
+        className="inline-flex w-full items-center justify-center rounded-lg bg-black px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {addBankAccountMutation.isPending ? "Adding..." : "Add Bank Account"}
       </button>
