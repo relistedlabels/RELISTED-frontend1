@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import ApiTestComponent from "@/common/debug/ApiTestComponent";
 import { AuthStateMonitorProvider } from "@/common/layer/AuthStateMonitorProvider";
 import SiteHeader from "@/common/layer/SiteHeader";
+import MobileBottomNav from "@/common/layer/MobileBottomNav";
 import DevGuard from "@/common/layer/DevGuard";
 import { FavoritesInitializer } from "@/common/layer/FavoritesInitializer";
 import Footer from "@/common/layer/Footer";
@@ -95,7 +96,8 @@ export default function RootLayout({
               <SiteHeader />
 
               {/* <Header /> */}
-              {children}
+              <div className="pb-16 xl:pb-0">{children}</div>
+              <MobileBottomNav />
               <Toaster position="top-right" />
               <Footer />
               {/* <ApiTestComponent /> */}

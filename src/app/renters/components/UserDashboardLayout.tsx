@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { buttonDestructive, buttonSecondary } from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 import { Paragraph2, Paragraph3, ParagraphLink1 } from "@/common/ui/Text";
 import { AnimatePresence, motion } from "framer-motion";
 import { useUserStore } from "@/store/useUserStore";
@@ -121,28 +123,32 @@ export default function UserDashboardLayout({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.25 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+            className={dialogBackdrop}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm"
+              className={dialogCard}
             >
-              <h2 className="text-lg font-bold mb-2">Confirm Logout</h2>
-              <p className="text-gray-600 mb-6">
+              <h2 className="mb-2 font-bold text-gray-900 text-lg">
+                Confirm logout
+              </h2>
+              <p className="mb-6 text-gray-600 text-sm">
                 Are you sure you want to log out?
               </p>
-              <div className="flex gap-3 justify-end">
+              <div className="flex justify-end gap-3">
                 <button
-                  className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold"
+                  type="button"
+                  className={buttonSecondary}
                   onClick={() => setShowLogoutModal(false)}
                 >
                   Cancel
                 </button>
                 <button
-                  className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold"
+                  type="button"
+                  className={buttonDestructive}
                   onClick={handleLogout}
                 >
                   Log out

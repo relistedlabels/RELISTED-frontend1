@@ -1,13 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { HiOutlineTag, HiOutlineHeart } from "react-icons/hi2";
-import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import React, { useEffect, useMemo, useState } from "react";
+import { HiOutlineTag } from "react-icons/hi2";
+import { Paragraph1 } from "@/common/ui/Text";
 import { Heart, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
-import { useRouter, usePathname } from "next/navigation";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   useAddFavorite,
   useRemoveFavorite,
@@ -16,31 +14,20 @@ import {
 import { useAddCartItem } from "@/lib/mutations/renters/useAddCartItem";
 import { useSubmitRentalRequest } from "@/lib/mutations/renters/useRentalRequestMutations";
 import { useMe } from "@/lib/queries/auth/useMe";
-import { useUserStore } from "@/store/useUserStore";
 import { usePublicProductById } from "@/lib/queries/product/usePublicProductById";
 import { usePublicUserById } from "@/lib/queries/user/usePublicUserById";
-import { useProfileDetails } from "@/lib/queries/renters/useProfileDetails";
-import { useAddresses } from "@/lib/queries/renters/useAddresses";
 import { getCartItemsApi } from "@/lib/api/cart";
+import {
+  submitGuestAvailabilityCheck,
+  type GuestAvailabilitySubmitResponse,
+} from "@/lib/api/publicAvailability";
 import { DetailPanelSkeleton } from "@/common/ui/SkeletonLoaders";
-import DispatchWindowsScheduler from "@/app/shop/cart/checkout/components/DispatchWindowsScheduler";
-import type {
-  DispatchWindowContext,
-  DispatchWindowSelection,
-  DispatchWindowSelectionMap,
-  DispatchWindowsPayload,
-  ShipmentDispatchType,
-} from "@/lib/checkout/dispatchWindows";
-import { buildDispatchWindowContexts } from "@/lib/checkout/dispatchWindows";
+import GuestContactModal from "./GuestContactModal";
 import { usePublicSiteFeatures } from "@/lib/queries/site/useSiteFeatures";
 import {
-  closetDispatchAnchorDate,
-  getClosetEarliestDeliveryLagosYmd,
-  lagosYmdMax,
   publicProductHasCloset,
 } from "@/lib/vaultClosetSaleDates";
 import { getProductPreSaleCta } from "@/lib/shopSale/productSale";
-import { getTodayInLagos } from "@/lib/checkout/dispatchWindows";
 import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 interface UserProfileProps {
@@ -58,7 +45,6 @@ const UserProfile: React.FC<UserProfileProps> = ({
 }) => (
   <div className="flex justify-between items-center bg-white mt-4 p-4 border border-gray-200 rounded-xl">
     <div className="flex items-center space-x-3">
-      {/* Placeholder for User Image */}
       <div className="flex justify-center items-center bg-gray-200 rounded-full w-10 h-10 overflow-hidden">
         {avatar ? (
           <img
@@ -92,14 +78,29 @@ const UserProfile: React.FC<UserProfileProps> = ({
   </div>
 );
 
+function cartLineIdFromAddCartPayload(payload: unknown): string | undefined {
+  const walk = (v: unknown): string | undefined => {
+    if (v == null || typeof v !== "object") return undefined;
+    const o = v as Record<string, unknown>;
+    for (const k of ["id", "cartItemId", "cart_item_id"] as const) {
+      const s = o[k];
+      if (typeof s === "string" && s.trim()) return s.trim();
+    }
+    for (const nested of [o.data, o.item, o.cartItem]) {
+      const found = walk(nested);
+      if (found) return found;
+    }
+    return undefined;
+  };
+  return walk(payload);
+}
+
 interface ResaleDetailsCardProps {
   productId: string;
 }
 
 const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
   const router = useRouter();
-  const pathname = usePathname();
-  const setUser = useUserStore((s) => s.setUser);
   const { data: product, isLoading } = usePublicProductById(productId);
   const { data: siteFeaturesRes } = usePublicSiteFeatures();
   const closetShopNavEnabled =
@@ -115,7 +116,6 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
   );
   const { data: lister } = usePublicUserById(product?.curatorId || "");
 
-  // Favorite logic
   const { data: user } = useMe();
   const { data: favoritesData } = useFavorites(1, 100);
   const addFavorite = useAddFavorite();
@@ -124,15 +124,7 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
   const submitRentalRequest = useSubmitRentalRequest();
   const [isFavorited, setIsFavorited] = useState(false);
   const [isRequesting, setIsRequesting] = useState(false);
-  const [isProfileSetupModalOpen, setIsProfileSetupModalOpen] = useState(false);
-  const [addedToCart, setAddedToCart] = useState(false);
-  const [dispatchSelections, setDispatchSelections] =
-    useState<DispatchWindowSelectionMap>({});
-
-  // Profile and addresses for availability request
-  const { data: profileData, isLoading: isProfileLoading } =
-    useProfileDetails();
-  const { data: addressesData, isLoading: isAddressesLoading } = useAddresses();
+  const [isGuestModalOpen, setIsGuestModalOpen] = useState(false);
 
   useEffect(() => {
     if (favoritesData?.favorites && product) {
@@ -143,94 +135,130 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
     }
   }, [favoritesData, product]);
 
-  const isClosetProduct = Boolean(product && publicProductHasCloset(product));
+  const resalePrice = product?.resalePrice ?? product?.originalValue ?? 0;
 
-  const dispatchContexts = useMemo<DispatchWindowContext[]>(() => {
-    if (!product) return [];
-    const minDate = isClosetProduct
-      ? lagosYmdMax(getTodayInLagos(), getClosetEarliestDeliveryLagosYmd())
-      : undefined;
-    return buildDispatchWindowContexts([
-      {
-        type: "RESALE",
-        baseDate: isClosetProduct ? closetDispatchAnchorDate() : new Date(),
-        minDate,
-        allowDateChange: true,
-        allowRollForward: true,
-        baseDateReason: isClosetProduct
-          ? "Earliest delivery is Monday 18 May"
-          : undefined,
-      },
-    ]);
-  }, [product, isClosetProduct]);
-
-  useEffect(() => {
-    if (dispatchContexts.length === 0) {
-      setDispatchSelections({});
+  const redirectAfterAvailabilitySubmit = (
+    res: GuestAvailabilitySubmitResponse,
+  ) => {
+    const checkingUrl = res?.data?.checkingUrl;
+    const requestId = res?.data?.requestId;
+    const accessToken = res?.data?.accessToken;
+    if (checkingUrl) {
+      router.push(checkingUrl);
       return;
     }
-    setDispatchSelections((prev) => {
-      const next = { ...prev } as DispatchWindowSelectionMap;
-      let changed = false;
-
-      dispatchContexts.forEach((ctx) => {
-        if (!next[ctx.type]) {
-          next[ctx.type] = {
-            type: ctx.type,
-            window: ctx.suggested.window,
-            mode: "DEFAULT",
-            baseDate: ctx.suggested.baseDate,
-            scheduledDate: ctx.suggested.scheduledDate,
-            rolledForwardDays: ctx.suggested.rolledForwardDays,
-          } satisfies DispatchWindowSelection;
-          changed = true;
-        }
-      });
-
-      (Object.keys(next) as ShipmentDispatchType[]).forEach((type) => {
-        if (!dispatchContexts.some((ctx) => ctx.type === type)) {
-          delete next[type];
-          changed = true;
-        }
-      });
-
-      return changed ? next : prev;
-    });
-  }, [dispatchContexts]);
-
-  const handleDispatchSelectionChange = useCallback(
-    (
-      type: ShipmentDispatchType,
-      selection: DispatchWindowSelection | undefined,
-    ) => {
-      setDispatchSelections((prev) => {
-        const next = { ...prev } as DispatchWindowSelectionMap;
-        if (!selection) {
-          delete next[type];
-        } else {
-          next[type] = selection;
-        }
-        return next;
-      });
-    },
-    [],
-  );
-
-  const dispatchWindowsPayload = useMemo<
-    DispatchWindowsPayload | undefined
-  >(() => {
-    if (dispatchContexts.length === 0) {
-      return undefined;
+    if (requestId && accessToken) {
+      router.push(
+        `/shop/availability/checking?requestId=${requestId}&token=${accessToken}`,
+      );
+      return;
     }
-    const payload: DispatchWindowsPayload = {};
-    dispatchContexts.forEach((ctx) => {
-      const selection = dispatchSelections[ctx.type];
-      if (selection?.window) {
-        payload[ctx.type] = selection.window;
+    if (requestId) {
+      router.push(`/shop/availability/checking?requestId=${requestId}`);
+    }
+  };
+
+  const submitPurchaseAvailability = async (guestContact?: {
+    firstName: string;
+    email: string;
+  }) => {
+    if (!product || product.status === "SOLD") {
+      toast.error("This item has been sold.");
+      return;
+    }
+
+    setIsRequesting(true);
+    try {
+      if (!user && guestContact) {
+        const res = await submitGuestAvailabilityCheck({
+          productId: product.id,
+          listerId: product.curatorId,
+          firstName: guestContact.firstName,
+          email: guestContact.email,
+          rentalDays: 0,
+          rentalStartDate: null,
+          rentalEndDate: null,
+          estimatedRentalPrice: resalePrice,
+        });
+        toast.success("We are checking availability with the lister.");
+        redirectAfterAvailabilitySubmit(res);
+        return;
       }
-    });
-    return Object.keys(payload).length > 0 ? payload : undefined;
-  }, [dispatchContexts, dispatchSelections]);
+
+      if (!user) {
+        setIsGuestModalOpen(true);
+        return;
+      }
+
+      let cartItemId: string | undefined;
+      try {
+        const addRes = await addToCart.mutateAsync({
+          productId: product.id,
+          days: 0,
+        });
+        cartItemId = cartLineIdFromAddCartPayload(addRes?.data ?? addRes);
+      } catch (cartErr: unknown) {
+        const msg = String(
+          cartErr && typeof cartErr === "object" && "message" in cartErr
+            ? (cartErr as { message: string }).message
+            : "",
+        );
+        if (/already in cart/i.test(msg)) {
+          try {
+            const cart = await getCartItemsApi();
+            const line = [...(cart.items ?? [])]
+              .reverse()
+              .find((i) => i.productId === product.id);
+            cartItemId = line?.id;
+          } catch {}
+        } else {
+          toast.error(msg || "Could not add to cart.");
+          return;
+        }
+      }
+
+      const res = await submitRentalRequest.mutateAsync({
+        productId: product.id,
+        listerId: product.curatorId,
+        rentalStartDate: null,
+        rentalEndDate: null,
+        rentalDays: 0,
+        estimatedRentalPrice: resalePrice,
+        autoPay: false,
+        currency: "NGN",
+        ...(cartItemId ? { cartItemId } : {}),
+      });
+
+      if (res?.success && res?.data) {
+        toast.success("We are checking availability with the lister.");
+        redirectAfterAvailabilitySubmit(res);
+      }
+    } catch (e: unknown) {
+      const msg =
+        e && typeof e === "object" && "message" in e
+          ? String((e as { message: string }).message)
+          : "Could not submit request. Please try again.";
+      if (/already.*request|already.*pending|pending.*request/i.test(msg)) {
+        toast.info("You already have a pending request for this item.");
+      } else {
+        toast.error(msg);
+      }
+    } finally {
+      setIsRequesting(false);
+    }
+  };
+
+  const handleCheckAvailability = () => {
+    void submitPurchaseAvailability();
+  };
+
+  const handleGuestContactSubmit = (contact: {
+    firstName: string;
+    email: string;
+  }) => {
+    setIsGuestModalOpen(false);
+    void submitPurchaseAvailability(contact);
+  };
 
   const handleFavoriteClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -253,123 +281,16 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
     }
   };
 
-  const handleBuy = async () => {
-    if (product?.status === "SOLD") {
-      toast.error("This item has been sold.");
-      return;
-    }
-
-    if (!user) {
-      const currentUrl = encodeURIComponent(window.location.href);
-      window.location.href = `/auth/sign-in?redirect=${currentUrl}`;
-      return;
-    }
-
-    if (!product) return;
-
-    if (isProfileLoading || isAddressesLoading) {
-      toast.info("Loading your profile and addresses...");
-      return;
-    }
-
-    if (!profileData) {
-      setIsProfileSetupModalOpen(true);
-      return;
-    }
-
-    const defaultAddress = addressesData?.[0];
-    if (!defaultAddress) {
-      setIsProfileSetupModalOpen(true);
-      return;
-    }
-
-    if (dispatchContexts.length > 0 && !dispatchWindowsPayload) {
-      toast.error("Please confirm delivery options before proceeding.");
-      return;
-    }
-
-    setIsRequesting(true);
-
-    try {
-      // Add to cart first with days = 0 for resale
-      let cartItemId: string | undefined;
-      try {
-        const addRes = await addToCart.mutateAsync({
-          productId: product.id,
-          days: 0,
-        });
-        cartItemId = addRes?.data?.id;
-      } catch (cartErr: any) {
-        const msg = String(cartErr?.message ?? "");
-        const alreadyInCart = /already in cart/i.test(msg);
-        if (alreadyInCart) {
-          try {
-            const cart = await getCartItemsApi();
-            const line = [...(cart.items ?? [])]
-              .reverse()
-              .find((i) => i.productId === product.id);
-            cartItemId = line?.id;
-          } catch {}
-        } else {
-          console.error("❌ Error posting cart item:", cartErr);
-          toast.error(msg || "Could not add to cart.");
-          setIsRequesting(false);
-          return;
-        }
-      }
-
-      // Submit availability request with null dates for resale
-      await submitRentalRequest.mutateAsync({
-        productId: product.id,
-        listerId: product.curatorId,
-        rentalStartDate: null,
-        rentalEndDate: null,
-        rentalDays: 0,
-        estimatedRentalPrice: resalePrice,
-        deliveryAddressId: defaultAddress.id,
-        autoPay: false,
-        currency: "NGN",
-        ...(cartItemId ? { cartItemId } : {}),
-        ...(dispatchWindowsPayload
-          ? { dispatchWindows: dispatchWindowsPayload }
-          : {}),
-      });
-
-      toast.success("Request sent! Awaiting lister approval.");
-      setAddedToCart(true);
-    } catch (e: any) {
-      console.error("❌ Error in handleBuy:", e);
-      const msg = String(e?.message ?? "");
-      if (/already.*request|already.*pending|pending.*request/i.test(msg)) {
-        toast.info("You already have a pending request for this item.");
-      } else {
-        toast.error(msg || "Could not submit request. Please try again.");
-      }
-    } finally {
-      setIsRequesting(false);
-    }
-  };
-
-  const handleProfileSetupProceed = () => {
-    setUser({ role: "RENTER" });
-    const returnUrl = encodeURIComponent(pathname);
-    router.push(`/auth/profile-setup?returnUrl=${returnUrl}`);
-  };
-
   if (isLoading || !product) {
     return <DetailPanelSkeleton />;
   }
 
-  // Use resalePrice from product, fallback to originalValue if not available
-  const resalePrice = product.resalePrice ?? product.originalValue;
   const soldOut = product.status === "SOLD";
 
   return (
     <div className="">
       <div className="bg-[#FBFBFB] p-4 py-6 border border-gray-200 rounded-xl">
-        {/* Resale Value Section */}
         <div className="space-y-4 mb-6">
-          {/* Resale Value */}
           <div className="flex justify-between items-center bg-white p-4 border border-gray-200 rounded-lg">
             <div className="flex items-center space-x-2 text-gray-700">
               <HiOutlineTag className="w-5 h-5" />
@@ -383,7 +304,6 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex space-x-2 mb-4">
           {soldOut ? (
             <div className="flex gap-2 w-full">
@@ -410,35 +330,11 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
                 />
               </button>
             </div>
-          ) : addedToCart ? (
-            <div className="flex gap-2 w-full">
-              <Link
-                href="/shop/cart"
-                className="flex flex-1 justify-center items-center bg-black hover:bg-gray-800 px-4 py-3 rounded-lg font-semibold text-white text-center transition duration-150"
-              >
-                View cart
-              </Link>
-              <button
-                type="button"
-                onClick={handleFavoriteClick}
-                disabled={addFavorite.isPending || removeFavorite.isPending}
-                className="bg-white hover:bg-gray-50 disabled:opacity-50 p-3 border border-gray-300 rounded-lg transition duration-150 shrink-0"
-                aria-label={
-                  isFavorited ? "Remove from favorites" : "Add to favorites"
-                }
-              >
-                <Heart
-                  className="w-6 h-6"
-                  fill={isFavorited ? "red" : "none"}
-                  color={isFavorited ? "red" : "#222"}
-                />
-              </button>
-            </div>
           ) : (
             <>
               <button
                 type="button"
-                onClick={handleBuy}
+                onClick={handleCheckAvailability}
                 disabled={isRequesting}
                 className={`flex flex-1 min-w-0 cursor-pointer items-center justify-center gap-1 rounded-lg border border-black bg-black text-center font-semibold text-white transition hover:bg-gray-100 hover:text-black disabled:opacity-50 ${
                   closetPrimaryCtaOverride
@@ -450,7 +346,7 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
                   <>
                     <Loader2 className="inline h-4 w-4 shrink-0 animate-spin" />
                     <Paragraph1 className="m-0 text-center text-inherit">
-                      Processing...
+                      Checking…
                     </Paragraph1>
                   </>
                 ) : closetPrimaryCtaOverride ? (
@@ -459,11 +355,12 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
                   </Paragraph1>
                 ) : (
                   <Paragraph1 className="m-0 text-center text-sm text-white">
-                    Add to Cart
+                    Check availability
                   </Paragraph1>
                 )}
               </button>
               <button
+                type="button"
                 onClick={handleFavoriteClick}
                 disabled={addFavorite.isPending || removeFavorite.isPending}
                 className="bg-white hover:bg-gray-50 disabled:opacity-50 p-3 border border-gray-300 rounded-lg transition duration-150"
@@ -481,25 +378,12 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
           )}
         </div>
 
-        {!soldOut && !addedToCart && dispatchContexts.length > 0 && (
-          <div className="space-y-3 mb-6">
-            <Paragraph1 className="font-bold text-gray-800 text-sm uppercase tracking-wide">
-              Delivery options
-            </Paragraph1>
-            <Paragraph1 className="text-gray-600 text-xs">
-              Choose when to receive this purchase so our courier can lock in
-              the right slot.
-            </Paragraph1>
-            <DispatchWindowsScheduler
-              contexts={dispatchContexts}
-              selections={dispatchSelections}
-              onSelectionChange={handleDispatchSelectionChange}
-            />
-          </div>
-        )}
+        <Paragraph1 className="mb-4 text-gray-600 text-xs leading-relaxed">
+          Delivery details and payment come at checkout, after the lister
+          confirms the item is available.
+        </Paragraph1>
 
-        {/* Security / Shipping Info */}
-        <div className="flex items-center space-x-2 bg-white mb-4 p-3 border border-gray-200 rounded-lg">
+        <div className="flex items-center space-x-2 bg-white p-3 border border-gray-200 rounded-lg">
           <img src="/icons/safe1.svg" alt="secure" />
           <Paragraph1 className="text-gray-700 leading-snug">
             Secure checkout. Item ships within 1-3 business days.
@@ -507,7 +391,6 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
         </div>
       </div>
 
-      {/* User Profile Card */}
       {lister && (
         <UserProfile
           name={lister.name || "Verified Lister"}
@@ -517,74 +400,12 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
         />
       )}
 
-      {/* Profile Setup Required Modal */}
-      <AnimatePresence>
-        {isProfileSetupModalOpen && (
-          <motion.div
-            className="z-[101] fixed inset-0 flex justify-center items-center bg-black/50 p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="bg-white shadow-xl p-8 rounded-2xl w-full max-w-md"
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              transition={{ type: "spring", damping: 20, stiffness: 300 }}
-            >
-              {/* Icon */}
-              <div className="flex justify-center mb-4">
-                <div className="flex justify-center items-center bg-blue-100 rounded-full w-16 h-16">
-                  <svg
-                    className="w-8 h-8 text-blue-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                    />
-                  </svg>
-                </div>
-              </div>
-
-              {/* Title */}
-              <Paragraph2 className="mb-2 font-bold text-gray-900 text-2xl text-center">
-                Complete Your Profile
-              </Paragraph2>
-
-              {/* Description */}
-              <Paragraph1 className="mb-6 text-gray-600 text-center leading-relaxed">
-                To complete this action, you need to set up your profile and add
-                a delivery address first. This will only take a few minutes!
-              </Paragraph1>
-
-              {/* Modal Actions */}
-              <div className="flex flex-col gap-3">
-                <button
-                  type="button"
-                  onClick={handleProfileSetupProceed}
-                  className="bg-black hover:bg-gray-800 px-4 py-3 rounded-lg w-full font-semibold text-white text-sm transition-colors"
-                >
-                  Proceed to Setup
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsProfileSetupModalOpen(false)}
-                  className="hover:bg-gray-50 px-4 py-3 border border-gray-300 rounded-lg w-full font-semibold text-gray-900 text-sm transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <GuestContactModal
+        isOpen={isGuestModalOpen}
+        onClose={() => setIsGuestModalOpen(false)}
+        onSubmit={handleGuestContactSubmit}
+        isSubmitting={isRequesting}
+      />
     </div>
   );
 };

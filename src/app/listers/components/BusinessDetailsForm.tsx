@@ -17,6 +17,7 @@ import {
 import { useBusinessProfile } from "@/lib/queries/listers/useBusinessProfile";
 import { useUpdateBusinessProfile } from "@/lib/mutations/listers/useUpdateBusinessProfile";
 import type { UpdateBusinessProfilePayload } from "@/lib/api/listers";
+import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
 
 const BusinessDetailsForm: React.FC = () => {
   const searchParams = useSearchParams();
@@ -351,7 +352,7 @@ const BusinessDetailsForm: React.FC = () => {
         {!fieldsEnabled ? (
           <button
             onClick={() => setIsEditing(true)}
-            className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition duration-150"
+            className={buttonPrimary}
           >
             Edit Business Details
           </button>
@@ -361,7 +362,7 @@ const BusinessDetailsForm: React.FC = () => {
               <button
                 onClick={() => setIsEditing(false)}
                 disabled={updateBusinessProfileMutation.isPending}
-                className="px-6 py-2 text-sm font-semibold text-black border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={buttonSecondary}
               >
                 Cancel
               </button>
@@ -369,7 +370,7 @@ const BusinessDetailsForm: React.FC = () => {
             <button
               onClick={handleSave}
               disabled={updateBusinessProfileMutation.isPending}
-              className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className={`${buttonPrimary} gap-2`}
             >
               {updateBusinessProfileMutation.isPending ? (
                 <>

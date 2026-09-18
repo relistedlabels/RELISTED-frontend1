@@ -20,6 +20,7 @@ import {
 } from "@/lib/renters/renterBankOptions";
 import { useNgBankOptions } from "@/lib/queries/useNgBankOptions";
 import { toast } from "sonner";
+import { buttonPrimary, buttonPrimaryFull } from "@/common/ui/buttonClasses";
 
 const ExampleWithdrawalForm: React.FC = () => {
   const [amount, setAmount] = useState<string>("");
@@ -326,7 +327,7 @@ const ExampleWithdrawalForm: React.FC = () => {
             }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="flex items-center space-x-1 bg-black hover:bg-gray-800 px-3 py-2 rounded-lg font-medium text-white text-xs transition"
+            className={`${buttonPrimary} space-x-1 px-3 py-2 text-xs font-medium`}
           >
             <HiOutlinePencil size={16} />
             <span>{accounts && accounts.length > 0 ? "Change" : "Add"}</span>
@@ -527,7 +528,7 @@ const ExampleWithdrawalForm: React.FC = () => {
               ? 0.98
               : 1,
         }}
-        className="bg-black hover:bg-gray-900 disabled:bg-gray-400 px-4 py-3 rounded-lg w-full font-semibold text-white transition disabled:cursor-not-allowed"
+        className={`${buttonPrimaryFull} py-3 disabled:bg-gray-400`}
       >
         <Paragraph1>
           {withdrawMutation.isPending ? "Processing..." : "Request Withdrawal"}
@@ -789,7 +790,7 @@ const ExampleWithdrawalForm: React.FC = () => {
                   updateProfileMutation.isPending ||
                   !profileFormData.bankName?.trim()
                 }
-                className="flex-1 bg-black hover:bg-gray-900 disabled:bg-gray-400 px-4 py-2 rounded-lg font-medium text-white transition"
+                className={`${buttonPrimary} flex-1 disabled:bg-gray-400`}
               >
                 {updateProfileMutation.isPending ? "Saving..." : "Save"}
               </motion.button>

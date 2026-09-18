@@ -5,6 +5,8 @@ import type { JSX } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowRight } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 
 interface FirstListingModalProps {
   isOpen: boolean;
@@ -20,24 +22,22 @@ export default function FirstListingModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          <motion.div
+        <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/50 z-40"
+            className={`${dialogBackdrop} z-40`}
             onClick={onClose}
-          />
-
-          <motion.div
+          >
+            <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className={`${dialogCard} max-h-[85vh] overflow-y-auto flex flex-col rounded-2xl p-0`}
+            onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-y-auto flex flex-col">
               {/* Header */}
               <div className="bg-white border-b border-gray-100 p-6 sticky top-0 z-10">
                 <div className="flex items-center justify-between mb-4">
@@ -124,22 +124,21 @@ export default function FirstListingModal({
                 {onClose && (
                   <button
                     onClick={onClose}
-                    className="flex-1 px-4 py-2.5 rounded-lg font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors text-sm"
+                    className={`${buttonSecondary} flex-1`}
                   >
                     Later
                   </button>
                 )}
                 <button
                   onClick={onGetStarted}
-                  className="flex-1 px-4 py-2.5 rounded-lg font-medium text-white bg-black hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 text-sm"
+                  className={`${buttonPrimary} flex-1`}
                 >
                   Let's Go
                   <ArrowRight size={16} />
                 </button>
               </div>
-            </div>
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );

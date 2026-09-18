@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   addDaysToDateString,
+  buildDispatchWindowChoices,
   buildDispatchWindowFromForm,
   differenceInDays,
   parseTimeToMinutes,
@@ -52,7 +53,11 @@ describe("buildDispatchWindowFromForm", () => {
       durationMinutes: 120,
     });
     expect(result.window).toBeUndefined();
-    expect(result.errors.some((e) => e.includes("2:00pm"))).toBe(true);
+    expect(
+      result.errors.some((e) =>
+        e.includes(`${DISPATCH_WINDOW_END_HOUR % 12 || 12}:00pm`),
+      ),
+    ).toBe(true);
   });
 
   test("accepts valid future window", () => {
@@ -64,5 +69,31 @@ describe("buildDispatchWindowFromForm", () => {
     expect(result.errors).toEqual([]);
     expect(result.window?.start).toContain("2030-06-01");
     expect(result.window?.end).toContain("2030-06-01");
+  });
+});
+
+describe("buildDispatchWindowChoices", () => {
+  test("adds off-hour suggested window before hourly slots", () => {
+    const suggested = {
+      start: "2030-06-15T15:03:00+01:00",
+      end: "2030-06-15T16:03:00+01:00",
+    };
+    const choices = buildDispatchWindowChoices("2030-06-15", suggested);
+    expect(choices[0]?.value).toBe(suggested.start);
+    expect(choices[0]?.isEarliest).toBe(true);
+    expect(choices.length).toBeGreaterThan(1);
+  });
+
+  test("uses hourly slots only when suggested aligns to the grid", () => {
+    const suggested = buildDispatchWindowFromForm({
+      date: "2030-06-15",
+      startTime: "10:00",
+      durationMinutes: 60,
+    }).window!;
+    const choices = buildDispatchWindowChoices("2030-06-15", suggested);
+    expect(choices.some((choice) => choice.window.start === suggested.start)).toBe(
+      true,
+    );
+    expect(choices.some((choice) => choice.isEarliest)).toBe(false);
   });
 });

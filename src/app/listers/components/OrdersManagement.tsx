@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Calendar, Clock, Package } from "lucide-react";
 
+import { buttonPrimary } from "@/common/ui/buttonClasses";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { useOrders } from "@/lib/queries/listers/useOrders";
 import {
@@ -15,7 +16,7 @@ import {
   isListerAvailabilityPending,
 } from "@/lib/listers/listerOrderStatus";
 import {
-  isListerAvailabilityExpiredStatusRow,
+  shouldShowListerNotifyRenterForDispatchWindow,
   isListerAvailabilityRequestRow,
   isListerResaleOrder,
   shouldShowListerAvailabilityDeadlineUi,
@@ -156,7 +157,7 @@ const OrdersManagement: React.FC = () => {
                   {isActive && (
                     <motion.div
                       layoutId="activeOrderTab"
-                      className="z-[-1] absolute inset-0 bg-[#33332D] rounded-lg"
+                      className="z-[-1] absolute inset-0 bg-black rounded-lg"
                       transition={{
                         type: "spring",
                         bounce: 0.2,
@@ -234,7 +235,8 @@ const OrdersManagement: React.FC = () => {
                       )
                     : "—";
                   const total = Number(row.totalAmount ?? 0);
-                  const showNudgeRenter = isListerAvailabilityExpiredStatusRow(row);
+                  const showNudgeRenter =
+                    shouldShowListerNotifyRenterForDispatchWindow(row);
 
                   return (
                     <OrderCard
@@ -449,12 +451,12 @@ const OrderCard: React.FC<{
             >
               {nudgeRenterMutation.isPending
                 ? "Sending..."
-                : "Notify renter item is available"}
+                : "Notify renter"}
             </button>
           ) : null}
           <Link
             href={`/listers/orders/${order.id}`}
-            className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-sm font-bold bg-[#33332D] text-white hover:bg-black transition-all active:scale-95 text-center"
+            className={`${buttonPrimary} flex-1 sm:flex-none active:scale-95 text-center`}
           >
             View Details
           </Link>

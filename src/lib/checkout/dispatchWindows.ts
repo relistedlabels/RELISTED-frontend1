@@ -156,7 +156,8 @@ const minutesUntil = (targetIso: string) => {
 };
 
 export const DISPATCH_WINDOW_START_HOUR = 8;
-export const DISPATCH_WINDOW_END_HOUR = 14;
+/** Last hour deliveries and pickups may end (Lagos). 1-hour slots may start up to one hour before this. */
+export const DISPATCH_WINDOW_END_HOUR = 18;
 export const MIN_DISPATCH_WINDOW_MINUTES = 60;
 export const MAX_DISPATCH_WINDOW_MINUTES = 240;
 export const IMMEDIATE_DISPATCH_THRESHOLD_MINUTES = 60;
@@ -304,7 +305,7 @@ export const formatLagosTime = (input: string | Date): string =>
 export const formatWindowRange = (window: DispatchWindow): string => {
   return `${formatLagosDate(window.start, { includeWeekday: true })}, ${formatLagosTime(
     window.start,
-  )} – ${formatLagosTime(window.end)} WAT`;
+  )} – ${formatLagosTime(window.end)}`;
 };
 
 const clampDuration = (minutes: number): number => {
@@ -440,14 +441,24 @@ export const buildDispatchWindowFromForm = (
     errors.push("Window must be between 60 and 240 minutes");
   }
 
+  const formatCutoffLabel = (hour: number) => {
+    const h = hour % 12 || 12;
+    const meridiem = hour >= 12 ? "pm" : "am";
+    return `${h}:00${meridiem}`;
+  };
+
   if (startMinutes < dayStart) {
-    errors.push("Start time must be after 8:00am WAT");
+    errors.push(
+      `Start time must be after ${formatCutoffLabel(DISPATCH_WINDOW_START_HOUR)}`,
+    );
   }
 
   const endMinutes = startMinutes + duration;
 
   if (endMinutes > dayEnd) {
-    errors.push("Window must end by 2:00pm WAT");
+    errors.push(
+      `Window must end by ${formatCutoffLabel(DISPATCH_WINDOW_END_HOUR)}`,
+    );
   }
 
   const today = getLagosDateString(new Date());
@@ -499,7 +510,7 @@ export const isDispatchSlotStartValidOnLagosDate = (
   return slotStartMinutes >= minStart;
 };
 
-/** True if at least one dispatch slot exists on this Lagos calendar day (8am–2pm window, 1h lead same-day). */
+/** True if at least one dispatch slot exists on this Lagos calendar day (same-day lead applies). */
 export const dayHasDispatchSlotOnLagosDate = (
   dateStr: string,
   durationMinutes: number = MIN_DISPATCH_WINDOW_MINUTES,
@@ -534,4 +545,128 @@ export const isImmediateDispatch = (
 ): boolean => {
   const mins = minutesUntil(startIso);
   return mins >= 0 && mins <= thresholdMinutes;
+};
+
+export type DispatchWindowChoice = {
+  value: string;
+  label: string;
+  window: DispatchWindow;
+  isEarliest?: boolean;
+};
+
+const listHourlySlotStartMinutes = (
+  durationMinutes: number = MIN_DISPATCH_WINDOW_MINUTES,
+): number[] => {
+  const dayStart = DISPATCH_WINDOW_START_HOUR * 60;
+  const dayEnd = DISPATCH_WINDOW_END_HOUR * 60;
+  const duration = clampDuration(durationMinutes);
+  const lastStart = dayEnd - duration;
+  const slots: number[] = [];
+  for (let minutes = dayStart; minutes <= lastStart; minutes += 60) {
+    slots.push(minutes);
+  }
+  return slots;
+};
+
+const windowsEqual = (a: DispatchWindow, b: DispatchWindow) =>
+  a.start === b.start && a.end === b.end;
+
+/** User-facing label for the earliest same-day window (may start before the hour grid). */
+export const formatEarliestWindowChoiceLabel = (window: DispatchWindow): string =>
+  `${formatLagosTime(window.start)} – ${formatLagosTime(window.end)}`;
+
+const formatHourlySlotLabel = (dateStr: string, startMinutes: number) => {
+  const endMinutes = startMinutes + MIN_DISPATCH_WINDOW_MINUTES;
+  const toTime = (minutes: number) => {
+    const hrs = Math.floor(minutes / 60)
+      .toString()
+      .padStart(2, "0");
+    const mins = (minutes % 60).toString().padStart(2, "0");
+    return `${hrs}:${mins}`;
+  };
+  const start = formatLagosTime(`${dateStr}T${toTime(startMinutes)}:00+01:00`);
+  const end = formatLagosTime(`${dateStr}T${toTime(endMinutes)}:00+01:00`);
+  return `${start} – ${end}`;
+};
+
+/**
+ * Dropdown choices for a Lagos calendar day: earliest available window first,
+ * then remaining hourly slots. Same-day "immediate" windows that fall between
+ * hour marks get their own first option (e.g. 3:03 PM – 4:03 PM).
+ */
+export const buildDispatchWindowChoices = (
+  dateStr: string,
+  suggestedWindow: DispatchWindow,
+  durationMinutes: number = MIN_DISPATCH_WINDOW_MINUTES,
+): DispatchWindowChoice[] => {
+  const choices: DispatchWindowChoice[] = [];
+  const suggestedOnDate = getLagosDateString(suggestedWindow.start) === dateStr;
+
+  if (suggestedOnDate) {
+    const suggestedStartParts = getLagosDateTimeParts(suggestedWindow.start);
+    const suggestedStartMin =
+      suggestedStartParts.hour * 60 + suggestedStartParts.minute;
+    const onHourBoundary = suggestedStartMin % 60 === 0;
+    const hourlyMatch =
+      onHourBoundary &&
+      isDispatchSlotStartValidOnLagosDate(
+        dateStr,
+        suggestedStartMin,
+        durationMinutes,
+      ) &&
+      (() => {
+        const hrs = Math.floor(suggestedStartMin / 60)
+          .toString()
+          .padStart(2, "0");
+        const mins = (suggestedStartMin % 60).toString().padStart(2, "0");
+        const built = buildDispatchWindowFromForm({
+          date: dateStr,
+          startTime: `${hrs}:${mins}`,
+          durationMinutes,
+        }).window;
+        return built ? windowsEqual(built, suggestedWindow) : false;
+      })();
+
+    if (!hourlyMatch || isImmediateDispatch(suggestedWindow.start)) {
+      choices.push({
+        value: suggestedWindow.start,
+        label: formatEarliestWindowChoiceLabel(suggestedWindow),
+        window: suggestedWindow,
+        isEarliest: true,
+      });
+    }
+  }
+
+  for (const startMin of listHourlySlotStartMinutes(durationMinutes)) {
+    if (!isDispatchSlotStartValidOnLagosDate(dateStr, startMin, durationMinutes)) {
+      continue;
+    }
+    const hrs = Math.floor(startMin / 60)
+      .toString()
+      .padStart(2, "0");
+    const mins = (startMin % 60).toString().padStart(2, "0");
+    const built = buildDispatchWindowFromForm({
+      date: dateStr,
+      startTime: `${hrs}:${mins}`,
+      durationMinutes,
+    }).window;
+    if (!built) continue;
+    if (choices.some((choice) => windowsEqual(choice.window, built))) continue;
+    choices.push({
+      value: built.start,
+      label: formatHourlySlotLabel(dateStr, startMin),
+      window: built,
+    });
+  }
+
+  if (choices.length === 0 && suggestedOnDate) {
+    choices.push({
+      value: suggestedWindow.start,
+      label: formatEarliestWindowChoiceLabel(suggestedWindow),
+      window: suggestedWindow,
+      isEarliest: true,
+    });
+  }
+
+  return choices;
 };

@@ -1,16 +1,15 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
 import { Check, Copy, RefreshCw, Shield } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
-import { useUpdateProfile } from "@/lib/mutations/renters/useProfileMutations";
 import { useProfile } from "@/lib/queries/renters/useProfile";
 import { useVerificationsStatus } from "@/lib/queries/renters/useVerifications";
 import { isRenterVerifiedForFundWallet } from "@/lib/renters/fundWalletVerification";
 import { useWallet } from "@/lib/queries/renters/useWallet";
 import VerificationModal from "./VerificationModal";
+import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
 
 // Currency constant
 const CURRENCY = "₦";
@@ -23,12 +22,6 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isGeneratingVA, setIsGeneratingVA] = useState(false);
-  const [vaLoadingStep, setVaLoadingStep] = useState<
-    "idle" | "saving" | "generating"
-  >("idle");
-  const [showVAForm, setShowVAForm] = useState(false);
-  const [nin, setNin] = useState("");
-  const [bvn, setBvn] = useState("");
   const [vaError, setVaError] = useState("");
   const [isVerified, setIsVerified] = useState(false);
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
@@ -55,8 +48,6 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
     isLoading: walletLoading,
     refetch: refetchWallet,
   } = useWallet();
-  const updateProfileMutation = useUpdateProfile();
-
   const verifications = verificationsStatusResponse?.data?.verifications;
   const satisfiesWallet = useMemo(
     () => isRenterVerifiedForFundWallet(profileResponse, verifications),
@@ -173,70 +164,23 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
 
   const handleGenerateVA = async () => {
     setVaError("");
-
-    if (!nin.trim() || !bvn.trim()) {
-      setVaError("Please enter both ID Number and BVN");
-      return;
-    }
-
-    if (nin.length < 11) {
-      setVaError("ID Number must be at least 11 digits");
-      return;
-    }
-
-    if (bvn.length < 11) {
-      setVaError("BVN must be at least 11 digits");
-      return;
-    }
-
     setIsGeneratingVA(true);
-    setVaLoadingStep("saving");
 
     try {
-      // Simulate "Saving..." for 5 seconds
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-
-      // Switch to "Generating account..."
-      setVaLoadingStep("generating");
-
-      // Call the update profile mutation with NIN and BVN
-      await new Promise((saveResolve) => {
-        updateProfileMutation.mutate(
-          {
-            nin,
-            bvn,
-          },
-          {
-            onSuccess: () => {
-              // Wait for the backend to process (5 more seconds)
-              setTimeout(() => {
-                saveResolve(null);
-              }, 5000);
-            },
-            onError: (error: any) => {
-              setVaError(
-                error?.message || "Failed to generate virtual account",
-              );
-              saveResolve(null);
-            },
-          },
+      const result = await refetchProfile();
+      const vaNumber = result.data?.virtualAccount?.vaNumber;
+      if (!vaNumber) {
+        setVaError(
+          "Could not load your transfer account yet. Please try again in a moment.",
         );
-      });
-
-      // Refetch profile to get the new virtual account
-      await refetchProfile();
+        return;
+      }
       await refetchWallet();
-
-      setIsGeneratingVA(false);
-      setVaLoadingStep("idle");
-      setShowVAForm(false);
-      setNin("");
-      setBvn("");
-      toast.success("Virtual account created successfully!");
-    } catch (error) {
-      setIsGeneratingVA(false);
-      setVaLoadingStep("idle");
+      toast.success("Your transfer account is ready.");
+    } catch {
       setVaError("An error occurred. Please try again.");
+    } finally {
+      setIsGeneratingVA(false);
     }
   };
 
@@ -279,7 +223,7 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
           {verificationSubmittedAt && countdown === 0 && (
             <button
               onClick={checkVerificationStatus}
-              className="bg-black hover:bg-gray-900 px-4 py-2 rounded-lg w-full font-semibold text-white text-sm transition"
+              className={buttonPrimaryFull}
             >
               Check Verification Status
             </button>
@@ -292,7 +236,7 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
                 verificationModalDismissedRef.current = false;
                 setIsVerificationModalOpen(true);
               }}
-              className="bg-black hover:bg-gray-900 px-4 py-2 rounded-lg w-full font-semibold text-white text-sm transition"
+              className={buttonPrimaryFull}
             >
               Verify Identity
             </button>
@@ -400,109 +344,27 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
           ) : (
             <div className="bg-amber-50 p-4 border border-amber-300 rounded-xl">
               <Paragraph1 className="mb-3 font-bold text-amber-900 text-sm">
-                GENERATE VIRTUAL ACCOUNT
+                GET TRANSFER DETAILS
               </Paragraph1>
               <Paragraph1 className="mb-4 text-amber-800 text-xs">
-                To receive direct transfers, you need to generate a virtual
-                account. We'll need your ID Number and BVN information.
+                Load your personal transfer account to fund your wallet by bank
+                transfer.
               </Paragraph1>
+
+              {vaError && (
+                <div className="bg-red-100 mb-3 p-3 border border-red-300 rounded-lg">
+                  <Paragraph1 className="text-red-700 text-xs">{vaError}</Paragraph1>
+                </div>
+              )}
 
               <button
                 type="button"
-                onClick={() => setShowVAForm(!showVAForm)}
+                onClick={handleGenerateVA}
                 disabled={isGeneratingVA}
                 className="bg-amber-600 hover:bg-amber-700 disabled:opacity-50 px-4 py-2 rounded-lg w-full font-semibold text-white transition"
               >
-                {isGeneratingVA ? (
-                  <span>
-                    {vaLoadingStep === "saving"
-                      ? "Saving..."
-                      : "Generating account..."}
-                  </span>
-                ) : (
-                  "Generate Virtual Account"
-                )}
+                {isGeneratingVA ? "Loading account..." : "Get transfer account"}
               </button>
-
-              {/* Inline VA Form */}
-              <AnimatePresence>
-                {showVAForm && !isGeneratingVA && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="space-y-3 mt-4 pt-4 border-amber-200 border-t"
-                  >
-                    <div className="bg-amber-50 p-3 border border-amber-200 rounded-lg">
-                      <Paragraph1 className="mb-1 font-medium text-amber-900 text-xs">
-                        ⚠️ Important: Use correct BVN and ID Number
-                      </Paragraph1>
-                      <Paragraph1 className="text-amber-800 text-xs">
-                        Ensure the BVN and ID Number you provide are accurate.
-                        Incorrect information will prevent account generation
-                        and affect your verification status on the platform.
-                      </Paragraph1>
-                    </div>
-
-                    {vaError && (
-                      <div className="bg-red-100 p-3 border border-red-300 rounded-lg">
-                        <Paragraph1 className="text-red-700 text-xs">
-                          {vaError}
-                        </Paragraph1>
-                      </div>
-                    )}
-
-                    <div>
-                      <label className="block mb-1 font-medium text-gray-700 text-xs">
-                        ID Number
-                      </label>
-                      <input
-                        type="text"
-                        value={nin}
-                        onChange={(e) => setNin(e.target.value)}
-                        placeholder="11-digit ID Number"
-                        maxLength={11}
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600 w-full"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block mb-1 font-medium text-gray-700 text-xs">
-                        BVN (Bank Verification Number)
-                      </label>
-                      <input
-                        type="text"
-                        value={bvn}
-                        onChange={(e) => setBvn(e.target.value)}
-                        placeholder="11-digit BVN"
-                        maxLength={11}
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-600 w-full"
-                      />
-                    </div>
-
-                    <div className="flex gap-2 pt-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowVAForm(false);
-                          setVaError("");
-                        }}
-                        className="flex-1 hover:bg-gray-50 px-3 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 transition"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleGenerateVA}
-                        className="flex-1 bg-amber-600 hover:bg-amber-700 px-3 py-2 rounded-lg font-medium text-white transition"
-                      >
-                        Generate
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
           )}
         </>
@@ -527,8 +389,6 @@ export default function WalletTopUpForm({ onClose }: WalletTopUpFormProps) {
           setIsVerificationModalOpen(false);
         }}
         onVerified={handleVerificationComplete}
-        currentBvn={profileResponse?.bvn || ""}
-        currentNin={profileResponse?.nin}
       />
     </div>
   );

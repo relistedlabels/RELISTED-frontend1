@@ -2,6 +2,14 @@
 import React from "react";
 import { X, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { buttonSecondary } from "@/common/ui/buttonClasses";
+import {
+  slidePanelBackdrop,
+  slidePanelFooter,
+  slidePanelHeader,
+  slidePanelSheet,
+  slidePanelTitle,
+} from "@/common/ui/dashboardClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import EditBankAccountForm from "./EditBankAccountForm";
 
@@ -33,14 +41,14 @@ const EditBankAccountPanel: React.FC<EditBankAccountPanelProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-99 bg-black/70 backdrop-blur-sm"
+          className={slidePanelBackdrop}
           onClick={onClose}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="fixed top-0 right-0 h-screen hide-scrollbar overflow-y-auto bg-white shadow-2xl px-4 flex flex-col w-full sm:w-114"
+            className={slidePanelSheet}
             role="dialog"
             aria-modal="true"
             aria-label="Edit Bank Account"
@@ -52,7 +60,7 @@ const EditBankAccountPanel: React.FC<EditBankAccountPanelProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex justify-between sticky top-0 items-center pb-4 border-b border-gray-100 pt-6 z-10 bg-white">
+            <div className={slidePanelHeader}>
               <button
                 onClick={onClose}
                 className="text-gray-500 xl:hidden hover:text-black p-1 rounded-full transition"
@@ -61,9 +69,7 @@ const EditBankAccountPanel: React.FC<EditBankAccountPanelProps> = ({
                 <ArrowLeft size={20} />
               </button>
 
-              <Paragraph1 className="uppercase font-bold tracking-widest text-gray-800">
-                Edit Bank Account
-              </Paragraph1>
+              <Paragraph1 className={slidePanelTitle}>Edit bank account</Paragraph1>
               <button
                 onClick={onClose}
                 className="text-gray-500 hover:text-black p-1 rounded-full transition"
@@ -79,12 +85,9 @@ const EditBankAccountPanel: React.FC<EditBankAccountPanelProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="mt-auto py-2 text-black bg-white flex justify-between gap-4 sticky bottom-0">
-              <button
-                onClick={onClose}
-                className="flex-1 px-4 py-3 font-semibold border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-              >
-                <Paragraph1>Cancel</Paragraph1>
+            <div className={`${slidePanelFooter} flex gap-3`}>
+              <button type="button" onClick={onClose} className={`${buttonSecondary} flex-1`}>
+                Cancel
               </button>
             </div>
           </motion.div>

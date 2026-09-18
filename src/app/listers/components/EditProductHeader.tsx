@@ -72,7 +72,7 @@ const EditProductHeader: React.FC<EditProductHeaderProps> = ({
           className={`w-full rounded-xl px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all active:scale-95 sm:w-fit ${
             isUpdating
               ? "cursor-not-allowed bg-gray-400"
-              : "bg-[#33332D] hover:bg-black"
+              : "bg-black hover:bg-black"
           }`}
         >
           <Paragraph1>{isUpdating ? "Updating…" : "Save Changes"}</Paragraph1>

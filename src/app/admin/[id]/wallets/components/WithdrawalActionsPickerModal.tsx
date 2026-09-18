@@ -4,6 +4,8 @@ import React from "react";
 import { Banknote, CheckCircle2, X, XCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1, Header2 } from "@/common/ui/Text";
+import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 
 interface WithdrawalActionsPickerModalProps {
   isOpen: boolean;
@@ -58,7 +60,7 @@ export default function WithdrawalActionsPickerModal({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-45 flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4"
+          className={dialogBackdrop}
           variants={backdropVariants}
           initial="hidden"
           animate="visible"
@@ -66,7 +68,7 @@ export default function WithdrawalActionsPickerModal({
           onClick={onClose}
         >
           <motion.div
-            className="bg-white rounded-xl shadow-xl max-w-xs w-full border border-gray-100 overflow-hidden"
+            className={`${dialogCard} max-w-xs p-0 overflow-hidden shadow-xl`}
             variants={modalVariants}
             initial="hidden"
             animate="visible"
@@ -98,7 +100,7 @@ export default function WithdrawalActionsPickerModal({
                 <button
                   type="button"
                   onClick={() => pick(onChooseApprove)}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold border border-gray-300 text-gray-900 bg-white hover:bg-gray-50 hover:border-gray-400 transition-colors shadow-sm"
+                  className={`${buttonSecondary} w-full shadow-sm`}
                 >
                   <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
                   Approve
@@ -118,7 +120,7 @@ export default function WithdrawalActionsPickerModal({
                 <button
                   type="button"
                   onClick={() => pick(onChooseMarkPaid)}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-black text-white hover:bg-gray-900 transition-colors shadow-sm"
+                  className={`${buttonPrimary} w-full shadow-sm`}
                 >
                   <Banknote className="h-4 w-4 shrink-0 opacity-90" />
                   Mark as paid
@@ -130,7 +132,7 @@ export default function WithdrawalActionsPickerModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                className={`${buttonSecondary} w-full`}
               >
                 Cancel
               </button>

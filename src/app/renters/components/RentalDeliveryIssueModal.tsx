@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useRaiseDispute } from "@/lib/mutations/renters/useDisputeMutations";
 import { useUpload } from "@/lib/queries/renters/useUpload";
+import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 
 const DELIVERY_ISSUE_CATEGORIES = [
   "Damaged Item",
@@ -97,7 +99,7 @@ export default function RentalDeliveryIssueModal({
     <AnimatePresence>
       {isOpen ? (
         <motion.div
-          className="fixed inset-0 z-[120] flex items-end justify-center bg-black/60 p-4 sm:items-center"
+          className={`${dialogBackdrop} z-[120] items-end justify-center sm:items-center`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -107,7 +109,7 @@ export default function RentalDeliveryIssueModal({
             role="dialog"
             aria-modal="true"
             aria-label="Report delivery issue"
-            className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-5 shadow-xl"
+            className={`${dialogCard} max-h-[90vh] overflow-y-auto rounded-2xl p-5`}
             initial={{ y: 24, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 24, opacity: 0 }}
@@ -201,7 +203,7 @@ export default function RentalDeliveryIssueModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-800"
+                  className={`${buttonSecondary} flex-1`}
                 >
                   Cancel
                 </button>
@@ -210,7 +212,7 @@ export default function RentalDeliveryIssueModal({
                   disabled={
                     raiseDisputeMutation.isPending || uploadMutation.isPending
                   }
-                  className="flex-1 rounded-lg bg-black px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+                  className={`${buttonPrimary} flex-1 disabled:opacity-60`}
                 >
                   {raiseDisputeMutation.isPending
                     ? "Submitting…"

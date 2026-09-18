@@ -1016,7 +1016,7 @@ export const rentersApi = {
     rentalEndDate: string | null;
     rentalDays: number;
     estimatedRentalPrice: number;
-    deliveryAddressId: string;
+    deliveryAddressId?: string;
     autoPay: boolean;
     currency: string;
     cartItemId?: string;

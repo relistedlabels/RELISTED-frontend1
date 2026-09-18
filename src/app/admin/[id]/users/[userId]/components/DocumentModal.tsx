@@ -4,6 +4,8 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Download } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 
 interface DocumentModalProps {
   isOpen: boolean;
@@ -33,22 +35,20 @@ export default function DocumentModal({
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50  z-50"
-          />
-
-          {/* Modal */}
+            className={dialogBackdrop}
+          >
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto z-50"
+            className={`${dialogCard} max-w-lg max-h-[90vh] p-0 overflow-y-auto shadow-2xl`}
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -111,16 +111,17 @@ export default function DocumentModal({
               <div className="flex gap-3">
                 <button
                   onClick={onClose}
-                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium text-sm text-gray-700"
+                  className={`${buttonSecondary} flex-1 text-sm`}
                 >
                   Close
                 </button>
-                <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition font-medium text-sm">
+                <button className={`${buttonPrimary} flex-1 text-sm`}>
                   <Download size={18} />
                   Download Document
                 </button>
               </div>
             </div>
+          </motion.div>
           </motion.div>
         </>
       )}

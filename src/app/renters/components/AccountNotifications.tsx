@@ -11,6 +11,7 @@ import {
 import { useNewsletterSubscribe } from "@/lib/mutations/newsletter/useNewsletterSubscribe";
 import { useNewsletterUnsubscribe } from "@/lib/mutations/newsletter/useNewsletterUnsubscribe";
 import { useUserStore } from "@/store/useUserStore";
+import { buttonPrimary } from "@/common/ui/buttonClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import { toast } from "sonner";
 
@@ -257,7 +258,7 @@ const AccountNotifications: React.FC = () => {
 
   return (
     <div className="font-sans ">
-      <Paragraph1 className="text-xl uppercase font-bold text-gray-900 mb-2">
+      <Paragraph1 className="mb-2 font-bold text-gray-900 text-lg">
         NOTIFICATIONS
       </Paragraph1>
       <Paragraph1 className="text-sm text-gray-500 mb-6">
@@ -283,7 +284,7 @@ const AccountNotifications: React.FC = () => {
           type="button"
           onClick={handleSavePreferences}
           disabled={!hasChanges || updateMutation.isPending}
-          className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 disabled:opacity-50 transition duration-150"
+          className={buttonPrimary}
         >
           {updateMutation.isPending ? "Saving..." : "Save Preferences"}
         </button>

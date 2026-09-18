@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import { CityLGASelect } from "@/app/auth/profile-setup/components/CityLGASelect";
 import { StateSelect } from "@/app/auth/profile-setup/components/StateSelect";
+import { buttonPrimary } from "@/common/ui/buttonClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useUpdateEmergencyContact } from "@/lib/mutations/listers/useUpdateEmergencyContact";
 import { useUploadNinDocument } from "@/lib/mutations/listers/useUploadNinDocument";
@@ -83,7 +84,8 @@ function isAllowedIdFile(file: File): boolean {
 // Sub-component for displaying a verification status on a document or field
 const VerificationBadge: React.FC<{
   status: "Verified" | "Pending" | "Failed";
-}> = ({ status }) => {
+  verifiedLabel?: string;
+}> = ({ status, verifiedLabel = "Verified" }) => {
   let colorClass = "";
   switch (status) {
     case "Verified":
@@ -96,9 +98,10 @@ const VerificationBadge: React.FC<{
       colorClass = "bg-red-100 text-red-800";
       break;
   }
+  const label = status === "Verified" ? verifiedLabel : status;
   return (
-    <span className={`px-4 py-2 rounded-sm text-xs font-medium ${colorClass}`}>
-      {status}
+    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${colorClass}`}>
+      {label}
     </span>
   );
 };
@@ -153,7 +156,7 @@ function EmergencyContactBlock({
 
   return (
     <>
-      <Paragraph1 className="mb-4 pt-4 border-gray-100 border-t font-bold text-gray-900 text-lg">
+      <Paragraph1 className="mb-4 border-t border-gray-100 pt-4 text-lg font-bold text-gray-900">
         Emergency Contact Information
       </Paragraph1>
       <Paragraph1 className="mb-4 text-gray-600 text-sm">
@@ -253,7 +256,7 @@ function EmergencyContactBlock({
 
       <div className="flex justify-end pt-4 pb-6">
         <button
-          className="bg-black hover:bg-gray-800 disabled:opacity-50 px-6 py-2 rounded-lg font-semibold text-white text-sm transition disabled:cursor-not-allowed"
+          className={buttonPrimary}
           type="button"
           disabled={updateEmergencyContactMutation.isPending}
           onClick={() => {
@@ -425,7 +428,7 @@ const AccountVerificationsForm: React.FC = () => {
   if (isLoading && !profile) {
     return (
       <div className="w-full font-sans">
-        <Paragraph1 className="mb-6 font-bold uppercase">
+        <Paragraph1 className="mb-6 font-bold text-gray-900 text-lg">
           Verifications
         </Paragraph1>
         <Paragraph1 className="text-gray-500 text-sm">
@@ -437,7 +440,7 @@ const AccountVerificationsForm: React.FC = () => {
 
   return (
     <div className="w-full font-sans">
-      <Paragraph1 className="mb-6 font-bold uppercase">
+      <Paragraph1 className="mb-6 font-bold text-gray-900 text-lg">
         Verifications
       </Paragraph1>
 
@@ -449,7 +452,10 @@ const AccountVerificationsForm: React.FC = () => {
         <Paragraph1 className="text-gray-900 text-lg">
           Identification
         </Paragraph1>
-        <VerificationBadge status={idVerificationStatus} />
+        <VerificationBadge
+          status={idVerificationStatus}
+          verifiedLabel="Uploaded"
+        />
       </div>
 
       {idVerificationStatus !== "Verified" ? (
@@ -566,7 +572,7 @@ const AccountVerificationsForm: React.FC = () => {
             type="button"
             onClick={handleUploadNin}
             disabled={idUploadBusy}
-            className="inline-flex justify-center items-center bg-black hover:bg-gray-800 disabled:opacity-50 mt-1 px-4 py-2 rounded-lg font-semibold text-white text-sm transition disabled:cursor-not-allowed"
+            className={`${buttonPrimary} mt-1`}
           >
             {idUploadBusy ? "Uploading..." : "Upload ID"}
           </button>
@@ -580,11 +586,11 @@ const AccountVerificationsForm: React.FC = () => {
           </div>
           <div className="flex-1">
             <Paragraph1 className="font-semibold text-green-900 text-base">
-              ✓ Your ID has been verified
+              ✓ Your ID has been uploaded
             </Paragraph1>
             <Paragraph1 className="mt-2 text-green-700 text-sm">
-              Your identification document is verified. You can still update
-              your ID from settings if needed.
+              Your identification document is on file. You can update your ID
+              from settings if needed.
             </Paragraph1>
           </div>
         </div>
@@ -671,7 +677,7 @@ const AccountVerificationsForm: React.FC = () => {
               />
               <button
                 type="button"
-                className="bg-black hover:bg-gray-800 disabled:opacity-50 mt-2 md:mt-0 ml-0 md:ml-4 px-4 py-2 rounded-lg font-semibold text-white text-sm whitespace-nowrap transition disabled:cursor-not-allowed"
+                className={`${buttonPrimary} md:ml-4 mt-2 md:mt-0 ml-0 whitespace-nowrap`}
                 disabled={
                   updateProfileMutation.isPending ||
                   !bvnInput ||

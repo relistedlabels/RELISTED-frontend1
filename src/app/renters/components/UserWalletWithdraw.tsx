@@ -203,7 +203,7 @@ export const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
           bankAccounts.length === 0 ||
           !selectedAccountId
         }
-        className="bg-black hover:bg-gray-900 disabled:opacity-50 py-3 rounded-lg w-full font-semibold text-white transition"
+        className="inline-flex w-full items-center justify-center rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {withdrawMutation.isPending ? "Processing..." : "Withdraw Now"}
       </button>

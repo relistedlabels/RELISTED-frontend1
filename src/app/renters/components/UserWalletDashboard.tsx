@@ -43,7 +43,7 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
 }) => (
   <div
     className={`p-4 rounded-xl flex flex-col justify-between ${
-      isDark ? "bg-[#333333] text-white" : "bg-gray-200 text-gray-900"
+      isDark ? "bg-black text-white" : "bg-gray-200 text-gray-900"
     } h-full`}
   >
     <Paragraph1 className=" text-gray-400 mb-2">{title}</Paragraph1>

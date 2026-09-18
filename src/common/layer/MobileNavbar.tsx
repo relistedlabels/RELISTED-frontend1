@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Heart, ShoppingBag, ShoppingBagIcon } from "lucide-react";
+import { Menu, X, Package, ShoppingBagIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Paragraph1 } from "../ui/Text";
@@ -11,7 +11,6 @@ import RentalCartView from "./RentalCartView";
 import SearchModal from "./SearchModal";
 import ShopDropdownMobile from "./ShopDropdownMobile";
 import { MobileAuthActions } from "./MobileAuthActions";
-import { useFavoriteCountStore } from "@/store/useFavoriteCountStore";
 import { useCartCountStore } from "@/store/useCartCountStore";
 import { useCartItems } from "@/lib/queries/renters/useCartItems";
 import { useUserStore } from "@/store/useUserStore";
@@ -20,7 +19,6 @@ import { MobileSalesNavLink } from "./SalesNavLink";
 function MobileNavbarContent() {
   const [open, setOpen] = useState(false);
   const [isShopMenuOpen, setIsShopMenuOpen] = useState(false);
-  const favoriteCount = useFavoriteCountStore((state) => state.favoriteCount);
   const cartCount = useCartCountStore((state) => state.cartCount);
   const setCartCount = useCartCountStore((state) => state.setCartCount);
   const token = useUserStore((s) => s.token);
@@ -129,6 +127,24 @@ function MobileNavbarContent() {
                   setOpen(false);
                 }}
               />
+              <Link
+                href="/shop?listingType=RENTAL,RENT_OR_RESALE"
+                onClick={() => setOpen(false)}
+              >
+                <Paragraph1>Rent</Paragraph1>
+              </Link>
+              <Link
+                href="/shop?listingType=RESALE,RENT_OR_RESALE"
+                onClick={() => setOpen(false)}
+              >
+                <Paragraph1>Buy</Paragraph1>
+              </Link>
+              <Link href="/renters/orders" onClick={() => setOpen(false)}>
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4" aria-hidden />
+                  <Paragraph1>Orders</Paragraph1>
+                </div>
+              </Link>
               <Link href="/style-spotlight" onClick={() => setOpen(false)}>
                 <Paragraph1>Style Spotlight</Paragraph1>
               </Link>
@@ -136,18 +152,6 @@ function MobileNavbarContent() {
                 <Paragraph1>How it works</Paragraph1>
               </Link>
               <MobileSalesNavLink onNavigate={() => setOpen(false)} />
-              <Link href="/about" onClick={() => setOpen(false)}>
-                <Paragraph1>About</Paragraph1>
-              </Link>
-              <Link href="/contact-us" onClick={() => setOpen(false)}>
-                <Paragraph1>Contact</Paragraph1>
-              </Link>
-              <Link href="/renters/favorites" onClick={() => setOpen(false)}>
-                <div className="flex items-center space-x-2">
-                  <Paragraph1>Favourites</Paragraph1>
-                  <span className="text-sm">({favoriteCount})</span>
-                </div>
-              </Link>
               <div className="mt- flex flex-col gap-3">
                 <MobileAuthActions onClose={() => setOpen(false)} />
               </div>

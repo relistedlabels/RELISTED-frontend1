@@ -34,7 +34,7 @@ const Button: React.FC<ButtonProps> = ({
   href,
   color = "text-white",
   border = "border",
-  backgroundColor = "bg-primary",
+  backgroundColor = "bg-black",
   isLink = false,
   additionalClasses = "",
   simpleHover = false,
@@ -48,9 +48,9 @@ const Button: React.FC<ButtonProps> = ({
     ? "relative flex items-center justify-center"
     : "relative overflow-hidden group flex items-center justify-center";
   const sizeClasses = responsive
-    ? "text-[10px] leading-snug px-2.5 py-1.5 sm:text-[13px] sm:leading-normal sm:px-[17px] sm:py-[7px]"
-    : "px-[17px] py-[7px] text-[13px] sm:text-[13px]";
-  const commonClasses = `${layoutPart} font-semibold ${transitionPart} ${sizeClasses} font-medium ${backgroundColor} ${color} ${border} ${body_Font.className} rounded-[4px] cursor-pointer text-center ${additionalClasses}`;
+    ? "text-xs leading-snug px-3 py-2 sm:text-sm sm:px-4 sm:py-2.5"
+    : "px-4 py-2.5 text-sm";
+  const commonClasses = `${layoutPart} font-semibold ${transitionPart} ${sizeClasses} ${backgroundColor} ${color} ${border} ${body_Font.className} rounded-lg cursor-pointer text-center disabled:cursor-not-allowed disabled:opacity-50 ${additionalClasses}`;
 
   const hoverEffectClasses =
     "absolute inset-0 bg-black -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-in-out";

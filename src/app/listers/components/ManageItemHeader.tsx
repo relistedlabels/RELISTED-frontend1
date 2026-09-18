@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { buttonPrimary } from "@/common/ui/buttonClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import BackHeader from "@/common/ui/BackHeader";
 import { motion, AnimatePresence } from "framer-motion";
@@ -89,7 +90,7 @@ const ManageItemHeader: React.FC<ManageItemHeaderProps> = ({
 
         <button
           onClick={handleEdit}
-          className="px-6 py-2.5 text-[10px] sm:text-[14px] w-full sm:w-fit bg-[#33332D] text-white rounded-xl text-sm font-semibold hover:bg-black transition-all shadow-sm active:scale-95"
+          className={`${buttonPrimary} w-full sm:w-fit text-[10px] sm:text-[14px] active:scale-95 shadow-sm`}
         >
           <p>Edit Item</p>
         </button>

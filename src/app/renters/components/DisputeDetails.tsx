@@ -5,6 +5,14 @@
 import React, { useState } from "react";
 import { X, ArrowLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
+import {
+  slidePanelBackdrop,
+  slidePanelFooter,
+  slidePanelHeader,
+  slidePanelSheet,
+  slidePanelTitle,
+} from "@/common/ui/dashboardClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import DisputeDetail from "./DisputeDetailTabs";
 import { useDisputeDetails } from "@/lib/queries/renters/useDisputes";
@@ -33,14 +41,14 @@ const DisputeDetailsPanel: React.FC<DisputeDetailsPanelProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="z-99 fixed inset-0 bg-black/70 backdrop--blur-sm"
+          className={slidePanelBackdrop}
           onClick={onClose}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="top-0 right-0 fixed flex flex-col bg-white shadow-2xl px-4 w-full sm:w-114 h-screen overflow-y-auto hide-scrollbar"
+            className={slidePanelSheet}
             role="dialog"
             aria-modal="true"
             aria-label="Product DisputeDetails"
@@ -52,7 +60,7 @@ const DisputeDetailsPanel: React.FC<DisputeDetailsPanelProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="top-0 z-10 sticky flex justify-between items-center bg-white pt-6 pb-4 border-gray-100 border-b">
+            <div className={slidePanelHeader}>
               <button
                 onClick={onClose}
                 className="xl:hidden p-1 rounded-full text-gray-500 hover:text-black transition"
@@ -61,7 +69,7 @@ const DisputeDetailsPanel: React.FC<DisputeDetailsPanelProps> = ({
                 <ArrowLeft size={20} />
               </button>
 
-              <Paragraph1 className="font-bold text-gray-800 uppercase tracking-widest">
+              <Paragraph1 className={slidePanelTitle}>
                 Dispute #{dispute?.disputeId || disputeId}
               </Paragraph1>
               <button
@@ -79,12 +87,9 @@ const DisputeDetailsPanel: React.FC<DisputeDetailsPanelProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="bottom-0 sticky flex justify-between gap-4 bg-white mt-auto py-2">
-              <button
-                onClick={onClose}
-                className="flex-1 bg-black hover:bg-gray-900 px-4 py-3 border rounded-lg font-semibold text-white text-sm transition"
-              >
-                <Paragraph1>Close </Paragraph1>
+            <div className={slidePanelFooter}>
+              <button type="button" onClick={onClose} className={buttonPrimaryFull}>
+                Close
               </button>
             </div>
           </motion.div>
@@ -102,8 +107,13 @@ const DisputeDetails: React.FC<{ disputeId: string }> = ({ disputeId }) => {
 
   return (
     <>
-      <button onClick={() => setIsOpen(true)}>
-        <ChevronRight className="w-5 h-5 text-gray-400 hover:text-gray-600 cursor-pointer" />
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        className="rounded-lg p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+        aria-label="View dispute details"
+      >
+        <ChevronRight className="h-5 w-5" />
       </button>
 
       {/* Filter Panel */}

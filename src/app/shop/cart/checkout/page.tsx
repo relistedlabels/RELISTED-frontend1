@@ -1,5 +1,6 @@
 "use client";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import { Header1, Header1Plus } from "@/common/ui/Text";
@@ -14,6 +15,7 @@ import {
   type ReturnPickupAddressPayload,
 } from "@/lib/api/cart";
 import { useCheckoutOrderSummary } from "@/lib/queries/order/useCheckoutOrderSummary";
+import { profileHasDeliveryAddress } from "@/lib/checkout/deliveryAddress";
 import { useProfile } from "@/lib/queries/user/useProfile";
 import { buildApprovedCheckoutLines } from "@/lib/cart/buildApprovedCheckoutLines";
 import {
@@ -166,6 +168,7 @@ export default function CheckoutPage() {
     RETURN_PICKUP_SUMMARY_DEBOUNCE_MS,
   );
 
+  const queryClient = useQueryClient();
   const { data: profile } = useProfile();
   const deliveryAddressForSummary = useMemo(
     () => ({
@@ -182,18 +185,29 @@ export default function CheckoutPage() {
     ],
   );
 
+  const hasDeliveryAddress = profileHasDeliveryAddress(profile);
+
   const orderSummaryQuery = useCheckoutOrderSummary(
     returnPickupForSummary,
     deliveryAddressForSummary,
+    { enabled: hasDeliveryAddress },
   );
+
+  const handleAddressSaved = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ["profile"] });
+    await queryClient.refetchQueries({ queryKey: ["profile"] });
+  }, [queryClient]);
   const orderSummaryErrorMessage = useMemo(() => {
+    if (!hasDeliveryAddress) return null;
     if (!orderSummaryQuery.isError) return null;
     const e = orderSummaryQuery.error;
     if (e instanceof Error && e.message.trim()) return e.message;
     return "Could not load your payment summary.";
-  }, [orderSummaryQuery.isError, orderSummaryQuery.error]);
+  }, [hasDeliveryAddress, orderSummaryQuery.isError, orderSummaryQuery.error]);
   const shippingQuoteWarnings =
     orderSummaryQuery.data?.data?.shippingQuoteWarnings ?? [];
+  const dispatchReschedules =
+    orderSummaryQuery.data?.data?.dispatchReschedules ?? [];
   const shippingTiers =
     orderSummaryQuery.data?.data?.shippingTiers ?? EMPTY_SHIPPING_TIERS;
   const returnShippingTiers =
@@ -835,6 +849,9 @@ export default function CheckoutPage() {
   }, [orderSummaryQuery.data?.data?.shipmentBuckets, productLabelById]);
 
   const checkoutBlockingIssues: string[] = [];
+  if (!hasDeliveryAddress) {
+    checkoutBlockingIssues.push("Add a delivery address to finish checkout.");
+  }
 
   const selectedTierData = useMemo(
     () =>
@@ -894,10 +911,15 @@ export default function CheckoutPage() {
             onReturnPickupChange={handleReturnPickupAddressChange}
             checkoutBlockingIssues={checkoutBlockingIssues}
             summaryDispatchPreview={summaryDispatchPreview}
+            hasDeliveryAddress={hasDeliveryAddress}
             orderSummaryError={orderSummaryErrorMessage}
+            dispatchReschedules={dispatchReschedules}
             shippingQuoteWarnings={shippingQuoteWarnings}
             onRefetchOrderSummary={() => {
               void orderSummaryQuery.refetch();
+            }}
+            onAddressSaved={() => {
+              void handleAddressSaved();
             }}
             isResaleOnly={
               (cartItems?.length ?? 0) > 0 &&
@@ -938,7 +960,9 @@ export default function CheckoutPage() {
             returnPickupAddress={returnPickupAddress}
             orderSummary={orderSummaryQuery.data}
             orderSummaryLoading={orderSummaryQuery.isLoading}
+            hasDeliveryAddress={hasDeliveryAddress}
             orderSummaryError={orderSummaryErrorMessage}
+            dispatchReschedules={dispatchReschedules}
             onRefetchOrderSummary={() => {
               void orderSummaryQuery.refetch();
             }}

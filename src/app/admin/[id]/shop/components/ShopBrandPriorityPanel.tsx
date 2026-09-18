@@ -53,7 +53,10 @@ export default function ShopBrandPriorityPanel() {
   const prioritizedSet = useMemo(() => new Set(orderedIds), [orderedIds]);
 
   const availableBrands = useMemo(() => {
-    const list = (brands ?? []).filter((brand) => !prioritizedSet.has(brand.id));
+    const list = (brands ?? []).filter(
+      (brand) =>
+        brand.isShopVisible !== false && !prioritizedSet.has(brand.id),
+    );
     const query = searchQuery.trim().toLowerCase();
     const filtered = query
       ? list.filter((brand) => brand.name.toLowerCase().includes(query))
@@ -97,8 +100,9 @@ export default function ShopBrandPriorityPanel() {
     <div className="bg-white border border-gray-200 rounded-lg p-6">
       <Paragraph3 className="text-gray-900 mb-1">Brand priority</Paragraph3>
       <Paragraph1 className="text-sm text-gray-600 mb-6">
-        Choose which brands appear first on the shop page and set their order.
-        Items from the top brand appear before the next, then all other listings.
+        Choose which site-visible brands appear first on the shop page and set
+        their order. Items from the top brand appear before the next, then all
+        other listings.
       </Paragraph1>
 
       {showSkeleton ? (
