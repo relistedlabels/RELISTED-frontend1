@@ -185,6 +185,13 @@ export type OrderSummaryPayload = {
   shipmentBuckets?: CheckoutShipmentBucket[];
   /** Carrier quote failures (checkout can continue with fallback tiers). */
   shippingQuoteWarnings?: ShippingQuoteWarning[];
+  /** Outbound windows rolled forward at checkout when the approved slot passed. */
+  dispatchReschedules?: Array<{
+    cartItemId?: string;
+    productName?: string;
+    outboundSummary?: string;
+    priceUnchanged?: boolean;
+  }>;
 };
 
 export type OrderSummaryResponse = {

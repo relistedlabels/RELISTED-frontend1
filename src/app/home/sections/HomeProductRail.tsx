@@ -8,7 +8,11 @@ import { useProducts } from "@/lib/queries/product/useProducts";
 import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import Link from "next/link";
 import { primaryProductHeroImage } from "@/lib/product/primaryProductHeroImage";
-import type { ListingFilterValues } from "@/lib/shop/listingFilters";
+import {
+  normalizeListingFilters,
+  pickerFiltersToApiParams,
+  type ListingFilterValues,
+} from "@/lib/shop/listingFilters";
 
 type HomeProductRailProps = {
   title: string;
@@ -28,10 +32,25 @@ export default function HomeProductRail({
   limit = 8,
 }: HomeProductRailProps) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const normalizedFilters = normalizeListingFilters(filters);
+  const apiFilters = pickerFiltersToApiParams(normalizedFilters);
   const { data: products, isLoading, error } = useProducts({
     sort,
     limit,
-    ...filters,
+    search: normalizedFilters.search,
+    category: apiFilters.category
+      ? apiFilters.category.split(",")
+      : undefined,
+    tags: apiFilters.tags,
+    brand: apiFilters.brand,
+    listingType: apiFilters.listingType,
+    lister: apiFilters.lister,
+    size: apiFilters.size,
+    color: apiFilters.color,
+    condition: apiFilters.condition,
+    material: apiFilters.material,
+    minPrice: apiFilters.minPrice,
+    maxPrice: apiFilters.maxPrice,
   });
 
   const displayProducts = products ?? [];
@@ -77,14 +96,15 @@ export default function HomeProductRail({
               <ProductCard
                 id={product.id}
                 image={primaryProductHeroImage(product)}
-                brand={product.brand?.name ?? ""}
+                brand={product.brand?.name ?? "BRAND"}
                 name={product.name}
-                size={product.size ?? ""}
+                price={`₦${(product.originalValue || 0).toLocaleString()}`}
                 dailyPrice={product.dailyPrice}
                 resalePrice={product.resalePrice}
                 listingType={product.listingType}
-                status={product.status}
-                originalValue={product.originalValue}
+                size={product.measurement}
+                isSold={product.status === "SOLD"}
+                isRentedOut={product.status === "RENTED"}
               />
             </div>
           ))}

@@ -17,7 +17,10 @@ import { useMe } from "@/lib/queries/auth/useMe";
 import { usePublicProductById } from "@/lib/queries/product/usePublicProductById";
 import { usePublicUserById } from "@/lib/queries/user/usePublicUserById";
 import { getCartItemsApi } from "@/lib/api/cart";
-import { submitGuestAvailabilityCheck } from "@/lib/api/publicAvailability";
+import {
+  submitGuestAvailabilityCheck,
+  type GuestAvailabilitySubmitResponse,
+} from "@/lib/api/publicAvailability";
 import { DetailPanelSkeleton } from "@/common/ui/SkeletonLoaders";
 import GuestContactModal from "./GuestContactModal";
 import { usePublicSiteFeatures } from "@/lib/queries/site/useSiteFeatures";
@@ -134,9 +137,9 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
 
   const resalePrice = product?.resalePrice ?? product?.originalValue ?? 0;
 
-  const redirectAfterAvailabilitySubmit = (res: {
-    data?: { requestId?: string; accessToken?: string; checkingUrl?: string };
-  }) => {
+  const redirectAfterAvailabilitySubmit = (
+    res: GuestAvailabilitySubmitResponse,
+  ) => {
     const checkingUrl = res?.data?.checkingUrl;
     const requestId = res?.data?.requestId;
     const accessToken = res?.data?.accessToken;
