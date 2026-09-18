@@ -59,10 +59,9 @@ export default function MobileGuestAuthSheet({
                 className="mx-auto mb-4 h-10 w-10"
               />
               <Paragraph3
-                id="guest-auth-sheet-title"
                 className="mb-2 font-bold text-black text-xl"
               >
-                Sign in to your account
+                <span id="guest-auth-sheet-title">Sign in to your account</span>
               </Paragraph3>
               <Paragraph1 className="text-gray-600 text-sm leading-relaxed">
                 Track orders, manage rentals, and checkout faster.

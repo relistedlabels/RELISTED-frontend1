@@ -120,6 +120,27 @@ export function mergePreservedShopParams(
   }
 }
 
+export function normalizeListingFilters(
+  filters: Partial<ListingFilterValues> = {},
+): ListingFilterValues {
+  return {
+    search: filters.search,
+    category: listOrEmpty(filters.category),
+    tags: listOrEmpty(filters.tags),
+    brand: listOrEmpty(filters.brand),
+    lister: listOrEmpty(filters.lister),
+    availability: listOrEmpty(filters.availability),
+    listingTypes: listOrEmpty(filters.listingTypes),
+    size: listOrEmpty(filters.size),
+    color: listOrEmpty(filters.color),
+    condition: filters.condition,
+    material: filters.material,
+    minPrice: filters.minPrice,
+    maxPrice: filters.maxPrice,
+    inCloset: filters.inCloset ?? "",
+  };
+}
+
 export function pickerFiltersToApiParams(filters: ListingFilterValues) {
   const listingFromAvailability = availabilityToListingTypes(
     filters.availability,

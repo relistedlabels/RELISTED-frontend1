@@ -22,7 +22,10 @@ import RentalDispatchWindowPicker, {
 } from "./RentalDispatchWindowPicker";
 import { useSubmitRentalRequest } from "@/lib/mutations/renters/useRentalRequestMutations";
 import GuestContactModal from "./GuestContactModal";
-import { submitGuestAvailabilityCheck } from "@/lib/api/publicAvailability";
+import {
+  submitGuestAvailabilityCheck,
+  type GuestAvailabilitySubmitResponse,
+} from "@/lib/api/publicAvailability";
 import { useAddCartItem } from "@/lib/mutations/renters/useAddCartItem";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { getCartItemsApi } from "@/lib/api/cart";
@@ -151,9 +154,9 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
     };
   };
 
-  const redirectAfterAvailabilitySubmit = (res: {
-    data?: { requestId?: string; accessToken?: string; checkingUrl?: string };
-  }) => {
+  const redirectAfterAvailabilitySubmit = (
+    res: GuestAvailabilitySubmitResponse,
+  ) => {
     const checkingUrl = res?.data?.checkingUrl;
     const requestId = res?.data?.requestId;
     const accessToken = res?.data?.accessToken;
