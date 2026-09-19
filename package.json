@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@sentry/nextjs": "^10.50.0",
+    "@serwist/next": "^9.5.12",
     "@tanstack/react-query": "^5.90.17",
     "@tanstack/react-query-devtools": "^5.91.2",
     "axios": "^1.13.3",
@@ -40,13 +41,14 @@
     "import-in-the-middle": "2.0.6"
   },
   "devDependencies": {
-    "@playwright/test": "^1.52.0",
     "@biomejs/biome": "2.2.0",
+    "@playwright/test": "^1.52.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "plop": "^4.0.5",
+    "serwist": "^9.5.12",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
