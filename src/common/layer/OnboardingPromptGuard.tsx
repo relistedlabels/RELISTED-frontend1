@@ -11,6 +11,8 @@ import {
 import {
   ONBOARDING_IDLE_PROMPT_MS,
   dismissSessionOnboardingPrompt,
+  isOnboardingPromptEnabled,
+  isOnboardingPromptSuppressedPath,
   isSessionOnboardingPromptDismissed,
   onboardingPromptCopy,
   onboardingPromptReason,
@@ -43,10 +45,12 @@ export function OnboardingPromptGuard() {
   const onboardingRole = authRoleToOnboardingRole(role);
 
   const canPrompt =
+    isOnboardingPromptEnabled() &&
     hydrated &&
     !isLoading &&
     Boolean(token) &&
     Boolean(onboardingRole) &&
+    !isOnboardingPromptSuppressedPath(pathname) &&
     shouldShowOnboardingPromptForUser({
       role,
       userId,

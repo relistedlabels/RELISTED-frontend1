@@ -4,16 +4,32 @@ import { isOnboardingAutoPromptSuppressed } from "./onboardingStorage";
 /** How long a user can browse before we offer the tour (ms). */
 export const ONBOARDING_IDLE_PROMPT_MS = 90_000;
 
-/** Paths that suggest the user may need guidance. */
+/** Paths that suggest the user may need guidance (never cart/checkout: active purchase flow). */
 export const ONBOARDING_TROUBLE_PATH_PREFIXES = [
-  "/shop/cart/checkout",
-  "/shop/cart",
   "/renters/wallet",
   "/renters/account",
   "/listers/inventory/product-upload",
   "/listers/wallet",
   "/listers/settings",
 ] as const;
+
+/** Never interrupt these flows with an onboarding prompt. */
+export const ONBOARDING_PROMPT_SUPPRESSED_PATH_PREFIXES = [
+  "/shop/cart/checkout",
+  "/shop/cart",
+  "/onboarding",
+  "/auth",
+] as const;
+
+export function isOnboardingPromptSuppressedPath(pathname: string): boolean {
+  return ONBOARDING_PROMPT_SUPPRESSED_PATH_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
+
+export function isOnboardingPromptEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_DISABLE_ONBOARDING_PROMPT !== "true";
+}
 
 const SESSION_PROMPT_DISMISSED_KEY = "relisted-onboarding-prompt-dismissed";
 
@@ -45,7 +61,9 @@ export function shouldOfferOnboardingPrompt(options: {
   if (sessionPromptDismissed) return false;
   if (isOnboardingAutoPromptSuppressed(userId, role)) return false;
 
-  if (pathname.startsWith("/onboarding") || pathname.startsWith("/auth")) {
+  if (!isOnboardingPromptEnabled()) return false;
+
+  if (isOnboardingPromptSuppressedPath(pathname)) {
     return false;
   }
 

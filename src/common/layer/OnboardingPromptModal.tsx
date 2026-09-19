@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Compass, X } from "lucide-react";
-import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { Paragraph1 } from "@/common/ui/Text";
 
 type OnboardingPromptModalProps = {
   open: boolean;
@@ -58,12 +58,12 @@ export function OnboardingPromptModal({
                 <Compass className="h-5 w-5 text-gray-800" aria-hidden />
               </div>
               <div>
-                <Paragraph3
+                <h2
                   id="onboarding-prompt-title"
                   className="mb-1 font-bold text-gray-900 text-lg"
                 >
                   {title}
-                </Paragraph3>
+                </h2>
                 <Paragraph1 className="text-gray-600 text-sm leading-relaxed">
                   {body}
                 </Paragraph1>

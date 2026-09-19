@@ -5,9 +5,9 @@ import {
   shouldOfferOnboardingPrompt,
 } from "./onboardingPrompt";
 describe("isOnboardingTroublePath", () => {
-  test("detects cart, checkout, wallet, and account paths", () => {
-    expect(isOnboardingTroublePath("/shop/cart")).toBe(true);
-    expect(isOnboardingTroublePath("/shop/cart/checkout")).toBe(true);
+  test("detects wallet and account paths but not cart or checkout", () => {
+    expect(isOnboardingTroublePath("/shop/cart")).toBe(false);
+    expect(isOnboardingTroublePath("/shop/cart/checkout")).toBe(false);
     expect(isOnboardingTroublePath("/renters/wallet")).toBe(true);
     expect(isOnboardingTroublePath("/")).toBe(false);
   });
@@ -19,11 +19,23 @@ describe("shouldOfferOnboardingPrompt", () => {
       shouldOfferOnboardingPrompt({
         userId: "user-trouble",
         role: "renter",
-        pathname: "/shop/cart",
+        pathname: "/renters/wallet",
         idleMs: 0,
         sessionPromptDismissed: false,
       }),
     ).toBe(true);
+  });
+
+  test("does not offer prompt on checkout", () => {
+    expect(
+      shouldOfferOnboardingPrompt({
+        userId: "user-checkout",
+        role: "renter",
+        pathname: "/shop/cart/checkout",
+        idleMs: ONBOARDING_IDLE_PROMPT_MS,
+        sessionPromptDismissed: false,
+      }),
+    ).toBe(false);
   });
 
   test("offers prompt after idle threshold", () => {

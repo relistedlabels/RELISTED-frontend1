@@ -3,6 +3,10 @@ import { test as base } from "@playwright/test";
 /** Shared fixture: block slow third-party requests during e2e. */
 export const test = base.extend({
   page: async ({ page }, use) => {
+    await page.addInitScript(() => {
+      sessionStorage.setItem("relisted-onboarding-prompt-dismissed", "1");
+    });
+
     await page.route("**/*", (route) => {
       const url = route.request().url();
       if (
