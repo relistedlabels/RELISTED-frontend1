@@ -12,7 +12,7 @@ export const test = base.extend({
       ) {
         return route.abort();
       }
-      return route.continue();
+      return route.fallback();
     });
     await use(page);
   },
