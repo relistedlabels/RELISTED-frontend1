@@ -1,4 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import {
+  PWA_APP_NAME,
+  PWA_APP_SHORT_NAME,
+  PWA_THEME_COLOR,
+} from "@/lib/pwa/constants";
 import "./globals.css";
 import Script from "next/script";
 import { Toaster } from "sonner";
@@ -16,12 +21,24 @@ import QueryProvider from "@/lib/providers/query-provider";
 import { Header } from "./Header";
 
 export const metadata: Metadata = {
-  title:
-    "RELISTED LABELS is a peer-to-peer rental platform redefining how women access fashion across Africa.",
+  applicationName: PWA_APP_NAME,
+  title: {
+    default:
+      "RELISTED LABELS is a peer-to-peer rental platform redefining how women access fashion across Africa.",
+    template: `%s | ${PWA_APP_SHORT_NAME}`,
+  },
   description:
     "We enable individuals rent and buy standout pieces at a fraction of the retail price from each other and the brands they love. At the same time, users earn from their wardrobe by listing pieces through our secure, easy to navigate software.",
   keywords: ["Relisted", "Fashion", "Heritage", "Luxury", "Global Style"],
   authors: [{ name: "Relisted" }],
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: PWA_APP_SHORT_NAME,
+  },
+  formatDetection: {
+    telephone: false,
+  },
   openGraph: {
     title:
       "RELISTED LABELS is a peer-to-peer rental platform redefining how women access fashion across Africa.",
@@ -59,6 +76,14 @@ export const metadata: Metadata = {
       "We enable individuals rent and buy standout pieces at a fraction of the retail price from each other and the brands they love. At the same time, users earn from their wardrobe by listing pieces through our secure, easy to navigate software.",
     images: ["/og-image.jpg"],
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: PWA_THEME_COLOR,
+  colorScheme: "light",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export const dynamic = "force-dynamic";

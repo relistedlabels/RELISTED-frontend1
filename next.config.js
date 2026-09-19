@@ -1,6 +1,26 @@
 // next.config.js
 
 const path = require("path");
+const { spawnSync } = require("node:child_process");
+const crypto = require("node:crypto");
+const withSerwistInit = require("@serwist/next").default;
+
+function getSerwistRevision() {
+  const stdout = spawnSync("git", ["rev-parse", "HEAD"], {
+    encoding: "utf-8",
+  }).stdout?.trim();
+  return stdout || crypto.randomUUID();
+}
+
+const withSerwist = withSerwistInit({
+  swSrc: "src/app/sw.ts",
+  swDest: "public/sw.js",
+  disable: process.env.NODE_ENV === "development",
+  reloadOnOnline: false,
+  additionalPrecacheEntries: [
+    { url: "/offline", revision: getSerwistRevision() },
+  ],
+});
 
 const nextConfig = {
   images: {
@@ -76,13 +96,11 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
-
 // Injected content via Sentry wizard below
 
 const { withSentryConfig } = require("@sentry/nextjs");
 
-module.exports = withSentryConfig(module.exports, {
+module.exports = withSentryConfig(withSerwist(nextConfig), {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
