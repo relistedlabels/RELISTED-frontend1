@@ -93,7 +93,6 @@ export function isCartPurchaseResaleOnly(
       {
         cartItemId: item.id,
         rentalDays: item.days,
-        product: item.product,
       },
       cartItems,
     ),
