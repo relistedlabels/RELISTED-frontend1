@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { loadRelistedLogoDataUrl } from "@/lib/pwa/loadLogoDataUrl";
 
 export const size = {
   width: 512,
@@ -7,7 +8,9 @@ export const size = {
 
 export const contentType = "image/png";
 
-export default function Icon() {
+export default async function Icon() {
+  const logoSrc = await loadRelistedLogoDataUrl();
+
   return new ImageResponse(
     (
       <div
@@ -18,14 +21,15 @@ export default function Icon() {
           alignItems: "center",
           justifyContent: "center",
           background: "#000000",
-          color: "#ffffff",
-          fontSize: 72,
-          fontWeight: 700,
-          letterSpacing: "-0.04em",
-          fontFamily: "system-ui, sans-serif",
         }}
       >
-        R
+        <img
+          src={logoSrc}
+          alt=""
+          width={320}
+          height={248}
+          style={{ objectFit: "contain" }}
+        />
       </div>
     ),
     {

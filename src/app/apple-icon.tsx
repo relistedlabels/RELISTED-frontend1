@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { loadRelistedLogoDataUrl } from "@/lib/pwa/loadLogoDataUrl";
 
 export const size = {
   width: 180,
@@ -7,7 +8,9 @@ export const size = {
 
 export const contentType = "image/png";
 
-export default function AppleIcon() {
+export default async function AppleIcon() {
+  const logoSrc = await loadRelistedLogoDataUrl();
+
   return new ImageResponse(
     (
       <div
@@ -18,14 +21,15 @@ export default function AppleIcon() {
           alignItems: "center",
           justifyContent: "center",
           background: "#000000",
-          color: "#ffffff",
-          fontSize: 96,
-          fontWeight: 700,
-          letterSpacing: "-0.04em",
-          fontFamily: "system-ui, sans-serif",
         }}
       >
-        R
+        <img
+          src={logoSrc}
+          alt=""
+          width={112}
+          height={87}
+          style={{ objectFit: "contain" }}
+        />
       </div>
     ),
     {
