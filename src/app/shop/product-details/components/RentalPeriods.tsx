@@ -369,10 +369,10 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
 
                 <button
                   type="button"
-                  className={`mt-4 w-full py-3 px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2.5 ${
+                  className={`mt-4 flex w-full items-center justify-center gap-2.5 rounded-lg px-4 py-3 text-base font-semibold transition-colors ${
                     isChecking
-                      ? "bg-gray-400 text-white cursor-not-allowed opacity-70"
-                      : "bg-black text-white hover:bg-gray-900 active:scale-95"
+                      ? "cursor-not-allowed bg-gray-400 text-white opacity-70"
+                      : "bg-black text-white hover:bg-gray-900"
                   }`}
                   onClick={handleCheckAvailability}
                   disabled={isChecking}

@@ -5,6 +5,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { CalendarDays, X } from "lucide-react";
 import Button from "@/common/ui/Button";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import {
+  bottomSheetBackdrop,
+  bottomSheetPanel,
+} from "@/common/ui/dashboardClasses";
 import DispatchWindowsScheduler from "@/app/shop/cart/checkout/components/DispatchWindowsScheduler";
 import {
   buildDispatchWindowContexts,
@@ -261,14 +265,14 @@ export default function RentalDispatchWindowPicker({
       <AnimatePresence>
         {isDispatchModalOpen && activeDispatchContext ? (
           <motion.div
-            className="fixed inset-0 z-120 flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4"
+            className={`${bottomSheetBackdrop} z-[120] sm:items-center sm:p-4`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsDispatchModalOpen(false)}
           >
             <motion.div
-              className="relative w-full max-w-md rounded-t-3xl bg-white px-6 py-8 sm:rounded-2xl"
+              className={`${bottomSheetPanel} flex max-h-[min(92vh,100%)] w-full max-w-md flex-col px-6 pt-8 sm:max-h-none sm:rounded-2xl sm:pb-8`}
               initial={{ y: 48, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 48, opacity: 0 }}
@@ -284,7 +288,7 @@ export default function RentalDispatchWindowPicker({
                 <X size={20} />
               </button>
 
-              <div className="pr-8">
+              <div className="shrink-0 pr-8">
                 <Paragraph1 className="mb-3 font-semibold text-[11px] text-gray-500 uppercase tracking-[0.2em]">
                   Step {dispatchModalStep + 1} of {totalDispatchSteps}
                 </Paragraph1>
@@ -292,20 +296,20 @@ export default function RentalDispatchWindowPicker({
                   {dispatchWindowMeta[activeDispatchContext.type]?.title ??
                     activeDispatchContext.title}
                 </Paragraph3>
-                <Paragraph1 className="text-gray-600 text-sm leading-relaxed">
+                <Paragraph1 className="text-base text-gray-600 leading-relaxed">
                   {dispatchWindowMeta[activeDispatchContext.type]?.description ??
                     activeDispatchContext.subtitle}
                 </Paragraph1>
               </div>
 
-              <div className="mt-5 h-0.5 w-full bg-gray-100">
+              <div className="mt-5 h-0.5 w-full shrink-0 bg-gray-100">
                 <div
                   className="h-full bg-black transition-all duration-300"
                   style={{ width: `${stepProgress}%` }}
                 />
               </div>
 
-              <div className="mt-6">
+              <div className="mt-6 min-h-0 flex-1 overflow-y-auto overscroll-contain">
                 <DispatchWindowsScheduler
                   contexts={[activeDispatchContext]}
                   selections={dispatchSelections}
@@ -314,7 +318,7 @@ export default function RentalDispatchWindowPicker({
                 />
               </div>
 
-              <div className="mt-8 flex gap-3">
+              <div className="mt-6 flex shrink-0 gap-3 pt-2">
                 <Button
                   text="Back"
                   onClick={() =>
@@ -329,7 +333,7 @@ export default function RentalDispatchWindowPicker({
                       : "text-gray-700 hover:text-black"
                   }
                   simpleHover
-                  additionalClasses="flex-1 !rounded-lg disabled:cursor-not-allowed disabled:opacity-60"
+                  additionalClasses="flex-1 !rounded-lg text-base disabled:cursor-not-allowed disabled:opacity-60"
                 />
                 <Button
                   text={
@@ -346,7 +350,7 @@ export default function RentalDispatchWindowPicker({
                   border="border border-black"
                   color="text-white"
                   simpleHover
-                  additionalClasses="flex-1 !rounded-lg"
+                  additionalClasses="flex-1 !rounded-lg text-base"
                 />
               </div>
             </motion.div>

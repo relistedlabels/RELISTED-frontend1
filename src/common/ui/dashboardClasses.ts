@@ -21,6 +21,14 @@ export const slidePanelFooter =
 export const dialogBackdrop =
   "fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm";
 
+/** Bottom sheet backdrop (flush to screen edge; no outer padding). */
+export const bottomSheetBackdrop =
+  "fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 backdrop-blur-sm";
+
+/** Bottom sheet panel shell with safe-area padding. */
+export const bottomSheetPanel =
+  "relative w-full rounded-t-3xl bg-white pb-[calc(1.5rem+env(safe-area-inset-bottom))]";
+
 /** Centered dialog card. */
 export const dialogCard =
   "w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl";
