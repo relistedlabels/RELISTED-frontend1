@@ -2,12 +2,15 @@
 
 import React from "react";
 import { LogOut } from "lucide-react";
+import NotificationBell from "@/components/notifications/NotificationBell";
+import { useAdminIdStore } from "@/store/useAdminIdStore";
 
 interface AdminTopNavbarProps {
   onLogout?: () => void;
 }
 
 export default function AdminTopNavbar({ onLogout }: AdminTopNavbarProps) {
+  const adminId = useAdminIdStore((state) => state.adminId);
   const handleLogout = () => {
     if (onLogout) {
       onLogout();
@@ -23,6 +26,13 @@ export default function AdminTopNavbar({ onLogout }: AdminTopNavbarProps) {
 
       {/* Right Actions */}
       <div className="flex items-center gap-4">
+        {adminId ? (
+          <NotificationBell
+            href={`/admin/${adminId}/notifications`}
+            iconClassName="h-5 w-5 text-gray-700"
+            badgeClassName="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white"
+          />
+        ) : null}
         <button
           onClick={handleLogout}
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"

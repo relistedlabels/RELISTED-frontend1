@@ -20,10 +20,58 @@ export interface NotificationIconConfig {
   bgColor: string;
 }
 
+const normalizeNotificationType = (type: NotificationType): string => {
+  switch (type) {
+    case "RENTAL_ACCEPTED":
+    case "RENTAL_RESPONSE":
+      return "RENTAL_APPROVED";
+    case "PURCHASE_REQUEST":
+    case "PURCHASE_REQUEST_SENT":
+    case "RENTAL_REQUEST_SENT":
+      return "RENTAL_REQUEST";
+    case "DISPUTE_CREATED":
+    case "DISPUTE_STATUS":
+    case "DISPUTE_MESSAGE":
+      return "DISPUTE_OPENED";
+    case "ESCROW_RELEASE":
+    case "WALLET_FUNDED":
+    case "WITHDRAWAL_STATUS":
+      return "PAYMENT_RECEIVED";
+    case "RETURN_COMPLETED":
+    case "RETURN_REJECTED":
+    case "RETURN_DELIVERED_TO_LISTER":
+    case "LISTER_RETURN_IN_TRANSIT":
+    case "LISTER_RETURN_DELIVERED_CONFIRM":
+    case "LISTER_RETURN_WINDOW_PASSED":
+      return "RETURN_INITIATED";
+    case "AVAILABILITY_REQUEST_REMINDER":
+    case "AVAILABILITY_CHECKOUT_REMINDER":
+    case "AVAILABILITY_EXPIRED_LISTER_REMINDER":
+    case "RETURN_DUE_REMINDER":
+    case "RETURN_REQUEST_REMINDER":
+    case "MANUAL_FULFILLMENT_DUE_REMINDER":
+      return "RETURN_PICKUP_SCHEDULED";
+    case "ORDER_CANCELLED":
+    case "ORDER_COMPLETED":
+    case "ORDER_UPDATED":
+    case "ORDER_CONFIRMATION":
+    case "SHIPPING_UPDATE":
+    case "SHIPMENT_PROVIDER_CANCELLED":
+    case "DISPATCH_FAILED":
+    case "MANUAL_FULFILLMENT_SHIPMENT":
+      return "ORDER_CONFIRMED";
+    case "ADMIN_WITHDRAWAL_REQUEST":
+    case "ADMIN_ORDER_CANCELLED":
+      return "SYSTEM";
+    default:
+      return type;
+  }
+};
+
 export const getNotificationIcon = (
   type: NotificationType,
 ): NotificationIconConfig => {
-  switch (type) {
+  switch (normalizeNotificationType(type)) {
     case "ORDER_CONFIRMED":
       return {
         icon: CheckCircle,

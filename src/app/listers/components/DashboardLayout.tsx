@@ -2,7 +2,6 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Bell,
   ChevronDown,
   FileText,
   HelpCircle,
@@ -29,7 +28,7 @@ import {
 } from "@/common/ui/Text";
 import { useLogout } from "@/lib/mutations";
 import { useBusinessProfile } from "@/lib/queries/listers/useBusinessProfile";
-import { useNotifications } from "@/lib/queries/notifications/useNotifications";
+import NotificationBell from "@/components/notifications/NotificationBell";
 import { useUserStore } from "@/store/useUserStore";
 import { UserProfileBadge } from "./UserProfileBadge";
 import { UserProfileBadge2 } from "./UserProfileBadge2";
@@ -169,11 +168,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const logout = useLogout();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const { data: notifications = [] } = useNotifications();
-  const hasUnreadNotifications = notifications.some(
-    (notif: any) => !notif.isRead,
-  );
-
   const handleConfirmLogout = () => {
     logout.mutate(undefined, {
       onSuccess: () => {
@@ -308,12 +302,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             <Link href="/listers/inbox" className="relative hidden">
               <Mail className="w-5 h-5 text-white cursor-pointer" />
             </Link>
-            <Link href="/listers/notifications" className="relative">
-              <Bell className="w-5 h-5 text-white cursor-pointer" />
-              {hasUnreadNotifications && (
-                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-              )}
-            </Link>
+            <NotificationBell
+              href="/listers/notifications"
+              iconClassName="w-5 h-5 text-white cursor-pointer"
+            />
             <UserProfileBadge2 />
           </div>
         </header>
