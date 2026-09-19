@@ -62,6 +62,9 @@ const normalizeNotificationType = (type: NotificationType): string => {
       return "ORDER_CONFIRMED";
     case "ADMIN_WITHDRAWAL_REQUEST":
     case "ADMIN_ORDER_CANCELLED":
+    case "ADMIN_NEW_ORDER":
+    case "ADMIN_INHOUSE_RENTAL_REQUEST":
+    case "ADMIN_INHOUSE_PURCHASE_REQUEST":
       return "SYSTEM";
     default:
       return type;

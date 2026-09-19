@@ -16,7 +16,7 @@ export default function AdminNotificationsPage() {
         <Paragraph2>Notifications</Paragraph2>
       </div>
       <Paragraph1 className="mb-4 text-sm text-gray-500">
-        Admin alerts for disputes, withdrawals, and manual fulfillment.
+        Admin alerts for orders, inhouse rental requests, disputes, withdrawals, and manual fulfillment.
       </Paragraph1>
       <NotificationsList audience="admin" adminId={adminId} />
     </div>
