@@ -23,9 +23,9 @@ import { profileHasDeliveryAddress } from "@/lib/checkout/deliveryAddress";
 import { useProfile } from "@/lib/queries/user/useProfile";
 import { buildApprovedCheckoutLines } from "@/lib/cart/buildApprovedCheckoutLines";
 import {
+  isCartPurchaseResaleOnly,
   isCheckoutRentalLine,
   isCheckoutResalePurchaseLine,
-  isPurchaseOnlyCheckout,
 } from "@/lib/cart/checkoutLineKind";
 import type {
   DerivedDispatchWindow,
@@ -1073,10 +1073,7 @@ export default function CheckoutPage() {
             onAddressSaved={() => {
               void handleAddressSaved();
             }}
-            isResaleOnly={isPurchaseOnlyCheckout(
-              approvedOnCheckout,
-              cartItems,
-            )}
+            isResaleOnly={isCartPurchaseResaleOnly(cartItems)}
           />
         </div>
         <div

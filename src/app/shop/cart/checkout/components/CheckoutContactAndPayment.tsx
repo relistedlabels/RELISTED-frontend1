@@ -244,7 +244,7 @@ export default function CheckoutContactAndPayment({
   );
   /** Avoid read-only scheduler from rentalItems[0] while GET /order/summary is still loading (multi-lister carts). */
   const showQuoteDispatchLoading =
-    showReturnShippingTierPicker &&
+    !isResaleOnly &&
     (hasRentalDispatch || multiListerRentalCart) &&
     isShippingTiersLoading &&
     !hasSummaryDispatchPreview &&
@@ -538,7 +538,7 @@ export default function CheckoutContactAndPayment({
       },
     ];
 
-    if (showReturnShippingTierPicker) {
+    if (!isResaleOnly) {
       legs.push({
         id: "return",
         title: "Return from you",
@@ -564,6 +564,7 @@ export default function CheckoutContactAndPayment({
     selectedReturnTierByBucket,
     selectedReturnShippingTier,
     returnTierList,
+    isResaleOnly,
   ]);
 
   if (!user) return <ContactSkeleton />;
@@ -635,7 +636,7 @@ export default function CheckoutContactAndPayment({
             )}
           </div>
 
-          {showReturnShippingTierPicker ? (
+          {!isResaleOnly ? (
             <div className="space-y-4 bg-white p-5 border border-gray-100 rounded-xl">
               <CheckoutSectionHeading>Pickup from you</CheckoutSectionHeading>
 
