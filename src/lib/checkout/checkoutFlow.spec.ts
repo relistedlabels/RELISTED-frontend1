@@ -5,6 +5,7 @@ import {
   analyzeCheckoutFlow,
   buildCheckoutReviewDelivery,
   buildCheckoutReviewLegs,
+  buildCheckoutReviewReturn,
   checkoutItemsForProductIds,
 } from "./checkoutFlow";
 
@@ -357,5 +358,96 @@ describe("buildCheckoutReviewDelivery", () => {
     const items = checkoutItemsForProductIds(listerGroups, ["prod-purchase"]);
     expect(items).toHaveLength(1);
     expect(items[0]?.productName).toBe("Leather bag");
+  });
+});
+
+describe("buildCheckoutReviewReturn", () => {
+  const listerGroups = [
+    {
+      listerId: "lister-a",
+      items: [
+        {
+          productId: "prod-rental",
+          productName: "Silk dress",
+          listerName: "Ada",
+          rentalDays: 7,
+        },
+      ],
+    },
+    {
+      listerId: "lister-b",
+      items: [
+        {
+          productId: "prod-purchase",
+          productName: "Leather bag",
+          listerName: "Bea",
+          isResale: true,
+        },
+      ],
+    },
+  ];
+
+  test("groups return pickup with rental items only", () => {
+    const review = buildCheckoutReviewReturn({
+      returnPickupAddressLine: "12 Test St, Lagos",
+      listerGroups,
+      summaryDispatchPreview: [
+        {
+          bucketIndex: 0,
+          groupHeading: "Order from Ada · Silk dress",
+          productIds: ["prod-rental"],
+          rows: [
+            { title: "Rental delivery", range: "Mon 10:00 to Mon 14:00" },
+            { title: "Return pickup", range: "Thu 10:00 to Thu 14:00" },
+          ],
+        },
+      ],
+      usePerBucketReturn: true,
+      returnBuckets: [
+        {
+          bucketIndex: 0,
+          shippingTiers: [{ name: "relisted_dispatch", totalShippingCost: 4500 }],
+        },
+      ],
+      selectedReturnTierByBucket: { 0: "relisted_dispatch" },
+      selectedReturnShippingTier: "",
+      returnTierList: [],
+    });
+
+    expect(review?.shipments).toHaveLength(1);
+    expect(review?.shipments[0]?.items.map((item) => item.productName)).toEqual([
+      "Silk dress",
+    ]);
+    expect(review?.shipments[0]?.pickupWindow).toBe("Thu 10:00 to Thu 14:00");
+    expect(review?.shipments[0]?.shipping).toEqual({
+      method: "relisted_dispatch",
+      cost: 4500,
+    });
+  });
+
+  test("returns null when cart has no rental lines", () => {
+    const review = buildCheckoutReviewReturn({
+      returnPickupAddressLine: "12 Test St, Lagos",
+      listerGroups: [
+        {
+          listerId: "lister-b",
+          items: [
+            {
+              productId: "prod-purchase",
+              productName: "Leather bag",
+              isResale: true,
+            },
+          ],
+        },
+      ],
+      summaryDispatchPreview: [],
+      usePerBucketReturn: false,
+      returnBuckets: [],
+      selectedReturnTierByBucket: {},
+      selectedReturnShippingTier: "",
+      returnTierList: [],
+    });
+
+    expect(review).toBeNull();
   });
 });

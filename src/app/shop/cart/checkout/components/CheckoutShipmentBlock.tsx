@@ -89,6 +89,23 @@ export default function CheckoutShipmentBlock({
         </div>
       ) : null}
 
+      {shipment.pickupWindow ? (
+        <div className="flex items-start gap-3.5">
+          <Clock
+            className="mt-1 size-4 text-gray-400 shrink-0"
+            aria-hidden
+          />
+          <div className="min-w-0 space-y-1">
+            <Paragraph1 className="font-medium text-gray-500 text-xs">
+              Pickup window
+            </Paragraph1>
+            <Paragraph1 className="text-gray-900 text-[15px] leading-relaxed">
+              {shipment.pickupWindow}
+            </Paragraph1>
+          </div>
+        </div>
+      ) : null}
+
       {children}
 
       {showSelectedCarrier && shipment.shipping ? (

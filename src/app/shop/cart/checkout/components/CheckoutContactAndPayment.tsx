@@ -31,14 +31,13 @@ import type {
 } from "@/lib/checkout/dispatchWindows";
 import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
 import type { CheckoutStep } from "./CheckoutStepper";
-import CheckoutDispatchLegPreview, {
-  CheckoutShippingLegHeader,
-} from "./CheckoutDispatchLegPreview";
+import { CheckoutShippingLegHeader } from "./CheckoutDispatchLegPreview";
 import CheckoutSectionHeading from "./CheckoutSectionHeading";
 import CheckoutStepIntro from "./CheckoutStepIntro";
 import CheckoutStepNav from "./CheckoutStepNav";
 import {
   buildCheckoutReviewDelivery,
+  buildCheckoutReviewReturn,
   type CheckoutDispatchPreviewGroup,
 } from "@/lib/checkout/checkoutFlow";
 import CheckoutReviewDeliverySection from "./CheckoutReviewDeliverySection";
@@ -480,6 +479,37 @@ export default function CheckoutContactAndPayment({
     tierList,
   ]);
 
+  const orderReviewReturn = useMemo(() => {
+    if (!showReturnShippingTierPicker) return null;
+
+    const returnPickupAddressLine =
+      formatReturnPickupAddressLine(returnPickupAddress ?? {}) ??
+      formatDeliveryAddressLine(profile?.address) ??
+      "No address set";
+
+    return buildCheckoutReviewReturn({
+      returnPickupAddressLine,
+      listerGroups,
+      summaryDispatchPreview,
+      usePerBucketReturn,
+      returnBuckets,
+      selectedReturnTierByBucket,
+      selectedReturnShippingTier,
+      returnTierList,
+    });
+  }, [
+    showReturnShippingTierPicker,
+    returnPickupAddress,
+    profile?.address,
+    listerGroups,
+    summaryDispatchPreview,
+    usePerBucketReturn,
+    returnBuckets,
+    selectedReturnTierByBucket,
+    selectedReturnShippingTier,
+    returnTierList,
+  ]);
+
   if (!user) return <ContactSkeleton />;
 
   const deliveryAddress =
@@ -734,20 +764,7 @@ export default function CheckoutContactAndPayment({
 
       {showReturnShippingTierPicker && (
         <div className="bg-white p-4 border border-gray-100 rounded-xl">
-          {usePerBucketReturn && returnBuckets.length > 1 ? (
-            <CheckoutShippingLegHeader sectionLabel="RETURN PICKUP" leg="return" />
-          ) : (
-            <CheckoutShippingLegHeader
-              sectionLabel="RETURN PICKUP"
-              groups={
-                hasSummaryDispatchPreview ? summaryDispatchPreview : undefined
-              }
-              bucketIndex={
-                usePerBucketReturn ? returnBuckets[0]?.bucketIndex : undefined
-              }
-              leg="return"
-            />
-          )}
+          <CheckoutShippingLegHeader sectionLabel="RETURN PICKUP" leg="return" />
           <hr className="my-4 text-gray-100" />
           {isShippingTiersLoading &&
           (usePerBucketReturn
@@ -763,18 +780,21 @@ export default function CheckoutContactAndPayment({
             </div>
           ) : usePerBucketReturn ? (
             <div className="space-y-8">
-              {returnBuckets.map((bucket) => {
+              {returnBuckets.map((bucket, bucketIndex) => {
                 const selectedName =
                   selectedReturnTierByBucket[bucket.bucketIndex] ??
                   bucket.shippingTiers[0]?.name ??
                   "";
+                const shipment =
+                  orderReviewReturn?.shipments.find(
+                    (row) => row.bucketIndex === bucket.bucketIndex,
+                  ) ?? orderReviewReturn?.shipments[bucketIndex];
                 return (
                   <div key={bucket.bucketIndex} className="space-y-3">
-                    {returnBuckets.length > 1 && hasSummaryDispatchPreview ? (
-                      <CheckoutDispatchLegPreview
-                        groups={summaryDispatchPreview}
-                        bucketIndex={bucket.bucketIndex}
-                        leg="return"
+                    {shipment ? (
+                      <CheckoutShipmentBlock
+                        shipment={shipment}
+                        showDivider={bucketIndex > 0}
                       />
                     ) : null}
                     {bucket.shippingTiers.length > 0 ? (
@@ -798,6 +818,13 @@ export default function CheckoutContactAndPayment({
             </div>
           ) : returnTierList.length > 0 ? (
             <div className="space-y-3">
+              {orderReviewReturn?.shipments.map((shipment, index) => (
+                <CheckoutShipmentBlock
+                  key={shipment.bucketIndex ?? `return-${index}`}
+                  shipment={shipment}
+                  showDivider={index > 0}
+                />
+              ))}
               {renderOutboundTierRadios(
                 returnTierList,
                 selectedReturnShippingTier,
@@ -911,7 +938,10 @@ export default function CheckoutContactAndPayment({
             subtitle="Check the details below, then complete your order in the summary."
           />
 
-          <CheckoutReviewDeliverySection review={orderReviewDelivery} />
+          <CheckoutReviewDeliverySection
+            review={orderReviewDelivery}
+            returnReview={orderReviewReturn}
+          />
 
           <CheckoutStepNav
             onBack={
