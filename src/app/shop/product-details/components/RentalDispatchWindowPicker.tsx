@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarDays, X } from "lucide-react";
+import { CalendarDays, ChevronRight, X } from "lucide-react";
 import Button from "@/common/ui/Button";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import {
@@ -26,6 +26,14 @@ import {
   formatDateOnlyLocal,
 } from "@/lib/dates/formatDateOnlyLocal";
 import { lagosYmdMax } from "@/lib/vaultClosetSaleDates";
+
+function formatShortDate(d: Date): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(d);
+}
 
 const DISPATCH_SLOT_MINUTES = 60;
 
@@ -201,6 +209,11 @@ export default function RentalDispatchWindowPicker({
     [],
   );
 
+  const openDispatchModal = useCallback((step = 0) => {
+    setDispatchModalStep(step);
+    setIsDispatchModalOpen(true);
+  }, []);
+
   const totalDispatchSteps = dispatchContexts.length;
   const activeDispatchContext =
     totalDispatchSteps > 0 ? dispatchContexts[dispatchModalStep] : undefined;
@@ -211,54 +224,82 @@ export default function RentalDispatchWindowPicker({
 
   if (!enabled || dispatchContexts.length === 0) return null;
 
+  const isSingleDayRental = rentalDays === 1;
+  const wearEnd = addCalendarDaysLocal(startDate, Math.max(0, rentalDays - 1));
+
   return (
     <>
-      <div className="space-y-3">
-        <button
-          type="button"
-          onClick={() => setIsDispatchModalOpen(true)}
-          className="w-full rounded-lg border border-black bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-900"
-        >
-          Choose delivery and return times
-        </button>
+      <div className="rounded-xl border border-gray-200 bg-[#FBFBFB] p-3 sm:p-4">
+        <div>
+          <Paragraph1 className="mb-0.5 font-semibold text-[11px] text-gray-500 uppercase tracking-[0.14em]">
+            {isSingleDayRental ? "Rental date" : "Rental dates"}
+          </Paragraph1>
+          <Paragraph1 className="text-sm font-semibold text-gray-900">
+            {isSingleDayRental
+              ? formatShortDate(startDate)
+              : `${formatShortDate(startDate)} – ${formatShortDate(wearEnd)}`}
+            <span className="ml-1.5 font-normal text-gray-500">
+              ({rentalDays}-day rental)
+            </span>
+          </Paragraph1>
+        </div>
 
-        <div className="space-y-2">
-          {dispatchContexts.map((ctx) => {
-            const selection = dispatchSelections[ctx.type];
-            const window = selection?.window ?? ctx.suggested.window;
-            const isCustom = selection?.mode === "CUSTOM";
-            const meta = dispatchWindowMeta[ctx.type];
-            return (
-              <button
-                key={ctx.type}
-                type="button"
-                className="w-full rounded-2xl border border-gray-100 bg-gray-50 p-4 text-left transition hover:border-gray-200"
-                onClick={() => setIsDispatchModalOpen(true)}
-              >
-                <div className="flex items-start gap-3">
+        <div className="mt-4 border-t border-gray-200 pt-4">
+          <Paragraph1 className="mb-1 font-semibold text-[11px] text-gray-500 uppercase tracking-[0.14em]">
+            Delivery & pickup times
+          </Paragraph1>
+          <Paragraph1 className="mb-3 text-xs text-gray-500">
+            Tap to choose your times.
+          </Paragraph1>
+
+          <div className="space-y-2">
+            {dispatchContexts.map((ctx, index) => {
+              const selection = dispatchSelections[ctx.type];
+              const window = selection?.window ?? ctx.suggested.window;
+              const isCustom = selection?.mode === "CUSTOM";
+              const meta = dispatchWindowMeta[ctx.type];
+              return (
+                <button
+                  key={ctx.type}
+                  type="button"
+                  aria-label={`Choose ${meta?.kicker?.toLowerCase() ?? "time window"}`}
+                  className="flex w-full items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 text-left transition hover:border-gray-300"
+                  onClick={() => openDispatchModal(index)}
+                >
                   <CalendarDays
-                    size={18}
-                    className="mt-0.5 shrink-0 text-gray-500"
+                    size={16}
+                    className="shrink-0 text-gray-400"
                     aria-hidden
                   />
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <Paragraph1 className="font-semibold text-[11px] text-gray-500 uppercase tracking-[0.2em]">
-                      {meta?.kicker ?? ctx.type}
-                    </Paragraph1>
-                    <Paragraph1 className="font-semibold text-gray-900 text-sm">
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                      <Paragraph1 className="font-semibold text-[11px] text-gray-500 uppercase tracking-[0.14em]">
+                        {meta?.kicker ?? ctx.type}
+                      </Paragraph1>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                          isCustom
+                            ? "bg-gray-900 text-white"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {isCustom ? "Your pick" : "Suggested"}
+                      </span>
+                    </div>
+                    <Paragraph1 className="text-sm font-medium text-gray-900">
                       {ctx.baseDateLabel} · {formatLagosTime(window.start)} –{" "}
                       {formatLagosTime(window.end)}
                     </Paragraph1>
-                    {isCustom ? (
-                      <Paragraph1 className="text-gray-500 text-xs">
-                        Your chosen time
-                      </Paragraph1>
-                    ) : null}
                   </div>
-                </div>
-              </button>
-            );
-          })}
+                  <ChevronRight
+                    size={18}
+                    className="shrink-0 text-gray-400"
+                    aria-hidden
+                  />
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
