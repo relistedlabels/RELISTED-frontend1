@@ -6,6 +6,7 @@ import { Clock3, XCircle } from "lucide-react";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import { useQuery } from "@tanstack/react-query";
 import { getPublicAvailabilityStatus } from "@/lib/api/publicAvailability";
+import { getAuthToken } from "@/lib/api/http";
 import { useEffect } from "react";
 
 export default function AvailabilityCheckingPage() {
@@ -37,6 +38,10 @@ export default function AvailabilityCheckingPage() {
 
   useEffect(() => {
     if (!isAvailable || !requestId || !token) return;
+    if (getAuthToken()) {
+      router.replace("/shop/cart/checkout");
+      return;
+    }
     const availableUrl =
       completeRentalUrl ??
       `/shop/availability/available?requestId=${encodeURIComponent(requestId)}&token=${encodeURIComponent(token)}`;
