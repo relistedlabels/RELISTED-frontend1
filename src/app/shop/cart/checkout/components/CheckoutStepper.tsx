@@ -6,7 +6,7 @@ export type CheckoutStep = 1 | 2 | 3 | 4;
 
 export const CHECKOUT_STEPS: Array<{ step: CheckoutStep; label: string }> = [
   { step: 1, label: "Address" },
-  { step: 2, label: "Shipping" },
+  { step: 2, label: "Delivery" },
   { step: 3, label: "Payment" },
   { step: 4, label: "Confirm" },
 ];

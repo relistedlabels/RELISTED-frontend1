@@ -108,7 +108,7 @@ export default function CheckoutStepNav({
 }
 
 export function checkoutStepContinueLabel(step: CheckoutStep): string {
-  if (step === 1) return "Continue to shipping";
+  if (step === 1) return "Continue to delivery";
   if (step === 2) return "Continue to payment";
   if (step === 3) return "Review order";
   return "Complete order";
