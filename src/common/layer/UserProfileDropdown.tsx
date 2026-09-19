@@ -12,7 +12,14 @@ import {
   LogOut,
   ChevronDown,
   LayoutDashboard,
+  Compass,
 } from "lucide-react";
+import { authRoleToOnboardingRole } from "@/lib/onboarding/onboardingGate";
+import {
+  getOnboardingTourPath,
+  resetOnboardingForManualTour,
+} from "@/lib/onboarding/onboardingStorage";
+import { useUserStore } from "@/store/useUserStore";
 import LogoutConfirmModal from "./LogoutConfirmModal";
 import { useLogout } from "@/lib/mutations";
 import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
@@ -29,10 +36,12 @@ export default function UserProfileDropdown({
   userRole,
 }: UserProfileDropdownProps) {
   const router = useRouter();
+  const userId = useUserStore((s) => s.userId);
   const [isOpen, setIsOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const logout = useLogout();
+  const onboardingRole = authRoleToOnboardingRole(userRole.toUpperCase());
 
   // Get first letter of name for avatar
   const firstLetter = userName?.charAt(0).toUpperCase() || "U";
@@ -104,6 +113,13 @@ export default function UserProfileDropdown({
         router.replace("/auth/sign-in");
       },
     });
+  };
+
+  const handleTakeTour = () => {
+    if (!onboardingRole) return;
+    setIsOpen(false);
+    resetOnboardingForManualTour(userId, onboardingRole);
+    router.push(getOnboardingTourPath(onboardingRole));
   };
 
   return (
@@ -183,6 +199,20 @@ export default function UserProfileDropdown({
                   </Link>
                 );
               })}
+
+              {onboardingRole ? (
+                <motion.button
+                  type="button"
+                  whileHover={{ backgroundColor: "#f3f4f6" }}
+                  onClick={handleTakeTour}
+                  className="w-full px-4 py-3 flex items-center gap-3 text-left transition-colors"
+                >
+                  <Compass size={18} className="text-gray-600 flex-shrink-0" />
+                  <span className="text-sm font-medium text-gray-700">
+                    Take the tour
+                  </span>
+                </motion.button>
+              ) : null}
 
               {/* Divider */}
               <div className="border-t border-gray-200 my-2" />

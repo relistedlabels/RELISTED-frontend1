@@ -10,8 +10,12 @@ import {
   buildOnboardingTaskUrl,
   getOnboardingTaskById,
 } from "@/lib/onboarding/onboardingTasks";
-import { completeOnboardingTask } from "@/lib/onboarding/onboardingStorage";
-import { useUserStore } from "@/store/useUserStore";
+import {
+  buildOnboardingWizardReturnUrl,
+  completeOnboardingTask,
+  resolveOnboardingResumeStep,
+} from "@/lib/onboarding/onboardingStorage";
+import { useOnboardingUserId } from "@/lib/onboarding/useOnboardingUserId";
 
 type TargetRect = {
   top: number;
@@ -225,7 +229,7 @@ export function OnboardingTaskTour({
 }: OnboardingTaskTourProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const userId = useUserStore((s) => s.userId);
+  const userId = useOnboardingUserId();
   const task = useMemo(() => getOnboardingTaskById(taskId), [taskId]);
 
   const taskStep = Math.min(
@@ -323,10 +327,17 @@ export function OnboardingTaskTour({
   }, []);
 
   const finishTour = () => {
-    if (task) {
-      completeOnboardingTask(userId, task.role);
+    if (!task) {
+      router.replace(returnPath);
+      return;
     }
-    router.replace(returnPath);
+
+    const resumeStep =
+      resolveOnboardingResumeStep(userId, task.role, task.resumeStep) ??
+      task.resumeStep;
+
+    completeOnboardingTask(userId, task.role, resumeStep);
+    router.replace(buildOnboardingWizardReturnUrl(returnPath, resumeStep));
   };
 
   const goToStep = (nextStep: number) => {
