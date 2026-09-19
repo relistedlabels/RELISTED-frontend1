@@ -337,8 +337,15 @@ test.describe("Checkout (mocked API)", () => {
 
     await gotoCheckoutConfirmStep(page);
 
-    await page.locator('label:has-text("Terms of Service Agreement")').click();
-    await page.getByRole("button", { name: "Complete Order" }).click();
+    await page
+      .locator("label")
+      .filter({ hasText: "By confirming this order" })
+      .locator("span.rounded")
+      .first()
+      .click();
+    const completeBtn = page.getByRole("button", { name: "Complete Order" });
+    await expect(completeBtn).toBeEnabled({ timeout: 5_000 });
+    await completeBtn.click();
 
     await expect(page).toHaveURL(/checkout\/success\?orderId=ORD-E2E-123/, {
       timeout: 15_000,
