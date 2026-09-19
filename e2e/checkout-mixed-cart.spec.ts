@@ -254,16 +254,30 @@ const mixedMultiListerScenario: CheckoutMockConfig = {
           listerId: "lister-a",
           listerName: "Ada",
           bucketMode: "RENTAL",
+          productIds: ["prod-rental-a"],
           outboundShippingCost: 5000,
           returnShippingCost: 4500,
+          outboundDeliveryWindow: {
+            start: "2026-09-21T09:00:00.000Z",
+            end: "2026-09-21T11:00:00.000Z",
+          },
+          returnPickupWindow: {
+            start: "2026-09-24T09:00:00.000Z",
+            end: "2026-09-24T11:00:00.000Z",
+          },
         },
         {
           bucketIndex: 1,
           listerId: "lister-b",
           listerName: "Bea",
           bucketMode: "RESALE",
+          productIds: ["prod-purchase-b"],
           outboundShippingCost: 3200,
           returnShippingCost: 0,
+          resaleDeliveryWindow: {
+            start: "2026-09-22T08:00:00.000Z",
+            end: "2026-09-22T10:00:00.000Z",
+          },
         },
       ],
       dispatchPreview: [
@@ -345,7 +359,7 @@ test.describe("Checkout mixed carts (mocked API)", () => {
     await expect(page.getByText("Pickup from you")).toHaveCount(0);
   });
 
-  test("@smoke mixed multi-lister cart shows return UI and both delivery windows", async ({
+  test("@smoke mixed multi-lister cart groups review by shipment", async ({
     page,
   }) => {
     await seedRenterSession(page);
@@ -355,8 +369,12 @@ test.describe("Checkout mixed carts (mocked API)", () => {
 
     await expect(page.getByText("Review your order")).toBeVisible();
     await expect(page.getByText("Delivery to you")).toBeVisible();
-    await expect(page.getByText("Return from you")).toBeVisible();
-    await expect(page.getByText("relisted_dispatch")).toHaveCount(2);
+    await expect(page.getByText("Return from you")).toHaveCount(0);
+    await expect(page.getByText("Silk dress")).toBeVisible();
+    await expect(page.getByText("Silk top")).toBeVisible();
+    await expect(page.getByText("From Ada")).toBeVisible();
+    await expect(page.getByText("From Bea")).toBeVisible();
+    await expect(page.getByText("relisted_dispatch")).toHaveCount(1);
     await expect(page.getByText("shipbubble")).toBeVisible();
   });
 

@@ -59,6 +59,7 @@ import {
   computeDisplayOutboundShipping,
   computeDisplayReturnShipping,
 } from "@/lib/checkout/checkoutSummaryTotals";
+import type { CheckoutDispatchPreviewGroup } from "@/lib/checkout/checkoutFlow";
 
 const RETURN_PICKUP_SUMMARY_DEBOUNCE_MS = 1000;
 
@@ -816,12 +817,7 @@ export default function CheckoutPage() {
       return city || state || "";
     };
 
-    const groups: Array<{
-      bucketIndex?: number;
-      groupHeading: string | null;
-      listerLocation?: string;
-      rows: Array<{ title: string; range: string }>;
-    }> = [];
+    const groups: CheckoutDispatchPreviewGroup[] = [];
     for (const b of bucketsChronological) {
       const groupKey = bucketGroupKey(b);
       const severalLegsForGroup =
