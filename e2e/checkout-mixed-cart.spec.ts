@@ -368,14 +368,20 @@ test.describe("Checkout mixed carts (mocked API)", () => {
     await gotoCheckoutStep(page, 4);
 
     await expect(page.getByText("Review your order")).toBeVisible();
-    await expect(page.getByText("Delivery to you")).toBeVisible();
     await expect(page.getByText("Return from you")).toHaveCount(0);
-    await expect(page.getByText("Silk dress")).toBeVisible();
-    await expect(page.getByText("Silk top")).toBeVisible();
-    await expect(page.getByText("From Ada")).toBeVisible();
-    await expect(page.getByText("From Bea")).toBeVisible();
-    await expect(page.getByText("relisted_dispatch")).toHaveCount(1);
-    await expect(page.getByText("shipbubble")).toBeVisible();
+
+    const orderDetails = page
+      .getByRole("heading", { name: "Order details" })
+      .locator("..")
+      .locator("..");
+
+    await expect(orderDetails.getByText("Delivery to you")).toBeVisible();
+    await expect(orderDetails.getByText("Silk dress")).toBeVisible();
+    await expect(orderDetails.getByText("Silk top")).toBeVisible();
+    await expect(orderDetails.getByText("From Ada")).toBeVisible();
+    await expect(orderDetails.getByText("From Bea")).toBeVisible();
+    await expect(orderDetails.getByText("relisted_dispatch")).toHaveCount(1);
+    await expect(orderDetails.getByText("shipbubble")).toBeVisible();
   });
 
   test("@smoke mixed multi-lister cart shows pickup from you on step 1", async ({
