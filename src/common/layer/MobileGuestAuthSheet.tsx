@@ -14,16 +14,20 @@ import {
 type MobileGuestAuthSheetProps = {
   isOpen: boolean;
   onClose: () => void;
+  /** Where to send the user after sign-in; defaults to the current page. */
+  redirectUrl?: string;
 };
 
 export default function MobileGuestAuthSheet({
   isOpen,
   onClose,
+  redirectUrl: redirectUrlProp,
 }: MobileGuestAuthSheetProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const qs = searchParams.toString();
-  const redirectUrl = qs ? `${pathname}?${qs}` : pathname;
+  const currentUrl = qs ? `${pathname}?${qs}` : pathname;
+  const redirectUrl = redirectUrlProp ?? currentUrl;
 
   return (
     <AnimatePresence>

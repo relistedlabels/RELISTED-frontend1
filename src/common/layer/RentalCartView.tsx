@@ -23,6 +23,8 @@ import Button from "@/common/ui/Button";
 import Link from "next/link";
 import RentalCartSummary from "@/app/shop/cart/components/RentalCartSummary";
 import { useNavbarCartCount } from "@/lib/queries/renters/useNavbarCartCount";
+import { useUserStore } from "@/store/useUserStore";
+import MobileGuestAuthSheet from "./MobileGuestAuthSheet";
 
 // --------------------
 // Slide-in Filter Panel
@@ -30,11 +32,15 @@ import { useNavbarCartCount } from "@/lib/queries/renters/useNavbarCartCount";
 interface RentalCartViewPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  isAuthenticated: boolean;
+  onRequireAuth: () => void;
 }
 
 const RentalCartViewPanel: React.FC<RentalCartViewPanelProps> = ({
   isOpen,
   onClose,
+  isAuthenticated,
+  onRequireAuth,
 }) => {
   const minPrice = 50000;
   const maxPrice = 200000;
@@ -93,13 +99,26 @@ const RentalCartViewPanel: React.FC<RentalCartViewPanelProps> = ({
 
             {/* Footer */}
             <div className={`${slidePanelFooter} flex flex-col gap-4`}>
-              <Link
-                onClick={onClose}
-                href="/shop/cart"
-                className={`${buttonSecondary} w-full`}
-              >
-                <Paragraph1>View Cart </Paragraph1>
-              </Link>
+              {isAuthenticated ? (
+                <Link
+                  onClick={onClose}
+                  href="/shop/cart"
+                  className={`${buttonSecondary} w-full`}
+                >
+                  <Paragraph1>View Cart </Paragraph1>
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onRequireAuth();
+                  }}
+                  className={`${buttonSecondary} w-full`}
+                >
+                  <Paragraph1>View Cart </Paragraph1>
+                </button>
+              )}
 
               <button type="button" onClick={onClose} className={`${buttonPrimary} w-full`}>
                 <Paragraph1>Continue Shopping</Paragraph1>
@@ -117,14 +136,25 @@ const RentalCartViewPanel: React.FC<RentalCartViewPanelProps> = ({
 // --------------------
 const RentalCartView: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
   const cartCount = useNavbarCartCount();
+  const token = useUserStore((s) => s.token);
+  const isAuthenticated = Boolean(token);
+
+  const openCartOrAuth = () => {
+    if (!isAuthenticated) {
+      setAuthOpen(true);
+      return;
+    }
+    setIsOpen(true);
+  };
 
   return (
     <>
       {/* Toggle Button */}
       <button
         type="button"
-        onClick={() => setIsOpen(true)}
+        onClick={openCartOrAuth}
         className="flex items-center gap-1.5 rounded-lg whitespace-nowrap bg-black px-2 py-1 text-white cursor-pointer transition"
         aria-label={
           cartCount > 0 ? `Cart, ${cartCount} items` : "Open cart preview"
@@ -139,8 +169,18 @@ const RentalCartView: React.FC = () => {
         ) : null}
       </button>
 
-      {/* Filter Panel */}
-      <RentalCartViewPanel isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <RentalCartViewPanel
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        isAuthenticated={isAuthenticated}
+        onRequireAuth={() => setAuthOpen(true)}
+      />
+
+      <MobileGuestAuthSheet
+        isOpen={authOpen}
+        onClose={() => setAuthOpen(false)}
+        redirectUrl="/shop/cart"
+      />
     </>
   );
 };
