@@ -6,16 +6,19 @@ import NotificationsList from "@/components/notifications/NotificationsList";
 
 export default function RenterNotificationsPage() {
   const path = [
+    { label: "Home", href: "/" },
     { label: "My Orders", href: "/renters/orders" },
     { label: "Notifications", href: null },
   ];
 
   return (
-    <UserDashboardLayout title="Notifications">
-      <div className="mb-4">
+    <div className="container mx-auto pt-[70px] sm:pt-[100px]">
+      <div className="mb-4 px-4 sm:px-0">
         <Breadcrumbs items={path} />
       </div>
-      <NotificationsList audience="renter" />
-    </UserDashboardLayout>
+      <UserDashboardLayout title="Notifications">
+        <NotificationsList audience="renter" />
+      </UserDashboardLayout>
+    </div>
   );
 }
