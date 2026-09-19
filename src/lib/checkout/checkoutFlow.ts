@@ -42,7 +42,7 @@ export type CheckoutFlowFlags = {
   hasReturnShippingLeg: boolean;
   isCartPurchaseResaleOnly: boolean;
   multiListerRentalCart: boolean;
-  /** Return pickup + review card visibility (cart has any rental lines). */
+  /** Return pickup + review card visibility (approved checkout includes rentals). */
   shouldShowReturnUi: boolean;
   listerIds: string[];
 };
@@ -102,7 +102,7 @@ export function analyzeCheckoutFlow(
     hasReturnShippingLeg: rentalLines.length > 0,
     isCartPurchaseResaleOnly: cartIsPurchaseResaleOnly,
     multiListerRentalCart: rentalListerIds.size > 1,
-    shouldShowReturnUi: !cartIsPurchaseResaleOnly,
+    shouldShowReturnUi: rentalLines.length > 0,
     listerIds: [
       ...new Set(
         approvedLines.map(listerIdFromLine).filter(Boolean) as string[],

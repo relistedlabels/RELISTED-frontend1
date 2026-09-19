@@ -138,7 +138,7 @@ describe("analyzeCheckoutFlow", () => {
     expect(flow.listerIds.sort()).toEqual(["lister-a", "lister-b"]);
   });
 
-  test("cart with rental lines still shows return UI when only purchase is approved", () => {
+  test("cart with rental lines hides return UI when only purchase is approved", () => {
     const approved = buildApprovedCheckoutLines(
       [],
       [
@@ -159,7 +159,7 @@ describe("analyzeCheckoutFlow", () => {
     expect(flow.rentalLineCount).toBe(0);
     expect(flow.hasReturnShippingLeg).toBe(false);
     expect(flow.isCartPurchaseResaleOnly).toBe(false);
-    expect(flow.shouldShowReturnUi).toBe(true);
+    expect(flow.shouldShowReturnUi).toBe(false);
   });
 });
 
