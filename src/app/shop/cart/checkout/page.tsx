@@ -25,6 +25,7 @@ import { buildApprovedCheckoutLines } from "@/lib/cart/buildApprovedCheckoutLine
 import {
   isCheckoutRentalLine,
   isCheckoutResalePurchaseLine,
+  isPurchaseOnlyCheckout,
 } from "@/lib/cart/checkoutLineKind";
 import type {
   DerivedDispatchWindow,
@@ -1072,25 +1073,10 @@ export default function CheckoutPage() {
             onAddressSaved={() => {
               void handleAddressSaved();
             }}
-            isResaleOnly={
-              (cartItems?.length ?? 0) > 0 &&
-              cartItems!.every((item) =>
-                isCheckoutResalePurchaseLine(
-                  {
-                    cartItemId: item.id,
-                    rentalDays: item.days,
-                    productDetail: {
-                      listingType: item.product?.listingType as
-                        | "RENTAL"
-                        | "RESALE"
-                        | "RENT_OR_RESALE"
-                        | undefined,
-                    },
-                  },
-                  cartItems,
-                ),
-              )
-            }
+            isResaleOnly={isPurchaseOnlyCheckout(
+              approvedOnCheckout,
+              cartItems,
+            )}
           />
         </div>
         <div

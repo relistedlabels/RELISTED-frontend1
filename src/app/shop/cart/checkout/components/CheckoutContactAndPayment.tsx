@@ -182,7 +182,7 @@ const getDeliveryTierDetails = (
       type: tierName,
       description:
         tierDescription?.trim() ||
-        "Verified address shipping via Shipbubble (courier pickup at sender)",
+        "Verified address delivery via Shipbubble (courier pickup at sender)",
     };
   }
   if (normalized.includes("chowdeck") && normalized.includes("relay")) {
@@ -193,7 +193,7 @@ const getDeliveryTierDetails = (
   }
   return {
     type: tierName,
-    description: "Shipping partner",
+    description: "Delivery partner",
   };
 };
 
@@ -244,7 +244,7 @@ export default function CheckoutContactAndPayment({
   );
   /** Avoid read-only scheduler from rentalItems[0] while GET /order/summary is still loading (multi-lister carts). */
   const showQuoteDispatchLoading =
-    !isResaleOnly &&
+    showReturnShippingTierPicker &&
     (hasRentalDispatch || multiListerRentalCart) &&
     isShippingTiersLoading &&
     !hasSummaryDispatchPreview &&
@@ -440,7 +440,7 @@ export default function CheckoutContactAndPayment({
                 )}
               </div>
               <div className="text-right">
-                <Paragraph1 className="text-gray-500 text-xs">Shipping</Paragraph1>
+                <Paragraph1 className="text-gray-500 text-xs">Delivery</Paragraph1>
                 <Paragraph1 className="font-bold text-gray-900 text-lg">
                   ₦{formatCurrency(tier.totalShippingCost)}
                 </Paragraph1>
@@ -538,7 +538,7 @@ export default function CheckoutContactAndPayment({
       },
     ];
 
-    if (!isResaleOnly) {
+    if (showReturnShippingTierPicker) {
       legs.push({
         id: "return",
         title: "Return from you",
@@ -564,7 +564,6 @@ export default function CheckoutContactAndPayment({
     selectedReturnTierByBucket,
     selectedReturnShippingTier,
     returnTierList,
-    isResaleOnly,
   ]);
 
   if (!user) return <ContactSkeleton />;
@@ -636,7 +635,7 @@ export default function CheckoutContactAndPayment({
             )}
           </div>
 
-          {!isResaleOnly ? (
+          {showReturnShippingTierPicker ? (
             <div className="space-y-4 bg-white p-5 border border-gray-100 rounded-xl">
               <CheckoutSectionHeading>Pickup from you</CheckoutSectionHeading>
 
@@ -657,7 +656,7 @@ export default function CheckoutContactAndPayment({
                 ? () => onCheckoutStepChange(2)
                 : undefined
             }
-            continueLabel="Continue to shipping"
+            continueLabel="Continue to delivery"
             continueDisabled={!hasDeliveryAddress}
             checkoutGrandTotalNgN={checkoutGrandTotalNgN}
           />
@@ -667,7 +666,7 @@ export default function CheckoutContactAndPayment({
       {checkoutStep === 2 ? (
         <>
           <CheckoutStepIntro
-            title="Shipping and schedule"
+            title="Delivery and schedule"
             subtitle="Pick carriers and delivery times."
           />
 
@@ -682,7 +681,7 @@ export default function CheckoutContactAndPayment({
           {hasDeliveryAddress && shippingQuoteWarnings.length > 0 ? (
             <div className="space-y-2 bg-amber-50 p-4 border border-amber-200 rounded-xl">
               <Paragraph1 className="font-semibold text-amber-950 text-sm">
-                Some shipping options are unavailable
+                Some delivery options are unavailable
               </Paragraph1>
               <ul className="space-y-1.5 list-disc pl-5 text-amber-900 text-sm">
                 {shippingQuoteWarnings.map((w, i) => (
