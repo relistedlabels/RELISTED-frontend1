@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { getAuthToken } from "@/lib/api/http";
 import { useConsumeMagicLink } from "@/lib/mutations";
 import { resolvePostAuthDestination } from "@/lib/onboarding/onboardingGate";
 import { useUserStore } from "@/store/useUserStore";
@@ -17,34 +18,54 @@ function safeRedirect(path: string | null): string {
   return path;
 }
 
+function redirectToPostAuthDestination(redirectParam: string | null) {
+  const state = useUserStore.getState();
+  const destination = resolvePostAuthDestination({
+    role: state.role,
+    userId: state.userId,
+    redirectUrl: safeRedirect(redirectParam),
+    honorRedirect: true,
+  });
+  window.location.href = destination;
+}
+
 export default function MagicLinkPage() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const redirectParam = searchParams.get("redirect");
   const consumeStartedRef = useRef(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   const consume = useConsumeMagicLink();
 
   useEffect(() => {
     if (!token || consumeStartedRef.current) return;
     consumeStartedRef.current = true;
+
+    if (getAuthToken()) {
+      setRedirecting(true);
+      redirectToPostAuthDestination(redirectParam);
+      return;
+    }
+
     consume.mutate(token, {
       onSuccess: async () => {
         await new Promise((r) => setTimeout(r, 300));
-        const state = useUserStore.getState();
-        const destination = resolvePostAuthDestination({
-          role: state.role,
-          userId: state.userId,
-          redirectUrl: safeRedirect(redirectParam),
-          honorRedirect: true,
-        });
-        window.location.href = destination;
+        setRedirecting(true);
+        redirectToPostAuthDestination(redirectParam);
+      },
+      onError: () => {
+        if (getAuthToken()) {
+          setRedirecting(true);
+          redirectToPostAuthDestination(redirectParam);
+        }
       },
     });
   }, [token, consume, redirectParam]);
 
-  const loading = consume.isPending || (consume.isSuccess && !consume.isError);
-  const failed = consume.isError;
+  const loading =
+    redirecting || consume.isPending || (consume.isSuccess && !consume.isError);
+  const failed = consume.isError && !redirecting;
 
   return (
     <div
