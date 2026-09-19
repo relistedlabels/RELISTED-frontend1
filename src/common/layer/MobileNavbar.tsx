@@ -4,6 +4,7 @@ import { useEffect, type ComponentType } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+  Bell,
   HelpCircle,
   Home,
   Menu,
@@ -13,6 +14,8 @@ import {
   Store,
   X,
 } from "lucide-react";
+import NavbarNotificationBell from "@/components/notifications/NavbarNotificationBell";
+import { useNotificationInboxHref } from "@/lib/queries/notifications/useNotificationInboxHref";
 import Image from "next/image";
 import Link from "next/link";
 import { Paragraph1 } from "../ui/Text";
@@ -48,6 +51,7 @@ function MobileNavbarContent() {
   const open = useMobileMenuStore((state) => state.isOpen);
   const openMenu = useMobileMenuStore((state) => state.openMenu);
   const closeMenu = useMobileMenuStore((state) => state.closeMenu);
+  const notificationHref = useNotificationInboxHref();
   useEffect(() => {
     closeMenu();
   }, [pathname, closeMenu]);
@@ -84,7 +88,8 @@ function MobileNavbarContent() {
         </Link>
 
         {/* RIGHT */}
-        <div className="flex items-center ml-auto z-20">
+        <div className="flex items-center gap-3 ml-auto z-20">
+          <NavbarNotificationBell />
           <SearchModal />
         </div>
       </div>
@@ -160,6 +165,14 @@ function MobileNavbarContent() {
                   icon={Package}
                   onNavigate={closeMenu}
                 />
+                {notificationHref ? (
+                  <MobileNavLink
+                    href={notificationHref}
+                    label="Notifications"
+                    icon={Bell}
+                    onNavigate={closeMenu}
+                  />
+                ) : null}
                 <MobileNavLink
                   href="/how-it-works"
                   label="How it works"

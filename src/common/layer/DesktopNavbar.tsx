@@ -10,6 +10,7 @@ import {
   ShoppingBagIcon,
   Store,
 } from "lucide-react";
+import NavbarNotificationBell from "@/components/notifications/NavbarNotificationBell";
 import { Paragraph1, ParagraphLink1 } from "../ui/Text";
 import SearchModal from "./SearchModal";
 import { AuthActions } from "./AuthActions";
@@ -48,6 +49,8 @@ function DesktopNavbarContent() {
             <Package className="w-5 h-5" aria-hidden />
             <ParagraphLink1>Orders</ParagraphLink1>
           </Link>
+
+          <NavbarNotificationBell />
 
           <Link href="/shop/cart" className="flex items-center space-x-1">
             <ShoppingBagIcon className="w-6 h-6" aria-hidden />
