@@ -36,6 +36,9 @@ export const getNotificationHref = (
   }
 
   if (audience === "admin" && adminId) {
+    if (requestId) {
+      return `/admin/${adminId}/requests?requestId=${encodeURIComponent(requestId)}`;
+    }
     if (orderId) {
       return `/admin/${adminId}/orders?orderId=${encodeURIComponent(orderId)}`;
     }
