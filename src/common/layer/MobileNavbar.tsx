@@ -20,9 +20,7 @@ import { Paragraph1 } from "../ui/Text";
 import RentalCartView from "./RentalCartView";
 import SearchModal from "./SearchModal";
 import { MobileAuthActions } from "./MobileAuthActions";
-import { useCartCountStore } from "@/store/useCartCountStore";
-import { useCartItems } from "@/lib/queries/renters/useCartItems";
-import { useUserStore } from "@/store/useUserStore";
+import { useNavbarCartCount } from "@/lib/queries/renters/useNavbarCartCount";
 import { useMobileMenuStore } from "@/store/useMobileMenuStore";
 import { MobileSalesNavLink } from "./SalesNavLink";
 
@@ -52,20 +50,7 @@ function MobileNavbarContent() {
   const open = useMobileMenuStore((state) => state.isOpen);
   const openMenu = useMobileMenuStore((state) => state.openMenu);
   const closeMenu = useMobileMenuStore((state) => state.closeMenu);
-  const cartCount = useCartCountStore((state) => state.cartCount);
-  const setCartCount = useCartCountStore((state) => state.setCartCount);
-  const token = useUserStore((s) => s.token);
-  const { data } = useCartItems();
-
-  useEffect(() => {
-    if (!token) {
-      setCartCount(0);
-      return;
-    }
-    if (data?.itemCount !== undefined) {
-      setCartCount(data.itemCount);
-    }
-  }, [token, data?.itemCount, setCartCount]);
+  const cartCount = useNavbarCartCount();
 
   useEffect(() => {
     closeMenu();

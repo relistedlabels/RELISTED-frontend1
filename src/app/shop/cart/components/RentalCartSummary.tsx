@@ -9,19 +9,13 @@ import {
   cartLineIdFromRentalItem,
   useRemoveCartItem,
 } from "@/lib/mutations/cart/useRemoveCartItem";
-import {
-  isLineRentalApproved,
-  rentalLineIsEffectivelyExpired,
-  shouldShowRentalRequestTimer,
-} from "@/lib/cart/rentalRequestUi";
 import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
+import { formatRentalDuration } from "@/lib/rental/formatRentalDuration";
 
-// --- Formatting Helper (for thousands separator) ---
 const formatCurrency = (amount: number): string => {
   return amount.toLocaleString("en-NG");
 };
 
-// === Skeleton Loader ===
 const CartSummarySkeleton = () => (
   <div className="space-y-6 animate-pulse">
     {[...Array(3)].map((_, i) => (
@@ -45,46 +39,12 @@ const CartSummarySkeleton = () => (
   </div>
 );
 
-// === Timer Component ===
-const RentalTimer: React.FC<{ expiresAt: string }> = ({ expiresAt }) => {
-  const [timeLeft, setTimeLeft] = React.useState<string>("");
-
-  React.useEffect(() => {
-    const updateTimer = () => {
-      const now = new Date().getTime();
-      const expiryTime = new Date(expiresAt).getTime();
-      const distance = expiryTime - now;
-
-      if (distance < 0) {
-        setTimeLeft("Expired");
-        return;
-      }
-
-      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-      setTimeLeft(`${minutes}:${seconds.toString().padStart(2, "0")}`);
-    };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-
-    return () => clearInterval(interval);
-  }, [expiresAt]);
-
-  return (
-    <Paragraph1 className="font-medium text-orange-600 text-xs">
-      Expires in: {timeLeft}
-    </Paragraph1>
-  );
-};
-
 export default function RentalCartSummary() {
   const { data, isLoading, error } = useCart();
   const removeCartItemMutation = useRemoveCartItem();
   const currency = "₦";
-  const items = data?.cartItems || [];
+  const items = data?.cartItems ?? [];
 
-  // Calculate Subtotal: Sum of all item totals
   const subtotal = useMemo(() => {
     return items.reduce((acc, item) => acc + item.totalPrice, 0);
   }, [items]);
@@ -104,14 +64,17 @@ export default function RentalCartSummary() {
   if (items.length === 0) {
     return (
       <div className="bg-gray-50 p-6 border border-gray-200 rounded-lg text-center">
-        <Paragraph1 className="text-gray-600">Your cart is empty</Paragraph1>
+        <Paragraph1 className="text-gray-600 text-sm leading-relaxed">
+          No items ready for checkout yet. When a lister confirms availability,
+          they will show up here.
+        </Paragraph1>
       </div>
     );
   }
 
   const handleRemove = (item: (typeof items)[number], productName: string) => {
     const ok = window.confirm(
-      `Remove "${productName}" from your cart? This will cancel your rental request. You can send another if you change your mind.`,
+      `Remove "${productName}" from your cart?`,
     );
     if (!ok) return;
     removeCartItemMutation.mutate({
@@ -122,16 +85,14 @@ export default function RentalCartSummary() {
 
   return (
     <div>
-      {/* List of Cart Items */}
       <div className="space-y-6">
         {items.map((item, idx) => (
           <div
             key={item.requestId || idx}
             className="flex items-start gap-4 pb-4 border-gray-200 border-b last:border-b-0"
           >
-            {/* Product Image */}
             <div className="relative bg-gray-200 border border-gray-100 rounded-md w-16 h-16 overflow-hidden shrink-0">
-              {item.productImage && (
+              {item.productImage ? (
                 <Image
                   src={cloudinaryOptimizedImageUrl(item.productImage, {
                     preset: "thumb",
@@ -141,51 +102,31 @@ export default function RentalCartSummary() {
                   className="object-cover"
                   unoptimized
                 />
-              )}
+              ) : null}
             </div>
 
-            {/* Product Details */}
             <div className="grow">
               <Paragraph1 className="font-semibold text-gray-800 text-sm uppercase leading-snug">
                 {item.productName}
               </Paragraph1>
-              {/* Lister name not available in RentalRequest type */}
               <Paragraph1 className="mt-1 font-medium text-gray-800 text-sm">
                 {item.rentalDays === 0 ? (
                   <>
-                    RESALE - {currency}
+                    Buy · {currency}
                     {formatCurrency(item.totalPrice)}
                   </>
                 ) : (
                   <>
-                    {item.rentalDays} DAYS - {currency}
+                    {formatRentalDuration(item.rentalDays)} · {currency}
                     {formatCurrency(item.totalPrice)}
                   </>
                 )}
               </Paragraph1>
-              {item.rentalDays === 0 && isLineRentalApproved(item.status) && (
-                <span className="inline-block bg-green-100 mt-2 px-2 py-0.5 border border-green-200 rounded-full font-semibold text-green-800 text-xs">
-                  Ready to checkout
-                </span>
-              )}
-              {item.rentalDays === 0 && !isLineRentalApproved(item.status) && (
-                <span className="inline-block bg-yellow-100 mt-2 px-2 py-0.5 border border-yellow-200 rounded-full font-semibold text-yellow-800 text-xs">
-                  Awaiting approval
-                </span>
-              )}
-              {item.rentalDays > 0 &&
-                rentalLineIsEffectivelyExpired(item.status, item.expiresAt) && (
-                  <span className="inline-block bg-red-100 mt-2 px-2 py-0.5 border border-red-200 rounded-full font-semibold text-red-800 text-xs">
-                    Expired
-                  </span>
-                )}
-              {item.rentalDays > 0 &&
-                shouldShowRentalRequestTimer(item.status, item.expiresAt) && (
-                  <RentalTimer expiresAt={item.expiresAt} />
-                )}
+              <span className="inline-block bg-green-100 mt-2 px-2 py-0.5 border border-green-200 rounded-full font-semibold text-green-800 text-xs">
+                Ready to checkout
+              </span>
             </div>
 
-            {/* Remove Button (Trash Icon) */}
             <button
               aria-label={`Remove ${item.productName}`}
               onClick={() => handleRemove(item, item.productName)}
@@ -198,7 +139,6 @@ export default function RentalCartSummary() {
         ))}
       </div>
 
-      {/* Subtotal Footer */}
       <div className="flex justify-between items-center mt-4 pt-6 border-gray-300 border-t">
         <Paragraph1 className="font-semibold text-gray-800 text-base tracking-wider">
           SUBTOTAL:

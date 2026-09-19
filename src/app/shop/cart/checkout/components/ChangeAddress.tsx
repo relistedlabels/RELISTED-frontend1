@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, ArrowLeft } from "lucide-react";
+import { ArrowLeft, MapPin, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
@@ -95,23 +95,55 @@ interface ChangeAddressProps {
   onAddressSaved?: () => void;
   buttonLabel?: string;
   panelTitle?: string;
+  /** Inline text link, full clickable row, or outline button for empty states. */
+  variant?: "link" | "outline" | "row";
+  addressLine?: string;
 }
 
 const ChangeAddress: React.FC<ChangeAddressProps> = ({
   onAddressSaved,
-  buttonLabel = "Update address",
+  buttonLabel = "Change",
   panelTitle = "Update address",
+  variant = "link",
+  addressLine,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  const openPanel = () => setIsOpen(true);
+
+  const triggerClassName =
+    variant === "link"
+      ? "shrink-0 whitespace-nowrap text-sm font-semibold text-gray-900 underline-offset-4 hover:underline transition-colors"
+      : "shrink-0 whitespace-nowrap rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-50 transition-colors";
+
   return (
     <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className="border px-4 items-center rounded-lg bg-black text-white justify-center w-fit py-2 flex gap-1 cursor-pointer font-semibold hover:bg-gray-900 text-sm transition"
-      >
-        <Paragraph1>{buttonLabel}</Paragraph1>
-      </button>
+      {variant === "row" && addressLine ? (
+        <button
+          type="button"
+          onClick={openPanel}
+          aria-label={`${buttonLabel} delivery address`}
+          className="flex w-full items-start gap-3.5 bg-gray-50 hover:bg-gray-100 p-4 sm:p-5 rounded-xl text-left transition-colors"
+        >
+          <MapPin
+            size={20}
+            className="mt-1 text-gray-500 shrink-0"
+            aria-hidden
+          />
+          <div className="flex flex-1 justify-between items-start gap-4 min-w-0">
+            <Paragraph1 className="text-gray-900 text-[15px] leading-relaxed">
+              {addressLine}
+            </Paragraph1>
+            <span className="shrink-0 font-semibold text-gray-900 text-[15px] underline-offset-4">
+              {buttonLabel}
+            </span>
+          </div>
+        </button>
+      ) : (
+        <button type="button" onClick={openPanel} className={triggerClassName}>
+          {buttonLabel}
+        </button>
+      )}
 
       <ChangeAddressPanel
         isOpen={isOpen}

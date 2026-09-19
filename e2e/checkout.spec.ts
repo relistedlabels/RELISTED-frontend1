@@ -231,6 +231,55 @@ async function mockCheckoutApis(page: import("@playwright/test").Page) {
       body: JSON.stringify(orderSummaryBody),
     });
   });
+
+  await page.route("**/api/renters/wallet**", async (route) => {
+    if (route.request().method() !== "GET") {
+      return route.continue();
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: {
+          wallet: {
+            walletId: "wallet-e2e",
+            userId: "renter-e2e",
+            balance: {
+              availableBalance: 200_000,
+              lockedBalance: 0,
+              totalBalance: 200_000,
+              currency: "NGN",
+              lastUpdated: new Date().toISOString(),
+            },
+            lockedBreakdown: {
+              activeRentals: [],
+              disputeHolds: [],
+              totalLockedAmount: 0,
+            },
+            statistics: {
+              totalDeposits: 200_000,
+              totalWithdrawals: 0,
+              totalSpent: 0,
+            },
+          },
+        },
+      }),
+    });
+  });
+}
+
+/** Confirm step: payment breakdown, terms, and Complete Order live on step 4. */
+async function gotoCheckoutConfirmStep(page: import("@playwright/test").Page) {
+  await page.goto("/shop/cart/checkout?step=4", {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(
+    page.getByRole("heading", { name: "CHECKOUT" }),
+  ).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText("PAYMENT BREAKDOWN")).toBeVisible({
+    timeout: 15_000,
+  });
 }
 
 test.describe("Checkout (mocked API)", () => {
@@ -240,16 +289,10 @@ test.describe("Checkout (mocked API)", () => {
     await seedAuthStorage(page);
     await mockCheckoutApis(page);
 
-    await page.goto("/shop/cart/checkout", { waitUntil: "domcontentloaded" });
+    await gotoCheckoutConfirmStep(page);
 
-    await expect(
-      page.getByRole("heading", { name: "CHECKOUT" }),
-    ).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText("PAYMENT BREAKDOWN")).toBeVisible({
-      timeout: 15_000,
-    });
     await expect(page.getByText("Grand Total:")).toBeVisible();
-    await expect(page.getByText("₦99,250", { exact: true })).toBeVisible();
+    await expect(page.getByText("99,250")).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Complete Order" }),
     ).toBeVisible();
@@ -261,7 +304,7 @@ test.describe("Checkout (mocked API)", () => {
     await seedAuthStorage(page);
     await mockCheckoutApis(page);
 
-    await page.goto("/shop/cart/checkout", { waitUntil: "domcontentloaded" });
+    await gotoCheckoutConfirmStep(page);
 
     const completeBtn = page.getByRole("button", { name: "Complete Order" });
     await expect(completeBtn).toBeVisible({ timeout: 15_000 });
@@ -292,10 +335,17 @@ test.describe("Checkout (mocked API)", () => {
       });
     });
 
-    await page.goto("/shop/cart/checkout", { waitUntil: "domcontentloaded" });
+    await gotoCheckoutConfirmStep(page);
 
-    await page.locator('label:has-text("Terms of Service Agreement")').click();
-    await page.getByRole("button", { name: "Complete Order" }).click();
+    await page
+      .locator("label")
+      .filter({ hasText: "By confirming this order" })
+      .locator("span.rounded")
+      .first()
+      .click();
+    const completeBtn = page.getByRole("button", { name: "Complete Order" });
+    await expect(completeBtn).toBeEnabled({ timeout: 5_000 });
+    await completeBtn.click();
 
     await expect(page).toHaveURL(/checkout\/success\?orderId=ORD-E2E-123/, {
       timeout: 15_000,

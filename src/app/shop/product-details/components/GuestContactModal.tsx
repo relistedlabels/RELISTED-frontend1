@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { X, Loader2, Mail, Calendar } from "lucide-react";
-import { HiOutlineEnvelope, HiOutlineUser } from "react-icons/hi2";
+import { X, Loader2, Calendar } from "lucide-react";
+import { HiOutlineEnvelope, HiOutlineUser, HiOutlinePhone } from "react-icons/hi2";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import {
@@ -18,7 +18,11 @@ import {
 type GuestContactModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { firstName: string; email: string }) => void;
+  onSubmit: (data: {
+    firstName: string;
+    email: string;
+    whatsappPhone?: string;
+  }) => void;
   isSubmitting?: boolean;
 };
 
@@ -30,9 +34,9 @@ export default function GuestContactModal({
 }: GuestContactModalProps) {
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
+  const [whatsappPhone, setWhatsappPhone] = useState("");
   const wasOpenRef = useRef(false);
 
-  // Pre-fill from storage once when the modal opens, not on every render.
   useEffect(() => {
     const justOpened = isOpen && !wasOpenRef.current;
     wasOpenRef.current = isOpen;
@@ -42,6 +46,7 @@ export default function GuestContactModal({
     const saved = readGuestContact();
     setFirstName(saved?.firstName ?? "");
     setEmail(saved?.email ?? "");
+    setWhatsappPhone(saved?.whatsappPhone ?? "");
   }, [isOpen]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -51,10 +56,17 @@ export default function GuestContactModal({
       new FormData(form).get("firstName") ?? "",
     ).trim();
     const emailValue = String(new FormData(form).get("email") ?? "").trim();
+    const whatsappValue = String(
+      new FormData(form).get("whatsappPhone") ?? "",
+    ).trim();
 
-    if (!firstNameValue || !emailValue) return;
+    if (!firstNameValue || !emailValue || !whatsappValue) return;
 
-    const contact = { firstName: firstNameValue, email: emailValue };
+    const contact = {
+      firstName: firstNameValue,
+      email: emailValue,
+      whatsappPhone: whatsappValue,
+    };
     saveGuestContact(contact);
     onSubmit(contact);
   };
@@ -139,6 +151,25 @@ export default function GuestContactModal({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
+                    className="w-full rounded-xl border border-gray-300 py-3.5 pr-4 pl-12 text-base text-gray-900 placeholder:text-gray-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Paragraph1 className="mb-2 font-medium text-gray-900 text-sm">
+                  WhatsApp number
+                </Paragraph1>
+                <div className="relative">
+                  <HiOutlinePhone className="top-1/2 left-4 absolute w-5 h-5 text-gray-400 -translate-y-1/2" />
+                  <input
+                    type="tel"
+                    name="whatsappPhone"
+                    placeholder="0801 234 5678"
+                    value={whatsappPhone}
+                    onChange={(e) => setWhatsappPhone(e.target.value)}
+                    autoComplete="tel"
                     className="w-full rounded-xl border border-gray-300 py-3.5 pr-4 pl-12 text-base text-gray-900 placeholder:text-gray-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
                     required
                   />

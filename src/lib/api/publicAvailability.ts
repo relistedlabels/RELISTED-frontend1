@@ -6,6 +6,7 @@ export type GuestAvailabilityPayload = {
   listerId: string;
   firstName: string;
   email: string;
+  whatsappPhone?: string;
   rentalDays: number;
   rentalStartDate?: string | null;
   rentalEndDate?: string | null;

@@ -1,22 +1,10 @@
 "use client";
 
-import {
-  Check,
-  Clock,
-  Compass,
-  Home,
-  MapPin,
-  Truck,
-  User,
-  Wallet,
-  ChevronDown,
-} from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Clock, MapPin, Truck, Wallet } from "lucide-react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
-import { toast } from "sonner";
 import {
-  canonicalReturnPickupJson,
   formatShippingQuoteWarningLine,
   type OrderSummaryApiResult,
   type ShippingQuoteWarning,
@@ -28,7 +16,11 @@ import { useMe } from "@/lib/queries/auth/useMe";
 import { useWallet } from "@/lib/queries/renters/useWallet";
 import { useProfile } from "@/lib/queries/user/useProfile";
 import ChangeAddress from "./ChangeAddress";
-import { formatDeliveryAddressLine } from "@/lib/checkout/deliveryAddress";
+import ChangeReturnPickup from "./ChangeReturnPickup";
+import {
+  formatDeliveryAddressLine,
+  formatReturnPickupAddressLine,
+} from "@/lib/checkout/deliveryAddress";
 import FundWallet from "./FundWallet";
 import DispatchWindowsScheduler from "./DispatchWindowsScheduler";
 import type { DispatchWindowContext } from "@/lib/checkout/dispatchWindows";
@@ -38,47 +30,13 @@ import type {
   ShipmentDispatchType,
 } from "@/lib/checkout/dispatchWindows";
 import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
-
-const TOPSHIP_CITIES = [
-  "Abule Egba",
-  "Agege",
-  "Ajah",
-  "Amuwo Odofin",
-  "Apapa",
-  "Badagry",
-  "Bariga",
-  "Ebute Metta",
-  "Egbeda",
-  "Epe",
-  "Ibeju-Lekki",
-  "Igando",
-  "Igbogbo",
-  "Ijegun",
-  "Ikeja",
-  "Ikorodu",
-  "Ikotun",
-  "Ikoyi",
-  "Ipaja",
-  "Isolo",
-  "Iyana Ipaja",
-  "Kosofe",
-  "Lagos",
-  "Lagos Island",
-  "Lekki",
-  "Marina",
-  "Maryland",
-  "Mushin",
-  "Ogba",
-  "Ojo",
-  "Ojokoro Ijaiye",
-  "Onikan",
-  "Oshodi",
-  "Sangotedo",
-  "Somolu",
-  "Surulere",
-  "Victoria Island",
-  "Yaba",
-];
+import type { CheckoutStep } from "./CheckoutStepper";
+import CheckoutDispatchLegPreview, {
+  CheckoutShippingLegHeader,
+} from "./CheckoutDispatchLegPreview";
+import CheckoutSectionHeading from "./CheckoutSectionHeading";
+import CheckoutStepIntro from "./CheckoutStepIntro";
+import CheckoutStepNav from "./CheckoutStepNav";
 
 interface CheckoutContactAndPaymentProps {
   /** Same GET /order/summary payload as the sidebar (used for wallet shortfall vs checkout total). */
@@ -133,6 +91,7 @@ interface CheckoutContactAndPaymentProps {
   onAddressSaved?: () => void;
   /** Quote-based dispatch: one optional heading per shipment bucket, then rental/return rows. */
   summaryDispatchPreview?: Array<{
+    bucketIndex?: number;
     groupHeading: string | null;
     listerLocation?: string;
     rows: Array<{ title: string; range: string }>;
@@ -140,6 +99,8 @@ interface CheckoutContactAndPaymentProps {
   /** When true, rental dispatch UI waits for per-bucket summary (no rentalItems[0] fallback). */
   multiListerRentalCart?: boolean;
   isResaleOnly?: boolean;
+  checkoutStep?: CheckoutStep;
+  onCheckoutStepChange?: (step: CheckoutStep) => void;
 }
 
 const CONTACT_SKELETON_KEYS = [
@@ -267,6 +228,8 @@ export default function CheckoutContactAndPayment({
   summaryDispatchPreview,
   multiListerRentalCart = false,
   isResaleOnly = false,
+  checkoutStep = 1,
+  onCheckoutStepChange,
 }: CheckoutContactAndPaymentProps) {
   const dispatchContexts = dispatchContextsProp ?? [];
   const hasRentalDispatch = useMemo(
@@ -289,7 +252,6 @@ export default function CheckoutContactAndPayment({
   const { data: user } = useMe();
   const { data: profile } = useProfile();
   const { data: walletResponse } = useWallet();
-  const [isSameAsBilling, setIsSameAsBilling] = useState(true);
   const tierList = shippingTiers ?? [];
   const returnTierList = returnShippingTiers ?? [];
   const outboundBuckets = outboundShippingByBucket ?? [];
@@ -371,7 +333,7 @@ export default function CheckoutContactAndPayment({
     showReturnShippingTierPicker,
   ]);
 
-  const basePickupDefaults = useMemo<ReturnPickupAddressPayload>(
+  const deliveryPickupDefaults = useMemo<ReturnPickupAddressPayload>(
     () => ({
       contactName: user?.name ?? "",
       phoneNumber: profile?.phoneNumber ?? "",
@@ -388,17 +350,6 @@ export default function CheckoutContactAndPayment({
       profile?.address?.state,
     ],
   );
-  const [returnPickupForm, setReturnPickupForm] =
-    useState<ReturnPickupAddressPayload>(
-      returnPickupAddress ?? basePickupDefaults,
-    );
-  const [returnPickupMode, setReturnPickupMode] = useState<
-    "delivery" | "custom"
-  >(returnPickupAddress ? "custom" : "delivery");
-  const [hasTouchedReturnPickup, setHasTouchedReturnPickup] = useState(false);
-  const [savingPickup, setSavingPickup] = useState(false);
-  /** Avoids redundant parent updates / summary refetches when JSON-stable form is unchanged. */
-  const lastSyncedPickupJsonRef = useRef<string>("");
 
   const handleShippingTierChange = (tierName: string) => {
     onShippingTierSelected?.(tierName);
@@ -500,108 +451,129 @@ export default function CheckoutContactAndPayment({
       });
   };
 
-  useEffect(() => {
-    if (returnPickupMode === "delivery") {
-      setReturnPickupForm(basePickupDefaults);
-      onReturnPickupChange?.(undefined);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [basePickupDefaults, returnPickupMode]);
+  const orderReviewLegs = useMemo(() => {
+    type ReviewLeg = {
+      id: string;
+      title: string;
+      address: string;
+      windows: string[];
+      shipping: Array<{ method: string; cost?: number }>;
+    };
 
-  useEffect(() => {
-    if (!returnPickupAddress) return;
-    setReturnPickupMode("custom");
-    setReturnPickupForm((prev) => {
-      if (
-        canonicalReturnPickupJson(prev) ===
-        canonicalReturnPickupJson(returnPickupAddress)
-      ) {
-        return prev;
+    const deliveryAddressLine =
+      formatDeliveryAddressLine(profile?.address) ?? "No address set";
+    const returnPickupAddressLine =
+      formatReturnPickupAddressLine(returnPickupAddress ?? {}) ??
+      deliveryAddressLine;
+
+    const deliveryWindows: string[] = [];
+    const returnWindows: string[] = [];
+    for (const group of summaryDispatchPreview ?? []) {
+      for (const row of group.rows) {
+        if (row.title.toLowerCase().includes("return pickup")) {
+          returnWindows.push(row.range);
+        } else {
+          deliveryWindows.push(row.range);
+        }
       }
-      return returnPickupAddress;
-    });
-  }, [returnPickupAddress]);
-
-  useEffect(() => {
-    if (returnPickupMode !== "custom") {
-      lastSyncedPickupJsonRef.current = "";
-      return;
     }
-    const payloadJson = canonicalReturnPickupJson(returnPickupForm);
-    if (payloadJson === lastSyncedPickupJsonRef.current) return;
-    const defaultsJson = canonicalReturnPickupJson(basePickupDefaults);
-    if (
-      payloadJson === defaultsJson &&
-      !returnPickupAddress
-    ) {
-      lastSyncedPickupJsonRef.current = payloadJson;
-      return;
+
+    const deliveryShipping: Array<{ method: string; cost?: number }> = [];
+    const returnShipping: Array<{ method: string; cost?: number }> = [];
+
+    if (usePerBucketOutbound) {
+      for (const bucket of outboundBuckets) {
+        const pick =
+          selectedOutboundTierByBucket[bucket.bucketIndex] ??
+          bucket.shippingTiers[0]?.name ??
+          "";
+        const row = bucket.shippingTiers.find((tier) => tier.name === pick);
+        if (pick) {
+          deliveryShipping.push({
+            method: pick,
+            cost: row?.totalShippingCost,
+          });
+        }
+      }
+    } else {
+      const pick = selectedShippingTier || tierList[0]?.name || "";
+      const row = tierList.find((tier) => tier.name === pick);
+      if (pick) {
+        deliveryShipping.push({ method: pick, cost: row?.totalShippingCost });
+      }
     }
-    if (
-      returnPickupAddress &&
-      canonicalReturnPickupJson(returnPickupAddress) === payloadJson
-    ) {
-      lastSyncedPickupJsonRef.current = payloadJson;
-      return;
+
+    if (showReturnShippingTierPicker) {
+      if (usePerBucketReturn) {
+        for (const bucket of returnBuckets) {
+          const pick =
+            selectedReturnTierByBucket[bucket.bucketIndex] ??
+            bucket.shippingTiers[0]?.name ??
+            "";
+          const row = bucket.shippingTiers.find((tier) => tier.name === pick);
+          if (pick) {
+            returnShipping.push({
+              method: pick,
+              cost: row?.totalShippingCost,
+            });
+          }
+        }
+      } else {
+        const pick =
+          selectedReturnShippingTier || returnTierList[0]?.name || "";
+        const row = returnTierList.find((tier) => tier.name === pick);
+        if (pick) {
+          returnShipping.push({ method: pick, cost: row?.totalShippingCost });
+        }
+      }
     }
-    lastSyncedPickupJsonRef.current = payloadJson;
-    onReturnPickupChange?.(returnPickupForm);
-  }, [
-    basePickupDefaults,
-    returnPickupForm,
-    returnPickupMode,
-    onReturnPickupChange,
-    returnPickupAddress,
-  ]);
 
-  const handleReturnPickupModeChange = (mode: "delivery" | "custom") => {
-    setReturnPickupMode(mode);
-    setHasTouchedReturnPickup(true);
-    if (mode === "delivery") {
-      onReturnPickupChange?.(undefined);
-    }
-  };
-
-  const handleReturnPickupFieldChange = (
-    field: keyof ReturnPickupAddressPayload,
-    value: string,
-  ) => {
-    setHasTouchedReturnPickup(true);
-    setReturnPickupForm((prev) => {
-      return { ...prev, [field]: value };
-    });
-  };
-
-  const handleSaveReturnPickup = () => {
-    if (returnPickupMode !== "custom" || returnPickupErrors.length > 0) return;
-    lastSyncedPickupJsonRef.current = canonicalReturnPickupJson(returnPickupForm);
-    onReturnPickupChange?.(returnPickupForm);
-    setSavingPickup(true);
-    toast.success("Pickup spot saved");
-    window.setTimeout(() => setSavingPickup(false), 450);
-  };
-
-  const returnPickupErrors = useMemo(() => {
-    if (returnPickupMode === "delivery") return [] as string[];
-    const required: Array<{
-      field: keyof ReturnPickupAddressPayload;
-      label: string;
-    }> = [
-      { field: "contactName", label: "Contact name" },
-      { field: "phoneNumber", label: "Phone number" },
-      { field: "street", label: "Street" },
-      { field: "city", label: "City" },
-      { field: "state", label: "State" },
+    const legs: ReviewLeg[] = [
+      {
+        id: "delivery",
+        title: "Delivery to you",
+        address: deliveryAddressLine,
+        windows: deliveryWindows,
+        shipping: deliveryShipping,
+      },
     ];
-    return required
-      .filter(({ field }) => !returnPickupForm[field]?.trim())
-      .map(({ label }) => `${label} is required`);
-  }, [returnPickupForm, returnPickupMode]);
+
+    if (!isResaleOnly) {
+      legs.push({
+        id: "return",
+        title: "Return from you",
+        address: returnPickupAddressLine,
+        windows: returnWindows,
+        shipping: returnShipping,
+      });
+    }
+
+    return legs;
+  }, [
+    profile?.address,
+    returnPickupAddress,
+    summaryDispatchPreview,
+    usePerBucketOutbound,
+    outboundBuckets,
+    selectedOutboundTierByBucket,
+    selectedShippingTier,
+    tierList,
+    showReturnShippingTierPicker,
+    usePerBucketReturn,
+    returnBuckets,
+    selectedReturnTierByBucket,
+    selectedReturnShippingTier,
+    returnTierList,
+    isResaleOnly,
+  ]);
 
   if (!user) return <ContactSkeleton />;
 
   const deliveryAddress =
     formatDeliveryAddressLine(profile?.address) ?? "No address set";
+  const returnPickupAddressLine =
+    formatReturnPickupAddressLine(returnPickupAddress ?? {}) ??
+    deliveryAddress;
 
   const walletData = walletResponse?.wallet?.balance;
   const availableBalance = walletData?.availableBalance || 0;
@@ -616,166 +588,161 @@ export default function CheckoutContactAndPayment({
       ? Math.max(0, Math.round(checkoutGrandTotalNgN - availableBalance))
       : undefined;
 
+  const walletCoversOrder =
+    checkoutGrandTotalNgN !== undefined &&
+    walletTopUpNgN !== undefined &&
+    walletTopUpNgN <= 0;
+
   return (
     <div className="space-y-6 bg-gray-50">
-      {hasDeliveryAddress && dispatchReschedules.length > 0 ? (
-        <div className="space-y-2 bg-amber-50 p-4 border border-amber-200 rounded-xl">
-          {dispatchReschedules.map((entry) => (
-            <Paragraph1
-              key={entry.cartItemId ?? entry.productName ?? entry.outboundSummary}
-              className="text-amber-900 text-sm leading-relaxed"
-            >
-              Your delivery time has passed
-              {entry.outboundSummary
-                ? `. New earliest slot: ${entry.outboundSummary}.`
-                : "."}{" "}
-              Confirm below or pick another.
-              {entry.priceUnchanged ? " Price unchanged." : ""}
-            </Paragraph1>
-          ))}
-        </div>
-      ) : null}
-
-      {hasDeliveryAddress && orderSummaryError ? (
-        <div className="space-y-3 bg-amber-50 p-4 border border-amber-200 rounded-xl">
-          <Paragraph1 className="font-semibold text-amber-950 text-sm">
-            Could not load payment summary
-          </Paragraph1>
-          <Paragraph1 className="text-amber-900 text-sm whitespace-pre-wrap">
-            {orderSummaryError}
-          </Paragraph1>
-          <div className="flex flex-wrap gap-2">
-            {onRefetchOrderSummary ? (
-              <button
-                type="button"
-                className="font-medium text-amber-950 text-sm bg-white hover:bg-amber-100 px-3 py-2 border border-amber-300 rounded-lg transition-colors"
-                onClick={() => onRefetchOrderSummary()}
-              >
-                Try again
-              </button>
-            ) : null}
-            <Link
-              href="/shop/cart"
-              className="inline-flex items-center font-medium text-amber-950 text-sm bg-white hover:bg-amber-100 px-3 py-2 border border-amber-300 rounded-lg transition-colors"
-            >
-              Back to cart
-            </Link>
-          </div>
-        </div>
-      ) : null}
-
-      {shippingQuoteWarnings.length > 0 ? (
-        <div className="space-y-2 bg-amber-50 p-4 border border-amber-200 rounded-xl">
-          <Paragraph1 className="font-semibold text-amber-950 text-sm">
-            Some shipping options are unavailable
-          </Paragraph1>
-          <ul className="space-y-1.5 list-disc pl-5 text-amber-900 text-sm">
-            {shippingQuoteWarnings.map((w, i) => (
-              <li
-                key={`${w.provider}-${w.leg}-${w.bucketIndex ?? i}-${w.message}`}
-              >
-                {formatShippingQuoteWarningLine(w)}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-
-      {/* 1. CONTACT Section */}
-      <div className="bg-white p-4 border border-gray-100 rounded-xl">
-        <Paragraph1 className="mb-3 font-bold text-gray-800 tracking-wider">
-          CONTACT
-        </Paragraph1>
-
-        <hr className="mb-3 text-gray-300" />
-        <div className="flex items-start gap-3">
-          <User size={30} className="mt-0.5 text-gray-700 shrink-0" />
-          <div>
-            <Paragraph1 className="font-medium text-gray-900 leading-snug">
-              {user.name}
-            </Paragraph1>
-            <Paragraph1 className="text-gray-600 text-xs leading-snug">
-              {user.email}
-            </Paragraph1>
-            <Paragraph1 className="text-gray-600 text-xs leading-snug">
-              {profile?.phoneNumber || "No phone number"}
-            </Paragraph1>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. DELIVERY ADDRESS Section */}
-      <div className="bg-white p-4 border border-gray-100 rounded-xl">
-        <Paragraph1 className="mb-4 font-bold text-gray-800 tracking-wider">
-          DELIVERY ADDRESS
-        </Paragraph1>
-        <hr className="mb-3 text-gray-300" />
-
-        {hasDeliveryAddress ? (
-          <>
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex items-start gap-3">
-                <Home size={30} className="mt-0.5 text-gray-700 shrink-0" />
-                <Paragraph1 className="max-w-[70%] text-gray-900 leading-snug">
-                  {deliveryAddress}
-                </Paragraph1>
-              </div>
-              <ChangeAddress onAddressSaved={onAddressSaved ?? onRefetchOrderSummary} />
-            </div>
-            <hr className="mb-3 text-gray-300" />
-
-            <label className="flex items-center space-x-2 mt-2 text-gray-700 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isSameAsBilling}
-                onChange={() => setIsSameAsBilling(!isSameAsBilling)}
-                className="hidden"
-              />
-              <span
-                className={`w-6 h-6 rounded border ${
-                  isSameAsBilling
-                    ? "bg-black border-black"
-                    : "bg-white border-gray-400"
-                } flex items-center justify-center`}
-              >
-                {isSameAsBilling && <Check size={18} className="text-white" />}
-              </span>
-              <Paragraph1>Same as billing address</Paragraph1>
-            </label>
-          </>
-        ) : (
-          <div className="flex justify-between items-start gap-4">
-            <div className="flex items-start gap-3">
-              <Home size={30} className="mt-0.5 text-gray-700 shrink-0" />
-              <div>
-                <Paragraph1 className="text-gray-900 leading-snug">
-                  No delivery address yet
-                </Paragraph1>
-              </div>
-            </div>
-            <ChangeAddress
-              buttonLabel="Add address"
-              panelTitle="Add delivery address"
-              onAddressSaved={onAddressSaved ?? onRefetchOrderSummary}
-            />
-          </div>
-        )}
-      </div>
-
-      {hasDeliveryAddress ? (
+      {checkoutStep === 1 ? (
         <>
-      {/* 3. DELIVERY / OUTBOUND SHIPPING */}
-      <div className="bg-white p-4 border border-gray-100 rounded-xl">
-        <div className="flex justify-between items-start gap-3">
-          <div>
-            <Paragraph1 className="font-bold text-gray-800 tracking-wider">
-              {showReturnShippingTierPicker
-                ? "DELIVERY SHIPPING"
-                : "SHIPPING METHOD"}
-            </Paragraph1>
+          <CheckoutStepIntro
+            title={isResaleOnly ? "Delivery address" : "Delivery and return"}
+            subtitle={
+              isResaleOnly
+                ? "Add where we should deliver your order."
+                : "Where we deliver your rental, and where we pick it up when you're done."
+            }
+          />
+
+          <div className="space-y-4 bg-white p-5 border border-gray-100 rounded-xl">
+            <CheckoutSectionHeading>Deliver to you</CheckoutSectionHeading>
+
+            {hasDeliveryAddress ? (
+              <ChangeAddress
+                addressLine={deliveryAddress}
+                buttonLabel="Change"
+                variant="row"
+                onAddressSaved={onAddressSaved ?? onRefetchOrderSummary}
+              />
+            ) : (
+              <div className="space-y-4 bg-gray-50 p-6 rounded-xl text-center">
+                <MapPin
+                  size={28}
+                  className="mx-auto text-gray-400"
+                  aria-hidden
+                />
+                <Paragraph1 className="text-gray-700 text-sm">
+                  Add where we should deliver your order.
+                </Paragraph1>
+                <ChangeAddress
+                  buttonLabel="Add address"
+                  panelTitle="Add delivery address"
+                  variant="outline"
+                  onAddressSaved={onAddressSaved ?? onRefetchOrderSummary}
+                />
+              </div>
+            )}
           </div>
-          <Truck size={24} className="text-gray-400" />
-        </div>
+
+          {!isResaleOnly ? (
+            <div className="space-y-4 bg-white p-5 border border-gray-100 rounded-xl">
+              <CheckoutSectionHeading>Pickup from you</CheckoutSectionHeading>
+
+              <ChangeReturnPickup
+                addressLine={returnPickupAddressLine}
+                returnPickupAddress={returnPickupAddress}
+                deliveryDefaults={deliveryPickupDefaults}
+                onReturnPickupChange={onReturnPickupChange}
+                buttonLabel="Change"
+                variant="row"
+              />
+            </div>
+          ) : null}
+
+          <CheckoutStepNav
+            onContinue={
+              onCheckoutStepChange
+                ? () => onCheckoutStepChange(2)
+                : undefined
+            }
+            continueLabel="Continue to shipping"
+            continueDisabled={!hasDeliveryAddress}
+            checkoutGrandTotalNgN={checkoutGrandTotalNgN}
+          />
+        </>
+      ) : null}
+
+      {checkoutStep === 2 ? (
+        <>
+          <CheckoutStepIntro
+            title="Shipping and schedule"
+            subtitle="Pick carriers and delivery times."
+          />
+
+          {!hasDeliveryAddress ? (
+            <div className="bg-amber-50 p-4 border border-amber-200 rounded-xl">
+              <Paragraph1 className="text-amber-900 text-sm leading-relaxed">
+                Add a delivery address first, then come back to this step.
+              </Paragraph1>
+            </div>
+          ) : null}
+
+          {hasDeliveryAddress && shippingQuoteWarnings.length > 0 ? (
+            <div className="space-y-2 bg-amber-50 p-4 border border-amber-200 rounded-xl">
+              <Paragraph1 className="font-semibold text-amber-950 text-sm">
+                Some shipping options are unavailable
+              </Paragraph1>
+              <ul className="space-y-1.5 list-disc pl-5 text-amber-900 text-sm">
+                {shippingQuoteWarnings.map((w, i) => (
+                  <li
+                    key={`${w.provider}-${w.leg}-${w.bucketIndex ?? i}-${w.message}`}
+                  >
+                    {formatShippingQuoteWarningLine(w)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {hasDeliveryAddress && dispatchReschedules.length > 0 ? (
+            <div className="space-y-2 bg-amber-50 p-4 border border-amber-200 rounded-xl">
+              {dispatchReschedules.map((entry) => (
+                <Paragraph1
+                  key={
+                    entry.cartItemId ?? entry.productName ?? entry.outboundSummary
+                  }
+                  className="text-amber-900 text-sm leading-relaxed"
+                >
+                  Your delivery time has passed
+                  {entry.outboundSummary
+                    ? `. New earliest slot: ${entry.outboundSummary}.`
+                    : "."}{" "}
+                  Confirm below or pick another.
+                  {entry.priceUnchanged ? " Price unchanged." : ""}
+                </Paragraph1>
+              ))}
+            </div>
+          ) : null}
+
+          {hasDeliveryAddress ? (
+            <>
+      {/* DELIVERY / OUTBOUND SHIPPING */}
+      <div className="bg-white p-4 border border-gray-100 rounded-xl">
+        {usePerBucketOutbound && outboundBuckets.length > 1 ? (
+          <CheckoutShippingLegHeader
+            sectionLabel={
+              showReturnShippingTierPicker ? "DELIVERY SHIPPING" : "SHIPPING METHOD"
+            }
+            leg="outbound"
+          />
+        ) : (
+          <CheckoutShippingLegHeader
+            sectionLabel={
+              showReturnShippingTierPicker ? "DELIVERY SHIPPING" : "SHIPPING METHOD"
+            }
+            groups={
+              hasSummaryDispatchPreview ? summaryDispatchPreview : undefined
+            }
+            bucketIndex={
+              usePerBucketOutbound
+                ? outboundBuckets[0]?.bucketIndex
+                : undefined
+            }
+            leg="outbound"
+          />
+        )}
 
         <hr className="my-4 text-gray-100" />
 
@@ -790,6 +757,11 @@ export default function CheckoutContactAndPayment({
           </div>
         ) : usePerBucketOutbound ? (
           <div className="space-y-8">
+            {showQuoteDispatchLoading && !hasSummaryDispatchPreview ? (
+              <div className="mb-4 pb-4 border-gray-100 border-b">
+                <DispatchWindowsQuoteSkeleton />
+              </div>
+            ) : null}
             {outboundBuckets.map((bucket) => {
               const selectedName =
                 selectedOutboundTierByBucket[bucket.bucketIndex] ??
@@ -797,13 +769,12 @@ export default function CheckoutContactAndPayment({
                 "";
               return (
                 <div key={bucket.bucketIndex} className="space-y-3">
-                  {outboundBuckets.length > 1 ? (
-                    <Paragraph1 className="font-semibold text-gray-900 text-sm">
-                      From {bucket.listerName}
-                      {bucket.bucketMode === "RESALE"
-                        ? " (purchase delivery)"
-                        : ""}
-                    </Paragraph1>
+                  {outboundBuckets.length > 1 && hasSummaryDispatchPreview ? (
+                    <CheckoutDispatchLegPreview
+                      groups={summaryDispatchPreview}
+                      bucketIndex={bucket.bucketIndex}
+                      leg="outbound"
+                    />
                   ) : null}
                   {bucket.shippingTiers.length > 0 ? (
                     <div className="space-y-3">
@@ -826,6 +797,21 @@ export default function CheckoutContactAndPayment({
           </div>
         ) : tierList.length > 0 ? (
           <div className="space-y-3">
+            {!hasSummaryDispatchPreview &&
+            (dispatchContexts.length > 0 || multiListerRentalCart) ? (
+              <div className="mb-4 pb-4 border-gray-100 border-b">
+                {showQuoteDispatchLoading ? (
+                  <DispatchWindowsQuoteSkeleton />
+                ) : (
+                  <DispatchWindowsScheduler
+                    contexts={dispatchContexts}
+                    selections={dispatchSelections || {}}
+                    onSelectionChange={onDispatchSelectionChange}
+                    readOnly={true}
+                  />
+                )}
+              </div>
+            ) : null}
             {renderOutboundTierRadios(
               tierList,
               selectedShippingTier,
@@ -840,176 +826,22 @@ export default function CheckoutContactAndPayment({
         )}
       </div>
 
-      {/* 4. RETURN PICKUP Section - Only show for rental orders */}
-      {!isResaleOnly && (
-        <div className="bg-white p-4 border border-gray-100 rounded-xl">
-          <div className="flex justify-between items-start gap-3">
-            <div>
-              <Paragraph1 className="font-bold text-gray-800 tracking-wider">
-                RETURN PICKUP
-              </Paragraph1>
-            </div>
-            <Compass size={22} className="text-amber-500" />
-          </div>
-
-          <div className="flex flex-wrap gap-3 mt-4">
-            {[
-              { label: "Use delivery address", value: "delivery" },
-              { label: "Custom pickup spot", value: "custom" },
-            ].map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() =>
-                  handleReturnPickupModeChange(
-                    option.value as "delivery" | "custom",
-                  )
-                }
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
-                  returnPickupMode === option.value
-                    ? "bg-gray-900 text-white shadow-lg shadow-gray-900/20"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-
-          {returnPickupMode === "delivery" ? (
-            <div className="bg-gray-50 mt-4 p-4 border border-gray-200 rounded-2xl">
-              <Paragraph1 className="font-semibold text-gray-900 text-sm">
-                {returnPickupForm.street
-                  ? `${returnPickupForm.street}, ${returnPickupForm.city}`
-                  : deliveryAddress}
-              </Paragraph1>
-            </div>
-          ) : (
-            <div className="space-y-4 mt-4">
-              <div className="gap-3 grid sm:grid-cols-2">
-                <label className="font-semibold text-gray-500 text-xs uppercase tracking-wide">
-                  Contact name
-                  <input
-                    type="text"
-                    value={returnPickupForm.contactName}
-                    onChange={(e) =>
-                      handleReturnPickupFieldChange(
-                        "contactName",
-                        e.target.value,
-                      )
-                    }
-                    className="mt-1 px-3 py-2 border border-gray-200 focus:border-gray-900 rounded-lg focus:outline-none w-full text-sm"
-                    placeholder="e.g. Adaora N."
-                  />
-                </label>
-                <label className="font-semibold text-gray-500 text-xs uppercase tracking-wide">
-                  Phone number
-                  <input
-                    type="tel"
-                    value={returnPickupForm.phoneNumber}
-                    onChange={(e) =>
-                      handleReturnPickupFieldChange(
-                        "phoneNumber",
-                        e.target.value,
-                      )
-                    }
-                    className="mt-1 px-3 py-2 border border-gray-200 focus:border-gray-900 rounded-lg focus:outline-none w-full text-sm"
-                    placeholder="0801..."
-                  />
-                </label>
-                <label className="sm:col-span-2 font-semibold text-gray-500 text-xs uppercase tracking-wide">
-                  Street
-                  <input
-                    type="text"
-                    value={returnPickupForm.street}
-                    onChange={(e) =>
-                      handleReturnPickupFieldChange("street", e.target.value)
-                    }
-                    className="mt-1 px-3 py-2 border border-gray-200 focus:border-gray-900 rounded-lg focus:outline-none w-full text-sm"
-                    placeholder="Apartment, street, landmark"
-                  />
-                </label>
-                <label className="font-semibold text-gray-500 text-xs uppercase tracking-wide">
-                  City
-                  <div className="relative">
-                    <select
-                      value={returnPickupForm.city}
-                      onChange={(e) => {
-                        handleReturnPickupFieldChange("city", e.target.value);
-                        handleReturnPickupFieldChange("state", "Lagos");
-                      }}
-                      className="bg-white mt-1 px-3 py-2 pr-10 border border-gray-200 focus:border-gray-900 rounded-lg focus:outline-none w-full text-sm appearance-none"
-                    >
-                      <option value="">Select City</option>
-                      {TOPSHIP_CITIES.map((city) => (
-                        <option key={city} value={city}>
-                          {city}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="top-1/2 right-3 absolute w-4 h-4 text-gray-400 -translate-y-1/2 pointer-events-none" />
-                  </div>
-                </label>
-                <label className="font-semibold text-gray-500 text-xs uppercase tracking-wide">
-                  State
-                  <input
-                    type="text"
-                    value="Lagos"
-                    disabled
-                    className="bg-gray-50 mt-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none w-full text-gray-500 text-sm"
-                  />
-                </label>
-              </div>
-
-              <label className="font-semibold text-gray-500 text-xs uppercase tracking-wide">
-                Handoff notes (optional)
-                <textarea
-                  value={returnPickupForm.instructions ?? ""}
-                  onChange={(e) =>
-                    handleReturnPickupFieldChange(
-                      "instructions",
-                      e.target.value,
-                    )
-                  }
-                  className="mt-1 px-3 py-2 border border-gray-200 focus:border-gray-900 rounded-lg focus:outline-none w-full text-sm"
-                  rows={3}
-                  placeholder="Gate codes, concierge numbers, etc."
-                />
-              </label>
-
-              {returnPickupErrors.length > 0 && hasTouchedReturnPickup && (
-                <div className="bg-red-50 p-3 border border-red-200 rounded-2xl text-red-700 text-xs">
-                  {returnPickupErrors.map((error) => (
-                    <p key={error}>{error}</p>
-                  ))}
-                </div>
-              )}
-
-              <button
-                type="button"
-                onClick={handleSaveReturnPickup}
-                disabled={returnPickupErrors.length > 0 || savingPickup}
-                className={`${buttonPrimaryFull} mt-2 gap-2 py-3.5 shadow-md hover:shadow-lg focus-visible:outline-2 focus-visible:outline-gray-900 focus-visible:outline-offset-2`}
-              >
-                <Check className="w-4 h-4 shrink-0" aria-hidden />
-                {savingPickup ? "Saving..." : "Save pickup spot"}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Return-leg shipping (rental): quoted separately from delivery */}
       {showReturnShippingTierPicker && (
         <div className="bg-white p-4 border border-gray-100 rounded-xl">
-          <div className="flex justify-between items-start gap-3">
-            <div>
-              <Paragraph1 className="font-bold text-gray-800 tracking-wider">
-                RETURN SHIPPING
-              </Paragraph1>
-            </div>
-            <Truck size={24} className="text-gray-400" />
-          </div>
+          {usePerBucketReturn && returnBuckets.length > 1 ? (
+            <CheckoutShippingLegHeader sectionLabel="RETURN SHIPPING" leg="return" />
+          ) : (
+            <CheckoutShippingLegHeader
+              sectionLabel="RETURN SHIPPING"
+              groups={
+                hasSummaryDispatchPreview ? summaryDispatchPreview : undefined
+              }
+              bucketIndex={
+                usePerBucketReturn ? returnBuckets[0]?.bucketIndex : undefined
+              }
+              leg="return"
+            />
+          )}
           <hr className="my-4 text-gray-100" />
           {isShippingTiersLoading &&
           (usePerBucketReturn
@@ -1032,10 +864,12 @@ export default function CheckoutContactAndPayment({
                   "";
                 return (
                   <div key={bucket.bucketIndex} className="space-y-3">
-                    {returnBuckets.length > 1 ? (
-                      <Paragraph1 className="font-semibold text-gray-900 text-sm">
-                        Return to {bucket.listerName}
-                      </Paragraph1>
+                    {returnBuckets.length > 1 && hasSummaryDispatchPreview ? (
+                      <CheckoutDispatchLegPreview
+                        groups={summaryDispatchPreview}
+                        bucketIndex={bucket.bucketIndex}
+                        leg="return"
+                      />
                     ) : null}
                     {bucket.shippingTiers.length > 0 ? (
                       <div className="space-y-3">
@@ -1073,117 +907,190 @@ export default function CheckoutContactAndPayment({
         </div>
       )}
 
-      {/* 4. DISPATCH WINDOWS Section */}
-      {(dispatchContexts.length > 0 || multiListerRentalCart) && (
-        <div className="bg-white p-4 border border-gray-100 rounded-xl">
-          <Paragraph1 className="mb-4 font-bold text-gray-800 tracking-wider">
-            {isResaleOnly ? "DELIVERY OPTIONS" : "DISPATCH WINDOWS"}
+      {checkoutBlockingIssues.length > 0 ? (
+        <div className="bg-amber-50 p-4 border border-amber-200 rounded-xl">
+          <Paragraph1 className="font-semibold text-amber-950 text-sm">
+            Before you pay
           </Paragraph1>
-          {hasSummaryDispatchPreview ? (
-            <div className="space-y-3 bg-linear-to-b from-neutral-50 to-neutral-50/40 p-3 sm:p-4 border border-gray-100 rounded-xl">
-              {(summaryDispatchPreview ?? []).map((group, gi) => (
+          <div className="space-y-1 mt-2">
+            {checkoutBlockingIssues.map((issue) => (
+              <Paragraph1 key={issue} className="text-amber-900 text-sm">
+                {issue}
+              </Paragraph1>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+        </>
+          ) : null}
+
+          <CheckoutStepNav
+            onBack={
+              onCheckoutStepChange ? () => onCheckoutStepChange(1) : undefined
+            }
+            onContinue={
+              onCheckoutStepChange ? () => onCheckoutStepChange(3) : undefined
+            }
+            continueLabel="Continue to payment"
+            continueDisabled={!hasDeliveryAddress}
+            checkoutGrandTotalNgN={checkoutGrandTotalNgN}
+          />
+        </>
+      ) : null}
+
+      {checkoutStep === 3 ? (
+        <>
+          <CheckoutStepIntro title="Pay with your wallet" />
+
+          {!hasDeliveryAddress ? (
+            <div className="bg-amber-50 p-4 border border-amber-200 rounded-xl">
+              <Paragraph1 className="text-amber-900 text-sm leading-relaxed">
+                Add a delivery address first, then come back to this step.
+              </Paragraph1>
+            </div>
+          ) : null}
+
+          {hasDeliveryAddress ? (
+            <div className="bg-white p-4 border border-gray-100 rounded-xl">
+              <Paragraph1 className="mb-4 font-bold text-gray-800 tracking-wider">
+                WALLET
+              </Paragraph1>
+              <hr className="mb-3 text-gray-300" />
+              <div className="flex justify-between items-start gap-4">
+                <div className="flex flex-1 items-start gap-3">
+                  <Wallet size={30} className="mt-0.5 text-gray-700 shrink-0" />
+                  <div className="space-y-2">
+                    <Paragraph1 className="text-gray-600 text-xs">
+                      Available balance
+                    </Paragraph1>
+                    <Paragraph3
+                      className={`font-bold ${
+                        isWalletFunded ? "text-green-700" : "text-red-700"
+                      }`}
+                    >
+                      ₦{formatCurrency(availableBalance)}
+                    </Paragraph3>
+                    {walletTopUpNgN !== undefined && walletTopUpNgN > 0 ? (
+                      <Paragraph1 className="mt-2 max-w-56 sm:max-w-none text-green-700 text-xs leading-relaxed">
+                        Fund your wallet with ₦{formatCurrency(walletTopUpNgN)}{" "}
+                        to complete your order.
+                      </Paragraph1>
+                    ) : null}
+                  </div>
+                </div>
+                <FundWallet />
+              </div>
+            </div>
+          ) : null}
+
+          <CheckoutStepNav
+            onBack={
+              onCheckoutStepChange ? () => onCheckoutStepChange(2) : undefined
+            }
+            onContinue={
+              onCheckoutStepChange ? () => onCheckoutStepChange(4) : undefined
+            }
+            continueLabel="Review order"
+            continueDisabled={!hasDeliveryAddress || !walletCoversOrder}
+            checkoutGrandTotalNgN={checkoutGrandTotalNgN}
+          />
+        </>
+      ) : null}
+
+      {checkoutStep === 4 ? (
+        <>
+          <CheckoutStepIntro
+            title="Review your order"
+            subtitle="Check the details below, then complete your order in the summary."
+          />
+
+          <div className="space-y-4 bg-white p-5 border border-gray-100 rounded-xl">
+            <CheckoutSectionHeading>Order details</CheckoutSectionHeading>
+
+            <div className="space-y-4">
+              {orderReviewLegs.map((leg) => (
                 <div
-                  key={`dispatch-group-${gi}`}
-                  className="bg-white shadow-sm border border-gray-200/90 rounded-lg overflow-hidden"
+                  key={leg.id}
+                  className="space-y-4 bg-gray-50 p-4 sm:p-5 border border-gray-100 rounded-xl"
                 >
-                  {group.groupHeading ? (
-                    <div className="flex gap-2.5 bg-neutral-50/70 px-4 py-3 border-gray-100 border-b">
+                  <h4 className="font-semibold text-gray-900 text-[15px] leading-snug">
+                    {leg.title}
+                  </h4>
+
+                  <div className="flex items-start gap-3.5">
+                    <MapPin
+                      className="mt-1 size-4 text-gray-400 shrink-0"
+                      aria-hidden
+                    />
+                    <div className="min-w-0 space-y-1">
+                      <Paragraph1 className="font-medium text-gray-500 text-xs">
+                        Address
+                      </Paragraph1>
+                      <Paragraph1 className="text-gray-900 text-[15px] leading-relaxed">
+                        {leg.address}
+                      </Paragraph1>
+                    </div>
+                  </div>
+
+                  {leg.windows.map((windowRange, index) => (
+                    <div
+                      key={`${leg.id}-window-${index}`}
+                      className="flex items-start gap-3.5"
+                    >
                       <Clock
-                        className="mt-0.5 size-4 text-gray-400 shrink-0"
-                        strokeWidth={2}
+                        className="mt-1 size-4 text-gray-400 shrink-0"
                         aria-hidden
                       />
-                      <div className="min-w-0">
-                        <Paragraph1 className="font-semibold text-gray-900 text-sm leading-snug">
-                          {group.groupHeading}
+                      <div className="min-w-0 space-y-1">
+                        <Paragraph1 className="font-medium text-gray-500 text-xs">
+                          Time window
                         </Paragraph1>
-                        {group.listerLocation ? (
-                          <Paragraph1 className="mt-0.5 text-gray-600 text-xs leading-snug">
-                            Ships from {group.listerLocation}
-                          </Paragraph1>
-                        ) : null}
+                        <Paragraph1 className="text-gray-900 text-[15px] leading-relaxed">
+                          {windowRange}
+                        </Paragraph1>
                       </div>
                     </div>
-                  ) : null}
-                  <div className="divide-y divide-gray-100">
-                    {group.rows.map((row, ri) => (
-                      <div
-                        key={`${row.title}-${gi}-${ri}`}
-                        className="px-4 sm:px-5 py-3.5 sm:py-4"
-                      >
-                        <Paragraph1 className="mb-1 font-semibold text-[10px] text-gray-500 uppercase tracking-[0.18em]">
-                          {row.title}
-                        </Paragraph1>
-                        <Paragraph1 className="font-medium text-[15px] text-gray-950 leading-relaxed tracking-tight">
-                          {row.range}
-                        </Paragraph1>
+                  ))}
+
+                  {leg.shipping.map((ship, index) => (
+                    <div
+                      key={`${leg.id}-ship-${index}`}
+                      className="flex justify-between items-start gap-4"
+                    >
+                      <div className="flex items-start gap-3.5 min-w-0">
+                        <Truck
+                          className="mt-1 size-4 text-gray-400 shrink-0"
+                          aria-hidden
+                        />
+                        <div className="min-w-0 space-y-1">
+                          <Paragraph1 className="font-medium text-gray-500 text-xs">
+                            Shipping
+                          </Paragraph1>
+                          <Paragraph1 className="text-gray-900 text-[15px] leading-relaxed">
+                            {ship.method}
+                          </Paragraph1>
+                        </div>
                       </div>
-                    ))}
-                  </div>
+                      {ship.cost !== undefined ? (
+                        <Paragraph1 className="font-semibold text-gray-900 text-[15px] shrink-0">
+                          ₦{formatCurrency(ship.cost)}
+                        </Paragraph1>
+                      ) : null}
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
-          ) : showQuoteDispatchLoading ? (
-            <DispatchWindowsQuoteSkeleton />
-          ) : (
-            <DispatchWindowsScheduler
-              contexts={dispatchContexts}
-              selections={dispatchSelections || {}}
-              onSelectionChange={onDispatchSelectionChange}
-              readOnly={true}
-            />
-          )}
-          {checkoutBlockingIssues.length > 0 && (
-            <div className="bg-amber-50 mt-4 p-3 border border-amber-200 rounded-lg">
-              <Paragraph1 className="font-semibold text-amber-900 text-xs uppercase tracking-wide">
-                Before you pay
-              </Paragraph1>
-              <div className="space-y-1 mt-1">
-                {checkoutBlockingIssues.map((issue) => (
-                  <Paragraph1 key={issue} className="text-amber-900 text-xs">
-                    {issue}
-                  </Paragraph1>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 4. PAYMENT Section */}
-      <div className="bg-white p-4 border border-gray-100 rounded-xl">
-        <Paragraph1 className="mb-4 font-bold text-gray-800 tracking-wider">
-          PAYMENT
-        </Paragraph1>
-        <hr className="mb-3 text-gray-300" />
-
-        {/* Wallet Balance Row */}
-        <div className="flex justify-between items-start gap-4">
-          <div className="flex flex-1 items-start gap-3">
-            <Wallet size={30} className="mt-0.5 text-gray-700 shrink-0" />
-            <div className="space-y-2">
-              <div>
-                <Paragraph1 className="text-gray-600 text-xs">
-                  Available Balance
-                </Paragraph1>
-                <Paragraph3
-                  className={`font-bold ${
-                    isWalletFunded ? "text-green-700" : "text-red-700"
-                  }`}
-                >
-                  ₦{formatCurrency(availableBalance)}
-                </Paragraph3>
-                {walletTopUpNgN !== undefined && walletTopUpNgN > 0 ? (
-                  <Paragraph1 className="mt-2 max-w-56 sm:max-w-none text-green-700 text-xs leading-snug">
-                    Fund your wallet with ₦{formatCurrency(walletTopUpNgN)} to complete your order.
-                  </Paragraph1>
-                ) : null}
-              </div>
-            </div>
           </div>
-          <FundWallet />
-        </div>
-      </div>
+
+          <CheckoutStepNav
+            onBack={
+              onCheckoutStepChange ? () => onCheckoutStepChange(3) : undefined
+            }
+            backLabel="Back to payment"
+            showMobileSticky={false}
+          />
         </>
       ) : null}
     </div>

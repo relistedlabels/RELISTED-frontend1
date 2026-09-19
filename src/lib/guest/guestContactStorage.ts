@@ -1,6 +1,7 @@
 export type GuestContactInfo = {
   firstName: string;
   email: string;
+  whatsappPhone?: string;
 };
 
 const STORAGE_KEY = "relisted:guest-ar-contact";
@@ -14,7 +15,12 @@ export function readGuestContact(): GuestContactInfo | null {
     const firstName = parsed.firstName?.trim();
     const email = parsed.email?.trim();
     if (!firstName || !email) return null;
-    return { firstName, email };
+    const whatsappPhone = parsed.whatsappPhone?.trim();
+    return {
+      firstName,
+      email,
+      ...(whatsappPhone ? { whatsappPhone } : {}),
+    };
   } catch {
     return null;
   }
@@ -28,6 +34,9 @@ export function saveGuestContact(contact: GuestContactInfo): void {
       JSON.stringify({
         firstName: contact.firstName.trim(),
         email: contact.email.trim(),
+        ...(contact.whatsappPhone?.trim()
+          ? { whatsappPhone: contact.whatsappPhone.trim() }
+          : {}),
       }),
     );
   } catch {

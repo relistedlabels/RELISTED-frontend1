@@ -184,26 +184,26 @@ Pagination
 
 **Frontend**
 
-- [ ] Guest contact modal (first name, email, WhatsApp) when not logged in
-- [ ] Allow date/duration selection before sign-in (calendar preview for guests)
-- [ ] Remove profile + address + dispatch windows from availability check
-- [ ] New screens:
+- [x] Guest contact modal (first name, email, WhatsApp) when not logged in
+- [x] Allow date/duration selection before sign-in (calendar preview for guests; live blocked dates still deferred)
+- [x] Remove profile + address from availability check (delivery **windows stay** on request so listers can confirm timing)
+- [x] New screens:
   - `/shop/availability/checking?requestId=…` — "We're checking with the lister"
   - `/shop/availability/available?requestId=…` — "It's available!" → Complete Rental
-- [ ] Remove pending/expired approval UI from cart; cart = checkout-ready items only
-- [ ] Progressive checkout stepper (Delivery → Payment → Confirm)
-- [ ] Defer delivery address to checkout (post-confirmation)
+- [x] Remove pending/expired approval UI from cart; cart = checkout-ready items only
+- [x] Progressive checkout stepper (Delivery → Payment → Confirm)
+- [x] Defer delivery address to checkout (post-confirmation)
 
 **Backend**
 
-- [ ] `deliveryAddressId` already optional — confirm checkout collects it
-- [ ] Guest availability endpoint: `POST /api/public/availability-requests`
+- [~] `deliveryAddressId` already optional — checkout collects delivery via profile address (not `deliveryAddressId` FK)
+- [x] Guest availability endpoint: `POST /api/public/availability-requests`
   - Creates guest user stub OR stores guest contact on request
   - Returns `requestId` + tracking token
-- [ ] Public status endpoint: `GET /api/public/availability-requests/:id?token=…`
-- [ ] Lister magic-link approve/reject (interim before WhatsApp):
+- [x] Public status endpoint: `GET /api/public/availability-requests/:id?token=…` (includes `completeRentalUrl` when available)
+- [x] Lister magic-link approve/reject (interim before WhatsApp):
   - `GET /api/public/lister-response/:token?action=accept|reject`
-- [ ] Notification copy: hide "approval" language; use "checking availability"
+- [~] Notification copy: hide "approval" language; use "checking availability" (core emails updated; some API labels remain)
 
 ### Key files
 
@@ -248,14 +248,14 @@ Example (1-day): wear Fri → return Sat. Outbound slips to Sat → wear Sat, re
 
 **Backend**
 
-- [ ] On approve: reject if renter's outbound window has already ended (`isWindowExpired`).
-- [ ] Remove silent window refresh on approve when outbound is stale (`dispatchWindowDataForAvailabilityApproval` only applies while windows are still valid).
-- [ ] New lister action: **Notify renter item is available** (when approve is blocked).
-- [ ] Email renter: product name, listing URL, short line to request again with a new delivery time. No checkout magic link on this path.
+- [x] On approve: reject if renter's outbound window has already ended (`isWindowExpired`).
+- [x] Remove silent window refresh on approve when outbound is stale (`dispatchWindowDataForAvailabilityApproval` only applies while windows are still valid).
+- [x] New lister action: **Notify renter item is available** (when approve is blocked).
+- [x] Email renter: product name, listing URL, short line to request again with a new delivery time. No checkout magic link on this path.
 
 **Frontend**
 
-- [ ] Lister approve UI: if outbound window passed → show **Notify renter**, not **Approve**.
+- [x] Lister approve UI: if outbound window passed → show **Notify renter**, not **Approve**.
 
 **Acceptance**
 
@@ -266,16 +266,16 @@ Example (1-day): wear Fri → return Sat. Outbound slips to Sat → wear Sat, re
 
 **Backend**
 
-- [ ] At checkout summary load: if approved outbound window ended, roll outbound to next valid slot (do not mark request EXPIRED).
-- [ ] Shift `startDate` / `endDate` with fixed `rentalDays`; rebuild return window from new start.
-- [ ] Recalc `totalPrice` from `dailyPrice × rentalDays`; persist on availability request + cart line before summary returns.
+- [x] At checkout summary load: if approved outbound window ended, roll outbound to next valid slot (do not mark request EXPIRED).
+- [x] Shift `startDate` / `endDate` with fixed `rentalDays`; rebuild return window from new start.
+- [x] Recalc `totalPrice` from `dailyPrice × rentalDays`; persist on availability request + cart line before summary returns.
 
 **Frontend**
 
-- [ ] Compact banner when dates/windows changed: *"Your delivery time has passed. New earliest slot: 5:00–6:00 PM. Confirm below or pick another."*
-- [ ] Show updated dates in checkout; optional *"Price unchanged"* when `rentalDays` did not change.
-- [ ] Renter confirms or changes windows via existing `DispatchWindowsScheduler` (no extra modal).
-- [ ] If renter changes outbound day on scheduler, re-run date bundle + price recalc.
+- [x] Compact banner when dates/windows changed: *"Your delivery time has passed. New earliest slot: 5:00–6:00 PM. Confirm below or pick another."*
+- [x] Show updated dates in checkout; optional *"Price unchanged"* when `rentalDays` did not change.
+- [x] Renter confirms or changes windows via existing `DispatchWindowsScheduler` (no extra modal).
+- [~] If renter changes outbound day on scheduler, re-run date bundle + price recalc (read-only scheduler at checkout today)
 
 **Acceptance**
 
@@ -287,11 +287,11 @@ Example (1-day): wear Fri → return Sat. Outbound slips to Sat → wear Sat, re
 
 **Backend**
 
-- [ ] On normal approve (window still valid): add outbound (+ return if rental) formatted times to `rental-response.hbs`. One line each, no extra paragraphs.
+- [x] On normal approve (window still valid): add outbound (+ return if rental) formatted times to `rental-response.hbs`. One line each, no extra paragraphs.
 
 **Frontend**
 
-- [ ] Product page outbound picker helper (one place only): **"Delivery depends on lister availability."**
+- [x] Product page outbound picker helper (one place only): **"Delivery depends on lister availability."**
 
 **Acceptance**
 

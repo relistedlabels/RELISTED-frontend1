@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -13,26 +13,11 @@ import {
 import { Paragraph1, ParagraphLink1 } from "../ui/Text";
 import SearchModal from "./SearchModal";
 import { AuthActions } from "./AuthActions";
-import { useCartCountStore } from "@/store/useCartCountStore";
-import { useCartItems } from "@/lib/queries/renters/useCartItems";
-import { useUserStore } from "@/store/useUserStore";
+import { useNavbarCartCount } from "@/lib/queries/renters/useNavbarCartCount";
 import { DesktopSalesNavLink } from "./SalesNavLink";
 
 function DesktopNavbarContent() {
-  const cartCount = useCartCountStore((state) => state.cartCount);
-  const setCartCount = useCartCountStore((state) => state.setCartCount);
-  const token = useUserStore((s) => s.token);
-  const { data } = useCartItems();
-
-  useEffect(() => {
-    if (!token) {
-      setCartCount(0);
-      return;
-    }
-    if (data?.itemCount !== undefined) {
-      setCartCount(data.itemCount);
-    }
-  }, [token, data?.itemCount, setCartCount]);
+  const cartCount = useNavbarCartCount();
 
   return (
     <nav className="bg-black/95 backdrop-blur-md hidden xl:block text-white w-full">

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarDays, ChevronRight, X } from "lucide-react";
+import { ChevronRight, X } from "lucide-react";
 import Button from "@/common/ui/Button";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import {
@@ -12,7 +12,9 @@ import {
 import DispatchWindowsScheduler from "@/app/shop/cart/checkout/components/DispatchWindowsScheduler";
 import {
   buildDispatchWindowContexts,
+  formatLagosDate,
   formatLagosTime,
+  formatWindowRange,
   getSuggestedRentalCalendarStartYmd,
   type DispatchWindowContext,
   type DispatchWindowSelection,
@@ -26,14 +28,6 @@ import {
   formatDateOnlyLocal,
 } from "@/lib/dates/formatDateOnlyLocal";
 import { lagosYmdMax } from "@/lib/vaultClosetSaleDates";
-
-function formatShortDate(d: Date): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  }).format(d);
-}
 
 const DISPATCH_SLOT_MINUTES = 60;
 
@@ -224,81 +218,77 @@ export default function RentalDispatchWindowPicker({
 
   if (!enabled || dispatchContexts.length === 0) return null;
 
-  const isSingleDayRental = rentalDays === 1;
-  const wearEnd = addCalendarDaysLocal(startDate, Math.max(0, rentalDays - 1));
-
   return (
     <>
-      <div className="rounded-xl border border-gray-200 bg-[#FBFBFB] p-3 sm:p-4">
-        <div>
-          <Paragraph1 className="mb-0.5 font-semibold text-[11px] text-gray-500 uppercase tracking-[0.14em]">
-            {isSingleDayRental ? "Rental date" : "Rental dates"}
-          </Paragraph1>
-          <Paragraph1 className="text-sm font-semibold text-gray-900">
-            {isSingleDayRental
-              ? formatShortDate(startDate)
-              : `${formatShortDate(startDate)} – ${formatShortDate(wearEnd)}`}
-            <span className="ml-1.5 font-normal text-gray-500">
-              ({rentalDays}-day rental)
-            </span>
-          </Paragraph1>
-        </div>
+      <div>
+        <Paragraph1 className="mb-3 font-bold text-gray-800 text-xs uppercase tracking-wider">
+          Delivery and pickup times
+        </Paragraph1>
 
-        <div className="mt-4 border-t border-gray-200 pt-4">
-          <Paragraph1 className="mb-1 font-semibold text-[11px] text-gray-500 uppercase tracking-[0.14em]">
-            Delivery & pickup times
-          </Paragraph1>
-          <Paragraph1 className="mb-3 text-xs text-gray-500">
-            Tap to choose your times.
-          </Paragraph1>
+        <div className="space-y-3 bg-linear-to-b from-neutral-50 to-neutral-50/40 p-3 border border-gray-200 rounded-xl">
+          <div className="bg-white shadow-sm p-4 border border-gray-200/90 rounded-lg">
+            <div className="relative pl-6">
+              <div
+                className="absolute top-2.5 bottom-2.5 left-[7px] w-0.5 bg-gray-300"
+                aria-hidden
+              />
 
-          <div className="space-y-2">
-            {dispatchContexts.map((ctx, index) => {
-              const selection = dispatchSelections[ctx.type];
-              const window = selection?.window ?? ctx.suggested.window;
-              const isCustom = selection?.mode === "CUSTOM";
-              const meta = dispatchWindowMeta[ctx.type];
-              return (
-                <button
-                  key={ctx.type}
-                  type="button"
-                  aria-label={`Choose ${meta?.kicker?.toLowerCase() ?? "time window"}`}
-                  className="flex w-full items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 text-left transition hover:border-gray-300"
-                  onClick={() => openDispatchModal(index)}
-                >
-                  <CalendarDays
-                    size={16}
-                    className="shrink-0 text-gray-400"
-                    aria-hidden
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-1 flex flex-wrap items-center gap-2">
-                      <Paragraph1 className="font-semibold text-[11px] text-gray-500 uppercase tracking-[0.14em]">
-                        {meta?.kicker ?? ctx.type}
-                      </Paragraph1>
+              <div className="space-y-1">
+                {dispatchContexts.map((ctx, index) => {
+                  const selection = dispatchSelections[ctx.type];
+                  const window = selection?.window ?? ctx.suggested.window;
+                  const meta = dispatchWindowMeta[ctx.type];
+                  const isLast = index === dispatchContexts.length - 1;
+
+                  return (
+                    <button
+                      key={ctx.type}
+                      type="button"
+                      aria-label={`Edit ${meta?.kicker?.toLowerCase() ?? "time window"}: ${formatWindowRange(window)}`}
+                      className={`relative flex w-full items-start gap-3 -mx-1 px-2 py-3.5 text-left rounded-lg transition hover:bg-gray-50 active:bg-gray-100 ${
+                        isLast ? "pb-2" : ""
+                      }`}
+                      onClick={() => openDispatchModal(index)}
+                    >
                       <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                          isCustom
-                            ? "bg-gray-900 text-white"
-                            : "bg-gray-100 text-gray-600"
-                        }`}
-                      >
-                        {isCustom ? "Your pick" : "Suggested"}
-                      </span>
-                    </div>
-                    <Paragraph1 className="text-sm font-medium text-gray-900">
-                      {ctx.baseDateLabel} · {formatLagosTime(window.start)} –{" "}
-                      {formatLagosTime(window.end)}
-                    </Paragraph1>
-                  </div>
-                  <ChevronRight
-                    size={18}
-                    className="shrink-0 text-gray-400"
-                    aria-hidden
-                  />
-                </button>
-              );
-            })}
+                        className="-left-6 absolute top-[1.125rem] bg-gray-900 ring-2 ring-white rounded-full w-3 h-3"
+                        aria-hidden
+                      />
+
+                      <div className="flex-1 min-w-0 pr-1">
+                        <Paragraph1 className="font-semibold text-[10px] text-gray-500 uppercase tracking-[0.18em]">
+                          {meta?.kicker ?? ctx.title}
+                        </Paragraph1>
+                        <Paragraph1 className="mt-1.5 font-semibold text-base text-gray-950 leading-snug tracking-tight">
+                          {formatLagosDate(window.start, {
+                            includeWeekday: true,
+                          })}
+                        </Paragraph1>
+                        <Paragraph1 className="mt-1 font-medium text-gray-800 text-sm leading-snug">
+                          {formatLagosTime(window.start)} –{" "}
+                          {formatLagosTime(window.end)}
+                        </Paragraph1>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-0.5 mt-1.5">
+                        <Paragraph1 className="font-semibold text-gray-700 text-xs">
+                          Edit
+                        </Paragraph1>
+                        <ChevronRight
+                          className="text-gray-500"
+                          size={16}
+                          aria-hidden
+                        />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <Paragraph1 className="mt-3 pt-3 border-gray-100 border-t text-gray-500 text-xs leading-relaxed">
+              Address confirmed at checkout.
+            </Paragraph1>
           </div>
         </div>
       </div>

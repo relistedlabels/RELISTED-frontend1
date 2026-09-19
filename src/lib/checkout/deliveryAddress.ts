@@ -32,3 +32,16 @@ export function formatDeliveryAddressLine(
   ].filter(Boolean);
   return parts.join(", ");
 }
+
+export function formatReturnPickupAddressLine(payload: {
+  street?: string;
+  city?: string;
+  state?: string;
+}): string | null {
+  const parts = [
+    payload.street?.trim(),
+    payload.city?.trim(),
+    payload.state?.trim(),
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(", ") : null;
+}

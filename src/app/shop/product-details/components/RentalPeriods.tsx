@@ -177,6 +177,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
   const submitAvailabilityRequest = async (guestContact?: {
     firstName: string;
     email: string;
+    whatsappPhone?: string;
   }) => {
     if (!Number.isFinite(startDate.getTime())) {
       toast.error("Invalid rental start date.");
@@ -187,7 +188,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
       buildAvailabilityPayload();
 
     if (!isResale && rentalDays > 0 && !dispatchWindowsPayload) {
-      toast.error("Pick delivery and pickup times to continue.");
+      toast.error("Pick delivery and return times so the lister can confirm.");
       return;
     }
 
@@ -199,6 +200,9 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
           listerId,
           firstName: guestContact.firstName,
           email: guestContact.email,
+          ...(guestContact.whatsappPhone
+            ? { whatsappPhone: guestContact.whatsappPhone }
+            : {}),
           rentalDays,
           rentalStartDate: rentalStartDate ?? "",
           rentalEndDate: rentalEndDate ?? "",
@@ -284,6 +288,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
   const handleGuestContactSubmit = (contact: {
     firstName: string;
     email: string;
+    whatsappPhone?: string;
   }) => {
     setIsGuestModalOpen(false);
     setPendingGuestSubmit(true);
@@ -343,24 +348,20 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                   onChangeRentalDays={handleRentalDaysChange}
                   suggestedStartLagosYmd={suggestedRentalCalendarStartYmd}
                   minSelectableLagosYmd={closetEarliestDeliveryYmd}
+                  afterCalendar={
+                    supportsRentalDates && rentalDays > 0 ? (
+                      <RentalDispatchWindowPicker
+                        startDate={startDate}
+                        rentalDays={rentalDays}
+                        enabled
+                        panelOpen={isOpen}
+                        applyDeliveryFloor={applyDeliveryFloor}
+                        closetEarliestDeliveryYmd={closetEarliestDeliveryYmd}
+                        onPayloadChange={setDispatchWindowsPayload}
+                      />
+                    ) : null
+                  }
                 />
-
-                {supportsRentalDates && rentalDays > 0 ? (
-                  <div className="space-y-2">
-                    <RentalDispatchWindowPicker
-                      startDate={startDate}
-                      rentalDays={rentalDays}
-                      enabled
-                      panelOpen={isOpen}
-                      applyDeliveryFloor={applyDeliveryFloor}
-                      closetEarliestDeliveryYmd={closetEarliestDeliveryYmd}
-                      onPayloadChange={setDispatchWindowsPayload}
-                    />
-                    <Paragraph1 className="text-center text-xs text-gray-500">
-                      Delivery address added at checkout.
-                    </Paragraph1>
-                  </div>
-                ) : null}
               </div>
 
               {/* Footer */}

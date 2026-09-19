@@ -3,25 +3,62 @@
 import React from "react";
 import Image from "next/image";
 import { CheckCircle } from "lucide-react";
-import { Header1, Paragraph1 } from "@/common/ui/Text";
+import { Paragraph1 } from "@/common/ui/Text";
 import Link from "next/link";
-// import { useCartSummary } from "@/lib/queries/renters/useCart";
-import { useQuery } from "@tanstack/react-query";
-import { publicApi } from "@/lib/api/public";
 import { useListerProfile } from "@/lib/queries/shop/useListerProfile";
-import { isResaleItem } from "@/lib/listers/listerOrderRow";
-import { isLineRentalApproved } from "@/lib/cart/rentalRequestUi";
 import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
 import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 import { formatRentalDuration } from "@/lib/rental/formatRentalDuration";
 import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
+import {
+  cartSurfaceCardClass,
+  cartSurfaceCardMutedClass,
+} from "../cartSurface";
+import {
+  lineIsResale,
+  resolveLineRentalPrice,
+  resolveLineSecurityDeposit,
+} from "../cartLinePricing";
 
 const CURRENCY = "₦";
 
-// --- Formatting Helper (for thousands separator) ---
 const formatCurrency = (amount: number): string => {
   return amount.toLocaleString("en-NG");
 };
+
+function SummaryMoneyRow({
+  label,
+  amount,
+  bold = false,
+  large = false,
+}: {
+  label: string;
+  amount: number;
+  bold?: boolean;
+  large?: boolean;
+}) {
+  return (
+    <div className="flex justify-between items-baseline gap-4">
+      <Paragraph1
+        className={`text-gray-700 text-sm ${bold ? "font-bold text-gray-900" : ""}`}
+      >
+        {label}
+      </Paragraph1>
+      <Paragraph1
+        className={`tabular-nums shrink-0 ${
+          large
+            ? "font-extrabold text-gray-900 text-xl sm:text-2xl"
+            : bold
+              ? "font-bold text-gray-900 text-base sm:text-lg"
+              : "font-medium text-gray-900 text-sm"
+        }`}
+      >
+        {CURRENCY}
+        {formatCurrency(amount)}
+      </Paragraph1>
+    </div>
+  );
+}
 
 // === Skeleton Loader ===
 const SummarySkeleton = () => (
@@ -49,30 +86,29 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
     group.listerId,
   );
 
-  // Calculate per-lister totals
-  let listerSubtotal = 0;
+  let listerRentalTotal = 0;
   let listerDeliveryFees = 0;
   let listerSecurityDeposit = 0;
   let listerPurchaseTotal = 0;
 
   group.items.forEach((item) => {
-    const isResale =
-      item.purchaseTotal > 0 || item.isResale || isResaleItem(item);
-    if (isResale) {
-      listerPurchaseTotal += item.purchaseTotal || item.totalPrice || 0;
+    if (lineIsResale(item)) {
+      listerPurchaseTotal += resolveLineRentalPrice(item);
     } else {
-      listerSubtotal += item.rentalPrice || 0;
+      listerRentalTotal += resolveLineRentalPrice(item);
       listerDeliveryFees += item.deliveryFee || 0;
-      listerSecurityDeposit += item.securityDeposit || 0;
+      listerSecurityDeposit += resolveLineSecurityDeposit(item);
     }
   });
 
   const hasResaleItems = listerPurchaseTotal > 0;
   const hasRentalItems =
-    listerSubtotal > 0 || listerDeliveryFees > 0 || listerSecurityDeposit > 0;
+    listerRentalTotal > 0 ||
+    listerDeliveryFees > 0 ||
+    listerSecurityDeposit > 0;
   const listerTotal =
     listerPurchaseTotal +
-    listerSubtotal +
+    listerRentalTotal +
     listerDeliveryFees +
     listerSecurityDeposit;
 
@@ -83,15 +119,15 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
     `Lister ${group.listerId}`;
 
   return (
-    <div className="p-4 border border-gray-200 rounded-xl">
-      <div className="space-y-1 mb-4">
+    <div className={cartSurfaceCardClass}>
+      <div className="mb-3 sm:mb-4">
         <div className="flex sm:flex-row flex-col sm:justify-between sm:items-start gap-1 sm:gap-4">
-          <div>
+          <div className="hidden sm:block">
             <Paragraph1 className="font-bold text-gray-900 text-lg tracking-wide">
               SUMMARY
             </Paragraph1>
           </div>
-          <Paragraph1 className="font-bold text-gray-600 text-sm sm:text-right tracking-wide shrink-0">
+          <Paragraph1 className="font-medium sm:font-bold text-gray-600 text-sm sm:text-right tracking-wide">
             From{" "}
             {isListerLoading ? (
               <span className="inline-block bg-gray-200 rounded w-24 h-5 align-middle animate-pulse" />
@@ -102,13 +138,50 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
         </div>
       </div>
 
-      {/* Item List for this Lister */}
-      <div className="space-y-4 pb-6 border-gray-200 border-b">
+      {/* Compact lines on mobile (no images; cart cards above have detail) */}
+      <div className="sm:hidden space-y-2 pb-3 border-gray-100 border-b">
         {group.items.map((item) => {
           const product = item.productDetail || {};
-          const isResale =
-            item.isResale === true || isResaleItem(item);
-          const isApproved = isLineRentalApproved(item.status);
+          const isResale = lineIsResale(item);
+          const rowKey =
+            item.requestId ||
+            item.cartItemId ||
+            item.lineId ||
+            item.productId;
+          const rentalAmount = resolveLineRentalPrice(item);
+
+          return (
+            <div
+              key={`compact-${rowKey}`}
+              className="flex justify-between items-baseline gap-3"
+            >
+              <Paragraph1 className="min-w-0 text-gray-700 text-sm leading-snug">
+                <span className="font-medium text-gray-900">
+                  {product.name || item.productName}
+                </span>
+                {isResale ? (
+                  <span className="text-gray-500"> · Purchase</span>
+                ) : (
+                  <span className="text-gray-500">
+                    {" "}
+                    · {formatRentalDuration(item.rentalDays)}
+                  </span>
+                )}
+              </Paragraph1>
+              <Paragraph1 className="font-medium text-gray-900 text-sm tabular-nums shrink-0">
+                {CURRENCY}
+                {formatCurrency(rentalAmount)}
+              </Paragraph1>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Full item list in sidebar on desktop */}
+      <div className="hidden sm:block space-y-4 pb-6 border-gray-200 border-b">
+        {group.items.map((item) => {
+          const product = item.productDetail || {};
+          const isResale = lineIsResale(item);
           // Try productDetail image, fallback to rental request image
           const productImageUrl = cloudinaryOptimizedImageUrl(
             firstProductAttachmentImageUrl(product.attachments?.uploads) ||
@@ -153,34 +226,18 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
                     </>
                   )}
                 </Paragraph1>
-                {isResale && isApproved && (
-                  <div className="bg-green-100 mt-4 px-2 py-0.5 border border-green-200 rounded-full w-fit text-green-800">
-                    <Paragraph1 className="font-semibold text-xs">
-                      Ready to checkout
-                    </Paragraph1>
-                  </div>
-                )}
-                {isResale && !isApproved && (
-                  <div className="bg-yellow-100 mt-4 px-2 py-0.5 border border-yellow-200 rounded-full w-fit text-yellow-800">
-                    <Paragraph1 className="font-semibold text-xs">
-                      Awaiting approval
-                    </Paragraph1>
-                  </div>
-                )}
-                {!isResale && isApproved && (
-                  <div className="bg-green-100 mt-4 px-2 py-0.5 border border-green-200 rounded-full w-fit text-green-800">
-                    <Paragraph1 className="font-semibold text-xs">
-                      Approved
-                    </Paragraph1>
-                  </div>
-                )}
+                <div className="bg-green-100 mt-4 px-2 py-0.5 border border-green-200 rounded-full w-fit text-green-800">
+                  <Paragraph1 className="font-semibold text-xs">
+                    Ready to checkout
+                  </Paragraph1>
+                </div>
               </div>
 
               {/* Price */}
               <div className="mt-1 font-bold text-gray-900 text-sm shrink-0">
                 <Paragraph1>
                   {CURRENCY}
-                  {formatCurrency(item.totalPrice)}
+                  {formatCurrency(resolveLineRentalPrice(item))}
                 </Paragraph1>
               </div>
             </div>
@@ -188,65 +245,26 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
         })}
       </div>
 
-      {/* Breakdown for this Lister */}
-      <div className="hidden space-y-2 py-4 border-gray-200 border-b">
-        {hasResaleItems && (
-          <div className="flex justify-between font-medium text-gray-700 text-sm">
-            <Paragraph1>Purchase Amount</Paragraph1>
-            <Paragraph1>
-              {CURRENCY}
-              {formatCurrency(listerPurchaseTotal)}
-            </Paragraph1>
-          </div>
-        )}
-        {hasRentalItems && (
-          <>
-            <div className="flex justify-between font-medium text-gray-700 text-sm">
-              <Paragraph1>Rental Amount</Paragraph1>
-              <Paragraph1>
-                {CURRENCY}
-                {formatCurrency(listerSubtotal)}
-              </Paragraph1>
-            </div>
-            <div className="flex justify-between font-medium text-gray-700 text-sm">
-              <Paragraph1>Delivery Fees:</Paragraph1>
-              <Paragraph1>
-                {CURRENCY}
-                {formatCurrency(listerDeliveryFees)}
-              </Paragraph1>
-            </div>
-            <div className="flex justify-between font-medium text-gray-700 text-sm">
-              <Paragraph1>Cleaning Fees:</Paragraph1>
-              <Paragraph1>
-                {CURRENCY}
-                {formatCurrency(
-                  group.items.reduce(
-                    (sum, item) => sum + (item.cleaningFee || 0),
-                    0,
-                  ),
-                )}
-              </Paragraph1>
-            </div>
-            <div className="flex justify-between font-medium text-gray-700 text-sm">
-              <Paragraph1>Security Deposit:</Paragraph1>
-              <Paragraph1>
-                {CURRENCY}
-                {formatCurrency(listerSecurityDeposit)}
-              </Paragraph1>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Lister Total */}
-      <div className="flex justify-between items-center pt-4">
-        <Paragraph1 className="font-bold text-gray-900 text-sm">
-          Subtotal:
-        </Paragraph1>
-        <Paragraph1 className="font-extrabold text-gray-900 text-lg">
-          {CURRENCY}
-          {formatCurrency(listerTotal)}
-        </Paragraph1>
+      <div className="space-y-2 pt-3 sm:pt-4">
+        {hasResaleItems ? (
+          <SummaryMoneyRow label="Purchase" amount={listerPurchaseTotal} />
+        ) : null}
+        {hasRentalItems ? (
+          <SummaryMoneyRow label="Rental" amount={listerRentalTotal} />
+        ) : null}
+        {listerSecurityDeposit > 0 ? (
+          <SummaryMoneyRow label="Deposit" amount={listerSecurityDeposit} />
+        ) : null}
+        {listerDeliveryFees > 0 ? (
+          <SummaryMoneyRow label="Delivery" amount={listerDeliveryFees} />
+        ) : null}
+        <div className="pt-2 border-gray-100 border-t">
+          <SummaryMoneyRow
+            label="Before delivery"
+            amount={listerTotal}
+            bold
+          />
+        </div>
       </div>
     </div>
   );
@@ -284,79 +302,82 @@ export function FinalOrderSummaryCard({
     return (
       <div className="space-y-2 bg-gray-50 p-4 border border-gray-200 rounded-xl">
         <Paragraph1 className="font-semibold text-gray-800 text-sm">
-          No approved items yet
+          Nothing ready for checkout yet
         </Paragraph1>
         <Paragraph1 className="text-gray-600 text-xs leading-relaxed">
-          This panel only shows items after the lister approves. Pending
-          requests appear in your main cart list on the left.
+          When a lister confirms your dates, your items will appear here and in
+          your cart.
         </Paragraph1>
       </div>
     );
   }
 
-  // Calculate grand total across all listers
-  let grandSubtotal = 0;
+  let grandRentalTotal = 0;
   let grandDeliveryFees = 0;
   let grandSecurityDeposit = 0;
   let grandPurchaseTotal = 0;
 
   approvedGroups.forEach((group) => {
     group.items.forEach((item) => {
-      const isResale =
-        item.purchaseTotal > 0 || item.isResale || isResaleItem(item);
-      if (isResale) {
-        grandPurchaseTotal += item.purchaseTotal || item.totalPrice || 0;
+      if (lineIsResale(item)) {
+        grandPurchaseTotal += resolveLineRentalPrice(item);
       } else {
-        grandSubtotal += item.rentalPrice || 0;
+        grandRentalTotal += resolveLineRentalPrice(item);
         grandDeliveryFees += item.deliveryFee || 0;
-        grandSecurityDeposit += item.securityDeposit || 0;
+        grandSecurityDeposit += resolveLineSecurityDeposit(item);
       }
     });
   });
 
   const hasGrandResaleItems = grandPurchaseTotal > 0;
   const hasGrandRentalItems =
-    grandSubtotal > 0 || grandDeliveryFees > 0 || grandSecurityDeposit > 0;
+    grandRentalTotal > 0 ||
+    grandDeliveryFees > 0 ||
+    grandSecurityDeposit > 0;
   const grandTotal =
     grandPurchaseTotal +
-    grandSubtotal +
+    grandRentalTotal +
     grandDeliveryFees +
     grandSecurityDeposit;
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-1 px-0.5">
-        <Paragraph1 className="font-bold text-gray-900 text-sm uppercase tracking-wide">
-          Checkout summary
-        </Paragraph1>
-        <Paragraph1 className="text-gray-600 text-xs leading-relaxed">
-          Totals and checkout apply to <strong>approved</strong> items only.
-        </Paragraph1>
-      </div>
+    <div className="space-y-4 min-w-0 w-full max-w-full sm:space-y-6">
+      <Paragraph1 className="font-bold text-gray-900 text-sm uppercase tracking-wide">
+        Order summary
+      </Paragraph1>
 
       {approvedGroups.map((group) => (
         <ListerSummaryCard key={group.listerId} group={group} />
       ))}
 
-      <div className="bg-gray-50 p-4 border border-gray-300 rounded-xl">
-        <div className="flex justify-between items-center mb-1">
-          <Paragraph1 className="font-bold text-gray-900 text-lg">
-            Approved total
-          </Paragraph1>
-          <Paragraph1 className="font-extrabold text-gray-900 text-2xl">
-            {CURRENCY}
-            {formatCurrency(grandTotal)}
-          </Paragraph1>
-        </div>
-        <Paragraph1 className="mb-4 text-gray-500 text-xs">
-          {hasGrandResaleItems && hasGrandRentalItems
-            ? "Sum of approved resale and rental items above, before shipping or final taxes if any."
-            : hasGrandResaleItems
-              ? "Sum of approved resale items above, before shipping or final taxes if any."
-              : "Sum of approved rental items above, before shipping or final taxes if any."}
+      <div className={cartSurfaceCardMutedClass}>
+        {(hasGrandRentalItems || hasGrandResaleItems) && (
+          <div className="space-y-2 mb-3 pb-3 border-gray-200 border-b">
+            {hasGrandResaleItems ? (
+              <SummaryMoneyRow label="Purchase" amount={grandPurchaseTotal} />
+            ) : null}
+            {hasGrandRentalItems ? (
+              <SummaryMoneyRow label="Rental" amount={grandRentalTotal} />
+            ) : null}
+            {grandSecurityDeposit > 0 ? (
+              <SummaryMoneyRow label="Deposit" amount={grandSecurityDeposit} />
+            ) : null}
+            {grandDeliveryFees > 0 ? (
+              <SummaryMoneyRow label="Delivery" amount={grandDeliveryFees} />
+            ) : null}
+          </div>
+        )}
+
+        <SummaryMoneyRow
+          label="Before delivery"
+          amount={grandTotal}
+          bold
+          large
+        />
+        <Paragraph1 className="mt-2 mb-4 text-gray-500 text-xs">
+          Delivery at checkout.
         </Paragraph1>
 
-        {/* Proceed Button */}
         <Link
           href="/shop/cart/checkout"
           className={buttonPrimaryFull}
@@ -364,14 +385,14 @@ export function FinalOrderSummaryCard({
           <Paragraph1>Proceed to Checkout</Paragraph1>
         </Link>
 
-        {/* Security Note */}
-        <div className="flex items-start gap-2 bg-green-50 mt-4 p-3 border border-green-200 rounded-md text-green-700 text-xs">
-          <CheckCircle size={16} className="mt-0.5 shrink-0" />
-          <Paragraph1 className="text-green-700">
-            Your <strong>refundable security deposit</strong> is returned to your wallet after
-            the item is returned and checked.
-          </Paragraph1>
-        </div>
+        {grandSecurityDeposit > 0 ? (
+          <div className="flex items-start gap-2 bg-green-50 mt-4 p-3 border border-green-200 rounded-md text-green-700 text-xs">
+            <CheckCircle size={16} className="mt-0.5 shrink-0" />
+            <Paragraph1 className="text-green-700">
+              Deposit refunded after return.
+            </Paragraph1>
+          </div>
+        ) : null}
       </div>
     </div>
   );
