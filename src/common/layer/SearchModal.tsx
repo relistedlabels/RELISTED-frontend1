@@ -7,7 +7,9 @@ import ProductCard from "@/common/ui/ProductCard";
 import { useBrowseStore } from "@/store/useBrowseStore";
 import { Paragraph1 } from "@/common/ui/Text";
 import { usePublicSearch } from "@/lib/queries/search/usePublicSearch";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { isShopRentMode } from "@/lib/shop/shopBrowse";
+import { productDetailHref } from "@/lib/shop/productDetailLinks";
 import Image from "next/image";
 import Link from "next/link";
 import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
@@ -25,6 +27,8 @@ export default function SearchModal() {
   const addViewed = useBrowseStore((s) => s.addViewed);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const shopBuyMode = !isShopRentMode(searchParams);
 
   const {
     data: results,
@@ -148,7 +152,10 @@ export default function SearchModal() {
                           key={item.id}
                           className="min-w-[200px] max-w-[200px] shrink-0"
                         >
-                          <ProductCard {...item} />
+                          <ProductCard
+                            {...item}
+                            priceFocus={shopBuyMode ? "buy" : "rent"}
+                          />
                         </div>
                       ))}
                     </div>
@@ -182,7 +189,12 @@ export default function SearchModal() {
                               onClick={() => {
                                 if (query.trim()) addSearch(query.trim());
                                 setOpen(false);
-                                router.push(`/shop/product-details/${item.id}`);
+                                router.push(
+                                  productDetailHref(
+                                    item.id,
+                                    shopBuyMode ? "buy" : undefined,
+                                  ),
+                                );
                               }}
                               className="flex items-center gap-3 hover:bg-gray-100 p-3 rounded-lg transition cursor-pointer"
                             >
