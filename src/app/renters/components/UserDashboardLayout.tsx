@@ -113,7 +113,7 @@ export default function UserDashboardLayout({
       </aside>
 
       {/* Main Content */}
-      <main className="grow h-screen overflow-x-auto px-4 sm:pl-8 sm:px-0 py-">
+      <main className="grow min-h-0 overflow-x-auto overflow-y-auto px-4 pb-24 sm:pl-8 sm:px-0 xl:pb-0">
         <div className="mb-6 flex items-center justify-between gap-4">
           <Paragraph2 className="text-2xl font-bold">{title}</Paragraph2>
           <NotificationBell

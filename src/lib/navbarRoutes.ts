@@ -33,6 +33,7 @@ export const MOBILE_BOTTOM_NAV_ROUTES = [
   "/renters/account",
   "/renters/orders",
   "/renters/wallet",
+  "/renters/notifications",
   "/how-it-works",
   "/lister-profile",
 ];
