@@ -37,6 +37,7 @@ import CheckoutDispatchLegPreview, {
 import CheckoutSectionHeading from "./CheckoutSectionHeading";
 import CheckoutStepIntro from "./CheckoutStepIntro";
 import CheckoutStepNav from "./CheckoutStepNav";
+import { buildCheckoutReviewLegs } from "@/lib/checkout/checkoutFlow";
 
 interface CheckoutContactAndPaymentProps {
   /** Same GET /order/summary payload as the sidebar (used for wallet shortfall vs checkout total). */
@@ -452,103 +453,29 @@ export default function CheckoutContactAndPayment({
   };
 
   const orderReviewLegs = useMemo(() => {
-    type ReviewLeg = {
-      id: string;
-      title: string;
-      address: string;
-      windows: string[];
-      shipping: Array<{ method: string; cost?: number }>;
-    };
-
     const deliveryAddressLine =
       formatDeliveryAddressLine(profile?.address) ?? "No address set";
     const returnPickupAddressLine =
       formatReturnPickupAddressLine(returnPickupAddress ?? {}) ??
       deliveryAddressLine;
 
-    const deliveryWindows: string[] = [];
-    const returnWindows: string[] = [];
-    for (const group of summaryDispatchPreview ?? []) {
-      for (const row of group.rows) {
-        if (row.title.toLowerCase().includes("return pickup")) {
-          returnWindows.push(row.range);
-        } else {
-          deliveryWindows.push(row.range);
-        }
-      }
-    }
-
-    const deliveryShipping: Array<{ method: string; cost?: number }> = [];
-    const returnShipping: Array<{ method: string; cost?: number }> = [];
-
-    if (usePerBucketOutbound) {
-      for (const bucket of outboundBuckets) {
-        const pick =
-          selectedOutboundTierByBucket[bucket.bucketIndex] ??
-          bucket.shippingTiers[0]?.name ??
-          "";
-        const row = bucket.shippingTiers.find((tier) => tier.name === pick);
-        if (pick) {
-          deliveryShipping.push({
-            method: pick,
-            cost: row?.totalShippingCost,
-          });
-        }
-      }
-    } else {
-      const pick = selectedShippingTier || tierList[0]?.name || "";
-      const row = tierList.find((tier) => tier.name === pick);
-      if (pick) {
-        deliveryShipping.push({ method: pick, cost: row?.totalShippingCost });
-      }
-    }
-
-    if (showReturnShippingTierPicker) {
-      if (usePerBucketReturn) {
-        for (const bucket of returnBuckets) {
-          const pick =
-            selectedReturnTierByBucket[bucket.bucketIndex] ??
-            bucket.shippingTiers[0]?.name ??
-            "";
-          const row = bucket.shippingTiers.find((tier) => tier.name === pick);
-          if (pick) {
-            returnShipping.push({
-              method: pick,
-              cost: row?.totalShippingCost,
-            });
-          }
-        }
-      } else {
-        const pick =
-          selectedReturnShippingTier || returnTierList[0]?.name || "";
-        const row = returnTierList.find((tier) => tier.name === pick);
-        if (pick) {
-          returnShipping.push({ method: pick, cost: row?.totalShippingCost });
-        }
-      }
-    }
-
-    const legs: ReviewLeg[] = [
-      {
-        id: "delivery",
-        title: "Delivery to you",
-        address: deliveryAddressLine,
-        windows: deliveryWindows,
-        shipping: deliveryShipping,
-      },
-    ];
-
-    if (!isResaleOnly) {
-      legs.push({
-        id: "return",
-        title: "Return from you",
-        address: returnPickupAddressLine,
-        windows: returnWindows,
-        shipping: returnShipping,
-      });
-    }
-
-    return legs;
+    return buildCheckoutReviewLegs({
+      deliveryAddressLine,
+      returnPickupAddressLine,
+      isCartPurchaseResaleOnly: isResaleOnly,
+      showReturnShippingTierPicker,
+      summaryDispatchPreview,
+      usePerBucketOutbound,
+      outboundBuckets,
+      selectedOutboundTierByBucket,
+      selectedShippingTier,
+      tierList,
+      usePerBucketReturn,
+      returnBuckets,
+      selectedReturnTierByBucket,
+      selectedReturnShippingTier,
+      returnTierList,
+    });
   }, [
     profile?.address,
     returnPickupAddress,

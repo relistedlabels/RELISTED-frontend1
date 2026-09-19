@@ -10,7 +10,6 @@ import {
   Package,
   Shirt,
   ShoppingBag,
-  ShoppingBagIcon,
   Store,
   X,
 } from "lucide-react";
@@ -20,7 +19,6 @@ import { Paragraph1 } from "../ui/Text";
 import RentalCartView from "./RentalCartView";
 import SearchModal from "./SearchModal";
 import { MobileAuthActions } from "./MobileAuthActions";
-import { useNavbarCartCount } from "@/lib/queries/renters/useNavbarCartCount";
 import { useMobileMenuStore } from "@/store/useMobileMenuStore";
 import { MobileSalesNavLink } from "./SalesNavLink";
 
@@ -50,8 +48,6 @@ function MobileNavbarContent() {
   const open = useMobileMenuStore((state) => state.isOpen);
   const openMenu = useMobileMenuStore((state) => state.openMenu);
   const closeMenu = useMobileMenuStore((state) => state.closeMenu);
-  const cartCount = useNavbarCartCount();
-
   useEffect(() => {
     closeMenu();
   }, [pathname, closeMenu]);
@@ -87,14 +83,9 @@ function MobileNavbarContent() {
           />
         </Link>
 
-        {/* RIGHT ICONS */}
-        <div className="flex gap-4 items-center ml-auto z-20">
+        {/* RIGHT */}
+        <div className="flex items-center ml-auto z-20">
           <SearchModal />
-
-          <Link href="/shop/cart" className="flex items-center space-x-1">
-            <ShoppingBagIcon className="w-6 h-6" aria-hidden />
-            <Paragraph1>{cartCount}</Paragraph1>
-          </Link>
         </div>
       </div>
 
