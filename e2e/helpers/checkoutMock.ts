@@ -154,11 +154,15 @@ export async function mockCheckoutScenario(
     if (url.includes("/api/public/products/") && method === "GET") {
       const productId = url.split("/").pop()?.split("?")[0] ?? "prod-e2e";
       const listingType = productId.includes("purchase") ? "RESALE" : "RENTAL";
+      const productNames: Record<string, string> = {
+        "prod-rental-a": "Silk dress",
+        "prod-purchase-b": "Silk top",
+      };
       await json(route, {
         success: true,
         data: {
           id: productId,
-          name: productId,
+          name: productNames[productId] ?? productId,
           listingType,
           dailyPrice: 10000,
           resalePrice: 45000,

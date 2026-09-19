@@ -3,7 +3,9 @@ import type { CartItem } from "@/lib/api/cart";
 import { buildApprovedCheckoutLines } from "@/lib/cart/buildApprovedCheckoutLines";
 import {
   analyzeCheckoutFlow,
+  buildCheckoutReviewDelivery,
   buildCheckoutReviewLegs,
+  checkoutItemsForProductIds,
 } from "./checkoutFlow";
 
 const cartPurchaseOnly: CartItem[] = [
@@ -237,13 +239,13 @@ describe("buildCheckoutReviewLegs", () => {
     ]);
   });
 
-  test("mixed multi-lister cart renders delivery and return legs with per-bucket shipping", () => {
+  test("mixed multi-lister cart renders delivery leg with per-bucket outbound shipping", () => {
     const legs = buildCheckoutReviewLegs({
       ...baseInput,
       isCartPurchaseResaleOnly: false,
     });
 
-    expect(legs.map((leg) => leg.id)).toEqual(["delivery", "return"]);
+    expect(legs.map((leg) => leg.id)).toEqual(["delivery"]);
     expect(legs[0].windows).toEqual([
       "Mon 10:00 to Mon 14:00",
       "Tue 09:00 to Tue 13:00",
@@ -252,13 +254,9 @@ describe("buildCheckoutReviewLegs", () => {
       { method: "relisted_dispatch", cost: 5000 },
       { method: "shipbubble", cost: 3200 },
     ]);
-    expect(legs[1].windows).toEqual(["Thu 10:00 to Thu 14:00"]);
-    expect(legs[1].shipping).toEqual([
-      { method: "relisted_dispatch", cost: 4500 },
-    ]);
   });
 
-  test("rental cart without return shipping tiers still shows return review card", () => {
+  test("rental cart review shows delivery leg only", () => {
     const legs = buildCheckoutReviewLegs({
       ...baseInput,
       isCartPurchaseResaleOnly: false,
@@ -268,7 +266,96 @@ describe("buildCheckoutReviewLegs", () => {
       returnTierList: [],
     });
 
-    expect(legs.map((leg) => leg.id)).toEqual(["delivery", "return"]);
-    expect(legs[1].shipping).toEqual([]);
+    expect(legs.map((leg) => leg.id)).toEqual(["delivery"]);
+  });
+});
+
+describe("buildCheckoutReviewDelivery", () => {
+  const listerGroups = [
+    {
+      listerId: "lister-a",
+      items: [
+        {
+          productId: "prod-rental",
+          productName: "Silk dress",
+          listerName: "Ada",
+          rentalDays: 7,
+        },
+      ],
+    },
+    {
+      listerId: "lister-b",
+      items: [
+        {
+          productId: "prod-purchase",
+          productName: "Leather bag",
+          listerName: "Bea",
+          isResale: true,
+        },
+      ],
+    },
+  ];
+
+  test("groups delivery windows and carriers per shipment with matched items", () => {
+    const review = buildCheckoutReviewDelivery({
+      deliveryAddressLine: "12 Test St, Lagos",
+      listerGroups,
+      summaryDispatchPreview: [
+        {
+          bucketIndex: 0,
+          groupHeading: "Order from Ada · 1 · Silk dress",
+          productIds: ["prod-rental"],
+          rows: [
+            { title: "Rental delivery", range: "Mon 10:00 to Mon 14:00" },
+            { title: "Return pickup", range: "Thu 10:00 to Thu 14:00" },
+          ],
+        },
+        {
+          bucketIndex: 1,
+          groupHeading: "Order from Bea · Leather bag",
+          productIds: ["prod-purchase"],
+          rows: [
+            { title: "Purchase delivery", range: "Tue 09:00 to Tue 13:00" },
+          ],
+        },
+      ],
+      usePerBucketOutbound: true,
+      outboundBuckets: [
+        {
+          bucketIndex: 0,
+          shippingTiers: [{ name: "relisted_dispatch", totalShippingCost: 5000 }],
+        },
+        {
+          bucketIndex: 1,
+          shippingTiers: [{ name: "shipbubble", totalShippingCost: 3200 }],
+        },
+      ],
+      selectedOutboundTierByBucket: {
+        0: "relisted_dispatch",
+        1: "shipbubble",
+      },
+      selectedShippingTier: "",
+      tierList: [],
+    });
+
+    expect(review.shipments).toHaveLength(2);
+    expect(review.shipments[0]?.items.map((item) => item.productName)).toEqual([
+      "Silk dress",
+    ]);
+    expect(review.shipments[0]?.deliveryWindow).toBe("Mon 10:00 to Mon 14:00");
+    expect(review.shipments[0]?.shipping).toEqual({
+      method: "relisted_dispatch",
+      cost: 5000,
+    });
+    expect(review.shipments[1]?.items.map((item) => item.productName)).toEqual([
+      "Leather bag",
+    ]);
+    expect(review.shipments[1]?.heading).toBe("From Bea");
+  });
+
+  test("checkoutItemsForProductIds maps bucket product ids to checkout lines", () => {
+    const items = checkoutItemsForProductIds(listerGroups, ["prod-purchase"]);
+    expect(items).toHaveLength(1);
+    expect(items[0]?.productName).toBe("Leather bag");
   });
 });
