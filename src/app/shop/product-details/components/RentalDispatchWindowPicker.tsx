@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronRight, X } from "lucide-react";
+import { ChevronRight, PackageOpen, Truck, X } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import Button from "@/common/ui/Button";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import {
@@ -30,6 +31,12 @@ import {
 import { lagosYmdMax } from "@/lib/vaultClosetSaleDates";
 
 const DISPATCH_SLOT_MINUTES = 60;
+
+const dispatchStepIcons: Record<ShipmentDispatchType, LucideIcon> = {
+  OUTBOUND: Truck,
+  RETURN: PackageOpen,
+  RESALE: Truck,
+};
 
 const dispatchWindowMeta: Record<
   ShipmentDispatchType,
@@ -227,35 +234,41 @@ export default function RentalDispatchWindowPicker({
 
         <div className="space-y-3 bg-linear-to-b from-neutral-50 to-neutral-50/40 p-3 border border-gray-200 rounded-xl">
           <div className="bg-white shadow-sm p-4 border border-gray-200/90 rounded-lg">
-            <div className="relative pl-6">
-              <div
-                className="absolute top-2.5 bottom-2.5 left-[7px] w-0.5 bg-gray-300"
-                aria-hidden
-              />
+            <div className="space-y-0">
+              {dispatchContexts.map((ctx, index) => {
+                const selection = dispatchSelections[ctx.type];
+                const window = selection?.window ?? ctx.suggested.window;
+                const meta = dispatchWindowMeta[ctx.type];
+                const isLast = index === dispatchContexts.length - 1;
+                const StepIcon = dispatchStepIcons[ctx.type];
 
-              <div className="space-y-1">
-                {dispatchContexts.map((ctx, index) => {
-                  const selection = dispatchSelections[ctx.type];
-                  const window = selection?.window ?? ctx.suggested.window;
-                  const meta = dispatchWindowMeta[ctx.type];
-                  const isLast = index === dispatchContexts.length - 1;
+                return (
+                  <div key={ctx.type} className="flex gap-3.5">
+                    <div
+                      className="flex w-8 shrink-0 flex-col items-center pt-1"
+                      aria-hidden
+                    >
+                      <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full border border-gray-200/90 bg-linear-to-b from-white to-gray-50 shadow-[0_1px_2px_rgba(15,23,42,0.06)]">
+                        <StepIcon
+                          size={14}
+                          strokeWidth={2.25}
+                          className="text-gray-800"
+                        />
+                      </div>
+                      {!isLast ? (
+                        <div className="my-1.5 w-px min-h-6 flex-1 rounded-full bg-linear-to-b from-gray-300 via-gray-200 to-gray-300" />
+                      ) : null}
+                    </div>
 
-                  return (
                     <button
-                      key={ctx.type}
                       type="button"
                       aria-label={`Edit ${meta?.kicker?.toLowerCase() ?? "time window"}: ${formatWindowRange(window)}`}
-                      className={`relative flex w-full items-start gap-3 -mx-1 px-2 py-3.5 text-left rounded-lg transition hover:bg-gray-50 active:bg-gray-100 ${
-                        isLast ? "pb-2" : ""
+                      className={`flex min-w-0 flex-1 items-start gap-3 rounded-lg px-1 py-2 text-left transition hover:bg-gray-50 active:bg-gray-100 ${
+                        isLast ? "pb-0" : "pb-3"
                       }`}
                       onClick={() => openDispatchModal(index)}
                     >
-                      <span
-                        className="-left-6 absolute top-[1.125rem] bg-gray-900 ring-2 ring-white rounded-full w-3 h-3"
-                        aria-hidden
-                      />
-
-                      <div className="flex-1 min-w-0 pr-1">
+                      <div className="min-w-0 flex-1 pr-1">
                         <Paragraph1 className="font-semibold text-[10px] text-gray-500 uppercase tracking-[0.18em]">
                           {meta?.kicker ?? ctx.title}
                         </Paragraph1>
@@ -270,7 +283,7 @@ export default function RentalDispatchWindowPicker({
                         </Paragraph1>
                       </div>
 
-                      <div className="flex shrink-0 items-center gap-0.5 mt-1.5">
+                      <div className="mt-1.5 flex shrink-0 items-center gap-0.5">
                         <Paragraph1 className="font-semibold text-gray-700 text-xs">
                           Edit
                         </Paragraph1>
@@ -281,9 +294,9 @@ export default function RentalDispatchWindowPicker({
                         />
                       </div>
                     </button>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
             </div>
 
             <Paragraph1 className="mt-3 pt-3 border-gray-100 border-t text-gray-500 text-xs leading-relaxed">
