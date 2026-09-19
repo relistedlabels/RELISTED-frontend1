@@ -15,7 +15,7 @@ export const slidePanelTitle = "font-bold text-gray-900 text-sm";
 
 /** Sticky panel footer action row. */
 export const slidePanelFooter =
-  "sticky bottom-0 shrink-0 border-t border-gray-100 bg-white py-3";
+  "sticky bottom-0 z-20 shrink-0 border-t border-gray-100 bg-white py-3";
 
 /** Centered dialog backdrop. */
 export const dialogBackdrop =
