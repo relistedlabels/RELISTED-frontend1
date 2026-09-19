@@ -290,6 +290,36 @@ const mixedMultiListerScenario: CheckoutMockConfig = {
   },
 };
 
+/** Cart still has a rental line, but only the purchase line is approved for checkout. */
+const pendingRentalCartPurchaseApprovedScenario: CheckoutMockConfig = {
+  cartItems: [
+    {
+      id: "ci-rental-pending",
+      cartId: "cart-e2e",
+      productId: "prod-rental-a",
+      days: 3,
+      createdAt: new Date().toISOString(),
+      product: {
+        id: "prod-rental-a",
+        name: "Silk dress",
+        listingType: "RENTAL",
+        dailyPrice: 10000,
+        isActive: true,
+        productVerified: true,
+        status: "AVAILABLE",
+      },
+      rentalRequest: {
+        requestId: "req-rental-pending",
+        status: "PENDING",
+        rentalDays: 3,
+      },
+    },
+    ...purchaseOnlyScenario.cartItems,
+  ],
+  rentalRequests: purchaseOnlyScenario.rentalRequests,
+  orderSummary: purchaseOnlyScenario.orderSummary,
+};
+
 test.describe("Checkout mixed carts (mocked API)", () => {
   test("@smoke purchase-only cart hides return UI on review", async ({ page }) => {
     await seedRenterSession(page);
@@ -340,5 +370,19 @@ test.describe("Checkout mixed carts (mocked API)", () => {
 
     await expect(page.getByText("Delivery and return")).toBeVisible();
     await expect(page.getByText("Pickup from you")).toBeVisible();
+  });
+
+  test("@smoke hides return UI on steps 1 and 4 when only purchase is approved", async ({
+    page,
+  }) => {
+    await seedRenterSession(page);
+    await mockCheckoutScenario(page, pendingRentalCartPurchaseApprovedScenario);
+
+    await gotoCheckoutStep(page, 1);
+    await expect(page.getByText("Delivery address")).toBeVisible();
+    await expect(page.getByText("Pickup from you")).toHaveCount(0);
+
+    await gotoCheckoutStep(page, 4);
+    await expect(page.getByText("Return from you")).toHaveCount(0);
   });
 });
