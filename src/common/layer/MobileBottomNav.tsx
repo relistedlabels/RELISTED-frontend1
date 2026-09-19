@@ -10,6 +10,7 @@ import {
   isRentShopNavActive,
 } from "@/lib/nav/shopNavMatch";
 import { useUserStore } from "@/store/useUserStore";
+import { useMobileMenuStore } from "@/store/useMobileMenuStore";
 import MobileGuestAuthSheet from "./MobileGuestAuthSheet";
 import {
   BUY_LISTING_TYPES,
@@ -71,6 +72,7 @@ export default function MobileBottomNav() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const token = useUserStore((s) => s.token);
+  const closeMenu = useMobileMenuStore((state) => state.closeMenu);
   const [authSheetOpen, setAuthSheetOpen] = useState(false);
 
   if (!shouldShowMobileBottomNav(pathname)) return null;
@@ -105,7 +107,10 @@ export default function MobileBottomNav() {
                 <li key={label} className="flex-1">
                   <button
                     type="button"
-                    onClick={() => setAuthSheetOpen(true)}
+                    onClick={() => {
+                      closeMenu();
+                      setAuthSheetOpen(true);
+                    }}
                     className={itemClass}
                   >
                     <Icon
@@ -120,7 +125,7 @@ export default function MobileBottomNav() {
 
             return (
               <li key={label} className="flex-1">
-                <Link href={href} className={itemClass}>
+                <Link href={href} className={itemClass} onClick={closeMenu}>
                   <Icon
                     className={`h-5 w-5 ${isActive ? "stroke-[2.5px]" : "stroke-[1.75px]"}`}
                     aria-hidden
