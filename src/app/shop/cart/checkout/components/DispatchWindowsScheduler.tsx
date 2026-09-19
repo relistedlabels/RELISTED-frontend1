@@ -259,7 +259,7 @@ export default function DispatchWindowsScheduler({
               min={ctx.minDate}
               onChange={(e) => handleDateChange(ctx, e.target.value)}
               aria-label="Delivery date"
-              className="w-full shrink-0 rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm text-gray-900 focus:border-black focus:outline-none focus:ring-1 focus:ring-black sm:w-auto"
+              className="w-full shrink-0 rounded-xl border border-gray-300 bg-white px-3 py-3 text-base text-gray-900 focus:border-black focus:outline-none focus:ring-1 focus:ring-black sm:w-auto"
             />
           ) : null}
 
@@ -271,6 +271,7 @@ export default function DispatchWindowsScheduler({
             placeholder="Choose a delivery window"
             emptyMessage="No windows left on this date. Pick another day."
             className="flex-1"
+            preferMenuAbove={embedded}
           />
         </div>
 

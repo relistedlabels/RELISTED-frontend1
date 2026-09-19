@@ -10,7 +10,10 @@ import {
   saveGuestContact,
 } from "@/lib/guest/guestContactStorage";
 import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
-import { dialogBackdrop } from "@/common/ui/dashboardClasses";
+import {
+  bottomSheetBackdrop,
+  bottomSheetPanel,
+} from "@/common/ui/dashboardClasses";
 
 type GuestContactModalProps = {
   isOpen: boolean;
@@ -60,7 +63,7 @@ export default function GuestContactModal({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className={`${dialogBackdrop} z-[110] items-end sm:items-center p-0 sm:p-4`}
+          className={`${bottomSheetBackdrop} z-[110] sm:items-center sm:p-4`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -72,7 +75,7 @@ export default function GuestContactModal({
             role="dialog"
             aria-modal="true"
             aria-labelledby="guest-contact-title"
-            className="relative bg-white shadow-2xl px-6 sm:px-8 pt-8 sm:pt-10 pb-8 sm:pb-10 sm:rounded-3xl rounded-t-3xl w-full max-w-md"
+            className={`${bottomSheetPanel} relative w-full max-w-md px-6 pt-8 shadow-2xl sm:rounded-3xl sm:px-8 sm:pt-10 sm:pb-10`}
             initial={{ y: 48, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 48, opacity: 0 }}
@@ -117,7 +120,7 @@ export default function GuestContactModal({
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     autoComplete="given-name"
-                    className="py-3.5 pr-4 pl-12 border border-gray-300 focus:border-black rounded-xl focus:outline-none focus:ring-1 focus:ring-black w-full text-gray-900 placeholder:text-gray-400 text-sm"
+                    className="w-full rounded-xl border border-gray-300 py-3.5 pr-4 pl-12 text-base text-gray-900 placeholder:text-gray-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
                     required
                   />
                 </div>
@@ -136,7 +139,7 @@ export default function GuestContactModal({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
-                    className="py-3.5 pr-4 pl-12 border border-gray-300 focus:border-black rounded-xl focus:outline-none focus:ring-1 focus:ring-black w-full text-gray-900 placeholder:text-gray-400 text-sm"
+                    className="w-full rounded-xl border border-gray-300 py-3.5 pr-4 pl-12 text-base text-gray-900 placeholder:text-gray-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
                     required
                   />
                 </div>
@@ -146,7 +149,7 @@ export default function GuestContactModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`${buttonPrimaryFull} mt-8 gap-2 py-4 rounded-xl active:scale-[0.99] disabled:opacity-60`}
+              className={`${buttonPrimaryFull} mt-8 gap-2 rounded-xl py-4 text-base disabled:opacity-60`}
             >
               {isSubmitting ? (
                 <>

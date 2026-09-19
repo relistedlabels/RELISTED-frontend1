@@ -220,8 +220,19 @@ export const ModalSkeleton = () => (
 );
 
 // Product Card Skeleton
-export const ProductCardSkeleton = ({ count = 8 }: { count?: number }) => (
-  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+export const ProductCardSkeleton = ({
+  count = 8,
+  className,
+}: {
+  count?: number;
+  className?: string;
+}) => (
+  <div
+    className={
+      className ??
+      "grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6"
+    }
+  >
     {[...Array(count)].map((_, i) => (
       <div
         key={i}

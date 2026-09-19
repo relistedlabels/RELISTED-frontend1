@@ -40,6 +40,18 @@ describe("getListerOrderStatusLabel", () => {
       "Pending Approval",
     );
     expect(formatListerOrderStatusLabel("RETURN_DUE")).toBe("Awaiting return");
+    expect(formatListerOrderStatusLabel("awaiting_payment")).toBe(
+      "Awaiting renter payment",
+    );
+  });
+
+  test("prefers awaiting_payment over accepted availability once approved", () => {
+    expect(
+      getListerOrderStatusLabel({
+        status: "awaiting_payment",
+        availabilityStatus: "ACCEPTED",
+      }),
+    ).toBe("Awaiting renter payment");
   });
 });
 

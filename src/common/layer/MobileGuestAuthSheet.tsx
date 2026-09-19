@@ -6,7 +6,10 @@ import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { buttonPrimaryFull, buttonSecondary } from "@/common/ui/buttonClasses";
-import { dialogBackdrop } from "@/common/ui/dashboardClasses";
+import {
+  bottomSheetBackdrop,
+  bottomSheetPanel,
+} from "@/common/ui/dashboardClasses";
 
 type MobileGuestAuthSheetProps = {
   isOpen: boolean;
@@ -26,7 +29,7 @@ export default function MobileGuestAuthSheet({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className={`${dialogBackdrop} z-[120] items-end`}
+          className={`${bottomSheetBackdrop} z-[120]`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -36,7 +39,7 @@ export default function MobileGuestAuthSheet({
             role="dialog"
             aria-modal="true"
             aria-labelledby="guest-auth-sheet-title"
-            className="relative w-full rounded-t-3xl bg-white px-6 pt-8 pb-10"
+            className={`${bottomSheetPanel} px-6 pt-8`}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
