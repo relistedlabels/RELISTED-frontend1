@@ -6,7 +6,7 @@ import type {
   ReturnShippingBucketQuote,
 } from "@/lib/api/cart";
 import Link from "next/link";
-import { Check, CheckCircle, MapPin } from "lucide-react";
+import { Check, CheckCircle } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useRouter } from "next/navigation";
 import {
@@ -406,37 +406,6 @@ export default function FinalOrderSummaryCard({
           </Paragraph1>
         </div>
       )}
-
-      {(orderSummary?.data?.summary?.rentalTotal ?? 0) > 0 ? (
-        <div className="bg-white p-4 border border-gray-200 rounded-xl">
-          <Paragraph1 className="mb-4 font-bold text-gray-900 text-lg">
-            Return pickup details
-          </Paragraph1>
-          <div className="flex items-start gap-3">
-            <div className="bg-gray-100 p-2 rounded-full">
-              <MapPin size={18} className="text-gray-700" />
-            </div>
-            <div>
-              <Paragraph1 className="font-semibold text-gray-900 text-sm">
-                {returnPickupAddress
-                  ? `${returnPickupAddress.street}, ${returnPickupAddress.city}`
-                  : "Using your delivery address"}
-              </Paragraph1>
-              {returnPickupAddress ? (
-                <Paragraph1 className="text-gray-600 text-xs">
-                  {returnPickupAddress.contactName} •{" "}
-                  {returnPickupAddress.phoneNumber}
-                </Paragraph1>
-              ) : null}
-              {returnPickupAddress?.instructions && (
-                <Paragraph1 className="mt-1 text-gray-500 text-xs">
-                  {returnPickupAddress.instructions}
-                </Paragraph1>
-              )}
-            </div>
-          </div>
-        </div>
-      ) : null}
 
       {!isLoading && !error && approvedGroups.length === 0 && (
         <div className="bg-gray-50 p-4 border border-gray-200 rounded-xl text-center">

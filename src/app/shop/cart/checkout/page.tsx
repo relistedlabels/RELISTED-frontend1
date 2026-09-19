@@ -867,6 +867,7 @@ export default function CheckoutPage() {
         groups.push({
           bucketIndex: b.bucketIndex,
           groupHeading,
+          productIds: b.productIds,
           ...(listerLocation ? { listerLocation } : {}),
           rows: bucketRows,
         });

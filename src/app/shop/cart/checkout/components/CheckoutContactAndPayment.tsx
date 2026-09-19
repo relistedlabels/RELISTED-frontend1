@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, MapPin, Truck, Wallet } from "lucide-react";
+import { MapPin, Truck, Wallet } from "lucide-react";
 import { useMemo } from "react";
 import Link from "next/link";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
@@ -37,10 +37,13 @@ import CheckoutDispatchLegPreview, {
 import CheckoutSectionHeading from "./CheckoutSectionHeading";
 import CheckoutStepIntro from "./CheckoutStepIntro";
 import CheckoutStepNav from "./CheckoutStepNav";
-import { buildCheckoutReviewLegs } from "@/lib/checkout/checkoutFlow";
-import CheckoutOrderItems, {
-  type CheckoutListerGroup,
-} from "./CheckoutOrderItems";
+import {
+  buildCheckoutReviewDelivery,
+  type CheckoutDispatchPreviewGroup,
+} from "@/lib/checkout/checkoutFlow";
+import CheckoutReviewDeliverySection from "./CheckoutReviewDeliverySection";
+import CheckoutShipmentBlock from "./CheckoutShipmentBlock";
+import { type CheckoutListerGroup } from "./CheckoutOrderItems";
 
 interface CheckoutContactAndPaymentProps {
   /** Same GET /order/summary payload as the sidebar (used for wallet shortfall vs checkout total). */
@@ -94,12 +97,7 @@ interface CheckoutContactAndPaymentProps {
   /** After delivery address is saved to profile (refetch profile + order summary). */
   onAddressSaved?: () => void;
   /** Quote-based dispatch: one optional heading per shipment bucket, then rental/return rows. */
-  summaryDispatchPreview?: Array<{
-    bucketIndex?: number;
-    groupHeading: string | null;
-    listerLocation?: string;
-    rows: Array<{ title: string; range: string }>;
-  }>;
+  summaryDispatchPreview?: CheckoutDispatchPreviewGroup[];
   /** When true, rental dispatch UI waits for per-bucket summary (no rentalItems[0] fallback). */
   multiListerRentalCart?: boolean;
   isResaleOnly?: boolean;
@@ -457,46 +455,29 @@ export default function CheckoutContactAndPayment({
       });
   };
 
-  const orderReviewLegs = useMemo(() => {
+  const orderReviewDelivery = useMemo(() => {
     const deliveryAddressLine =
       formatDeliveryAddressLine(profile?.address) ?? "No address set";
-    const returnPickupAddressLine =
-      formatReturnPickupAddressLine(returnPickupAddress ?? {}) ??
-      deliveryAddressLine;
 
-    return buildCheckoutReviewLegs({
+    return buildCheckoutReviewDelivery({
       deliveryAddressLine,
-      returnPickupAddressLine,
-      isCartPurchaseResaleOnly: isResaleOnly,
-      showReturnShippingTierPicker,
+      listerGroups,
       summaryDispatchPreview,
       usePerBucketOutbound,
       outboundBuckets,
       selectedOutboundTierByBucket,
       selectedShippingTier,
       tierList,
-      usePerBucketReturn,
-      returnBuckets,
-      selectedReturnTierByBucket,
-      selectedReturnShippingTier,
-      returnTierList,
     });
   }, [
     profile?.address,
-    returnPickupAddress,
+    listerGroups,
     summaryDispatchPreview,
     usePerBucketOutbound,
     outboundBuckets,
     selectedOutboundTierByBucket,
     selectedShippingTier,
     tierList,
-    showReturnShippingTierPicker,
-    usePerBucketReturn,
-    returnBuckets,
-    selectedReturnTierByBucket,
-    selectedReturnShippingTier,
-    returnTierList,
-    isResaleOnly,
   ]);
 
   if (!user) return <ContactSkeleton />;
@@ -603,17 +584,6 @@ export default function CheckoutContactAndPayment({
             subtitle="Pick carriers and delivery times."
           />
 
-          {listerGroups.some((g) => g.items.length > 0) ? (
-            <div className="bg-white p-4 sm:p-5 border border-gray-100 rounded-xl">
-              <CheckoutSectionHeading>Your items</CheckoutSectionHeading>
-              <CheckoutOrderItems
-                listerGroups={listerGroups}
-                variant="compact"
-                className="mt-3"
-              />
-            </div>
-          ) : null}
-
           {!hasDeliveryAddress ? (
             <div className="bg-amber-50 p-4 border border-amber-200 rounded-xl">
               <Paragraph1 className="text-amber-900 text-sm leading-relaxed">
@@ -663,29 +633,12 @@ export default function CheckoutContactAndPayment({
             <>
       {/* DELIVERY / OUTBOUND SHIPPING */}
       <div className="bg-white p-4 border border-gray-100 rounded-xl">
-        {usePerBucketOutbound && outboundBuckets.length > 1 ? (
-          <CheckoutShippingLegHeader
-            sectionLabel={
-              showReturnShippingTierPicker ? "DELIVERY" : "DELIVERY METHOD"
-            }
-            leg="outbound"
-          />
-        ) : (
-          <CheckoutShippingLegHeader
-            sectionLabel={
-              showReturnShippingTierPicker ? "DELIVERY" : "DELIVERY METHOD"
-            }
-            groups={
-              hasSummaryDispatchPreview ? summaryDispatchPreview : undefined
-            }
-            bucketIndex={
-              usePerBucketOutbound
-                ? outboundBuckets[0]?.bucketIndex
-                : undefined
-            }
-            leg="outbound"
-          />
-        )}
+        <CheckoutShippingLegHeader
+          sectionLabel={
+            showReturnShippingTierPicker ? "DELIVERY" : "DELIVERY METHOD"
+          }
+          leg="outbound"
+        />
 
         <hr className="my-4 text-gray-100" />
 
@@ -705,18 +658,21 @@ export default function CheckoutContactAndPayment({
                 <DispatchWindowsQuoteSkeleton />
               </div>
             ) : null}
-            {outboundBuckets.map((bucket) => {
+            {outboundBuckets.map((bucket, bucketIndex) => {
               const selectedName =
                 selectedOutboundTierByBucket[bucket.bucketIndex] ??
                 bucket.shippingTiers[0]?.name ??
                 "";
+              const shipment =
+                orderReviewDelivery.shipments.find(
+                  (row) => row.bucketIndex === bucket.bucketIndex,
+                ) ?? orderReviewDelivery.shipments[bucketIndex];
               return (
                 <div key={bucket.bucketIndex} className="space-y-3">
-                  {outboundBuckets.length > 1 && hasSummaryDispatchPreview ? (
-                    <CheckoutDispatchLegPreview
-                      groups={summaryDispatchPreview}
-                      bucketIndex={bucket.bucketIndex}
-                      leg="outbound"
+                  {shipment ? (
+                    <CheckoutShipmentBlock
+                      shipment={shipment}
+                      showDivider={bucketIndex > 0}
                     />
                   ) : null}
                   {bucket.shippingTiers.length > 0 ? (
@@ -740,6 +696,13 @@ export default function CheckoutContactAndPayment({
           </div>
         ) : tierList.length > 0 ? (
           <div className="space-y-3">
+            {orderReviewDelivery.shipments.map((shipment, index) => (
+              <CheckoutShipmentBlock
+                key={shipment.bucketIndex ?? `shipment-${index}`}
+                shipment={shipment}
+                showDivider={index > 0}
+              />
+            ))}
             {!hasSummaryDispatchPreview &&
             (dispatchContexts.length > 0 || multiListerRentalCart) ? (
               <div className="mb-4 pb-4 border-gray-100 border-b">
@@ -948,95 +911,7 @@ export default function CheckoutContactAndPayment({
             subtitle="Check the details below, then complete your order in the summary."
           />
 
-          {listerGroups.some((g) => g.items.length > 0) ? (
-            <div className="bg-white p-4 sm:p-5 border border-gray-100 rounded-xl">
-              <CheckoutSectionHeading>Your items</CheckoutSectionHeading>
-              <CheckoutOrderItems
-                listerGroups={listerGroups}
-                variant="compact"
-                className="mt-3"
-              />
-            </div>
-          ) : null}
-
-          <div className="space-y-4 bg-white p-5 border border-gray-100 rounded-xl">
-            <CheckoutSectionHeading>Order details</CheckoutSectionHeading>
-
-            <div className="space-y-4">
-              {orderReviewLegs.map((leg) => (
-                <div
-                  key={leg.id}
-                  className="space-y-4 bg-gray-50 p-4 sm:p-5 border border-gray-100 rounded-xl"
-                >
-                  <h4 className="font-semibold text-gray-900 text-[15px] leading-snug">
-                    {leg.title}
-                  </h4>
-
-                  <div className="flex items-start gap-3.5">
-                    <MapPin
-                      className="mt-1 size-4 text-gray-400 shrink-0"
-                      aria-hidden
-                    />
-                    <div className="min-w-0 space-y-1">
-                      <Paragraph1 className="font-medium text-gray-500 text-xs">
-                        Address
-                      </Paragraph1>
-                      <Paragraph1 className="text-gray-900 text-[15px] leading-relaxed">
-                        {leg.address}
-                      </Paragraph1>
-                    </div>
-                  </div>
-
-                  {leg.windows.map((windowRange, index) => (
-                    <div
-                      key={`${leg.id}-window-${index}`}
-                      className="flex items-start gap-3.5"
-                    >
-                      <Clock
-                        className="mt-1 size-4 text-gray-400 shrink-0"
-                        aria-hidden
-                      />
-                      <div className="min-w-0 space-y-1">
-                        <Paragraph1 className="font-medium text-gray-500 text-xs">
-                          Time window
-                        </Paragraph1>
-                        <Paragraph1 className="text-gray-900 text-[15px] leading-relaxed">
-                          {windowRange}
-                        </Paragraph1>
-                      </div>
-                    </div>
-                  ))}
-
-                  {leg.shipping.map((ship, index) => (
-                    <div
-                      key={`${leg.id}-ship-${index}`}
-                      className="flex justify-between items-start gap-4"
-                    >
-                      <div className="flex items-start gap-3.5 min-w-0">
-                        <Truck
-                          className="mt-1 size-4 text-gray-400 shrink-0"
-                          aria-hidden
-                        />
-                        <div className="min-w-0 space-y-1">
-                          <Paragraph1 className="font-medium text-gray-500 text-xs">
-                            Delivery
-                          </Paragraph1>
-                          <Paragraph1 className="text-gray-900 text-[15px] leading-relaxed">
-                            {ship.method}
-                          </Paragraph1>
-                        </div>
-                      </div>
-                      {ship.cost !== undefined ? (
-                        <Paragraph1 className="font-semibold text-gray-900 text-[15px] shrink-0">
-                          ₦{formatCurrency(ship.cost)}
-                        </Paragraph1>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
+          <CheckoutReviewDeliverySection review={orderReviewDelivery} />
 
           <CheckoutStepNav
             onBack={

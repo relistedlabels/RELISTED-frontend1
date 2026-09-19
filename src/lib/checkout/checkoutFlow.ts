@@ -24,7 +24,22 @@ export type CheckoutDispatchPreviewGroup = {
   bucketIndex?: number;
   groupHeading: string | null;
   listerLocation?: string;
+  productIds?: string[];
   rows: CheckoutDispatchPreviewRow[];
+};
+
+export type CheckoutReviewDeliveryShipment = {
+  bucketIndex?: number;
+  /** Shown when multiple shipments need a sub-label (e.g. From Ada). */
+  heading: string | null;
+  items: Array<Record<string, unknown>>;
+  deliveryWindow?: string;
+  shipping?: { method: string; cost?: number };
+};
+
+export type CheckoutReviewDelivery = {
+  address: string;
+  shipments: CheckoutReviewDeliveryShipment[];
 };
 
 export type CheckoutReviewLeg = {
@@ -75,6 +90,17 @@ export type BuildCheckoutReviewLegsInput = {
   returnTierList: ShippingTierPick[];
 };
 
+export type BuildCheckoutReviewDeliveryInput = {
+  deliveryAddressLine: string;
+  listerGroups: Array<{ listerId: string; items: Array<Record<string, unknown>> }>;
+  summaryDispatchPreview?: CheckoutDispatchPreviewGroup[];
+  usePerBucketOutbound: boolean;
+  outboundBuckets: ShippingBucketPick[];
+  selectedOutboundTierByBucket: Record<number, string>;
+  selectedShippingTier: string;
+  tierList: ShippingTierPick[];
+};
+
 function listerIdFromLine(line: CheckoutLineRef): string | undefined {
   const id = line.listerId ?? line.productDetail?.curatorId ?? line.product?.curatorId;
   return typeof id === "string" && id.trim() ? id.trim() : undefined;
@@ -111,6 +137,39 @@ export function analyzeCheckoutFlow(
   };
 }
 
+function isReturnPickupDispatchRow(title: string): boolean {
+  return title.toLowerCase().includes("return pickup");
+}
+
+function deliveryWindowFromPreviewGroup(
+  group: CheckoutDispatchPreviewGroup,
+): string | undefined {
+  return group.rows.find((row) => !isReturnPickupDispatchRow(row.title))?.range;
+}
+
+function listerNameFromGroupHeading(groupHeading: string | null | undefined): string | null {
+  const heading = groupHeading?.trim();
+  if (!heading) return null;
+  const match = /^Order from (.+?)(?:\s·|$)/i.exec(heading);
+  return match?.[1]?.trim() || null;
+}
+
+export function checkoutItemsForProductIds(
+  listerGroups: Array<{ items: Array<Record<string, unknown>> }>,
+  productIds?: string[],
+): Array<Record<string, unknown>> {
+  const allItems = listerGroups.flatMap((group) => group.items);
+  if (!productIds?.length) return allItems;
+
+  const idSet = new Set(
+    productIds.map((id) => id.trim()).filter(Boolean),
+  );
+  const matched = allItems.filter((item) =>
+    idSet.has(String(item.productId ?? "").trim()),
+  );
+  return matched.length > 0 ? matched : allItems;
+}
+
 function collectDispatchWindows(
   summaryDispatchPreview: CheckoutDispatchPreviewGroup[] | undefined,
 ): { deliveryWindows: string[]; returnWindows: string[] } {
@@ -119,7 +178,7 @@ function collectDispatchWindows(
 
   for (const group of summaryDispatchPreview ?? []) {
     for (const row of group.rows) {
-      if (row.title.toLowerCase().includes("return pickup")) {
+      if (isReturnPickupDispatchRow(row.title)) {
         returnWindows.push(row.range);
       } else {
         deliveryWindows.push(row.range);
@@ -128,6 +187,35 @@ function collectDispatchWindows(
   }
 
   return { deliveryWindows, returnWindows };
+}
+
+function shippingForOutboundBucket(
+  bucketIndex: number | undefined,
+  input: Pick<
+    BuildCheckoutReviewDeliveryInput,
+    | "usePerBucketOutbound"
+    | "outboundBuckets"
+    | "selectedOutboundTierByBucket"
+    | "selectedShippingTier"
+    | "tierList"
+  >,
+): { method: string; cost?: number } | undefined {
+  if (input.usePerBucketOutbound && bucketIndex != null) {
+    const bucket = input.outboundBuckets.find(
+      (row) => row.bucketIndex === bucketIndex,
+    );
+    if (!bucket) return undefined;
+    const pick =
+      input.selectedOutboundTierByBucket[bucketIndex] ??
+      bucket.shippingTiers[0]?.name ??
+      "";
+    const tier = bucket.shippingTiers.find((row) => row.name === pick);
+    if (!pick) return undefined;
+    return { method: pick, cost: tier?.totalShippingCost };
+  }
+
+  const rows = selectedSingleTierRow(input.tierList, input.selectedShippingTier);
+  return rows[0];
 }
 
 function selectedTierRows(
@@ -155,10 +243,91 @@ function selectedSingleTierRow(
   return [{ method: pick, cost: row?.totalShippingCost }];
 }
 
+export function buildCheckoutReviewDelivery(
+  input: BuildCheckoutReviewDeliveryInput,
+): CheckoutReviewDelivery {
+  const preview = input.summaryDispatchPreview ?? [];
+  const allItems = input.listerGroups.flatMap((group) => group.items);
+
+  if (preview.length === 0) {
+    const { deliveryWindows } = collectDispatchWindows(preview);
+    const shipping = input.usePerBucketOutbound
+      ? selectedTierRows(
+          input.outboundBuckets,
+          input.selectedOutboundTierByBucket,
+        )[0]
+      : selectedSingleTierRow(input.tierList, input.selectedShippingTier)[0];
+
+    return {
+      address: input.deliveryAddressLine,
+      shipments: [
+        {
+          heading: null,
+          items: allItems,
+          deliveryWindow: deliveryWindows[0],
+          shipping,
+        },
+      ],
+    };
+  }
+
+  const shipments: CheckoutReviewDeliveryShipment[] = preview
+    .map((group) => {
+      const items = checkoutItemsForProductIds(
+        input.listerGroups,
+        group.productIds,
+      );
+      const deliveryWindow = deliveryWindowFromPreviewGroup(group);
+      const shipping = shippingForOutboundBucket(group.bucketIndex, input);
+      if (!deliveryWindow && items.length === 0 && !shipping) return null;
+
+      return {
+        bucketIndex: group.bucketIndex,
+        heading: null,
+        items,
+        deliveryWindow,
+        shipping,
+      } satisfies CheckoutReviewDeliveryShipment;
+    })
+    .filter((row): row is CheckoutReviewDeliveryShipment => row != null);
+
+  const showSubHeadings = shipments.length > 1;
+  for (const shipment of shipments) {
+    if (!showSubHeadings) continue;
+    const listerName =
+      listerNameFromGroupHeading(
+        preview.find((group) => group.bucketIndex === shipment.bucketIndex)
+          ?.groupHeading,
+      ) ||
+      (typeof shipment.items[0]?.listerName === "string"
+        ? shipment.items[0].listerName
+        : null);
+    shipment.heading = listerName ? `From ${listerName}` : "Delivery";
+  }
+
+  if (shipments.length === 0) {
+    return {
+      address: input.deliveryAddressLine,
+      shipments: [
+        {
+          heading: null,
+          items: allItems,
+          shipping: shippingForOutboundBucket(undefined, input),
+        },
+      ],
+    };
+  }
+
+  return {
+    address: input.deliveryAddressLine,
+    shipments,
+  };
+}
+
 export function buildCheckoutReviewLegs(
   input: BuildCheckoutReviewLegsInput,
 ): CheckoutReviewLeg[] {
-  const { deliveryWindows, returnWindows } = collectDispatchWindows(
+  const { deliveryWindows } = collectDispatchWindows(
     input.summaryDispatchPreview,
   );
 
@@ -169,16 +338,7 @@ export function buildCheckoutReviewLegs(
       )
     : selectedSingleTierRow(input.tierList, input.selectedShippingTier);
 
-  const returnShipping = input.showReturnShippingTierPicker
-    ? input.usePerBucketReturn
-      ? selectedTierRows(input.returnBuckets, input.selectedReturnTierByBucket)
-      : selectedSingleTierRow(
-          input.returnTierList,
-          input.selectedReturnShippingTier,
-        )
-    : [];
-
-  const legs: CheckoutReviewLeg[] = [
+  return [
     {
       id: "delivery",
       title: "Delivery to you",
@@ -187,16 +347,4 @@ export function buildCheckoutReviewLegs(
       shipping: deliveryShipping,
     },
   ];
-
-  if (!input.isCartPurchaseResaleOnly) {
-    legs.push({
-      id: "return",
-      title: "Return from you",
-      address: input.returnPickupAddressLine,
-      windows: returnWindows,
-      shipping: returnShipping,
-    });
-  }
-
-  return legs;
 }
