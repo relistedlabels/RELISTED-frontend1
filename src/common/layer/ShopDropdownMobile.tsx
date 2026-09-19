@@ -51,8 +51,12 @@ const ShopDropdownMobile: React.FC<ShopDropdownMobileProps> = ({
 
   const brandNames = useMemo(
     () =>
-      brandsData?.slice(0, 32).map((brand: { name?: string }) => brand.name || brand) ??
-      [],
+      brandsData
+        ?.slice(0, 32)
+        .map((brand: { name?: string } | string) =>
+          typeof brand === "string" ? brand : (brand.name ?? ""),
+        )
+        .filter((name): name is string => Boolean(name)) ?? [],
     [brandsData],
   );
 

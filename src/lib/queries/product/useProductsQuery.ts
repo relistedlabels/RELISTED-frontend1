@@ -29,8 +29,10 @@ export const useProductsQuery = () => {
   const listingFilters = pickerFiltersToApiParams(
     listingFiltersFromSearchParams(searchParams),
   );
+  const { listingType: filterListingType, ...restListingFilters } =
+    listingFilters;
   const listingType =
-    listingFilters.listingType ?? shopListingTypesParam(searchParams);
+    filterListingType ?? shopListingTypesParam(searchParams);
 
   const query = useQuery<any, Error, { products: any[]; pagination?: any }>({
     queryKey: [
@@ -42,7 +44,7 @@ export const useProductsQuery = () => {
         page,
         sort,
         listingType,
-        ...listingFilters,
+        ...restListingFilters,
       },
     ],
     queryFn: async () => {

@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useListingFilterOptions } from "@/lib/queries/product/useListingFilterOptions";
 import { listingFiltersFromSearchParams } from "@/lib/shop/listingFilters";
+import { EMPTY_LISTING_FILTER_OPTIONS } from "@/lib/shop/listingFilterOptions";
 import {
   shouldPreserveShopHeading,
   syncShopHeadingParams,
@@ -12,10 +13,11 @@ export default function ShopCategoryChips() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sale = searchParams.get("sale") || undefined;
-  const { data: filterOptions } = useListingFilterOptions({
-    scope: "shop",
-    sale,
-  });
+  const { data: filterOptions = EMPTY_LISTING_FILTER_OPTIONS } =
+    useListingFilterOptions({
+      scope: "shop",
+      sale,
+    });
   const categories = filterOptions.categories;
   const activeCategoryIds = new Set(
     listingFiltersFromSearchParams(searchParams).category ?? [],

@@ -6,6 +6,7 @@ import { useRef } from "react";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import { useHorizontalWheelScroll } from "@/hooks/useHorizontalWheelScroll";
 import { useListingFilterOptions } from "@/lib/queries/product/useListingFilterOptions";
+import { EMPTY_LISTING_FILTER_OPTIONS } from "@/lib/shop/listingFilterOptions";
 import { shopOccasionsFromFilterOptions } from "@/lib/shop/shopOccasions";
 import { shouldPreserveShopHeading } from "@/lib/shop/shopBrowse";
 
@@ -13,7 +14,8 @@ export default function ShopOccasionTiles() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const scrollerRef = useRef<HTMLDivElement | null>(null);
-  const { data: filterOptions } = useListingFilterOptions({ scope: "shop" });
+  const { data: filterOptions = EMPTY_LISTING_FILTER_OPTIONS } =
+    useListingFilterOptions({ scope: "shop" });
   const occasions = shopOccasionsFromFilterOptions(filterOptions);
   const activeTag = searchParams.get("tags")?.split(",")[0]?.trim() ?? "";
 

@@ -18,6 +18,7 @@ import {
   listingFiltersFromSearchParams,
   mergePreservedShopParams,
 } from "@/lib/shop/listingFilters";
+import { EMPTY_LISTING_FILTER_OPTIONS } from "@/lib/shop/listingFilterOptions";
 import ListingFilterPanel from "./ListingFilterPanel";
 
 type ShopToolbarProps = {
@@ -39,10 +40,11 @@ export default function ShopToolbar({ resultCountLabel }: ShopToolbarProps) {
     () => searchParams.get("search") ?? "",
   );
   const sale = searchParams.get("sale") || undefined;
-  const { data: filterOptions } = useListingFilterOptions({
-    scope: "shop",
-    sale,
-  });
+  const { data: filterOptions = EMPTY_LISTING_FILTER_OPTIONS } =
+    useListingFilterOptions({
+      scope: "shop",
+      sale,
+    });
 
   useEffect(() => {
     setSearchDraft(searchParams.get("search") ?? "");
