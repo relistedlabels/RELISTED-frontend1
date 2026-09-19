@@ -9,6 +9,7 @@ import {
   ShoppingBag,
   LogOut,
 } from "lucide-react";
+import NotificationBell from "@/components/notifications/NotificationBell";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { buttonDestructive, buttonSecondary } from "@/common/ui/buttonClasses";
@@ -33,8 +34,10 @@ const navItems: NavItem[] = [
 
 export default function UserDashboardLayout({
   children,
+  title: titleOverride,
 }: {
   children: React.ReactNode;
+  title?: string;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -43,7 +46,7 @@ export default function UserDashboardLayout({
 
   // Get the active page title
   const activeItem = navItems.find((item) => pathname.startsWith(item.href));
-  const title = activeItem?.name || "";
+  const title = titleOverride ?? activeItem?.name ?? "";
 
   const handleLogout = async () => {
     await clearUser();
@@ -111,7 +114,14 @@ export default function UserDashboardLayout({
 
       {/* Main Content */}
       <main className="grow h-screen overflow-x-auto px-4 sm:pl-8 sm:px-0 py-">
-        <Paragraph2 className="text-2xl font-bold mb-6">{title}</Paragraph2>
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <Paragraph2 className="text-2xl font-bold">{title}</Paragraph2>
+          <NotificationBell
+            href="/renters/notifications"
+            iconClassName="h-5 w-5 text-gray-700"
+            badgeClassName="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-gray-50"
+          />
+        </div>
         {children}
       </main>
 
