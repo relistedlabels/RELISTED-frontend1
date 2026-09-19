@@ -52,9 +52,16 @@ function DesktopNavbarContent() {
 
           <NavbarNotificationBell />
 
-          <Link href="/shop/cart" className="flex items-center space-x-1">
-            <ShoppingBagIcon className="w-6 h-6" aria-hidden />
-            <Paragraph1>{cartCount}</Paragraph1>
+          <Link
+            href="/shop/cart"
+            className="flex items-center gap-1.5"
+            aria-label={
+              cartCount > 0 ? `Cart, ${cartCount} items` : "Cart"
+            }
+          >
+            <ShoppingBagIcon className="w-5 h-5" aria-hidden />
+            <ParagraphLink1>Cart</ParagraphLink1>
+            {cartCount > 0 ? <Paragraph1>{cartCount}</Paragraph1> : null}
           </Link>
 
           <AuthActions />
