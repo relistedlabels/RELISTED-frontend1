@@ -38,6 +38,9 @@ import CheckoutSectionHeading from "./CheckoutSectionHeading";
 import CheckoutStepIntro from "./CheckoutStepIntro";
 import CheckoutStepNav from "./CheckoutStepNav";
 import { buildCheckoutReviewLegs } from "@/lib/checkout/checkoutFlow";
+import CheckoutOrderItems, {
+  type CheckoutListerGroup,
+} from "./CheckoutOrderItems";
 
 interface CheckoutContactAndPaymentProps {
   /** Same GET /order/summary payload as the sidebar (used for wallet shortfall vs checkout total). */
@@ -100,6 +103,7 @@ interface CheckoutContactAndPaymentProps {
   /** When true, rental dispatch UI waits for per-bucket summary (no rentalItems[0] fallback). */
   multiListerRentalCart?: boolean;
   isResaleOnly?: boolean;
+  listerGroups?: CheckoutListerGroup[];
   checkoutStep?: CheckoutStep;
   onCheckoutStepChange?: (step: CheckoutStep) => void;
 }
@@ -229,6 +233,7 @@ export default function CheckoutContactAndPayment({
   summaryDispatchPreview,
   multiListerRentalCart = false,
   isResaleOnly = false,
+  listerGroups = [],
   checkoutStep = 1,
   onCheckoutStepChange,
 }: CheckoutContactAndPaymentProps) {
@@ -598,6 +603,17 @@ export default function CheckoutContactAndPayment({
             subtitle="Pick carriers and delivery times."
           />
 
+          {listerGroups.some((g) => g.items.length > 0) ? (
+            <div className="bg-white p-4 sm:p-5 border border-gray-100 rounded-xl">
+              <CheckoutSectionHeading>Your items</CheckoutSectionHeading>
+              <CheckoutOrderItems
+                listerGroups={listerGroups}
+                variant="compact"
+                className="mt-3"
+              />
+            </div>
+          ) : null}
+
           {!hasDeliveryAddress ? (
             <div className="bg-amber-50 p-4 border border-amber-200 rounded-xl">
               <Paragraph1 className="text-amber-900 text-sm leading-relaxed">
@@ -931,6 +947,17 @@ export default function CheckoutContactAndPayment({
             title="Review your order"
             subtitle="Check the details below, then complete your order in the summary."
           />
+
+          {listerGroups.some((g) => g.items.length > 0) ? (
+            <div className="bg-white p-4 sm:p-5 border border-gray-100 rounded-xl">
+              <CheckoutSectionHeading>Your items</CheckoutSectionHeading>
+              <CheckoutOrderItems
+                listerGroups={listerGroups}
+                variant="compact"
+                className="mt-3"
+              />
+            </div>
+          ) : null}
 
           <div className="space-y-4 bg-white p-5 border border-gray-100 rounded-xl">
             <CheckoutSectionHeading>Order details</CheckoutSectionHeading>
