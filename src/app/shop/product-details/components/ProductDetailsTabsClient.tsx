@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import RentalDetailsCard from "./RentalDetailsCard";
 import ResaleDetailsCard from "./ResaleDetailsCard";
 import { usePublicProductById } from "@/lib/queries/product/usePublicProductById";
 import { DetailPanelSkeleton } from "@/common/ui/SkeletonLoaders";
+import { resolveProductDetailTab } from "@/lib/shop/productDetailLinks";
 
 interface ProductDetailsTabsClientProps {
   productId: string;
@@ -13,8 +15,11 @@ interface ProductDetailsTabsClientProps {
 const ProductDetailsTabsClient: React.FC<ProductDetailsTabsClientProps> = ({
   productId,
 }) => {
+  const searchParams = useSearchParams();
+  const modeParam = searchParams.get("mode");
   const { data: product, isLoading } = usePublicProductById(productId);
   const listingType = product?.listingType;
+  const productLoaded = !isLoading && product != null;
 
   // Determine available tabs based on listingType
   const hasRent =
@@ -24,19 +29,25 @@ const ProductDetailsTabsClient: React.FC<ProductDetailsTabsClientProps> = ({
   const hasResale =
     listingType === "RESALE" || listingType === "RENT_OR_RESALE";
 
-  // Set initial active tab based on available options
-  const [activeTab, setActiveTab] = useState<"rent" | "resale">(
-    hasRent ? "rent" : "resale",
-  );
+  const [activeTab, setActiveTab] = useState<"rent" | "resale">("rent");
+  const [tabInitialized, setTabInitialized] = useState(false);
+
+  // Apply default tab once listing type is known (respects ?mode=buy from shop)
+  useEffect(() => {
+    if (!productLoaded || tabInitialized) return;
+    setActiveTab(resolveProductDetailTab(modeParam, hasRent, hasResale));
+    setTabInitialized(true);
+  }, [productLoaded, tabInitialized, modeParam, hasRent, hasResale]);
 
   // Update active tab if current tab becomes unavailable
   useEffect(() => {
+    if (!productLoaded) return;
     if (activeTab === "rent" && !hasRent && hasResale) {
       setActiveTab("resale");
     } else if (activeTab === "resale" && !hasResale && hasRent) {
       setActiveTab("rent");
     }
-  }, [hasRent, hasResale, activeTab]);
+  }, [hasRent, hasResale, activeTab, productLoaded]);
 
   if (isLoading) {
     return <DetailPanelSkeleton />;

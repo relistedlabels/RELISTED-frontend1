@@ -14,6 +14,7 @@ import {
 import { useMe } from "@/lib/queries/auth/useMe";
 import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 import { listingPriceDisplay } from "@/lib/product/listingPriceDisplay";
+import { productDetailHref } from "@/lib/shop/productDetailLinks";
 
 export type ProductCardPriceFocus = "rent" | "buy";
 
@@ -124,7 +125,9 @@ export default function ProductCard({
       isSold,
       isRentedOut,
     });
-    router.push(`/shop/product-details/${id}`);
+    router.push(
+      productDetailHref(id, priceFocus === "buy" ? "buy" : undefined),
+    );
   };
 
   const isDimmed = isSold || isRentedOut;
