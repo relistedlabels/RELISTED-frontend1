@@ -4,14 +4,19 @@
 
 import ProductCard from "@/common/ui/ProductCard";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
-import Filters from "../components/Filters";
 import { primaryProductHeroImage } from "@/lib/product/primaryProductHeroImage";
 import { useProductsQuery } from "@/lib/queries/product/useProductsQuery";
+import { isShopRentMode, shopResultCountLabel } from "@/lib/shop/shopBrowse";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
 
 type PaginationItem = number | "ellipsis";
+
+type NewListingsSectionProps = {
+  showSectionHeading?: boolean;
+  sectionTitle?: string;
+};
 
 function getPaginationItems(
   page: number,
@@ -45,7 +50,10 @@ function getPaginationItems(
   return items;
 }
 
-export default function NewListingsSection() {
+export default function NewListingsSection({
+  showSectionHeading = false,
+  sectionTitle = "All listings",
+}: NewListingsSectionProps) {
   const [paginationConfig, setPaginationConfig] = useState({
     siblings: 4,
     maxShowAll: 10,
@@ -64,9 +72,6 @@ export default function NewListingsSection() {
     return () => mq.removeEventListener("change", update);
   }, []);
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
   const {
     data: { products: filteredProducts = [], pagination } = {},
     isLoading: loading,
@@ -74,6 +79,7 @@ export default function NewListingsSection() {
   } = useProductsQuery();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const priceFocus = isShopRentMode(searchParams) ? "rent" : "buy";
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams);
@@ -81,19 +87,28 @@ export default function NewListingsSection() {
     router.push(`?${params.toString()}`);
   };
 
+  const total = pagination?.total ?? filteredProducts.length;
+  const countLabel = shopResultCountLabel(total, searchParams);
+
   if (loading) {
     return (
-      <section className="bg-white px-4 md:px-10 py-4 sm:py-10 w-full">
+      <section
+        id="shop-all-listings"
+        className="w-full scroll-mt-36 py-4 sm:py-10"
+      >
         <div className="mx-auto container">
-          <div className="mb-2 sm:mb-6 text-center">
-            <Header1Plus className="flex-1 font-light sm:text-center">
-              Available Listings
-            </Header1Plus>
-            <Paragraph1 className="mt-4 text-gray-600">
-              Loading products...
-            </Paragraph1>
-          </div>
-          <ProductCardSkeleton count={15} />
+          {showSectionHeading ? (
+            <div className="mb-2 sm:mb-6">
+              <Header1Plus className="font-light">{sectionTitle}</Header1Plus>
+              <Paragraph1 className="mt-2 text-gray-600">
+                Loading products...
+              </Paragraph1>
+            </div>
+          ) : null}
+          <ProductCardSkeleton
+            count={15}
+            className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-7 md:grid-cols-4 lg:grid-cols-5 lg:gap-x-5"
+          />
         </div>
       </section>
     );
@@ -101,36 +116,42 @@ export default function NewListingsSection() {
 
   if (error) {
     return (
-      <section className="bg-white px-4 md:px-0 py-4 sm:pb-10 w-full">
+      <section
+        id="shop-all-listings"
+        className="w-full scroll-mt-36 py-4 sm:pb-10"
+      >
         <div className="mx-auto container">
-          <div className="mb-2 sm:mb-6 text-center">
-            <Header1Plus className="flex-1 font-light sm:text-center">
-              Available Listings
-            </Header1Plus>
-          </div>
-          <ProductCardSkeleton count={15} />
+          {showSectionHeading ? (
+            <div className="mb-2 sm:mb-6">
+              <Header1Plus className="font-light">{sectionTitle}</Header1Plus>
+            </div>
+          ) : null}
+          <ProductCardSkeleton
+            count={15}
+            className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-7 md:grid-cols-4 lg:grid-cols-5 lg:gap-x-5"
+          />
         </div>
       </section>
     );
   }
 
   return (
-    <section className="bg-white px-4 md:px-10 py-4 w-full">
-      <div className="mx-auto container">
-        {/* Top Bar */}
-        <div
-          className="flex justify-end items-center gap-4 mb-2 sm:mb-6"
-        >
-          <div className="hidden sm:flex items-center gap-4">
-            <Filters />
+    <section
+      id="shop-all-listings"
+      className="w-full scroll-mt-40 py-8 sm:scroll-mt-44 sm:py-10"
+    >
+      <div className="mx-auto w-full">
+        {showSectionHeading ? (
+          <div className="mb-5 border-b border-gray-100 pb-4 sm:mb-6">
+            <Header1Plus className="uppercase tracking-wide">
+              {sectionTitle}
+            </Header1Plus>
+            <Paragraph1 className="mt-1 text-sm text-gray-600">
+              {countLabel}
+            </Paragraph1>
           </div>
+        ) : null}
 
-          <div className="sm:hidden flex items-center gap-4">
-            <Filters />
-          </div>
-        </div>
-
-        {/* Product Grid */}
         {filteredProducts.length === 0 ? (
           <div className="py-12 text-center">
             <Paragraph1 className="text-gray-600">
@@ -139,7 +160,7 @@ export default function NewListingsSection() {
           </div>
         ) : (
           <>
-            <div className="gap-2 sm:gap-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-7 md:grid-cols-4 lg:grid-cols-5 lg:gap-x-5">
               {filteredProducts.map((product: any) => (
                 <ProductCard
                   key={product.id}
@@ -156,23 +177,23 @@ export default function NewListingsSection() {
                   closetImage={product.closet?.imageUrl ?? undefined}
                   isSold={product.status === "SOLD"}
                   isRentedOut={product.status === "RENTED"}
+                  priceFocus={priceFocus}
                 />
               ))}
             </div>
 
-            {/* Pagination */}
-            {pagination && pagination.totalPages > 1 && (
-              <div className="flex flex-nowrap justify-center items-center gap-1 sm:gap-2 mt-8 w-full min-w-0 max-w-full">
+            {pagination && pagination.totalPages > 1 ? (
+              <div className="mt-8 flex w-full min-w-0 max-w-full flex-nowrap items-center justify-center gap-1 sm:gap-2">
                 <button
                   onClick={() => handlePageChange(pagination.page - 1)}
                   disabled={!pagination.hasPrevious}
-                  className="hover:bg-gray-50 disabled:opacity-50 px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded text-sm disabled:cursor-not-allowed shrink-0"
+                  className="shrink-0 rounded border border-gray-300 px-2 py-1.5 text-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:py-2"
                 >
                   <span className="sm:hidden">Prev</span>
                   <span className="hidden sm:inline">Previous</span>
                 </button>
 
-                <div className="flex flex-nowrap justify-center items-center gap-0.5 sm:gap-1 min-w-0 overflow-x-auto">
+                <div className="flex min-w-0 flex-nowrap items-center justify-center gap-0.5 overflow-x-auto sm:gap-1">
                   {getPaginationItems(
                     pagination.page,
                     pagination.totalPages,
@@ -183,7 +204,7 @@ export default function NewListingsSection() {
                       return (
                         <span
                           key={`ellipsis-${index}`}
-                          className="px-1 sm:px-2 py-1.5 sm:py-2 text-gray-500 text-sm"
+                          className="px-1 py-1.5 text-sm text-gray-500 sm:px-2 sm:py-2"
                         >
                           ...
                         </span>
@@ -195,9 +216,9 @@ export default function NewListingsSection() {
                       <button
                         key={item}
                         onClick={() => handlePageChange(item)}
-                        className={`shrink-0 min-w-7 sm:min-w-0 px-1.5 sm:px-3 py-1.5 sm:py-2 rounded border text-sm ${
+                        className={`min-w-7 shrink-0 rounded border px-1.5 py-1.5 text-sm sm:min-w-0 sm:px-3 sm:py-2 ${
                           isActive
-                            ? "bg-black text-white border-black"
+                            ? "border-black bg-black text-white"
                             : "border-gray-300 hover:bg-gray-50"
                         }`}
                       >
@@ -210,12 +231,12 @@ export default function NewListingsSection() {
                 <button
                   onClick={() => handlePageChange(pagination.page + 1)}
                   disabled={!pagination.hasNext}
-                  className="hover:bg-gray-50 disabled:opacity-50 px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded text-sm disabled:cursor-not-allowed shrink-0"
+                  className="shrink-0 rounded border border-gray-300 px-2 py-1.5 text-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:py-2"
                 >
                   Next
                 </button>
               </div>
-            )}
+            ) : null}
           </>
         )}
       </div>

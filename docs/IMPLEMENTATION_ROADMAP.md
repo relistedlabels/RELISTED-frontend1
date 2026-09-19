@@ -10,13 +10,13 @@ Phased delivery plan for the optimizations in `CUSTOMER_JOURNEY_ANALYSIS.md` and
 
 | Phase | Frontend branch | Backend branch | Ships independently? |
 |-------|-----------------|----------------|----------------------|
-| **1** Discovery & nav | `feat/new-rental-flow/phase-1-discovery` | — | Yes |
+| **1** Discovery & nav + shop revamp | `feat/new-rental-flow/phase-1-discovery` | — | Yes |
 | **2** Rental flow UX | `feat/new-rental-flow/phase-2-rental-flow` | `feat/new-rental-flow/phase-2-rental-flow` | Yes (needs both) |
 | **3** WhatsApp + async notify | `feat/new-rental-flow/phase-3-whatsapp` | `feat/new-rental-flow/phase-3-whatsapp` | Needs Meta credentials |
 | **4** Lister dashboard | `feat/new-rental-flow/phase-4-lister-dashboard` | — (uses phase 3 APIs) | Yes |
 | **5** Unified account | `feat/new-rental-flow/phase-5-unified-account` | `feat/new-rental-flow/phase-5-unified-account` | Later (role model) |
 
-Merge order: **1 → 2 → 3 → 4 → 5**
+Merge order: **1 (incl. 1b shop revamp) → 2 → 3 → 4 → 5**
 
 ---
 
@@ -24,29 +24,155 @@ Merge order: **1 → 2 → 3 → 4 → 5**
 
 **Goal:** First screen answers "How do I want to shop?" Rent and Buy are first-class modes.
 
+**Status (Sep 2026):** Core discovery shipped. Remaining gaps are wallet/onboarding "Locked Balance" copy and dynamic N-day price in the PDP header block.
+
 ### Build list
 
-- [ ] Homepage hero: `RENT` / `SHOP RESALE` CTAs (replace equal-weight "Find Your Next Fit" + "List Items")
-- [ ] Homepage sections: New In → Shop by Occasion → Most Rented → List Your Wardrobe (lower)
-- [ ] Mobile sticky bottom nav: Home / Rent / Buy / Saved / Account
-- [ ] Copy: "Refundable security deposit" (remove customer-facing "Locked Balance")
-- [ ] Pricing: "Rent for ₦X — N-day rental" instead of daily-only display
-- [ ] Nav routes: `/shop?listingType=RENTAL,RENT_OR_RESALE` (Rent), `/shop?listingType=RESALE,RENT_OR_RESALE` (Buy)
+- [x] Homepage hero: `RENT` / `SHOP RESALE` CTAs (replace equal-weight "Find Your Next Fit" + "List Items")
+- [x] Homepage sections: New In → Popular Categories (occasion tiles) → Most Rented → List Your Wardrobe (`BecomeCurator`, lower). Brand carousel + featured sale sit between New In and categories.
+- [x] Mobile sticky bottom nav: Home / Rent / Buy / Orders / Account *(shipped as **Orders**, not Saved; guests get auth sheet on Orders/Account)*
+- [~] Copy: "Refundable security deposit" *(PDP + checkout use it; wallet dashboard and onboarding still say "Locked Balance")*
+- [~] Pricing: "Rent for ₦X — N-day rental" *(PDP shows "Rent for" + total; duration line is still "1-day rental" in the header block; N-day copy appears in duration/logistics UI below)*
+- [x] Nav routes: `/shop?listingType=RENTAL,RENT_OR_RESALE` (Rent), `/shop?listingType=RESALE,RENT_OR_RESALE` (Buy)
+
+**Also shipped (Phase 1 adjacent):**
+
+- [x] Style Spotlight removed from main nav; home "Browse All" → `/shop`
+- [x] Sales nav link with tag icon (desktop + mobile)
+- [x] Closet shop UI gated behind admin **Closet Feature** toggle (`headerClosetsShopNavEnabled`)
 
 ### Key files
 
 - `src/app/home/sections/EndlessStyleHero.tsx`
 - `src/app/page.tsx`
-- `src/common/layer/MobileBottomNav.tsx` (new)
-- `src/app/layout.tsx`, `src/lib/navbarRoutes.ts`
+- `src/common/layer/MobileBottomNav.tsx`
+- `src/app/layout.tsx`, `src/lib/navbarRoutes.ts`, `src/lib/nav/shopNavMatch.ts`
 - `src/app/shop/product-details/components/RentalDetailsCard.tsx`
 - Checkout/wallet copy in `FinalOrderSummaryCard.tsx`, `UserWalletDashboard.tsx`
+- `src/lib/site/closetShopFeature.ts`, `src/common/layer/SalesNavLink.tsx`
 
 ### Acceptance
 
-- Mobile user can switch Rent/Buy/Saved/Account without opening hamburger
-- Homepage shows product preview below hero within one scroll
-- Product page shows total rental price for selected duration
+- [x] Mobile user can switch Rent/Buy/Orders/Account without opening hamburger
+- [x] Homepage shows product preview below hero within one scroll
+- [~] Product page shows total rental price for selected duration *(total updates in rental flow; top "Rent for" block still defaults to 1-day label)*
+
+### Phase 1b: Shop browse & findability (frontend only)
+
+**Goal:** Shop answers "what am I looking for?" without an extra click. Curated shortcuts sit above the grid; the full catalog is visible on the same page within one scroll.
+
+Same branch as Phase 1: `feat/new-rental-flow/phase-1-discovery`.
+
+**Status (Sep 2026):** Core browse/findability **shipped**. P2 polish items below are deferred or intentionally skipped.
+
+#### Two page modes (one route: `/shop`)
+
+| Mode | When | What the user sees |
+|------|------|-------------------|
+| **Browse** | Default `/shop` (no category, tag, search, brand, or sale param) | Sticky heading + Rent/Buy toggle, search + sort/filter icons, category chips, occasion tiles, **New In** rail, then **All listings** grid |
+| **Filtered** | Any active filter param (from nav, chips, rails, or search) | Same sticky header; active filter chips; result count above grid; sort; grid. Hide curated rails |
+
+No gate screen. Product cards are always reachable without tapping "Show products" first.
+
+#### Layout (browse mode, as shipped)
+
+```
+SHOP                          Rent | Buy   ← sticky header
+[ Search........................ ] [↕] [⚙]
+All · Dresses · Tops · Bags · Shoes · …  ← category chips (horizontal scroll)
+
+Shop by occasion
+[ Night Out ] [ Wedding Guest ] [ Brunch ] [ Work ] …
+
+New In                          View all →
+[card] [card] [card] [card] →            ← horizontal rail (~8 items)
+
+── All listings (N items for rent) ──
+[card] [card] [card] [card] [card]       ← full grid, same page
+Pagination
+```
+
+- **Most Rented rail on `/shop` was removed** (still on homepage). Sort by popular via toolbar if needed.
+- **Rails are shortcuts**, not the only path to inventory. Tapping a card goes to PDP; "View all" applies that rail's filter and switches to filtered mode (scroll to grid).
+- **Occasion tiles** apply a tag filter; grid below updates.
+- Old text-only shop hero replaced by `ShopBrowseSection` + sticky toolbar.
+
+#### Rent / Buy toggle
+
+- Single page at `/shop`; toggle sets `listingType` in the URL (same params as Phase 1 nav routes).
+- Mobile bottom nav **Rent** / **Buy** opens `/shop` with the correct mode pre-selected.
+- **Preserve other filters** when switching Rent ↔ Buy (category, size, search, etc.). Do not wipe the query string.
+- Reuse active-state logic from `shopNavMatch.ts`.
+
+#### Build list
+
+**P0 — Fix broken findability**
+
+- [x] Category nav links: pass category **IDs** in `ShopDropdown`, `ShopDropdownMobile`, and `ShopCategoryChips`
+- [~] Home occasion cards (`categoryData.tsx`) use **tags**, not category IDs *(intentional for occasion tiles)*
+- [x] Wire `sort` URL param in `useProductsQuery` → API (`newest`, `popular`, `price_low`, `price_high`)
+- [x] Inline search bar on shop (always visible; sets `?search=` on submit)
+- [x] Result count above grid ("47 items", "12 items for rent")
+- [x] Active filter chips (removable; clearing last chip returns to browse mode). Comma-separated color/size/tags supported.
+- [x] Sort in shop toolbar (icon trigger + dropdown; not only inside filter panel)
+- [x] Filter active count on shop toolbar (badge on filter icon)
+
+**P1 — Browse structure**
+
+- [x] `ShopRentBuyToggle` — sticky on shop page (title left, toggle right)
+- [x] `ShopCategoryChips` — horizontal category filter bar (instant filter, no slide-over)
+- [x] `ShopOccasionTiles` — shop by occasion row (reuse tag data from home / `categoryData`)
+- [x] Reuse `HomeProductRail` on shop for **New In** (browse mode only, default sort)
+- [x] ~~Most Rented rail on shop~~ — **removed**; homepage rail kept
+- [x] `ShopBrowseSection` wrapper: browse vs filtered mode switch
+- [x] Filtered mode: hide rails; show grid-first with chips + count
+- [x] "All listings" / "Results" section heading + count when grid renders
+- [x] Stable shop dropdown categories (all categories alphabetical, not 3 random per load)
+- [x] Campaign/sale pages: stack category filters without duplicate chips or broken headings
+
+**P2 — Polish**
+
+- [ ] Brand logo / pill strip on shop (browse mode) — **deferred**
+- [~] Vault Closet Drops — **gated** via admin Closet Feature toggle + `ShopClosetParamsGuard`; main shop still excludes closet inventory (`ONLY_WITH_CLOSET = false`)
+- [ ] SearchModal: optional "View all results on shop" → `/shop?search=…`
+- [x] Preserve `listingType`, `closetId`, `onlyWithCloset`, `sort`, `title`, `description`, `sale` in filter merge helpers
+- [~] Rent/Resale on `ProductCard` — **deferred**; cards use Rent/Buy price rows with `priceFocus` instead of badge pills
+- [ ] Remove dead shop hero files: `src/app/shop/sections/EndlessStyleHero.tsx`, `EndlessStyleHero copy.tsx`
+
+**Out of scope (Phase 1b)**
+
+- Separate `/shop/rent` and `/shop/buy` routes (toggle only)
+- Infinite scroll (keep pagination for v1)
+- Size-aware pre-filter from profile
+- Availability-by-date filter ("Available this weekend")
+
+#### Key files
+
+- `src/app/shop/page.tsx` → `ShopBrowseSection`
+- `src/app/shop/sections/NewListingsSection.tsx`
+- `src/app/shop/components/ShopRentBuyToggle.tsx`
+- `src/app/shop/components/ShopCategoryChips.tsx`
+- `src/app/shop/components/ShopOccasionTiles.tsx`
+- `src/app/shop/components/ShopBrowseSection.tsx`
+- `src/app/shop/components/ShopToolbar.tsx` (search, sort icon, filter icon, chips)
+- `src/app/shop/components/ListingFilterPanel.tsx`, `ShopClosetParamsGuard.tsx`
+- `src/app/home/sections/HomeProductRail.tsx` (reuse)
+- `src/lib/shop/shopBrowse.ts`, `src/lib/shop/listingFilters.ts`, `src/lib/nav/shopCategoryNav.ts`
+- `src/lib/queries/product/useProductsQuery.ts`
+- `src/common/layer/ShopDropdown.tsx`, `ShopDropdownMobile.tsx`
+- `src/common/layer/MobileBottomNav.tsx`, `src/lib/nav/shopNavMatch.ts`
+- `src/common/ui/SelectDropdown.tsx`, `ProductCard.tsx`
+- Tests: `src/lib/shop/shopBrowse.spec.ts`, `shopCategoryNav.spec.ts`, `closetShopFeature.spec.ts`
+
+#### Acceptance
+
+- [x] User landing on `/shop` sees product cards within one mobile scroll (no extra button)
+- [x] User can switch Rent/Buy without losing category or search filters
+- [x] Category links from nav return results (ID-based filters)
+- [x] Sort changes product order on shop *(confirm `popular` sort deployed on backend in prod)*
+- [x] Active filters visible as chips; clearing all returns browse mode with rails
+- [x] Filtered deep links (`/shop?tags=Night+Out`, brand, sale) show grid-first, no redundant rails
+- [x] Bottom nav Rent/Buy matches shop toggle state
 
 ---
 

@@ -28,9 +28,6 @@ export default function DesktopNavbar() {
             <ParagraphLink1>Shop</ParagraphLink1>
           </Link>
           <BrandsDropdown />
-          <Link href="#">
-            <ParagraphLink1>Style Spotlight</ParagraphLink1>
-          </Link>
           <Link href="/how-it-works">
             <ParagraphLink1>How it works</ParagraphLink1>
           </Link>

@@ -41,6 +41,7 @@ export type UserProduct = {
     | "UNAVAILABLE"
     | "SOLD";
   composition: string;
+  material?: string | null;
   measurement: string;
   originalValue: number;
   warning: string;
@@ -53,6 +54,8 @@ export type UserProduct = {
     createdAt?: string;
   } | null;
   categoryId: string | null;
+  category?: { id: string; name: string } | null;
+  tags?: Array<{ id: string; name: string }>;
   tagId: string | null;
   curatorId: string;
   receiveSmsNotifications: boolean;
