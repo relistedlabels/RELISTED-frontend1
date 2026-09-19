@@ -344,17 +344,17 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
               >
                 {isRequesting ? (
                   <>
-                    <Loader2 className="inline h-4 w-4 shrink-0 animate-spin" />
-                    <Paragraph1 className="m-0 text-center text-inherit">
+                    <Loader2 className="inline w-4 h-4 animate-spin shrink-0" />
+                    <Paragraph1 className="m-0 text-inherit text-center">
                       Checking…
                     </Paragraph1>
                   </>
                 ) : closetPrimaryCtaOverride ? (
-                  <Paragraph1 className="m-0 max-w-full text-center text-[11px] leading-snug text-inherit sm:text-xs">
+                  <Paragraph1 className="m-0 max-w-full text-[11px] text-inherit sm:text-xs text-center leading-snug">
                     {closetPrimaryCtaOverride}
                   </Paragraph1>
                 ) : (
-                  <Paragraph1 className="m-0 text-center text-sm text-white">
+                  <Paragraph1 className="m-0 text-white text-sm text-center">
                     Check availability
                   </Paragraph1>
                 )}
@@ -378,15 +378,16 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
           )}
         </div>
 
-        <Paragraph1 className="mb-4 text-gray-600 text-xs leading-relaxed">
-          Delivery details and payment come at checkout, after the lister
-          confirms the item is available.
-        </Paragraph1>
-
-        <div className="flex items-center space-x-2 bg-white p-3 border border-gray-200 rounded-lg">
-          <img src="/icons/safe1.svg" alt="secure" />
-          <Paragraph1 className="text-gray-700 leading-snug">
-            Secure checkout. Item ships within 1-3 business days.
+        <div className="flex items-start gap-2.5 pt-1">
+          <img
+            src="/icons/safe1.svg"
+            alt=""
+            className="mt-0.5 h-4 w-4 shrink-0"
+            aria-hidden
+          />
+          <Paragraph1 className="text-xs leading-relaxed text-gray-500">
+            No payment yet. Address and payment at checkout once availability is
+            confirmed.
           </Paragraph1>
         </div>
       </div>

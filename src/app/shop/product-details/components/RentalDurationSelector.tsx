@@ -262,9 +262,9 @@ const RentalDurationSelector = ({
 
   if (_token && isCheckingAuth) {
     return (
-      <div className="py-6">
-        <Paragraph1 className="mb-4 font-bold text-gray-800 text-xl tracking-wider">
-          RENTAL DURATION
+      <div className="pt-1">
+        <Paragraph1 className="mb-3 font-semibold text-[11px] text-gray-500 uppercase tracking-[0.14em]">
+          Rental duration
         </Paragraph1>
         <RentalCheckSkeleton />
       </div>
@@ -272,9 +272,9 @@ const RentalDurationSelector = ({
   }
 
   return (
-    <div className="py-6">
-      <Paragraph1 className="mb-4 font-bold text-gray-800 text-xl tracking-wider">
-        RENTAL DURATION
+    <div className="pt-1">
+      <Paragraph1 className="mb-3 font-semibold text-[11px] text-gray-500 uppercase tracking-[0.14em]">
+        Rental duration
       </Paragraph1>
 
       {/* Auth Error Alert */}
@@ -309,7 +309,7 @@ const RentalDurationSelector = ({
       )}
 
       {/* Duration Buttons */}
-      <div className="gap-2 grid grid-cols-2 xl:grid-cols-4 mb-8">
+      <div className="mb-5 grid grid-cols-2 gap-2 xl:grid-cols-4">
         {rentalDayOptions.map((days, _idx) => (
           <button
             type="button"
@@ -397,7 +397,7 @@ const RentalDurationSelector = ({
       />
 
       {/* Legends */}
-      <div className="flex justify-center gap-6 mt-6 text-gray-600 text-sm">
+      <div className="mt-4 flex justify-center gap-6 text-sm text-gray-600">
         <div className="flex items-center gap-2">
           <span className="bg-yellow-400 rounded w-4 h-4"></span>
           <Paragraph1>Selected range</Paragraph1>

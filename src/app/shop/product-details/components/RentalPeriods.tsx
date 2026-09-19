@@ -16,7 +16,6 @@ import {
 } from "@/common/ui/dashboardClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import RentalDurationSelector from "./RentalDurationSelector";
-import RentalLogisticsPreview from "./RentalLogisticsPreview";
 import RentalDispatchWindowPicker, {
   rentalDispatchCalendarStartYmd,
 } from "./RentalDispatchWindowPicker";
@@ -188,7 +187,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
       buildAvailabilityPayload();
 
     if (!isResale && rentalDays > 0 && !dispatchWindowsPayload) {
-      toast.error("Please choose delivery and return times.");
+      toast.error("Pick delivery and pickup times to continue.");
       return;
     }
 
@@ -335,7 +334,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
               </div>
 
               {/* Content */}
-              <div className="space-y-8 pt-4 pb-20 grow">
+              <div className="grow space-y-5 pb-24 pt-3 sm:space-y-6">
                 <RentalDurationSelector
                   productId={productId}
                   listerId={listerId}
@@ -347,11 +346,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                 />
 
                 {supportsRentalDates && rentalDays > 0 ? (
-                  <>
-                    <RentalLogisticsPreview
-                      startDate={startDate}
-                      rentalDays={rentalDays}
-                    />
+                  <div className="space-y-2">
                     <RentalDispatchWindowPicker
                       startDate={startDate}
                       rentalDays={rentalDays}
@@ -361,34 +356,11 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
                       closetEarliestDeliveryYmd={closetEarliestDeliveryYmd}
                       onPayloadChange={setDispatchWindowsPayload}
                     />
-                    <Paragraph1 className="text-xs text-gray-500">
+                    <Paragraph1 className="text-center text-xs text-gray-500">
                       Delivery address added at checkout.
                     </Paragraph1>
-                  </>
+                  </div>
                 ) : null}
-
-                <button
-                  type="button"
-                  className={`mt-4 flex w-full items-center justify-center gap-2.5 rounded-lg px-4 py-3 text-base font-semibold transition-colors ${
-                    isChecking
-                      ? "cursor-not-allowed bg-gray-400 text-white opacity-70"
-                      : "bg-black text-white hover:bg-gray-900"
-                  }`}
-                  onClick={handleCheckAvailability}
-                  disabled={isChecking}
-                >
-                  {isChecking ? (
-                    <>
-                      <Loader2
-                        className="w-4 h-4 animate-spin shrink-0"
-                        aria-hidden
-                      />
-                      Checking…
-                    </>
-                  ) : (
-                    "Check availability"
-                  )}
-                </button>
               </div>
 
               {/* Footer */}

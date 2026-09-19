@@ -67,15 +67,13 @@ const ProductDetailsTabsClient: React.FC<ProductDetailsTabsClientProps> = ({
   }
 
   return (
-    <div>
-
-
+    <div className="flex flex-col gap-2 sm:gap-3">
       {/* Tab Buttons - only show if both tabs are available */}
       {hasRent && hasResale && (
-        <div className="flex gap-2 bg-white mb-2 p-1 border border-gray-300 rounded-xl text-[14px]">
+        <div className="flex gap-1 rounded-xl border border-gray-300 bg-white p-0.5 text-[14px] sm:gap-2 sm:p-1">
           <button
             onClick={() => setActiveTab("rent")}
-            className={`flex-1 py-3 px-4 font-semibold rounded-lg transition duration-150 ${
+            className={`flex-1 rounded-lg px-3 py-2.5 font-semibold transition duration-150 sm:px-4 sm:py-3 ${
               activeTab === "rent"
                 ? "bg-black text-white"
                 : "bg-transparent text-black hover:bg-gray-50"
@@ -85,7 +83,7 @@ const ProductDetailsTabsClient: React.FC<ProductDetailsTabsClientProps> = ({
           </button>
           <button
             onClick={() => setActiveTab("resale")}
-            className={`flex-1 py-3 px-4 font-semibold rounded-lg transition duration-150 ${
+            className={`flex-1 rounded-lg px-3 py-2.5 font-semibold transition duration-150 sm:px-4 sm:py-3 ${
               activeTab === "resale"
                 ? "bg-black text-white"
                 : "bg-transparent text-black hover:bg-gray-50"
@@ -93,17 +91,6 @@ const ProductDetailsTabsClient: React.FC<ProductDetailsTabsClientProps> = ({
           >
             Buy
           </button>
-        </div>
-      )}
-
-      {/* Switching Message - only show if both tabs are available */}
-      {hasRent && hasResale && (
-        <div className="mb-6 text-[12px] text-gray-500 text-center">
-          {activeTab === "rent" ? (
-            <p>Prefer to own it? Switch to Buy.</p>
-          ) : (
-            <p>Prefer to rent? Switch to Rent.</p>
-          )}
         </div>
       )}
 

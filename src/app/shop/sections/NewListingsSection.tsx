@@ -8,8 +8,17 @@ import { primaryProductHeroImage } from "@/lib/product/primaryProductHeroImage";
 import { useProductsQuery } from "@/lib/queries/product/useProductsQuery";
 import { isShopRentMode, shopResultCountLabel } from "@/lib/shop/shopBrowse";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
+
+const LISTINGS_ANCHOR_ID = "shop-all-listings";
+
+function scrollToListingsSection(behavior: ScrollBehavior = "smooth") {
+  document.getElementById(LISTINGS_ANCHOR_ID)?.scrollIntoView({
+    behavior,
+    block: "start",
+  });
+}
 
 type PaginationItem = number | "ellipsis";
 
@@ -80,11 +89,28 @@ export default function NewListingsSection({
   const router = useRouter();
   const searchParams = useSearchParams();
   const priceFocus = isShopRentMode(searchParams) ? "rent" : "buy";
+  const pageParam = searchParams.get("page") ?? "1";
+  const skipInitialPageScroll = useRef(true);
+
+  useEffect(() => {
+    if (loading) return;
+
+    const page = Number(pageParam) || 1;
+
+    if (skipInitialPageScroll.current) {
+      skipInitialPageScroll.current = false;
+      if (page <= 1) return;
+    }
+
+    scrollToListingsSection();
+  }, [pageParam, loading]);
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams);
     params.set("page", newPage.toString());
-    router.push(`?${params.toString()}`);
+    router.push(`?${params.toString()}#${LISTINGS_ANCHOR_ID}`, {
+      scroll: false,
+    });
   };
 
   const total = pagination?.total ?? filteredProducts.length;
@@ -93,7 +119,7 @@ export default function NewListingsSection({
   if (loading) {
     return (
       <section
-        id="shop-all-listings"
+        id={LISTINGS_ANCHOR_ID}
         className="w-full scroll-mt-36 py-4 sm:py-10"
       >
         <div className="mx-auto container">
@@ -117,7 +143,7 @@ export default function NewListingsSection({
   if (error) {
     return (
       <section
-        id="shop-all-listings"
+        id={LISTINGS_ANCHOR_ID}
         className="w-full scroll-mt-36 py-4 sm:pb-10"
       >
         <div className="mx-auto container">
@@ -137,7 +163,7 @@ export default function NewListingsSection({
 
   return (
     <section
-      id="shop-all-listings"
+      id={LISTINGS_ANCHOR_ID}
       className="w-full scroll-mt-40 py-8 sm:scroll-mt-44 sm:py-10"
     >
       <div className="mx-auto w-full">

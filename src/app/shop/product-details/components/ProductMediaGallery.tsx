@@ -35,7 +35,7 @@ const ProductMediaGallery: React.FC<ProductMediaGalleryProps> = ({
 
   if (media.length === 0) {
     return (
-      <div className="w-full h-[250px] sm:h-[420px] bg-black/5 rounded-xl overflow-hidden flex items-center justify-center">
+      <div className="w-full h-[220px] sm:h-[420px] bg-black/5 rounded-xl overflow-hidden flex items-center justify-center">
         <p>No images available for this product.</p>
       </div>
     );
@@ -58,7 +58,7 @@ const ProductMediaGallery: React.FC<ProductMediaGalleryProps> = ({
         layout
         whileHover={{ scale: 1.01 }}
         transition={{ type: "spring", stiffness: 200, damping: 20 }}
-        className="w-full h-[400px] sm:h-[420px] bg-gray-100/5 rounded-xl- overflow-hidden cursor-zoom-in"
+        className="relative w-full h-[min(52vw,280px)] sm:h-[420px] bg-gray-100/5 rounded-xl overflow-hidden cursor-zoom-in"
         onClick={() => setIsOpen(true)}
       >
         <AnimatePresence mode="wait">
@@ -93,10 +93,47 @@ const ProductMediaGallery: React.FC<ProductMediaGalleryProps> = ({
             </motion.div>
           )}
         </AnimatePresence>
+
+        {media.length > 1 ? (
+          <>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                prevMedia();
+              }}
+              className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-1.5 shadow-sm transition hover:bg-white sm:hidden"
+              aria-label="Previous image"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                nextMedia();
+              }}
+              className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-1.5 shadow-sm transition hover:bg-white sm:hidden"
+              aria-label="Next image"
+            >
+              <ChevronRight size={18} />
+            </button>
+            <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 sm:hidden">
+              {media.map((_, idx) => (
+                <span
+                  key={idx}
+                  className={`h-1.5 rounded-full transition-all ${
+                    activeIndex === idx ? "w-4 bg-black" : "w-1.5 bg-black/30"
+                  }`}
+                />
+              ))}
+            </div>
+          </>
+        ) : null}
       </motion.div>
 
       {/* Navigation Controls */}
-      <div className="flex justify-between items-center mt-4">
+      <div className="mt-3 hidden items-center justify-between sm:flex">
         <button
           onClick={prevMedia}
           className="p-2 hover:bg-gray-200 rounded-full transition"
@@ -117,7 +154,7 @@ const ProductMediaGallery: React.FC<ProductMediaGalleryProps> = ({
       </div>
 
       {/* Thumbnail Strip */}
-      <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
+      <div className="mt-3 hidden gap-2 overflow-x-auto pb-2 sm:flex">
         {media.map((item: any, idx: number) => (
           <motion.button
             key={idx}

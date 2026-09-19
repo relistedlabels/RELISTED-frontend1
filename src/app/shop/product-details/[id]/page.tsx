@@ -36,7 +36,7 @@ export default async function ProductDetailsPage({
           </div>
           <ProductMediaGallery productId={id} />
         </div>
-        <div className=" sm:py-[100px] bg-white sm:px-[100px] p-4 flex flex-col gap-4 ">
+        <div className="flex flex-col gap-2 bg-white p-4 sm:gap-4 sm:py-[100px] sm:px-[100px]">
           <TitleProductCard productId={id} />
           <ProductDetailsTabsClient productId={id} />
           <ProductAccordion productId={id} />

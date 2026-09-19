@@ -107,14 +107,14 @@ const TitleProductCard: React.FC<TitleProductCardProps> = ({ productId }) => {
       </div>
 
       {subText ? (
-        <Paragraph1 className="mb-3 text-base text-gray-500 sm:text-lg">
+        <Paragraph1 className="mb-2 text-base text-gray-500 sm:mb-3 sm:text-lg">
           {subText}
         </Paragraph1>
       ) : null}
 
       {hasMetaRow ? (
-        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-4 sm:gap-y-2">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="mb-2 flex items-start justify-between gap-x-3 gap-y-2 sm:mb-4">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
             {product.category?.name ? (
               <CategoryPill href={shopCategoryHref(product.category)}>
                 {product.category.name}
@@ -131,7 +131,7 @@ const TitleProductCard: React.FC<TitleProductCardProps> = ({ productId }) => {
             ) : null}
           </div>
           {product.measurement ? (
-            <div className="flex justify-end sm:block">
+            <div className="shrink-0 pt-0.5">
               <SizeGuide variant="inline" />
             </div>
           ) : null}
