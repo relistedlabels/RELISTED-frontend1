@@ -3,6 +3,7 @@
 import React from "react";
 import AccordionItem from "../../../../common/ui/AccordionItem";
 import { Paragraph1 } from "@/common/ui/Text";
+import ProductMetadataSection from "./ProductMetadataSection";
 import ProductDetailsBlock from "./Specification";
 import ProductCareDetails from "./ProductCareDetails";
 import ExampleReviewsBlock from "./Review";
@@ -21,14 +22,32 @@ const ProductAccordion: React.FC<ProductAccordionProps> = ({ productId }) => {
     return <DetailPanelSkeleton />;
   }
 
+  const stylingTip = product.stylingTip?.trim();
+
   return (
     <div className=" bg-white">
       <AccordionItem title="PRODUCT DETAILS">
-        <ProductDetailsBlock product={product} />
+        <div className="font-sans p-4 sm:p-0">
+          <ProductMetadataSection product={product} />
+          <ProductDetailsBlock product={product} />
+        </div>
       </AccordionItem>
 
+      {stylingTip ? (
+        <AccordionItem title="STYLING TIPS">
+          <div className="font-sans p-4 sm:p-0">
+            <Paragraph1 className="text-sm text-gray-700 leading-relaxed">
+              {stylingTip}
+            </Paragraph1>
+          </div>
+        </AccordionItem>
+      ) : null}
+
       <AccordionItem title="PRODUCT CARE">
-        <ProductCareDetails />
+        <ProductCareDetails
+          careInstruction={product.careInstruction}
+          careSteps={product.careSteps}
+        />
       </AccordionItem>
 
       <AccordionItem title="REVIEWS" count={0}>

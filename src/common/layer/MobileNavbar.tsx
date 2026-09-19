@@ -1,24 +1,52 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ComponentType } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Package, ShoppingBagIcon } from "lucide-react";
+import {
+  HelpCircle,
+  Home,
+  Menu,
+  Package,
+  Shirt,
+  ShoppingBag,
+  ShoppingBagIcon,
+  Store,
+  X,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Paragraph1 } from "../ui/Text";
-import Button from "../ui/Button";
 import RentalCartView from "./RentalCartView";
 import SearchModal from "./SearchModal";
-import ShopDropdownMobile from "./ShopDropdownMobile";
 import { MobileAuthActions } from "./MobileAuthActions";
 import { useCartCountStore } from "@/store/useCartCountStore";
 import { useCartItems } from "@/lib/queries/renters/useCartItems";
 import { useUserStore } from "@/store/useUserStore";
 import { MobileSalesNavLink } from "./SalesNavLink";
 
+type MobileNavLinkProps = {
+  href: string;
+  label: string;
+  icon: ComponentType<{ className?: string }>;
+  onNavigate: () => void;
+};
+
+function MobileNavLink({
+  href,
+  label,
+  icon: Icon,
+  onNavigate,
+}: MobileNavLinkProps) {
+  return (
+    <Link href={href} onClick={onNavigate} className="flex items-center gap-3">
+      <Icon className="h-5 w-5 shrink-0 text-gray-400" aria-hidden />
+      <Paragraph1>{label}</Paragraph1>
+    </Link>
+  );
+}
+
 function MobileNavbarContent() {
   const [open, setOpen] = useState(false);
-  const [isShopMenuOpen, setIsShopMenuOpen] = useState(false);
   const cartCount = useCartCountStore((state) => state.cartCount);
   const setCartCount = useCartCountStore((state) => state.setCartCount);
   const token = useUserStore((s) => s.token);
@@ -34,11 +62,22 @@ function MobileNavbarContent() {
     }
   }, [token, data?.itemCount, setCartCount]);
 
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
+
+  const closeMenu = () => setOpen(false);
+
   return (
     <div className="xl:hidden bg-black text-white px-4 py-5 w-full">
       <div className="relative flex items-center">
         {/* LEFT - Toggle */}
-        <button onClick={() => setOpen(true)} className="z-20">
+        <button onClick={() => setOpen(true)} className="z-20" aria-label="Open menu">
           <Menu className="w-6 h-6" />
         </button>
 
@@ -61,7 +100,7 @@ function MobileNavbarContent() {
           <SearchModal />
 
           <Link href="/shop/cart" className="flex items-center space-x-1">
-            <ShoppingBagIcon className="w-6 h-6" />
+            <ShoppingBagIcon className="w-6 h-6" aria-hidden />
             <Paragraph1>{cartCount}</Paragraph1>
           </Link>
         </div>
@@ -74,19 +113,18 @@ function MobileNavbarContent() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black z-50 flex flex-col px-4 py-4"
+            className="fixed inset-0 z-[100] flex flex-col bg-black"
           >
             {/* Top Row */}
-            <div className="relative flex items-center justify-center">
-              {/* Close Button (Left) */}
+            <div className="relative flex shrink-0 items-center justify-center px-4 py-4">
               <button
-                onClick={() => setOpen(false)}
-                className="absolute left-0 top-1/2 -translate-y-1/2"
+                onClick={closeMenu}
+                className="absolute left-4 top-1/2 -translate-y-1/2"
+                aria-label="Close menu"
               >
                 <X className="w-6 h-6" />
               </button>
 
-              {/* Center Logo */}
               <Image
                 src="/images/logo.svg"
                 alt="Logo"
@@ -95,65 +133,61 @@ function MobileNavbarContent() {
                 className="object-contain"
               />
 
-              {/* Bag Icon (Right) */}
-              <div className="absolute right-0 top-1/2 -translate-y-1/2">
-                <div className="relative">
-                  <RentalCartView />
-                </div>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                <RentalCartView />
               </div>
             </div>
 
-            {/* Slide Down Body */}
+            {/* Scrollable menu body — extra bottom padding clears fixed bottom nav */}
             <motion.div
-              initial={{ y: -20, opacity: 0 }}
+              initial={{ y: -12, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              exit={{ y: -20, opacity: 0 }}
+              exit={{ y: -12, opacity: 0 }}
               transition={{ duration: 0.25 }}
-              className="mt-10 flex flex-col gap-6 text-lg"
+              className="flex-1 overflow-y-auto overscroll-contain px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
             >
-              <Link href="/" onClick={() => setOpen(false)}>
-                <Paragraph1>Home</Paragraph1>
-              </Link>
-              <button
-                className=" flex  "
-                onClick={() => setIsShopMenuOpen(true)}
-              >
-                <Paragraph1>Shop</Paragraph1>
-              </button>
-              <ShopDropdownMobile
-                isOpen={isShopMenuOpen}
-                onClose={() => {
-                  setIsShopMenuOpen(false);
-                  setOpen(false);
-                }}
-              />
-              <Link
-                href="/shop?listingType=RENTAL,RENT_OR_RESALE"
-                onClick={() => setOpen(false)}
-              >
-                <Paragraph1>Rent</Paragraph1>
-              </Link>
-              <Link
-                href="/shop?listingType=RESALE,RENT_OR_RESALE"
-                onClick={() => setOpen(false)}
-              >
-                <Paragraph1>Buy</Paragraph1>
-              </Link>
-              <Link href="/renters/orders" onClick={() => setOpen(false)}>
-                <div className="flex items-center gap-2">
-                  <Package className="h-4 w-4" aria-hidden />
-                  <Paragraph1>Orders</Paragraph1>
-                </div>
-              </Link>
-              <Link href="/style-spotlight" onClick={() => setOpen(false)}>
-                <Paragraph1>Style Spotlight</Paragraph1>
-              </Link>
-              <Link href="/how-it-works" onClick={() => setOpen(false)}>
-                <Paragraph1>How it works</Paragraph1>
-              </Link>
-              <MobileSalesNavLink onNavigate={() => setOpen(false)} />
-              <div className="mt- flex flex-col gap-3">
-                <MobileAuthActions onClose={() => setOpen(false)} />
+              <div className="flex flex-col gap-6 py-4 text-lg">
+                <MobileNavLink
+                  href="/"
+                  label="Home"
+                  icon={Home}
+                  onNavigate={closeMenu}
+                />
+                <MobileNavLink
+                  href="/shop"
+                  label="Shop"
+                  icon={Store}
+                  onNavigate={closeMenu}
+                />
+                <MobileNavLink
+                  href="/shop?listingType=RENTAL,RENT_OR_RESALE"
+                  label="Rent"
+                  icon={Shirt}
+                  onNavigate={closeMenu}
+                />
+                <MobileNavLink
+                  href="/shop?listingType=RESALE,RENT_OR_RESALE"
+                  label="Buy"
+                  icon={ShoppingBag}
+                  onNavigate={closeMenu}
+                />
+                <MobileNavLink
+                  href="/renters/orders"
+                  label="Orders"
+                  icon={Package}
+                  onNavigate={closeMenu}
+                />
+                <MobileNavLink
+                  href="/how-it-works"
+                  label="How it works"
+                  icon={HelpCircle}
+                  onNavigate={closeMenu}
+                />
+                <MobileSalesNavLink onNavigate={closeMenu} />
+              </div>
+
+              <div className="mt-2 border-t border-gray-800 pt-6">
+                <MobileAuthActions onClose={closeMenu} />
               </div>
             </motion.div>
           </motion.div>

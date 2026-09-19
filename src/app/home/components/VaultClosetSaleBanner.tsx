@@ -8,6 +8,7 @@ import VaultClosetSaleNotifyModal from "./VaultClosetSaleNotifyModal";
 import { useFeaturedShopSale } from "@/lib/queries/shop/useShopSale";
 import { buildSaleShopHref } from "@/lib/api/shopSale";
 import { isShopSaleBannerActive } from "@/lib/shopSale/bannerVisibility";
+import { useClosetShopFeatureEnabled } from "@/lib/queries/site/useClosetShopFeatureEnabled";
 
 function pad2(n: number) {
   return n.toString().padStart(2, "0");
@@ -42,6 +43,7 @@ export default function VaultClosetSaleBanner() {
   const [tick, setTick] = useState(0);
   const [notifyOpen, setNotifyOpen] = useState(false);
   const { data: me } = useMe();
+  const { enabled: closetFeatureEnabled } = useClosetShopFeatureEnabled();
   const { data: featuredRes } = useFeaturedShopSale();
   const sale = featuredRes?.data;
 
@@ -66,7 +68,7 @@ export default function VaultClosetSaleBanner() {
     return { target: null, phase: "ended" as const };
   }, [sale, tick]);
 
-  if (!sale || phase === "ended" || target === null) {
+  if (!closetFeatureEnabled || !sale || phase === "ended" || target === null) {
     return null;
   }
 

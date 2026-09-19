@@ -1,35 +1,59 @@
 "use client";
 
+import Link from "next/link";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import React from "react";
 import SizeGuide from "./SizeGuide";
 import { usePublicProductById } from "@/lib/queries/product/usePublicProductById";
 import { useBrandById } from "@/lib/queries/brand/useBrands";
-import { usePublicUserById } from "@/lib/queries/user/usePublicUserById";
 import { ProductDetailSkeleton } from "@/common/ui/SkeletonLoaders";
+import { shopCategoryHref } from "@/lib/shop/productDetailLinks";
 
 interface TitleProductCardProps {
   productId: string;
 }
 
-const TitleProductCard: React.FC<TitleProductCardProps> = ({ productId }) => {
-  console.log("🎯 TitleProductCard: Mounted with productId:", productId);
-  const { data: product, isLoading, error } = usePublicProductById(productId);
-
-  // Fetch brand by brandId if available
-  const { data: brand } = useBrandById(product?.brandId || "");
-
-  // Fetch curator (lister) by curatorId if available
-  const { data: curator } = usePublicUserById(product?.curatorId || "");
-
-  console.log(
-    "🎯 TitleProductCard: Query state - isLoading:",
-    isLoading,
-    "hasError:",
-    !!error,
-    "product:",
-    product,
+function CategoryPill({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex items-center rounded-full border border-gray-900 bg-gray-900 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-gray-800"
+    >
+      {children}
+    </Link>
   );
+}
+
+function AttributePill({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-700">
+      {children}
+    </span>
+  );
+}
+
+function subTextMentionsColor(color: string, subText: string): boolean {
+  const escaped = color.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`\\b${escaped}\\b`, "i").test(subText);
+}
+
+function subTextMentionsSize(measurement: string, subText: string): boolean {
+  const escaped = measurement.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return (
+    new RegExp(`\\bsize\\s+${escaped}\\b`, "i").test(subText) ||
+    new RegExp(`\\b${escaped}\\b`, "i").test(subText)
+  );
+}
+
+const TitleProductCard: React.FC<TitleProductCardProps> = ({ productId }) => {
+  const { data: product, isLoading, error } = usePublicProductById(productId);
+  const { data: brand } = useBrandById(product?.brandId || "");
 
   if (isLoading) {
     return <ProductDetailSkeleton />;
@@ -45,71 +69,74 @@ const TitleProductCard: React.FC<TitleProductCardProps> = ({ productId }) => {
     );
   }
 
+  const brandName = brand?.name || product.brand?.name || "Brand";
+  const subText = product.subText?.trim() ?? "";
+  const showColor =
+    product.color &&
+    (!subText || !subTextMentionsColor(product.color, subText));
+  const showSize =
+    product.measurement &&
+    (!subText || !subTextMentionsSize(product.measurement, subText));
+
+  const hasMetaRow =
+    product.category?.name ||
+    showColor ||
+    showSize ||
+    product.condition ||
+    product.measurement;
+
   return (
     <div className="font-sans">
-      {/* Brand Name */}
       <Paragraph1 className="mb-1 text-gray-700 tracking-wider">
-        {brand?.name || product.brand?.name || "Brand"}
+        {brandName}
       </Paragraph1>
 
-      {/* Product Name */}
-      <div className="flex flex-wrap items-center gap-2 mb-1">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
         <Header1Plus className="font-extrabold text-black text-2xl sm:text-3xl md:text-4xl leading-tight">
           {product.name}
         </Header1Plus>
         {product.status === "SOLD" ? (
-          <span className="inline-flex items-center bg-neutral-800 px-2.5 py-0.5 rounded-full font-semibold text-[11px] text-white uppercase tracking-wide">
+          <span className="inline-flex items-center rounded-full bg-neutral-800 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
             Sold out
           </span>
         ) : product.status === "RENTED" ? (
-          <span className="inline-flex items-center bg-amber-800 px-2.5 py-0.5 rounded-full font-semibold text-[11px] text-white uppercase tracking-wide">
+          <span className="inline-flex items-center rounded-full bg-amber-800 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
             Rented out
           </span>
         ) : null}
       </div>
 
-      {/* Product Description */}
-      <Paragraph1 className="mb-3 text-gray-700 text-base sm:text-lg md:text-xl">
-        {product.color && product.measurement
-          ? `${product.color} / ${product.measurement}`
-          : product.color || "Premium fashion item"}
-      </Paragraph1>
-
-      {/* Ratings and Reviews - Default values if not available */}
-      <div className="flex items-center mb-5">
-        <div className="mr-2 text-yellow-500 text-lg sm:text-xl">
-          <span aria-label={`4.5 star rating`}>
-            {"★".repeat(4)}
-            {"☆".repeat(1)}
-          </span>
-        </div>
-        <Paragraph1 className="mr-2 font-bold text-gray-900 text-base sm:text-lg">
-          4.5
+      {subText ? (
+        <Paragraph1 className="mb-3 text-base text-gray-500 sm:text-lg">
+          {subText}
         </Paragraph1>
-        <Paragraph1 className="text-gray-500 text-sm sm:text-base">
-          (0 Reviews)
-        </Paragraph1>
-      </div>
+      ) : null}
 
-      {/* Tags and Size Guide */}
-      <div className="flex sm:flex-row flex-col sm:justify-between items-start sm:items-center gap-3">
-        <div className="flex flex-wrap items-center gap-2 pb-1 overflow-x-auto g no-scrollbar">
-          {product.color && (
-            <div className="bg-white px-3 py-1 border border-gray-300 rounded-full text-gray-800 whitespace-nowrap">
-              <Paragraph1>{product.color}</Paragraph1>
-            </div>
-          )}
-          {product.measurement && (
-            <div className="bg-white px-3 py-1 border border-gray-300 rounded-full text-gray-800 whitespace-nowrap">
-              <Paragraph1>Size {product.measurement}</Paragraph1>
-            </div>
-          )}
-          <div className="bg-white px-3 py-1 border border-gray-300 rounded-full text-gray-800 whitespace-nowrap">
-            <Paragraph1>{product.condition}</Paragraph1>
+      {hasMetaRow ? (
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-4 sm:gap-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {product.category?.name ? (
+              <CategoryPill href={shopCategoryHref(product.category)}>
+                {product.category.name}
+              </CategoryPill>
+            ) : null}
+            {showColor ? (
+              <AttributePill>{product.color}</AttributePill>
+            ) : null}
+            {showSize ? (
+              <AttributePill>Size {product.measurement}</AttributePill>
+            ) : null}
+            {product.condition ? (
+              <AttributePill>{product.condition}</AttributePill>
+            ) : null}
           </div>
+          {product.measurement ? (
+            <div className="flex justify-end sm:block">
+              <SizeGuide variant="inline" />
+            </div>
+          ) : null}
         </div>
-        <SizeGuide />
-      </div>
+      ) : null}
     </div>
   );
 };

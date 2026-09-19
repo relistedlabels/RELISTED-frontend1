@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { ChevronRight, X } from "lucide-react";
 import { ParagraphLink1, Paragraph1 } from "../ui/Text";
 import { motion, AnimatePresence } from "framer-motion";
 import { useBrands } from "@/lib/queries/brand/useBrands";
 import { useCategories } from "@/lib/queries/category/useCategories";
+import { shopCategoryNavItems } from "@/lib/nav/shopCategoryNav";
 
-// Type for navigation items
 type NavItem = {
   name: string;
   subMenu: string[] | null;
@@ -17,7 +17,6 @@ type NavItem = {
   description?: string;
 };
 
-// Helper function to build shop URL with filters
 const buildShopUrl = (
   title: string,
   description: string,
@@ -32,13 +31,6 @@ const buildShopUrl = (
   return `/shop?${params.toString()}`;
 };
 
-const NAV_LINKS: NavItem[] = [
-  {
-    name: "Brands",
-    subMenu: null,
-  },
-];
-
 interface ShopDropdownMobileProps {
   isOpen: boolean;
   onClose: () => void;
@@ -51,40 +43,29 @@ const ShopDropdownMobile: React.FC<ShopDropdownMobileProps> = ({
   const { data: brandsData } = useBrands();
   const { data: categoriesData = [] } = useCategories();
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
-  const [navLinks, setNavLinks] = useState<NavItem[]>(NAV_LINKS);
-  const [randomCategories, setRandomCategories] = useState<NavItem[]>([]);
 
-  // Select 3 random categories
-  useEffect(() => {
-    if (categoriesData && categoriesData.length > 0) {
-      const shuffled = [...categoriesData].sort(() => 0.5 - Math.random());
-      const randomCats = shuffled.slice(0, 3).map((cat: any) => ({
-        name: cat.name,
-        subMenu: null,
-        title: cat.name,
-        description: `Shop ${cat.name} collection`,
-        filter: { key: "category", value: cat.name },
-      }));
-      setRandomCategories(randomCats);
-    }
-  }, [categoriesData]);
+  const categoryLinks = useMemo(
+    () => shopCategoryNavItems(categoriesData),
+    [categoriesData],
+  );
 
-  // Update NAV_LINKS when brands data is fetched
-  useEffect(() => {
-    if (brandsData && brandsData.length > 0) {
-      const brandNames = brandsData
-        .slice(0, 32)
-        .map((brand: any) => brand.name || brand);
+  const brandNames = useMemo(
+    () =>
+      brandsData?.slice(0, 32).map((brand: { name?: string }) => brand.name || brand) ??
+      [],
+    [brandsData],
+  );
 
-      setNavLinks([
-        {
-          name: "Brands",
-          subMenu: brandNames,
-        },
-        ...randomCategories,
-      ]);
-    }
-  }, [brandsData, randomCategories]);
+  const navLinks = useMemo<NavItem[]>(
+    () => [
+      {
+        name: "Brands",
+        subMenu: brandNames.length > 0 ? brandNames : null,
+      },
+      ...categoryLinks,
+    ],
+    [brandNames, categoryLinks],
+  );
 
   const handleCategoryClick = (categoryName: string, hasSubMenu: boolean) => {
     if (hasSubMenu) {
@@ -114,7 +95,6 @@ const ShopDropdownMobile: React.FC<ShopDropdownMobileProps> = ({
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
             <div className="flex justify-between items-center p-4 ">
               <Paragraph1 className="font-bold">Shop</Paragraph1>
               <button
@@ -126,9 +106,7 @@ const ShopDropdownMobile: React.FC<ShopDropdownMobileProps> = ({
               </button>
             </div>
 
-            {/* Navigation Items */}
             <nav className="py-2">
-              {/* Main Shop Link */}
               <Link
                 href="/shop?title=Shop&description=Browse+all+collections"
                 onClick={onClose}
@@ -137,7 +115,6 @@ const ShopDropdownMobile: React.FC<ShopDropdownMobileProps> = ({
                 <ParagraphLink1>All Products</ParagraphLink1>
               </Link>
 
-              {/* Category Links */}
               {navLinks.map((item) => {
                 const isExpanded = expandedCategory === item.name;
                 const hasSubMenu = item.subMenu && item.subMenu.length > 0;
@@ -170,7 +147,6 @@ const ShopDropdownMobile: React.FC<ShopDropdownMobileProps> = ({
                       )}
                     </div>
 
-                    {/* Submenu Items */}
                     <AnimatePresence>
                       {hasSubMenu && isExpanded && (
                         <motion.div
@@ -180,7 +156,6 @@ const ShopDropdownMobile: React.FC<ShopDropdownMobileProps> = ({
                           transition={{ duration: 0.2 }}
                           className="overflow-hidden bg-black"
                         >
-                          {/* 2-Column Grid with Scrollable Container */}
                           <div className="max-h-58 overflow-y-auto px-4 py-3">
                             <div className="grid grid-cols-2 gap-2">
                               {item.subMenu!.map((subItem, index) => {
