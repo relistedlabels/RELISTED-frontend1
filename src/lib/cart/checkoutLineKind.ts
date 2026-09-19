@@ -83,11 +83,18 @@ export function isCheckoutRentalLine(
   );
 }
 
-/** Approved checkout rows with no rental lines (purchase / resale only). */
-export function isPurchaseOnlyCheckout(
-  approvedLines: CheckoutLineRef[],
+/** Entire cart is purchase / resale (no rental lines). */
+export function isCartPurchaseResaleOnly(
   cartItems: CartItem[] | undefined,
 ): boolean {
-  if (!approvedLines.length) return false;
-  return !approvedLines.some((item) => isCheckoutRentalLine(item, cartItems));
+  if (!cartItems?.length) return false;
+  return cartItems.every((item) =>
+    isCheckoutResalePurchaseLine(
+      {
+        cartItemId: item.id,
+        rentalDays: item.days,
+      },
+      cartItems,
+    ),
+  );
 }

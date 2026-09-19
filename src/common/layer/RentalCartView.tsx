@@ -22,6 +22,7 @@ import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
 import Link from "next/link";
 import RentalCartSummary from "@/app/shop/cart/components/RentalCartSummary";
+import { useNavbarCartCount } from "@/lib/queries/renters/useNavbarCartCount";
 
 // --------------------
 // Slide-in Filter Panel
@@ -116,15 +117,26 @@ const RentalCartViewPanel: React.FC<RentalCartViewPanelProps> = ({
 // --------------------
 const RentalCartView: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const cartCount = useNavbarCartCount();
 
   return (
     <>
       {/* Toggle Button */}
       <button
+        type="button"
         onClick={() => setIsOpen(true)}
-        className="flex rounded-lg whitespace-nowrap bg-black text-white  items-center  gap-1 cursor-pointer  transition "
+        className="flex items-center gap-1.5 rounded-lg whitespace-nowrap bg-black px-2 py-1 text-white cursor-pointer transition"
+        aria-label={
+          cartCount > 0 ? `Cart, ${cartCount} items` : "Open cart preview"
+        }
       >
-        <ShoppingBagIcon className="w-6 h-6" /> <Paragraph1> 0</Paragraph1>
+        <ShoppingBagIcon className="w-5 h-5 shrink-0" aria-hidden />
+        <Paragraph1 className="text-sm font-medium">Cart</Paragraph1>
+        {cartCount > 0 ? (
+          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold leading-none text-black">
+            {cartCount > 99 ? "99+" : cartCount}
+          </span>
+        ) : null}
       </button>
 
       {/* Filter Panel */}

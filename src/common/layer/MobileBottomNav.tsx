@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Home, Shirt, ShoppingBag, Package, User } from "lucide-react";
+import { Home, Shirt, ShoppingBag, Package, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import { shouldShowMobileBottomNav } from "@/lib/navbarRoutes";
+import { useNavbarCartCount } from "@/lib/queries/renters/useNavbarCartCount";
 import {
   isBuyShopNavActive,
   isRentShopNavActive,
@@ -57,14 +58,10 @@ const NAV_ITEMS = [
     guestOpensAuth: true,
   },
   {
-    href: "/renters/account",
-    label: "Account",
-    icon: User,
-    match: (p: string) =>
-      p.startsWith("/renters/account") ||
-      p.startsWith("/renters/wallet") ||
-      p.startsWith("/renters/dispute"),
-    guestOpensAuth: true,
+    href: "/shop/cart",
+    label: "Cart",
+    icon: ShoppingCart,
+    match: (p: string) => p.startsWith("/shop/cart"),
   },
 ] as const;
 
@@ -74,6 +71,7 @@ export default function MobileBottomNav() {
   const token = useUserStore((s) => s.token);
   const closeMenu = useMobileMenuStore((state) => state.closeMenu);
   const [authSheetOpen, setAuthSheetOpen] = useState(false);
+  const cartCount = useNavbarCartCount();
 
   if (!shouldShowMobileBottomNav(pathname)) return null;
 
@@ -101,6 +99,30 @@ export default function MobileBottomNav() {
             const itemClass = `flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium transition-colors w-full ${
               isActive ? "text-black" : "text-gray-500"
             }`;
+            const showCartBadge = label === "Cart" && cartCount > 0;
+            const cartBadgeLabel =
+              cartCount > 99 ? "99+" : String(cartCount);
+
+            const iconNode = (
+              <span className="relative inline-flex">
+                <Icon
+                  className={`h-5 w-5 ${isActive ? "stroke-[2.5px]" : "stroke-[1.75px]"}`}
+                  aria-hidden
+                />
+                {showCartBadge ? (
+                  <span
+                    className={`absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold leading-none ${
+                      isActive
+                        ? "bg-black text-white"
+                        : "bg-red-600 text-white"
+                    }`}
+                    aria-hidden
+                  >
+                    {cartBadgeLabel}
+                  </span>
+                ) : null}
+              </span>
+            );
 
             if (!token && guestOpensAuth) {
               return (
@@ -113,10 +135,7 @@ export default function MobileBottomNav() {
                     }}
                     className={itemClass}
                   >
-                    <Icon
-                      className={`h-5 w-5 ${isActive ? "stroke-[2.5px]" : "stroke-[1.75px]"}`}
-                      aria-hidden
-                    />
+                    {iconNode}
                     <span>{label}</span>
                   </button>
                 </li>
@@ -125,11 +144,17 @@ export default function MobileBottomNav() {
 
             return (
               <li key={label} className="flex-1">
-                <Link href={href} className={itemClass} onClick={closeMenu}>
-                  <Icon
-                    className={`h-5 w-5 ${isActive ? "stroke-[2.5px]" : "stroke-[1.75px]"}`}
-                    aria-hidden
-                  />
+                <Link
+                  href={href}
+                  className={itemClass}
+                  onClick={closeMenu}
+                  aria-label={
+                    showCartBadge
+                      ? `Cart, ${cartBadgeLabel} items`
+                      : undefined
+                  }
+                >
+                  {iconNode}
                   <span>{label}</span>
                 </Link>
               </li>
