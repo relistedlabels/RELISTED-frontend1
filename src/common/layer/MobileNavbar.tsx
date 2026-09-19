@@ -89,8 +89,8 @@ function MobileNavbarContent() {
 
         {/* RIGHT */}
         <div className="flex items-center gap-3 ml-auto z-20">
-          <NavbarNotificationBell />
           <SearchModal />
+          <NavbarNotificationBell />
         </div>
       </div>
 

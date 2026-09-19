@@ -61,14 +61,12 @@ function DesktopNavbarContent() {
 
           {/* Right Section */}
           <div className="flex items-center space-x-6 text-sm font-light">
-            <SearchModal />
+            <SearchModal showLabel />
 
             <Link href="/renters/orders" className="flex items-center gap-1.5">
               <Package className="w-5 h-5" aria-hidden />
               <ParagraphLink1>Orders</ParagraphLink1>
             </Link>
-
-            <NavbarNotificationBell />
 
             {token ? (
               <Link
@@ -88,6 +86,8 @@ function DesktopNavbarContent() {
                 {cartContent}
               </button>
             )}
+
+            <NavbarNotificationBell />
 
             <AuthActions />
           </div>

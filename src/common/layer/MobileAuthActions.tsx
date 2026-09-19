@@ -3,6 +3,7 @@
 import type { ComponentType } from "react";
 import {
   AlertCircle,
+  Compass,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -10,6 +11,12 @@ import {
   User,
   Wallet,
 } from "lucide-react";
+import { authRoleToOnboardingRole } from "@/lib/onboarding/onboardingGate";
+import {
+  getOnboardingTourPath,
+  resetOnboardingForManualTour,
+} from "@/lib/onboarding/onboardingStorage";
+import { useUserStore } from "@/store/useUserStore";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -65,6 +72,8 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
   const searchParams = useSearchParams();
   const [signInRedirectUrl, setSignInRedirectUrl] = useState(pathname);
   const router = useRouter();
+  const userId = useUserStore((s) => s.userId);
+  const onboardingRole = authRoleToOnboardingRole(user?.role);
 
   useEffect(() => {
     const qs = searchParams.toString();
@@ -85,6 +94,13 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
         router.replace("/auth/sign-in");
       },
     });
+  };
+
+  const handleTakeTour = () => {
+    if (!onboardingRole) return;
+    handleLinkClick();
+    resetOnboardingForManualTour(userId, onboardingRole);
+    router.push(getOnboardingTourPath(onboardingRole));
   };
 
   const getSettingsRoute = () => {
@@ -207,6 +223,16 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
             icon={AlertCircle}
             onClick={handleLinkClick}
           />
+          {onboardingRole ? (
+            <button
+              type="button"
+              onClick={handleTakeTour}
+              className="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-gray-900"
+            >
+              <Compass size={18} className="text-gray-400" aria-hidden />
+              <Paragraph1 className="text-sm text-white">Take the tour</Paragraph1>
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => setShowLogoutConfirm(true)}

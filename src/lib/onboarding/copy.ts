@@ -23,8 +23,8 @@ export const renterHowItWorksSteps: readonly OnboardingStep[] = [
     icon: "wallet",
   },
   {
-    title: "Deposit is locked",
-    description: "Your security deposit shows as Locked Balance while the item is out.",
+    title: "Refundable security deposit",
+    description: "Your deposit is held until the item is returned and approved.",
     icon: "choice",
   },
   {
@@ -101,11 +101,6 @@ export const renterVerificationSteps: readonly OnboardingStep[] = [
     title: "Add your ID",
     description: "Upload your document and ID number.",
     icon: "camera",
-  },
-  {
-    title: "Submit your BVN",
-    description: "Enter your 11-digit BVN.",
-    icon: "sparkles",
   },
 ];
 

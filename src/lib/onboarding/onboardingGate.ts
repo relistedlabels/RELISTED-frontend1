@@ -1,7 +1,7 @@
 import {
   type OnboardingRole,
   hasActiveOnboardingTask,
-  isOnboardingComplete,
+  isOnboardingAutoPromptSuppressed,
 } from "./onboardingStorage";
 
 export function authRoleToOnboardingRole(
@@ -73,13 +73,14 @@ export function isCheckoutRedirect(url: string): boolean {
   );
 }
 
+/** Post-auth: browse-first. Users land on shop or dashboard, not forced onboarding. */
 export function resolvePostAuthDestination(options: {
   role: string | null | undefined;
   userId: string | null;
   redirectUrl?: string | null;
   honorRedirect?: boolean;
 }): string {
-  const { role, userId, redirectUrl, honorRedirect = false } = options;
+  const { role, redirectUrl, honorRedirect = false } = options;
 
   if (redirectUrl && isCheckoutRedirect(redirectUrl)) {
     return redirectUrl;
@@ -90,17 +91,6 @@ export function resolvePostAuthDestination(options: {
     return "/";
   }
 
-  const onboardingRole = authRoleToOnboardingRole(role);
-  const onboardingPath = getOnboardingPathForAuthRole(role);
-
-  if (
-    onboardingPath &&
-    onboardingRole &&
-    !isOnboardingComplete(userId, onboardingRole)
-  ) {
-    return onboardingPath;
-  }
-
   if (honorRedirect && redirectUrl) {
     return redirectUrl;
   }
@@ -109,33 +99,33 @@ export function resolvePostAuthDestination(options: {
     return "/listers/dashboard";
   }
 
-  return "/";
+  return "/shop";
 }
 
-export function shouldRedirectToOnboarding(options: {
+/**
+ * Forced onboarding redirects are disabled. Users browse first; optional prompts
+ * are handled by OnboardingPromptGuard.
+ */
+export function shouldRedirectToOnboarding(_options: {
   pathname: string;
   role: string | null | undefined;
   userId: string | null;
   isAuthenticated: boolean;
 }): string | null {
-  const { pathname, role, userId, isAuthenticated } = options;
+  return null;
+}
 
-  if (!isAuthenticated) return null;
-  if (role === "ADMIN") return null;
+export function shouldShowOnboardingPromptForUser(options: {
+  role: string | null | undefined;
+  userId: string | null;
+  isAuthenticated: boolean;
+}): boolean {
+  const { role, userId, isAuthenticated } = options;
+  if (!isAuthenticated) return false;
+  if (role === "ADMIN") return false;
 
   const onboardingRole = authRoleToOnboardingRole(role);
-  if (
-    onboardingRole &&
-    hasActiveOnboardingTask(userId, onboardingRole) &&
-    shouldBypassOnboardingForPath(pathname, { hasActiveTask: true })
-  ) {
-    return null;
-  }
+  if (!onboardingRole) return false;
 
-  if (shouldBypassOnboardingForPath(pathname)) return null;
-
-  if (!onboardingRole) return null;
-  if (isOnboardingComplete(userId, onboardingRole)) return null;
-
-  return getOnboardingPathForAuthRole(role);
+  return !isOnboardingAutoPromptSuppressed(userId, onboardingRole);
 }

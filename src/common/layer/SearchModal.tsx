@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Search, Clock, X, ArrowRight } from "lucide-react";
 import ProductCard from "@/common/ui/ProductCard";
 import { useBrowseStore } from "@/store/useBrowseStore";
-import { Paragraph1 } from "@/common/ui/Text";
+import { Paragraph1, ParagraphLink1 } from "@/common/ui/Text";
 import { usePublicSearch } from "@/lib/queries/search/usePublicSearch";
 import { useRouter, useSearchParams } from "next/navigation";
 import { isShopRentMode } from "@/lib/shop/shopBrowse";
@@ -14,7 +14,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
-export default function SearchModal() {
+type SearchModalProps = {
+  showLabel?: boolean;
+};
+
+export default function SearchModal({ showLabel = false }: SearchModalProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
@@ -61,12 +65,15 @@ export default function SearchModal() {
 
   return (
     <>
-      <div
+      <button
+        type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center space-x-2 cursor-pointer"
+        className={`flex items-center cursor-pointer ${showLabel ? "gap-1.5" : ""}`}
+        aria-label="Search"
       >
-        <Search className="w-5 h-5" />
-      </div>
+        <Search className="w-5 h-5" aria-hidden />
+        {showLabel ? <ParagraphLink1>Search</ParagraphLink1> : null}
+      </button>
 
       <AnimatePresence>
         {open && (

@@ -35,7 +35,7 @@ export const listerProfileOnboardingTask = {
   label: "Profile setup",
   role: "lister" as const,
   basePath: "/listers/settings",
-  resumeStep: 4,
+  resumeStep: 4, // next wizard step after profile detour (step 3 → 4)
   steps: [
     {
       target: '[data-onboarding-target="lister-avatar"]',
@@ -58,19 +58,13 @@ export const listerProfileOnboardingTask = {
     {
       target: '[data-onboarding-target="lister-verifications-tab"]',
       title: "Verify your identity",
-      body: "Open Verifications and add your ID and BVN. Both are required before you can list items.",
+      body: "Open Verifications and add your ID before you list items.",
       tab: "profile",
     },
     {
       target: '[data-onboarding-target="lister-id-section"]',
       title: "Add your ID",
       body: "Upload a valid ID document and enter your ID number.",
-      tab: "verifications",
-    },
-    {
-      target: '[data-onboarding-target="lister-bvn-section"]',
-      title: "Submit your BVN",
-      body: "Enter your 11-digit BVN to complete verification.",
       tab: "verifications",
     },
   ] satisfies OnboardingTaskStep[],
@@ -131,7 +125,7 @@ export const renterVerificationOnboardingTask = {
   label: "Verification setup",
   role: "renter" as const,
   basePath: "/renters/account",
-  resumeStep: 3,
+  resumeStep: 4, // next wizard step after verification detour (step 3 → 4)
   steps: [
     {
       target: '[data-onboarding-target="renter-verifications-tab"]',
@@ -153,7 +147,7 @@ export const renterWalletOnboardingTask = {
   label: "Wallet setup",
   role: "renter" as const,
   basePath: "/renters/wallet",
-  resumeStep: 5,
+  resumeStep: 5, // next wizard step after wallet detour (step 4 → 5)
   steps: [
     {
       target: '[data-onboarding-target="renter-fund-wallet-button"]',
@@ -167,8 +161,8 @@ export const renterWalletOnboardingTask = {
     },
     {
       target: '[data-onboarding-target="renter-locked-balance"]',
-      title: "Locked Balance",
-      body: "Your security deposit sits here during active rentals. It returns to Available Balance after return is approved.",
+      title: "Refundable security deposit",
+      body: "Your deposit sits here during active rentals. It returns to your available balance after return is approved.",
     },
   ] satisfies OnboardingTaskStep[],
 };

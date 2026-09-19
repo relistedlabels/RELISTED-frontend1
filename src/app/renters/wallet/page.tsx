@@ -2,7 +2,7 @@
 
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import UserDashboardLayout from "../components/UserDashboardLayout";
@@ -25,7 +25,9 @@ function page() {
         <Breadcrumbs items={path} />{" "}
       </div>
       <UserDashboardLayout>
-        <OnboardingTaskMount />
+        <Suspense fallback={null}>
+          <OnboardingTaskMount />
+        </Suspense>
         <div>
           <ExampleUserWalletDashboard />
           <ExampleAllTransactionsList />
