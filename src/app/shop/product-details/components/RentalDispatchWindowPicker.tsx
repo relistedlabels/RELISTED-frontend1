@@ -248,7 +248,7 @@ export default function RentalDispatchWindowPicker({
                       className="flex w-8 shrink-0 flex-col items-center pt-1"
                       aria-hidden
                     >
-                      <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full border border-gray-200/90 bg-linear-to-b from-white to-gray-50 shadow-[0_1px_2px_rgba(15,23,42,0.06)]">
+                      <div className="relative z-0 flex h-8 w-8 items-center justify-center rounded-full border border-gray-200/90 bg-linear-to-b from-white to-gray-50 shadow-[0_1px_2px_rgba(15,23,42,0.06)]">
                         <StepIcon
                           size={14}
                           strokeWidth={2.25}
