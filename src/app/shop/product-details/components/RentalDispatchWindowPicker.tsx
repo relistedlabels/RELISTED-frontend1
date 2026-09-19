@@ -13,6 +13,7 @@ import {
 import DispatchWindowsScheduler from "@/app/shop/cart/checkout/components/DispatchWindowsScheduler";
 import {
   buildDispatchWindowContexts,
+  DEFAULT_DISPATCH_WINDOW_MINUTES,
   formatLagosDate,
   formatLagosTime,
   formatWindowRange,
@@ -29,8 +30,6 @@ import {
   formatDateOnlyLocal,
 } from "@/lib/dates/formatDateOnlyLocal";
 import { lagosYmdMax } from "@/lib/vaultClosetSaleDates";
-
-const DISPATCH_SLOT_MINUTES = 60;
 
 const dispatchStepIcons: Record<ShipmentDispatchType, LucideIcon> = {
   OUTBOUND: Truck,
@@ -110,7 +109,7 @@ export default function RentalDispatchWindowPicker({
         type: "OUTBOUND",
         baseDate: rentalStartDateIso,
         minDate: closetOutboundMin,
-        durationMinutes: DISPATCH_SLOT_MINUTES,
+        durationMinutes: DEFAULT_DISPATCH_WINDOW_MINUTES,
         title: dispatchWindowMeta.OUTBOUND.title,
         subtitle: dispatchWindowMeta.OUTBOUND.description,
         baseDateReason: applyDeliveryFloor
@@ -120,7 +119,7 @@ export default function RentalDispatchWindowPicker({
       {
         type: "RETURN",
         baseDate: rentalReturnBaseIso,
-        durationMinutes: DISPATCH_SLOT_MINUTES,
+        durationMinutes: DEFAULT_DISPATCH_WINDOW_MINUTES,
         title: dispatchWindowMeta.RETURN.title,
         subtitle: dispatchWindowMeta.RETURN.description,
       },
@@ -409,7 +408,7 @@ export function rentalDispatchCalendarStartYmd(
   applyDeliveryFloor: boolean,
   closetEarliestDeliveryYmd?: string,
 ): string {
-  let ymd = getSuggestedRentalCalendarStartYmd(DISPATCH_SLOT_MINUTES);
+  let ymd = getSuggestedRentalCalendarStartYmd(DEFAULT_DISPATCH_WINDOW_MINUTES);
   if (applyDeliveryFloor && closetEarliestDeliveryYmd) {
     ymd = lagosYmdMax(ymd, closetEarliestDeliveryYmd);
   }

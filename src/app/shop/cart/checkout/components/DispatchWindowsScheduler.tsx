@@ -13,6 +13,7 @@ import type {
 import {
   buildDispatchWindowChoices,
   dayHasDispatchSlotOnLagosDate,
+  DEFAULT_DISPATCH_WINDOW_MINUTES,
   deriveDefaultDispatchWindow,
   differenceInDays,
   formatWindowRange,
@@ -39,8 +40,6 @@ type FormState = {
 
 type FormMap = Partial<Record<ShipmentDispatchType, FormState>>;
 
-const FIXED_DURATION = 60;
-
 const TYPE_LABELS: Record<ShipmentDispatchType, string> = {
   OUTBOUND: "Rental start",
   RETURN: "Return pickup",
@@ -63,9 +62,13 @@ const resolveChoices = (ctx: DispatchWindowContext, date: string) => {
     date === ctx.suggested.scheduledDate
       ? ctx.suggested.window
       : deriveDefaultDispatchWindow(date, {
-          durationMinutes: FIXED_DURATION,
+          durationMinutes: DEFAULT_DISPATCH_WINDOW_MINUTES,
         }).window;
-  return buildDispatchWindowChoices(date, suggestedForDate, FIXED_DURATION);
+  return buildDispatchWindowChoices(
+    date,
+    suggestedForDate,
+    DEFAULT_DISPATCH_WINDOW_MINUTES,
+  );
 };
 
 const pickChoiceForWindow = (
@@ -193,7 +196,7 @@ export default function DispatchWindowsScheduler({
     const current = forms[ctx.type];
     if (!current) return;
 
-    if (!dayHasDispatchSlotOnLagosDate(date, FIXED_DURATION)) {
+    if (!dayHasDispatchSlotOnLagosDate(date, DEFAULT_DISPATCH_WINDOW_MINUTES)) {
       setForms((prev) => ({
         ...prev,
         [ctx.type]: {

@@ -5,6 +5,7 @@ import {
   buildDispatchWindowFromForm,
   differenceInDays,
   parseTimeToMinutes,
+  DEFAULT_DISPATCH_WINDOW_MINUTES,
   DISPATCH_WINDOW_END_HOUR,
   DISPATCH_WINDOW_START_HOUR,
 } from "./dispatchWindows";
@@ -88,9 +89,13 @@ describe("buildDispatchWindowChoices", () => {
     const suggested = buildDispatchWindowFromForm({
       date: "2030-06-15",
       startTime: "10:00",
-      durationMinutes: 60,
+      durationMinutes: DEFAULT_DISPATCH_WINDOW_MINUTES,
     }).window!;
-    const choices = buildDispatchWindowChoices("2030-06-15", suggested);
+    const choices = buildDispatchWindowChoices(
+      "2030-06-15",
+      suggested,
+      DEFAULT_DISPATCH_WINDOW_MINUTES,
+    );
     expect(choices.some((choice) => choice.window.start === suggested.start)).toBe(
       true,
     );
