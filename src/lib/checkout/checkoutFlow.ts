@@ -271,25 +271,27 @@ export function buildCheckoutReviewDelivery(
     };
   }
 
-  const shipments = preview.flatMap((group) => {
-    const items = checkoutItemsForProductIds(
-      input.listerGroups,
-      group.productIds,
-    );
-    const deliveryWindow = deliveryWindowFromPreviewGroup(group);
-    const shipping = shippingForOutboundBucket(group.bucketIndex, input);
-    if (!deliveryWindow && items.length === 0 && !shipping) return [];
+  const shipments: CheckoutReviewDeliveryShipment[] = preview.flatMap(
+    (group) => {
+      const items = checkoutItemsForProductIds(
+        input.listerGroups,
+        group.productIds,
+      );
+      const deliveryWindow = deliveryWindowFromPreviewGroup(group);
+      const shipping = shippingForOutboundBucket(group.bucketIndex, input);
+      if (!deliveryWindow && items.length === 0 && !shipping) return [];
 
-    return [
-      {
-        bucketIndex: group.bucketIndex,
-        heading: null,
-        items,
-        deliveryWindow,
-        shipping,
-      } satisfies CheckoutReviewDeliveryShipment,
-    ];
-  });
+      return [
+        {
+          bucketIndex: group.bucketIndex,
+          heading: null,
+          items,
+          deliveryWindow,
+          shipping,
+        },
+      ];
+    },
+  );
 
   const showSubHeadings = shipments.length > 1;
   for (const shipment of shipments) {
