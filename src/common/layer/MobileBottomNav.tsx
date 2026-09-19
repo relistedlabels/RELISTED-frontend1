@@ -62,6 +62,7 @@ const NAV_ITEMS = [
     label: "Cart",
     icon: ShoppingCart,
     match: (p: string) => p.startsWith("/shop/cart"),
+    guestOpensAuth: true,
   },
 ] as const;
 
@@ -71,6 +72,7 @@ export default function MobileBottomNav() {
   const token = useUserStore((s) => s.token);
   const closeMenu = useMobileMenuStore((state) => state.closeMenu);
   const [authSheetOpen, setAuthSheetOpen] = useState(false);
+  const [authRedirectUrl, setAuthRedirectUrl] = useState<string | undefined>();
   const cartCount = useNavbarCartCount();
 
   if (!shouldShowMobileBottomNav(pathname)) return null;
@@ -131,6 +133,7 @@ export default function MobileBottomNav() {
                     type="button"
                     onClick={() => {
                       closeMenu();
+                      setAuthRedirectUrl(href);
                       setAuthSheetOpen(true);
                     }}
                     className={itemClass}
@@ -166,6 +169,7 @@ export default function MobileBottomNav() {
       <MobileGuestAuthSheet
         isOpen={authSheetOpen}
         onClose={() => setAuthSheetOpen(false)}
+        redirectUrl={authRedirectUrl}
       />
     </>
   );

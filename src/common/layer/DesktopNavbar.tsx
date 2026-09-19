@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import {
   HelpCircle,
@@ -11,63 +12,94 @@ import {
   Store,
 } from "lucide-react";
 import NavbarNotificationBell from "@/components/notifications/NavbarNotificationBell";
+import LoginModal from "@/common/modals/LoginModal";
 import { Paragraph1, ParagraphLink1 } from "../ui/Text";
 import SearchModal from "./SearchModal";
 import { AuthActions } from "./AuthActions";
 import { useNavbarCartCount } from "@/lib/queries/renters/useNavbarCartCount";
 import { DesktopSalesNavLink } from "./SalesNavLink";
+import { useUserStore } from "@/store/useUserStore";
 
 function DesktopNavbarContent() {
   const cartCount = useNavbarCartCount();
+  const token = useUserStore((s) => s.token);
+  const router = useRouter();
+  const [loginOpen, setLoginOpen] = useState(false);
+
+  const cartAriaLabel =
+    cartCount > 0 ? `Cart, ${cartCount} items` : "Cart";
+
+  const cartContent = (
+    <>
+      <ShoppingBagIcon className="w-5 h-5" aria-hidden />
+      <ParagraphLink1>Cart</ParagraphLink1>
+      {cartCount > 0 ? <Paragraph1>{cartCount}</Paragraph1> : null}
+    </>
+  );
 
   return (
-    <nav className="bg-black/95 backdrop-blur-md hidden xl:block text-white w-full">
-      <div className="relative flex items-center justify-between container mx-auto w-full py-4 px-[20px]">
-        {/* Left Section */}
-        <div className="flex items-center space-x-8">
-          <Link href="/shop" className="flex items-center gap-1.5">
-            <Store className="w-5 h-5" aria-hidden />
-            <ParagraphLink1>Shop</ParagraphLink1>
+    <>
+      <nav className="bg-black/95 backdrop-blur-md hidden xl:block text-white w-full">
+        <div className="relative flex items-center justify-between container mx-auto w-full py-4 px-[20px]">
+          {/* Left Section */}
+          <div className="flex items-center space-x-8">
+            <Link href="/shop" className="flex items-center gap-1.5">
+              <Store className="w-5 h-5" aria-hidden />
+              <ParagraphLink1>Shop</ParagraphLink1>
+            </Link>
+            <Link href="/how-it-works" className="flex items-center gap-1.5">
+              <HelpCircle className="w-5 h-5" aria-hidden />
+              <ParagraphLink1>How it works</ParagraphLink1>
+            </Link>
+            <DesktopSalesNavLink />
+          </div>
+
+          {/* Center Logo */}
+          <Link href="/" className="absolute left-1/2 -translate-x-1/2">
+            <Image src="/images/logo.svg" alt="Logo" width={45} height={45} />
           </Link>
-          <Link href="/how-it-works" className="flex items-center gap-1.5">
-            <HelpCircle className="w-5 h-5" aria-hidden />
-            <ParagraphLink1>How it works</ParagraphLink1>
-          </Link>
-          <DesktopSalesNavLink />
+
+          {/* Right Section */}
+          <div className="flex items-center space-x-6 text-sm font-light">
+            <SearchModal />
+
+            <Link href="/renters/orders" className="flex items-center gap-1.5">
+              <Package className="w-5 h-5" aria-hidden />
+              <ParagraphLink1>Orders</ParagraphLink1>
+            </Link>
+
+            <NavbarNotificationBell />
+
+            {token ? (
+              <Link
+                href="/shop/cart"
+                className="flex items-center gap-1.5"
+                aria-label={cartAriaLabel}
+              >
+                {cartContent}
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setLoginOpen(true)}
+                className="flex items-center gap-1.5"
+                aria-label={cartAriaLabel}
+              >
+                {cartContent}
+              </button>
+            )}
+
+            <AuthActions />
+          </div>
         </div>
+      </nav>
 
-        {/* Center Logo */}
-        <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-          <Image src="/images/logo.svg" alt="Logo" width={45} height={45} />
-        </Link>
-
-        {/* Right Section */}
-        <div className="flex items-center space-x-6 text-sm font-light">
-          <SearchModal />
-
-          <Link href="/renters/orders" className="flex items-center gap-1.5">
-            <Package className="w-5 h-5" aria-hidden />
-            <ParagraphLink1>Orders</ParagraphLink1>
-          </Link>
-
-          <NavbarNotificationBell />
-
-          <Link
-            href="/shop/cart"
-            className="flex items-center gap-1.5"
-            aria-label={
-              cartCount > 0 ? `Cart, ${cartCount} items` : "Cart"
-            }
-          >
-            <ShoppingBagIcon className="w-5 h-5" aria-hidden />
-            <ParagraphLink1>Cart</ParagraphLink1>
-            {cartCount > 0 ? <Paragraph1>{cartCount}</Paragraph1> : null}
-          </Link>
-
-          <AuthActions />
-        </div>
-      </div>
-    </nav>
+      <LoginModal
+        isOpen={loginOpen}
+        onClose={() => setLoginOpen(false)}
+        onLoginSuccess={() => router.push("/shop/cart")}
+      />
+    </>
   );
 }
 
