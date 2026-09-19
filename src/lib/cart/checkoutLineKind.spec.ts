@@ -78,6 +78,18 @@ describe("isCheckoutResalePurchaseLine", () => {
       ),
     ).toBe(true);
   });
+
+  test("detects purchase when cart days are zero but listingType is missing", () => {
+    const cartWithoutListingType = [
+      { id: "cart-purchase", days: 0, product: {} },
+    ] as CartItem[];
+    expect(
+      isCheckoutResalePurchaseLine(
+        { cartItemId: "cart-purchase" },
+        cartWithoutListingType,
+      ),
+    ).toBe(true);
+  });
 });
 
 describe("isCartPurchaseResaleOnly", () => {
@@ -91,6 +103,14 @@ describe("isCartPurchaseResaleOnly", () => {
 
   test("returns false for an empty cart", () => {
     expect(isCartPurchaseResaleOnly([])).toBe(false);
+  });
+
+  test("returns true when all lines have days zero even without listingType", () => {
+    expect(
+      isCartPurchaseResaleOnly([
+        { id: "cart-purchase", days: 0, product: {} },
+      ] as CartItem[]),
+    ).toBe(true);
   });
 });
 

@@ -63,6 +63,8 @@ export function isCheckoutResalePurchaseLine(
   const listingType = checkoutLineListingType(item, cartLine);
   if (listingType === "RESALE") return true;
   if (listingType === "RENT_OR_RESALE" && days === 0) return true;
+  // Cart API often omits listingType on embedded product; days === 0 is purchase.
+  if (days === 0) return true;
   return false;
 }
 
@@ -83,18 +85,10 @@ export function isCheckoutRentalLine(
   );
 }
 
-/** Entire cart is purchase / resale (no rental lines). */
+/** Entire cart is purchase / resale (no rental lines). Rentals always have days > 0. */
 export function isCartPurchaseResaleOnly(
   cartItems: CartItem[] | undefined,
 ): boolean {
   if (!cartItems?.length) return false;
-  return cartItems.every((item) =>
-    isCheckoutResalePurchaseLine(
-      {
-        cartItemId: item.id,
-        rentalDays: item.days,
-      },
-      cartItems,
-    ),
-  );
+  return cartItems.every((item) => item.days === 0);
 }
