@@ -39,7 +39,7 @@ export default function AvailabilityCheckingPage() {
   useEffect(() => {
     if (!isAvailable || !requestId || !token) return;
     if (getAuthToken()) {
-      router.replace("/shop/cart/checkout");
+      router.replace("/shop/cart");
       return;
     }
     const availableUrl =
@@ -52,7 +52,7 @@ export default function AvailabilityCheckingPage() {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center px-6 py-16 text-center">
         <Header1Plus className="mb-3">It&apos;s available!</Header1Plus>
-        <Paragraph1 className="text-gray-600">Taking you to checkout…</Paragraph1>
+        <Paragraph1 className="text-gray-600">Taking you to your cart…</Paragraph1>
       </div>
     );
   }

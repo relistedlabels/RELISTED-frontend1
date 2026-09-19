@@ -29,6 +29,17 @@ function redirectToPostAuthDestination(redirectParam: string | null) {
   window.location.href = destination;
 }
 
+function redirectLoggedInUserToCart() {
+  const state = useUserStore.getState();
+  const destination = resolvePostAuthDestination({
+    role: state.role,
+    userId: state.userId,
+    redirectUrl: "/shop/cart",
+    honorRedirect: true,
+  });
+  window.location.href = destination;
+}
+
 export default function MagicLinkPage() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -44,7 +55,7 @@ export default function MagicLinkPage() {
 
     if (getAuthToken()) {
       setRedirecting(true);
-      redirectToPostAuthDestination(redirectParam);
+      redirectLoggedInUserToCart();
       return;
     }
 
@@ -57,7 +68,7 @@ export default function MagicLinkPage() {
       onError: () => {
         if (getAuthToken()) {
           setRedirecting(true);
-          redirectToPostAuthDestination(redirectParam);
+          redirectLoggedInUserToCart();
         }
       },
     });
