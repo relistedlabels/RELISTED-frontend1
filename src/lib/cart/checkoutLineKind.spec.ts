@@ -5,6 +5,7 @@ import {
   findCartLineForCheckoutItem,
   isCheckoutRentalLine,
   isCheckoutResalePurchaseLine,
+  isPurchaseOnlyCheckout,
 } from "./checkoutLineKind";
 import type { CartItem } from "@/lib/api/cart";
 
@@ -76,6 +77,40 @@ describe("isCheckoutResalePurchaseLine", () => {
         [{ ...cartItems[1], days: 0 } as CartItem],
       ),
     ).toBe(true);
+  });
+});
+
+describe("isPurchaseOnlyCheckout", () => {
+  test("returns true when approved lines are all purchase/resale", () => {
+    expect(
+      isPurchaseOnlyCheckout(
+        [{ cartItemId: "cart-1", rentalDays: 0 }],
+        cartItems,
+      ),
+    ).toBe(true);
+  });
+
+  test("stays true when cart also holds unapproved rental lines", () => {
+    const cartWithExtraRental = [
+      ...cartItems,
+      {
+        id: "cart-4",
+        days: 5,
+        product: { listingType: "RENTAL" },
+      } as CartItem,
+    ];
+    expect(
+      isPurchaseOnlyCheckout(
+        [{ cartItemId: "cart-1", rentalDays: 0 }],
+        cartWithExtraRental,
+      ),
+    ).toBe(true);
+  });
+
+  test("returns false when approved checkout includes a rental line", () => {
+    expect(
+      isPurchaseOnlyCheckout([{ cartItemId: "cart-3" }], cartItems),
+    ).toBe(false);
   });
 });
 

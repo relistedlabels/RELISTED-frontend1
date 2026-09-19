@@ -82,3 +82,12 @@ export function isCheckoutRentalLine(
     (listingType === "RENTAL" || listingType === "RENT_OR_RESALE")
   );
 }
+
+/** Approved checkout rows with no rental lines (purchase / resale only). */
+export function isPurchaseOnlyCheckout(
+  approvedLines: CheckoutLineRef[],
+  cartItems: CartItem[] | undefined,
+): boolean {
+  if (!approvedLines.length) return false;
+  return !approvedLines.some((item) => isCheckoutRentalLine(item, cartItems));
+}
