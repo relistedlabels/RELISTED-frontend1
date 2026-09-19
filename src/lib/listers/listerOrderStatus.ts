@@ -22,6 +22,10 @@ function pickStatusForDisplay(order: Record<string, unknown> | null | undefined)
     typeof order.status === "string" ? order.status.trim() : "";
   const stk = st ? normalizeListerOrderStatusKey(st) : "";
 
+  if (stk === "AWAITING_PAYMENT") {
+    return st;
+  }
+
   if (av && (!st || PENDING_SHAPED.has(stk))) {
     return av;
   }
@@ -49,6 +53,7 @@ export function formatListerOrderStatusLabel(raw: string): string {
     ONGOING: "Approved",
     IN_DISPUTE: "In Dispute",
     APPROVED: "Approved",
+    AWAITING_PAYMENT: "Awaiting renter payment",
     IN_PROGRESS: "In Progress",
     COMPLETED: "Completed",
     CANCELLED: "Cancelled",

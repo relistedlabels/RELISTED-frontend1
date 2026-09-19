@@ -1,8 +1,8 @@
 "use client";
 
+import type { ComponentType } from "react";
 import {
   AlertCircle,
-  ChevronDown,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -26,6 +26,31 @@ interface MobileAuthActionsProps {
   onClose?: () => void;
 }
 
+function MobileAccountLink({
+  href,
+  label,
+  icon: Icon,
+  onClick,
+  iconClassName = "text-gray-400",
+  labelClassName = "text-white",
+}: {
+  href: string;
+  label: string;
+  icon: ComponentType<{ size?: number; className?: string }>;
+  onClick: () => void;
+  iconClassName?: string;
+  labelClassName?: string;
+}) {
+  return (
+    <Link href={href} onClick={onClick}>
+      <span className="flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-gray-900">
+        <Icon size={18} className={iconClassName} aria-hidden />
+        <Paragraph1 className={`text-sm ${labelClassName}`}>{label}</Paragraph1>
+      </span>
+    </Link>
+  );
+}
+
 export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
   const { data: user, isLoading } = useMe();
   const isLister = user?.role?.toLowerCase() === "lister";
@@ -34,7 +59,6 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
   const { data: renterProfileData } = useRenterProfile(
     Boolean(user) && !isLister && !isAdmin,
   );
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const adminId = useAdminIdStore((s) => s.adminId);
   const pathname = usePathname();
@@ -48,17 +72,14 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
   }, [pathname, searchParams]);
   const logout = useLogout();
 
-  // Avoid flicker while auth state is resolving
   if (isLoading) return null;
 
   const handleLinkClick = () => {
-    setIsDropdownOpen(false);
     onClose?.();
   };
 
   const handleLogoutConfirm = () => {
     setShowLogoutConfirm(false);
-    setIsDropdownOpen(false);
     logout.mutate(undefined, {
       onSuccess: () => {
         router.replace("/auth/sign-in");
@@ -118,9 +139,7 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
     }
   };
 
-  // ✅ Logged in → show User Name and Dropdown
   if (user) {
-    // ✅ Determine avatar based on user role
     let userAvatar: string | null = null;
 
     if (user.role?.toLowerCase() === "lister") {
@@ -131,112 +150,76 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
 
     return (
       <div className="flex flex-col gap-4">
-        <button
-          type="button"
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="flex justify-between items-center gap-3"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex justify-center items-center bg-gradient-to-br from-gray-600 to-gray-800 rounded-full w-10 h-10 overflow-hidden">
-              {userAvatar ? (
-                <img
-                  src={cloudinaryOptimizedImageUrl(userAvatar, {
-                    preset: "thumb",
-                  })}
-                  alt={user.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <User size={20} className="text-white" />
-              )}
-            </div>
-            <div className="text-left">
-              <Paragraph1 className="font-semibold text-white text-sm">
-                {user.name}
-              </Paragraph1>
-              <Paragraph1 className="text-gray-400 text-xs capitalize">
-                {user.role}
-              </Paragraph1>
-            </div>
+        <div className="flex items-center gap-3 px-2">
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-gray-600 to-gray-800">
+            {userAvatar ? (
+              <img
+                src={cloudinaryOptimizedImageUrl(userAvatar, {
+                  preset: "thumb",
+                })}
+                alt={user.name}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <User size={20} className="text-white" aria-hidden />
+            )}
           </div>
-          <ChevronDown
-            size={18}
-            className={`text-gray-400 transition-transform ${
-              isDropdownOpen ? "rotate-180" : ""
-            }`}
+          <div className="text-left">
+            <Paragraph1 className="text-sm font-semibold text-white">
+              {user.name}
+            </Paragraph1>
+            <Paragraph1 className="text-xs capitalize text-gray-400">
+              {user.role}
+            </Paragraph1>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          {user.role === "LISTER" ? (
+            <MobileAccountLink
+              href="/listers/dashboard"
+              label="Lister Dashboard"
+              icon={LayoutDashboard}
+              onClick={handleLinkClick}
+            />
+          ) : null}
+          <MobileAccountLink
+            href={getSettingsRoute()}
+            label="Settings"
+            icon={Settings}
+            onClick={handleLinkClick}
           />
-        </button>
+          <MobileAccountLink
+            href={getWalletRoute()}
+            label="Wallet"
+            icon={Wallet}
+            onClick={handleLinkClick}
+          />
+          <MobileAccountLink
+            href={getOrdersRoute()}
+            label="Orders"
+            icon={ShoppingBag}
+            onClick={handleLinkClick}
+          />
+          <MobileAccountLink
+            href={getDisputeRoute()}
+            label="Disputes"
+            icon={AlertCircle}
+            onClick={handleLinkClick}
+          />
+          <button
+            type="button"
+            onClick={() => setShowLogoutConfirm(true)}
+            disabled={logout.isPending}
+            className="flex items-center gap-3 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-gray-900 disabled:opacity-50"
+          >
+            <LogOut size={18} className="text-red-500" aria-hidden />
+            <Paragraph1 className="text-sm text-red-500">
+              {logout.isPending ? "Logging out..." : "Logout"}
+            </Paragraph1>
+          </button>
+        </div>
 
-        {/* Dropdown Menu */}
-        {isDropdownOpen && (
-          <div className="flex flex-col gap-2 px-2">
-            {user.role === "LISTER" && (
-              <Link href="/listers/dashboard" onClick={handleLinkClick}>
-                <button
-                  type="button"
-                  className="flex items-center gap-3 hover:bg-gray-900 px-4 py-2 rounded-lg w-full text-left transition-colors"
-                >
-                  <LayoutDashboard size={18} className="text-gray-400" />
-                  <Paragraph1 className="text-white text-sm">
-                    Lister Dashboard
-                  </Paragraph1>
-                </button>
-              </Link>
-            )}{" "}
-            <Link href={getSettingsRoute()} onClick={handleLinkClick}>
-              <button
-                type="button"
-                className="flex items-center gap-3 hover:bg-gray-900 px-4 py-2 rounded-lg w-full text-left transition-colors"
-              >
-                <Settings size={18} className="text-gray-400" />
-                <Paragraph1 className="text-white text-sm">Settings</Paragraph1>
-              </button>
-            </Link>
-            <Link href={getWalletRoute()} onClick={handleLinkClick}>
-              <button
-                type="button"
-                className="flex items-center gap-3 hover:bg-gray-900 px-4 py-2 rounded-lg w-full text-left transition-colors"
-              >
-                <Wallet size={18} className="text-gray-400" />
-                <Paragraph1 className="text-white text-sm">Wallet</Paragraph1>
-              </button>
-            </Link>
-            <Link href={getOrdersRoute()} onClick={handleLinkClick}>
-              <button
-                type="button"
-                className="flex items-center gap-3 hover:bg-gray-900 px-4 py-2 rounded-lg w-full text-left transition-colors"
-              >
-                <ShoppingBag size={18} className="text-gray-400" />
-                <Paragraph1 className="text-white text-sm">Orders</Paragraph1>
-              </button>
-            </Link>
-            <Link href={getDisputeRoute()} onClick={handleLinkClick}>
-              <button
-                type="button"
-                className="flex items-center gap-3 hover:bg-gray-900 px-4 py-2 rounded-lg w-full text-left transition-colors"
-              >
-                <AlertCircle size={18} className="text-gray-400" />
-                <Paragraph1 className="text-white text-sm">Disputes</Paragraph1>
-              </button>
-            </Link>
-            <button
-              type="button"
-              onClick={() => {
-                setIsDropdownOpen(false);
-                setShowLogoutConfirm(true);
-              }}
-              disabled={logout.isPending}
-              className="flex items-center gap-3 hover:bg-gray-900 disabled:opacity-50 px-4 py-2 rounded-lg w-full text-left transition-colors"
-            >
-              <LogOut size={18} className="text-red-500" />
-              <Paragraph1 className="text-red-500 text-sm">
-                {logout.isPending ? "Logging out..." : "Logout"}
-              </Paragraph1>
-            </button>
-          </div>
-        )}
-
-        {/* Logout Confirmation Modal */}
         <LogoutConfirmModal
           isOpen={showLogoutConfirm}
           onClose={() => setShowLogoutConfirm(false)}
@@ -247,7 +230,6 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
     );
   }
 
-  // ❌ Not logged in → show Sign In / Sign Up stacked
   return (
     <div className="flex flex-col gap-3">
       <Link
@@ -256,15 +238,15 @@ export function MobileAuthActions({ onClose }: MobileAuthActionsProps) {
       >
         <button
           type="button"
-          className="hover:bg-gray-900 px-4 py-2 border border-white rounded-lg w-full font-medium text-white text-sm transition-colors"
+          className="w-full rounded-lg border border-white px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-900"
         >
           Sign In
         </button>
       </Link>
-      <Link href={`/auth/create-account`} onClick={handleLinkClick}>
+      <Link href="/auth/create-account" onClick={handleLinkClick}>
         <button
           type="button"
-          className="bg-white hover:bg-gray-100 px-4 py-2 rounded-lg w-full font-medium text-black text-sm transition-colors"
+          className="w-full rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-gray-100"
         >
           Sign Up
         </button>

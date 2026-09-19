@@ -207,16 +207,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       isActive: pathname === "/listers/dashboard",
     },
     {
-      name: "Inventory",
-      href: "/listers/inventory",
-      icon: Package,
-      isActive: pathname.startsWith("/listers/inventory"),
-    },
-    {
       name: "Orders",
       href: "/listers/orders",
       icon: ShoppingCart,
       isActive: pathname.startsWith("/listers/orders"),
+    },
+    {
+      name: "Inventory",
+      href: "/listers/inventory",
+      icon: Package,
+      isActive: pathname.startsWith("/listers/inventory"),
     },
     {
       name: "Wallet",
