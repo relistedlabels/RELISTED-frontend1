@@ -4,7 +4,6 @@
 export const PUBLIC_NAVBAR_ROUTES = [
   "/",
   "/shop",
-  "/style-spotlight",
   "/how-it-works",
   "/about",
   "/contact-us",
@@ -34,7 +33,6 @@ export const MOBILE_BOTTOM_NAV_ROUTES = [
   "/renters/account",
   "/renters/orders",
   "/renters/wallet",
-  "/style-spotlight",
   "/how-it-works",
   "/lister-profile",
 ];

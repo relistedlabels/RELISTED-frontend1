@@ -1,3 +1,5 @@
+import type { ReadonlyURLSearchParams } from "next/navigation";
+
 const AVAILABILITY_TO_LISTING_TYPE: Record<string, string> = {
   Rent: "RENTAL",
   Resale: "RESALE",
@@ -37,13 +39,14 @@ export type ListingFilterValues = {
   inCloset?: "" | "true" | "false";
 };
 
-function parseMultiSearchParam(
-  searchParams: URLSearchParams,
+export function parseMultiSearchParam(
+  searchParams: URLSearchParams | ReadonlyURLSearchParams,
   key: string,
 ): string[] {
-  const all = searchParams.getAll(key);
+  const params = searchParams as URLSearchParams;
+  const all = params.getAll(key);
   if (all.length > 1) return all;
-  const single = searchParams.get(key);
+  const single = params.get(key);
   if (!single) return [];
   return single.split(",").map((value) => value.trim()).filter(Boolean);
 }
@@ -110,11 +113,20 @@ export function listingFiltersFromSearchParams(
   };
 }
 
+/** Copy shop context params into a fresh params object (e.g. filter panel apply). Do not call after mutating a cloned URL. */
 export function mergePreservedShopParams(
   target: URLSearchParams,
   from: URLSearchParams,
 ) {
-  for (const key of ["title", "description", "sale"] as const) {
+  for (const key of [
+    "title",
+    "description",
+    "sale",
+    "listingType",
+    "sort",
+    "closetId",
+    "onlyWithCloset",
+  ] as const) {
     const v = from.get(key);
     if (v) target.set(key, v);
   }

@@ -8,6 +8,7 @@ import { useProducts } from "@/lib/queries/product/useProducts";
 import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import Link from "next/link";
 import { primaryProductHeroImage } from "@/lib/product/primaryProductHeroImage";
+import type { ProductCardPriceFocus } from "@/common/ui/ProductCard";
 import {
   normalizeListingFilters,
   pickerFiltersToApiParams,
@@ -21,6 +22,9 @@ type HomeProductRailProps = {
   sort?: "newest" | "popular" | "rating";
   filters?: Partial<ListingFilterValues>;
   limit?: number;
+  /** Tighter layout when nested inside another shop container. */
+  embedded?: boolean;
+  priceFocus?: ProductCardPriceFocus;
 };
 
 export default function HomeProductRail({
@@ -30,6 +34,8 @@ export default function HomeProductRail({
   sort = "newest",
   filters,
   limit = 8,
+  embedded = false,
+  priceFocus = "rent",
 }: HomeProductRailProps) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const normalizedFilters = normalizeListingFilters(filters);
@@ -61,8 +67,14 @@ export default function HomeProductRail({
   );
 
   return (
-    <section className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-0 py-8 sm:py-10">
-      <div className="flex items-end justify-between gap-4 mb-4 sm:mb-6">
+    <section
+      className={
+        embedded
+          ? "border-b border-gray-100 py-8 sm:py-10 last:border-b-0"
+          : "container mx-auto px-3 py-8 sm:px-4 sm:py-10 md:px-6 lg:px-0"
+      }
+    >
+      <div className="mb-4 flex items-end justify-between gap-4 sm:mb-5">
         <div>
           <Header1Plus className="uppercase tracking-wide">{title}</Header1Plus>
           {subtitle ? (
@@ -86,7 +98,7 @@ export default function HomeProductRail({
       ) : (
         <div
           ref={scrollerRef}
-          className="flex gap-3 sm:gap-4 overflow-x-auto hide-scrollbar pb-1"
+          className="flex gap-4 overflow-x-auto hide-scrollbar pb-1 sm:gap-5"
         >
           {displayProducts.map((product) => (
             <div
@@ -96,7 +108,7 @@ export default function HomeProductRail({
               <ProductCard
                 id={product.id}
                 image={primaryProductHeroImage(product)}
-                brand={product.brand?.name ?? "BRAND"}
+                brand={product.brand?.name ?? ""}
                 name={product.name}
                 price={`₦${(product.originalValue || 0).toLocaleString()}`}
                 dailyPrice={product.dailyPrice}
@@ -105,6 +117,7 @@ export default function HomeProductRail({
                 size={product.measurement}
                 isSold={product.status === "SOLD"}
                 isRentedOut={product.status === "RENTED"}
+                priceFocus={priceFocus}
               />
             </div>
           ))}

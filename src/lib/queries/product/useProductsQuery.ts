@@ -5,6 +5,10 @@ import {
   listingFiltersFromSearchParams,
   pickerFiltersToApiParams,
 } from "@/lib/shop/listingFilters";
+import {
+  shopListingTypesParam,
+  shopSortFromSearchParams,
+} from "@/lib/shop/shopBrowse";
 
 export { CLOSET_DROPS_SHOP_TITLE, matchesClosetDropsShopTitle } from "@/lib/nav/vaultClosetDropsShop";
 
@@ -20,10 +24,15 @@ export const useProductsQuery = () => {
     : 1;
   const sale = searchParams.get("sale") || undefined;
   const onlyWithCloset = sale ? undefined : ONLY_WITH_CLOSET;
+  const sort = shopSortFromSearchParams(searchParams);
 
   const listingFilters = pickerFiltersToApiParams(
     listingFiltersFromSearchParams(searchParams),
   );
+  const { listingType: filterListingType, ...restListingFilters } =
+    listingFilters;
+  const listingType =
+    filterListingType ?? shopListingTypesParam(searchParams);
 
   const query = useQuery<any, Error, { products: any[]; pagination?: any }>({
     queryKey: [
@@ -33,7 +42,9 @@ export const useProductsQuery = () => {
         sale,
         onlyWithCloset,
         page,
-        ...listingFilters,
+        sort,
+        listingType,
+        ...restListingFilters,
       },
     ],
     queryFn: async () => {
@@ -46,7 +57,7 @@ export const useProductsQuery = () => {
         sale,
         onlyWithCloset,
         brand: listingFilters.brand,
-        listingType: listingFilters.listingType,
+        listingType,
         lister: listingFilters.lister,
         size: listingFilters.size,
         minPrice: listingFilters.minPrice,
@@ -54,6 +65,7 @@ export const useProductsQuery = () => {
         color: listingFilters.color,
         condition: listingFilters.condition,
         material: listingFilters.material,
+        sort,
         page,
         limit: 20,
       });

@@ -110,17 +110,25 @@ const SizeGuidePanel: React.FC<SizeGuidePanelProps> = ({ isOpen, onClose }) => {
 // --------------------
 // Main Component
 // --------------------
-const SizeGuide: React.FC = () => {
+type SizeGuideProps = {
+  variant?: "default" | "inline";
+};
+
+const SizeGuide: React.FC<SizeGuideProps> = ({ variant = "default" }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      {/* Toggle Button */}
       <button
+        type="button"
         onClick={() => setIsOpen(true)}
-        className="border-b border-gray-400 px-4 items-center   justify-center  w-fit py- flex gap-1 cursor-pointer  transition "
+        className={
+          variant === "inline"
+            ? "text-xs font-normal text-gray-500 underline underline-offset-2 transition hover:text-gray-900"
+            : "flex w-fit cursor-pointer items-center justify-center gap-1 border-b border-gray-400 px-4 py-0 transition"
+        }
       >
-        <Paragraph1> Size Guide</Paragraph1>
+        {variant === "inline" ? "Size guide" : <Paragraph1>Size Guide</Paragraph1>}
       </button>
 
       {/* Filter Panel */}

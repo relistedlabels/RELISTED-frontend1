@@ -24,8 +24,9 @@ describe("shouldSuppressSignInRedirect", () => {
 
   test("suppresses on public browse routes (shop bug fix)", () => {
     expect(shouldSuppressSignInRedirect("/shop")).toBe(true);
+    expect(shouldSuppressSignInRedirect("/shop/product-details/abc")).toBe(true);
     expect(shouldSuppressSignInRedirect("/shop?page=2")).toBe(false);
-    expect(shouldSuppressSignInRedirect("/style-spotlight")).toBe(true);
+    expect(shouldSuppressSignInRedirect("/style-spotlight")).toBe(false);
   });
 
   test("does not suppress on protected renter/lister routes", () => {
