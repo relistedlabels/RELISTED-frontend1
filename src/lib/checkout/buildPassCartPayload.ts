@@ -56,11 +56,11 @@ export function getCheckoutTierBlockingIssue(args: {
         bucket.shippingTiers[0]?.name?.trim() ??
         "";
       if (!pick) {
-        return "Please select a delivery shipping method for each order.";
+        return "Please select a delivery method for each order.";
       }
     }
   } else if (!args.selectedShippingTier.trim()) {
-    return "Please select a shipping method";
+    return "Please select a delivery method";
   }
 
   if (args.hasReturnShippingLeg && args.usePerBucketReturn) {
@@ -70,14 +70,14 @@ export function getCheckoutTierBlockingIssue(args: {
         bucket.shippingTiers[0]?.name?.trim() ??
         "";
       if (!pick) {
-        return "Please select a return shipping method for each rental.";
+        return "Please select a return pickup method for each rental.";
       }
     }
   } else if (
     args.hasReturnShippingLeg &&
     !args.selectedReturnShippingTier.trim()
   ) {
-    return "Please select a return shipping method";
+    return "Please select a return pickup method";
   }
 
   return null;

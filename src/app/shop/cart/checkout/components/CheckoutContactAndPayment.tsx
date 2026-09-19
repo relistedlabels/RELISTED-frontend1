@@ -722,14 +722,14 @@ export default function CheckoutContactAndPayment({
         {usePerBucketOutbound && outboundBuckets.length > 1 ? (
           <CheckoutShippingLegHeader
             sectionLabel={
-              showReturnShippingTierPicker ? "DELIVERY SHIPPING" : "SHIPPING METHOD"
+              showReturnShippingTierPicker ? "DELIVERY" : "DELIVERY METHOD"
             }
             leg="outbound"
           />
         ) : (
           <CheckoutShippingLegHeader
             sectionLabel={
-              showReturnShippingTierPicker ? "DELIVERY SHIPPING" : "SHIPPING METHOD"
+              showReturnShippingTierPicker ? "DELIVERY" : "DELIVERY METHOD"
             }
             groups={
               hasSummaryDispatchPreview ? summaryDispatchPreview : undefined
@@ -787,7 +787,7 @@ export default function CheckoutContactAndPayment({
                     </div>
                   ) : (
                     <Paragraph1 className="text-gray-600 text-sm">
-                      No shipping methods for this order segment.
+                      No delivery options for this order segment.
                     </Paragraph1>
                   )}
                 </div>
@@ -820,7 +820,7 @@ export default function CheckoutContactAndPayment({
           </div>
         ) : (
           <Paragraph1 className="text-gray-600 text-sm">
-            No shipping methods available
+            No delivery options available
           </Paragraph1>
         )}
       </div>
@@ -828,10 +828,10 @@ export default function CheckoutContactAndPayment({
       {showReturnShippingTierPicker && (
         <div className="bg-white p-4 border border-gray-100 rounded-xl">
           {usePerBucketReturn && returnBuckets.length > 1 ? (
-            <CheckoutShippingLegHeader sectionLabel="RETURN SHIPPING" leg="return" />
+            <CheckoutShippingLegHeader sectionLabel="RETURN PICKUP" leg="return" />
           ) : (
             <CheckoutShippingLegHeader
-              sectionLabel="RETURN SHIPPING"
+              sectionLabel="RETURN PICKUP"
               groups={
                 hasSummaryDispatchPreview ? summaryDispatchPreview : undefined
               }
@@ -882,7 +882,7 @@ export default function CheckoutContactAndPayment({
                       </div>
                     ) : (
                       <Paragraph1 className="text-gray-600 text-sm">
-                        No return shipping methods for this segment.
+                        No return pickup options for this segment.
                       </Paragraph1>
                     )}
                   </div>
@@ -900,7 +900,7 @@ export default function CheckoutContactAndPayment({
             </div>
           ) : (
             <Paragraph1 className="text-gray-600 text-sm">
-              No return shipping methods available for this pickup address.
+              No return pickup options available for this pickup address.
             </Paragraph1>
           )}
         </div>
@@ -1064,7 +1064,7 @@ export default function CheckoutContactAndPayment({
                         />
                         <div className="min-w-0 space-y-1">
                           <Paragraph1 className="font-medium text-gray-500 text-xs">
-                            Shipping
+                            Delivery
                           </Paragraph1>
                           <Paragraph1 className="text-gray-900 text-[15px] leading-relaxed">
                             {ship.method}

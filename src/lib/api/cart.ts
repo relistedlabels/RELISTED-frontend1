@@ -212,8 +212,7 @@ export function formatShippingQuoteWarningLine(
           ? "Topship"
           : warning.provider;
   const who = warning.listerName?.trim();
-  const leg =
-    warning.leg === "return" ? "return shipping" : "delivery shipping";
+  const leg = warning.leg === "return" ? "return pickup" : "delivery";
   return who
     ? `${providerLabel} (${who}, ${leg}): ${warning.message}`
     : `${providerLabel} (${leg}): ${warning.message}`;

@@ -316,12 +316,12 @@ export default function FinalOrderSummaryCard({
           b.shippingTiers[0]?.name ??
           "";
         if (!pick.trim()) {
-          alert("Please select a delivery shipping method for each order.");
+          alert("Please select a delivery method for each order.");
           return;
         }
       }
     } else if (!selectedShippingTier) {
-      alert("Please select a shipping method");
+      alert("Please select a delivery method");
       return;
     }
     if (hasReturnShippingLeg && usePerBucketReturn) {
@@ -331,18 +331,18 @@ export default function FinalOrderSummaryCard({
           b.shippingTiers[0]?.name ??
           "";
         if (!pick.trim()) {
-          alert("Please select a return shipping method for each rental.");
+          alert("Please select a return pickup method for each rental.");
           return;
         }
       }
     } else if (hasReturnShippingLeg && !selectedReturnShippingTier) {
-      alert("Please select a return shipping method");
+      alert("Please select a return pickup method");
       return;
     }
     if (!canCheckout) {
       toast.error(
         checkoutBlockingIssues[0] ||
-          "Resolve shipment schedule conflicts before checkout.",
+          "Resolve delivery schedule conflicts before checkout.",
       );
       return;
     }
@@ -489,7 +489,7 @@ export default function FinalOrderSummaryCard({
       {shippingQuoteWarnings.length > 0 ? (
         <div className="space-y-2 bg-amber-50 p-3 border border-amber-200 rounded-xl">
           <Paragraph1 className="font-semibold text-amber-950 text-xs">
-            Shipping quote note
+            Delivery quote note
           </Paragraph1>
           <ul className="space-y-1 pl-4 text-amber-900 text-xs list-disc">
             {shippingQuoteWarnings.map((w, i) => (
