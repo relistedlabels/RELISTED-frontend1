@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -21,13 +21,13 @@ export default function MagicLinkPage() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const redirectParam = searchParams.get("redirect");
-  const [started, setStarted] = useState(false);
+  const consumeStartedRef = useRef(false);
 
   const consume = useConsumeMagicLink();
 
   useEffect(() => {
-    if (!token || started) return;
-    setStarted(true);
+    if (!token || consumeStartedRef.current) return;
+    consumeStartedRef.current = true;
     consume.mutate(token, {
       onSuccess: async () => {
         await new Promise((r) => setTimeout(r, 300));
@@ -41,7 +41,7 @@ export default function MagicLinkPage() {
         window.location.href = destination;
       },
     });
-  }, [token, started, consume, redirectParam]);
+  }, [token, consume, redirectParam]);
 
   const loading = consume.isPending || (consume.isSuccess && !consume.isError);
   const failed = consume.isError;
