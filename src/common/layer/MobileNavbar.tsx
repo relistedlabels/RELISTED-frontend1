@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, type ComponentType } from "react";
+import { useEffect, type ComponentType } from "react";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   HelpCircle,
@@ -22,6 +23,7 @@ import { MobileAuthActions } from "./MobileAuthActions";
 import { useCartCountStore } from "@/store/useCartCountStore";
 import { useCartItems } from "@/lib/queries/renters/useCartItems";
 import { useUserStore } from "@/store/useUserStore";
+import { useMobileMenuStore } from "@/store/useMobileMenuStore";
 import { MobileSalesNavLink } from "./SalesNavLink";
 
 type MobileNavLinkProps = {
@@ -46,7 +48,10 @@ function MobileNavLink({
 }
 
 function MobileNavbarContent() {
-  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const open = useMobileMenuStore((state) => state.isOpen);
+  const openMenu = useMobileMenuStore((state) => state.openMenu);
+  const closeMenu = useMobileMenuStore((state) => state.closeMenu);
   const cartCount = useCartCountStore((state) => state.cartCount);
   const setCartCount = useCartCountStore((state) => state.setCartCount);
   const token = useUserStore((s) => s.token);
@@ -63,6 +68,10 @@ function MobileNavbarContent() {
   }, [token, data?.itemCount, setCartCount]);
 
   useEffect(() => {
+    closeMenu();
+  }, [pathname, closeMenu]);
+
+  useEffect(() => {
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -71,13 +80,11 @@ function MobileNavbarContent() {
     };
   }, [open]);
 
-  const closeMenu = () => setOpen(false);
-
   return (
     <div className="xl:hidden bg-black text-white px-4 py-5 w-full">
       <div className="relative flex items-center">
         {/* LEFT - Toggle */}
-        <button onClick={() => setOpen(true)} className="z-20" aria-label="Open menu">
+        <button onClick={openMenu} className="z-20" aria-label="Open menu">
           <Menu className="w-6 h-6" />
         </button>
 
