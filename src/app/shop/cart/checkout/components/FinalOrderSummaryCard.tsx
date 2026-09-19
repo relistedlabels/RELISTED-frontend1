@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, memo, useMemo } from "react";
-import ReservationTimer from "./ReservationTimer";
 import type {
   OutboundShippingBucketQuote,
   ReturnShippingBucketQuote,
@@ -199,6 +198,8 @@ interface FinalOrderSummaryCardProps {
   }>;
   onRefetchOrderSummary?: () => void;
   checkoutBlockingIssues?: string[];
+  checkoutStep?: 1 | 2 | 3 | 4;
+  onCheckoutStepChange?: (step: 1 | 2 | 3 | 4) => void;
 }
 
 export default function FinalOrderSummaryCard({
@@ -223,6 +224,8 @@ export default function FinalOrderSummaryCard({
   dispatchReschedules = [],
   onRefetchOrderSummary,
   checkoutBlockingIssues = [],
+  checkoutStep = 1,
+  onCheckoutStepChange,
 }: FinalOrderSummaryCardProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -431,11 +434,10 @@ export default function FinalOrderSummaryCard({
   const showItemsSkeleton = isLoading && !error;
   const showPaymentSkeleton =
     hasDeliveryAddress && orderSummaryLoading && !orderSummaryError;
+  const showCheckoutActions = checkoutStep === 4;
 
   return (
     <div className="space-y-6">
-      <ReservationTimer />
-
       {showItemsSkeleton && <CheckoutSummarySkeleton />}
 
       {hasDeliveryAddress && dispatchReschedules.length > 0 ? (
@@ -504,12 +506,12 @@ export default function FinalOrderSummaryCard({
       {error && (
         <div className="bg-yellow-50 p-4 border border-yellow-200 rounded-xl">
           <Paragraph1 className="text-yellow-800 text-sm">
-            Failed to load approved items for checkout. Please try again.
+            Failed to load your checkout items. Please try again.
           </Paragraph1>
         </div>
       )}
 
-      {(orderSummary?.data?.summary?.rentalTotal ?? 0) > 0 && (
+      {(orderSummary?.data?.summary?.rentalTotal ?? 0) > 0 ? (
         <div className="bg-white p-4 border border-gray-200 rounded-xl">
           <Paragraph1 className="mb-4 font-bold text-gray-900 text-lg">
             Return pickup details
@@ -538,12 +540,12 @@ export default function FinalOrderSummaryCard({
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
       {!isLoading && !error && approvedGroups.length === 0 && (
         <div className="bg-gray-50 p-4 border border-gray-200 rounded-xl text-center">
           <Paragraph1 className="text-gray-600">
-            No approved items. Add items to get started!
+            No items ready for checkout yet.
           </Paragraph1>
         </div>
       )}
@@ -679,73 +681,107 @@ export default function FinalOrderSummaryCard({
                       </Paragraph1>
                     </div>
 
-                    {passCartMutation.isError && (
-                      <div className="bg-red-50 mb-4 p-3 border border-red-200 rounded-lg">
-                        <Paragraph1 className="text-red-700 text-xs">
-                          {passCartMutation.error?.message ||
-                            "Failed to complete checkout"}
-                        </Paragraph1>
-                      </div>
-                    )}
-
-                    <button
-                      onClick={handleCheckout}
-                      disabled={!isAgree || passCartMutation.isPending || !canCheckout}
-                      className={buttonPrimaryFull}
-                    >
-                      <Paragraph1>
-                        {passCartMutation.isPending
-                          ? "Processing..."
-                          : "Complete Order"}
-                      </Paragraph1>
-                    </button>
-                    {!canCheckout && (
-                      <div className="bg-amber-50 mt-4 p-3 border border-amber-200 rounded-lg">
-                        <Paragraph1 className="font-semibold text-amber-900 text-xs uppercase tracking-wide">
-                          Before you pay
-                        </Paragraph1>
-                        <div className="space-y-1 mt-1">
-                          {checkoutBlockingIssues.map((issue) => (
-                            <Paragraph1 key={issue} className="text-amber-900 text-xs">
-                              {issue}
+                    {showCheckoutActions ? (
+                      <>
+                        {passCartMutation.isError && (
+                          <div className="bg-red-50 mb-4 p-3 border border-red-200 rounded-lg">
+                            <Paragraph1 className="text-red-700 text-xs">
+                              {passCartMutation.error?.message ||
+                                "Failed to complete checkout"}
                             </Paragraph1>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                          </div>
+                        )}
 
-                    {(orderSummary?.data?.summary?.rentalTotal ?? 0) > 0 && (
-                      <div className="flex items-start gap-2 bg-green-50 mt-4 p-3 border border-green-200 rounded-md text-green-700 text-xs">
-                        <CheckCircle size={16} className="mt-0.5 shrink-0" />
-                        <Paragraph1 className="text-green-700">
-                          Your <strong>refundable security deposit</strong> is
-                          returned to your wallet after the item is returned and checked.
-                        </Paragraph1>
-                      </div>
-                    )}
+                        <button
+                          onClick={handleCheckout}
+                          disabled={
+                            !isAgree ||
+                            passCartMutation.isPending ||
+                            !canCheckout
+                          }
+                          className={buttonPrimaryFull}
+                        >
+                          <Paragraph1>
+                            {passCartMutation.isPending
+                              ? "Processing..."
+                              : "Complete Order"}
+                          </Paragraph1>
+                        </button>
+                        {!canCheckout && (
+                          <div className="bg-amber-50 mt-4 p-3 border border-amber-200 rounded-lg">
+                            <Paragraph1 className="font-semibold text-amber-900 text-xs uppercase tracking-wide">
+                              Before you pay
+                            </Paragraph1>
+                            <div className="space-y-1 mt-1">
+                              {checkoutBlockingIssues.map((issue) => (
+                                <Paragraph1
+                                  key={issue}
+                                  className="text-amber-900 text-xs"
+                                >
+                                  {issue}
+                                </Paragraph1>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
-                    <label className="flex items-start space-x-2 mt-4 text-gray-700 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={isAgree}
-                        onChange={() => setIsAgree(!isAgree)}
-                        className="hidden"
-                      />
-                      <span
-                        className={`shrink-0 w-6 h-6 rounded border mt-0.5 ${
-                          isAgree
-                            ? "bg-black border-black"
-                            : "bg-white border-gray-400"
-                        } flex items-center justify-center`}
-                      >
-                        {isAgree && <Check size={18} className="text-white" />}
-                      </span>
-                      <Paragraph1 className="text-xs">
-                        By confirming this order you accept our{" "}
-                        <strong>Terms of Service Agreement</strong> and our{" "}
-                        <strong>Data Protection Policy</strong>
-                      </Paragraph1>
-                    </label>
+                        {(orderSummary?.data?.summary?.rentalTotal ?? 0) > 0 && (
+                          <div className="flex items-start gap-2 bg-green-50 mt-4 p-3 border border-green-200 rounded-md text-green-700 text-xs">
+                            <CheckCircle
+                              size={16}
+                              className="mt-0.5 shrink-0"
+                            />
+                            <Paragraph1 className="text-green-700">
+                              Your <strong>refundable security deposit</strong> is
+                              returned to your wallet after the item is returned
+                              and checked.
+                            </Paragraph1>
+                          </div>
+                        )}
+
+                        <label className="flex items-start space-x-2 mt-4 text-gray-700 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isAgree}
+                            onChange={() => setIsAgree(!isAgree)}
+                            className="hidden"
+                          />
+                          <span
+                            className={`shrink-0 w-6 h-6 rounded border mt-0.5 ${
+                              isAgree
+                                ? "bg-black border-black"
+                                : "bg-white border-gray-400"
+                            } flex items-center justify-center`}
+                          >
+                            {isAgree && (
+                              <Check size={18} className="text-white" />
+                            )}
+                          </span>
+                          <Paragraph1 className="text-xs">
+                            By confirming this order you accept our{" "}
+                            <Link
+                              href="/terms-and-conditions"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-semibold underline underline-offset-2 hover:text-gray-900"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Terms of Service Agreement
+                            </Link>{" "}
+                            and our{" "}
+                            <Link
+                              href="/privacy-policy"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-semibold underline underline-offset-2 hover:text-gray-900"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Data Protection Policy
+                            </Link>
+                          </Paragraph1>
+                        </label>
+                      </>
+                    ) : null}
                   </div>
           ) : null}
         </>

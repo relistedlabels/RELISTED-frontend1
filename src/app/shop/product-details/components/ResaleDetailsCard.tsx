@@ -161,6 +161,7 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
   const submitPurchaseAvailability = async (guestContact?: {
     firstName: string;
     email: string;
+    whatsappPhone?: string;
   }) => {
     if (!product || product.status === "SOLD") {
       toast.error("This item has been sold.");
@@ -175,6 +176,9 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
           listerId: product.curatorId,
           firstName: guestContact.firstName,
           email: guestContact.email,
+          ...(guestContact.whatsappPhone
+            ? { whatsappPhone: guestContact.whatsappPhone }
+            : {}),
           rentalDays: 0,
           rentalStartDate: null,
           rentalEndDate: null,
@@ -255,6 +259,7 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
   const handleGuestContactSubmit = (contact: {
     firstName: string;
     email: string;
+    whatsappPhone?: string;
   }) => {
     setIsGuestModalOpen(false);
     void submitPurchaseAvailability(contact);

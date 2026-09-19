@@ -211,6 +211,8 @@ interface RentalDurationSelectorProps {
   suggestedStartLagosYmd?: string;
   /** Lagos YYYY-MM-DD: earliest selectable start (e.g. Vault Closet delivery floor). */
   minSelectableLagosYmd?: string;
+  /** Rendered after the calendar and before the legend (e.g. delivery/pickup times). */
+  afterCalendar?: React.ReactNode;
 }
 
 const RentalDurationSelector = ({
@@ -221,6 +223,7 @@ const RentalDurationSelector = ({
   onChangeRentalDays,
   suggestedStartLagosYmd,
   minSelectableLagosYmd,
+  afterCalendar,
 }: RentalDurationSelectorProps) => {
   const [selectedDuration, setSelectedDuration] = useState<number | "custom">(
     1,
@@ -395,6 +398,8 @@ const RentalDurationSelector = ({
         unavailableDays={[]}
         minSelectableLagosYmd={minSelectableLagosYmd}
       />
+
+      {afterCalendar ? <div className="mt-4">{afterCalendar}</div> : null}
 
       {/* Legends */}
       <div className="mt-4 flex justify-center gap-6 text-sm text-gray-600">

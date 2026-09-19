@@ -1,10 +1,14 @@
 "use client";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import { Header1, Header1Plus } from "@/common/ui/Text";
 import CheckoutContactAndPayment from "./components/CheckoutContactAndPayment";
+import CheckoutStepper, {
+  type CheckoutStep,
+} from "./components/CheckoutStepper";
 import FinalOrderSummaryCard from "./components/FinalOrderSummaryCard";
 import { useRentalRequests } from "@/lib/queries/renters/useRentalRequests";
 import { useCartItems } from "@/lib/queries/renters/useCartItems";
@@ -49,6 +53,12 @@ import {
   checkoutItemInActiveSale,
   getCheckoutItemEarliestDeliveryLagosYmd,
 } from "@/lib/shopSale/productSale";
+import { useWallet } from "@/lib/queries/renters/useWallet";
+import {
+  computeCheckoutGrandTotal,
+  computeDisplayOutboundShipping,
+  computeDisplayReturnShipping,
+} from "@/lib/checkout/checkoutSummaryTotals";
 
 const RETURN_PICKUP_SUMMARY_DEBOUNCE_MS = 1000;
 
@@ -113,7 +123,19 @@ function bucketEarliestWindowStartMs(
   return Number.POSITIVE_INFINITY;
 }
 
+function parseCheckoutStep(raw: string | null): CheckoutStep {
+  const n = Number(raw);
+  if (n === 2) return 2;
+  if (n === 3) return 3;
+  if (n === 4) return 4;
+  return 1;
+}
+
 export default function CheckoutPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const checkoutStep = parseCheckoutStep(searchParams.get("step"));
+
   const [selectedShippingTier, setSelectedShippingTier] = useState<string>("");
   const [selectedReturnShippingTier, setSelectedReturnShippingTier] =
     useState<string>("");
@@ -190,7 +212,10 @@ export default function CheckoutPage() {
   const orderSummaryQuery = useCheckoutOrderSummary(
     returnPickupForSummary,
     deliveryAddressForSummary,
-    { enabled: hasDeliveryAddress },
+    {
+      enabled: hasDeliveryAddress,
+      pollForDispatchRefresh: hasDeliveryAddress,
+    },
   );
 
   const handleAddressSaved = useCallback(async () => {
@@ -792,6 +817,7 @@ export default function CheckoutPage() {
     };
 
     const groups: Array<{
+      bucketIndex?: number;
       groupHeading: string | null;
       listerLocation?: string;
       rows: Array<{ title: string; range: string }>;
@@ -839,6 +865,7 @@ export default function CheckoutPage() {
       if (bucketRows.length > 0) {
         const listerLocation = formatListerLocation(b);
         groups.push({
+          bucketIndex: b.bucketIndex,
           groupHeading,
           ...(listerLocation ? { listerLocation } : {}),
           rows: bucketRows,
@@ -869,15 +896,139 @@ export default function CheckoutPage() {
     [returnShippingTiers, selectedReturnShippingTier],
   );
 
+  const { data: walletResponse } = useWallet();
+  const availableWalletBalance =
+    walletResponse?.wallet?.balance?.availableBalance ?? 0;
+
+  const orderSummarySummary = orderSummaryQuery.data?.data?.summary;
+  const shipmentBucketsMeta =
+    orderSummaryQuery.data?.data?.shipmentBuckets ?? [];
+  const usePerBucketOutbound = outboundShippingByBucket.length > 0;
+  const usePerBucketReturn =
+    hasReturnShippingLeg && returnShippingByBucket.length > 0;
+
+  const displayOutboundShipping = useMemo(
+    () =>
+      computeDisplayOutboundShipping({
+        usePerBucket: usePerBucketOutbound,
+        outboundShippingByBucket,
+        selectedOutboundTierByBucket,
+        shipmentBucketsMeta,
+        selectedTierTotal: selectedTierData?.totalShippingCost,
+        summaryOutboundTotal: orderSummarySummary?.outboundShippingTotal ?? 0,
+      }),
+    [
+      usePerBucketOutbound,
+      outboundShippingByBucket,
+      selectedOutboundTierByBucket,
+      shipmentBucketsMeta,
+      selectedTierData,
+      orderSummarySummary?.outboundShippingTotal,
+    ],
+  );
+
+  const displayReturnShipping = useMemo(
+    () =>
+      computeDisplayReturnShipping({
+        hasReturnShippingLeg,
+        usePerBucketReturn,
+        returnShippingByBucket,
+        selectedReturnTierByBucket,
+        shipmentBucketsMeta,
+        selectedReturnTierTotal: selectedReturnTierData?.totalShippingCost,
+        summaryReturnTotal: orderSummarySummary?.returnShippingTotal ?? 0,
+      }),
+    [
+      hasReturnShippingLeg,
+      usePerBucketReturn,
+      returnShippingByBucket,
+      selectedReturnTierByBucket,
+      shipmentBucketsMeta,
+      selectedReturnTierData,
+      orderSummarySummary?.returnShippingTotal,
+    ],
+  );
+
+  const checkoutGrandTotalNgN = useMemo(() => {
+    if (!orderSummarySummary) return undefined;
+    return computeCheckoutGrandTotal(
+      orderSummarySummary,
+      displayOutboundShipping,
+      displayReturnShipping,
+    );
+  }, [orderSummarySummary, displayOutboundShipping, displayReturnShipping]);
+
+  const walletShortfallNgN = useMemo(() => {
+    if (checkoutGrandTotalNgN === undefined) return undefined;
+    return Math.max(0, Math.round(checkoutGrandTotalNgN - availableWalletBalance));
+  }, [checkoutGrandTotalNgN, availableWalletBalance]);
+
+  const goToCheckoutStep = useCallback(
+    (step: CheckoutStep) => {
+      if (
+        step === 4 &&
+        checkoutGrandTotalNgN !== undefined &&
+        walletShortfallNgN !== undefined &&
+        walletShortfallNgN > 0
+      ) {
+        return;
+      }
+      const params = new URLSearchParams(searchParams.toString());
+      if (step === 1) {
+        params.delete("step");
+      } else {
+        params.set("step", String(step));
+      }
+      const q = params.toString();
+      router.push(q ? `/shop/cart/checkout?${q}` : "/shop/cart/checkout");
+    },
+    [
+      router,
+      searchParams,
+      checkoutGrandTotalNgN,
+      walletShortfallNgN,
+    ],
+  );
+
+  useEffect(() => {
+    if (
+      checkoutStep !== 4 ||
+      checkoutGrandTotalNgN === undefined ||
+      walletShortfallNgN === undefined ||
+      walletShortfallNgN <= 0
+    ) {
+      return;
+    }
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("step", "3");
+    router.replace(`/shop/cart/checkout?${params.toString()}`);
+  }, [
+    checkoutStep,
+    checkoutGrandTotalNgN,
+    walletShortfallNgN,
+    router,
+    searchParams,
+  ]);
+
   return (
-    <div className="mx-auto px-4 sm:px-0 py-[70px] sm:py-[100px] container">
+    <div className="mx-auto px-4 sm:px-0 pt-[70px] sm:pt-[100px] pb-36 xl:pb-[100px] container">
       <div className="mb-4">
         <Breadcrumbs items={path} />
       </div>
-      <Header1Plus className="mb-8 uppercase">CHECKOUT</Header1Plus>
+      <Header1Plus className="mb-5 uppercase">CHECKOUT</Header1Plus>
+      <CheckoutStepper
+        currentStep={checkoutStep}
+        onStepChange={goToCheckoutStep}
+      />
       <div className="gap-4 sm:gap-8 xl:gap-16 grid grid-cols-1 xl:grid-cols-3">
-        <div className="xl:col-span-2 min-w-0">
+        <div
+          className={`min-w-0 xl:col-span-2 xl:order-1 ${
+            checkoutStep === 3 ? "order-2" : "order-1"
+          }`}
+        >
           <CheckoutContactAndPayment
+            checkoutStep={checkoutStep}
+            onCheckoutStepChange={goToCheckoutStep}
             orderSummary={orderSummaryQuery.data}
             onShippingTierSelected={setSelectedShippingTier}
             shippingTiers={shippingTiers}
@@ -942,8 +1093,18 @@ export default function CheckoutPage() {
             }
           />
         </div>
-        <div className="xl:col-span-1 min-w-0">
+        <div
+          className={`min-w-0 xl:col-span-1 xl:order-2 ${
+            checkoutStep < 3
+              ? "hidden xl:block"
+              : checkoutStep === 3
+                ? "order-1"
+                : "order-2"
+          }`}
+        >
           <FinalOrderSummaryCard
+            checkoutStep={checkoutStep}
+            onCheckoutStepChange={goToCheckoutStep}
             listerGroups={listerGroups}
             isLoading={isLoading || cartIsLoading}
             error={error instanceof Error ? error : null}

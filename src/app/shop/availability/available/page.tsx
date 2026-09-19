@@ -28,7 +28,13 @@ export default function AvailabilityAvailablePage() {
   const requesterEmail = data?.data?.requesterEmail as string | null | undefined;
   const isPurchase = data?.data?.rentalDays === 0;
 
+  const completeRentalUrl = data?.data?.completeRentalUrl;
+
   const handleLoginLink = () => {
+    if (completeRentalUrl) {
+      window.location.href = completeRentalUrl;
+      return;
+    }
     if (!requesterEmail) {
       window.location.href = "/auth/sign-in?redirect=/shop/cart/checkout";
       return;
