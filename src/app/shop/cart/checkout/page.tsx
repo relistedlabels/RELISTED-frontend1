@@ -1073,6 +1073,7 @@ export default function CheckoutPage() {
               void handleAddressSaved();
             }}
             isResaleOnly={!hasReturnShippingLeg}
+            listerGroups={listerGroups}
           />
         </div>
         <div

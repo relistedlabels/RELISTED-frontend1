@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState, memo, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import type {
   OutboundShippingBucketQuote,
   ReturnShippingBucketQuote,
 } from "@/lib/api/cart";
-import Image from "next/image";
 import Link from "next/link";
 import { Check, CheckCircle, MapPin } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
@@ -18,18 +17,14 @@ import {
 } from "@/lib/api/cart";
 import { usePassCart } from "@/lib/mutations/renters/usePassCartMutation";
 import { useQueryClient } from "@tanstack/react-query";
-import { useListerProfile } from "@/lib/queries/shop/useListerProfile";
 import { toast } from "sonner";
-import { isResaleItem } from "@/lib/listers/listerOrderRow";
-import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
 import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
-import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 import {
   computeCheckoutGrandTotal,
   computeDisplayOutboundShipping,
   computeDisplayReturnShipping,
 } from "@/lib/checkout/checkoutSummaryTotals";
-import { formatRentalDuration } from "@/lib/rental/formatRentalDuration";
+import CheckoutOrderItems from "./CheckoutOrderItems";
 import type {
   DispatchWindowSelectionMap,
   DispatchWindowsPayload,
@@ -41,105 +36,6 @@ const CURRENCY = "₦";
 const formatCurrency = (amount: number): string => {
   return amount.toLocaleString("en-NG");
 };
-
-// === Lister Summary Card Component ===
-interface ListerSummaryCardProps {
-  group: {
-    listerId: string;
-    items: any[];
-  };
-}
-
-const ListerOrderCard = memo(({ group }: ListerSummaryCardProps) => {
-    const { data: listerData, isLoading: isListerLoading } = useListerProfile(
-      group.listerId,
-    );
-
-    const listerName =
-      listerData?.name ||
-      group.items[0]?.listerName ||
-      `Lister ${group.listerId}`;
-
-    return (
-      <div
-        key={group.listerId}
-        className="p-4 border border-gray-200 rounded-xl"
-      >
-        <div className="flex justify-between items-center gap-4 mb-4">
-          <Paragraph1 className="font-bold text-gray-900 text-lg tracking-wide">
-            ORDER SUMMARY
-          </Paragraph1>
-          <Paragraph1 className="font-bold text-gray-500 text-lg tracking-wide">
-            From -{" "}
-            {isListerLoading ? (
-              <span className="inline-block bg-gray-200 rounded w-24 h-5 animate-pulse"></span>
-            ) : (
-              listerName
-            )}
-          </Paragraph1>
-        </div>
-
-        <div className="space-y-4">
-          {group.items.map((item) => {
-            const product = item.productDetail || {};
-            const productImageUrl = cloudinaryOptimizedImageUrl(
-              firstProductAttachmentImageUrl(product.attachments?.uploads) ||
-                item.productImage ||
-                "",
-              { preset: "thumb" },
-            );
-
-            return (
-              <div
-                key={item.requestId || item.cartItemId || item.id}
-                className="flex items-start gap-4"
-              >
-                <div className="relative bg-gray-200 border border-gray-100 rounded-md w-16 h-20 overflow-hidden shrink-0">
-                  {productImageUrl && (
-                    <Image
-                      src={productImageUrl}
-                      alt={product.name || item.productName}
-                      fill
-                      className="object-cover"
-                      unoptimized
-                    />
-                  )}
-                </div>
-
-                <div className="grow">
-                  <Paragraph1 className="font-semibold text-gray-800 text-sm uppercase leading-snug">
-                    {product.name || item.productName}
-                  </Paragraph1>
-                  <Paragraph1 className="mt-1 text-gray-600 text-xs leading-snug">
-                    {item.isResale || isResaleItem(item) ? (
-                      <>
-                        Type: <strong>Resale</strong>
-                      </>
-                    ) : (
-                      <>
-                        Duration:{" "}
-                        <strong>{formatRentalDuration(item.rentalDays)}</strong>
-                      </>
-                    )}
-                  </Paragraph1>
-                </div>
-
-                <div className="mt-1 font-bold text-gray-900 text-sm shrink-0">
-                  <Paragraph1>
-                    {CURRENCY}
-                    {formatCurrency(item.totalPrice || 0)}
-                  </Paragraph1>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  },
-);
-
-ListerOrderCard.displayName = "ListerOrderCard";
 
 // === Skeleton Loader ===
 const CheckoutSummarySkeleton = () => (
@@ -552,9 +448,15 @@ export default function FinalOrderSummaryCard({
 
       {!isLoading && !error && approvedGroups.length > 0 && (
         <>
-          {approvedGroups.map((group) => (
-            <ListerOrderCard key={group.listerId} group={group} />
-          ))}
+          <div className="p-4 border border-gray-200 rounded-xl">
+            <Paragraph1 className="mb-4 font-bold text-gray-900 text-lg tracking-wide">
+              ORDER SUMMARY
+            </Paragraph1>
+            <CheckoutOrderItems
+              listerGroups={approvedGroups}
+              variant="sidebar"
+            />
+          </div>
 
           {showPaymentSkeleton && <CheckoutSummarySkeleton />}
 
