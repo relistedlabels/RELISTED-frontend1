@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import HomeProductRail from "@/app/home/sections/HomeProductRail";
+import { useState } from "react";
 import { Header1Plus } from "@/common/ui/Text";
 import {
   isShopBrowseMode,
@@ -10,16 +10,22 @@ import {
   RENT_LISTING_TYPES,
 } from "@/lib/shop/shopBrowse";
 import ShopCategoryChips from "./ShopCategoryChips";
-import ShopOccasionTiles from "./ShopOccasionTiles";
 import ShopRentBuyToggle from "./ShopRentBuyToggle";
 import ShopToolbar from "./ShopToolbar";
 import ShopClosetParamsGuard from "./ShopClosetParamsGuard";
 import NewListingsSection from "../sections/NewListingsSection";
+import ListingFilterPanel from "./ListingFilterPanel";
+
+const FILTER_SHORTCUTS = [
+  { id: "size", label: "Size" },
+  { id: "category", label: "Category" },
+  { id: "occasion", label: "Occasion" },
+  { id: "filters", label: "Filters" },
+] as const;
 
 export default function ShopBrowseSection() {
   const searchParams = useSearchParams();
   const browseMode = isShopBrowseMode(searchParams);
-  const showBrowseRails = browseMode && isShopDefaultSort(searchParams);
   const rentMode = isShopRentMode(searchParams);
   const listingTypes = rentMode
     ? RENT_LISTING_TYPES.split(",")
@@ -28,6 +34,14 @@ export default function ShopBrowseSection() {
   const pageTitle = searchParams.get("title");
   const pageDescription = searchParams.get("description");
   const heading = pageTitle ?? "Shop";
+
+  const [filterShortcutOpen, setFilterShortcutOpen] = useState<string | null>(
+    null,
+  );
+
+  const handleFilterShortcut = (id: string) => {
+    setFilterShortcutOpen((prev) => (prev === id ? null : id));
+  };
 
   return (
     <div className="bg-white pt-[70px] sm:pt-[100px]">
@@ -59,6 +73,23 @@ export default function ShopBrowseSection() {
           <div className="mt-4">
             <ShopToolbar />
           </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {FILTER_SHORTCUTS.map((shortcut) => (
+              <button
+                key={shortcut.id}
+                type="button"
+                onClick={() => handleFilterShortcut(shortcut.id)}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                  filterShortcutOpen === shortcut.id
+                    ? "border-black bg-black text-white"
+                    : "border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50"
+                }`}
+              >
+                {shortcut.label}
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -67,27 +98,14 @@ export default function ShopBrowseSection() {
           <ShopCategoryChips />
         </div>
 
-        {showBrowseRails ? (
-          <>
-            <ShopOccasionTiles />
-            <HomeProductRail
-              embedded
-              title="New In"
-              subtitle="Fresh pieces ready to rent or buy."
-              viewAllHref={`/shop?listingType=${RENT_LISTING_TYPES}&sort=newest#shop-all-listings`}
-              sort="newest"
-              filters={{ listingTypes }}
-              limit={8}
-              priceFocus={rentMode ? "rent" : "buy"}
-            />
-          </>
-        ) : null}
-
-        <NewListingsSection
-          showSectionHeading
-          sectionTitle={browseMode ? "All listings" : "Results"}
-        />
+        <NewListingsSection showSectionHeading={false} />
       </div>
+
+      <ListingFilterPanel
+        isOpen={!!filterShortcutOpen}
+        onClose={() => setFilterShortcutOpen(null)}
+        hideSearch
+      />
     </div>
   );
 }
