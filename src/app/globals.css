@@ -59,9 +59,10 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Hero background video: hide native play UI in all browsers */
+/* Hero background video: hide native play UI where WebKit still allows it */
 .hero-bg-video {
   -webkit-touch-callout: none;
+  -webkit-media-controls: none;
 }
 
 .hero-bg-video::-webkit-media-controls,
@@ -74,4 +75,9 @@ html {
   -webkit-appearance: none;
   opacity: 0;
   pointer-events: none;
+}
+
+.hero-bg-video-cover {
+  -webkit-touch-callout: none;
+  z-index: 1;
 }
