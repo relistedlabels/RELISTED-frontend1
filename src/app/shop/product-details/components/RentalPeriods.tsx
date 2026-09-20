@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import type { DispatchWindowsPayload } from "@/lib/checkout/dispatchWindows";
 import { toast } from "sonner";
 import { X, ArrowLeft, Loader2 } from "lucide-react";
@@ -96,10 +97,26 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
     DispatchWindowsPayload | undefined
   >(undefined);
 
+  const [mounted, setMounted] = useState(false);
+
   const variants = {
     hidden: { x: "100%" },
     visible: { x: 0 },
   };
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const { overflow } = document.body.style;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = overflow;
+    };
+  }, [isOpen]);
 
   const [rentalDays, setRentalDays] = useState(1);
   const [startDate, setStartDate] = useState<Date>(new Date());
@@ -300,109 +317,112 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
     void submitAvailabilityRequest(contact);
   };
 
+  const panel = (
+    <AnimatePresence>
+      {isOpen ? (
+        <motion.div
+          className={slidePanelBackdrop}
+          onClick={onClose}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className={slidePanelSheetPinned}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Product RentalPeriods"
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={variants}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className={slidePanelHeader}>
+              <button
+                onClick={onClose}
+                className="xl:hidden p-1 rounded-full text-gray-500 hover:text-black transition"
+                aria-label="Close RentalPeriods"
+              >
+                <ArrowLeft size={20} />
+              </button>
+
+              <Paragraph1 className={slidePanelTitle}>SELECT YOUR DATES</Paragraph1>
+              <button
+                onClick={onClose}
+                className="p-1 rounded-full text-gray-500 hover:text-black transition"
+                aria-label="Close RentalPeriods"
+              >
+                <X className="hidden xl:flex" size={20} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className={`${slidePanelBody} space-y-5 pt-3 sm:space-y-6`}>
+              <RentalDurationSelector
+                productId={productId}
+                listerId={listerId}
+                dailyPrice={dailyPrice}
+                collateralPrice={collateralPrice}
+                onChangeRentalDays={handleRentalDaysChange}
+                suggestedStartLagosYmd={suggestedRentalCalendarStartYmd}
+                minSelectableLagosYmd={closetEarliestDeliveryYmd}
+                afterCalendar={
+                  supportsRentalDates && rentalDays > 0 ? (
+                    <RentalDispatchWindowPicker
+                      startDate={startDate}
+                      rentalDays={rentalDays}
+                      enabled
+                      panelOpen={isOpen}
+                      applyDeliveryFloor={applyDeliveryFloor}
+                      closetEarliestDeliveryYmd={closetEarliestDeliveryYmd}
+                      onPayloadChange={setDispatchWindowsPayload}
+                    />
+                  ) : null
+                }
+              />
+            </div>
+
+            {/* Footer */}
+            <div className={`${slidePanelFooter} flex gap-4`}>
+              <button
+                type="button"
+                onClick={onClose}
+                className={`${buttonSecondary} flex-1`}
+              >
+                <Paragraph1>Shop More </Paragraph1>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCheckAvailability}
+                disabled={isChecking}
+                className={`${buttonPrimary} flex flex-1 items-center justify-center gap-1`}
+              >
+                {isChecking ? (
+                  <>
+                    <Loader2
+                      className="w-4 h-4 animate-spin shrink-0"
+                      aria-hidden
+                    />
+                    <Paragraph1>Checking…</Paragraph1>
+                  </>
+                ) : (
+                  <Paragraph1>Check availability</Paragraph1>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
+
   return (
     <>
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            className={slidePanelBackdrop}
-            onClick={onClose}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className={slidePanelSheetPinned}
-              role="dialog"
-              aria-modal="true"
-              aria-label="Product RentalPeriods"
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-              variants={variants}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Header */}
-              <div className={slidePanelHeader}>
-                <button
-                  onClick={onClose}
-                  className="xl:hidden p-1 rounded-full text-gray-500 hover:text-black transition"
-                  aria-label="Close RentalPeriods"
-                >
-                  <ArrowLeft size={20} />
-                </button>
-
-                <Paragraph1 className={slidePanelTitle}>SELECT YOUR DATES</Paragraph1>
-                <button
-                  onClick={onClose}
-                  className="p-1 rounded-full text-gray-500 hover:text-black transition"
-                  aria-label="Close RentalPeriods"
-                >
-                  <X className="hidden xl:flex" size={20} />
-                </button>
-              </div>
-
-              {/* Content */}
-              <div className={`${slidePanelBody} space-y-5 pt-3 sm:space-y-6`}>
-                <RentalDurationSelector
-                  productId={productId}
-                  listerId={listerId}
-                  dailyPrice={dailyPrice}
-                  collateralPrice={collateralPrice}
-                  onChangeRentalDays={handleRentalDaysChange}
-                  suggestedStartLagosYmd={suggestedRentalCalendarStartYmd}
-                  minSelectableLagosYmd={closetEarliestDeliveryYmd}
-                  afterCalendar={
-                    supportsRentalDates && rentalDays > 0 ? (
-                      <RentalDispatchWindowPicker
-                        startDate={startDate}
-                        rentalDays={rentalDays}
-                        enabled
-                        panelOpen={isOpen}
-                        applyDeliveryFloor={applyDeliveryFloor}
-                        closetEarliestDeliveryYmd={closetEarliestDeliveryYmd}
-                        onPayloadChange={setDispatchWindowsPayload}
-                      />
-                    ) : null
-                  }
-                />
-              </div>
-
-              {/* Footer */}
-              <div className={`${slidePanelFooter} flex gap-4`}>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className={`${buttonSecondary} flex-1`}
-                >
-                  <Paragraph1>Shop More </Paragraph1>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleCheckAvailability}
-                  disabled={isChecking}
-                  className={`${buttonPrimary} flex flex-1 items-center justify-center gap-1`}
-                >
-                  {isChecking ? (
-                    <>
-                      <Loader2
-                        className="w-4 h-4 animate-spin shrink-0"
-                        aria-hidden
-                      />
-                      <Paragraph1>Checking…</Paragraph1>
-                    </>
-                  ) : (
-                    <Paragraph1>Check availability</Paragraph1>
-                  )}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
+      {mounted ? createPortal(panel, document.body) : null}
 
       <GuestContactModal
         isOpen={isGuestModalOpen}
