@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Search, SlidersVertical, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useListingFilterOptions } from "@/lib/queries/product/useListingFilterOptions";
@@ -99,6 +99,8 @@ function toListingFilters(state: PanelState): ListingFilterValues {
   };
 }
 
+export type ListingFilterSection = "category" | "size";
+
 export type ListingFilterPanelProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -107,6 +109,7 @@ export type ListingFilterPanelProps = {
   onApply?: (filters: ListingFilterValues) => void;
   onClear?: () => void;
   hideSearch?: boolean;
+  initialSection?: ListingFilterSection;
   filterOptionsScope?: "shop" | "admin-picker";
 };
 
@@ -144,6 +147,7 @@ export default function ListingFilterPanel({
   onApply,
   onClear,
   hideSearch = false,
+  initialSection,
   filterOptionsScope = "shop",
 }: ListingFilterPanelProps) {
   const router = useRouter();
@@ -169,6 +173,8 @@ export default function ListingFilterPanel({
   const [listerSearch, setListerSearch] = useState("");
   const [localFilters, setLocalFilters] = useState<PanelState>(emptyPanelState);
   const [mounted, setMounted] = useState(false);
+  const categorySectionRef = useRef<HTMLElement | null>(null);
+  const sizeSectionRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -193,6 +199,19 @@ export default function ListingFilterPanel({
       document.body.style.overflow = previousOverflow;
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !initialSection) return;
+    const target =
+      initialSection === "category"
+        ? categorySectionRef.current
+        : sizeSectionRef.current;
+    if (!target) return;
+    const frame = requestAnimationFrame(() => {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isOpen, initialSection]);
 
   const toggleList = (list: string[], item: string, checked: boolean) =>
     checked ? [...list, item] : list.filter((entry) => entry !== item);
@@ -288,7 +307,7 @@ export default function ListingFilterPanel({
                 </div>
               ) : null}
 
-              <section>
+              <section ref={categorySectionRef}>
                 <Paragraph1 className={filterSectionTitle}>
                   Primary Categories
                 </Paragraph1>
@@ -557,7 +576,7 @@ export default function ListingFilterPanel({
                 )}
               </section>
 
-              <section>
+              <section ref={sizeSectionRef}>
                 <Paragraph1 className={filterSectionTitle}>
                   Size
                 </Paragraph1>
