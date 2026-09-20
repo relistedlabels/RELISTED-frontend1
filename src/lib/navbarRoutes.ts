@@ -4,6 +4,7 @@
 export const PUBLIC_NAVBAR_ROUTES = [
   "/",
   "/shop",
+  "/style-spotlight",
   "/how-it-works",
   "/about",
   "/contact-us",

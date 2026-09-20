@@ -15,7 +15,7 @@ export default function FAQSection() {
   const hasMore = faqs.length > 10;
 
   return (
-    <section className="w-full max-w-4xl mx-auto py-20 px-6">
+    <section id="faq" className="w-full max-w-4xl mx-auto py-20 px-6">
       {/* Title */}
       <Header1Plus className="text-center text-3xl font-semibold tracking-wide mb-14">
         FAQ
