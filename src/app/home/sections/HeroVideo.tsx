@@ -3,6 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 
 const HERO_MP4_SRC = "/videos/hero1.mp4";
+const HERO_POSTER_SRC = "/videos/hero1-poster.jpg";
+
+function isSafari(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  const isIOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isWebKit = /AppleWebKit/.test(ua);
+  const isOtherIOSBrowser = /(CriOS|FxiOS|OPiOS|EdgiOS)/.test(ua);
+  return (isWebKit && !/Chrome|Chromium|Edg|OPR|SamsungBrowser/.test(ua)) || (isIOS && !isOtherIOSBrowser);
+}
 
 /**
  * Defer attaching the MP4 until the browser is idle (or a short timeout).
@@ -13,6 +25,7 @@ export default function HeroVideo() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [fade, setFade] = useState(false);
   const [srcReady, setSrcReady] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -21,7 +34,6 @@ export default function HeroVideo() {
     };
 
     let idleId: number | undefined;
-    /** Browser timers are numeric handles; `ReturnType<typeof setTimeout>` can be `NodeJS.Timeout` when Node typings are in scope. */
     let timeoutId: number | undefined;
 
     if (typeof window.requestIdleCallback === "function") {
@@ -37,9 +49,6 @@ export default function HeroVideo() {
     };
   }, []);
 
-  // Do not call video.load() here. Adding <source> triggers a load; an extra load()
-  // can abort the first range request (Network shows "canceled" then a slow retry).
-
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !srcReady) return;
@@ -47,43 +56,68 @@ export default function HeroVideo() {
     video.muted = true;
     video.defaultMuted = true;
     video.setAttribute("muted", "");
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
+    video.setAttribute("x-webkit-airplay", "deny");
 
-    const ensurePlaying = () => {
-      if (video.paused && !document.hidden) {
-        void video.play().catch(() => {});
+    const startPlayback = () => {
+      if (document.hidden) return;
+      void video.play().catch(() => {});
+    };
+
+    const schedulePlayback = () => {
+      // Safari shows a native play overlay when the autoplay attribute is present.
+      // Programmatic play (especially deferred with setTimeout) avoids that UI.
+      if (isSafari()) {
+        window.setTimeout(startPlayback, 0);
+      } else {
+        startPlayback();
       }
     };
 
     const handlePlaying = () => {
-      video.removeAttribute("poster");
+      if (video.currentTime > 0) setIsPlaying(true);
     };
 
-    ensurePlaying();
+    schedulePlayback();
 
-    video.addEventListener("loadeddata", ensurePlaying);
-    video.addEventListener("canplay", ensurePlaying);
+    video.addEventListener("loadeddata", schedulePlayback);
+    video.addEventListener("canplay", schedulePlayback);
     video.addEventListener("playing", handlePlaying);
-    video.addEventListener("pause", ensurePlaying);
+    video.addEventListener("timeupdate", handlePlaying);
 
     const handleVisibility = () => {
-      if (!document.hidden) ensurePlaying();
+      if (!document.hidden) schedulePlayback();
     };
     document.addEventListener("visibilitychange", handleVisibility);
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry?.isIntersecting) ensurePlaying();
+        if (entry?.isIntersecting) schedulePlayback();
       },
       { threshold: 0.1 },
     );
     observer.observe(video);
 
+    // Low Power Mode and strict autoplay policies may block until first interaction.
+    const unlockOnInteraction = () => schedulePlayback();
+    window.addEventListener("touchstart", unlockOnInteraction, {
+      once: true,
+      passive: true,
+    });
+    window.addEventListener("scroll", unlockOnInteraction, {
+      once: true,
+      passive: true,
+    });
+
     return () => {
-      video.removeEventListener("loadeddata", ensurePlaying);
-      video.removeEventListener("canplay", ensurePlaying);
+      video.removeEventListener("loadeddata", schedulePlayback);
+      video.removeEventListener("canplay", schedulePlayback);
       video.removeEventListener("playing", handlePlaying);
-      video.removeEventListener("pause", ensurePlaying);
+      video.removeEventListener("timeupdate", handlePlaying);
       document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("touchstart", unlockOnInteraction);
+      window.removeEventListener("scroll", unlockOnInteraction);
       observer.disconnect();
     };
   }, [srcReady]);
@@ -92,14 +126,13 @@ export default function HeroVideo() {
     const video = videoRef.current;
     if (!video || !srcReady) return;
 
-    const FADE_DURATION = 0.5; // seconds before end to fade out
+    const FADE_DURATION = 0.5;
 
     const handleTimeUpdate = () => {
       if (!video.duration) return;
 
       const timeLeft = video.duration - video.currentTime;
 
-      // Fade out near the end
       if (timeLeft <= FADE_DURATION) {
         setFade(true);
       } else {
@@ -112,30 +145,41 @@ export default function HeroVideo() {
   }, [srcReady]);
 
   return (
-    <video
-      ref={videoRef}
-      autoPlay
-      loop
-      muted
-      playsInline
-      disablePictureInPicture
-      disableRemotePlayback
-      controls={false}
-      controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
-      poster="/videos/hero1-poster.jpg"
-      preload={srcReady ? "metadata" : "none"}
-      aria-hidden
-      tabIndex={-1}
-      className={`
-        hero-bg-video pointer-events-none select-none
-        absolute inset-0 w-full h-full object-cover xl:object-contain
-        transition-opacity duration-1000 ease-in-out
-        ${fade ? "opacity-0" : "opacity-100"}
-      `}
-    >
-      {srcReady ? (
-        <source src={HERO_MP4_SRC} type="video/mp4" />
-      ) : null}
-    </video>
+    <div className="absolute inset-0">
+      <video
+        ref={videoRef}
+        src={srcReady ? HERO_MP4_SRC : undefined}
+        loop
+        muted
+        playsInline
+        disablePictureInPicture
+        disableRemotePlayback
+        controls={false}
+        controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
+        preload={srcReady ? "auto" : "none"}
+        aria-hidden
+        tabIndex={-1}
+        className={`
+          hero-bg-video pointer-events-none select-none
+          absolute inset-0 w-full h-full object-cover xl:object-contain
+          transition-opacity duration-1000 ease-in-out
+          ${fade ? "opacity-0" : "opacity-100"}
+        `}
+      />
+
+      {/* Covers Safari's native play overlay until frames are actually playing. */}
+      <img
+        src={HERO_POSTER_SRC}
+        alt=""
+        aria-hidden
+        draggable={false}
+        className={`
+          hero-bg-video-cover pointer-events-none select-none
+          absolute inset-0 w-full h-full object-cover xl:object-contain
+          transition-opacity duration-700 ease-out
+          ${isPlaying ? "opacity-0" : "opacity-100"}
+        `}
+      />
+    </div>
   );
 }
