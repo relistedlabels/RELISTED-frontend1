@@ -21,15 +21,16 @@ import QueryProvider from "@/lib/providers/query-provider";
 import SerwistRegistration from "@/components/pwa/SerwistRegistration";
 import { Header } from "./Header";
 
+const SITE_DESCRIPTION =
+  "We enable individuals rent and buy standout pieces at a fraction of the retail price from each other and the brands they love. At the same time, users earn from their wardrobe by listing pieces through our secure, easy to navigate software.";
+
 export const metadata: Metadata = {
   applicationName: PWA_APP_NAME,
   title: {
-    default:
-      "RELISTED LABELS is a peer-to-peer rental platform redefining how women access fashion across Africa.",
+    default: PWA_APP_NAME,
     template: `%s | ${PWA_APP_SHORT_NAME}`,
   },
-  description:
-    "We enable individuals rent and buy standout pieces at a fraction of the retail price from each other and the brands they love. At the same time, users earn from their wardrobe by listing pieces through our secure, easy to navigate software.",
+  description: SITE_DESCRIPTION,
   keywords: ["Relisted", "Fashion", "Heritage", "Luxury", "Global Style"],
   authors: [{ name: "Relisted" }],
   appleWebApp: {
@@ -41,10 +42,8 @@ export const metadata: Metadata = {
     telephone: false,
   },
   openGraph: {
-    title:
-      "RELISTED LABELS is a peer-to-peer rental platform redefining how women access fashion across Africa.",
-    description:
-      "We enable individuals rent and buy standout pieces at a fraction of the retail price from each other and the brands they love. At the same time, users earn from their wardrobe by listing pieces through our secure, easy to navigate software.",
+    title: PWA_APP_NAME,
+    description: SITE_DESCRIPTION,
     url: "https://www.relisted.com",
     siteName: "Relisted",
     images: [
@@ -71,10 +70,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title:
-      "RELISTED LABELS is a peer-to-peer rental platform redefining how women access fashion across Africa.",
-    description:
-      "We enable individuals rent and buy standout pieces at a fraction of the retail price from each other and the brands they love. At the same time, users earn from their wardrobe by listing pieces through our secure, easy to navigate software.",
+    title: PWA_APP_NAME,
+    description: SITE_DESCRIPTION,
     images: ["/og-image.jpg"],
   },
 };
