@@ -44,6 +44,54 @@ export default function HeroVideo() {
     const video = videoRef.current;
     if (!video || !srcReady) return;
 
+    video.muted = true;
+    video.defaultMuted = true;
+    video.setAttribute("muted", "");
+
+    const ensurePlaying = () => {
+      if (video.paused && !document.hidden) {
+        void video.play().catch(() => {});
+      }
+    };
+
+    const handlePlaying = () => {
+      video.removeAttribute("poster");
+    };
+
+    ensurePlaying();
+
+    video.addEventListener("loadeddata", ensurePlaying);
+    video.addEventListener("canplay", ensurePlaying);
+    video.addEventListener("playing", handlePlaying);
+    video.addEventListener("pause", ensurePlaying);
+
+    const handleVisibility = () => {
+      if (!document.hidden) ensurePlaying();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) ensurePlaying();
+      },
+      { threshold: 0.1 },
+    );
+    observer.observe(video);
+
+    return () => {
+      video.removeEventListener("loadeddata", ensurePlaying);
+      video.removeEventListener("canplay", ensurePlaying);
+      video.removeEventListener("playing", handlePlaying);
+      video.removeEventListener("pause", ensurePlaying);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      observer.disconnect();
+    };
+  }, [srcReady]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !srcReady) return;
+
     const FADE_DURATION = 0.5; // seconds before end to fade out
 
     const handleTimeUpdate = () => {
@@ -70,9 +118,16 @@ export default function HeroVideo() {
       loop
       muted
       playsInline
+      disablePictureInPicture
+      disableRemotePlayback
+      controls={false}
+      controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
       poster="/videos/hero1-poster.jpg"
       preload={srcReady ? "metadata" : "none"}
+      aria-hidden
+      tabIndex={-1}
       className={`
+        hero-bg-video pointer-events-none select-none
         absolute inset-0 w-full h-full object-cover xl:object-contain
         transition-opacity duration-1000 ease-in-out
         ${fade ? "opacity-0" : "opacity-100"}

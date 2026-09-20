@@ -58,3 +58,20 @@ html::-webkit-scrollbar {
 html {
   scroll-behavior: smooth;
 }
+
+/* Hero background video: hide native play UI in all browsers */
+.hero-bg-video {
+  -webkit-touch-callout: none;
+}
+
+.hero-bg-video::-webkit-media-controls,
+.hero-bg-video::-webkit-media-controls-enclosure,
+.hero-bg-video::-webkit-media-controls-panel,
+.hero-bg-video::-webkit-media-controls-play-button,
+.hero-bg-video::-webkit-media-controls-start-playback-button,
+.hero-bg-video::-webkit-media-controls-overlay-play-button {
+  display: none !important;
+  -webkit-appearance: none;
+  opacity: 0;
+  pointer-events: none;
+}
