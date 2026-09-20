@@ -32,5 +32,5 @@
     "src/app/curators/dashboard",
     "next.config.js"
   ],
-  "exclude": ["node_modules", "public/sw.js"]
+  "exclude": ["node_modules"]
 }

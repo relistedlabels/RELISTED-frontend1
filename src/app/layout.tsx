@@ -18,6 +18,7 @@ import { UnauthorizedSignInRedirect } from "@/common/layer/UnauthorizedSignInRed
 import { OnboardingPromptGuard } from "@/common/layer/OnboardingPromptGuard";
 import { UploaderProvider } from "@/context/UploaderProvider";
 import QueryProvider from "@/lib/providers/query-provider";
+import SerwistRegistration from "@/components/pwa/SerwistRegistration";
 import { Header } from "./Header";
 
 export const metadata: Metadata = {
@@ -112,6 +113,7 @@ export default function RootLayout({
       </head>
       <body className=" ">
         {/* <DevGuard> */}
+        <SerwistRegistration>
         <QueryProvider>
           <AuthStateMonitorProvider>
             <UnauthorizedSignInRedirect />
@@ -129,6 +131,7 @@ export default function RootLayout({
             </UploaderProvider>
           </AuthStateMonitorProvider>
         </QueryProvider>
+        </SerwistRegistration>
         {/* </DevGuard> */}
       </body>
     </html>

@@ -1,26 +1,7 @@
 // next.config.js
 
 const path = require("path");
-const { spawnSync } = require("node:child_process");
-const crypto = require("node:crypto");
-const withSerwistInit = require("@serwist/next").default;
-
-function getSerwistRevision() {
-  const stdout = spawnSync("git", ["rev-parse", "HEAD"], {
-    encoding: "utf-8",
-  }).stdout?.trim();
-  return stdout || crypto.randomUUID();
-}
-
-const withSerwist = withSerwistInit({
-  swSrc: "src/app/sw.ts",
-  swDest: "public/sw.js",
-  disable: process.env.NODE_ENV === "development",
-  reloadOnOnline: false,
-  additionalPrecacheEntries: [
-    { url: "/offline", revision: getSerwistRevision() },
-  ],
-});
+const { withSerwist } = require("@serwist/turbopack");
 
 const nextConfig = {
   images: {
