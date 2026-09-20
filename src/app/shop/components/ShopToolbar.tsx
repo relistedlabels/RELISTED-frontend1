@@ -7,8 +7,8 @@ import SelectDropdown from "@/common/ui/SelectDropdown";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useListingFilterOptions } from "@/lib/queries/product/useListingFilterOptions";
 import {
-  countShopPanelFilters,
   buildShopFilterChips,
+  countShopPanelFilters,
   removeShopFilterChip,
   SHOP_SORT_OPTIONS,
   shopSortFromSearchParams,
@@ -23,6 +23,7 @@ import ListingFilterPanel from "./ListingFilterPanel";
 
 type ShopToolbarProps = {
   resultCountLabel?: string;
+  searchOnly?: boolean;
 };
 
 const toolbarShellClassName =
@@ -32,7 +33,10 @@ const toolbarActionClassName = `${toolbarShellClassName} font-semibold`;
 
 const iconActionWidthClassName = "relative shrink-0 w-11";
 
-export default function ShopToolbar({ resultCountLabel }: ShopToolbarProps) {
+export default function ShopToolbar({
+  resultCountLabel,
+  searchOnly = false,
+}: ShopToolbarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [filterOpen, setFilterOpen] = useState(false);
@@ -110,8 +114,11 @@ export default function ShopToolbar({ resultCountLabel }: ShopToolbarProps) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-stretch gap-2">
-        <form onSubmit={submitSearch} className="relative min-w-0 flex-1">
+      <div className={searchOnly ? "" : "flex items-stretch gap-2"}>
+        <form
+          onSubmit={submitSearch}
+          className={`relative min-w-0 ${searchOnly ? "w-full" : "flex-1"}`}
+        >
           <Search
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
             aria-hidden
@@ -125,39 +132,45 @@ export default function ShopToolbar({ resultCountLabel }: ShopToolbarProps) {
           />
         </form>
 
-        <div className={iconActionWidthClassName}>
-          <SelectDropdown
-            compact
-            value={sort}
-            options={SHOP_SORT_OPTIONS.map((option) => ({
-              value: option.value,
-              label: option.label,
-            }))}
-            onChange={setSort}
-            ariaLabel={`Sort products, ${sortLabel}`}
-            placeholder="Sort"
-            triggerClassName={toolbarActionClassName}
-            triggerIcon={<ArrowUpDown className="h-4 w-4 shrink-0" aria-hidden />}
-          />
-        </div>
+        {!searchOnly ? (
+          <>
+            <div className={iconActionWidthClassName}>
+              <SelectDropdown
+                compact
+                value={sort}
+                options={SHOP_SORT_OPTIONS.map((option) => ({
+                  value: option.value,
+                  label: option.label,
+                }))}
+                onChange={setSort}
+                ariaLabel={`Sort products, ${sortLabel}`}
+                placeholder="Sort"
+                triggerClassName={toolbarActionClassName}
+                triggerIcon={
+                  <ArrowUpDown className="h-4 w-4 shrink-0" aria-hidden />
+                }
+              />
+            </div>
 
-        <button
-          type="button"
-          onClick={() => setFilterOpen(true)}
-          className={`inline-flex items-center justify-center px-0 ${toolbarActionClassName} ${iconActionWidthClassName}`}
-          aria-label={
-            panelFilterCount > 0
-              ? `Filters, ${panelFilterCount} active`
-              : "Filters"
-          }
-        >
-          <SlidersHorizontal className="h-4 w-4 shrink-0" aria-hidden />
-          {panelFilterCount > 0 ? (
-            <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-black px-1 text-[11px] font-bold text-white">
-              {panelFilterCount}
-            </span>
-          ) : null}
-        </button>
+            <button
+              type="button"
+              onClick={() => setFilterOpen(true)}
+              className={`inline-flex items-center justify-center px-0 ${toolbarActionClassName} ${iconActionWidthClassName}`}
+              aria-label={
+                panelFilterCount > 0
+                  ? `Filters, ${panelFilterCount} active`
+                  : "Filters"
+              }
+            >
+              <SlidersHorizontal className="h-4 w-4 shrink-0" aria-hidden />
+              {panelFilterCount > 0 ? (
+                <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-black px-1 text-[11px] font-bold text-white">
+                  {panelFilterCount}
+                </span>
+              ) : null}
+            </button>
+          </>
+        ) : null}
       </div>
 
       {chips.length > 0 ? (
@@ -187,11 +200,13 @@ export default function ShopToolbar({ resultCountLabel }: ShopToolbarProps) {
         <Paragraph1 className="text-sm text-gray-600">{resultCountLabel}</Paragraph1>
       ) : null}
 
-      <ListingFilterPanel
-        isOpen={filterOpen}
-        onClose={() => setFilterOpen(false)}
-        hideSearch
-      />
+      {!searchOnly ? (
+        <ListingFilterPanel
+          isOpen={filterOpen}
+          onClose={() => setFilterOpen(false)}
+          hideSearch
+        />
+      ) : null}
     </div>
   );
 }

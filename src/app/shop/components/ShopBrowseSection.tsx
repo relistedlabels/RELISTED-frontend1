@@ -1,29 +1,18 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import HomeProductRail from "@/app/home/sections/HomeProductRail";
 import { Header1Plus } from "@/common/ui/Text";
-import {
-  isShopBrowseMode,
-  isShopDefaultSort,
-  isShopRentMode,
-  RENT_LISTING_TYPES,
-} from "@/lib/shop/shopBrowse";
-import ShopCategoryChips from "./ShopCategoryChips";
-import ShopOccasionTiles from "./ShopOccasionTiles";
+import { isShopBrowseMode, isShopRentMode } from "@/lib/shop/shopBrowse";
 import ShopRentBuyToggle from "./ShopRentBuyToggle";
 import ShopToolbar from "./ShopToolbar";
+import ShopFilterBar from "./ShopFilterBar";
 import ShopClosetParamsGuard from "./ShopClosetParamsGuard";
 import NewListingsSection from "../sections/NewListingsSection";
 
 export default function ShopBrowseSection() {
   const searchParams = useSearchParams();
   const browseMode = isShopBrowseMode(searchParams);
-  const showBrowseRails = browseMode && isShopDefaultSort(searchParams);
   const rentMode = isShopRentMode(searchParams);
-  const listingTypes = rentMode
-    ? RENT_LISTING_TYPES.split(",")
-    : ["RESALE", "RENT_OR_RESALE"];
 
   const pageTitle = searchParams.get("title");
   const pageDescription = searchParams.get("description");
@@ -57,36 +46,15 @@ export default function ShopBrowseSection() {
           </div>
 
           <div className="mt-4">
-            <ShopToolbar />
+            <ShopToolbar searchOnly />
           </div>
+
+          <ShopFilterBar />
         </div>
       </section>
 
       <div className="mx-auto container px-4 sm:px-10">
-        <div className="border-b border-gray-100 py-4 sm:py-5">
-          <ShopCategoryChips />
-        </div>
-
-        {showBrowseRails ? (
-          <>
-            <ShopOccasionTiles />
-            <HomeProductRail
-              embedded
-              title="New In"
-              subtitle="Fresh pieces ready to rent or buy."
-              viewAllHref={`/shop?listingType=${RENT_LISTING_TYPES}&sort=newest#shop-all-listings`}
-              sort="newest"
-              filters={{ listingTypes }}
-              limit={8}
-              priceFocus={rentMode ? "rent" : "buy"}
-            />
-          </>
-        ) : null}
-
-        <NewListingsSection
-          showSectionHeading
-          sectionTitle={browseMode ? "All listings" : "Results"}
-        />
+        <NewListingsSection showSectionHeading={false} />
       </div>
     </div>
   );

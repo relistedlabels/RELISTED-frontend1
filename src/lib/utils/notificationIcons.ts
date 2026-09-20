@@ -65,6 +65,7 @@ const normalizeNotificationType = (type: NotificationType): string => {
     case "ADMIN_NEW_ORDER":
     case "ADMIN_INHOUSE_RENTAL_REQUEST":
     case "ADMIN_INHOUSE_PURCHASE_REQUEST":
+    case "ADMIN_RETURN_REQUEST_PAST_DUE":
       return "SYSTEM";
     default:
       return type;
