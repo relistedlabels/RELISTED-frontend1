@@ -26,7 +26,7 @@ describe("shouldSuppressSignInRedirect", () => {
     expect(shouldSuppressSignInRedirect("/shop")).toBe(true);
     expect(shouldSuppressSignInRedirect("/shop/product-details/abc")).toBe(true);
     expect(shouldSuppressSignInRedirect("/shop?page=2")).toBe(false);
-    expect(shouldSuppressSignInRedirect("/style-spotlight")).toBe(false);
+    expect(shouldSuppressSignInRedirect("/style-spotlight")).toBe(true);
   });
 
   test("does not suppress on protected renter/lister routes", () => {

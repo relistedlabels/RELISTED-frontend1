@@ -84,23 +84,22 @@ export default function NewListingsSection({
   const {
     data: { products: filteredProducts = [], pagination } = {},
     isLoading: loading,
+    isFetching,
     error,
   } = useProductsQuery();
   const router = useRouter();
   const searchParams = useSearchParams();
   const priceFocus = isShopRentMode(searchParams) ? "rent" : "buy";
   const pageParam = searchParams.get("page") ?? "1";
-  const skipInitialPageScroll = useRef(true);
+  const prevPageParam = useRef(pageParam);
 
   useEffect(() => {
     if (loading) return;
+    if (prevPageParam.current === pageParam) return;
 
     const page = Number(pageParam) || 1;
-
-    if (skipInitialPageScroll.current) {
-      skipInitialPageScroll.current = false;
-      if (page <= 1) return;
-    }
+    prevPageParam.current = pageParam;
+    if (page <= 1) return;
 
     scrollToListingsSection();
   }, [pageParam, loading]);
@@ -186,7 +185,11 @@ export default function NewListingsSection({
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-7 md:grid-cols-4 lg:grid-cols-5 lg:gap-x-5">
+            <div
+              className={`grid grid-cols-2 gap-x-3 gap-y-6 transition-opacity duration-200 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-7 md:grid-cols-4 lg:grid-cols-5 lg:gap-x-5 ${
+                isFetching && !loading ? "opacity-60" : "opacity-100"
+              }`}
+            >
               {filteredProducts.map((product: any) => (
                 <ProductCard
                   key={product.id}

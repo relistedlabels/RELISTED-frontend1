@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { productApi } from "@/lib/api/product";
 import { useSearchParams } from "next/navigation";
 import {
@@ -77,6 +77,7 @@ export const useProductsQuery = () => {
     },
     staleTime: 5 * 60 * 1000,
     retry: 1,
+    placeholderData: keepPreviousData,
   });
 
   return query;

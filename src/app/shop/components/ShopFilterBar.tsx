@@ -64,11 +64,10 @@ export default function ShopFilterBar() {
     [filterOptions],
   );
 
-  const pushParams = (params: URLSearchParams, scrollToListings = false) => {
+  const pushParams = (params: URLSearchParams) => {
     params.delete("page");
     const qs = params.toString();
-    const hash = scrollToListings ? "#shop-all-listings" : "";
-    router.push(qs ? `/shop?${qs}${hash}` : `/shop${hash}`);
+    router.push(qs ? `/shop?${qs}` : "/shop", { scroll: false });
   };
 
   const toggleListParam = (
@@ -104,7 +103,7 @@ export default function ShopFilterBar() {
     }
 
     mergePreservedShopParams(params, searchParams);
-    pushParams(params, true);
+    pushParams(params);
   };
 
   return (
@@ -146,10 +145,11 @@ export default function ShopFilterBar() {
           <button
             type="button"
             onClick={() => setSortOpen(true)}
-            className={`inline-flex items-center justify-center px-0 ${toolbarActionClassName} ${iconActionWidthClassName}`}
+            className={`inline-flex items-center justify-center gap-1.5 px-0 sm:px-3 ${toolbarActionClassName} ${iconActionWidthClassName} sm:w-auto`}
             aria-label="Sort products"
           >
             <ArrowUpDown className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="hidden sm:inline">Sort</span>
           </button>
 
           <button
