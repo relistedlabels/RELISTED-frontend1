@@ -7,9 +7,10 @@ import { useRouter } from "next/navigation";
 import { buttonPrimary } from "@/common/ui/buttonClasses";
 import {
   slidePanelBackdrop,
+  slidePanelBody,
   slidePanelFooter,
   slidePanelHeader,
-  slidePanelSheet,
+  slidePanelSheetPinned,
   slidePanelTitle,
 } from "@/common/ui/dashboardClasses";
 import { Paragraph1 } from "@/common/ui/Text";
@@ -44,7 +45,7 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className={slidePanelSheet}
+            className={slidePanelSheetPinned}
             role="dialog"
             aria-modal="true"
             aria-label="Fund wallet"
@@ -76,7 +77,7 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
             </div>
 
             {/* Content */}
-            <div className="grow pt-4 pb-20">
+            <div className={`${slidePanelBody} pt-4`}>
               <WalletTopUpForm onClose={onClose} />
             </div>
 

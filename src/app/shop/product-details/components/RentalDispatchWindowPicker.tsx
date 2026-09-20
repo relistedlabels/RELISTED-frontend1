@@ -315,7 +315,7 @@ export default function RentalDispatchWindowPicker({
             onClick={() => setIsDispatchModalOpen(false)}
           >
             <motion.div
-              className={`${bottomSheetPanel} flex max-h-[min(92vh,100%)] w-full max-w-md flex-col px-6 pt-8 sm:max-h-none sm:rounded-2xl sm:pb-8`}
+              className={`${bottomSheetPanel} flex max-h-[min(92dvh,100%)] w-full max-w-md flex-col px-6 pt-8 sm:max-h-none sm:rounded-2xl sm:pb-8`}
               initial={{ y: 48, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 48, opacity: 0 }}

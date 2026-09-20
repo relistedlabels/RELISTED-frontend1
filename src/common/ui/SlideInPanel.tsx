@@ -6,9 +6,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
   slidePanelBackdrop,
+  slidePanelBody,
   slidePanelFooter,
   slidePanelHeader,
-  slidePanelSheet,
+  slidePanelSheetPinned,
   slidePanelTitle,
 } from "@/common/ui/dashboardClasses";
 
@@ -35,7 +36,7 @@ export default function SlideInPanel({
   ariaLabel,
   children,
   footer,
-  bodyClassName = "min-h-0 flex-1 space-y-4 overflow-y-auto hide-scrollbar py-4",
+  bodyClassName = `${slidePanelBody} space-y-4 py-4`,
 }: SlideInPanelProps) {
   return (
     <AnimatePresence>
@@ -48,7 +49,7 @@ export default function SlideInPanel({
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className={slidePanelSheet}
+            className={slidePanelSheetPinned}
             role="dialog"
             aria-modal="true"
             aria-label={ariaLabel ?? title}

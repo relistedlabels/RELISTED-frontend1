@@ -7,6 +7,7 @@ import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Paragraph1 } from "@/common/ui/Text";
+import { slidePanelActionsFooter } from "@/common/ui/dashboardClasses";
 import { useListingFilterOptions } from "@/lib/queries/product/useListingFilterOptions";
 import {
   EMPTY_LISTING_FILTER_OPTIONS,
@@ -737,7 +738,7 @@ export default function ListingFilterPanel({
               />
             </div>
 
-            <div className="flex shrink-0 gap-3 border-t border-gray-100 bg-white px-4 py-4 sm:px-5">
+            <div className={slidePanelActionsFooter}>
               <button
                 type="button"
                 onClick={handleClearFilters}
