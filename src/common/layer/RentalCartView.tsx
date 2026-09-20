@@ -13,9 +13,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
 import {
   slidePanelBackdrop,
+  slidePanelBody,
   slidePanelFooter,
   slidePanelHeader,
-  slidePanelSheet,
+  slidePanelSheetPinned,
   slidePanelTitle,
 } from "@/common/ui/dashboardClasses";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
@@ -61,7 +62,7 @@ const RentalCartViewPanel: React.FC<RentalCartViewPanelProps> = ({
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className={slidePanelSheet}
+            className={slidePanelSheetPinned}
             role="dialog"
             aria-modal="true"
             aria-label="Product RentalCartView"
@@ -93,7 +94,7 @@ const RentalCartViewPanel: React.FC<RentalCartViewPanelProps> = ({
             </div>
 
             {/* Content */}
-            <div className="grow pt-4 pb-20 space-y-8">
+            <div className={`${slidePanelBody} space-y-8 pt-4`}>
               <RentalCartSummary />
             </div>
 

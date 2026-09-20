@@ -6,8 +6,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
   slidePanelBackdrop,
+  slidePanelBody,
   slidePanelHeader,
-  slidePanelSheet,
+  slidePanelSheetPinned,
   slidePanelTitle,
 } from "@/common/ui/dashboardClasses";
 import AddressInputForm from "./AddressInputForm";
@@ -43,7 +44,7 @@ const ChangeAddressPanel: React.FC<ChangeAddressPanelProps> = ({
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className={slidePanelSheet}
+            className={slidePanelSheetPinned}
             role="dialog"
             aria-modal="true"
             aria-label={panelTitle}
@@ -75,7 +76,7 @@ const ChangeAddressPanel: React.FC<ChangeAddressPanelProps> = ({
             </div>
 
             {/* Content */}
-            <div className="grow pt-4 pb-20">
+            <div className={`${slidePanelBody} pt-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]`}>
               <AddressInputForm
                 onAddressSaved={onAddressSaved}
                 onClose={onClose}

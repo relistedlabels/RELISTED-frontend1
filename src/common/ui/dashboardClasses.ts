@@ -4,7 +4,19 @@ export const slidePanelBackdrop =
 
 /** Right-side slide-in sheet. */
 export const slidePanelSheet =
-  "fixed top-0 right-0 flex h-screen w-full flex-col overflow-y-auto hide-scrollbar bg-white px-4 shadow-2xl sm:w-[28.5rem]";
+  "fixed inset-y-0 right-0 flex h-[100dvh] w-full flex-col overflow-y-auto hide-scrollbar bg-white px-4 shadow-2xl sm:w-[28.5rem]";
+
+/** Full-height sheet with pinned header/footer and scrollable body. */
+export const slidePanelSheetPinned =
+  "fixed inset-y-0 right-0 flex h-[100dvh] w-full flex-col overflow-hidden hide-scrollbar bg-white px-4 shadow-2xl sm:w-[28.5rem]";
+
+/** Scrollable panel body (use inside sheets with pinned footers). */
+export const slidePanelBody =
+  "min-h-0 flex-1 overflow-y-auto hide-scrollbar";
+
+/** Pinned action row for filter-style panels. */
+export const slidePanelActionsFooter =
+  "flex shrink-0 gap-3 border-t border-gray-100 bg-white px-4 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:px-5";
 
 /** Sticky panel header row. */
 export const slidePanelHeader =
@@ -15,7 +27,7 @@ export const slidePanelTitle = "font-bold text-gray-900 text-sm";
 
 /** Sticky panel footer action row. */
 export const slidePanelFooter =
-  "sticky bottom-0 z-20 shrink-0 border-t border-gray-100 bg-white py-3";
+  "sticky bottom-0 z-20 shrink-0 border-t border-gray-100 bg-white pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]";
 
 /** Centered dialog backdrop. */
 export const dialogBackdrop =

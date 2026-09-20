@@ -9,9 +9,10 @@ import { useRouter } from "next/navigation";
 import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
 import {
   slidePanelBackdrop,
+  slidePanelBody,
   slidePanelFooter,
   slidePanelHeader,
-  slidePanelSheet,
+  slidePanelSheetPinned,
   slidePanelTitle,
 } from "@/common/ui/dashboardClasses";
 import { Paragraph1 } from "@/common/ui/Text";
@@ -307,7 +308,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className={slidePanelSheet}
+              className={slidePanelSheetPinned}
               role="dialog"
               aria-modal="true"
               aria-label="Product RentalPeriods"
@@ -339,7 +340,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
               </div>
 
               {/* Content */}
-              <div className="grow space-y-5 pb-24 pt-3 sm:space-y-6">
+              <div className={`${slidePanelBody} space-y-5 pt-3 sm:space-y-6`}>
                 <RentalDurationSelector
                   productId={productId}
                   listerId={listerId}

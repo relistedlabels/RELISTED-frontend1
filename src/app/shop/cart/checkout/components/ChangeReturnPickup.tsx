@@ -7,8 +7,10 @@ import { toast } from "sonner";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
   slidePanelBackdrop,
+  slidePanelBody,
+  slidePanelFooter,
   slidePanelHeader,
-  slidePanelSheet,
+  slidePanelSheetPinned,
   slidePanelTitle,
 } from "@/common/ui/dashboardClasses";
 import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
@@ -149,7 +151,7 @@ function ChangeReturnPickupPanel({
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className={slidePanelSheet}
+            className={slidePanelSheetPinned}
             role="dialog"
             aria-modal="true"
             aria-label="Update pickup address"
@@ -182,7 +184,7 @@ function ChangeReturnPickupPanel({
               </button>
             </div>
 
-            <div className="grow space-y-4 pt-4 pb-20">
+            <div className={`${slidePanelBody} space-y-4 pt-4`}>
               <button
                 type="button"
                 onClick={handleUseDeliveryAddress}
@@ -283,7 +285,9 @@ function ChangeReturnPickupPanel({
                   ))}
                 </div>
               ) : null}
+            </div>
 
+            <div className={slidePanelFooter}>
               <button
                 type="button"
                 onClick={handleSubmit}
