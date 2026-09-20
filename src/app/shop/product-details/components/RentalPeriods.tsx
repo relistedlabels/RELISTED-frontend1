@@ -42,6 +42,10 @@ import {
   getProductSaleEarliestDeliveryLagosYmd,
   productHasActiveSale,
 } from "@/lib/shopSale/productSale";
+import { useUrlOverlay } from "@/hooks/useUrlOverlay";
+
+/** URL flag while the rental dates panel is open (`?select-dates=1`). */
+export const RENTAL_DATES_OVERLAY_PARAM = "select-dates";
 
 function cartLineIdFromAddCartPayload(payload: unknown): string | undefined {
   const walk = (v: unknown): string | undefined => {
@@ -434,7 +438,7 @@ const RentalPeriods: React.FC<RentalPeriodsProps> = ({
   resalePrice,
   closetPrimaryCtaOverride,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const { isOpen, open, close } = useUrlOverlay(RENTAL_DATES_OVERLAY_PARAM);
   const primaryLabel = closetPrimaryCtaOverride?.trim() || "Check Availability";
   const useVaultClosetCtaStyle = Boolean(closetPrimaryCtaOverride?.trim());
 
@@ -443,7 +447,7 @@ const RentalPeriods: React.FC<RentalPeriodsProps> = ({
       {/* Toggle Button */}
       <button
         type="button"
-        onClick={() => setIsOpen(true)}
+        onClick={open}
         className={`flex w-full cursor-pointer items-center justify-center gap-1 rounded-lg border border-black bg-black font-semibold text-white transition hover:bg-gray-100 hover:text-black ${
           useVaultClosetCtaStyle
             ? "px-2 py-2.5 sm:px-3"
@@ -464,7 +468,7 @@ const RentalPeriods: React.FC<RentalPeriodsProps> = ({
       {/* Filter Panel */}
       <RentalPeriodsPanel
         isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
+        onClose={close}
         productId={productId}
         listerId={listerId}
         dailyPrice={dailyPrice}
