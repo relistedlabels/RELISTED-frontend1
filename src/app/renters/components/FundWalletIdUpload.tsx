@@ -132,7 +132,10 @@ export default function FundWalletIdUpload({ onUploaded }: FundWalletIdUploadPro
       <Paragraph1 className="mb-1 font-semibold text-gray-900 text-sm">
         Verify your ID
       </Paragraph1>
-      <Paragraph1 className="mb-4 text-gray-600 text-xs leading-relaxed">
+      <Paragraph1 className="mb-2 text-gray-600 text-xs leading-relaxed">
+        Required to fund your Relisted wallet.
+      </Paragraph1>
+      <Paragraph1 className="mb-4 text-gray-500 text-xs leading-relaxed">
         Use the same upload as your account verifications. Accepted formats:
         JPEG, PNG, or PDF (max 5MB).
       </Paragraph1>
