@@ -3,12 +3,10 @@
 import React, { useState } from "react";
 import { X, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
 import { buttonPrimary } from "@/common/ui/buttonClasses";
 import {
   slidePanelBackdrop,
   slidePanelBody,
-  slidePanelFooter,
   slidePanelHeader,
   slidePanelSheetPinned,
   slidePanelTitle,
@@ -16,9 +14,6 @@ import {
 import { Paragraph1 } from "@/common/ui/Text";
 import WalletTopUpForm from "./WalletTopUpForm";
 
-// --------------------
-// Slide-in Wallet Modal
-// --------------------
 interface FundWalletPanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -28,7 +23,6 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
   isOpen,
   onClose,
 }) => {
-  const router = useRouter();
   const variants = {
     hidden: { x: "100%" },
     visible: { x: 0 },
@@ -36,7 +30,7 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
 
   return (
     <AnimatePresence>
-      {isOpen && (
+      {isOpen ? (
         <motion.div
           className={slidePanelBackdrop}
           onClick={onClose}
@@ -56,7 +50,6 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
             <div className={slidePanelHeader}>
               <button
                 onClick={onClose}
@@ -66,7 +59,7 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
                 <ArrowLeft size={20} />
               </button>
 
-              <Paragraph1 className={slidePanelTitle}>Fund Your Wallet</Paragraph1>
+              <Paragraph1 className={slidePanelTitle}>Fund your wallet</Paragraph1>
               <button
                 onClick={onClose}
                 className="text-gray-500 hover:text-black p-1 rounded-full transition"
@@ -76,47 +69,29 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
               </button>
             </div>
 
-            {/* Content */}
-            <div className={`${slidePanelBody} pt-4`}>
-              <WalletTopUpForm onClose={onClose} />
-            </div>
-
-            <div className={slidePanelFooter}>
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  router.push("/shop");
-                }}
-                className={`${buttonPrimary} w-full`}
-              >
-                <Paragraph1>Continue Shopping</Paragraph1>
-              </button>
+            <div className={`${slidePanelBody} pt-4 pb-8`}>
+              <WalletTopUpForm isActive={isOpen} />
             </div>
           </motion.div>
         </motion.div>
-      )}
+      ) : null}
     </AnimatePresence>
   );
 };
 
-// --------------------
-// Main Component
-// --------------------
 const FundWallet: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      {/* Toggle Button */}
       <button
+        type="button"
         onClick={() => setIsOpen(true)}
         className={`${buttonPrimary} w-fit cursor-pointer gap-1`}
       >
         <Paragraph1>Fund Wallet</Paragraph1>
       </button>
 
-      {/* Wallet Modal */}
       <FundWalletPanel isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
   );

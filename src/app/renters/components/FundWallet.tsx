@@ -2,9 +2,9 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { X, ArrowLeft, Copy, RotateCcw } from "lucide-react";
+import { X, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   slidePanelBackdrop,
@@ -12,23 +12,14 @@ import {
   slidePanelSheet,
   slidePanelTitle,
 } from "@/common/ui/dashboardClasses";
-import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
-import Button from "@/common/ui/Button";
-import { buttonPrimary, buttonPrimaryFull } from "@/common/ui/buttonClasses";
+import { Paragraph1 } from "@/common/ui/Text";
 import { FaPlus } from "react-icons/fa";
-import { useProfile } from "@/lib/queries/renters/useProfile";
-import { useVerificationsStatus } from "@/lib/queries/renters/useVerifications";
-import { isRenterVerifiedForFundWallet } from "@/lib/renters/fundWalletVerification";
-import VerificationModal from "@/app/shop/cart/checkout/components/VerificationModal";
-import { toast } from "sonner";
+import WalletTopUpForm from "@/app/shop/cart/checkout/components/WalletTopUpForm";
 import {
   buildOnboardingTaskUrl,
   renterWalletOnboardingTask,
 } from "@/lib/onboarding/onboardingTasks";
 
-// --------------------
-// Slide-in Filter Panel
-// --------------------
 interface FundWalletPanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -42,129 +33,6 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
   const onboardingOverlayZ = searchParams.get("onboardingTask")
     ? "z-[130]"
     : "z-99";
-  const { data: profileResponse, isLoading, refetch } = useProfile();
-  // Same hook + cache as Account Verifications so invalidation after verify updates this UI
-  const {
-    data: verificationsStatusResponse,
-    isLoading: verificationsLoading,
-    refetch: refetchVerificationsStatus,
-  } = useVerificationsStatus();
-  const verificationReady = !verificationsLoading;
-  const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [isVerified, setIsVerified] = useState(false);
-  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
-  const [verificationSubmittedAt, setVerificationSubmittedAt] = useState<
-    number | null
-  >(null);
-  const [countdown, setCountdown] = useState(0);
-  /** Same as checkout WalletTopUpForm: avoid forcing the verification modal open after the user closes it. */
-  const verificationModalDismissedRef = useRef(false);
-
-  // useProfile() returns the profile object directly (not { profile })
-  const virtualAccount = profileResponse?.virtualAccount;
-
-  const verifications = verificationsStatusResponse?.data?.verifications;
-
-  const satisfiesFundWallet = useMemo(
-    () =>
-      isRenterVerifiedForFundWallet(profileResponse, verifications),
-    [profileResponse, verifications],
-  );
-
-  // Sync verified state + modal: wait for profile; use verification status when BVN omitted from profile
-  useEffect(() => {
-    if (!isOpen) {
-      setIsVerificationModalOpen(false);
-      return;
-    }
-    if (isLoading || !verificationReady) return;
-
-    setIsVerified(satisfiesFundWallet);
-    if (satisfiesFundWallet) {
-      verificationModalDismissedRef.current = false;
-      setIsVerificationModalOpen(false);
-    } else if (!verificationModalDismissedRef.current) {
-      setIsVerificationModalOpen(true);
-    }
-  }, [
-    isOpen,
-    isLoading,
-    verificationReady,
-    satisfiesFundWallet,
-  ]);
-
-  // Countdown timer
-  useEffect(() => {
-    if (!verificationSubmittedAt) return;
-
-    const VERIFICATION_TIMEOUT = 10 * 60 * 1000; // 10 minutes
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - verificationSubmittedAt;
-      const remaining = VERIFICATION_TIMEOUT - elapsed;
-
-      if (remaining <= 0) {
-        setCountdown(0);
-        clearInterval(interval);
-      } else {
-        setCountdown(remaining);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [verificationSubmittedAt]);
-
-  const handleVerificationComplete = () => {
-    setVerificationSubmittedAt(Date.now());
-    setIsVerificationModalOpen(false);
-  };
-
-  const checkVerificationStatus = async () => {
-    const VERIFICATION_TIMEOUT = 10 * 60 * 1000;
-    if (countdown > 0) {
-      const minutes = Math.floor(countdown / 60000);
-      const seconds = Math.floor((countdown % 60000) / 1000);
-      alert(
-        `Please wait ${minutes}:${seconds.toString().padStart(2, "0")} before checking verification status.`,
-      );
-      return;
-    }
-
-    try {
-      const [vRes, pRes] = await Promise.all([
-        refetchVerificationsStatus(),
-        refetch(),
-      ]);
-      const ok = isRenterVerifiedForFundWallet(
-        pRes.data,
-        vRes.data?.data?.verifications,
-      );
-      if (ok) {
-        setIsVerified(true);
-        setIsVerificationModalOpen(false);
-        setVerificationSubmittedAt(null);
-        setCountdown(0);
-        toast.success("Verification successful!");
-      } else {
-        alert(
-          "Verification is still pending. Please try again in a few moments.",
-        );
-      }
-    } catch (err) {
-      console.error("Failed to check verification status:", err);
-      alert("Failed to check verification status. Please try again.");
-    }
-  };
-
-  const handleCopy = (text: string, fieldName: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedField(fieldName);
-    toast.success(`${fieldName} copied to clipboard`);
-    setTimeout(() => setCopiedField(null), 2000);
-  };
-
-  const handleRefresh = () => {
-    window.location.reload();
-  };
 
   const variants = {
     hidden: { x: "100%" },
@@ -173,7 +41,7 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
 
   return (
     <AnimatePresence>
-      {isOpen && (
+      {isOpen ? (
         <motion.div
           className={`${onboardingOverlayZ} ${slidePanelBackdrop}`}
           onClick={onClose}
@@ -193,7 +61,6 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
             <div className={slidePanelHeader}>
               <button
                 onClick={onClose}
@@ -213,227 +80,19 @@ const FundWalletPanel: React.FC<FundWalletPanelProps> = ({
               </button>
             </div>
 
-            {/* Content */}
             <div
-              className="space-y-6 pt-6 pb-20 grow"
+              className="space-y-6 pt-6 pb-20 px-4 sm:px-6 grow"
               data-onboarding-target="renter-fund-wallet-details"
             >
-              {/* Verification messages */}
-              {verificationSubmittedAt && countdown > 0 && (
-                <div className="bg-blue-50 p-4 border border-blue-200 rounded-lg">
-                  <Paragraph1 className="text-blue-700 text-xs">
-                    ⏱️ Verification in progress. Please wait{" "}
-                    <strong>
-                      {Math.floor(countdown / 60000)}:
-                      {Math.floor((countdown % 60000) / 1000)
-                        .toString()
-                        .padStart(2, "0")}
-                    </strong>{" "}
-                    to check status.
-                  </Paragraph1>
-                </div>
-              )}
-
-              {verificationSubmittedAt && countdown === 0 && (
-                <div className="bg-amber-50 p-4 border border-amber-200 rounded-lg">
-                  <Paragraph1 className="text-amber-700 text-xs">
-                    ✓ Verification timer complete. Click below to check status.
-                  </Paragraph1>
-                </div>
-              )}
-
-              {!isVerified && !isLoading && verificationReady && (
-                <div className="flex flex-col gap-4 bg-red-50 p-6 border border-red-300 rounded-lg">
-                  <Paragraph1 className="font-semibold text-red-800 text-sm">
-                    Verification Required
-                  </Paragraph1>
-                  <Paragraph1 className="text-red-700 text-xs">
-                    You need to verify your identity before funding your wallet.
-                    Please complete the verification process below.
-                  </Paragraph1>
-
-                  {verificationSubmittedAt && countdown === 0 && (
-                    <button
-                      onClick={checkVerificationStatus}
-                      className={buttonPrimaryFull}
-                    >
-                      Check Verification Status
-                    </button>
-                  )}
-
-                  {!verificationSubmittedAt && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        verificationModalDismissedRef.current = false;
-                        setIsVerificationModalOpen(true);
-                      }}
-                      className={buttonPrimaryFull}
-                    >
-                      Verify Identity
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {isLoading && (
-                <div className="flex justify-center items-center py-8">
-                  <Paragraph1 className="text-gray-500">Loading...</Paragraph1>
-                </div>
-              )}
-
-              {isVerified && !isLoading && virtualAccount?.vaNumber ? (
-                <div className="space-y-6">
-                  {/* Virtual Account Card */}
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 border border-blue-300 rounded-lg">
-                    <Paragraph3 className="mb-4 font-semibold text-blue-900 text-sm uppercase tracking-wide">
-                      Your Virtual Account
-                    </Paragraph3>
-
-                    {/* VA Number */}
-                    <div className="space-y-2 mb-5">
-                      <Paragraph3 className="text-blue-700 text-xs">
-                        VA Number
-                      </Paragraph3>
-                      <div className="flex items-center gap-3 bg-white px-4 py-3 border border-blue-200 rounded-lg">
-                        <input
-                          type="text"
-                          value={virtualAccount?.vaNumber || "N/A"}
-                          readOnly
-                          className="flex-1 bg-transparent outline-none font-mono font-bold text-gray-900 text-lg"
-                        />
-                        <button
-                          onClick={() =>
-                            handleCopy(virtualAccount?.vaNumber ?? "", "VA Number")
-                          }
-                          className="p-2 text-blue-600 hover:text-blue-800 transition"
-                          title="Copy VA Number"
-                        >
-                          <Copy
-                            size={18}
-                            className={
-                              copiedField === "VA Number"
-                                ? "text-green-600"
-                                : ""
-                            }
-                          />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Bank Name */}
-                    <div className="space-y-2 mb-5">
-                      <Paragraph3 className="text-blue-700 text-xs">
-                        Bank Name
-                      </Paragraph3>
-                      <div className="flex items-center gap-3 bg-white px-4 py-3 border border-blue-200 rounded-lg">
-                        <input
-                          type="text"
-                          value={virtualAccount?.bankName || "N/A"}
-                          readOnly
-                          className="flex-1 bg-transparent outline-none font-semibold text-gray-900 text-base"
-                        />
-                        <button
-                          onClick={() =>
-                            handleCopy(virtualAccount?.bankName ?? "", "Bank Name")
-                          }
-                          className="p-2 text-blue-600 hover:text-blue-800 transition"
-                          title="Copy Bank Name"
-                        >
-                          <Copy
-                            size={18}
-                            className={
-                              copiedField === "Bank Name"
-                                ? "text-green-600"
-                                : ""
-                            }
-                          />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Status */}
-                    <div className="space-y-2">
-                      <Paragraph3 className="text-blue-700 text-xs">
-                        Status
-                      </Paragraph3>
-                      <div className="flex items-center bg-white px-4 py-3 border border-blue-200 rounded-lg">
-                        <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                            virtualAccount?.status === "ACTIVE"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          <span
-                            className={`w-2 h-2 rounded-full mr-2 ${
-                              virtualAccount?.status === "ACTIVE"
-                                ? "bg-green-600"
-                                : "bg-gray-400"
-                            }`}
-                          />
-                          {virtualAccount?.status || "UNKNOWN"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Info Box */}
-                  <div className="bg-amber-50 p-4 border border-amber-300 rounded-lg">
-                    <Paragraph1 className="text-amber-800 text-sm">
-                      Transfer funds to this virtual account to instantly credit
-                      your wallet. Use the copy buttons above for quick access.
-                    </Paragraph1>
-                  </div>
-
-                  {/* Footer Buttons */}
-                  <div className="flex gap-4 pt-6">
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      className="flex-1 hover:bg-gray-50 px-4 py-3 border border-gray-300 rounded-lg font-semibold text-black transition"
-                    >
-                      <Paragraph1>Cancel</Paragraph1>
-                    </button>
-
-                    <button
-                      // onClick={onClose}
-                      onClick={handleRefresh}
-                      className={`${buttonPrimary} flex-1 py-3`}
-                    >
-                      <Paragraph1>Done</Paragraph1>
-                    </button>
-                  </div>
-                </div>
-              ) : isVerified && !isLoading && !virtualAccount?.vaNumber ? (
-                <div className="bg-amber-50 p-4 border border-amber-300 rounded-lg">
-                  <Paragraph1 className="text-amber-900 text-sm">
-                    You are verified, but a virtual account number is not available
-                    yet. Try refreshing the page or contact support if this continues.
-                  </Paragraph1>
-                </div>
-              ) : null}
+              <WalletTopUpForm isActive={isOpen} />
             </div>
-
-            {/* Verification Modal */}
-            <VerificationModal
-              isOpen={isVerificationModalOpen}
-              onClose={() => {
-                verificationModalDismissedRef.current = true;
-                setIsVerificationModalOpen(false);
-              }}
-              onVerified={handleVerificationComplete}
-            />
           </motion.div>
         </motion.div>
-      )}
+      ) : null}
     </AnimatePresence>
   );
 };
 
-// --------------------
-// Main Component
-// --------------------
 const FundWallet: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -465,7 +124,6 @@ const FundWallet: React.FC = () => {
 
   return (
     <>
-      {/* Toggle Button */}
       <button
         type="button"
         data-onboarding-target="renter-fund-wallet-button"
@@ -476,7 +134,6 @@ const FundWallet: React.FC = () => {
         <Paragraph1>Fund Wallet</Paragraph1>
       </button>
 
-      {/* Fund Wallet Panel */}
       <FundWalletPanel isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
   );

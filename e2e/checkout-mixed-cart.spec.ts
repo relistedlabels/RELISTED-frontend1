@@ -335,16 +335,20 @@ const pendingRentalCartPurchaseApprovedScenario: CheckoutMockConfig = {
 };
 
 test.describe("Checkout mixed carts (mocked API)", () => {
-  test("@smoke purchase-only cart hides return UI on review", async ({ page }) => {
+  test("@smoke purchase-only cart hides return UI on pay step", async ({
+    page,
+  }) => {
     await seedRenterSession(page);
     await mockCheckoutScenario(page, purchaseOnlyScenario);
 
-    await gotoCheckoutStep(page, 4);
+    await gotoCheckoutStep(page, 2);
 
-    await expect(page.getByText("Review your order")).toBeVisible();
-    await expect(page.getByText("DELIVERY", { exact: true })).toBeVisible();
+    await expect(page.getByText("PAYMENT BREAKDOWN")).toBeVisible();
+    await expect(page.getByText("ORDER SUMMARY")).toBeVisible();
     await expect(page.getByText("RETURN", { exact: true })).toHaveCount(0);
-    await expect(page.getByText("shipbubble")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Complete Order" }),
+    ).toBeVisible();
   });
 
   test("@smoke purchase-only cart uses delivery address copy on step 1", async ({
@@ -355,37 +359,24 @@ test.describe("Checkout mixed carts (mocked API)", () => {
 
     await gotoCheckoutStep(page, 1);
 
-    await expect(
-      page.getByRole("heading", { name: "Delivery address" }),
-    ).toBeVisible();
-    await expect(page.getByText("Pick-up address", { exact: true })).toHaveCount(
-      0,
-    );
+    await expect(page.getByText("DELIVERY METHOD", { exact: true })).toBeVisible();
+    await expect(page.getByText("RETURN", { exact: true })).toHaveCount(0);
   });
 
-  test("@smoke mixed multi-lister cart groups review by shipment", async ({
+  test("@smoke mixed multi-lister cart shows grouped items on pay step", async ({
     page,
   }) => {
     await seedRenterSession(page);
     await mockCheckoutScenario(page, mixedMultiListerScenario);
 
-    await gotoCheckoutStep(page, 4);
+    await gotoCheckoutStep(page, 2);
 
-    await expect(page.getByText("Review your order")).toBeVisible();
-
-    const orderDetails = page
-      .getByRole("heading", { name: "Order details" })
-      .locator("..")
-      .locator("..");
-
-    await expect(orderDetails.getByText("DELIVERY", { exact: true })).toBeVisible();
-    await expect(orderDetails.getByText("RETURN", { exact: true })).toBeVisible();
-    await expect(orderDetails.getByText("Silk dress")).toHaveCount(2);
-    await expect(orderDetails.getByText("Silk top")).toBeVisible();
-    await expect(orderDetails.getByText("From Ada")).toBeVisible();
-    await expect(orderDetails.getByText("From Bea")).toBeVisible();
-    await expect(orderDetails.getByText("relisted_dispatch")).toHaveCount(2);
-    await expect(orderDetails.getByText("shipbubble")).toBeVisible();
+    await expect(page.getByText("ORDER SUMMARY")).toBeVisible();
+    await expect(page.getByText("PAYMENT BREAKDOWN")).toBeVisible();
+    await expect(page.getByText("Silk dress")).toHaveCount(2);
+    await expect(page.getByText("Silk top")).toBeVisible();
+    await expect(page.getByText("From Ada")).toBeVisible();
+    await expect(page.getByText("From Bea")).toBeVisible();
   });
 
   test("@smoke mixed multi-lister cart shows pickup from you on step 1", async ({
@@ -397,24 +388,20 @@ test.describe("Checkout mixed carts (mocked API)", () => {
     await gotoCheckoutStep(page, 1);
 
     await expect(page.getByText("Delivery and return")).toBeVisible();
-    await expect(page.getByText("Pick-up address", { exact: true })).toBeVisible();
+    await expect(page.getByText("RETURN", { exact: true })).toBeVisible();
   });
 
-  test("@smoke hides return UI on steps 1 and 4 when only purchase is approved", async ({
+  test("@smoke hides return UI on steps 1 and 2 when only purchase is approved", async ({
     page,
   }) => {
     await seedRenterSession(page);
     await mockCheckoutScenario(page, pendingRentalCartPurchaseApprovedScenario);
 
     await gotoCheckoutStep(page, 1);
-    await expect(
-      page.getByRole("heading", { name: "Delivery address" }),
-    ).toBeVisible();
-    await expect(page.getByText("Pick-up address", { exact: true })).toHaveCount(
-      0,
-    );
+    await expect(page.getByText("DELIVERY METHOD", { exact: true })).toBeVisible();
+    await expect(page.getByText("RETURN", { exact: true })).toHaveCount(0);
 
-    await gotoCheckoutStep(page, 4);
+    await gotoCheckoutStep(page, 2);
     await expect(page.getByText("RETURN", { exact: true })).toHaveCount(0);
   });
 });

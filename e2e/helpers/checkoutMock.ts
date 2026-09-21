@@ -185,7 +185,7 @@ export async function mockCheckoutScenario(
   });
 }
 
-export async function gotoCheckoutStep(page: Page, step: 1 | 2 | 3 | 4) {
+export async function gotoCheckoutStep(page: Page, step: 1 | 2) {
   await page.goto(`/shop/cart/checkout?step=${step}`, {
     waitUntil: "domcontentloaded",
   });

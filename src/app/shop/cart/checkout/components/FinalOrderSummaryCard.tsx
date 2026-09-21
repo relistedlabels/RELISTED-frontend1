@@ -25,6 +25,7 @@ import {
   computeDisplayReturnShipping,
 } from "@/lib/checkout/checkoutSummaryTotals";
 import CheckoutOrderItems from "./CheckoutOrderItems";
+import CheckoutWalletBlock from "./CheckoutWalletBlock";
 import type {
   DispatchWindowSelectionMap,
   DispatchWindowsPayload,
@@ -94,8 +95,7 @@ interface FinalOrderSummaryCardProps {
   }>;
   onRefetchOrderSummary?: () => void;
   checkoutBlockingIssues?: string[];
-  checkoutStep?: 1 | 2 | 3 | 4;
-  onCheckoutStepChange?: (step: 1 | 2 | 3 | 4) => void;
+  checkoutStep?: 1 | 2;
 }
 
 export default function FinalOrderSummaryCard({
@@ -121,7 +121,6 @@ export default function FinalOrderSummaryCard({
   onRefetchOrderSummary,
   checkoutBlockingIssues = [],
   checkoutStep = 1,
-  onCheckoutStepChange,
 }: FinalOrderSummaryCardProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -324,7 +323,29 @@ export default function FinalOrderSummaryCard({
   const showItemsSkeleton = isLoading && !error;
   const showPaymentSkeleton =
     hasDeliveryAddress && orderSummaryLoading && !orderSummaryError;
-  const showCheckoutActions = checkoutStep === 4;
+  const showCheckoutActions = checkoutStep === 2;
+
+  const checkoutGrandTotalNgN = useMemo(() => {
+    if (!orderSummary?.data?.summary) return undefined;
+    const summaryForTotal = hasReturnShippingLeg
+      ? orderSummary.data.summary
+      : {
+          ...orderSummary.data.summary,
+          rentalTotal: 0,
+          collateralTotal: 0,
+          cleaningTotal: 0,
+        };
+    return computeCheckoutGrandTotal(
+      summaryForTotal,
+      displayOutboundShipping,
+      displayReturnShipping,
+    );
+  }, [
+    orderSummary?.data?.summary,
+    hasReturnShippingLeg,
+    displayOutboundShipping,
+    displayReturnShipping,
+  ]);
 
   return (
     <div className="space-y-6">
@@ -531,31 +552,21 @@ export default function FinalOrderSummaryCard({
                       );
                     })()}
 
-                    <div className="flex justify-between items-center mb-6 pt-4">
+                    <div className="flex justify-between items-center pt-4">
                       <Paragraph1 className="font-bold text-gray-900 text-lg">
                         Grand Total:
                       </Paragraph1>
                       <Paragraph1 className="font-extrabold text-gray-900 text-2xl">
                         {CURRENCY}
-                        {formatCurrency(
-                          computeCheckoutGrandTotal(
-                            hasReturnShippingLeg
-                              ? orderSummary.data.summary
-                              : {
-                                  ...orderSummary.data.summary,
-                                  rentalTotal: 0,
-                                  collateralTotal: 0,
-                                  cleaningTotal: 0,
-                                },
-                            displayOutboundShipping,
-                            displayReturnShipping,
-                          ),
-                        )}
+                        {formatCurrency(checkoutGrandTotalNgN ?? 0)}
                       </Paragraph1>
                     </div>
 
                     {showCheckoutActions ? (
                       <>
+                        <CheckoutWalletBlock
+                          checkoutGrandTotalNgN={checkoutGrandTotalNgN}
+                        />
                         {passCartMutation.isError && (
                           <div className="bg-red-50 mb-4 p-3 border border-red-200 rounded-lg">
                             <Paragraph1 className="text-red-700 text-xs">
