@@ -88,13 +88,6 @@ const AccountVerificationsForm: React.FC = () => {
     }
   }, [emergencyContact]);
 
-  useEffect(() => {
-    if (!profile?.nin) return;
-    if (normalizeFundWalletIdType(documentType) === "NIN") {
-      setNinNumber(sanitizeFundWalletIdInput("NIN", profile.nin));
-    }
-  }, [profile?.nin, documentType]);
-
   const handleEmergencyChange = (
     field: keyof typeof emergencyForm,
     value: string,
@@ -143,6 +136,13 @@ const AccountVerificationsForm: React.FC = () => {
     FUND_WALLET_ID_TYPE_OPTIONS[0].value,
   );
   const [isDraggingNin, setIsDraggingNin] = useState(false);
+
+  useEffect(() => {
+    if (!profile?.nin) return;
+    if (normalizeFundWalletIdType(documentType) === "NIN") {
+      setNinNumber(sanitizeFundWalletIdInput("NIN", profile.nin));
+    }
+  }, [profile?.nin, documentType]);
 
   const inputConfig = useMemo(
     () => getFundWalletIdInputConfig(documentType),

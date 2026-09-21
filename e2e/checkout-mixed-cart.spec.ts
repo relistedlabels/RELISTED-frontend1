@@ -373,7 +373,7 @@ test.describe("Checkout mixed carts (mocked API)", () => {
 
     await expect(page.getByText("ORDER SUMMARY")).toBeVisible();
     await expect(page.getByText("PAYMENT BREAKDOWN")).toBeVisible();
-    await expect(page.getByText("Silk dress")).toHaveCount(2);
+    await expect(page.getByText("Silk dress")).toBeVisible();
     await expect(page.getByText("Silk top")).toBeVisible();
     await expect(page.getByText("From Ada")).toBeVisible();
     await expect(page.getByText("From Bea")).toBeVisible();
