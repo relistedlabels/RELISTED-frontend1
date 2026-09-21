@@ -136,7 +136,7 @@ export default function FundWalletIdUpload({ onUploaded }: FundWalletIdUploadPro
         Required to fund your Relisted wallet.
       </Paragraph1>
       <Paragraph1 className="mb-4 text-gray-500 text-xs leading-relaxed">
-        Use the same upload as your account verifications. Accepted formats:
+         Accepted formats:
         JPEG, PNG, or PDF (max 5MB).
       </Paragraph1>
 
@@ -144,7 +144,7 @@ export default function FundWalletIdUpload({ onUploaded }: FundWalletIdUploadPro
         <div>
           <label
             htmlFor="fund-wallet-id-type"
-            className="mb-1 block text-gray-700 text-xs font-medium"
+            className="block mb-1 font-medium text-gray-700 text-xs"
           >
             Document type
           </label>
@@ -153,7 +153,7 @@ export default function FundWalletIdUpload({ onUploaded }: FundWalletIdUploadPro
             value={documentType}
             onChange={handleDocumentTypeChange}
             disabled={isUploading}
-            className="bg-white px-3 py-2.5 border border-gray-300 rounded-md focus:border-black focus:outline-none focus:ring-1 focus:ring-black w-full text-gray-900 text-sm disabled:opacity-50"
+            className="bg-white disabled:opacity-50 px-3 py-2.5 border border-gray-300 focus:border-black rounded-md focus:outline-none focus:ring-1 focus:ring-black w-full text-gray-900 text-sm"
           >
             {FUND_WALLET_ID_TYPE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -166,7 +166,7 @@ export default function FundWalletIdUpload({ onUploaded }: FundWalletIdUploadPro
         <div>
           <label
             htmlFor="fund-wallet-id-number"
-            className="mb-1 block text-gray-700 text-xs font-medium"
+            className="block mb-1 font-medium text-gray-700 text-xs"
           >
             ID number
           </label>
@@ -181,12 +181,12 @@ export default function FundWalletIdUpload({ onUploaded }: FundWalletIdUploadPro
             maxLength={inputConfig.maxLength}
             autoComplete="off"
             spellCheck={false}
-            className="bg-white px-3 py-2.5 border border-gray-300 rounded-md focus:border-black focus:outline-none focus:ring-1 focus:ring-black w-full text-sm disabled:opacity-50"
+            className="bg-white disabled:opacity-50 px-3 py-2.5 border border-gray-300 focus:border-black rounded-md focus:outline-none focus:ring-1 focus:ring-black w-full text-sm"
           />
         </div>
 
         <div>
-          <Paragraph1 className="mb-1 text-gray-700 text-xs font-medium">
+          <Paragraph1 className="mb-1 font-medium text-gray-700 text-xs">
             ID document
           </Paragraph1>
           <div
@@ -207,7 +207,7 @@ export default function FundWalletIdUpload({ onUploaded }: FundWalletIdUploadPro
               accept="image/jpeg,image/png,application/pdf"
               onChange={handleFileChange}
               disabled={isUploading}
-              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full disabled:cursor-not-allowed"
+              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer disabled:cursor-not-allowed"
             />
             {isUploading ? (
               <Paragraph1 className="font-medium text-blue-600 text-sm">
