@@ -1,9 +1,9 @@
 "use client";
 
-import { MapPin, Truck, Wallet } from "lucide-react";
+import { Truck } from "lucide-react";
 import { useMemo } from "react";
 import Link from "next/link";
-import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { Paragraph1 } from "@/common/ui/Text";
 import {
   formatShippingQuoteWarningLine,
   type OrderSummaryApiResult,
@@ -13,34 +13,51 @@ import {
   type ReturnShippingBucketQuote,
 } from "@/lib/api/cart";
 import { useMe } from "@/lib/queries/auth/useMe";
-import { useWallet } from "@/lib/queries/renters/useWallet";
 import { useProfile } from "@/lib/queries/user/useProfile";
-import ChangeAddress from "./ChangeAddress";
-import ChangeReturnPickup from "./ChangeReturnPickup";
+import CheckoutDeliveryContact, {
+  CheckoutDeliveryContactEmpty,
+} from "./CheckoutDeliveryContact";
+import {
+  formatPhoneDisplayLine,
+  profileHasPhone,
+  resolveProfilePhone,
+} from "@/lib/checkout/profilePhone";
+import { useProfileDetails } from "@/lib/queries/renters/useProfileDetails";
+import CheckoutReturnPickupContact from "./CheckoutReturnPickupContact";
 import {
   formatDeliveryAddressLine,
   formatReturnPickupAddressLine,
 } from "@/lib/checkout/deliveryAddress";
-import FundWallet from "./FundWallet";
-import DispatchWindowsScheduler from "./DispatchWindowsScheduler";
 import type { DispatchWindowContext } from "@/lib/checkout/dispatchWindows";
-import type {
-  DispatchWindowSelection,
-  DispatchWindowSelectionMap,
-  ShipmentDispatchType,
+import {
+  formatWindowRange,
+  type DispatchWindowSelection,
+  type DispatchWindowSelectionMap,
+  type ShipmentDispatchType,
 } from "@/lib/checkout/dispatchWindows";
+import type { CheckoutReviewDeliveryShipment } from "@/lib/checkout/checkoutFlow";
+import {
+  CheckoutLabeledBlock,
+  CheckoutReadonlyDetail,
+} from "./CheckoutFieldLabel";
 import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
 import type { CheckoutStep } from "./CheckoutStepper";
 import { CheckoutShippingLegHeader } from "./CheckoutDispatchLegPreview";
 import CheckoutSectionHeading from "./CheckoutSectionHeading";
 import CheckoutStepIntro from "./CheckoutStepIntro";
-import CheckoutStepNav from "./CheckoutStepNav";
+import CheckoutStepNav, {
+  checkoutStepContinueLabel,
+} from "./CheckoutStepNav";
+import {
+  buildCheckoutStickySummaryLines,
+  computeDisplayOutboundShipping,
+  computeDisplayReturnShipping,
+} from "@/lib/checkout/checkoutSummaryTotals";
 import {
   buildCheckoutReviewDelivery,
   buildCheckoutReviewReturn,
   type CheckoutDispatchPreviewGroup,
 } from "@/lib/checkout/checkoutFlow";
-import CheckoutReviewDeliverySection from "./CheckoutReviewDeliverySection";
 import CheckoutShipmentBlock from "./CheckoutShipmentBlock";
 import { type CheckoutListerGroup } from "./CheckoutOrderItems";
 
@@ -123,6 +140,26 @@ const SAME_DAY_TIER_KEYWORDS = [
 ];
 const SAME_DAY_CUTOFF_DISCLAIMER =
   "Orders placed after 11:00am may be delivered the next day.";
+
+function resolveOutboundDeliveryWindowText(
+  shipment: CheckoutReviewDeliveryShipment | undefined,
+  dispatchContexts: DispatchWindowContext[],
+  dispatchSelections: DispatchWindowSelectionMap,
+): string | undefined {
+  if (shipment?.deliveryWindow?.trim()) return shipment.deliveryWindow.trim();
+
+  const context =
+    dispatchContexts.find((c) => c.type === "OUTBOUND") ??
+    dispatchContexts.find((c) => c.type === "RESALE");
+  if (!context) return undefined;
+
+  const selection = dispatchSelections[context.type];
+  if (selection?.window) return formatWindowRange(selection.window);
+  if (context.suggested?.window) {
+    return formatWindowRange(context.suggested.window);
+  }
+  return undefined;
+}
 
 const isShipbubbleShippingTierName = (tierName: string) =>
   tierName.toLowerCase().includes("via shipbubble");
@@ -254,13 +291,87 @@ export default function CheckoutContactAndPayment({
     !orderSummaryError;
   const { data: user } = useMe();
   const { data: profile } = useProfile();
-  const { data: walletResponse } = useWallet();
+  const { data: renterProfileDetails } = useProfileDetails();
+  const resolvedProfilePhone = resolveProfilePhone(
+    profile,
+    renterProfileDetails?.profile,
+  );
   const tierList = shippingTiers ?? [];
   const returnTierList = returnShippingTiers ?? [];
   const outboundBuckets = outboundShippingByBucket ?? [];
   const usePerBucketOutbound = outboundBuckets.length > 0;
   const returnBuckets = returnShippingByBucket ?? [];
   const usePerBucketReturn = returnBuckets.length > 0;
+
+  const checkoutItemCount = useMemo(
+    () => listerGroups.reduce((count, group) => count + group.items.length, 0),
+    [listerGroups],
+  );
+
+  const shipmentBucketsMeta = orderSummary?.data?.shipmentBuckets ?? [];
+
+  const displayOutboundShipping = useMemo(
+    () =>
+      computeDisplayOutboundShipping({
+        usePerBucket: usePerBucketOutbound,
+        outboundShippingByBucket: outboundBuckets,
+        selectedOutboundTierByBucket,
+        shipmentBucketsMeta,
+        selectedTierTotal: tierList.find((t) => t.name === selectedShippingTier)
+          ?.totalShippingCost,
+        summaryOutboundTotal: orderSummary?.data?.summary?.outboundShippingTotal ?? 0,
+      }),
+    [
+      usePerBucketOutbound,
+      outboundBuckets,
+      selectedOutboundTierByBucket,
+      shipmentBucketsMeta,
+      tierList,
+      selectedShippingTier,
+      orderSummary?.data?.summary?.outboundShippingTotal,
+    ],
+  );
+
+  const displayReturnShipping = useMemo(
+    () =>
+      computeDisplayReturnShipping({
+        hasReturnShippingLeg: showReturnShippingTierPicker,
+        usePerBucketReturn,
+        returnShippingByBucket: returnBuckets,
+        selectedReturnTierByBucket,
+        shipmentBucketsMeta,
+        selectedReturnTierTotal: returnTierList.find(
+          (t) => t.name === selectedReturnShippingTier,
+        )?.totalShippingCost,
+        summaryReturnTotal: orderSummary?.data?.summary?.returnShippingTotal ?? 0,
+      }),
+    [
+      showReturnShippingTierPicker,
+      usePerBucketReturn,
+      returnBuckets,
+      selectedReturnTierByBucket,
+      shipmentBucketsMeta,
+      returnTierList,
+      selectedReturnShippingTier,
+      orderSummary?.data?.summary?.returnShippingTotal,
+    ],
+  );
+
+  const stickySummaryLines = useMemo(() => {
+    const summary = orderSummary?.data?.summary;
+    if (!summary) return undefined;
+    return buildCheckoutStickySummaryLines({
+      summary,
+      displayOutboundShipping,
+      displayReturnShipping,
+      hasReturnShippingLeg: showReturnShippingTierPicker,
+    });
+  }, [
+    orderSummary?.data?.summary,
+    displayOutboundShipping,
+    displayReturnShipping,
+    showReturnShippingTierPicker,
+  ]);
 
   /** Matches grand total in FinalOrderSummaryCard (line items plus selected outbound and return shipping). */
   const checkoutGrandTotalNgN = useMemo(() => {
@@ -339,7 +450,7 @@ export default function CheckoutContactAndPayment({
   const deliveryPickupDefaults = useMemo<ReturnPickupAddressPayload>(
     () => ({
       contactName: user?.name ?? "",
-      phoneNumber: profile?.phoneNumber ?? "",
+      phoneNumber: resolvedProfilePhone ?? "",
       street: profile?.address?.street ?? "",
       city: profile?.address?.city ?? "",
       state: profile?.address?.state ?? "",
@@ -347,7 +458,7 @@ export default function CheckoutContactAndPayment({
     }),
     [
       user?.name,
-      profile?.phoneNumber,
+      resolvedProfilePhone,
       profile?.address?.street,
       profile?.address?.city,
       profile?.address?.state,
@@ -514,165 +625,130 @@ export default function CheckoutContactAndPayment({
 
   const deliveryAddress =
     formatDeliveryAddressLine(profile?.address) ?? "No address set";
+  const phoneLine = formatPhoneDisplayLine(
+    profile,
+    renterProfileDetails?.profile,
+  );
+  const hasPhone = profileHasPhone(profile, renterProfileDetails?.profile);
   const returnPickupAddressLine =
     formatReturnPickupAddressLine(returnPickupAddress ?? {}) ??
     deliveryAddress;
 
-  const walletData = walletResponse?.wallet?.balance;
-  const availableBalance = walletData?.availableBalance || 0;
-  const isWalletFunded = availableBalance > 0;
+  const stickyNavProps = {
+    checkoutGrandTotalNgN,
+    itemCount: checkoutItemCount,
+    summaryLines: stickySummaryLines,
+    summaryLoading: isShippingTiersLoading && checkoutGrandTotalNgN === undefined,
+  };
 
   const formatCurrency = (amount: number): string => {
     return amount.toLocaleString("en-NG");
   };
-
-  const walletTopUpNgN =
-    checkoutGrandTotalNgN !== undefined
-      ? Math.max(0, Math.round(checkoutGrandTotalNgN - availableBalance))
-      : undefined;
-
-  const walletCoversOrder =
-    checkoutGrandTotalNgN !== undefined &&
-    walletTopUpNgN !== undefined &&
-    walletTopUpNgN <= 0;
 
   return (
     <div className="space-y-6 bg-gray-50">
       {checkoutStep === 1 ? (
         <>
           <CheckoutStepIntro
-            title={isResaleOnly ? "Delivery address" : "Delivery and return"}
+            title={isResaleOnly ? "Delivery" : "Delivery and return"}
             subtitle={
               isResaleOnly
-                ? "Add where we should deliver your order."
-                : "Where we deliver your rental, and where we pick it up when you're done."
+                ? "Add your address and pick a delivery option."
+                : "Set your addresses, then pick your delivery options."
             }
           />
 
-          <div className="space-y-4 bg-white p-5 border border-gray-100 rounded-xl">
-            <CheckoutSectionHeading>Delivery address</CheckoutSectionHeading>
-
-            {hasDeliveryAddress ? (
-              <ChangeAddress
-                addressLine={deliveryAddress}
-                buttonLabel="Change"
-                variant="row"
-                onAddressSaved={onAddressSaved ?? onRefetchOrderSummary}
+          <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
+            <div className="p-4 sm:p-5">
+              <CheckoutShippingLegHeader
+                sectionLabel={
+                  showReturnShippingTierPicker ? "DELIVERY" : "DELIVERY METHOD"
+                }
+                leg="outbound"
               />
-            ) : (
-              <div className="space-y-4 bg-gray-50 p-6 rounded-xl text-center">
-                <MapPin
-                  size={28}
-                  className="mx-auto text-gray-400"
-                  aria-hidden
+
+              <hr className="my-4 text-gray-100" />
+
+              {hasDeliveryAddress ? (
+                <>
+                  {isShippingTiersLoading ? (
+                    <div className="space-y-3 mb-4">
+                      {SHIPPING_SKELETON_KEYS.map((key) => (
+                        <div
+                          key={`item-${key}`}
+                          className="bg-gray-200 rounded-2xl h-20 animate-pulse"
+                        />
+                      ))}
+                    </div>
+                  ) : orderReviewDelivery.shipments.length > 0 ? (
+                    <div className="bg-gray-50/50 mb-4 p-3 sm:p-3.5 border border-gray-200 rounded-lg">
+                      {orderReviewDelivery.shipments.map((shipment, index) => (
+                        <CheckoutShipmentBlock
+                          key={shipment.bucketIndex ?? `delivery-item-${index}`}
+                          shipment={shipment}
+                          showDivider={index > 0}
+                          showWindows={false}
+                          prominentItems
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <CheckoutDeliveryContact
+                    contactName={user?.name}
+                    deliveryAddress={deliveryAddress}
+                    phoneLine={phoneLine}
+                    onContactSaved={onAddressSaved ?? onRefetchOrderSummary}
+                  />
+                </>
+              ) : (
+                <CheckoutDeliveryContactEmpty
+                  onContactSaved={onAddressSaved ?? onRefetchOrderSummary}
                 />
-                <Paragraph1 className="text-gray-700 text-sm">
-                  Add where we should deliver your order.
-                </Paragraph1>
-                <ChangeAddress
-                  buttonLabel="Add address"
-                  panelTitle="Add delivery address"
-                  variant="outline"
-                  onAddressSaved={onAddressSaved ?? onRefetchOrderSummary}
-                />
-              </div>
-            )}
-          </div>
+              )}
 
-          {!isResaleOnly ? (
-            <div className="space-y-4 bg-white p-5 border border-gray-100 rounded-xl">
-              <CheckoutSectionHeading>Pick-up address</CheckoutSectionHeading>
+              {hasDeliveryAddress ? (
+                <>
+                  {shippingQuoteWarnings.length > 0 ? (
+                    <div className="space-y-2 bg-amber-50 mb-4 p-4 border border-amber-200 rounded-xl">
+                      <Paragraph1 className="font-semibold text-amber-950 text-sm">
+                        Some delivery options are unavailable
+                      </Paragraph1>
+                      <ul className="space-y-1.5 pl-5 text-amber-900 text-sm list-disc">
+                        {shippingQuoteWarnings.map((w, i) => (
+                          <li
+                            key={`${w.provider}-${w.leg}-${w.bucketIndex ?? i}-${w.message}`}
+                          >
+                            {formatShippingQuoteWarningLine(w)}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
 
-              <ChangeReturnPickup
-                addressLine={returnPickupAddressLine}
-                returnPickupAddress={returnPickupAddress}
-                deliveryDefaults={deliveryPickupDefaults}
-                onReturnPickupChange={onReturnPickupChange}
-                buttonLabel="Change"
-                variant="row"
-              />
-            </div>
-          ) : null}
+                  {dispatchReschedules.length > 0 ? (
+                    <div className="space-y-2 bg-amber-50 mb-4 p-4 border border-amber-200 rounded-xl">
+                      {dispatchReschedules.map((entry) => (
+                        <Paragraph1
+                          key={
+                            entry.cartItemId ??
+                            entry.productName ??
+                            entry.outboundSummary
+                          }
+                          className="text-amber-900 text-sm leading-relaxed"
+                        >
+                          Your delivery time has passed
+                          {entry.outboundSummary
+                            ? `. New earliest slot: ${entry.outboundSummary}.`
+                            : "."}{" "}
+                          Confirm below or pick another.
+                          {entry.priceUnchanged ? " Price unchanged." : ""}
+                        </Paragraph1>
+                      ))}
+                    </div>
+                  ) : null}
 
-          <CheckoutStepNav
-            onContinue={
-              onCheckoutStepChange
-                ? () => onCheckoutStepChange(2)
-                : undefined
-            }
-            continueLabel="Continue to delivery"
-            continueDisabled={!hasDeliveryAddress}
-            checkoutGrandTotalNgN={checkoutGrandTotalNgN}
-          />
-        </>
-      ) : null}
-
-      {checkoutStep === 2 ? (
-        <>
-          <CheckoutStepIntro
-            title="Delivery and schedule"
-            subtitle="Pick carriers and delivery times."
-          />
-
-          {!hasDeliveryAddress ? (
-            <div className="bg-amber-50 p-4 border border-amber-200 rounded-xl">
-              <Paragraph1 className="text-amber-900 text-sm leading-relaxed">
-                Add a delivery address first, then come back to this step.
-              </Paragraph1>
-            </div>
-          ) : null}
-
-          {hasDeliveryAddress && shippingQuoteWarnings.length > 0 ? (
-            <div className="space-y-2 bg-amber-50 p-4 border border-amber-200 rounded-xl">
-              <Paragraph1 className="font-semibold text-amber-950 text-sm">
-                Some delivery options are unavailable
-              </Paragraph1>
-              <ul className="space-y-1.5 list-disc pl-5 text-amber-900 text-sm">
-                {shippingQuoteWarnings.map((w, i) => (
-                  <li
-                    key={`${w.provider}-${w.leg}-${w.bucketIndex ?? i}-${w.message}`}
-                  >
-                    {formatShippingQuoteWarningLine(w)}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          {hasDeliveryAddress && dispatchReschedules.length > 0 ? (
-            <div className="space-y-2 bg-amber-50 p-4 border border-amber-200 rounded-xl">
-              {dispatchReschedules.map((entry) => (
-                <Paragraph1
-                  key={
-                    entry.cartItemId ?? entry.productName ?? entry.outboundSummary
-                  }
-                  className="text-amber-900 text-sm leading-relaxed"
-                >
-                  Your delivery time has passed
-                  {entry.outboundSummary
-                    ? `. New earliest slot: ${entry.outboundSummary}.`
-                    : "."}{" "}
-                  Confirm below or pick another.
-                  {entry.priceUnchanged ? " Price unchanged." : ""}
-                </Paragraph1>
-              ))}
-            </div>
-          ) : null}
-
-          {hasDeliveryAddress ? (
-            <>
-      {/* DELIVERY / OUTBOUND SHIPPING */}
-      <div className="bg-white p-4 border border-gray-100 rounded-xl">
-        <CheckoutShippingLegHeader
-          sectionLabel={
-            showReturnShippingTierPicker ? "DELIVERY" : "DELIVERY METHOD"
-          }
-          leg="outbound"
-        />
-
-        <hr className="my-4 text-gray-100" />
-
-        {isShippingTiersLoading ? (
+                  {isShippingTiersLoading ? (
           <div className="space-y-3">
             {SHIPPING_SKELETON_KEYS.map((key) => (
               <div
@@ -697,16 +773,22 @@ export default function CheckoutContactAndPayment({
                 orderReviewDelivery.shipments.find(
                   (row) => row.bucketIndex === bucket.bucketIndex,
                 ) ?? orderReviewDelivery.shipments[bucketIndex];
+              const deliveryWindowText = resolveOutboundDeliveryWindowText(
+                shipment,
+                dispatchContexts,
+                dispatchSelections ?? {},
+              );
               return (
                 <div key={bucket.bucketIndex} className="space-y-3">
-                  {shipment ? (
-                    <CheckoutShipmentBlock
-                      shipment={shipment}
-                      showDivider={bucketIndex > 0}
-                    />
+                  {bucketIndex > 0 ? (
+                    <hr className="border-gray-100" />
                   ) : null}
+                  <CheckoutReadonlyDetail
+                    label="Delivery window"
+                    value={deliveryWindowText}
+                  />
                   {bucket.shippingTiers.length > 0 ? (
-                    <div className="space-y-3">
+                    <CheckoutLabeledBlock label="Delivery options">
                       {renderOutboundTierRadios(
                         bucket.shippingTiers,
                         selectedName,
@@ -714,7 +796,7 @@ export default function CheckoutContactAndPayment({
                         (name) =>
                           onOutboundTierForBucket?.(bucket.bucketIndex, name),
                       )}
-                    </div>
+                    </CheckoutLabeledBlock>
                   ) : (
                     <Paragraph1 className="text-gray-600 text-sm">
                       No delivery options for this order segment.
@@ -726,121 +808,160 @@ export default function CheckoutContactAndPayment({
           </div>
         ) : tierList.length > 0 ? (
           <div className="space-y-3">
-            {orderReviewDelivery.shipments.map((shipment, index) => (
-              <CheckoutShipmentBlock
-                key={shipment.bucketIndex ?? `shipment-${index}`}
-                shipment={shipment}
-                showDivider={index > 0}
-              />
-            ))}
-            {!hasSummaryDispatchPreview &&
-            (dispatchContexts.length > 0 || multiListerRentalCart) ? (
-              <div className="mb-4 pb-4 border-gray-100 border-b">
-                {showQuoteDispatchLoading ? (
-                  <DispatchWindowsQuoteSkeleton />
-                ) : (
-                  <DispatchWindowsScheduler
-                    contexts={dispatchContexts}
-                    selections={dispatchSelections || {}}
-                    onSelectionChange={onDispatchSelectionChange}
-                    readOnly={true}
-                  />
+            {showQuoteDispatchLoading && !hasSummaryDispatchPreview ? (
+              <DispatchWindowsQuoteSkeleton />
+            ) : (
+              <CheckoutReadonlyDetail
+                label="Delivery window"
+                value={resolveOutboundDeliveryWindowText(
+                  orderReviewDelivery.shipments[0],
+                  dispatchContexts,
+                  dispatchSelections ?? {},
                 )}
-              </div>
-            ) : null}
-            {renderOutboundTierRadios(
-              tierList,
-              selectedShippingTier,
-              "outboundShippingTierLegacy",
-              handleShippingTierChange,
+              />
             )}
+            <CheckoutLabeledBlock label="Delivery options">
+              {renderOutboundTierRadios(
+                tierList,
+                selectedShippingTier,
+                "outboundShippingTierLegacy",
+                handleShippingTierChange,
+              )}
+            </CheckoutLabeledBlock>
           </div>
         ) : (
           <Paragraph1 className="text-gray-600 text-sm">
             No delivery options available
           </Paragraph1>
         )}
-      </div>
-
-      {showReturnShippingTierPicker && (
-        <div className="bg-white p-4 border border-gray-100 rounded-xl">
-          <CheckoutShippingLegHeader sectionLabel="RETURN" leg="return" />
-          <hr className="my-4 text-gray-100" />
-          {isShippingTiersLoading &&
-          (usePerBucketReturn
-            ? returnBuckets.length === 0
-            : returnTierList.length === 0) ? (
-            <div className="space-y-3">
-              {SHIPPING_SKELETON_KEYS.map((key) => (
-                <div
-                  key={`ret-${key}`}
-                  className="bg-gray-200 rounded-2xl h-20 animate-pulse"
-                />
-              ))}
+                </>
+              ) : null}
             </div>
-          ) : usePerBucketReturn ? (
-            <div className="space-y-8">
-              {returnBuckets.map((bucket, bucketIndex) => {
-                const selectedName =
-                  selectedReturnTierByBucket[bucket.bucketIndex] ??
-                  bucket.shippingTiers[0]?.name ??
-                  "";
-                const shipment =
-                  orderReviewReturn?.shipments.find(
-                    (row) => row.bucketIndex === bucket.bucketIndex,
-                  ) ?? orderReviewReturn?.shipments[bucketIndex];
-                return (
-                  <div key={bucket.bucketIndex} className="space-y-3">
-                    {shipment ? (
-                      <CheckoutShipmentBlock
-                        shipment={shipment}
-                        showDivider={bucketIndex > 0}
-                      />
+          </div>
+
+          {!isResaleOnly ? (
+            <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
+              <div className="p-4 sm:p-5">
+                <CheckoutShippingLegHeader sectionLabel="RETURN" leg="return" />
+                <hr className="my-4 text-gray-100" />
+
+                {hasDeliveryAddress ? (
+                  <>
+                    {isShippingTiersLoading ? (
+                      <div className="space-y-3 mb-4">
+                        {SHIPPING_SKELETON_KEYS.map((key) => (
+                          <div
+                            key={`return-item-${key}`}
+                            className="bg-gray-200 rounded-2xl h-20 animate-pulse"
+                          />
+                        ))}
+                      </div>
+                    ) : (orderReviewReturn?.shipments.length ?? 0) > 0 ? (
+                      <div className="bg-gray-50/50 mb-4 p-3 sm:p-3.5 border border-gray-200 rounded-lg">
+                        {orderReviewReturn?.shipments.map((shipment, index) => (
+                          <CheckoutShipmentBlock
+                            key={shipment.bucketIndex ?? `return-item-${index}`}
+                            shipment={shipment}
+                            showDivider={index > 0}
+                            showWindows={false}
+                            prominentItems
+                          />
+                        ))}
+                      </div>
                     ) : null}
-                    {bucket.shippingTiers.length > 0 ? (
+                  </>
+                ) : null}
+
+                <CheckoutReturnPickupContact
+                  returnPickupAddress={returnPickupAddress}
+                  deliveryDefaults={deliveryPickupDefaults}
+                  onReturnPickupChange={onReturnPickupChange}
+                />
+
+                {hasDeliveryAddress && showReturnShippingTierPicker ? (
+                  <>
+                    {isShippingTiersLoading &&
+                    (usePerBucketReturn
+                      ? returnBuckets.length === 0
+                      : returnTierList.length === 0) ? (
                       <div className="space-y-3">
-                        {renderOutboundTierRadios(
-                          bucket.shippingTiers,
-                          selectedName,
-                          `returnBucket-${bucket.bucketIndex}`,
-                          (name) =>
-                            onReturnTierForBucket?.(bucket.bucketIndex, name),
-                        )}
+                        {SHIPPING_SKELETON_KEYS.map((key) => (
+                          <div
+                            key={`ret-${key}`}
+                            className="bg-gray-200 rounded-2xl h-20 animate-pulse"
+                          />
+                        ))}
+                      </div>
+                    ) : usePerBucketReturn ? (
+                      <div className="space-y-8">
+                        {returnBuckets.map((bucket, bucketIndex) => {
+                          const selectedName =
+                            selectedReturnTierByBucket[bucket.bucketIndex] ??
+                            bucket.shippingTiers[0]?.name ??
+                            "";
+                          const shipment =
+                            orderReviewReturn?.shipments.find(
+                              (row) => row.bucketIndex === bucket.bucketIndex,
+                            ) ?? orderReviewReturn?.shipments[bucketIndex];
+                          return (
+                            <div key={bucket.bucketIndex} className="space-y-3">
+                              {bucketIndex > 0 ? (
+                                <hr className="border-gray-100" />
+                              ) : null}
+                              <CheckoutReadonlyDetail
+                                label="Pickup window"
+                                value={shipment?.pickupWindow}
+                              />
+                              {bucket.shippingTiers.length > 0 ? (
+                                <CheckoutLabeledBlock label="Return options">
+                                  {renderOutboundTierRadios(
+                                    bucket.shippingTiers,
+                                    selectedName,
+                                    `returnBucket-${bucket.bucketIndex}`,
+                                    (name) =>
+                                      onReturnTierForBucket?.(
+                                        bucket.bucketIndex,
+                                        name,
+                                      ),
+                                  )}
+                                </CheckoutLabeledBlock>
+                              ) : (
+                                <Paragraph1 className="text-gray-600 text-sm">
+                                  No return pickup options for this segment.
+                                </Paragraph1>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : returnTierList.length > 0 ? (
+                      <div className="space-y-3">
+                        <CheckoutReadonlyDetail
+                          label="Pickup window"
+                          value={orderReviewReturn?.shipments[0]?.pickupWindow}
+                        />
+                        <CheckoutLabeledBlock label="Return options">
+                          {renderOutboundTierRadios(
+                            returnTierList,
+                            selectedReturnShippingTier,
+                            "returnShippingTier",
+                            handleReturnShippingTierChange,
+                          )}
+                        </CheckoutLabeledBlock>
                       </div>
                     ) : (
                       <Paragraph1 className="text-gray-600 text-sm">
-                        No return pickup options for this segment.
+                        No return pickup options available for this pickup
+                        address.
                       </Paragraph1>
                     )}
-                  </div>
-                );
-              })}
+                  </>
+                ) : null}
+              </div>
             </div>
-          ) : returnTierList.length > 0 ? (
-            <div className="space-y-3">
-              {orderReviewReturn?.shipments.map((shipment, index) => (
-                <CheckoutShipmentBlock
-                  key={shipment.bucketIndex ?? `return-${index}`}
-                  shipment={shipment}
-                  showDivider={index > 0}
-                />
-              ))}
-              {renderOutboundTierRadios(
-                returnTierList,
-                selectedReturnShippingTier,
-                "returnShippingTier",
-                handleReturnShippingTierChange,
-              )}
-            </div>
-          ) : (
-            <Paragraph1 className="text-gray-600 text-sm">
-              No return pickup options available for this pickup address.
-            </Paragraph1>
-          )}
-        </div>
-      )}
+          ) : null}
 
-      {checkoutBlockingIssues.length > 0 ? (
+      {hasDeliveryAddress && checkoutBlockingIssues.length > 0 ? (
         <div className="bg-amber-50 p-4 border border-amber-200 rounded-xl">
           <Paragraph1 className="font-semibold text-amber-950 text-sm">
             Before you pay
@@ -855,103 +976,17 @@ export default function CheckoutContactAndPayment({
         </div>
       ) : null}
 
-        </>
-          ) : null}
-
           <CheckoutStepNav
-            onBack={
-              onCheckoutStepChange ? () => onCheckoutStepChange(1) : undefined
-            }
             onContinue={
-              onCheckoutStepChange ? () => onCheckoutStepChange(3) : undefined
-            }
-            continueLabel="Continue to payment"
-            continueDisabled={!hasDeliveryAddress}
-            checkoutGrandTotalNgN={checkoutGrandTotalNgN}
-          />
-        </>
-      ) : null}
-
-      {checkoutStep === 3 ? (
-        <>
-          <CheckoutStepIntro title="Pay with your wallet" />
-
-          {!hasDeliveryAddress ? (
-            <div className="bg-amber-50 p-4 border border-amber-200 rounded-xl">
-              <Paragraph1 className="text-amber-900 text-sm leading-relaxed">
-                Add a delivery address first, then come back to this step.
-              </Paragraph1>
-            </div>
-          ) : null}
-
-          {hasDeliveryAddress ? (
-            <div className="bg-white p-4 border border-gray-100 rounded-xl">
-              <Paragraph1 className="mb-4 font-bold text-gray-800 tracking-wider">
-                WALLET
-              </Paragraph1>
-              <hr className="mb-3 text-gray-300" />
-              <div className="flex justify-between items-start gap-4">
-                <div className="flex flex-1 items-start gap-3">
-                  <Wallet size={30} className="mt-0.5 text-gray-700 shrink-0" />
-                  <div className="space-y-2">
-                    <Paragraph1 className="text-gray-600 text-xs">
-                      Available balance
-                    </Paragraph1>
-                    <Paragraph3
-                      className={`font-bold ${
-                        isWalletFunded ? "text-green-700" : "text-red-700"
-                      }`}
-                    >
-                      ₦{formatCurrency(availableBalance)}
-                    </Paragraph3>
-                    {walletTopUpNgN !== undefined && walletTopUpNgN > 0 ? (
-                      <Paragraph1 className="mt-2 max-w-56 sm:max-w-none text-green-700 text-xs leading-relaxed">
-                        Fund your wallet with ₦{formatCurrency(walletTopUpNgN)}{" "}
-                        to complete your order.
-                      </Paragraph1>
-                    ) : null}
-                  </div>
-                </div>
-                <FundWallet />
-              </div>
-            </div>
-          ) : null}
-
-          <CheckoutStepNav
-            onBack={
               onCheckoutStepChange ? () => onCheckoutStepChange(2) : undefined
             }
-            onContinue={
-              onCheckoutStepChange ? () => onCheckoutStepChange(4) : undefined
-            }
-            continueLabel="Review order"
-            continueDisabled={!hasDeliveryAddress || !walletCoversOrder}
-            checkoutGrandTotalNgN={checkoutGrandTotalNgN}
+            continueLabel={checkoutStepContinueLabel(1)}
+            continueDisabled={!hasDeliveryAddress || !hasPhone}
+            {...stickyNavProps}
           />
         </>
       ) : null}
 
-      {checkoutStep === 4 ? (
-        <>
-          <CheckoutStepIntro
-            title="Review your order"
-            subtitle="Check the details below, then complete your order in the summary."
-          />
-
-          <CheckoutReviewDeliverySection
-            review={orderReviewDelivery}
-            returnReview={orderReviewReturn}
-          />
-
-          <CheckoutStepNav
-            onBack={
-              onCheckoutStepChange ? () => onCheckoutStepChange(3) : undefined
-            }
-            backLabel="Back to payment"
-            showMobileSticky={false}
-          />
-        </>
-      ) : null}
     </div>
   );
 }

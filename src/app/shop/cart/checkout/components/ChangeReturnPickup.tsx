@@ -85,7 +85,7 @@ interface ChangeReturnPickupPanelProps {
   onSave: (value?: ReturnPickupAddressPayload) => void;
 }
 
-function ChangeReturnPickupPanel({
+export function ChangeReturnPickupPanel({
   isOpen,
   onClose,
   initialValue,

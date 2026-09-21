@@ -111,7 +111,7 @@ const rentalOnlyScenario: CheckoutMockConfig = {
 };
 
 async function gotoCheckoutConfirmStep(page: import("@playwright/test").Page) {
-  await gotoCheckoutStep(page, 4);
+  await gotoCheckoutStep(page, 2);
   await expect(page.getByText("PAYMENT BREAKDOWN")).toBeVisible({
     timeout: 15_000,
   });

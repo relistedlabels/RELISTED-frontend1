@@ -6,6 +6,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import { Header1, Header1Plus } from "@/common/ui/Text";
 import CheckoutContactAndPayment from "./components/CheckoutContactAndPayment";
+import {
+  profileHasPhone,
+  resolveProfilePhone,
+} from "@/lib/checkout/profilePhone";
+import { useProfileDetails } from "@/lib/queries/renters/useProfileDetails";
 import CheckoutStepper, {
   type CheckoutStep,
 } from "./components/CheckoutStepper";
@@ -53,13 +58,13 @@ import {
   checkoutItemInActiveSale,
   getCheckoutItemEarliestDeliveryLagosYmd,
 } from "@/lib/shopSale/productSale";
-import { useWallet } from "@/lib/queries/renters/useWallet";
 import {
   computeCheckoutGrandTotal,
   computeDisplayOutboundShipping,
   computeDisplayReturnShipping,
 } from "@/lib/checkout/checkoutSummaryTotals";
 import type { CheckoutDispatchPreviewGroup } from "@/lib/checkout/checkoutFlow";
+import { parseCheckoutStep } from "@/lib/checkout/parseCheckoutStep";
 
 const RETURN_PICKUP_SUMMARY_DEBOUNCE_MS = 1000;
 
@@ -124,14 +129,6 @@ function bucketEarliestWindowStartMs(
   return Number.POSITIVE_INFINITY;
 }
 
-function parseCheckoutStep(raw: string | null): CheckoutStep {
-  const n = Number(raw);
-  if (n === 2) return 2;
-  if (n === 3) return 3;
-  if (n === 4) return 4;
-  return 1;
-}
-
 export default function CheckoutPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -193,6 +190,11 @@ export default function CheckoutPage() {
 
   const queryClient = useQueryClient();
   const { data: profile } = useProfile();
+  const { data: renterProfileDetails } = useProfileDetails();
+  const resolvedProfilePhone = useMemo(
+    () => resolveProfilePhone(profile, renterProfileDetails?.profile),
+    [profile, renterProfileDetails?.profile],
+  );
   const deliveryAddressForSummary = useMemo(
     () => ({
       street: profile?.address?.street,
@@ -412,6 +414,32 @@ export default function CheckoutPage() {
     setSelectedReturnShippingTier("");
     setSelectedReturnTierByBucket({});
   }, [hasReturnShippingLeg]);
+
+  useEffect(() => {
+    if (!hasReturnShippingLeg || returnPickupAddress || !profile || !hasDeliveryAddress) {
+      return;
+    }
+    const phoneNumber = resolvedProfilePhone?.trim() ?? "";
+    const street = profile.address?.street?.trim() ?? "";
+    const city = profile.address?.city?.trim() ?? "";
+    const state = profile.address?.state?.trim() ?? "";
+    if (!street || !city || !profileHasPhone(phoneNumber)) return;
+
+    setReturnPickupAddress({
+      contactName: profile.user?.name?.trim() ?? "",
+      phoneNumber,
+      street,
+      city,
+      state,
+      instructions: "",
+    });
+  }, [
+    hasReturnShippingLeg,
+    returnPickupAddress,
+    profile,
+    hasDeliveryAddress,
+    resolvedProfilePhone,
+  ]);
 
   useEffect(() => {
     if (
@@ -926,10 +954,6 @@ export default function CheckoutPage() {
     [returnShippingTiers, selectedReturnShippingTier],
   );
 
-  const { data: walletResponse } = useWallet();
-  const availableWalletBalance =
-    walletResponse?.wallet?.balance?.availableBalance ?? 0;
-
   const orderSummarySummary = orderSummaryQuery.data?.data?.summary;
   const shipmentBucketsMeta =
     orderSummaryQuery.data?.data?.shipmentBuckets ?? [];
@@ -1001,21 +1025,8 @@ export default function CheckoutPage() {
     hasReturnShippingLeg,
   ]);
 
-  const walletShortfallNgN = useMemo(() => {
-    if (checkoutGrandTotalNgN === undefined) return undefined;
-    return Math.max(0, Math.round(checkoutGrandTotalNgN - availableWalletBalance));
-  }, [checkoutGrandTotalNgN, availableWalletBalance]);
-
   const goToCheckoutStep = useCallback(
     (step: CheckoutStep) => {
-      if (
-        step === 4 &&
-        checkoutGrandTotalNgN !== undefined &&
-        walletShortfallNgN !== undefined &&
-        walletShortfallNgN > 0
-      ) {
-        return;
-      }
       const params = new URLSearchParams(searchParams.toString());
       if (step === 1) {
         params.delete("step");
@@ -1025,32 +1036,95 @@ export default function CheckoutPage() {
       const q = params.toString();
       router.push(q ? `/shop/cart/checkout?${q}` : "/shop/cart/checkout");
     },
-    [
-      router,
-      searchParams,
-      checkoutGrandTotalNgN,
-      walletShortfallNgN,
-    ],
+    [router, searchParams],
   );
 
+  const didSmartLandRef = useRef(false);
+
   useEffect(() => {
+    if (didSmartLandRef.current) return;
+    if (searchParams.get("step") !== null || checkoutStep !== 1) return;
     if (
-      checkoutStep !== 4 ||
-      checkoutGrandTotalNgN === undefined ||
-      walletShortfallNgN === undefined ||
-      walletShortfallNgN <= 0
+      !hasDeliveryAddress ||
+      !profileHasPhone(profile, renterProfileDetails?.profile)
     ) {
       return;
     }
+    if (hasReturnShippingLeg) {
+      if (!returnPickupAddress) return;
+      if (
+        canonicalReturnPickupJson(returnPickupForSummary ?? {
+          contactName: "",
+          phoneNumber: "",
+          street: "",
+          city: "",
+          state: "",
+        }) !== canonicalReturnPickupJson(returnPickupAddress)
+      ) {
+        return;
+      }
+    }
+    if (orderSummaryQuery.isLoading || orderSummaryQuery.isFetching) return;
+    if (!orderSummarySummary) return;
+    if (orderSummaryErrorMessage) return;
+    if (shippingQuoteWarnings.length > 0) return;
+    if (dispatchReschedules.length > 0) return;
+    if (checkoutGrandTotalNgN === undefined) return;
+
+    if (useOutboundByBucket) {
+      if (outboundShippingByBucket.length === 0) return;
+      for (const bucket of outboundShippingByBucket) {
+        const pick = selectedOutboundTierByBucket[bucket.bucketIndex] ?? "";
+        if (!pick.trim()) return;
+      }
+    } else if (shippingTiers.length > 0 && !selectedShippingTier.trim()) {
+      return;
+    }
+
+    if (hasReturnShippingLeg) {
+      if (returnShippingByBucket.length > 0) {
+        for (const bucket of returnShippingByBucket) {
+          const pick = selectedReturnTierByBucket[bucket.bucketIndex] ?? "";
+          if (!pick.trim()) return;
+        }
+      } else if (
+        returnShippingTiers.length > 0 &&
+        !selectedReturnShippingTier.trim()
+      ) {
+        return;
+      }
+    }
+
+    didSmartLandRef.current = true;
     const params = new URLSearchParams(searchParams.toString());
-    params.set("step", "3");
+    params.set("step", "2");
     router.replace(`/shop/cart/checkout?${params.toString()}`);
   }, [
     checkoutStep,
-    checkoutGrandTotalNgN,
-    walletShortfallNgN,
-    router,
     searchParams,
+    hasDeliveryAddress,
+    profile,
+    renterProfileDetails?.profile,
+    hasReturnShippingLeg,
+    returnPickupAddress,
+    returnPickupForSummary,
+    orderSummaryQuery.isLoading,
+    orderSummaryQuery.isFetching,
+    orderSummarySummary,
+    orderSummaryErrorMessage,
+    shippingQuoteWarnings,
+    dispatchReschedules,
+    checkoutGrandTotalNgN,
+    useOutboundByBucket,
+    outboundShippingByBucket,
+    selectedOutboundTierByBucket,
+    shippingTiers,
+    selectedShippingTier,
+    returnShippingByBucket,
+    selectedReturnTierByBucket,
+    returnShippingTiers,
+    selectedReturnShippingTier,
+    router,
   ]);
 
   return (
@@ -1063,10 +1137,14 @@ export default function CheckoutPage() {
         currentStep={checkoutStep}
         onStepChange={goToCheckoutStep}
       />
-      <div className="gap-4 sm:gap-8 xl:gap-16 grid grid-cols-1 xl:grid-cols-3">
+      <div
+        className={`gap-4 sm:gap-8 xl:gap-16 grid grid-cols-1 ${
+          checkoutStep === 2 ? "max-w-xl mx-auto" : "xl:grid-cols-3"
+        }`}
+      >
         <div
-          className={`min-w-0 xl:col-span-2 xl:order-1 ${
-            checkoutStep === 3 ? "order-2" : "order-1"
+          className={`min-w-0 xl:col-span-2 xl:order-1 order-1 ${
+            checkoutStep === 2 ? "hidden" : ""
           }`}
         >
           <CheckoutContactAndPayment
@@ -1120,17 +1198,14 @@ export default function CheckoutPage() {
           />
         </div>
         <div
-          className={`min-w-0 xl:col-span-1 xl:order-2 ${
-            checkoutStep < 3
-              ? "hidden xl:block"
-              : checkoutStep === 3
-                ? "order-1"
-                : "order-2"
+          className={`min-w-0 ${
+            checkoutStep === 2
+              ? ""
+              : "hidden xl:block xl:col-span-1 xl:order-2 order-2"
           }`}
         >
           <FinalOrderSummaryCard
             checkoutStep={checkoutStep}
-            onCheckoutStepChange={goToCheckoutStep}
             listerGroups={listerGroups}
             isLoading={isLoading || cartIsLoading}
             error={error instanceof Error ? error : null}

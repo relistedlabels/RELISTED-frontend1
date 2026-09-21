@@ -6,7 +6,6 @@ import type {
   CheckoutReviewDelivery,
   CheckoutReviewReturn,
 } from "@/lib/checkout/checkoutFlow";
-import CheckoutSectionHeading from "./CheckoutSectionHeading";
 import { CheckoutShippingLegHeader } from "./CheckoutDispatchLegPreview";
 import CheckoutShipmentBlock from "./CheckoutShipmentBlock";
 
@@ -37,8 +36,6 @@ export default function CheckoutReviewDeliverySection({
 }: CheckoutReviewDeliverySectionProps) {
   return (
     <div className="space-y-4">
-      <CheckoutSectionHeading>Order details</CheckoutSectionHeading>
-
       <div className="bg-white p-4 border border-gray-100 rounded-xl">
         <CheckoutShippingLegHeader sectionLabel="DELIVERY" leg="outbound" />
         <hr className="my-4 text-gray-100" />

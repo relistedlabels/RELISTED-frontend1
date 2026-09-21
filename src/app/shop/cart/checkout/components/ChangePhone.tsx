@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { ArrowLeft, MapPin, X } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { ArrowLeft, Phone, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
@@ -11,24 +11,51 @@ import {
   slidePanelSheetPinned,
   slidePanelTitle,
 } from "@/common/ui/dashboardClasses";
-import AddressInputForm from "./AddressInputForm";
+import { PhoneInput } from "@/app/auth/profile-setup/components/PhoneInput";
+import { useProfile } from "@/lib/queries/user/useProfile";
+import { useUpdateProfile } from "@/lib/mutations/user/useUpdateProfile";
+import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
+import {
+  profileHasPhone,
+  resolveProfilePhone,
+} from "@/lib/checkout/profilePhone";
 import CheckoutEditableField from "./CheckoutEditableField";
-// --------------------
-// Slide-in Address Modal
-// --------------------
-interface ChangeAddressPanelProps {
+
+interface ChangePhonePanelProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddressSaved?: () => void;
+  onPhoneSaved?: () => void;
   panelTitle?: string;
 }
 
-const ChangeAddressPanel: React.FC<ChangeAddressPanelProps> = ({
+const ChangePhonePanel: React.FC<ChangePhonePanelProps> = ({
   isOpen,
   onClose,
-  onAddressSaved,
-  panelTitle = "Update address",
+  onPhoneSaved,
+  panelTitle = "Update phone number",
 }) => {
+  const { data: profile } = useProfile();
+  const updateProfile = useUpdateProfile();
+  const [phoneNumber, setPhoneNumber] = useState("");
+
+  useEffect(() => {
+    const resolved = resolveProfilePhone(profile);
+    if (!resolved) return;
+    setPhoneNumber(resolved);
+  }, [profile]);
+
+  useEffect(() => {
+    if (!updateProfile.isSuccess) return;
+    onPhoneSaved?.();
+    onClose();
+  }, [updateProfile.isSuccess, onClose, onPhoneSaved]);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!profileHasPhone(phoneNumber)) return;
+    updateProfile.mutate({ phoneNumber: phoneNumber.trim() });
+  };
+
   const variants = {
     hidden: { x: "100%" },
     visible: { x: 0 },
@@ -36,7 +63,7 @@ const ChangeAddressPanel: React.FC<ChangeAddressPanelProps> = ({
 
   return (
     <AnimatePresence>
-      {isOpen && (
+      {isOpen ? (
         <motion.div
           className={slidePanelBackdrop}
           onClick={onClose}
@@ -56,61 +83,67 @@ const ChangeAddressPanel: React.FC<ChangeAddressPanelProps> = ({
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
             <div className={slidePanelHeader}>
               <button
+                type="button"
                 onClick={onClose}
                 className="text-gray-500 xl:hidden hover:text-black p-1 rounded-full transition"
-                aria-label="Close address modal"
+                aria-label="Close phone modal"
               >
                 <ArrowLeft size={20} />
               </button>
 
               <Paragraph1 className={slidePanelTitle}>{panelTitle}</Paragraph1>
               <button
+                type="button"
                 onClick={onClose}
                 className="text-gray-500 hover:text-black p-1 rounded-full transition"
-                aria-label="Close address modal"
+                aria-label="Close phone modal"
               >
                 <X className="hidden xl:flex" size={20} />
               </button>
             </div>
 
-            {/* Content */}
-            <div className={`${slidePanelBody} pt-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]`}>
-              <AddressInputForm
-                onAddressSaved={onAddressSaved}
-                onClose={onClose}
-              />
+            <div
+              className={`${slidePanelBody} pt-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]`}
+            >
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <PhoneInput value={phoneNumber} onChange={setPhoneNumber} />
+                <button
+                  type="submit"
+                  disabled={
+                    !profileHasPhone(phoneNumber) || updateProfile.isPending
+                  }
+                  className={`${buttonPrimaryFull} disabled:opacity-50`}
+                >
+                  {updateProfile.isPending ? "Saving..." : "Save phone number"}
+                </button>
+              </form>
             </div>
           </motion.div>
         </motion.div>
-      )}
+      ) : null}
     </AnimatePresence>
   );
 };
 
-// --------------------
-// Main Component
-// --------------------
-interface ChangeAddressProps {
-  onAddressSaved?: () => void;
+interface ChangePhoneProps {
+  onPhoneSaved?: () => void;
   buttonLabel?: string;
   panelTitle?: string;
-  /** Inline text link, full clickable row, field row, or outline button for empty states. */
   variant?: "link" | "outline" | "row" | "field";
-  addressLine?: string;
+  phoneLine?: string;
   fieldLabel?: string;
   grouped?: boolean;
 }
 
-const ChangeAddress: React.FC<ChangeAddressProps> = ({
-  onAddressSaved,
+const ChangePhone: React.FC<ChangePhoneProps> = ({
+  onPhoneSaved,
   buttonLabel = "Change",
-  panelTitle = "Update address",
+  panelTitle = "Update phone number",
   variant = "link",
-  addressLine,
-  fieldLabel = "Address",
+  phoneLine,
+  fieldLabel = "Phone",
   grouped = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -127,32 +160,30 @@ const ChangeAddress: React.FC<ChangeAddressProps> = ({
       {variant === "field" ? (
         <CheckoutEditableField
           label={fieldLabel}
-          value={addressLine}
-          placeholder="Add delivery address"
-          empty={!addressLine?.trim()}
+          value={phoneLine}
+          placeholder="Add phone number"
+          empty={!phoneLine?.trim()}
           grouped={grouped}
           onClick={openPanel}
           ariaLabel={
-            addressLine?.trim()
-              ? "Edit delivery address"
-              : "Add delivery address"
+            phoneLine?.trim() ? "Edit phone number" : "Add phone number"
           }
         />
-      ) : variant === "row" && addressLine ? (
+      ) : variant === "row" && phoneLine ? (
         <button
           type="button"
           onClick={openPanel}
-          aria-label={`${buttonLabel} delivery address`}
+          aria-label={`${buttonLabel} phone number`}
           className="flex w-full items-start gap-3.5 bg-gray-50 hover:bg-gray-100 p-4 sm:p-5 rounded-xl text-left transition-colors"
         >
-          <MapPin
+          <Phone
             size={20}
             className="mt-1 text-gray-500 shrink-0"
             aria-hidden
           />
           <div className="flex flex-1 justify-between items-start gap-4 min-w-0">
             <Paragraph1 className="text-gray-900 text-[15px] leading-relaxed">
-              {addressLine}
+              {phoneLine}
             </Paragraph1>
             <span className="shrink-0 font-semibold text-gray-900 text-[15px] underline-offset-4">
               {buttonLabel}
@@ -165,14 +196,14 @@ const ChangeAddress: React.FC<ChangeAddressProps> = ({
         </button>
       )}
 
-      <ChangeAddressPanel
+      <ChangePhonePanel
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
-        onAddressSaved={onAddressSaved}
+        onPhoneSaved={onPhoneSaved}
         panelTitle={panelTitle}
       />
     </>
   );
 };
 
-export default ChangeAddress;
+export default ChangePhone;

@@ -21,41 +21,14 @@ import {
   useUploadIdDocument,
   useVerificationsStatus,
 } from "@/lib/queries/renters/useVerifications";
-
-const ID_TYPE_OPTIONS = [
-  { value: "NIN", label: "National ID (NIN)" },
-  { value: "PASSPORT", label: "International passport" },
-  { value: "DRIVERS_LICENSE", label: "Driver's licence" },
-] as const;
-
-/** Map old/lowercase idType formats to uppercase for backend */
-function normalizeIdType(idType: string): string {
-  const normalized = idType.toUpperCase().trim();
-  const mapping: Record<string, string> = {
-    NATIONALID: "NIN",
-    NATIONAL_ID: "NIN",
-    NIN: "NIN",
-    PASSPORT: "PASSPORT",
-    DRIVERSLICENSE: "DRIVERS_LICENSE",
-    DRIVERS_LICENSE: "DRIVERS_LICENSE",
-    DRIVERS: "DRIVERS_LICENSE",
-    DRIVER: "DRIVERS_LICENSE",
-  };
-  return mapping[normalized] || "NIN";
-}
-
-/** Validate ID number based on document type */
-function validateIdNumber(documentType: string, value: string): string | null {
-  const v = value.trim();
-  if (!v) return "Please enter your ID number.";
-  if (documentType === "NIN") {
-    if (!/^\d{11}$/.test(v)) return "NIN must be exactly 11 digits.";
-    return null;
-  }
-  if (v.length < 5) return "ID number looks too short.";
-  if (v.length > 50) return "ID number is too long.";
-  return null;
-}
+import {
+  FUND_WALLET_ID_TYPE_OPTIONS,
+  getFundWalletIdInputConfig,
+  isFundWalletIdNumberComplete,
+  normalizeFundWalletIdType,
+  sanitizeFundWalletIdInput,
+  validateFundWalletIdNumber,
+} from "@/lib/renters/fundWalletIdUpload";
 
 // Sub-component for displaying a verification status on a document or field
 const VerificationBadge: React.FC<{
@@ -115,12 +88,6 @@ const AccountVerificationsForm: React.FC = () => {
     }
   }, [emergencyContact]);
 
-  useEffect(() => {
-    if (profile) {
-      setNinNumber(profile.nin || "");
-    }
-  }, [profile?.nin]);
-
   const handleEmergencyChange = (
     field: keyof typeof emergencyForm,
     value: string,
@@ -166,9 +133,23 @@ const AccountVerificationsForm: React.FC = () => {
   const [ninFile, setNinFile] = useState<File | null>(null);
   const [ninError, setNinError] = useState<string | null>(null);
   const [documentType, setDocumentType] = useState<string>(
-    ID_TYPE_OPTIONS[0].value,
+    FUND_WALLET_ID_TYPE_OPTIONS[0].value,
   );
   const [isDraggingNin, setIsDraggingNin] = useState(false);
+
+  useEffect(() => {
+    if (!profile?.nin) return;
+    if (normalizeFundWalletIdType(documentType) === "NIN") {
+      setNinNumber(sanitizeFundWalletIdInput("NIN", profile.nin));
+    }
+  }, [profile?.nin, documentType]);
+
+  const inputConfig = useMemo(
+    () => getFundWalletIdInputConfig(documentType),
+    [documentType],
+  );
+  const canUploadId =
+    isFundWalletIdNumberComplete(documentType, ninNumber) && ninFile !== null;
 
   const handleNinFileChange: React.ChangeEventHandler<HTMLInputElement> = (
     event,
@@ -203,7 +184,7 @@ const AccountVerificationsForm: React.FC = () => {
       return;
     }
 
-    const idErr = validateIdNumber(documentType, ninNumber);
+    const idErr = validateFundWalletIdNumber(documentType, ninNumber);
     if (idErr) {
       setNinError(idErr);
       return;
@@ -213,7 +194,7 @@ const AccountVerificationsForm: React.FC = () => {
 
     const formData = new FormData();
     formData.append("idDocument", ninFile, ninFile.name);
-    formData.append("idType", normalizeIdType(documentType));
+    formData.append("idType", normalizeFundWalletIdType(documentType));
 
     try {
       await Promise.all([
@@ -284,12 +265,16 @@ const AccountVerificationsForm: React.FC = () => {
             <select
               id="renter-id-document-type"
               value={documentType}
-              onChange={(e) => setDocumentType(e.target.value)}
+              onChange={(e) => {
+                setDocumentType(e.target.value);
+                setNinNumber("");
+                setNinError(null);
+              }}
               disabled={uploadIdDocumentMutation.isPending}
               className="w-full max-w-lg rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-black focus:outline-none focus:ring-1 focus:ring-black disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="ID document type"
             >
-              {ID_TYPE_OPTIONS.map((opt) => (
+              {FUND_WALLET_ID_TYPE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
@@ -303,8 +288,16 @@ const AccountVerificationsForm: React.FC = () => {
               </Paragraph1>
               <input
                 type="text"
+                inputMode={inputConfig.inputMode}
                 value={ninNumber}
-                onChange={(e) => setNinNumber(e.target.value)}
+                onChange={(e) =>
+                  setNinNumber(
+                    sanitizeFundWalletIdInput(documentType, e.target.value),
+                  )
+                }
+                maxLength={inputConfig.maxLength}
+                autoComplete="off"
+                spellCheck={false}
                 className="w-full rounded-md border border-gray-300 p-2 text-sm"
                 placeholder="Enter ID number"
               />
@@ -380,8 +373,8 @@ const AccountVerificationsForm: React.FC = () => {
           <button
             type="button"
             onClick={handleUploadNin}
-            disabled={uploadIdDocumentMutation.isPending}
-            className={`${buttonPrimary} mt-1`}
+            disabled={uploadIdDocumentMutation.isPending || !canUploadId}
+            className={`${buttonPrimary} mt-1 disabled:opacity-50`}
           >
             {uploadIdDocumentMutation.isPending ? "Uploading..." : "Upload ID"}
           </button>

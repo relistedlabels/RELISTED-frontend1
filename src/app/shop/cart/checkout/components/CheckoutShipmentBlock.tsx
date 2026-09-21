@@ -12,6 +12,10 @@ type CheckoutShipmentBlockProps = {
   showDivider?: boolean;
   /** Step 4 review: show selected carrier row. Step 2 uses carrier pickers as children. */
   showSelectedCarrier?: boolean;
+  /** When false, hides delivery/pickup window rows (shown separately above carrier options). */
+  showWindows?: boolean;
+  /** Larger product row for checkout step 1. */
+  prominentItems?: boolean;
   children?: ReactNode;
 };
 
@@ -22,6 +26,8 @@ export default function CheckoutShipmentBlock({
   shipment,
   showDivider = false,
   showSelectedCarrier = false,
+  showWindows = true,
+  prominentItems = false,
   children,
 }: CheckoutShipmentBlockProps) {
   return (
@@ -45,9 +51,17 @@ export default function CheckoutShipmentBlock({
             return (
               <li
                 key={line.rowKey}
-                className="flex items-center gap-3 min-w-0"
+                className={`flex min-w-0 ${
+                  prominentItems ? "gap-3" : "gap-3 items-center"
+                }`}
               >
-                <div className="relative h-12 w-10 shrink-0 overflow-hidden rounded-md border border-gray-100 bg-gray-100">
+                <div
+                  className={`relative shrink-0 overflow-hidden border bg-gray-100 ${
+                    prominentItems
+                      ? "h-[4.5rem] w-[3.75rem] rounded-lg border-gray-200"
+                      : "h-12 w-10 border-gray-100 rounded-md"
+                  }`}
+                >
                   {line.productImageUrl ? (
                     <Image
                       src={line.productImageUrl}
@@ -58,11 +72,29 @@ export default function CheckoutShipmentBlock({
                     />
                   ) : null}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <Paragraph1 className="truncate font-medium text-gray-900 text-sm leading-snug">
+                <div
+                  className={`min-w-0 flex-1 ${
+                    prominentItems
+                      ? "flex h-[4.5rem] flex-col justify-center"
+                      : ""
+                  }`}
+                >
+                  <Paragraph1
+                    className={`truncate text-gray-900 ${
+                      prominentItems
+                        ? "font-semibold text-sm leading-tight"
+                        : "font-medium text-sm leading-snug"
+                    }`}
+                  >
                     {line.productName}
                   </Paragraph1>
-                  <Paragraph1 className="text-gray-500 text-xs leading-snug">
+                  <Paragraph1
+                    className={`text-gray-500 ${
+                      prominentItems
+                        ? "mt-1 text-xs leading-tight"
+                        : "text-xs leading-snug"
+                    }`}
+                  >
                     {line.subtitle}
                   </Paragraph1>
                 </div>
@@ -72,7 +104,7 @@ export default function CheckoutShipmentBlock({
         </ul>
       ) : null}
 
-      {shipment.deliveryWindow ? (
+      {showWindows && shipment.deliveryWindow ? (
         <div className="flex items-start gap-3.5">
           <Clock
             className="mt-1 size-4 text-gray-400 shrink-0"
@@ -89,7 +121,7 @@ export default function CheckoutShipmentBlock({
         </div>
       ) : null}
 
-      {shipment.pickupWindow ? (
+      {showWindows && shipment.pickupWindow ? (
         <div className="flex items-start gap-3.5">
           <Clock
             className="mt-1 size-4 text-gray-400 shrink-0"
