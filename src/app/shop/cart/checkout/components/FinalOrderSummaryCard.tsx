@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import type {
   OutboundShippingBucketQuote,
   ReturnShippingBucketQuote,
 } from "@/lib/api/cart";
 import Link from "next/link";
-import { Check, CheckCircle } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useRouter } from "next/navigation";
 import {
@@ -126,7 +126,6 @@ export default function FinalOrderSummaryCard({
   const router = useRouter();
   const queryClient = useQueryClient();
   const passCartMutation = usePassCart();
-  const [isAgree, setIsAgree] = useState(false);
   const canCheckout = checkoutBlockingIssues.length === 0;
 
   const dispatchWindowsPayload = useMemo<
@@ -200,11 +199,6 @@ export default function FinalOrderSummaryCard({
   );
 
   const handleCheckout = async () => {
-    if (!isAgree) {
-      alert("Please agree to the terms of service");
-      return;
-    }
-
     if (usePerBucketOutbound) {
       for (const b of outboundShippingByBucket) {
         const pick =
@@ -448,6 +442,7 @@ export default function FinalOrderSummaryCard({
                       const isResaleOrder =
                         (orderSummary?.data?.summary?.purchaseTotal ?? 0) > 0;
                       const hasRentalItems =
+                        hasReturnShippingLeg &&
                         (orderSummary?.data?.summary?.rentalTotal ?? 0) > 0;
 
                       return (
@@ -544,7 +539,14 @@ export default function FinalOrderSummaryCard({
                         {CURRENCY}
                         {formatCurrency(
                           computeCheckoutGrandTotal(
-                            orderSummary.data.summary,
+                            hasReturnShippingLeg
+                              ? orderSummary.data.summary
+                              : {
+                                  ...orderSummary.data.summary,
+                                  rentalTotal: 0,
+                                  collateralTotal: 0,
+                                  cleaningTotal: 0,
+                                },
                             displayOutboundShipping,
                             displayReturnShipping,
                           ),
@@ -563,12 +565,48 @@ export default function FinalOrderSummaryCard({
                           </div>
                         )}
 
+                        {hasReturnShippingLeg &&
+                          (orderSummary?.data?.summary?.rentalTotal ?? 0) >
+                            0 && (
+                          <div className="flex items-start gap-2 bg-green-50 mb-4 p-3 border border-green-200 rounded-md text-green-700 text-xs">
+                            <CheckCircle
+                              size={16}
+                              className="mt-0.5 shrink-0"
+                            />
+                            <Paragraph1 className="text-green-700">
+                              Your <strong>refundable security deposit</strong> is
+                              returned to your wallet after the item is returned
+                              and checked.
+                            </Paragraph1>
+                          </div>
+                        )}
+
+                        <Paragraph1 className="mb-4 text-gray-500 text-xs leading-relaxed">
+                          By completing this order, you agree to our{" "}
+                          <Link
+                            href="/terms-and-conditions"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-semibold text-gray-700 underline underline-offset-2 hover:text-gray-900"
+                          >
+                            Terms of Service
+                          </Link>{" "}
+                          and{" "}
+                          <Link
+                            href="/privacy-policy"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-semibold text-gray-700 underline underline-offset-2 hover:text-gray-900"
+                          >
+                            Data Protection Policy
+                          </Link>
+                          .
+                        </Paragraph1>
+
                         <button
                           onClick={handleCheckout}
                           disabled={
-                            !isAgree ||
-                            passCartMutation.isPending ||
-                            !canCheckout
+                            passCartMutation.isPending || !canCheckout
                           }
                           className={buttonPrimaryFull}
                         >
@@ -595,62 +633,6 @@ export default function FinalOrderSummaryCard({
                             </div>
                           </div>
                         )}
-
-                        {(orderSummary?.data?.summary?.rentalTotal ?? 0) > 0 && (
-                          <div className="flex items-start gap-2 bg-green-50 mt-4 p-3 border border-green-200 rounded-md text-green-700 text-xs">
-                            <CheckCircle
-                              size={16}
-                              className="mt-0.5 shrink-0"
-                            />
-                            <Paragraph1 className="text-green-700">
-                              Your <strong>refundable security deposit</strong> is
-                              returned to your wallet after the item is returned
-                              and checked.
-                            </Paragraph1>
-                          </div>
-                        )}
-
-                        <label className="flex items-start space-x-2 mt-4 text-gray-700 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={isAgree}
-                            onChange={() => setIsAgree(!isAgree)}
-                            className="hidden"
-                          />
-                          <span
-                            className={`shrink-0 w-6 h-6 rounded border mt-0.5 ${
-                              isAgree
-                                ? "bg-black border-black"
-                                : "bg-white border-gray-400"
-                            } flex items-center justify-center`}
-                          >
-                            {isAgree && (
-                              <Check size={18} className="text-white" />
-                            )}
-                          </span>
-                          <Paragraph1 className="text-xs">
-                            By confirming this order you accept our{" "}
-                            <Link
-                              href="/terms-and-conditions"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="font-semibold underline underline-offset-2 hover:text-gray-900"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              Terms of Service Agreement
-                            </Link>{" "}
-                            and our{" "}
-                            <Link
-                              href="/privacy-policy"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="font-semibold underline underline-offset-2 hover:text-gray-900"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              Data Protection Policy
-                            </Link>
-                          </Paragraph1>
-                        </label>
                       </>
                     ) : null}
                   </div>

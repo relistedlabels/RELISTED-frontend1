@@ -343,7 +343,7 @@ export default function CheckoutProductList({
                   </Paragraph1>
                   {item.isResale || isResaleItem(item) ? (
                     <Paragraph1 className="mt-1 text-gray-600 text-xs leading-snug">
-                      Type: <strong>Resale</strong>
+                      Type: <strong>Purchase</strong>
                     </Paragraph1>
                   ) : (
                     <Paragraph1 className="mt-1 text-gray-600 text-xs leading-snug">

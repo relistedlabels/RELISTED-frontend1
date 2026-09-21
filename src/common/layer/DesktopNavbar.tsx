@@ -8,13 +8,13 @@ import { useRouter } from "next/navigation";
 import {
   HelpCircle,
   Package,
-  ShoppingBagIcon,
+  ShoppingCart,
   Sparkles,
   Store,
 } from "lucide-react";
 import NavbarNotificationBell from "@/components/notifications/NavbarNotificationBell";
 import LoginModal from "@/common/modals/LoginModal";
-import { Paragraph1, ParagraphLink1 } from "../ui/Text";
+import { ParagraphLink1 } from "../ui/Text";
 import SearchModal from "./SearchModal";
 import { AuthActions } from "./AuthActions";
 import { useNavbarCartCount } from "@/lib/queries/renters/useNavbarCartCount";
@@ -39,11 +39,26 @@ function DesktopNavbarContent() {
   const cartAriaLabel =
     cartCount > 0 ? `Cart, ${cartCount} items` : "Cart";
 
+  const cartBadgeLabel = cartCount > 99 ? "99+" : String(cartCount);
+
   const cartContent = (
     <>
-      <ShoppingBagIcon className="h-5 w-5" aria-hidden />
+      <span
+        className={`relative inline-flex shrink-0 items-center ${
+          cartCount > 0 ? "h-5 w-8" : "h-5 w-5"
+        }`}
+      >
+        <ShoppingCart className="h-5 w-5 shrink-0" aria-hidden />
+        {cartCount > 0 ? (
+          <span
+            className="absolute -top-1.5 right-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-bold leading-none text-white"
+            aria-hidden
+          >
+            {cartBadgeLabel}
+          </span>
+        ) : null}
+      </span>
       <ParagraphLink1>Cart</ParagraphLink1>
-      {cartCount > 0 ? <Paragraph1>{cartCount}</Paragraph1> : null}
     </>
   );
 
@@ -80,7 +95,7 @@ function DesktopNavbarContent() {
             {token ? (
               <Link
                 href="/shop/cart"
-                className="flex items-center gap-1.5"
+                className="flex items-center gap-2"
                 aria-label={cartAriaLabel}
               >
                 {cartContent}
@@ -89,7 +104,7 @@ function DesktopNavbarContent() {
               <button
                 type="button"
                 onClick={() => setLoginOpen(true)}
-                className="flex items-center gap-1.5"
+                className="flex items-center gap-2"
                 aria-label={cartAriaLabel}
               >
                 {cartContent}

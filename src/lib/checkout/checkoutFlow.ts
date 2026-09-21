@@ -517,7 +517,7 @@ export function buildCheckoutReviewLegs(
   return [
     {
       id: "delivery",
-      title: "Delivery to you",
+      title: "Delivery address",
       address: input.deliveryAddressLine,
       windows: deliveryWindows,
       shipping: deliveryShipping,

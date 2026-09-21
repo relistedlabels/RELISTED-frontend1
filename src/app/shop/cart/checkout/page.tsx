@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -382,6 +382,36 @@ export default function CheckoutPage() {
   );
 
   const hasReturnShippingLeg = rentalItems.length > 0;
+
+  const approvedLinesKey = useMemo(
+    () =>
+      approvedOnCheckout
+        .map((item) =>
+          String(item.cartItemId ?? item.requestId ?? item.productId ?? ""),
+        )
+        .sort()
+        .join(","),
+    [approvedOnCheckout],
+  );
+  const prevApprovedLinesKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!hasDeliveryAddress) return;
+    if (prevApprovedLinesKeyRef.current === null) {
+      prevApprovedLinesKeyRef.current = approvedLinesKey;
+      return;
+    }
+    if (prevApprovedLinesKeyRef.current === approvedLinesKey) return;
+    prevApprovedLinesKeyRef.current = approvedLinesKey;
+    void queryClient.invalidateQueries({ queryKey: ["orderSummary"] });
+  }, [approvedLinesKey, hasDeliveryAddress, queryClient]);
+
+  useEffect(() => {
+    if (hasReturnShippingLeg) return;
+    setReturnPickupAddress(undefined);
+    setSelectedReturnShippingTier("");
+    setSelectedReturnTierByBucket({});
+  }, [hasReturnShippingLeg]);
 
   useEffect(() => {
     if (
@@ -948,12 +978,25 @@ export default function CheckoutPage() {
 
   const checkoutGrandTotalNgN = useMemo(() => {
     if (!orderSummarySummary) return undefined;
+    const summaryForTotal = hasReturnShippingLeg
+      ? orderSummarySummary
+      : {
+          ...orderSummarySummary,
+          rentalTotal: 0,
+          collateralTotal: 0,
+          cleaningTotal: 0,
+        };
     return computeCheckoutGrandTotal(
-      orderSummarySummary,
+      summaryForTotal,
       displayOutboundShipping,
       displayReturnShipping,
     );
-  }, [orderSummarySummary, displayOutboundShipping, displayReturnShipping]);
+  }, [
+    orderSummarySummary,
+    displayOutboundShipping,
+    displayReturnShipping,
+    hasReturnShippingLeg,
+  ]);
 
   const walletShortfallNgN = useMemo(() => {
     if (checkoutGrandTotalNgN === undefined) return undefined;

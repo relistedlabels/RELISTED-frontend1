@@ -342,8 +342,8 @@ test.describe("Checkout mixed carts (mocked API)", () => {
     await gotoCheckoutStep(page, 4);
 
     await expect(page.getByText("Review your order")).toBeVisible();
-    await expect(page.getByText("Delivery to you")).toBeVisible();
-    await expect(page.getByText("Return from you")).toHaveCount(0);
+    await expect(page.getByText("DELIVERY")).toBeVisible();
+    await expect(page.getByText("RETURN")).toHaveCount(0);
     await expect(page.getByText("shipbubble")).toBeVisible();
   });
 
@@ -356,7 +356,7 @@ test.describe("Checkout mixed carts (mocked API)", () => {
     await gotoCheckoutStep(page, 1);
 
     await expect(page.getByText("Delivery address")).toBeVisible();
-    await expect(page.getByText("Pickup from you")).toHaveCount(0);
+    await expect(page.getByText("Pick-up address")).toHaveCount(0);
   });
 
   test("@smoke mixed multi-lister cart groups review by shipment", async ({
@@ -374,8 +374,8 @@ test.describe("Checkout mixed carts (mocked API)", () => {
       .locator("..")
       .locator("..");
 
-    await expect(orderDetails.getByText("Delivery to you")).toBeVisible();
-    await expect(orderDetails.getByText("Return from you")).toBeVisible();
+    await expect(orderDetails.getByText("DELIVERY")).toBeVisible();
+    await expect(orderDetails.getByText("RETURN")).toBeVisible();
     await expect(orderDetails.getByText("Silk dress")).toHaveCount(2);
     await expect(orderDetails.getByText("Silk top")).toBeVisible();
     await expect(orderDetails.getByText("From Ada")).toBeVisible();
@@ -393,7 +393,7 @@ test.describe("Checkout mixed carts (mocked API)", () => {
     await gotoCheckoutStep(page, 1);
 
     await expect(page.getByText("Delivery and return")).toBeVisible();
-    await expect(page.getByText("Pickup from you")).toBeVisible();
+    await expect(page.getByText("Pick-up address")).toBeVisible();
   });
 
   test("@smoke hides return UI on steps 1 and 4 when only purchase is approved", async ({
@@ -404,9 +404,9 @@ test.describe("Checkout mixed carts (mocked API)", () => {
 
     await gotoCheckoutStep(page, 1);
     await expect(page.getByText("Delivery address")).toBeVisible();
-    await expect(page.getByText("Pickup from you")).toHaveCount(0);
+    await expect(page.getByText("Pick-up address")).toHaveCount(0);
 
     await gotoCheckoutStep(page, 4);
-    await expect(page.getByText("Return from you")).toHaveCount(0);
+    await expect(page.getByText("RETURN")).toHaveCount(0);
   });
 });

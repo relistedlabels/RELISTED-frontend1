@@ -72,7 +72,7 @@ export function computeDisplayReturnShipping(args: {
   selectedReturnTierTotal?: number;
   summaryReturnTotal?: number;
 }): number {
-  if (!args.hasReturnShippingLeg) return args.summaryReturnTotal ?? 0;
+  if (!args.hasReturnShippingLeg) return 0;
   if (args.usePerBucketReturn) {
     return sumPerBucketShipping(
       args.returnShippingByBucket,
