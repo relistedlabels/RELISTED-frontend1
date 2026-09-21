@@ -79,9 +79,14 @@ interface ListerSummaryCardProps {
     listerId: string;
     items: any[];
   };
+  /** Per-lister totals duplicate the checkout footer when there is only one lister. */
+  showMoneyBreakdown?: boolean;
 }
 
-const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
+const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({
+  group,
+  showMoneyBreakdown = true,
+}) => {
   const { data: listerData, isLoading: isListerLoading } = useListerProfile(
     group.listerId,
   );
@@ -121,21 +126,14 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
   return (
     <div className={cartSurfaceCardClass}>
       <div className="mb-3 sm:mb-4">
-        <div className="flex sm:flex-row flex-col sm:justify-between sm:items-start gap-1 sm:gap-4">
-          <div className="hidden sm:block">
-            <Paragraph1 className="font-bold text-gray-900 text-lg tracking-wide">
-              SUMMARY
-            </Paragraph1>
-          </div>
-          <Paragraph1 className="font-medium sm:font-bold text-gray-600 text-sm sm:text-right tracking-wide">
-            From{" "}
-            {isListerLoading ? (
-              <span className="inline-block bg-gray-200 rounded w-24 h-5 align-middle animate-pulse" />
-            ) : (
-              listerName
-            )}
-          </Paragraph1>
-        </div>
+        <Paragraph1 className="font-medium sm:font-bold text-gray-600 text-sm tracking-wide">
+          From{" "}
+          {isListerLoading ? (
+            <span className="inline-block bg-gray-200 rounded w-24 h-5 align-middle animate-pulse" />
+          ) : (
+            listerName
+          )}
+        </Paragraph1>
       </div>
 
       {/* Compact lines on mobile (no images; cart cards above have detail) */}
@@ -217,7 +215,7 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
                 <Paragraph1 className="mt-1 text-gray-600 text-xs leading-snug">
                   {isResale ? (
                     <>
-                      Type: <strong>Resale</strong>
+                      Type: <strong>Purchase</strong>
                     </>
                   ) : (
                     <>
@@ -245,27 +243,25 @@ const ListerSummaryCard: React.FC<ListerSummaryCardProps> = ({ group }) => {
         })}
       </div>
 
-      <div className="space-y-2 pt-3 sm:pt-4">
-        {hasResaleItems ? (
-          <SummaryMoneyRow label="Purchase" amount={listerPurchaseTotal} />
-        ) : null}
-        {hasRentalItems ? (
-          <SummaryMoneyRow label="Rental" amount={listerRentalTotal} />
-        ) : null}
-        {listerSecurityDeposit > 0 ? (
-          <SummaryMoneyRow label="Deposit" amount={listerSecurityDeposit} />
-        ) : null}
-        {listerDeliveryFees > 0 ? (
-          <SummaryMoneyRow label="Delivery" amount={listerDeliveryFees} />
-        ) : null}
-        <div className="pt-2 border-gray-100 border-t">
-          <SummaryMoneyRow
-            label="Before delivery"
-            amount={listerTotal}
-            bold
-          />
+      {showMoneyBreakdown ? (
+        <div className="space-y-2 pt-3 sm:pt-4">
+          {hasResaleItems ? (
+            <SummaryMoneyRow label="Purchase" amount={listerPurchaseTotal} />
+          ) : null}
+          {hasRentalItems ? (
+            <SummaryMoneyRow label="Rental" amount={listerRentalTotal} />
+          ) : null}
+          {listerSecurityDeposit > 0 ? (
+            <SummaryMoneyRow label="Deposit" amount={listerSecurityDeposit} />
+          ) : null}
+          {listerDeliveryFees > 0 ? (
+            <SummaryMoneyRow label="Delivery" amount={listerDeliveryFees} />
+          ) : null}
+          <div className="pt-2 border-gray-100 border-t">
+            <SummaryMoneyRow label="Total" amount={listerTotal} bold />
+          </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 };
@@ -340,6 +336,16 @@ export function FinalOrderSummaryCard({
     grandDeliveryFees +
     grandSecurityDeposit;
 
+  const multipleListers = approvedGroups.length > 1;
+  const grandBreakdownRowCount = [
+    hasGrandResaleItems,
+    hasGrandRentalItems,
+    grandSecurityDeposit > 0,
+    grandDeliveryFees > 0,
+  ].filter(Boolean).length;
+  const showGrandBreakdown =
+    multipleListers || grandBreakdownRowCount > 1;
+
   return (
     <div className="space-y-4 min-w-0 w-full max-w-full sm:space-y-6">
       <Paragraph1 className="font-bold text-gray-900 text-sm uppercase tracking-wide">
@@ -347,11 +353,15 @@ export function FinalOrderSummaryCard({
       </Paragraph1>
 
       {approvedGroups.map((group) => (
-        <ListerSummaryCard key={group.listerId} group={group} />
+        <ListerSummaryCard
+          key={group.listerId}
+          group={group}
+          showMoneyBreakdown={multipleListers}
+        />
       ))}
 
       <div className={cartSurfaceCardMutedClass}>
-        {(hasGrandRentalItems || hasGrandResaleItems) && (
+        {showGrandBreakdown ? (
           <div className="space-y-2 mb-3 pb-3 border-gray-200 border-b">
             {hasGrandResaleItems ? (
               <SummaryMoneyRow label="Purchase" amount={grandPurchaseTotal} />
@@ -366,16 +376,16 @@ export function FinalOrderSummaryCard({
               <SummaryMoneyRow label="Delivery" amount={grandDeliveryFees} />
             ) : null}
           </div>
-        )}
+        ) : null}
 
         <SummaryMoneyRow
-          label="Before delivery"
+          label="Total"
           amount={grandTotal}
           bold
           large
         />
         <Paragraph1 className="mt-2 mb-4 text-gray-500 text-xs">
-          Delivery at checkout.
+          Delivery fees calculated at checkout.
         </Paragraph1>
 
         <Link

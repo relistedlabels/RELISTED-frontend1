@@ -50,6 +50,7 @@ export const useRemoveFromCart = () => {
       queryClient.invalidateQueries({
         queryKey: ["renters", "rental-requests"],
       });
+      queryClient.invalidateQueries({ queryKey: ["orderSummary"] });
     },
   });
 };

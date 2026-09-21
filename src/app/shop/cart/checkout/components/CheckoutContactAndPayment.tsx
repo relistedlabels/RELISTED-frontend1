@@ -550,7 +550,7 @@ export default function CheckoutContactAndPayment({
           />
 
           <div className="space-y-4 bg-white p-5 border border-gray-100 rounded-xl">
-            <CheckoutSectionHeading>Deliver to you</CheckoutSectionHeading>
+            <CheckoutSectionHeading>Delivery address</CheckoutSectionHeading>
 
             {hasDeliveryAddress ? (
               <ChangeAddress
@@ -581,7 +581,7 @@ export default function CheckoutContactAndPayment({
 
           {!isResaleOnly ? (
             <div className="space-y-4 bg-white p-5 border border-gray-100 rounded-xl">
-              <CheckoutSectionHeading>Pickup from you</CheckoutSectionHeading>
+              <CheckoutSectionHeading>Pick-up address</CheckoutSectionHeading>
 
               <ChangeReturnPickup
                 addressLine={returnPickupAddressLine}
@@ -764,7 +764,7 @@ export default function CheckoutContactAndPayment({
 
       {showReturnShippingTierPicker && (
         <div className="bg-white p-4 border border-gray-100 rounded-xl">
-          <CheckoutShippingLegHeader sectionLabel="RETURN PICKUP" leg="return" />
+          <CheckoutShippingLegHeader sectionLabel="RETURN" leg="return" />
           <hr className="my-4 text-gray-100" />
           {isShippingTiersLoading &&
           (usePerBucketReturn

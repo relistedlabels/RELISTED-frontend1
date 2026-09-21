@@ -342,8 +342,8 @@ test.describe("Checkout mixed carts (mocked API)", () => {
     await gotoCheckoutStep(page, 4);
 
     await expect(page.getByText("Review your order")).toBeVisible();
-    await expect(page.getByText("Delivery to you")).toBeVisible();
-    await expect(page.getByText("Return from you")).toHaveCount(0);
+    await expect(page.getByText("DELIVERY", { exact: true })).toBeVisible();
+    await expect(page.getByText("RETURN", { exact: true })).toHaveCount(0);
     await expect(page.getByText("shipbubble")).toBeVisible();
   });
 
@@ -355,8 +355,12 @@ test.describe("Checkout mixed carts (mocked API)", () => {
 
     await gotoCheckoutStep(page, 1);
 
-    await expect(page.getByText("Delivery address")).toBeVisible();
-    await expect(page.getByText("Pickup from you")).toHaveCount(0);
+    await expect(
+      page.getByRole("heading", { name: "Delivery address" }),
+    ).toBeVisible();
+    await expect(page.getByText("Pick-up address", { exact: true })).toHaveCount(
+      0,
+    );
   });
 
   test("@smoke mixed multi-lister cart groups review by shipment", async ({
@@ -374,8 +378,8 @@ test.describe("Checkout mixed carts (mocked API)", () => {
       .locator("..")
       .locator("..");
 
-    await expect(orderDetails.getByText("Delivery to you")).toBeVisible();
-    await expect(orderDetails.getByText("Return from you")).toBeVisible();
+    await expect(orderDetails.getByText("DELIVERY", { exact: true })).toBeVisible();
+    await expect(orderDetails.getByText("RETURN", { exact: true })).toBeVisible();
     await expect(orderDetails.getByText("Silk dress")).toHaveCount(2);
     await expect(orderDetails.getByText("Silk top")).toBeVisible();
     await expect(orderDetails.getByText("From Ada")).toBeVisible();
@@ -393,7 +397,7 @@ test.describe("Checkout mixed carts (mocked API)", () => {
     await gotoCheckoutStep(page, 1);
 
     await expect(page.getByText("Delivery and return")).toBeVisible();
-    await expect(page.getByText("Pickup from you")).toBeVisible();
+    await expect(page.getByText("Pick-up address", { exact: true })).toBeVisible();
   });
 
   test("@smoke hides return UI on steps 1 and 4 when only purchase is approved", async ({
@@ -403,10 +407,14 @@ test.describe("Checkout mixed carts (mocked API)", () => {
     await mockCheckoutScenario(page, pendingRentalCartPurchaseApprovedScenario);
 
     await gotoCheckoutStep(page, 1);
-    await expect(page.getByText("Delivery address")).toBeVisible();
-    await expect(page.getByText("Pickup from you")).toHaveCount(0);
+    await expect(
+      page.getByRole("heading", { name: "Delivery address" }),
+    ).toBeVisible();
+    await expect(page.getByText("Pick-up address", { exact: true })).toHaveCount(
+      0,
+    );
 
     await gotoCheckoutStep(page, 4);
-    await expect(page.getByText("Return from you")).toHaveCount(0);
+    await expect(page.getByText("RETURN", { exact: true })).toHaveCount(0);
   });
 });

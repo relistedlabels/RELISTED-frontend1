@@ -133,7 +133,7 @@ test.describe("Checkout (mocked API)", () => {
     ).toBeVisible();
   });
 
-  test("@smoke disables complete order until terms are accepted", async ({
+  test("@smoke shows terms disclaimer above complete order", async ({
     page,
   }) => {
     await seedRenterSession(page);
@@ -143,7 +143,10 @@ test.describe("Checkout (mocked API)", () => {
 
     const completeBtn = page.getByRole("button", { name: "Complete Order" });
     await expect(completeBtn).toBeVisible({ timeout: 15_000 });
-    await expect(completeBtn).toBeDisabled();
+    await expect(completeBtn).toBeEnabled();
+    await expect(
+      page.getByText(/By completing this order, you agree to our/i),
+    ).toBeVisible();
   });
 
   test("@smoke completes checkout with mocked POST and navigates to success", async ({
@@ -178,12 +181,6 @@ test.describe("Checkout (mocked API)", () => {
 
     await gotoCheckoutConfirmStep(page);
 
-    await page
-      .locator("label")
-      .filter({ hasText: "By confirming this order" })
-      .locator("span.rounded")
-      .first()
-      .click();
     const completeBtn = page.getByRole("button", { name: "Complete Order" });
     await expect(completeBtn).toBeEnabled({ timeout: 5_000 });
     await completeBtn.click();

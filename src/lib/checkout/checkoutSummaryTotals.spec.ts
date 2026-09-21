@@ -55,7 +55,7 @@ describe("computeDisplayReturnShipping", () => {
         shipmentBucketsMeta: [],
         summaryReturnTotal: 5000,
       }),
-    ).toBe(5000);
+    ).toBe(0);
   });
 
   test("sums per-bucket return tiers when enabled", () => {

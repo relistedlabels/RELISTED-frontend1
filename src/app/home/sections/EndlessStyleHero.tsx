@@ -63,7 +63,7 @@ export default function EndlessStyleHero() {
             }}
             transition={{ duration: 0.8 }}
           >
-            <Header1 className="!text-[52px] sm:!text-[100px] !leading-[1.08] sm:!leading-[1.05] pb-1">
+            <Header1 className="!text-[52px] sm:!text-[100px] !leading-[1.08] sm:!leading-[1.05] pb-1 text-balance">
               Your wardrobe just got bigger.
             </Header1>
           </motion.div>
@@ -76,7 +76,7 @@ export default function EndlessStyleHero() {
             }}
             transition={{ duration: 0.9 }}
           >
-            <FashionLead className="text-white/90 text-base sm:text-lg xl:text-xl leading-relaxed tracking-wide">
+            <FashionLead className="text-white/90 text-base sm:text-lg xl:text-xl leading-relaxed tracking-wide text-balance">
               Rent or shop pre-loved fashion from wardrobes you love.
             </FashionLead>
           </motion.div>
