@@ -46,7 +46,7 @@ describe("buildDispatchWindowFromForm", () => {
     expect(result.errors.some((e) => e.includes("8:00am"))).toBe(true);
   });
 
-  test("rejects window ending after dispatch cutoff", () => {
+  test("rejects window ending after 4pm cutoff", () => {
     const lastStartHour = DISPATCH_WINDOW_END_HOUR - 1;
     const result = buildDispatchWindowFromForm({
       date: "2030-01-15",
