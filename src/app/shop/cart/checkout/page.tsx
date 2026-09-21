@@ -521,6 +521,7 @@ export default function CheckoutPage() {
       } else {
         window = deriveDefaultDispatchWindow(outboundBaseDate, {
           allowRollForward: false,
+          type: "OUTBOUND",
         });
       }
       outboundDerived = window;
@@ -554,6 +555,7 @@ export default function CheckoutPage() {
       } else {
         window = deriveDefaultDispatchWindow(returnBaseDate, {
           allowRollForward: false,
+          type: "RETURN",
         });
       }
       contexts.push({
@@ -604,6 +606,7 @@ export default function CheckoutPage() {
         const anchor = hasClosetResale ? closetDispatchAnchorDate() : new Date();
         resaleSuggested = deriveDefaultDispatchWindow(anchor, {
           allowRollForward: true,
+          type: "RESALE",
         });
       }
 

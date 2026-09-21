@@ -63,11 +63,13 @@ const resolveChoices = (ctx: DispatchWindowContext, date: string) => {
       ? ctx.suggested.window
       : deriveDefaultDispatchWindow(date, {
           durationMinutes: DEFAULT_DISPATCH_WINDOW_MINUTES,
+          type: ctx.type,
         }).window;
   return buildDispatchWindowChoices(
     date,
     suggestedForDate,
     DEFAULT_DISPATCH_WINDOW_MINUTES,
+    ctx.type,
   );
 };
 
@@ -196,7 +198,14 @@ export default function DispatchWindowsScheduler({
     const current = forms[ctx.type];
     if (!current) return;
 
-    if (!dayHasDispatchSlotOnLagosDate(date, DEFAULT_DISPATCH_WINDOW_MINUTES)) {
+    if (
+      !dayHasDispatchSlotOnLagosDate(
+        date,
+        DEFAULT_DISPATCH_WINDOW_MINUTES,
+        60,
+        ctx.type,
+      )
+    ) {
       setForms((prev) => ({
         ...prev,
         [ctx.type]: {
