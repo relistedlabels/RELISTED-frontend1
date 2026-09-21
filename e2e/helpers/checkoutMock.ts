@@ -174,9 +174,58 @@ export async function mockCheckoutScenario(
     }
 
     if (url.includes("/api/public/users/") && method === "GET") {
+      const userId =
+        url.split("/api/public/users/")[1]?.split("?")[0]?.trim() ?? "lister-a";
+      const listerNames: Record<string, string> = {
+        "lister-a": "Ada",
+        "lister-b": "Bea",
+        "lister-e2e": "Ada",
+      };
       await json(route, {
         success: true,
-        data: { id: "lister-a", name: "Ada" },
+        data: {
+          user: {
+            id: userId,
+            name: listerNames[userId] ?? "Lister",
+          },
+        },
+      });
+      return;
+    }
+
+    if (
+      /\/api\/renters\/orders\/[^/?]+$/.test(url) &&
+      method === "GET"
+    ) {
+      const orderId =
+        url.split("/api/renters/orders/")[1]?.split("?")[0]?.trim() ??
+        "ORD-E2E-123";
+      await json(route, {
+        success: true,
+        data: {
+          order: {
+            id: orderId,
+            orderId,
+            status: "confirmed",
+            createdAt: new Date().toISOString(),
+          },
+        },
+      });
+      return;
+    }
+
+    if (
+      url.includes("/order") &&
+      !url.includes("/order/summary") &&
+      method === "POST"
+    ) {
+      await json(route, {
+        success: true,
+        data: {
+          orderIds: ["ORD-E2E-123"],
+          orderId: "ORD-E2E-123",
+          shipmentIds: ["ship-1"],
+        },
       });
       return;
     }
