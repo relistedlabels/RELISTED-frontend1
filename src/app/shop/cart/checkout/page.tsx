@@ -58,11 +58,6 @@ import {
   checkoutItemInActiveSale,
   getCheckoutItemEarliestDeliveryLagosYmd,
 } from "@/lib/shopSale/productSale";
-import {
-  computeCheckoutGrandTotal,
-  computeDisplayOutboundShipping,
-  computeDisplayReturnShipping,
-} from "@/lib/checkout/checkoutSummaryTotals";
 import type { CheckoutDispatchPreviewGroup } from "@/lib/checkout/checkoutFlow";
 import { parseCheckoutStep } from "@/lib/checkout/parseCheckoutStep";
 
@@ -954,77 +949,6 @@ export default function CheckoutPage() {
     [returnShippingTiers, selectedReturnShippingTier],
   );
 
-  const orderSummarySummary = orderSummaryQuery.data?.data?.summary;
-  const shipmentBucketsMeta =
-    orderSummaryQuery.data?.data?.shipmentBuckets ?? [];
-  const usePerBucketOutbound = outboundShippingByBucket.length > 0;
-  const usePerBucketReturn =
-    hasReturnShippingLeg && returnShippingByBucket.length > 0;
-
-  const displayOutboundShipping = useMemo(
-    () =>
-      computeDisplayOutboundShipping({
-        usePerBucket: usePerBucketOutbound,
-        outboundShippingByBucket,
-        selectedOutboundTierByBucket,
-        shipmentBucketsMeta,
-        selectedTierTotal: selectedTierData?.totalShippingCost,
-        summaryOutboundTotal: orderSummarySummary?.outboundShippingTotal ?? 0,
-      }),
-    [
-      usePerBucketOutbound,
-      outboundShippingByBucket,
-      selectedOutboundTierByBucket,
-      shipmentBucketsMeta,
-      selectedTierData,
-      orderSummarySummary?.outboundShippingTotal,
-    ],
-  );
-
-  const displayReturnShipping = useMemo(
-    () =>
-      computeDisplayReturnShipping({
-        hasReturnShippingLeg,
-        usePerBucketReturn,
-        returnShippingByBucket,
-        selectedReturnTierByBucket,
-        shipmentBucketsMeta,
-        selectedReturnTierTotal: selectedReturnTierData?.totalShippingCost,
-        summaryReturnTotal: orderSummarySummary?.returnShippingTotal ?? 0,
-      }),
-    [
-      hasReturnShippingLeg,
-      usePerBucketReturn,
-      returnShippingByBucket,
-      selectedReturnTierByBucket,
-      shipmentBucketsMeta,
-      selectedReturnTierData,
-      orderSummarySummary?.returnShippingTotal,
-    ],
-  );
-
-  const checkoutGrandTotalNgN = useMemo(() => {
-    if (!orderSummarySummary) return undefined;
-    const summaryForTotal = hasReturnShippingLeg
-      ? orderSummarySummary
-      : {
-          ...orderSummarySummary,
-          rentalTotal: 0,
-          collateralTotal: 0,
-          cleaningTotal: 0,
-        };
-    return computeCheckoutGrandTotal(
-      summaryForTotal,
-      displayOutboundShipping,
-      displayReturnShipping,
-    );
-  }, [
-    orderSummarySummary,
-    displayOutboundShipping,
-    displayReturnShipping,
-    hasReturnShippingLeg,
-  ]);
-
   const goToCheckoutStep = useCallback(
     (step: CheckoutStep) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -1038,94 +962,6 @@ export default function CheckoutPage() {
     },
     [router, searchParams],
   );
-
-  const didSmartLandRef = useRef(false);
-
-  useEffect(() => {
-    if (didSmartLandRef.current) return;
-    if (searchParams.get("step") !== null || checkoutStep !== 1) return;
-    if (
-      !hasDeliveryAddress ||
-      !profileHasPhone(profile, renterProfileDetails?.profile)
-    ) {
-      return;
-    }
-    if (hasReturnShippingLeg) {
-      if (!returnPickupAddress) return;
-      if (
-        canonicalReturnPickupJson(returnPickupForSummary ?? {
-          contactName: "",
-          phoneNumber: "",
-          street: "",
-          city: "",
-          state: "",
-        }) !== canonicalReturnPickupJson(returnPickupAddress)
-      ) {
-        return;
-      }
-    }
-    if (orderSummaryQuery.isLoading || orderSummaryQuery.isFetching) return;
-    if (!orderSummarySummary) return;
-    if (orderSummaryErrorMessage) return;
-    if (shippingQuoteWarnings.length > 0) return;
-    if (dispatchReschedules.length > 0) return;
-    if (checkoutGrandTotalNgN === undefined) return;
-
-    if (useOutboundByBucket) {
-      if (outboundShippingByBucket.length === 0) return;
-      for (const bucket of outboundShippingByBucket) {
-        const pick = selectedOutboundTierByBucket[bucket.bucketIndex] ?? "";
-        if (!pick.trim()) return;
-      }
-    } else if (shippingTiers.length > 0 && !selectedShippingTier.trim()) {
-      return;
-    }
-
-    if (hasReturnShippingLeg) {
-      if (returnShippingByBucket.length > 0) {
-        for (const bucket of returnShippingByBucket) {
-          const pick = selectedReturnTierByBucket[bucket.bucketIndex] ?? "";
-          if (!pick.trim()) return;
-        }
-      } else if (
-        returnShippingTiers.length > 0 &&
-        !selectedReturnShippingTier.trim()
-      ) {
-        return;
-      }
-    }
-
-    didSmartLandRef.current = true;
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("step", "2");
-    router.replace(`/shop/cart/checkout?${params.toString()}`);
-  }, [
-    checkoutStep,
-    searchParams,
-    hasDeliveryAddress,
-    profile,
-    renterProfileDetails?.profile,
-    hasReturnShippingLeg,
-    returnPickupAddress,
-    returnPickupForSummary,
-    orderSummaryQuery.isLoading,
-    orderSummaryQuery.isFetching,
-    orderSummarySummary,
-    orderSummaryErrorMessage,
-    shippingQuoteWarnings,
-    dispatchReschedules,
-    checkoutGrandTotalNgN,
-    useOutboundByBucket,
-    outboundShippingByBucket,
-    selectedOutboundTierByBucket,
-    shippingTiers,
-    selectedShippingTier,
-    returnShippingByBucket,
-    selectedReturnTierByBucket,
-    returnShippingTiers,
-    selectedReturnShippingTier,
-    router,
-  ]);
 
   return (
     <div className="mx-auto px-4 sm:px-0 pt-[70px] sm:pt-[100px] pb-36 xl:pb-[100px] container">
