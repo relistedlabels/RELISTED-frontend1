@@ -43,13 +43,13 @@ const dispatchWindowMeta: Record<
 > = {
   OUTBOUND: {
     title: "When should we deliver to you?",
-    kicker: "Delivery address",
+    kicker: "Delivery",
     description:
       "Pick a time on your rental start day so the item reaches you when your rental begins. Delivery depends on lister availability.",
   },
   RETURN: {
     title: "When should we collect the return?",
-    kicker: "Pick-up address",
+    kicker: "Return",
     description:
       "Pick a time for us to collect the item from you after your rental ends.",
   },
