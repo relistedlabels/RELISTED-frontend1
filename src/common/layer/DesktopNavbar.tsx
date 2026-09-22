@@ -18,6 +18,7 @@ import { ParagraphLink1 } from "../ui/Text";
 import SearchModal from "./SearchModal";
 import { AuthActions } from "./AuthActions";
 import { useNavbarCartCount } from "@/lib/queries/renters/useNavbarCartCount";
+import { useNavbarOrderCount } from "@/lib/queries/renters/useNavbarOrderCount";
 import { DesktopSalesNavLink } from "./SalesNavLink";
 import NavDropdown from "./NavDropdown";
 import { useUserStore } from "@/store/useUserStore";
@@ -28,6 +29,7 @@ import {
 
 function DesktopNavbarContent() {
   const cartCount = useNavbarCartCount();
+  const orderCount = useNavbarOrderCount();
   const token = useUserStore((s) => s.token);
   const router = useRouter();
   const [loginOpen, setLoginOpen] = useState(false);
@@ -40,6 +42,9 @@ function DesktopNavbarContent() {
     cartCount > 0 ? `Cart, ${cartCount} items` : "Cart";
 
   const cartBadgeLabel = cartCount > 99 ? "99+" : String(cartCount);
+  const orderBadgeLabel = orderCount > 99 ? "99+" : String(orderCount);
+  const ordersAriaLabel =
+    orderCount > 0 ? `Orders, ${orderCount} ongoing` : "Orders";
 
   const cartContent = (
     <>
@@ -87,8 +92,26 @@ function DesktopNavbarContent() {
           <div className="flex items-center space-x-6 text-sm font-light">
             <SearchModal showLabel />
 
-            <Link href="/renters/orders" className="flex items-center gap-1.5">
-              <Package className="h-5 w-5" aria-hidden />
+            <Link
+              href="/renters/orders"
+              className="flex items-center gap-1.5"
+              aria-label={ordersAriaLabel}
+            >
+              <span
+                className={`relative inline-flex shrink-0 items-center ${
+                  orderCount > 0 ? "h-5 w-8" : "h-5 w-5"
+                }`}
+              >
+                <Package className="h-5 w-5 shrink-0" aria-hidden />
+                {orderCount > 0 ? (
+                  <span
+                    className="absolute -top-1.5 right-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-bold leading-none text-white"
+                    aria-hidden
+                  >
+                    {orderBadgeLabel}
+                  </span>
+                ) : null}
+              </span>
               <ParagraphLink1>Orders</ParagraphLink1>
             </Link>
 

@@ -6,6 +6,7 @@ import { Home, Shirt, ShoppingBag, Package, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import { shouldShowMobileBottomNav } from "@/lib/navbarRoutes";
 import { useNavbarCartCount } from "@/lib/queries/renters/useNavbarCartCount";
+import { useNavbarOrderCount } from "@/lib/queries/renters/useNavbarOrderCount";
 import {
   isBuyShopNavActive,
   isRentShopNavActive,
@@ -74,6 +75,7 @@ export default function MobileBottomNav() {
   const [authSheetOpen, setAuthSheetOpen] = useState(false);
   const [authRedirectUrl, setAuthRedirectUrl] = useState<string | undefined>();
   const cartCount = useNavbarCartCount();
+  const orderCount = useNavbarOrderCount();
 
   if (!shouldShowMobileBottomNav(pathname)) return null;
 
@@ -101,9 +103,15 @@ export default function MobileBottomNav() {
             const itemClass = `flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium transition-colors w-full ${
               isActive ? "text-black" : "text-gray-500"
             }`;
-            const showCartBadge = label === "Cart" && cartCount > 0;
-            const cartBadgeLabel =
-              cartCount > 99 ? "99+" : String(cartCount);
+            const badgeCount =
+              label === "Cart"
+                ? cartCount
+                : label === "Orders"
+                  ? orderCount
+                  : 0;
+            const showBadge = badgeCount > 0;
+            const badgeLabel =
+              badgeCount > 99 ? "99+" : String(badgeCount);
 
             const iconNode = (
               <span className="relative inline-flex">
@@ -111,7 +119,7 @@ export default function MobileBottomNav() {
                   className={`h-5 w-5 ${isActive ? "stroke-[2.5px]" : "stroke-[1.75px]"}`}
                   aria-hidden
                 />
-                {showCartBadge ? (
+                {showBadge ? (
                   <span
                     className={`absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold leading-none ${
                       isActive
@@ -120,7 +128,7 @@ export default function MobileBottomNav() {
                     }`}
                     aria-hidden
                   >
-                    {cartBadgeLabel}
+                    {badgeLabel}
                   </span>
                 ) : null}
               </span>
@@ -152,8 +160,12 @@ export default function MobileBottomNav() {
                   className={itemClass}
                   onClick={closeMenu}
                   aria-label={
-                    showCartBadge
-                      ? `Cart, ${cartBadgeLabel} items`
+                    showBadge
+                      ? label === "Cart"
+                        ? `Cart, ${badgeLabel} items`
+                        : label === "Orders"
+                          ? `Orders, ${badgeLabel} ongoing`
+                          : undefined
                       : undefined
                   }
                 >
