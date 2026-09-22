@@ -1,3 +1,5 @@
+import { isValidPhoneNumber } from "@/lib/phone";
+
 type PhoneSource = {
   phone?: string | null;
   phoneNumber?: string | null;
@@ -34,8 +36,7 @@ export function resolveProfilePhone(
 export function profileHasPhone(
   ...sources: Array<PhoneSource | string | null | undefined>
 ): boolean {
-  const digits = resolveProfilePhone(...sources)?.replace(/\D/g, "") ?? "";
-  return digits.length >= 10;
+  return isValidPhoneNumber(resolveProfilePhone(...sources));
 }
 
 export function formatPhoneDisplayLine(

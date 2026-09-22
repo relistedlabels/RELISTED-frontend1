@@ -2,14 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import { X, Loader2, Calendar } from "lucide-react";
-import { HiOutlineEnvelope, HiOutlineUser, HiOutlinePhone } from "react-icons/hi2";
+import { HiOutlineEnvelope, HiOutlineUser } from "react-icons/hi2";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import {
   readGuestContact,
   saveGuestContact,
 } from "@/lib/guest/guestContactStorage";
+import { PhoneInput } from "@/app/auth/profile-setup/components/PhoneInput";
 import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
+import { validatePhoneNumber } from "@/lib/phone";
 import {
   bottomSheetBackdrop,
   bottomSheetPanel,
@@ -60,7 +62,8 @@ export default function GuestContactModal({
       new FormData(form).get("whatsappPhone") ?? "",
     ).trim();
 
-    if (!firstNameValue || !emailValue || !whatsappValue) return;
+    const phoneError = validatePhoneNumber(whatsappValue);
+    if (!firstNameValue || !emailValue || phoneError) return;
 
     const contact = {
       firstName: firstNameValue,
@@ -161,19 +164,11 @@ export default function GuestContactModal({
                 <Paragraph1 className="mb-2 font-medium text-gray-900 text-sm">
                   WhatsApp number
                 </Paragraph1>
-                <div className="relative">
-                  <HiOutlinePhone className="top-1/2 left-4 absolute w-5 h-5 text-gray-400 -translate-y-1/2" />
-                  <input
-                    type="tel"
-                    name="whatsappPhone"
-                    placeholder="0801 234 5678"
-                    value={whatsappPhone}
-                    onChange={(e) => setWhatsappPhone(e.target.value)}
-                    autoComplete="tel"
-                    className="w-full rounded-xl border border-gray-300 py-3.5 pr-4 pl-12 text-base text-gray-900 placeholder:text-gray-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
-                    required
-                  />
-                </div>
+                <input type="hidden" name="whatsappPhone" value={whatsappPhone} />
+                <PhoneInput
+                  value={whatsappPhone || "+234"}
+                  onChange={setWhatsappPhone}
+                />
               </div>
             </div>
 

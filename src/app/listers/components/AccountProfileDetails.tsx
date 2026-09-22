@@ -10,7 +10,6 @@ import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
   HiOutlineUser,
-  HiOutlinePhone,
   HiOutlineCube,
   HiOutlineHome,
   HiOutlinePencil,
@@ -29,6 +28,8 @@ import { type AddAddressPayload } from "@/lib/api/listers";
 import { StateSelect } from "@/app/auth/profile-setup/components/StateSelect";
 import { CityLGASelect } from "@/app/auth/profile-setup/components/CityLGASelect";
 import { toast } from "sonner";
+import { PhoneInput } from "@/app/auth/profile-setup/components/PhoneInput";
+import { validatePhoneNumber } from "@/lib/phone";
 
 const AccountProfileDetails: React.FC = () => {
   const searchParams = useSearchParams();
@@ -140,10 +141,16 @@ const AccountProfileDetails: React.FC = () => {
     const profile = profileResponse?.data.profile;
     if (!profile) return;
 
+    const phoneError = validatePhoneNumber(formData.phone);
+    if (phoneError) {
+      toast.error(phoneError);
+      return;
+    }
+
     updateProfileMutation.mutate(
       {
         fullName: formData.fullName || profile.fullName,
-        phone: formData.phone || profile.phone,
+        phone: formData.phone.trim(),
       },
       {
         onSuccess: () => {
@@ -412,15 +419,10 @@ const AccountProfileDetails: React.FC = () => {
           <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
             Phone Number
           </Paragraph1>
-          <div className="relative">
-            <HiOutlinePhone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => handleInputChange("phone", e.target.value)}
-              className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition duration-150"
-            />
-          </div>
+          <PhoneInput
+            value={formData.phone || "+234"}
+            onChange={(value) => handleInputChange("phone", value)}
+          />
         </div>
 
         {/* Role */}

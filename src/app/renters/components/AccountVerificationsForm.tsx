@@ -5,12 +5,13 @@ import {
   HiOutlineDocumentText,
   HiOutlineEnvelope,
   HiOutlineHome,
-  HiOutlinePhone,
   HiOutlinePlus,
   HiOutlineUser,
   HiOutlineUsers,
 } from "react-icons/hi2";
 import { toast } from "sonner";
+import { PhoneInput } from "@/app/auth/profile-setup/components/PhoneInput";
+import { validatePhoneNumber } from "@/lib/phone";
 import { CityLGASelect } from "@/app/auth/profile-setup/components/CityLGASelect";
 import { StateSelect } from "@/app/auth/profile-setup/components/StateSelect";
 import { buttonPrimary } from "@/common/ui/buttonClasses";
@@ -441,16 +442,10 @@ const AccountVerificationsForm: React.FC = () => {
           <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
             Phone Number
           </Paragraph1>
-          <div className="relative">
-            <HiOutlinePhone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="tel"
-              value={emergencyForm.phone}
-              placeholder="Not provided yet"
-              onChange={(e) => handleEmergencyChange("phone", e.target.value)}
-              className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-black focus:border-black"
-            />
-          </div>
+          <PhoneInput
+            value={emergencyForm.phone || "+234"}
+            onChange={(value) => handleEmergencyChange("phone", value)}
+          />
         </div>
         <div>
           <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
@@ -496,8 +491,9 @@ const AccountVerificationsForm: React.FC = () => {
           type="button"
           disabled={updateVerificationMutation.isPending}
           onClick={() => {
-            if (!emergencyForm.fullName.trim() || !emergencyForm.phone.trim()) {
-              toast.error("Please fill in name and phone number");
+            const phoneError = validatePhoneNumber(emergencyForm.phone);
+            if (!emergencyForm.fullName.trim() || phoneError) {
+              toast.error(phoneError ?? "Please fill in name and phone number");
               return;
             }
 
