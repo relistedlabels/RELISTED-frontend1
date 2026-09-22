@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useSubmitRenterAddress } from "@/lib/mutations";
 import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
+import { validatePhoneNumber } from "@/lib/phone";
 
 interface StepOnePersonalProps {
   onNext: () => void;
@@ -49,8 +50,11 @@ const StepOnePersonal: React.FC<StepOnePersonalProps> = ({
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!phoneNumber || !address || !cityLGA || !state) {
-      setError("Please complete all required fields before continuing.");
+    const phoneError = validatePhoneNumber(phoneNumber);
+    if (phoneError || !address || !cityLGA || !state) {
+      setError(
+        phoneError ?? "Please complete all required fields before continuing.",
+      );
       return;
     }
 

@@ -18,6 +18,8 @@ import {
   canonicalReturnPickupJson,
   type ReturnPickupAddressPayload,
 } from "@/lib/api/cart";
+import { PhoneInput } from "@/app/auth/profile-setup/components/PhoneInput";
+import { validatePhoneNumber } from "@/lib/phone";
 
 const TOPSHIP_CITIES = [
   "Abule Egba",
@@ -72,9 +74,16 @@ function pickupValidationErrors(
     { field: "street", label: "Street" },
     { field: "city", label: "City" },
   ];
-  return required
+  const errors = required
     .filter(({ field }) => !form[field]?.trim())
     .map(({ label }) => `${label} is required`);
+
+  const phoneError = validatePhoneNumber(form.phoneNumber);
+  if (phoneError) {
+    errors.push(phoneError);
+  }
+
+  return errors;
 }
 
 interface ChangeReturnPickupPanelProps {
@@ -206,18 +215,17 @@ export function ChangeReturnPickupPanel({
                     placeholder="e.g. Adaora N."
                   />
                 </label>
-                <label className="font-semibold text-[11px] text-gray-500 uppercase tracking-wide">
+                <div className="font-semibold text-[11px] text-gray-500 uppercase tracking-wide">
                   Phone number
-                  <input
-                    type="tel"
-                    value={form.phoneNumber}
-                    onChange={(e) =>
-                      handleFieldChange("phoneNumber", e.target.value)
-                    }
-                    className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-gray-900 focus:outline-none"
-                    placeholder="0801..."
-                  />
-                </label>
+                  <div className="mt-1 normal-case tracking-normal">
+                    <PhoneInput
+                      value={form.phoneNumber || "+234"}
+                      onChange={(value) =>
+                        handleFieldChange("phoneNumber", value)
+                      }
+                    />
+                  </div>
+                </div>
                 <label className="sm:col-span-2 font-semibold text-[11px] text-gray-500 uppercase tracking-wide">
                   Street
                   <input

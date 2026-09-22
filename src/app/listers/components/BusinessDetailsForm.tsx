@@ -11,13 +11,14 @@ import {
   HiOutlineDocumentText,
   HiOutlineHome,
   HiOutlineGlobeAlt,
-  HiOutlinePhone,
   HiOutlineEnvelope,
 } from "react-icons/hi2";
 import { useBusinessProfile } from "@/lib/queries/listers/useBusinessProfile";
 import { useUpdateBusinessProfile } from "@/lib/mutations/listers/useUpdateBusinessProfile";
 import type { UpdateBusinessProfilePayload } from "@/lib/api/listers";
 import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
+import { PhoneInput } from "@/app/auth/profile-setup/components/PhoneInput";
+import { validatePhoneNumber } from "@/lib/phone";
 
 const BusinessDetailsForm: React.FC = () => {
   const searchParams = useSearchParams();
@@ -100,6 +101,11 @@ const BusinessDetailsForm: React.FC = () => {
       payload.businessEmail = formData.businessEmail.trim();
     }
     if (formData.businessPhone.trim()) {
+      const phoneError = validatePhoneNumber(formData.businessPhone);
+      if (phoneError) {
+        toast.error(phoneError);
+        return;
+      }
       payload.businessPhone = formData.businessPhone.trim();
     }
     if (formData.businessAddress.trim()) {
@@ -238,17 +244,10 @@ const BusinessDetailsForm: React.FC = () => {
             <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
               Business Phone *
             </Paragraph1>
-            <div className="relative">
-              <HiOutlinePhone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="tel"
-                value={formData.businessPhone}
-                onChange={(e) =>
-                  handleInputChange("businessPhone", e.target.value)
-                }
-                disabled={!fieldsEnabled}
-                placeholder="+234 (0) 907 123 4567"
-                className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition disabled:bg-gray-50 disabled:text-gray-600 disabled:cursor-not-allowed"
+            <div className={fieldsEnabled ? "" : "pointer-events-none opacity-60"}>
+              <PhoneInput
+                value={formData.businessPhone || "+234"}
+                onChange={(value) => handleInputChange("businessPhone", value)}
               />
             </div>
           </div>

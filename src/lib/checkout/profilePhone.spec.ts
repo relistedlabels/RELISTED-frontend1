@@ -33,6 +33,11 @@ describe("profileHasPhone", () => {
   test("rejects missing phone", () => {
     expect(profileHasPhone({ phoneNumber: "" })).toBe(false);
   });
+
+  test("rejects incomplete phone numbers", () => {
+    expect(profileHasPhone({ phone: "+234801" })).toBe(false);
+    expect(profileHasPhone({ phone: "+234" })).toBe(false);
+  });
 });
 
 describe("formatPhoneDisplayLine", () => {

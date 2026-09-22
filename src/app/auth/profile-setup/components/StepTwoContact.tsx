@@ -6,6 +6,7 @@ import { PhoneInput } from "./PhoneInput";
 import { useProfileStore } from "@/store/useProfileStore";
 import { useCreateProfile } from "@/lib/mutations";
 import { useRouter } from "next/navigation";
+import { validatePhoneNumber } from "@/lib/phone";
 
 interface StepTwoContactProps {
   onBack: () => void; // Function to move to the previous step
@@ -26,8 +27,9 @@ const StepTwoContact: React.FC<StepTwoContactProps> = ({ onBack }) => {
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!fullName || !relationship || !phoneNumber || !city || !state) {
-      alert("Please fill in all Emergency Contact details.");
+    const phoneError = validatePhoneNumber(phoneNumber);
+    if (!fullName || !relationship || phoneError || !city || !state) {
+      alert(phoneError ?? "Please fill in all Emergency Contact details.");
       return;
     }
 

@@ -10,14 +10,15 @@ import { useMemo, useState } from "react";
 import {
   HiOutlineDocumentText,
   HiOutlineEnvelope,
-  HiOutlinePhone,
   HiOutlinePlus,
   HiOutlineUser,
   HiOutlineUsers,
 } from "react-icons/hi2";
 import { toast } from "sonner";
 import { CityLGASelect } from "@/app/auth/profile-setup/components/CityLGASelect";
+import { PhoneInput } from "@/app/auth/profile-setup/components/PhoneInput";
 import { StateSelect } from "@/app/auth/profile-setup/components/StateSelect";
+import { validatePhoneNumber } from "@/lib/phone";
 import { buttonPrimary } from "@/common/ui/buttonClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useUpdateEmergencyContact } from "@/lib/mutations/listers/useUpdateEmergencyContact";
@@ -202,16 +203,10 @@ function EmergencyContactBlock({
           <Paragraph1 className="mb-2 font-medium text-gray-900 text-sm">
             Phone Number
           </Paragraph1>
-          <div className="relative">
-            <HiOutlinePhone className="top-1/2 left-3 absolute w-5 h-5 text-gray-400 -translate-y-1/2" />
-            <input
-              type="tel"
-              value={emergencyForm.phone}
-              placeholder="Not provided yet"
-              onChange={(e) => handleEmergencyChange("phone", e.target.value)}
-              className="p-3 pl-10 border border-gray-300 focus:border-black rounded-lg focus:ring-black w-full"
-            />
-          </div>
+          <PhoneInput
+            value={emergencyForm.phone || "+234"}
+            onChange={(value) => handleEmergencyChange("phone", value)}
+          />
         </div>
 
         <div>
@@ -260,11 +255,17 @@ function EmergencyContactBlock({
           type="button"
           disabled={updateEmergencyContactMutation.isPending}
           onClick={() => {
+            const phoneError = validatePhoneNumber(emergencyForm.phone);
+            if (phoneError) {
+              toast.error(phoneError);
+              return;
+            }
+
             updateEmergencyContactMutation.mutate(
               {
                 fullName: emergencyForm.fullName,
                 email: emergencyForm.email,
-                phone: emergencyForm.phone,
+                phone: emergencyForm.phone.trim(),
                 relationship: emergencyForm.relationship,
                 city: emergencyForm.city,
                 state: emergencyForm.state,

@@ -8,6 +8,7 @@ import { CityLGASelect } from "./CityLGASelect";
 import { StateSelect } from "./StateSelect";
 import { PhoneInput } from "./PhoneInput";
 import { RelationshipSelect } from "./RelationshipSelect";
+import { validatePhoneNumber } from "@/lib/phone";
 
 interface StepTwoContactProps {
   onNext: () => void;
@@ -37,8 +38,11 @@ const StepTwoContact: React.FC<StepTwoContactProps> = ({ onNext, onBack }) => {
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!fullName || !relationship || !phoneNumber || !city || !state) {
-      setError("Please complete all required fields before continuing.");
+    const phoneError = validatePhoneNumber(phoneNumber);
+    if (!fullName || !relationship || phoneError || !city || !state) {
+      setError(
+        phoneError ?? "Please complete all required fields before continuing.",
+      );
       return;
     }
 

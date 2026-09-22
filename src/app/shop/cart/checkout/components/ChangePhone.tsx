@@ -19,6 +19,8 @@ import {
   profileHasPhone,
   resolveProfilePhone,
 } from "@/lib/checkout/profilePhone";
+import { validatePhoneNumber } from "@/lib/phone";
+import { toast } from "sonner";
 import CheckoutEditableField from "./CheckoutEditableField";
 
 interface ChangePhonePanelProps {
@@ -52,7 +54,11 @@ const ChangePhonePanel: React.FC<ChangePhonePanelProps> = ({
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!profileHasPhone(phoneNumber)) return;
+    const phoneError = validatePhoneNumber(phoneNumber);
+    if (phoneError) {
+      toast.error(phoneError);
+      return;
+    }
     updateProfile.mutate({ phoneNumber: phoneNumber.trim() });
   };
 
