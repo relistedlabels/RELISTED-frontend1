@@ -122,9 +122,6 @@ export default function RentalCartSummary() {
                   </>
                 )}
               </Paragraph1>
-              <span className="inline-block bg-green-100 mt-2 px-2 py-0.5 border border-green-200 rounded-full font-semibold text-green-800 text-xs">
-                Ready to checkout
-              </span>
             </div>
 
             <button
