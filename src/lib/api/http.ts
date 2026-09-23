@@ -124,7 +124,8 @@ export async function apiFetch<T>(
     // credential sent on this request is still the active one. Otherwise a
     // stale response (e.g. old sessionToken after MFA upgraded to access token)
     // would clear the brand-new session and show SessionExpiredModal.
-    if (res.status === 401) {
+    const isLogoutRequest = path === "/auth/logout";
+    if (res.status === 401 && !isLogoutRequest) {
       const currentState = useUserStore.getState();
       const tokenNow = getAuthToken();
       const sameCredentialAsRequest =
