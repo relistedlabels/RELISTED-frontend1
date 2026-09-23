@@ -1,14 +1,9 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import { CheckCircle } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import Link from "next/link";
-import { useListerProfile } from "@/lib/queries/shop/useListerProfile";
-import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
-import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
-import { formatRentalDuration } from "@/lib/rental/formatRentalDuration";
 import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
 import { cartSurfaceCardClass } from "../cartSurface";
 import {
@@ -68,102 +63,6 @@ const SummarySkeleton = () => (
     <div className="bg-gray-200 mt-6 rounded h-10"></div>
   </div>
 );
-
-interface ListerItemsSectionProps {
-  group: {
-    listerId: string;
-    items: any[];
-  };
-  showListerLabel: boolean;
-}
-
-function ListerItemsSection({ group, showListerLabel }: ListerItemsSectionProps) {
-  const { data: listerData, isLoading: isListerLoading } = useListerProfile(
-    group.listerId,
-  );
-
-  const listerName =
-    listerData?.name ||
-    group.items[0]?.listerName ||
-    `Lister ${group.listerId}`;
-
-  return (
-    <div className="space-y-3">
-      {showListerLabel ? (
-        <Paragraph1 className="font-medium text-gray-600 text-sm tracking-wide">
-          From{" "}
-          {isListerLoading ? (
-            <span className="inline-block bg-gray-200 rounded w-24 h-5 align-middle animate-pulse" />
-          ) : (
-            listerName
-          )}
-        </Paragraph1>
-      ) : null}
-
-      {group.items.map((item) => {
-        const product = item.productDetail || {};
-        const isResale = lineIsResale(item);
-        const rowKey =
-          item.requestId ||
-          item.cartItemId ||
-          item.lineId ||
-          item.productId;
-        const productImageUrl = cloudinaryOptimizedImageUrl(
-          firstProductAttachmentImageUrl(product.attachments?.uploads) ||
-            item.productImage ||
-            "",
-          { preset: "thumb" },
-        );
-
-        const linePrice = resolveLineRentalPrice(item);
-        const lineDeposit = resolveLineSecurityDeposit(item);
-
-        return (
-          <div key={rowKey} className="flex items-start gap-3">
-            <div className="relative hidden sm:block bg-gray-200 border border-gray-100 rounded-md w-14 h-[4.5rem] overflow-hidden shrink-0">
-              {productImageUrl ? (
-                <Image
-                  src={productImageUrl}
-                  alt={product.name || item.productName}
-                  fill
-                  className="object-cover"
-                  unoptimized
-                />
-              ) : null}
-            </div>
-
-            <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
-              <div className="min-w-0">
-                <Paragraph1 className="font-semibold text-gray-900 text-sm leading-snug">
-                  {product.name || item.productName}
-                </Paragraph1>
-                <Paragraph1 className="mt-1 text-gray-600 text-xs leading-relaxed">
-                  {isResale ? (
-                    <>Purchase</>
-                  ) : (
-                    <>{formatRentalDuration(item.rentalDays)}</>
-                  )}
-                </Paragraph1>
-              </div>
-              <div className="text-right shrink-0">
-                <Paragraph1 className="font-medium text-gray-900 text-sm tabular-nums">
-                  {CURRENCY}
-                  {formatCurrency(linePrice)}
-                </Paragraph1>
-                {!isResale && lineDeposit > 0 ? (
-                  <Paragraph1 className="mt-0.5 text-gray-500 text-xs tabular-nums">
-                    Deposit {CURRENCY}
-                    {formatCurrency(lineDeposit)}
-                  </Paragraph1>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 interface FinalOrderSummaryCardProps {
   listerGroups?: Array<{
@@ -225,24 +124,17 @@ export function FinalOrderSummaryCard({
   });
 
   const hasGrandResaleItems = grandPurchaseTotal > 0;
-  const hasGrandRentalItems =
-    grandRentalTotal > 0 ||
-    grandDeliveryFees > 0 ||
-    grandSecurityDeposit > 0;
   const grandTotal =
     grandPurchaseTotal +
     grandRentalTotal +
     grandDeliveryFees +
     grandSecurityDeposit;
 
-  const multipleListers = approvedGroups.length > 1;
-  const grandBreakdownRowCount = [
-    hasGrandResaleItems,
-    hasGrandRentalItems,
-    grandSecurityDeposit > 0,
-    grandDeliveryFees > 0,
-  ].filter(Boolean).length;
-  const showGrandBreakdown = grandBreakdownRowCount > 1;
+  const showGrandBreakdown =
+    hasGrandResaleItems ||
+    grandRentalTotal > 0 ||
+    grandSecurityDeposit > 0 ||
+    grandDeliveryFees > 0;
 
   return (
     <div className={`${cartSurfaceCardClass} space-y-4 sm:space-y-5`}>
@@ -250,22 +142,12 @@ export function FinalOrderSummaryCard({
         Order summary
       </Paragraph1>
 
-      <div className="space-y-4 pb-4 border-gray-100 border-b">
-        {approvedGroups.map((group) => (
-          <ListerItemsSection
-            key={group.listerId}
-            group={group}
-            showListerLabel={multipleListers}
-          />
-        ))}
-      </div>
-
       {showGrandBreakdown ? (
         <div className="space-y-2">
           {hasGrandResaleItems ? (
             <SummaryMoneyRow label="Purchase Total" amount={grandPurchaseTotal} />
           ) : null}
-          {hasGrandRentalItems ? (
+          {grandRentalTotal > 0 ? (
             <SummaryMoneyRow label="Rental Total" amount={grandRentalTotal} />
           ) : null}
           {grandSecurityDeposit > 0 ? (

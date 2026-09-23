@@ -306,9 +306,19 @@ export default function CheckoutProductList({
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <Paragraph1 className="font-semibold text-gray-800 text-sm leading-snug">
-                    {product.name || item.productName}
-                  </Paragraph1>
+                  <div className="flex items-start justify-between gap-3">
+                    <Paragraph1 className="min-w-0 font-semibold text-gray-800 text-sm leading-snug">
+                      {product.name || item.productName}
+                    </Paragraph1>
+                    <button
+                      aria-label={`Remove ${product.name || item.productName}`}
+                      onClick={() => handleRemoveItem(item)}
+                      disabled={removeCartItemMutation.isPending}
+                      className="sm:hidden disabled:opacity-50 shrink-0 rounded-md p-1.5 text-red-500 hover:bg-red-50 hover:text-red-700 transition-colors"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
 
                   <Paragraph1 className="mt-1.5 text-gray-600 text-xs leading-snug">
                     Size: <strong>S</strong> Color: <strong>Black</strong>
@@ -324,21 +334,19 @@ export default function CheckoutProductList({
                     </Paragraph1>
                   )}
 
-                  <div className="sm:hidden flex items-center justify-between gap-3 mt-3">
+                  <div className="sm:hidden flex items-end justify-between gap-4 mt-2.5">
                     {statusBadge}
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="text-right shrink-0">
                       <Paragraph1 className="font-bold text-gray-900 text-sm tabular-nums">
                         {currency}
                         {formatCurrency(item.totalPrice)}
                       </Paragraph1>
-                      <button
-                        aria-label={`Remove ${product.name || item.productName}`}
-                        onClick={() => handleRemoveItem(item)}
-                        disabled={removeCartItemMutation.isPending}
-                        className="disabled:opacity-50 p-1 text-red-500 hover:text-red-700 transition-colors"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      {!item.isResale && deposit > 0 ? (
+                        <Paragraph1 className="mt-0.5 text-gray-500 text-xs tabular-nums">
+                          Deposit {currency}
+                          {formatCurrency(deposit)}
+                        </Paragraph1>
+                      ) : null}
                     </div>
                   </div>
                 </div>
