@@ -39,6 +39,15 @@ export function profileHasPhone(
   return isValidPhoneNumber(resolveProfilePhone(...sources));
 }
 
+/** Saved phone exists but fails current validation (legacy or malformed). */
+export function profilePhoneNeedsUpdate(
+  ...sources: Array<PhoneSource | string | null | undefined>
+): boolean {
+  const resolved = resolveProfilePhone(...sources);
+  if (!resolved?.trim()) return false;
+  return !isValidPhoneNumber(resolved);
+}
+
 export function formatPhoneDisplayLine(
   ...sources: Array<PhoneSource | string | null | undefined>
 ): string | undefined {

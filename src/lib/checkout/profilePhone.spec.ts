@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   formatPhoneDisplayLine,
   profileHasPhone,
+  profilePhoneNeedsUpdate,
   resolveProfilePhone,
 } from "./profilePhone";
 
@@ -37,6 +38,18 @@ describe("profileHasPhone", () => {
   test("rejects incomplete phone numbers", () => {
     expect(profileHasPhone({ phone: "+234801" })).toBe(false);
     expect(profileHasPhone({ phone: "+234" })).toBe(false);
+  });
+});
+
+describe("profilePhoneNeedsUpdate", () => {
+  test("flags saved numbers that fail validation", () => {
+    expect(profilePhoneNeedsUpdate({ phone: "+234802424242444" })).toBe(true);
+    expect(profilePhoneNeedsUpdate({ phone: "+234801" })).toBe(true);
+  });
+
+  test("returns false when phone is missing or already valid", () => {
+    expect(profilePhoneNeedsUpdate({ phoneNumber: "" })).toBe(false);
+    expect(profilePhoneNeedsUpdate({ phone: "+2348012345678" })).toBe(false);
   });
 });
 
