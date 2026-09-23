@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  CalendarClock,
   ChevronDown,
   FileText,
   HelpCircle,
@@ -28,6 +29,7 @@ import {
 } from "@/common/ui/Text";
 import { useLogout } from "@/lib/mutations";
 import { useBusinessProfile } from "@/lib/queries/listers/useBusinessProfile";
+import { usePendingAvailabilityCount } from "@/lib/queries/listers/usePendingAvailabilityCount";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import { useUserStore } from "@/store/useUserStore";
 import { UserProfileBadge } from "./UserProfileBadge";
@@ -41,6 +43,7 @@ export type NavItem = {
   href: string;
   icon: LucideIcon;
   isActive?: boolean;
+  badgeCount?: number;
 };
 
 export type UserProfile = {
@@ -100,14 +103,24 @@ const SidebarNav: React.FC<{
           key={item.name}
           href={item.href}
           onClick={onItemClick}
-          className={`flex items-center p-3 rounded-xl transition duration-150 ${
+          className={`flex items-center justify-between p-3 rounded-xl transition duration-150 ${
             item.isActive
               ? "bg-white text-black font-semibold"
               : "text-gray-300 hover:bg-gray-800"
           }`}
         >
-          <item.icon className="w-5 h-5 mr-3" />
-          <Paragraph1 className="text-sm">{item.name}</Paragraph1>
+          <div className="flex items-center min-w-0">
+            <item.icon className="w-5 h-5 mr-3 shrink-0" />
+            <Paragraph1 className="text-sm">{item.name}</Paragraph1>
+          </div>
+          {typeof item.badgeCount === "number" && item.badgeCount > 0 ? (
+            <span
+              className="ml-2 flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] font-bold leading-none text-white"
+              aria-label={`${item.badgeCount} pending`}
+            >
+              {item.badgeCount > 99 ? "99+" : item.badgeCount}
+            </span>
+          ) : null}
         </Link>
       ))}
     </nav>
@@ -185,6 +198,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     setShowLogoutModal(false);
   };
 
+  const { data: pendingAvailabilityCount = 0 } = usePendingAvailabilityCount();
+
   // TODO: replace this mock with real auth/user hook (Supabase, Firebase, API, etc.)
   const user: UserProfile = {
     name: "Jane Graham",
@@ -205,6 +220,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       href: "/listers/orders",
       icon: ShoppingCart,
       isActive: pathname.startsWith("/listers/orders"),
+    },
+    {
+      name: "Availability Requests",
+      href: "/listers/availability-requests",
+      icon: CalendarClock,
+      isActive: pathname.startsWith("/listers/availability-requests"),
+      badgeCount: pendingAvailabilityCount,
     },
     {
       name: "Inventory",

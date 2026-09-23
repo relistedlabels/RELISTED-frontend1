@@ -95,10 +95,20 @@ function resolveOrderExpiresAt(
   return undefined;
 }
 
-const OrdersManagement: React.FC = () => {
+type OrdersManagementProps = {
+  availabilityRequestsOnly?: boolean;
+};
+
+const OrdersManagement: React.FC<OrdersManagementProps> = ({
+  availabilityRequestsOnly = false,
+}) => {
   const [activeTab, setActiveTab] = useState<ListerTabKey>("pending");
 
-  const apiStatus = activeTab === "all" ? undefined : activeTab;
+  const apiStatus = availabilityRequestsOnly
+    ? "pending"
+    : activeTab === "all"
+      ? undefined
+      : activeTab;
 
   const { data: ordersData, isLoading } = useOrders(apiStatus, 1, 20) as {
     data?: any;
@@ -124,8 +134,11 @@ const OrdersManagement: React.FC = () => {
       statusLabel: getListerOrderStatusLabel(order),
       expiresAt: resolveOrderExpiresAt(order),
     });
+    const enriched = rawOrders.map(enrich);
     return {
-      orders: rawOrders.map(enrich),
+      orders: availabilityRequestsOnly
+        ? enriched.filter((order) => isListerAvailabilityRequestRow(order))
+        : enriched,
       summary: Array.isArray(d)
         ? undefined
         : (d.summary as ListerOrdersSummary),
@@ -133,11 +146,16 @@ const OrdersManagement: React.FC = () => {
         ? ordersData.pagination
         : (d.pagination ?? ordersData.pagination),
     };
-  }, [ordersData]);
+  }, [ordersData, availabilityRequestsOnly]);
+
+  const emptyLabel = availabilityRequestsOnly
+    ? "availability requests"
+    : TAB_LABEL[activeTab].toLowerCase();
 
   return (
     <div className="w-full">
       {/* 1. Tab Switcher with Motion Pill */}
+      {!availabilityRequestsOnly ? (
       <div className="relative mb-8 w-full overflow-hidden">
         <div className="w-[340px] sm:w-full max-w-full sm:overflow-visible overflow-x-auto hide-scrollbar scrollbar-hide">
           <div className="inline-flex gap-1 bg-[#F9F9F7] p-1 border border-gray-300 rounded-xl whitespace-nowrap">
@@ -180,6 +198,7 @@ const OrdersManagement: React.FC = () => {
           </div>
         </div>
       </div>
+      ) : null}
 
       {/* 2. Orders List with Staggered Reveal */}
       <div className="space-y-4">
@@ -198,7 +217,7 @@ const OrdersManagement: React.FC = () => {
             </div>
           ) : (
             <motion.div
-              key={activeTab}
+              key={availabilityRequestsOnly ? "availability-requests" : activeTab}
               initial="hidden"
               animate="visible"
               exit="hidden"
@@ -263,9 +282,7 @@ const OrdersManagement: React.FC = () => {
                   animate={{ opacity: 1 }}
                   className="py-20 border-2 border-gray-300 border-dashed rounded-2xl text-gray-400 text-center"
                 >
-                  <Paragraph3>
-                    No {TAB_LABEL[activeTab].toLowerCase()} items found.
-                  </Paragraph3>
+                  <Paragraph3>No {emptyLabel} found.</Paragraph3>
                 </motion.div>
               )}
             </motion.div>

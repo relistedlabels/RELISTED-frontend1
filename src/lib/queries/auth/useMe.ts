@@ -23,6 +23,7 @@ export function useMe(options?: { enabled?: boolean }) {
 
   return {
     ...query,
+    data: token !== null ? query.data : undefined,
     isLoading: isAuthLoading,
   };
 }

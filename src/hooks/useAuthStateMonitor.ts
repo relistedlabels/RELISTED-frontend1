@@ -7,6 +7,7 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
+import { clearAuthenticatedClientSession } from "@/lib/auth/clearAuthenticatedClientSession";
 import { isPublicBrowseRoute } from "@/lib/auth/signInRedirectPaths";
 import { useUserStore } from "@/store/useUserStore";
 import { useSessionStore } from "@/store/useSessionStore";
@@ -33,13 +34,11 @@ export function useAuthStateMonitor() {
 
       if (onPublicBrowse) {
         // Keep catalog queries; drop authed caches only so the shop grid stays visible.
-        void queryClient.invalidateQueries({ queryKey: ["auth"] });
-        void queryClient.invalidateQueries({ queryKey: ["cart"] });
-        void queryClient.invalidateQueries({ queryKey: ["renters"] });
-        void queryClient.invalidateQueries({ queryKey: ["profile"] });
+        clearAuthenticatedClientSession(queryClient);
       } else {
         void queryClient.invalidateQueries();
         queryClient.clear();
+        clearAuthenticatedClientSession(queryClient);
       }
     }
 
@@ -50,10 +49,7 @@ export function useAuthStateMonitor() {
   useEffect(() => {
     if (isSessionExpired) {
       // Session was explicitly marked as expired (via 401 response)
-      void queryClient.invalidateQueries({
-        queryKey: ["auth"],
-        exact: false,
-      });
+      clearAuthenticatedClientSession(queryClient);
     }
   }, [isSessionExpired, queryClient]);
 }

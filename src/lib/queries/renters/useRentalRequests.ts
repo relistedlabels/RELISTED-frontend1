@@ -11,7 +11,7 @@ export const useRentalRequests = (
   const token = useUserStore((s) => s.token);
   const shouldFetch = token !== null;
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ["renters", "rental-requests", status, page, limit],
     queryFn: async () => {
       const response = await rentersApi.getRentalRequests({
@@ -26,4 +26,9 @@ export const useRentalRequests = (
     staleTime: 30 * 1000,
     retry: 1,
   });
+
+  return {
+    ...query,
+    data: shouldFetch ? query.data : undefined,
+  };
 };

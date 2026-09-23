@@ -31,7 +31,7 @@ export function getAdminNavItemDefinitions(): AdminNavItemDefinition[] {
     },
     {
       id: "requests",
-      label: "Requests",
+      label: "Availability Requests",
       getHref: (id) => `/admin/${id}/requests`,
       showNewBadge: true,
     },

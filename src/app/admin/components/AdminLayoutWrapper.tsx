@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ReactNode, useState } from "react";
+import React, { ReactNode, useEffect, useMemo, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { X, LogOut } from "lucide-react";
@@ -12,10 +12,31 @@ import { useAdminIdStore } from "@/store/useAdminIdStore";
 import MobileDesktopRecommendation from "@/common/ui/MobileDesktopRecommendation";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import { useCheckDashboardSelection } from "@/lib/queries/auth/useCheckDashboardSelection";
-import { useEffect } from "react";
+import {
+  adminIdFromPathname,
+  getAdminLoginPath,
+} from "@/lib/auth/adminLoginPath";
+import { useUserStoreHydrated } from "@/hooks/useUserStoreHydrated";
+import { useUserStore } from "@/store/useUserStore";
+import { useSessionStore } from "@/store/useSessionStore";
 
 interface AdminLayoutWrapperProps {
   children: ReactNode;
+}
+
+function AdminLoadingShell({
+  showSessionExpired,
+}: {
+  showSessionExpired: boolean;
+}) {
+  return (
+    <>
+      {showSessionExpired ? <SessionExpiredModal /> : null}
+      <div className="flex h-screen items-center justify-center bg-gray-100">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-black border-t-transparent" />
+      </div>
+    </>
+  );
 }
 
 export default function AdminLayoutWrapper({
@@ -23,75 +44,89 @@ export default function AdminLayoutWrapper({
 }: AdminLayoutWrapperProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const hydrated = useUserStoreHydrated();
+  const token = useUserStore((state) => state.token);
+  const isSessionExpired = useSessionStore((state) => state.isSessionExpired);
   const adminId = useAdminIdStore((state) => state.adminId);
   const logout = useLogout();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  // Check if we're on an auth route
   const isAuthRoute = pathname.includes("/auth");
+  const adminLoginPath = useMemo(
+    () => getAdminLoginPath(adminId ?? adminIdFromPathname(pathname)),
+    [adminId, pathname],
+  );
 
-  const { data: dashboardSelection, isLoading, error } = useCheckDashboardSelection({
-    enabled: !isAuthRoute,
+  const shouldVerifyAdmin = !isAuthRoute && hydrated && token !== null;
+
+  const {
+    data: dashboardSelection,
+    isLoading,
+    isFetched,
+    error,
+  } = useCheckDashboardSelection({
+    enabled: shouldVerifyAdmin,
   });
 
+  const waitingForAdminCheck =
+    shouldVerifyAdmin && (isLoading || (!isFetched && !error));
+
+  const shouldRedirectToLogin =
+    hydrated &&
+    !isAuthRoute &&
+    !isSessionExpired &&
+    (token === null ||
+      (isFetched && (Boolean(error) || !dashboardSelection?.isAdmin)));
+
   useEffect(() => {
-    if (!isAuthRoute && !isLoading) {
-      if (error || (dashboardSelection && !dashboardSelection.isAdmin)) {
-        router.push("/auth/sign-in");
-      }
-    }
-  }, [isAuthRoute, isLoading, error, dashboardSelection, router, adminId]);
+    if (!shouldRedirectToLogin) return;
+    router.replace(adminLoginPath);
+  }, [shouldRedirectToLogin, adminLoginPath, router]);
 
   const handleLogout = () => {
     setShowLogoutModal(true);
   };
 
   const confirmLogout = () => {
+    const redirectPath = adminLoginPath;
     logout.mutate(undefined, {
       onSettled: () => {
         setShowLogoutModal(false);
-        router.push(
-          isAuthRoute && adminId
-            ? `/admin/${adminId}/auth/login`
-            : "/auth/sign-in",
-        );
+        router.replace(redirectPath);
       },
     });
   };
 
-  // For auth routes, just show the children without navbar/sidebar
   if (isAuthRoute) {
     return <>{children}</>;
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-gray-100">
-        <div className="w-8 h-8 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+  if (
+    !hydrated ||
+    waitingForAdminCheck ||
+    shouldRedirectToLogin ||
+    isSessionExpired
+  ) {
+    return <AdminLoadingShell showSessionExpired={isSessionExpired} />;
   }
 
-  // If we made it here but aren't admin, we'll be redirected shortly
   if (!dashboardSelection?.isAdmin) {
-    return null;
+    return <AdminLoadingShell showSessionExpired={false} />;
   }
 
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-gray-100">
       <SessionExpiredModal />
       <MobileDesktopRecommendation />
       <AdminTopNavbar onLogout={handleLogout} />
       <AdminSidebar onLogout={handleLogout} />
 
-      <main className="flex-1 bg-white p-2 sm:p-8 pt-20 sm:pt-[100px] hide-scrollbar overflow-auto">
+      <main className="hide-scrollbar flex-1 overflow-auto bg-white p-2 pt-20 sm:p-8 sm:pt-[100px]">
         {children}
       </main>
 
-      {/* Logout Confirmation Modal */}
-      {showLogoutModal && (
+      {showLogoutModal ? (
         <div className="fixed inset-0 z-50">
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -100,18 +135,15 @@ export default function AdminLayoutWrapper({
             className="absolute inset-0 bg-black/50"
           />
 
-          {/* Modal - Center */}
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             className="absolute inset-0 flex items-center justify-center p-4"
           >
-            <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
-              <div className="flex items-center justify-between mb-4">
-                <Paragraph2 className="text-gray-900 font-bold">
-                  Logout
-                </Paragraph2>
+            <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
+              <div className="mb-4 flex items-center justify-between">
+                <Paragraph2 className="font-bold text-gray-900">Logout</Paragraph2>
                 <button
                   onClick={() => setShowLogoutModal(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -120,7 +152,7 @@ export default function AdminLayoutWrapper({
                 </button>
               </div>
 
-              <Paragraph1 className="text-gray-600 mb-6">
+              <Paragraph1 className="mb-6 text-gray-600">
                 Are you sure you want to logout? You'll be redirected to the
                 login page.
               </Paragraph1>
@@ -129,7 +161,7 @@ export default function AdminLayoutWrapper({
                 <button
                   onClick={confirmLogout}
                   disabled={logout.isPending}
-                  className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium disabled:opacity-50 transition flex items-center justify-center gap-2"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3 font-medium text-white transition hover:bg-red-700 disabled:opacity-50"
                 >
                   <LogOut size={18} />
                   <Paragraph1 className="text-white">
@@ -140,7 +172,7 @@ export default function AdminLayoutWrapper({
                 <button
                   onClick={() => setShowLogoutModal(false)}
                   disabled={logout.isPending}
-                  className="w-full px-4 py-3 border border-gray-300 text-gray-900 rounded-lg hover:bg-gray-50 font-medium disabled:opacity-50 transition"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 font-medium text-gray-900 transition hover:bg-gray-50 disabled:opacity-50"
                 >
                   <Paragraph1 className="text-gray-900">Cancel</Paragraph1>
                 </button>
@@ -148,7 +180,7 @@ export default function AdminLayoutWrapper({
             </div>
           </motion.div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

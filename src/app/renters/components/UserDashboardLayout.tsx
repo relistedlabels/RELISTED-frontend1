@@ -16,7 +16,7 @@ import { buttonDestructive, buttonSecondary } from "@/common/ui/buttonClasses";
 import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 import { Paragraph2, Paragraph3, ParagraphLink1 } from "@/common/ui/Text";
 import { AnimatePresence, motion } from "framer-motion";
-import { useUserStore } from "@/store/useUserStore";
+import { useLogout } from "@/lib/mutations";
 
 interface NavItem {
   name: string;
@@ -42,16 +42,19 @@ export default function UserDashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const clearUser = useUserStore((s) => s.clearUser);
+  const logout = useLogout();
 
   // Get the active page title
   const activeItem = navItems.find((item) => pathname.startsWith(item.href));
   const title = titleOverride ?? activeItem?.name ?? "";
 
-  const handleLogout = async () => {
-    await clearUser();
+  const handleLogout = () => {
     setShowLogoutModal(false);
-    router.replace("/auth/sign-in");
+    logout.mutate(undefined, {
+      onSettled: () => {
+        router.replace("/auth/sign-in");
+      },
+    });
   };
 
   return (
