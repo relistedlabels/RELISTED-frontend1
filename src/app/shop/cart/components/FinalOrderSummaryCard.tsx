@@ -115,6 +115,8 @@ function ListerItemsSection({ group, showListerLabel }: ListerItemsSectionProps)
           { preset: "thumb" },
         );
 
+        const linePrice = resolveLineRentalPrice(item);
+
         return (
           <div key={rowKey} className="flex items-start gap-3">
             <div className="relative hidden sm:block bg-gray-200 border border-gray-100 rounded-md w-14 h-[4.5rem] overflow-hidden shrink-0">
@@ -129,16 +131,22 @@ function ListerItemsSection({ group, showListerLabel }: ListerItemsSectionProps)
               ) : null}
             </div>
 
-            <div className="min-w-0 flex-1">
-              <Paragraph1 className="font-semibold text-gray-900 text-sm leading-snug">
-                {product.name || item.productName}
-              </Paragraph1>
-              <Paragraph1 className="mt-1 text-gray-600 text-xs leading-relaxed">
-                {isResale ? (
-                  <>Purchase</>
-                ) : (
-                  <>{formatRentalDuration(item.rentalDays)}</>
-                )}
+            <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+              <div className="min-w-0">
+                <Paragraph1 className="font-semibold text-gray-900 text-sm leading-snug">
+                  {product.name || item.productName}
+                </Paragraph1>
+                <Paragraph1 className="mt-1 text-gray-600 text-xs leading-relaxed">
+                  {isResale ? (
+                    <>Purchase</>
+                  ) : (
+                    <>{formatRentalDuration(item.rentalDays)}</>
+                  )}
+                </Paragraph1>
+              </div>
+              <Paragraph1 className="font-medium text-gray-900 text-sm tabular-nums shrink-0">
+                {CURRENCY}
+                {formatCurrency(linePrice)}
               </Paragraph1>
             </div>
           </div>
@@ -246,10 +254,10 @@ export function FinalOrderSummaryCard({
       {showGrandBreakdown ? (
         <div className="space-y-2">
           {hasGrandResaleItems ? (
-            <SummaryMoneyRow label="Purchase" amount={grandPurchaseTotal} />
+            <SummaryMoneyRow label="Purchase Total" amount={grandPurchaseTotal} />
           ) : null}
           {hasGrandRentalItems ? (
-            <SummaryMoneyRow label="Rental" amount={grandRentalTotal} />
+            <SummaryMoneyRow label="Rental Total" amount={grandRentalTotal} />
           ) : null}
           {grandSecurityDeposit > 0 ? (
             <SummaryMoneyRow label="Deposit" amount={grandSecurityDeposit} />
