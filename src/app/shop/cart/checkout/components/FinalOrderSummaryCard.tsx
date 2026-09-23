@@ -439,6 +439,7 @@ export default function FinalOrderSummaryCard({
             <CheckoutOrderItems
               listerGroups={approvedGroups}
               variant="sidebar"
+              showLineDeposit={showCheckoutActions}
             />
           </div>
 
