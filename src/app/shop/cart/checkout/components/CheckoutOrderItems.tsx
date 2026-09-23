@@ -5,6 +5,7 @@ import { memo } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { resolveCheckoutDisplayLine } from "@/lib/checkout/checkoutLineDisplay";
 import { useListerProfile } from "@/lib/queries/shop/useListerProfile";
+import { resolveLineSecurityDeposit } from "@/app/shop/cart/cartLinePricing";
 
 export type CheckoutListerGroup = {
   listerId: string;
@@ -15,6 +16,8 @@ type CheckoutOrderItemsProps = {
   listerGroups: CheckoutListerGroup[];
   /** compact: main checkout steps; sidebar: order summary with prices */
   variant?: "compact" | "sidebar";
+  /** Show per-line deposit on rental items (payment step). */
+  showLineDeposit?: boolean;
   className?: string;
 };
 
@@ -24,9 +27,11 @@ const formatCurrency = (amount: number): string =>
 const ListerGroupBlock = memo(function ListerGroupBlock({
   group,
   variant,
+  showLineDeposit = false,
 }: {
   group: CheckoutListerGroup;
   variant: "compact" | "sidebar";
+  showLineDeposit?: boolean;
 }) {
   const { data: listerData, isLoading } = useListerProfile(group.listerId);
   const listerName =
@@ -54,6 +59,7 @@ const ListerGroupBlock = memo(function ListerGroupBlock({
       <ul className="space-y-2.5">
         {group.items.map((item) => {
           const line = resolveCheckoutDisplayLine(item);
+          const deposit = resolveLineSecurityDeposit(item);
           return (
             <li
               key={line.rowKey}
@@ -83,9 +89,16 @@ const ListerGroupBlock = memo(function ListerGroupBlock({
               </div>
 
               {variant === "sidebar" && line.totalPrice > 0 ? (
-                <Paragraph1 className="shrink-0 font-semibold text-gray-900 text-sm tabular-nums">
-                  ₦{formatCurrency(line.totalPrice)}
-                </Paragraph1>
+                <div className="shrink-0 text-right">
+                  <Paragraph1 className="font-semibold text-gray-900 text-sm tabular-nums">
+                    ₦{formatCurrency(line.totalPrice)}
+                  </Paragraph1>
+                  {showLineDeposit && deposit > 0 ? (
+                    <Paragraph1 className="mt-0.5 text-gray-500 text-xs tabular-nums">
+                      Deposit ₦{formatCurrency(deposit)}
+                    </Paragraph1>
+                  ) : null}
+                </div>
               ) : null}
             </li>
           );
@@ -100,6 +113,7 @@ ListerGroupBlock.displayName = "ListerGroupBlock";
 export default function CheckoutOrderItems({
   listerGroups,
   variant = "compact",
+  showLineDeposit = false,
   className = "",
 }: CheckoutOrderItemsProps) {
   const groups = listerGroups.filter((g) => g.items.length > 0);
@@ -123,7 +137,11 @@ export default function CheckoutOrderItems({
             index > 0 ? "pt-4 border-t border-gray-100" : undefined
           }
         >
-          <ListerGroupBlock group={group} variant={variant} />
+          <ListerGroupBlock
+            group={group}
+            variant={variant}
+            showLineDeposit={showLineDeposit}
+          />
         </div>
       ))}
     </div>
