@@ -116,6 +116,7 @@ function ListerItemsSection({ group, showListerLabel }: ListerItemsSectionProps)
         );
 
         const linePrice = resolveLineRentalPrice(item);
+        const lineDeposit = resolveLineSecurityDeposit(item);
 
         return (
           <div key={rowKey} className="flex items-start gap-3">
@@ -144,10 +145,18 @@ function ListerItemsSection({ group, showListerLabel }: ListerItemsSectionProps)
                   )}
                 </Paragraph1>
               </div>
-              <Paragraph1 className="font-medium text-gray-900 text-sm tabular-nums shrink-0">
-                {CURRENCY}
-                {formatCurrency(linePrice)}
-              </Paragraph1>
+              <div className="text-right shrink-0">
+                <Paragraph1 className="font-medium text-gray-900 text-sm tabular-nums">
+                  {CURRENCY}
+                  {formatCurrency(linePrice)}
+                </Paragraph1>
+                {!isResale && lineDeposit > 0 ? (
+                  <Paragraph1 className="mt-0.5 text-gray-500 text-xs tabular-nums">
+                    Deposit {CURRENCY}
+                    {formatCurrency(lineDeposit)}
+                  </Paragraph1>
+                ) : null}
+              </div>
             </div>
           </div>
         );
