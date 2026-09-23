@@ -7,7 +7,6 @@ import { Trash2, ShoppingCart } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 // import { useCart } from "@/lib/queries/renters/useCart";
 import { useRemoveCartItem } from "@/lib/mutations/cart/useRemoveCartItem";
-import { isLineRentalApproved } from "@/lib/cart/rentalRequestUi";
 import type { CartCheckoutLine } from "../types";
 import { isResaleItem } from "@/lib/listers/listerOrderRow";
 import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
@@ -237,9 +236,7 @@ export default function CheckoutProductList({
         <div className="col-span-2 text-center">
           <Paragraph1>Subtotal</Paragraph1>
         </div>
-        <div className="col-span-3 px-4 text-start">
-          <Paragraph1>Status</Paragraph1>
-        </div>
+        <div className="col-span-3" aria-hidden />
       </div>
 
       {/* List of Cart Items */}
@@ -266,17 +263,7 @@ export default function CheckoutProductList({
           const unitPrice = item.isResale
             ? (product.resalePrice ?? 0)
             : (product.dailyPrice ?? 0);
-          const isApproved = isLineRentalApproved(item.status);
           const inventoryMessage = inventoryBlockMessage(item);
-          const statusBadge = inventoryMessage ? (
-            <span className="text-gray-600 text-xs leading-snug max-w-56">
-              {inventoryMessage}
-            </span>
-          ) : (
-            <span className="bg-green-100 px-2 py-0.5 border border-green-200 rounded-full font-semibold text-green-800 text-xs">
-              {isApproved || item.isResale ? "Ready to checkout" : "Ready"}
-            </span>
-          );
 
           return (
             <div
@@ -334,8 +321,13 @@ export default function CheckoutProductList({
                     </Paragraph1>
                   )}
 
-                  <div className="sm:hidden flex items-end justify-between gap-4 mt-2.5">
-                    {statusBadge}
+                  {inventoryMessage ? (
+                    <Paragraph1 className="mt-2 text-gray-600 text-xs leading-snug">
+                      {inventoryMessage}
+                    </Paragraph1>
+                  ) : null}
+
+                  <div className="sm:hidden flex justify-end mt-2.5">
                     <div className="text-right shrink-0">
                       <Paragraph1 className="font-bold text-gray-900 text-sm tabular-nums">
                         {currency}
@@ -379,18 +371,15 @@ export default function CheckoutProductList({
                   </Paragraph1>
                 </div>
 
-                <div className="col-span-3 text-center">
-                  <div className="flex flex-col items-center gap-2">
-                    {statusBadge}
-                    <button
-                      aria-label={`Remove ${product.name || item.productName}`}
-                      onClick={() => handleRemoveItem(item)}
-                      disabled={removeCartItemMutation.isPending}
-                      className="disabled:opacity-50 p-1 text-red-500 hover:text-red-700 transition-colors"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+                <div className="col-span-3 flex justify-center items-center">
+                  <button
+                    aria-label={`Remove ${product.name || item.productName}`}
+                    onClick={() => handleRemoveItem(item)}
+                    disabled={removeCartItemMutation.isPending}
+                    className="disabled:opacity-50 p-1 text-red-500 hover:text-red-700 transition-colors"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               </div>
 
