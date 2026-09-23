@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { Clock, AlertCircle } from "lucide-react";
@@ -11,15 +11,17 @@ import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 
 export default function SessionExpiredModal() {
   const router = useRouter();
+  const pathname = usePathname();
   const isSessionExpired = useSessionStore((state) => state.isSessionExpired);
   const setSessionExpired = useSessionStore((state) => state.setSessionExpired);
   const adminId = useAdminIdStore((state) => state.adminId);
+  const onAdminRoute = pathname.startsWith("/admin/");
 
   useEffect(() => {
     if (isSessionExpired) {
       // Redirect after 3 seconds
       const timer = setTimeout(() => {
-        if (adminId) {
+        if (onAdminRoute && adminId) {
           router.push(`/admin/${adminId}/auth/login`);
         } else {
           router.push("/auth/sign-in");
@@ -29,7 +31,7 @@ export default function SessionExpiredModal() {
 
       return () => clearTimeout(timer);
     }
-  }, [isSessionExpired, adminId, router, setSessionExpired]);
+  }, [isSessionExpired, adminId, onAdminRoute, router, setSessionExpired]);
 
   return (
     <AnimatePresence>
@@ -92,7 +94,7 @@ export default function SessionExpiredModal() {
               {/* Button */}
               <button
                 onClick={() => {
-                  if (adminId) {
+                  if (onAdminRoute && adminId) {
                     router.push(`/admin/${adminId}/auth/login`);
                   } else {
                     router.push("/auth/sign-in");

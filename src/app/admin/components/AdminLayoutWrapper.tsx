@@ -37,8 +37,7 @@ export default function AdminLayoutWrapper({
   useEffect(() => {
     if (!isAuthRoute && !isLoading) {
       if (error || (dashboardSelection && !dashboardSelection.isAdmin)) {
-        // Block access
-        router.push(adminId ? `/admin/${adminId}/auth/login` : "/auth/sign-in");
+        router.push("/auth/sign-in");
       }
     }
   }, [isAuthRoute, isLoading, error, dashboardSelection, router, adminId]);
@@ -51,11 +50,11 @@ export default function AdminLayoutWrapper({
     logout.mutate(undefined, {
       onSettled: () => {
         setShowLogoutModal(false);
-        if (adminId) {
-          router.push(`/admin/${adminId}/auth/login`);
-        } else {
-          router.push("/auth/sign-in");
-        }
+        router.push(
+          isAuthRoute && adminId
+            ? `/admin/${adminId}/auth/login`
+            : "/auth/sign-in",
+        );
       },
     });
   };

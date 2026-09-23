@@ -79,7 +79,7 @@ export default function ProfileSecurityTab() {
       await logoutAllDevicesMutation.mutateAsync(false);
       setIsLogoutConfirmOpen(false);
       // Redirect to login after successful logout
-      window.location.href = "/admin/auth/login";
+      window.location.href = "/auth/sign-in";
     } catch (error) {
       console.error("Error logging out all devices:", error);
     }
