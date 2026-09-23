@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { ReturnPickupAddressPayload } from "@/lib/api/cart";
 import { formatReturnPickupAddressLine } from "@/lib/checkout/deliveryAddress";
-import { profileHasPhone } from "@/lib/checkout/profilePhone";
+import { profilePhoneNeedsUpdate } from "@/lib/checkout/profilePhone";
 import CheckoutEditableField from "./CheckoutEditableField";
 import { ChangeReturnPickupPanel } from "./ChangeReturnPickup";
 
@@ -48,10 +48,20 @@ export default function CheckoutReturnPickupContact({
           label="Phone"
           value={value.phoneNumber}
           placeholder="Add phone number"
-          empty={!profileHasPhone(value.phoneNumber)}
+          empty={!value.phoneNumber?.trim()}
+          invalid={profilePhoneNeedsUpdate(value.phoneNumber)}
+          helperText={
+            profilePhoneNeedsUpdate(value.phoneNumber)
+              ? "Update this number to continue to payment."
+              : undefined
+          }
           grouped
           onClick={openPanel}
-          ariaLabel="Edit return pickup phone number"
+          ariaLabel={
+            profilePhoneNeedsUpdate(value.phoneNumber)
+              ? "Update return pickup phone number"
+              : "Edit return pickup phone number"
+          }
         />
       </div>
 

@@ -20,6 +20,7 @@ import CheckoutDeliveryContact, {
 import {
   formatPhoneDisplayLine,
   profileHasPhone,
+  profilePhoneNeedsUpdate,
   resolveProfilePhone,
 } from "@/lib/checkout/profilePhone";
 import { useProfileDetails } from "@/lib/queries/renters/useProfileDetails";
@@ -642,6 +643,10 @@ export default function CheckoutContactAndPayment({
     renterProfileDetails?.profile,
   );
   const hasPhone = profileHasPhone(profile, renterProfileDetails?.profile);
+  const phoneNeedsUpdate = profilePhoneNeedsUpdate(
+    profile,
+    renterProfileDetails?.profile,
+  );
   const returnPickupAddressLine =
     formatReturnPickupAddressLine(returnPickupAddress ?? {}) ??
     deliveryAddress;
@@ -952,6 +957,18 @@ export default function CheckoutContactAndPayment({
               </Paragraph1>
             ))}
           </div>
+        </div>
+      ) : null}
+
+      {hasDeliveryAddress && phoneNeedsUpdate ? (
+        <div className="bg-amber-50 p-4 border border-amber-200 rounded-xl">
+          <Paragraph1 className="font-semibold text-amber-950 text-sm">
+            Update your phone number
+          </Paragraph1>
+          <Paragraph1 className="mt-1 text-amber-900 text-sm">
+            Your saved phone number needs to be updated before you can
+            continue. Tap Phone above to fix it.
+          </Paragraph1>
         </div>
       ) : null}
 

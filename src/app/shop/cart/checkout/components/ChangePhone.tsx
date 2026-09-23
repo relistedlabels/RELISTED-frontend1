@@ -17,6 +17,7 @@ import { useUpdateProfile } from "@/lib/mutations/user/useUpdateProfile";
 import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
 import {
   profileHasPhone,
+  profilePhoneNeedsUpdate,
   resolveProfilePhone,
 } from "@/lib/checkout/profilePhone";
 import { validatePhoneNumber } from "@/lib/phone";
@@ -153,6 +154,7 @@ const ChangePhone: React.FC<ChangePhoneProps> = ({
   grouped = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const phoneNeedsUpdate = profilePhoneNeedsUpdate(phoneLine);
 
   const openPanel = () => setIsOpen(true);
 
@@ -169,10 +171,20 @@ const ChangePhone: React.FC<ChangePhoneProps> = ({
           value={phoneLine}
           placeholder="Add phone number"
           empty={!phoneLine?.trim()}
+          invalid={phoneNeedsUpdate}
+          helperText={
+            phoneNeedsUpdate
+              ? "Update this number to continue to payment."
+              : undefined
+          }
           grouped={grouped}
           onClick={openPanel}
           ariaLabel={
-            phoneLine?.trim() ? "Edit phone number" : "Add phone number"
+            phoneNeedsUpdate
+              ? "Update phone number"
+              : phoneLine?.trim()
+                ? "Edit phone number"
+                : "Add phone number"
           }
         />
       ) : variant === "row" && phoneLine ? (
