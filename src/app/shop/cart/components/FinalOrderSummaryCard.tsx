@@ -145,10 +145,10 @@ export function FinalOrderSummaryCard({
       {showGrandBreakdown ? (
         <div className="space-y-2">
           {hasGrandResaleItems ? (
-            <SummaryMoneyRow label="Purchase Total" amount={grandPurchaseTotal} />
+            <SummaryMoneyRow label="Purchase" amount={grandPurchaseTotal} />
           ) : null}
           {grandRentalTotal > 0 ? (
-            <SummaryMoneyRow label="Rental Total" amount={grandRentalTotal} />
+            <SummaryMoneyRow label="Rental" amount={grandRentalTotal} />
           ) : null}
           {grandSecurityDeposit > 0 ? (
             <SummaryMoneyRow label="Deposit" amount={grandSecurityDeposit} />
