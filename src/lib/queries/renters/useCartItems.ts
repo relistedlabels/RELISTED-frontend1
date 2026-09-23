@@ -12,7 +12,7 @@ export type CartItemsData = CartData & {
 export const useCartItems = (): UseQueryResult<CartItemsData, Error> => {
   const token = useUserStore((s) => s.token);
 
-  return useQuery<CartItemsData, Error>({
+  const query = useQuery<CartItemsData, Error>({
     queryKey: ["cart", "items"],
     queryFn: async () => {
       const cartData = await getCartItemsApi();
@@ -28,4 +28,9 @@ export const useCartItems = (): UseQueryResult<CartItemsData, Error> => {
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: token !== null,
   });
+
+  return {
+    ...query,
+    data: token !== null ? query.data : undefined,
+  };
 };

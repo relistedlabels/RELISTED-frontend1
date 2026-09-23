@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { clearAuthenticatedClientSession } from "@/lib/auth/clearAuthenticatedClientSession";
 import { apiFetch } from "@/lib/api/http";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { useSessionStore } from "@/store/useSessionStore";
@@ -18,7 +19,7 @@ export function useLogout() {
       clearUser();
       useAdminIdStore.getState().clearAdminId();
       useSessionStore.getState().setSessionExpired(false);
-      qc.removeQueries({ queryKey: ["auth", "me"] });
+      clearAuthenticatedClientSession(qc);
     },
   });
 }
