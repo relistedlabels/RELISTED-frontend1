@@ -688,8 +688,7 @@ export default function CheckoutContactAndPayment({
 
               {hasDeliveryAddress ? (
                 <>
-                  {!isShippingTiersLoading &&
-                  orderReviewDelivery.shipments.length > 0 ? (
+                  {orderReviewDelivery.shipments.length > 0 ? (
                     <div className="bg-gray-50/50 mb-4 p-3 sm:p-3.5 border border-gray-200 rounded-lg">
                       {orderReviewDelivery.shipments.map((shipment, index) => (
                         <CheckoutShipmentBlock
@@ -849,8 +848,7 @@ export default function CheckoutContactAndPayment({
 
                 {hasDeliveryAddress ? (
                   <>
-                    {!isShippingTiersLoading &&
-                    (orderReviewReturn?.shipments.length ?? 0) > 0 ? (
+                    {(orderReviewReturn?.shipments.length ?? 0) > 0 ? (
                       <div className="bg-gray-50/50 mb-4 p-3 sm:p-3.5 border border-gray-200 rounded-lg">
                         {orderReviewReturn?.shipments.map((shipment, index) => (
                           <CheckoutShipmentBlock
