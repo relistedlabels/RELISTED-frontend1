@@ -1,6 +1,6 @@
 "use client";
 
-import { Truck } from "lucide-react";
+import { Loader2, Truck } from "lucide-react";
 import { useMemo } from "react";
 import Link from "next/link";
 import { Paragraph1 } from "@/common/ui/Text";
@@ -128,7 +128,6 @@ const CONTACT_SKELETON_KEYS = [
   "contact-3",
   "contact-4",
 ];
-const SHIPPING_SKELETON_KEYS = ["shipping-1", "shipping-2", "shipping-3"];
 const SAME_DAY_TIER_KEYWORDS = [
   "chowdeck",
   "errandlr",
@@ -203,6 +202,19 @@ const DispatchWindowsQuoteSkeleton = () => (
     ))}
   </div>
 );
+
+function FetchingDeliveryOptions({ label }: { label: string }) {
+  return (
+    <div
+      className="flex items-center gap-3 py-6 text-gray-600"
+      role="status"
+      aria-live="polite"
+    >
+      <Loader2 className="h-5 w-5 animate-spin shrink-0" aria-hidden />
+      <Paragraph1 className="text-gray-600 text-sm">{label}</Paragraph1>
+    </div>
+  );
+}
 
 // === Delivery Tier Helper Function ===
 const getDeliveryTierDetails = (
@@ -671,16 +683,8 @@ export default function CheckoutContactAndPayment({
 
               {hasDeliveryAddress ? (
                 <>
-                  {isShippingTiersLoading ? (
-                    <div className="space-y-3 mb-4">
-                      {SHIPPING_SKELETON_KEYS.map((key) => (
-                        <div
-                          key={`item-${key}`}
-                          className="bg-gray-200 rounded-2xl h-20 animate-pulse"
-                        />
-                      ))}
-                    </div>
-                  ) : orderReviewDelivery.shipments.length > 0 ? (
+                  {!isShippingTiersLoading &&
+                  orderReviewDelivery.shipments.length > 0 ? (
                     <div className="bg-gray-50/50 mb-4 p-3 sm:p-3.5 border border-gray-200 rounded-lg">
                       {orderReviewDelivery.shipments.map((shipment, index) => (
                         <CheckoutShipmentBlock
@@ -749,15 +753,8 @@ export default function CheckoutContactAndPayment({
                   ) : null}
 
                   {isShippingTiersLoading ? (
-          <div className="space-y-3">
-            {SHIPPING_SKELETON_KEYS.map((key) => (
-              <div
-                key={key}
-                className="bg-gray-200 rounded-2xl h-20 animate-pulse"
-              ></div>
-            ))}
-          </div>
-        ) : usePerBucketOutbound ? (
+                    <FetchingDeliveryOptions label="Fetching delivery options…" />
+                  ) : usePerBucketOutbound ? (
           <div className="space-y-8">
             {showQuoteDispatchLoading && !hasSummaryDispatchPreview ? (
               <div className="mb-4 pb-4 border-gray-100 border-b">
@@ -847,16 +844,8 @@ export default function CheckoutContactAndPayment({
 
                 {hasDeliveryAddress ? (
                   <>
-                    {isShippingTiersLoading ? (
-                      <div className="space-y-3 mb-4">
-                        {SHIPPING_SKELETON_KEYS.map((key) => (
-                          <div
-                            key={`return-item-${key}`}
-                            className="bg-gray-200 rounded-2xl h-20 animate-pulse"
-                          />
-                        ))}
-                      </div>
-                    ) : (orderReviewReturn?.shipments.length ?? 0) > 0 ? (
+                    {!isShippingTiersLoading &&
+                    (orderReviewReturn?.shipments.length ?? 0) > 0 ? (
                       <div className="bg-gray-50/50 mb-4 p-3 sm:p-3.5 border border-gray-200 rounded-lg">
                         {orderReviewReturn?.shipments.map((shipment, index) => (
                           <CheckoutShipmentBlock
@@ -880,18 +869,8 @@ export default function CheckoutContactAndPayment({
 
                 {hasDeliveryAddress && showReturnShippingTierPicker ? (
                   <>
-                    {isShippingTiersLoading &&
-                    (usePerBucketReturn
-                      ? returnBuckets.length === 0
-                      : returnTierList.length === 0) ? (
-                      <div className="space-y-3">
-                        {SHIPPING_SKELETON_KEYS.map((key) => (
-                          <div
-                            key={`ret-${key}`}
-                            className="bg-gray-200 rounded-2xl h-20 animate-pulse"
-                          />
-                        ))}
-                      </div>
+                    {isShippingTiersLoading ? (
+                      <FetchingDeliveryOptions label="Fetching return options…" />
                     ) : usePerBucketReturn ? (
                       <div className="space-y-8">
                         {returnBuckets.map((bucket, bucketIndex) => {

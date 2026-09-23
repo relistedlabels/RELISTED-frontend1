@@ -397,7 +397,7 @@ export default function FinalOrderSummaryCard({
         </div>
       ) : null}
 
-      {shippingQuoteWarnings.length > 0 ? (
+      {checkoutStep === 1 && shippingQuoteWarnings.length > 0 ? (
         <div className="space-y-2 bg-amber-50 p-3 border border-amber-200 rounded-xl">
           <Paragraph1 className="font-semibold text-amber-950 text-xs">
             Delivery quote note
