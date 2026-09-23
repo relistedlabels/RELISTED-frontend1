@@ -6,7 +6,6 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
-import { getAuthToken } from "@/lib/api/http";
 import { useConsumeMagicLink } from "@/lib/mutations";
 import { resolvePostAuthDestination } from "@/lib/onboarding/onboardingGate";
 import { useUserStore } from "@/store/useUserStore";
@@ -29,17 +28,6 @@ function redirectToPostAuthDestination(redirectParam: string | null) {
   window.location.href = destination;
 }
 
-function redirectLoggedInUserToCart() {
-  const state = useUserStore.getState();
-  const destination = resolvePostAuthDestination({
-    role: state.role,
-    userId: state.userId,
-    redirectUrl: "/shop/cart",
-    honorRedirect: true,
-  });
-  window.location.href = destination;
-}
-
 export default function MagicLinkPage() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -53,23 +41,11 @@ export default function MagicLinkPage() {
     if (!token || consumeStartedRef.current) return;
     consumeStartedRef.current = true;
 
-    if (getAuthToken()) {
-      setRedirecting(true);
-      redirectLoggedInUserToCart();
-      return;
-    }
-
     consume.mutate(token, {
       onSuccess: async () => {
         await new Promise((r) => setTimeout(r, 300));
         setRedirecting(true);
         redirectToPostAuthDestination(redirectParam);
-      },
-      onError: () => {
-        if (getAuthToken()) {
-          setRedirecting(true);
-          redirectLoggedInUserToCart();
-        }
       },
     });
   }, [token, consume, redirectParam]);

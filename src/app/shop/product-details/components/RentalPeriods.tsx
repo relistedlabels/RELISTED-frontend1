@@ -182,17 +182,17 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
     const requestId = res?.data?.requestId;
     const accessToken = res?.data?.accessToken;
     if (checkingUrl) {
-      router.push(checkingUrl);
+      window.location.assign(checkingUrl);
       return;
     }
     if (requestId && accessToken) {
-      router.push(
+      router.replace(
         `/shop/availability/checking?requestId=${requestId}&token=${accessToken}`,
       );
       return;
     }
     if (requestId) {
-      router.push(`/shop/availability/checking?requestId=${requestId}`);
+      router.replace(`/shop/availability/checking?requestId=${requestId}`);
     }
   };
 
@@ -234,7 +234,6 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
             : {}),
         });
         toast.success("We are checking availability with the lister.");
-        onClose();
         redirectAfterAvailabilitySubmit(res);
         return;
       }
@@ -288,7 +287,6 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
 
       if (res?.success && res?.data) {
         toast.success("We are checking availability with the lister.");
-        onClose();
         redirectAfterAvailabilitySubmit(res);
       }
     } catch (e: unknown) {

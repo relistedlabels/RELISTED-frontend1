@@ -268,10 +268,6 @@ export default function CheckoutProductList({
             : (product.dailyPrice ?? 0);
           const isApproved = isLineRentalApproved(item.status);
           const inventoryMessage = inventoryBlockMessage(item);
-          const dueBeforeShipping = item.isResale
-            ? item.totalPrice
-            : item.totalPrice + deposit;
-
           const statusBadge = inventoryMessage ? (
             <span className="text-gray-600 text-xs leading-snug max-w-56">
               {inventoryMessage}
@@ -310,33 +306,9 @@ export default function CheckoutProductList({
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-3">
-                    <Paragraph1 className="flex-1 font-semibold text-gray-800 text-sm uppercase leading-snug">
-                      {product.name || item.productName}
-                    </Paragraph1>
-                    <div className="sm:hidden flex items-start gap-1 shrink-0">
-                      <div className="text-right">
-                        <Paragraph1 className="font-bold text-gray-900 text-sm tabular-nums">
-                          {currency}
-                          {formatCurrency(dueBeforeShipping)}
-                        </Paragraph1>
-                        {!item.isResale && deposit > 0 ? (
-                          <Paragraph1 className="mt-0.5 text-gray-500 text-[11px] leading-none">
-                            incl. {currency}
-                            {formatCurrency(deposit)} deposit
-                          </Paragraph1>
-                        ) : null}
-                      </div>
-                      <button
-                        aria-label={`Remove ${product.name || item.productName}`}
-                        onClick={() => handleRemoveItem(item)}
-                        disabled={removeCartItemMutation.isPending}
-                        className="disabled:opacity-50 p-1 text-red-500 hover:text-red-700 transition-colors"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
+                  <Paragraph1 className="font-semibold text-gray-800 text-sm leading-snug">
+                    {product.name || item.productName}
+                  </Paragraph1>
 
                   <Paragraph1 className="mt-1.5 text-gray-600 text-xs leading-snug">
                     Size: <strong>S</strong> Color: <strong>Black</strong>
@@ -352,7 +324,23 @@ export default function CheckoutProductList({
                     </Paragraph1>
                   )}
 
-                  <div className="sm:hidden mt-3">{statusBadge}</div>
+                  <div className="sm:hidden flex items-center justify-between gap-3 mt-3">
+                    {statusBadge}
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Paragraph1 className="font-bold text-gray-900 text-sm tabular-nums">
+                        {currency}
+                        {formatCurrency(item.totalPrice)}
+                      </Paragraph1>
+                      <button
+                        aria-label={`Remove ${product.name || item.productName}`}
+                        onClick={() => handleRemoveItem(item)}
+                        disabled={removeCartItemMutation.isPending}
+                        className="disabled:opacity-50 p-1 text-red-500 hover:text-red-700 transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
