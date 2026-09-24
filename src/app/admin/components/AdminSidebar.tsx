@@ -7,7 +7,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import type React from "react";
 import { useState } from "react";
 import {
-  HiOutlineArrowRightOnRectangle,
   HiOutlineCog6Tooth,
   HiOutlineCreditCard,
   HiOutlineCube,
@@ -64,7 +63,7 @@ const getNavItems = (): NavItem[] =>
   }));
 
 interface AdminSidebarProps {
-  onLogout: () => void;
+  onLogout?: () => void;
 }
 
 const getInitials = (name: string): string => {
@@ -92,7 +91,7 @@ const getAvatarBgColor = (name: string): string => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
+const AdminSidebar: React.FC<AdminSidebarProps> = () => {
   const queryClient = useQueryClient();
   const { data: user } = useMe();
   const { data: navState } = useAdminNavState();
@@ -186,8 +185,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 min-h-0 overflow-y-auto hide-scrollbar px-2 sm:px-4">
-        <ul>
+      <nav className="hide-scrollbar max-h-[calc(100dvh-11rem)] overflow-y-auto px-2 sm:max-h-[calc(100dvh-13rem)] sm:px-4">
+        <ul className="pb-2">
           {navItems.map((item) => {
             const href = item.getHref(resolvedAdminId);
             const isActive =
@@ -270,32 +269,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
               </li>
             );
           })}
-
-          <li className="relative mb-2 mt-2 border-t border-gray-100 pt-2">
-            <button
-              type="button"
-              onClick={onLogout}
-              className={`${linkBaseClasses} ${inactiveLinkClasses} hover:bg-red-50 hover:text-red-600 ${
-                !isMobileExpanded
-                  ? "flex-col items-center gap-1 px-1 py-2.5 text-center lg:flex-row lg:items-center lg:gap-0 lg:p-3 lg:text-left"
-                  : "items-center p-3"
-              }`}
-            >
-              <HiOutlineArrowRightOnRectangle className="h-6 w-6 shrink-0" />
-              {!isMobileExpanded ? (
-                <span className="block w-full break-words text-[10px] font-medium leading-snug text-gray-600 lg:hidden">
-                  Log out
-                </span>
-              ) : null}
-              <Paragraph1
-                className={`${
-                  !isMobileExpanded ? "hidden lg:ml-4 lg:block" : "ml-4 block"
-                }`}
-              >
-                Log Out
-              </Paragraph1>
-            </button>
-          </li>
         </ul>
       </nav>
     </div>
