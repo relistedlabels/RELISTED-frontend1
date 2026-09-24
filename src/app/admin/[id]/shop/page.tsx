@@ -13,8 +13,7 @@ export default function AdminShopPage() {
           Brands
         </Paragraph2>
         <Paragraph1 className="text-gray-600">
-          Manage which brands appear on the site and how they are ordered on the
-          shop page.
+          Control which brands show on the site and their shop order.
         </Paragraph1>
       </div>
 

@@ -9,6 +9,7 @@ import DresserTable from "./DresserTable";
 import CuratorTable from "./CuratorTable";
 import NewsletterModal from "./NewsletterModal";
 import { useAdminAllUsers } from "@/lib/queries/admin/useUsers";
+import { AdminSectionTabs } from "../../../components/AdminSectionTabs";
 
 type UserRole = "LISTER" | "RENTER" | "ADMIN";
 
@@ -110,23 +111,14 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <div className="flex border-b border-gray-200">
-        {TABS.map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            onClick={() => setActiveTab(tab)}
-            className={`px-6 py-3 transition-all relative ${
-              activeTab === tab ? "text-black font-semibold" : "text-gray-400"
-            }`}
-          >
-            <Paragraph1>{tabLabel(tab, listerCount, renterCount)}</Paragraph1>
-            {activeTab === tab && (
-              <div className="absolute bottom-0 left-0 w-full h-0.5 bg-black" />
-            )}
-          </button>
-        ))}
-      </div>
+      <AdminSectionTabs
+        tabs={TABS.map((tab) => ({
+          id: tab,
+          label: tabLabel(tab, listerCount, renterCount),
+        }))}
+        activeTab={activeTab}
+        onChange={(tabId) => setActiveTab(tabId as UserRole)}
+      />
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         {showTableSkeleton ? (

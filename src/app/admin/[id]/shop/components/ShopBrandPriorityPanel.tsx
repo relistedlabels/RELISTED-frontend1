@@ -100,9 +100,7 @@ export default function ShopBrandPriorityPanel() {
     <div className="bg-white border border-gray-200 rounded-lg p-6">
       <Paragraph3 className="text-gray-900 mb-1">Brand priority</Paragraph3>
       <Paragraph1 className="text-sm text-gray-600 mb-6">
-        Choose which site-visible brands appear first on the shop page and set
-        their order. Items from the top brand appear before the next, then all
-        other listings.
+        Top brands appear first on the shop page. Listings follow this order.
       </Paragraph1>
 
       {showSkeleton ? (
@@ -115,7 +113,7 @@ export default function ShopBrandPriorityPanel() {
             </Paragraph3>
             {orderedIds.length === 0 ? (
               <div className="border border-dashed border-gray-200 rounded-lg p-4 text-sm text-gray-500">
-                No brands prioritized yet. Add brands below.
+                No priority brands yet.
               </div>
             ) : (
               <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">

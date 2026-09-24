@@ -182,12 +182,15 @@ export type PublicUser = {
 
 export type PublicUserDetail = PublicUser & {
   bio: string;
-  verificationDate: string;
+  verificationDate: string | null;
+  website?: string | null;
+  businessCategory?: string | null;
+  location?: string | null;
   shopPolicies: {
     returnPolicy: string;
     deliveryTime: string;
     cancellationPolicy: string;
-  };
+  } | null;
   featuredProducts: Array<{
     id: string;
     name: string;

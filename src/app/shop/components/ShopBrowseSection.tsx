@@ -29,7 +29,7 @@ export default function ShopBrowseSection() {
                 {heading}
               </Header1Plus>
               {pageDescription ? (
-                <p className="mt-1 line-clamp-2 text-sm text-gray-600 sm:line-clamp-none">
+                <p className="mt-1 text-sm text-gray-600 leading-relaxed">
                   {pageDescription}
                 </p>
               ) : browseMode ? (

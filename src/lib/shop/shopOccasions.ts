@@ -23,13 +23,13 @@ export function shopOccasionsFromFilterOptions(
 
   return occasionCatalog
     .filter((entry) => {
-      const key = normalizeTagName(entry.filterValue ?? entry.title);
+      const key = normalizeTagName(entry.tag ?? entry.filterValue ?? entry.title);
       return availableTags.has(key);
     })
     .map((entry) => ({
       title: entry.title,
       description: entry.description,
       image: entry.image,
-      tag: entry.filterValue ?? entry.title,
+      tag: entry.tag ?? entry.filterValue ?? entry.title,
     }));
 }

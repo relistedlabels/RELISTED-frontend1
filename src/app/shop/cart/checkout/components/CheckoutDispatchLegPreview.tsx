@@ -63,17 +63,17 @@ function DispatchPreviewContent({
               <div className="space-y-2">
                 {group.rows.map((row) => (
                   <div key={`${row.title}-${row.range}`}>
-                    <Paragraph1 className="font-medium text-gray-400 text-[10px] uppercase tracking-wide">
+                    <Paragraph1 className="font-semibold text-gray-900 text-[11px] uppercase tracking-wide">
                       {row.title}
                     </Paragraph1>
-                    <Paragraph1 className="mt-0.5 text-gray-700 text-[15px] leading-snug tabular-nums">
+                    <Paragraph1 className="mt-0.5 font-medium text-gray-900 text-[15px] leading-snug tabular-nums">
                       {row.range}
                     </Paragraph1>
                   </div>
                 ))}
               </div>
             ) : group.rows[0] ? (
-              <Paragraph1 className="text-gray-700 text-[15px] leading-snug tabular-nums">
+              <Paragraph1 className="font-medium text-gray-900 text-[15px] leading-snug tabular-nums">
                 {group.rows[0].range}
               </Paragraph1>
             ) : null}
@@ -126,7 +126,7 @@ export function CheckoutShippingLegHeader({
   return (
     <div className="flex justify-between items-start gap-4">
       <div className="min-w-0 flex-1 border-gray-900 border-l-2 pl-3">
-        <Paragraph1 className="font-semibold text-[10px] text-gray-500 uppercase tracking-[0.14em]">
+        <Paragraph1 className="font-bold text-[11px] text-gray-900 uppercase tracking-[0.12em]">
           {sectionLabel}
         </Paragraph1>
         {hasPreview ? (
@@ -135,7 +135,7 @@ export function CheckoutShippingLegHeader({
           </div>
         ) : null}
       </div>
-      <Truck size={22} className="mt-0.5 text-gray-400 shrink-0" aria-hidden />
+      <Truck size={22} className="mt-0.5 text-gray-700 shrink-0" aria-hidden />
     </div>
   );
 }

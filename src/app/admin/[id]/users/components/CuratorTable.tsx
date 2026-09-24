@@ -2,13 +2,16 @@
 import React from "react";
 import Link from "next/link";
 import { Paragraph1 } from "@/common/ui/Text";
+import {
+  ResponsiveDataTable,
+  type ResponsiveColumnDef,
+} from "@/common/ui/ResponsiveDataTable";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
-
 const StatusPill = ({ isSuspended }: { isSuspended: boolean }) => {
   const isActive = !isSuspended;
   return (
     <div
-      className={`px-3 py-1 rounded-full text-xs font-medium w-fit ${
+      className={`w-fit rounded-full px-3 py-1 text-xs font-medium ${
         isActive ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
       }`}
     >
@@ -17,117 +20,128 @@ const StatusPill = ({ isSuspended }: { isSuspended: boolean }) => {
   );
 };
 
-const getInitials = (name: string) => {
-  return name
+const getInitials = (name: string) =>
+  name
     .split(" ")
     .map((n) => n[0])
     .join("")
     .toUpperCase();
+
+type UserRow = {
+  id: string;
+  name: string;
+  email: string;
+  role?: string;
+  isSuspended: boolean;
+  totalRentals?: number;
+  profile?: {
+    createdAt?: string;
+    avatarUpload?: { url?: string };
+    avatar?: string;
+  };
 };
 
-const UserRow = ({ user, adminId }: { user: any; adminId: string | null }) => {
-  const profileDate = user.profile?.createdAt
-    ? new Date(user.profile.createdAt).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "2-digit",
-      })
-    : "N/A";
-
-  const avatar =
-    user.profile?.avatarUpload?.url ?? user.profile?.avatar ?? null;
-
-  return (
-    <tr className="hover:bg-gray-50/30 transition-colors">
-      <td className="px-6 py-4 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-600 flex-shrink-0">
-          {avatar ? (
-            <img
-              src={avatar}
-              alt={`${user.name} avatar`}
-              className="w-full h-full object-cover"
-              onError={(e) => (e.currentTarget.style.display = "none")}
-            />
-          ) : (
-            <span className="text-lg">{getInitials(user.name)}</span>
-          )}
-        </div>
-        <div>
-          <Paragraph1 className="font-bold text-gray-900">
-            {user.name}
-          </Paragraph1>
-          <Paragraph1 className="text-xs text-gray-500">{user.role}</Paragraph1>
-        </div>
-      </td>
-      <td className="px-6 py-4">
+function buildColumns(adminId: string | null): ResponsiveColumnDef<UserRow>[] {
+  return [
+    {
+      id: "user",
+      header: "User",
+      mobile: "primary",
+      render: (user) => {
+        const avatar =
+          user.profile?.avatarUpload?.url ?? user.profile?.avatar ?? null;
+        return (
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-sm font-semibold text-gray-600">
+              {avatar ? (
+                <img
+                  src={avatar}
+                  alt={`${user.name} avatar`}
+                  className="h-full w-full object-cover"
+                  onError={(e) => (e.currentTarget.style.display = "none")}
+                />
+              ) : (
+                <span className="text-lg">{getInitials(user.name)}</span>
+              )}
+            </div>
+            <div>
+              <Paragraph1 className="font-bold text-gray-900">
+                {user.name}
+              </Paragraph1>
+              <Paragraph1 className="text-xs text-gray-500">
+                {user.role}
+              </Paragraph1>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      id: "email",
+      header: "Email",
+      mobile: "detail",
+      render: (user) => (
         <Paragraph1 className="text-gray-500">{user.email}</Paragraph1>
-      </td>
-      <td className="px-6 py-4">
-        <StatusPill isSuspended={user.isSuspended} />
-      </td>
-      <td className="px-6 py-4 font-bold">
-        <Paragraph1>{user.totalRentals || 0}</Paragraph1>
-      </td>
-      <td className="px-6 py-4">
-        <Paragraph1 className="text-gray-500">{profileDate}</Paragraph1>
-      </td>
-      <td className="px-6 py-4">
-        <div className="text-white bg-black rounded-md whitespace-nowrap px-2 py-1 ">
+      ),
+    },
+    {
+      id: "status",
+      header: "Status",
+      mobile: "badge",
+      render: (user) => <StatusPill isSuspended={user.isSuspended} />,
+    },
+    {
+      id: "totalRentals",
+      header: "Total Rentals",
+      mobile: "detail",
+      render: (user) => (
+        <Paragraph1 className="font-bold">{user.totalRentals || 0}</Paragraph1>
+      ),
+    },
+    {
+      id: "profileCreated",
+      header: "Profile Created",
+      mobile: "detail",
+      render: (user) => {
+        const profileDate = user.profile?.createdAt
+          ? new Date(user.profile.createdAt).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "2-digit",
+            })
+          : "N/A";
+        return <Paragraph1 className="text-gray-500">{profileDate}</Paragraph1>;
+      },
+    },
+    {
+      id: "action",
+      header: "Action",
+      mobile: "action",
+      render: (user) => (
+        <div className="whitespace-nowrap rounded-md bg-black px-2 py-1 text-white">
           <Link href={`/admin/${adminId || ""}/users/${user.id}`}>
             <Paragraph1> View Details</Paragraph1>
           </Link>
         </div>
-      </td>
-    </tr>
-  );
-};
+      ),
+    },
+  ];
+}
 
-export default function CuratorTable({ data }: { data: any[] }) {
+export default function CuratorTable({ data }: { data: UserRow[] }) {
   const adminId = useAdminIdStore((state) => state.adminId);
+  const columns = buildColumns(adminId);
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-left">
-        <thead className="bg-gray-50/50 border-b border-gray-100">
-          <tr>
-            <th className="px-6 py-4">
-              <Paragraph1 className="text-xs font-semibold text-gray-400 uppercase">
-                User
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4">
-              <Paragraph1 className="text-xs font-semibold text-gray-400 uppercase">
-                Email
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4">
-              <Paragraph1 className="text-xs font-semibold text-gray-400 uppercase">
-                Status
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4">
-              <Paragraph1 className="text-xs font-semibold text-gray-400 uppercase">
-                Total Rentals
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4">
-              <Paragraph1 className="text-xs font-semibold text-gray-400 uppercase">
-                Profile Created
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4">
-              <Paragraph1 className="text-xs font-semibold text-gray-400 uppercase">
-                Action
-              </Paragraph1>
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {data.map((user) => (
-            <UserRow key={user.id} user={user} adminId={adminId} />
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <ResponsiveDataTable
+      rows={data as unknown as UserRow[]}
+      columns={columns}
+      getRowKey={(user) => user.id}
+      emptyState={
+        <div className="px-4 py-8 text-center md:px-6">
+          <Paragraph1 className="text-gray-500">No users found</Paragraph1>
+        </div>
+      }
+    />
   );
 }

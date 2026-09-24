@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 export function CheckoutFieldLabel({ children }: { children: ReactNode }) {
   return (
-    <span className="font-medium text-[10px] text-gray-500 uppercase tracking-[0.12em]">
+    <span className="font-semibold text-[11px] text-gray-900 uppercase tracking-[0.1em]">
       {children}
     </span>
   );
@@ -27,7 +27,9 @@ export function CheckoutReadonlyDetail({
   return (
     <div className={className}>
       <CheckoutFieldLabel>{label}</CheckoutFieldLabel>
-      <p className="mt-0.5 text-gray-900 text-sm leading-snug">{trimmed}</p>
+      <p className="mt-0.5 font-medium text-gray-900 text-sm leading-snug">
+        {trimmed}
+      </p>
     </div>
   );
 }

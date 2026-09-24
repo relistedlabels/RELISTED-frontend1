@@ -7,6 +7,11 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Paragraph1 } from "@/common/ui/Text";
+import { ResponsiveDataTable } from "@/common/ui/ResponsiveDataTable";
+import {
+  buildPendingDisputeColumns,
+  type DisputeListRow,
+} from "./disputeListColumns";
 import type { Dispute } from "@/lib/api/admin/disputes";
 import { useDisputeById } from "@/lib/queries/admin/useDisputes";
 import { DisputeResolutionPanel } from "./DisputeResolutionPanel";
@@ -410,160 +415,20 @@ export default function PendingTable({
   const resaleAmount = caps.resaleAmount;
   const payoutLocked = caps.payoutLocked;
 
+  const disputeColumns = buildPendingDisputeColumns(setSelectedDisputeId);
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
-        <thead>
-          <tr className="bg-gray-50 border-gray-200 border-b">
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="font-semibold text-gray-900">
-                DISPUTE ID
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="font-semibold text-gray-900">
-                RAISED BY
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="font-semibold text-gray-900">
-                LISTER
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="font-semibold text-gray-900">
-                RENTER
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="font-semibold text-gray-900">
-                CATEGORY
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="font-semibold text-gray-900">
-                ORDER ID
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="font-semibold text-gray-900">
-                PREFERRED RESOLUTION
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="font-semibold text-gray-900">
-                DATE CREATED
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="font-semibold text-gray-900">
-                STATUS
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="font-semibold text-gray-900">
-                ACTION
-              </Paragraph1>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredData.length === 0 ? (
-            <tr>
-              <td colSpan={10} className="px-6 py-8 text-center">
-                <Paragraph1 className="text-gray-500">
-                  No pending disputes found
-                </Paragraph1>
-              </td>
-            </tr>
-          ) : (
-            filteredData.map((item) => (
-              <tr
-                key={item.id}
-                className="hover:bg-gray-50 border-gray-200 border-b transition-colors"
-              >
-                <td className="px-6 py-4">
-                  <Paragraph1 className="font-medium text-gray-900">
-                    {item.id}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    {item.raisedByAvatar ? (
-                      <img
-                        src={item.raisedByAvatar}
-                        alt={item.raisedBy}
-                        className="rounded-full w-8 h-8"
-                      />
-                    ) : (
-                      <div className="flex justify-center items-center bg-gray-200 rounded-full w-8 h-8">
-                        <Paragraph1 className="font-semibold text-gray-700 text-xs">
-                          {(item.raisedBy || "U")
-                            .trim()
-                            .charAt(0)
-                            .toUpperCase()}
-                        </Paragraph1>
-                      </div>
-                    )}
-                    <div>
-                      <Paragraph1 className="font-medium text-gray-900">
-                        {item.raisedBy}
-                      </Paragraph1>
-                      <Paragraph1 className="text-gray-500 text-xs">
-                        {item.raiserRole}
-                      </Paragraph1>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <Paragraph1 className="text-gray-600">
-                    {item.listerName}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <Paragraph1 className="text-gray-600">
-                    {item.renterName}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <Paragraph1 className="text-gray-600">
-                    {item.category}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <Paragraph1 className="font-medium text-gray-900">
-                    {item.orderId}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <Paragraph1 className="text-gray-600">
-                    {item.preferredResolution}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <Paragraph1 className="text-gray-600">
-                    {item.dateCreated}
-                  </Paragraph1>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="bg-yellow-100 px-3 py-1 rounded-full font-medium text-yellow-700 text-xs">
-                    {item.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <button
-                    type="button"
-                    className="hover:bg-gray-50 px-4 py-2 border border-gray-300 rounded-lg font-medium"
-                    onClick={() => setSelectedDisputeId(item.id)}
-                  >
-                    <Paragraph1>View Details</Paragraph1>
-                  </button>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+    <>
+      <ResponsiveDataTable
+        rows={filteredData as unknown as DisputeListRow[]}
+        columns={disputeColumns}
+        getRowKey={(item) => item.id}
+        emptyState={
+          <Paragraph1 className="py-8 text-center text-gray-500">
+            No pending disputes found
+          </Paragraph1>
+        }
+      />
 
       <AnimatePresence>
         {selectedDisputeId && (
@@ -1119,6 +984,6 @@ export default function PendingTable({
           </>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 }

@@ -40,6 +40,7 @@ import UserListings from "./components/UserListings";
 import UserWallet from "./components/UserWallet";
 import UserDisputes from "./components/UserDisputes";
 import SavedItems from "./components/SavedItems";
+import { AdminSectionTabs } from "../../../components/AdminSectionTabs";
 
 interface UserDetailPageProps {
   params: Promise<{
@@ -261,28 +262,12 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="border-b border-gray-200">
-          <div className="flex">
-            {TABS.map((tab) => {
-              const IconComponent = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
-                  className={`px-6 py-4 transition-all duration-300 flex items-center gap-2 ${
-                    activeTab === tab.id
-                      ? "text-black border-b-4 border-black"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  <IconComponent size={18} />
-                  <Paragraph1 className="font-medium">{tab.label}</Paragraph1>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <AdminSectionTabs
+          tabs={TABS}
+          activeTab={activeTab}
+          onChange={handleTabChange}
+          thickActiveBorder
+        />
 
         {/* Tab Content */}
         <motion.div

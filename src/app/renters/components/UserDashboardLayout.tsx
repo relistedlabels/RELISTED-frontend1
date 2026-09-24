@@ -8,6 +8,7 @@ import {
   FileText,
   ShoppingBag,
   LogOut,
+  ArrowDownToLine,
 } from "lucide-react";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import Link from "next/link";
@@ -20,16 +21,23 @@ import { useLogout } from "@/lib/mutations";
 
 interface NavItem {
   name: string;
+  shortName: string;
   icon: React.ElementType;
   href: string;
 }
 
 const navItems: NavItem[] = [
-  { name: "My Orders", icon: ShoppingBag, href: "/renters/orders" },
-  { name: "Wallet", icon: Wallet, href: "/renters/wallet" },
-  { name: "Favourites", icon: Heart, href: "/renters/favorites" },
-  { name: "My Disputes", icon: FileText, href: "/renters/dispute" },
-  { name: "My Account", icon: Users, href: "/renters/account" },
+  { name: "My Orders", shortName: "Orders", icon: ShoppingBag, href: "/renters/orders" },
+  { name: "Wallet", shortName: "Wallet", icon: Wallet, href: "/renters/wallet" },
+  {
+    name: "Withdraw",
+    shortName: "Withdraw",
+    icon: ArrowDownToLine,
+    href: "/renters/withdraw",
+  },
+  { name: "Favourites", shortName: "Saved", icon: Heart, href: "/renters/favorites" },
+  { name: "My Disputes", shortName: "Disputes", icon: FileText, href: "/renters/dispute" },
+  { name: "My Account", shortName: "Account", icon: Users, href: "/renters/account" },
 ];
 
 export default function UserDashboardLayout({
@@ -60,7 +68,7 @@ export default function UserDashboardLayout({
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside className="w-14 sm:w-64 border-r border-gray-200 shrink-0">
+      <aside className="w-[4.75rem] sm:w-64 border-r border-gray-200 shrink-0">
         <nav className="flex flex-col h-full">
           <ul>
             {navItems.map((item) => {
@@ -72,7 +80,8 @@ export default function UserDashboardLayout({
                   <Link
                     href={item.href}
                     className={`
-                      flex items-center px-2 sm:px-4 py-5 transition-colors
+                      flex flex-col sm:flex-row items-center justify-center sm:justify-start
+                      px-1 sm:px-4 py-3 sm:py-5 gap-1 sm:gap-0 transition-colors
                       ${
                         isActive
                           ? "bg-black text-white"
@@ -82,13 +91,16 @@ export default function UserDashboardLayout({
                   >
                     <Icon
                       size={22}
-                      className={`mx-auto sm:mr-3 sm:mx-0 ${
+                      className={`shrink-0 sm:mr-3 ${
                         isActive ? "text-white" : "text-gray-600"
                       }`}
                     />
 
-                    <span className="hidden sm:inline font-semibold">
-                      <ParagraphLink1>{item.name} </ParagraphLink1>
+                    <span className="text-[10px] sm:text-base font-semibold text-center leading-tight sm:text-left">
+                      <span className="sm:hidden">{item.shortName}</span>
+                      <span className="hidden sm:inline">
+                        <ParagraphLink1>{item.name}</ParagraphLink1>
+                      </span>
                     </span>
                   </Link>
                 </li>
@@ -97,14 +109,19 @@ export default function UserDashboardLayout({
 
             <button
               className={`
-                flex text-red-500 hover:bg-red-100 w-full items-center px-2 sm:px-4 py-5 transition-colors
+                flex flex-col sm:flex-row text-red-500 hover:bg-red-100 w-full
+                items-center justify-center sm:justify-start
+                px-1 sm:px-4 py-3 sm:py-5 gap-1 sm:gap-0 transition-colors
               `}
               onClick={() => setShowLogoutModal(true)}
             >
-              <LogOut size={22} className={`mx-auto sm:mr-3 sm:mx-0`} />
+              <LogOut size={22} className="shrink-0 sm:mr-3" />
 
-              <span className="hidden sm:inline ">
-                <ParagraphLink1 className="font-bold">Log out</ParagraphLink1>
+              <span className="text-[10px] sm:text-base font-bold text-center leading-tight sm:text-left">
+                <span className="sm:hidden">Logout</span>
+                <span className="hidden sm:inline">
+                  <ParagraphLink1 className="font-bold">Log out</ParagraphLink1>
+                </span>
               </span>
             </button>
             <div className="">

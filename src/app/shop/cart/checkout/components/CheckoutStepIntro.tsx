@@ -17,7 +17,7 @@ export default function CheckoutStepIntro({
         {title}
       </Paragraph3>
       {subtitle ? (
-        <Paragraph1 className="mt-2 text-gray-600 text-sm leading-relaxed">
+        <Paragraph1 className="mt-2 font-medium text-gray-800 text-sm leading-relaxed">
           {subtitle}
         </Paragraph1>
       ) : null}

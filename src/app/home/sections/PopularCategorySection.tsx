@@ -19,12 +19,6 @@ const PopularCategorySection = () => {
         <Paragraph1 className="text-gray-600 max-w-[280px] mt-2">
           Explore categories curated for every season, mood, and moment.
         </Paragraph1>
-        <Link
-          href="/shop"
-          className="mt-4 text-sm font-bold border-b hover:opacity-70 transition-opacity"
-        >
-          Browse All →
-        </Link>
       </div>
 
       {/* 2x2 Grid */}

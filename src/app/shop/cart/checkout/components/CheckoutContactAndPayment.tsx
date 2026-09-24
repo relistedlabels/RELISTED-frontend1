@@ -37,10 +37,7 @@ import {
   type ShipmentDispatchType,
 } from "@/lib/checkout/dispatchWindows";
 import type { CheckoutReviewDeliveryShipment } from "@/lib/checkout/checkoutFlow";
-import {
-  CheckoutLabeledBlock,
-  CheckoutReadonlyDetail,
-} from "./CheckoutFieldLabel";
+import { CheckoutReadonlyDetail } from "./CheckoutFieldLabel";
 import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
 import type { CheckoutStep } from "./CheckoutStepper";
 import { CheckoutShippingLegHeader } from "./CheckoutDispatchLegPreview";
@@ -59,7 +56,6 @@ import {
   buildCheckoutReviewReturn,
   type CheckoutDispatchPreviewGroup,
 } from "@/lib/checkout/checkoutFlow";
-import CheckoutShipmentBlock from "./CheckoutShipmentBlock";
 import { type CheckoutListerGroup } from "./CheckoutOrderItems";
 
 interface CheckoutContactAndPaymentProps {
@@ -313,8 +309,16 @@ export default function CheckoutContactAndPayment({
   const returnTierList = returnShippingTiers ?? [];
   const outboundBuckets = outboundShippingByBucket ?? [];
   const usePerBucketOutbound = outboundBuckets.length > 0;
+  const showSplitOutboundSections = outboundBuckets.length > 1;
   const returnBuckets = returnShippingByBucket ?? [];
   const usePerBucketReturn = returnBuckets.length > 0;
+  const showSplitReturnSections = returnBuckets.length > 1;
+  const unifiedOutboundTiers =
+    tierList.length > 0 ? tierList : (outboundBuckets[0]?.shippingTiers ?? []);
+  const unifiedReturnTiers =
+    returnTierList.length > 0
+      ? returnTierList
+      : (returnBuckets[0]?.shippingTiers ?? []);
 
   const checkoutItemCount = useMemo(
     () => listerGroups.reduce((count, group) => count + group.items.length, 0),
@@ -567,7 +571,9 @@ export default function CheckoutContactAndPayment({
                 )}
               </div>
               <div className="text-right">
-                <Paragraph1 className="text-gray-500 text-xs">Delivery</Paragraph1>
+                <Paragraph1 className="font-medium text-gray-800 text-xs">
+                  Delivery
+                </Paragraph1>
                 <Paragraph1 className="font-bold text-gray-900 text-lg">
                   ₦{formatCurrency(tier.totalShippingCost)}
                 </Paragraph1>
@@ -687,28 +693,12 @@ export default function CheckoutContactAndPayment({
               <hr className="my-4 text-gray-100" />
 
               {hasDeliveryAddress ? (
-                <>
-                  {orderReviewDelivery.shipments.length > 0 ? (
-                    <div className="bg-gray-50/50 mb-4 p-3 sm:p-3.5 border border-gray-200 rounded-lg">
-                      {orderReviewDelivery.shipments.map((shipment, index) => (
-                        <CheckoutShipmentBlock
-                          key={shipment.bucketIndex ?? `delivery-item-${index}`}
-                          shipment={shipment}
-                          showDivider={index > 0}
-                          showWindows={false}
-                          prominentItems
-                        />
-                      ))}
-                    </div>
-                  ) : null}
-
-                  <CheckoutDeliveryContact
-                    contactName={user?.name}
-                    deliveryAddress={deliveryAddress}
-                    phoneLine={phoneLine}
-                    onContactSaved={onAddressSaved ?? onRefetchOrderSummary}
-                  />
-                </>
+                <CheckoutDeliveryContact
+                  contactName={user?.name}
+                  deliveryAddress={deliveryAddress}
+                  phoneLine={phoneLine}
+                  onContactSaved={onAddressSaved ?? onRefetchOrderSummary}
+                />
               ) : (
                 <CheckoutDeliveryContactEmpty
                   onContactSaved={onAddressSaved ?? onRefetchOrderSummary}
@@ -758,83 +748,103 @@ export default function CheckoutContactAndPayment({
 
                   {isShippingTiersLoading ? (
                     <FetchingDeliveryOptions label="Fetching delivery options…" />
-                  ) : usePerBucketOutbound ? (
-          <div className="space-y-8">
-            {showQuoteDispatchLoading && !hasSummaryDispatchPreview ? (
-              <div className="mb-4 pb-4 border-gray-100 border-b">
-                <DispatchWindowsQuoteSkeleton />
-              </div>
-            ) : null}
-            {outboundBuckets.map((bucket, bucketIndex) => {
-              const selectedName =
-                selectedOutboundTierByBucket[bucket.bucketIndex] ??
-                bucket.shippingTiers[0]?.name ??
-                "";
-              const shipment =
-                orderReviewDelivery.shipments.find(
-                  (row) => row.bucketIndex === bucket.bucketIndex,
-                ) ?? orderReviewDelivery.shipments[bucketIndex];
-              const deliveryWindowText = resolveOutboundDeliveryWindowText(
-                shipment,
-                dispatchContexts,
-                dispatchSelections ?? {},
-              );
-              return (
-                <div key={bucket.bucketIndex} className="space-y-3">
-                  {bucketIndex > 0 ? (
-                    <hr className="border-gray-100" />
-                  ) : null}
-                  <CheckoutReadonlyDetail
-                    label="Delivery window"
-                    value={deliveryWindowText}
-                  />
-                  {bucket.shippingTiers.length > 0 ? (
-                    <CheckoutLabeledBlock label="Delivery options">
-                      {renderOutboundTierRadios(
-                        bucket.shippingTiers,
-                        selectedName,
-                        `outboundBucket-${bucket.bucketIndex}`,
-                        (name) =>
-                          onOutboundTierForBucket?.(bucket.bucketIndex, name),
+                  ) : showSplitOutboundSections ? (
+                    <div className="space-y-8">
+                      {showQuoteDispatchLoading && !hasSummaryDispatchPreview ? (
+                        <div className="mb-4 pb-4 border-gray-100 border-b">
+                          <DispatchWindowsQuoteSkeleton />
+                        </div>
+                      ) : null}
+                      {outboundBuckets.map((bucket, bucketIndex) => {
+                        const selectedName =
+                          selectedOutboundTierByBucket[bucket.bucketIndex] ??
+                          bucket.shippingTiers[0]?.name ??
+                          "";
+                        const shipment =
+                          orderReviewDelivery.shipments.find(
+                            (row) => row.bucketIndex === bucket.bucketIndex,
+                          ) ?? orderReviewDelivery.shipments[bucketIndex];
+                        const deliveryWindowText = resolveOutboundDeliveryWindowText(
+                          shipment,
+                          dispatchContexts,
+                          dispatchSelections ?? {},
+                        );
+                        return (
+                          <div key={bucket.bucketIndex} className="space-y-3">
+                            {bucketIndex > 0 ? (
+                              <hr className="border-gray-100" />
+                            ) : null}
+                            {bucket.listerName?.trim() ? (
+                              <Paragraph1 className="font-semibold text-gray-900 text-sm">
+                                {bucket.listerName.trim()}
+                              </Paragraph1>
+                            ) : null}
+                            <CheckoutReadonlyDetail
+                              label="Delivery window"
+                              value={deliveryWindowText}
+                            />
+                            {bucket.shippingTiers.length > 0 ? (
+                              <div className="space-y-3">
+                                {renderOutboundTierRadios(
+                                  bucket.shippingTiers,
+                                  selectedName,
+                                  `outboundBucket-${bucket.bucketIndex}`,
+                                  (name) =>
+                                    onOutboundTierForBucket?.(
+                                      bucket.bucketIndex,
+                                      name,
+                                    ),
+                                )}
+                              </div>
+                            ) : (
+                              <Paragraph1 className="text-gray-700 text-sm">
+                                No delivery options for this order segment.
+                              </Paragraph1>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : unifiedOutboundTiers.length > 0 ? (
+                    <div className="space-y-3">
+                      {showQuoteDispatchLoading && !hasSummaryDispatchPreview ? (
+                        <DispatchWindowsQuoteSkeleton />
+                      ) : (
+                        <CheckoutReadonlyDetail
+                          label="Delivery window"
+                          value={resolveOutboundDeliveryWindowText(
+                            orderReviewDelivery.shipments[0],
+                            dispatchContexts,
+                            dispatchSelections ?? {},
+                          )}
+                        />
                       )}
-                    </CheckoutLabeledBlock>
+                      {renderOutboundTierRadios(
+                        unifiedOutboundTiers,
+                        outboundBuckets.length === 1
+                          ? (selectedOutboundTierByBucket[
+                              outboundBuckets[0].bucketIndex
+                            ] ??
+                            unifiedOutboundTiers[0]?.name ??
+                            "")
+                          : selectedShippingTier,
+                        outboundBuckets.length === 1
+                          ? `outboundBucket-${outboundBuckets[0].bucketIndex}`
+                          : "outboundShippingTierLegacy",
+                        outboundBuckets.length === 1
+                          ? (name) =>
+                              onOutboundTierForBucket?.(
+                                outboundBuckets[0].bucketIndex,
+                                name,
+                              )
+                          : handleShippingTierChange,
+                      )}
+                    </div>
                   ) : (
-                    <Paragraph1 className="text-gray-600 text-sm">
-                      No delivery options for this order segment.
+                    <Paragraph1 className="text-gray-700 text-sm">
+                      No delivery options available
                     </Paragraph1>
                   )}
-                </div>
-              );
-            })}
-          </div>
-        ) : tierList.length > 0 ? (
-          <div className="space-y-3">
-            {showQuoteDispatchLoading && !hasSummaryDispatchPreview ? (
-              <DispatchWindowsQuoteSkeleton />
-            ) : (
-              <CheckoutReadonlyDetail
-                label="Delivery window"
-                value={resolveOutboundDeliveryWindowText(
-                  orderReviewDelivery.shipments[0],
-                  dispatchContexts,
-                  dispatchSelections ?? {},
-                )}
-              />
-            )}
-            <CheckoutLabeledBlock label="Delivery options">
-              {renderOutboundTierRadios(
-                tierList,
-                selectedShippingTier,
-                "outboundShippingTierLegacy",
-                handleShippingTierChange,
-              )}
-            </CheckoutLabeledBlock>
-          </div>
-        ) : (
-          <Paragraph1 className="text-gray-600 text-sm">
-            No delivery options available
-          </Paragraph1>
-        )}
                 </>
               ) : null}
             </div>
@@ -846,24 +856,6 @@ export default function CheckoutContactAndPayment({
                 <CheckoutShippingLegHeader sectionLabel="RETURN" leg="return" />
                 <hr className="my-4 text-gray-100" />
 
-                {hasDeliveryAddress ? (
-                  <>
-                    {(orderReviewReturn?.shipments.length ?? 0) > 0 ? (
-                      <div className="bg-gray-50/50 mb-4 p-3 sm:p-3.5 border border-gray-200 rounded-lg">
-                        {orderReviewReturn?.shipments.map((shipment, index) => (
-                          <CheckoutShipmentBlock
-                            key={shipment.bucketIndex ?? `return-item-${index}`}
-                            shipment={shipment}
-                            showDivider={index > 0}
-                            showWindows={false}
-                            prominentItems
-                          />
-                        ))}
-                      </div>
-                    ) : null}
-                  </>
-                ) : null}
-
                 <CheckoutReturnPickupContact
                   returnPickupAddress={returnPickupAddress}
                   deliveryDefaults={deliveryPickupDefaults}
@@ -874,7 +866,7 @@ export default function CheckoutContactAndPayment({
                   <>
                     {isShippingTiersLoading ? (
                       <FetchingDeliveryOptions label="Fetching return options…" />
-                    ) : usePerBucketReturn ? (
+                    ) : showSplitReturnSections ? (
                       <div className="space-y-8">
                         {returnBuckets.map((bucket, bucketIndex) => {
                           const selectedName =
@@ -890,12 +882,17 @@ export default function CheckoutContactAndPayment({
                               {bucketIndex > 0 ? (
                                 <hr className="border-gray-100" />
                               ) : null}
+                              {bucket.listerName?.trim() ? (
+                                <Paragraph1 className="font-semibold text-gray-900 text-sm">
+                                  {bucket.listerName.trim()}
+                                </Paragraph1>
+                              ) : null}
                               <CheckoutReadonlyDetail
                                 label="Pickup window"
                                 value={shipment?.pickupWindow}
                               />
                               {bucket.shippingTiers.length > 0 ? (
-                                <CheckoutLabeledBlock label="Return options">
+                                <div className="space-y-3">
                                   {renderOutboundTierRadios(
                                     bucket.shippingTiers,
                                     selectedName,
@@ -906,9 +903,9 @@ export default function CheckoutContactAndPayment({
                                         name,
                                       ),
                                   )}
-                                </CheckoutLabeledBlock>
+                                </div>
                               ) : (
-                                <Paragraph1 className="text-gray-600 text-sm">
+                                <Paragraph1 className="text-gray-700 text-sm">
                                   No return pickup options for this segment.
                                 </Paragraph1>
                               )}
@@ -916,23 +913,35 @@ export default function CheckoutContactAndPayment({
                           );
                         })}
                       </div>
-                    ) : returnTierList.length > 0 ? (
+                    ) : unifiedReturnTiers.length > 0 ? (
                       <div className="space-y-3">
                         <CheckoutReadonlyDetail
                           label="Pickup window"
                           value={orderReviewReturn?.shipments[0]?.pickupWindow}
                         />
-                        <CheckoutLabeledBlock label="Return options">
-                          {renderOutboundTierRadios(
-                            returnTierList,
-                            selectedReturnShippingTier,
-                            "returnShippingTier",
-                            handleReturnShippingTierChange,
-                          )}
-                        </CheckoutLabeledBlock>
+                        {renderOutboundTierRadios(
+                          unifiedReturnTiers,
+                          returnBuckets.length === 1
+                            ? (selectedReturnTierByBucket[
+                                returnBuckets[0].bucketIndex
+                              ] ??
+                              unifiedReturnTiers[0]?.name ??
+                              "")
+                            : selectedReturnShippingTier,
+                          returnBuckets.length === 1
+                            ? `returnBucket-${returnBuckets[0].bucketIndex}`
+                            : "returnShippingTier",
+                          returnBuckets.length === 1
+                            ? (name) =>
+                                onReturnTierForBucket?.(
+                                  returnBuckets[0].bucketIndex,
+                                  name,
+                                )
+                            : handleReturnShippingTierChange,
+                        )}
                       </div>
                     ) : (
-                      <Paragraph1 className="text-gray-600 text-sm">
+                      <Paragraph1 className="text-gray-700 text-sm">
                         No return pickup options available for this pickup
                         address.
                       </Paragraph1>

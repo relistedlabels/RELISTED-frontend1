@@ -6,32 +6,28 @@ import React, { Suspense } from "react";
 
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import UserDashboardLayout from "../components/UserDashboardLayout";
-import DashboardOrderList from "../components/DashboardOrderList";
-import ExampleUserWalletDashboard from "../components/UserWalletDashboard";
-import ExampleAllTransactionsList from "../components/Transaction";
+import WalletDashboardTabs from "../components/WalletDashboardTabs";
 import { OnboardingTaskMount } from "@/app/onboarding/components/OnboardingTaskMount";
 
 function page() {
   const path = [
     { label: "Home", href: "/" },
     { label: "Dashboard", href: "/renters/orders" },
-    { label: "Wallet", href: null }, // Current page, href is null
+    { label: "Wallet", href: null },
   ];
 
   return (
     <div className="mx-auto pt-[70px] sm:pt-[100px] container">
-      {" "}
       <div className="mb-4 px-4 sm:px-0">
-        <Breadcrumbs items={path} />{" "}
+        <Breadcrumbs items={path} />
       </div>
       <UserDashboardLayout>
         <Suspense fallback={null}>
           <OnboardingTaskMount />
         </Suspense>
-        <div>
-          <ExampleUserWalletDashboard />
-          <ExampleAllTransactionsList />
-        </div>
+        <Suspense fallback={null}>
+          <WalletDashboardTabs />
+        </Suspense>
       </UserDashboardLayout>
     </div>
   );

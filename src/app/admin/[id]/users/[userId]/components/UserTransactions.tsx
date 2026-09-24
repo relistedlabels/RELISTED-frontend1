@@ -3,6 +3,10 @@
 
 import React from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import {
+  ResponsiveDataTable,
+  type ResponsiveColumnDef,
+} from "@/common/ui/ResponsiveDataTable";
 import { Transaction } from "@/lib/api/admin/users";
 
 interface UserTransactionsProps {
@@ -35,95 +39,94 @@ const getTypeColor = (type: string) => {
   }
 };
 
+const columns: ResponsiveColumnDef<Transaction>[] = [
+  {
+    id: "date",
+    header: "Date",
+    mobile: "detail",
+    render: (transaction) => (
+      <Paragraph1 className="text-sm text-gray-700">
+        {new Date(transaction.createdAt).toLocaleDateString()}
+      </Paragraph1>
+    ),
+  },
+  {
+    id: "description",
+    header: "Description",
+    mobile: "primary",
+    render: (transaction) => (
+      <Paragraph1 className="text-sm font-medium text-gray-900">
+        {transaction.note}
+      </Paragraph1>
+    ),
+  },
+  {
+    id: "type",
+    header: "Type",
+    mobile: "detail",
+    render: (transaction) => (
+      <Paragraph1 className={getTypeColor(transaction.type)}>
+        {transaction.type}
+      </Paragraph1>
+    ),
+  },
+  {
+    id: "amount",
+    header: "Amount",
+    mobile: "detail",
+    render: (transaction) => (
+      <Paragraph1 className="text-sm font-semibold text-gray-900">
+        ₦{transaction.amount.toLocaleString()}
+      </Paragraph1>
+    ),
+  },
+  {
+    id: "status",
+    header: "Status",
+    mobile: "badge",
+    render: (transaction) => (
+      <span
+        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(transaction.status)}`}
+      >
+        {transaction.status}
+      </span>
+    ),
+  },
+  {
+    id: "action",
+    header: "Action",
+    mobile: "action",
+    render: () => (
+      <button
+        type="button"
+        className="text-sm font-medium text-gray-900 transition hover:text-gray-600"
+      >
+        View Details
+      </button>
+    ),
+  },
+];
+
 export default function UserTransactions({
   transactions,
 }: UserTransactionsProps) {
   return (
     <div>
-      <Paragraph3 className="text-base font-bold mb-6 text-gray-900">
+      <Paragraph3 className="mb-6 text-base font-bold text-gray-900">
         Transaction History
       </Paragraph3>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 bg-white">
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Date
-                </th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Description
-                </th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Type
-                </th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Amount
-                </th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Status
-                </th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions && transactions.length > 0 ? (
-                transactions.map((transaction) => (
-                  <tr
-                    key={transaction.id}
-                    className="border-b border-gray-200 hover:bg-gray-50 transition"
-                  >
-                    <td className="py-4 px-6">
-                      <Paragraph1 className="text-sm text-gray-700">
-                        {new Date(transaction.createdAt).toLocaleDateString()}
-                      </Paragraph1>
-                    </td>
-                    <td className="py-4 px-6">
-                      <Paragraph1 className="text-sm font-medium text-gray-900">
-                        {transaction.note}
-                      </Paragraph1>
-                    </td>
-                    <td className="py-4 px-6">
-                      <Paragraph1 className={getTypeColor(transaction.type)}>
-                        {transaction.type}
-                      </Paragraph1>
-                    </td>
-                    <td className="py-4 px-6">
-                      <Paragraph1 className="text-sm font-semibold text-gray-900">
-                        ₦{transaction.amount.toLocaleString()}
-                      </Paragraph1>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span
-                        className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                          transaction.status,
-                        )}`}
-                      >
-                        {transaction.status}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <button className="text-sm font-medium text-gray-900 hover:text-gray-600 transition">
-                        View Details
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="py-8 px-6 text-center">
-                    <Paragraph1 className="text-gray-500">
-                      No transactions found
-                    </Paragraph1>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+        <ResponsiveDataTable
+          rows={transactions ?? []}
+          columns={columns}
+          getRowKey={(transaction) => transaction.id}
+          emptyState={
+            <Paragraph1 className="py-8 text-center text-gray-500">
+              No transactions found
+            </Paragraph1>
+          }
+        />
       </div>
     </div>
   );

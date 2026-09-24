@@ -8,6 +8,12 @@ import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImag
 const defaultAvatar = (name: string) =>
   `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`;
 
+const detailRowClass =
+  "flex flex-col gap-0.5 md:flex-row md:items-start md:justify-between md:gap-4";
+const detailLabelClass = "text-sm text-gray-600 shrink-0";
+const detailValueClass =
+  "text-sm font-medium text-gray-900 break-words md:text-right";
+
 interface PersonInfo {
   name: string;
   email?: string | null;
@@ -39,7 +45,7 @@ export default function OrderSection2({
   renter,
 }: OrderSection2Props) {
   const renderPerson = (person: PersonInfo, label: string) => (
-    <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 sm:p-6">
       <Paragraph3 className="text-base font-bold text-gray-900 mb-4">
         {label}
       </Paragraph3>
@@ -70,57 +76,45 @@ export default function OrderSection2({
 
   return (
     <div className="space-y-6">
-      <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 sm:p-6">
         <Paragraph3 className="text-base font-bold text-gray-900 mb-4">
           Order information
         </Paragraph3>
         <div className="space-y-3">
           {listingType && (
-            <div className="flex justify-between items-center">
-              <Paragraph1 className="text-sm text-gray-600">Type:</Paragraph1>
-              <Paragraph1 className="text-sm font-medium text-gray-900">
+            <div className={detailRowClass}>
+              <Paragraph1 className={detailLabelClass}>Type</Paragraph1>
+              <Paragraph1 className={detailValueClass}>
                 {listingType.replace(/_/g, " ")}
               </Paragraph1>
             </div>
           )}
           {rentalPeriod && rentalPeriod !== "N/A" && (
-            <div className="flex justify-between items-center">
-              <Paragraph1 className="text-sm text-gray-600">
-                Rental period:
-              </Paragraph1>
-              <Paragraph1 className="text-sm font-medium text-gray-900">
-                {rentalPeriod}
-              </Paragraph1>
+            <div className={detailRowClass}>
+              <Paragraph1 className={detailLabelClass}>Rental period</Paragraph1>
+              <Paragraph1 className={detailValueClass}>{rentalPeriod}</Paragraph1>
             </div>
           )}
-          <div className="flex justify-between items-center">
-            <Paragraph1 className="text-sm text-gray-600">Return due:</Paragraph1>
-            <Paragraph1 className="text-sm font-medium text-gray-900">
-              {returnDue}
-            </Paragraph1>
+          <div className={detailRowClass}>
+            <Paragraph1 className={detailLabelClass}>Return due</Paragraph1>
+            <Paragraph1 className={detailValueClass}>{returnDue}</Paragraph1>
           </div>
-          <div className="flex justify-between items-center gap-4">
-            <Paragraph1 className="text-sm text-gray-600 shrink-0">
-              Payment reference:
-            </Paragraph1>
-            <Paragraph1 className="text-sm font-medium text-gray-900 break-all text-right">
+          <div className={detailRowClass}>
+            <Paragraph1 className={detailLabelClass}>Payment reference</Paragraph1>
+            <Paragraph1 className={`${detailValueClass} break-all`}>
               {paymentReference}
             </Paragraph1>
           </div>
           {paymentStatus && (
-            <div className="flex justify-between items-center">
-              <Paragraph1 className="text-sm text-gray-600">Payment:</Paragraph1>
-              <Paragraph1 className="text-sm font-medium text-gray-900">
-                {paymentStatus}
-              </Paragraph1>
+            <div className={detailRowClass}>
+              <Paragraph1 className={detailLabelClass}>Payment</Paragraph1>
+              <Paragraph1 className={detailValueClass}>{paymentStatus}</Paragraph1>
             </div>
           )}
           {trackingNumber && trackingNumber !== "N/A" && (
-            <div className="flex justify-between items-center">
-              <Paragraph1 className="text-sm text-gray-600">Tracking:</Paragraph1>
-              <Paragraph1 className="text-sm font-medium text-gray-900">
-                {trackingNumber}
-              </Paragraph1>
+            <div className={detailRowClass}>
+              <Paragraph1 className={detailLabelClass}>Tracking</Paragraph1>
+              <Paragraph1 className={detailValueClass}>{trackingNumber}</Paragraph1>
             </div>
           )}
         </div>

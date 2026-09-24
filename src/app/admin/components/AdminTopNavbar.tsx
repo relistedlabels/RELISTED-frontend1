@@ -18,14 +18,14 @@ export default function AdminTopNavbar({ onLogout }: AdminTopNavbarProps) {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 px-8 flex items-center justify-between z-40 ">
-      {/* Logo */}
-      <div className="flex items-center">
-        <h1 className="text-lg font-bold text-gray-900">RELISTED LABELS</h1>
+    <div className="fixed top-0 left-0 right-0 z-40 flex h-14 items-center justify-between border-b border-gray-200 bg-white px-3 sm:h-16 sm:px-8">
+      <div className="flex min-w-0 items-center">
+        <h1 className="truncate text-sm font-bold text-gray-900 sm:text-lg">
+          RELISTED LABELS
+        </h1>
       </div>
 
-      {/* Right Actions */}
-      <div className="flex items-center gap-4">
+      <div className="flex shrink-0 items-center gap-2 sm:gap-4">
         {adminId ? (
           <NotificationBell
             href={`/admin/${adminId}/notifications`}
@@ -34,11 +34,13 @@ export default function AdminTopNavbar({ onLogout }: AdminTopNavbarProps) {
           />
         ) : null}
         <button
+          type="button"
           onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+          className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900 sm:px-4"
+          aria-label="Log out"
         >
           <LogOut size={18} />
-          Log Out
+          <span className="hidden sm:inline">Log Out</span>
         </button>
       </div>
     </div>

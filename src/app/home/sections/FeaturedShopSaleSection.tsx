@@ -102,14 +102,6 @@ export default function FeaturedShopSaleSection() {
           <Paragraph1 className="max-w-[280px] sm:max-w-[480px] text-gray-600">
             {sectionDescription}
           </Paragraph1>
-          <Link
-            href={browseShopHref}
-            className="hover:opacity-70 mt-4 border-b font-bold text-sm transition-opacity"
-          >
-            {sale.shopAccessEnabled
-              ? `${browseCtaLabel} →`
-              : browseCtaLabel}
-          </Link>
         </div>
 
         {displayProducts.length === 0 ? (

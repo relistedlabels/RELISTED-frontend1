@@ -73,7 +73,7 @@ export default function ShopBrandVisibilityPanel() {
           );
         }
         setNewBrandName("");
-        toast.success("Brand created. Save changes to publish it on the site.");
+        toast.success("Brand created. Save to publish.");
       },
       onError: (err: unknown) => {
         const message =
@@ -119,9 +119,8 @@ export default function ShopBrandVisibilityPanel() {
     <div className="bg-white border border-gray-200 rounded-lg p-6">
       <Paragraph3 className="text-gray-900 mb-1">Site brands</Paragraph3>
       <Paragraph1 className="text-sm text-gray-600 mb-6">
-        Choose which brands appear on the site and in the lister brand picker.
-        Removing a brand deactivates its listings. Active rentals stay until
-        returned.
+        Show or hide brands on the site and lister picker. Hidden brands
+        deactivate their listings.
       </Paragraph1>
 
       {showSkeleton ? (

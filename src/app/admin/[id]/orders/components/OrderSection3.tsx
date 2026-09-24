@@ -22,7 +22,7 @@ export default function OrderSection3({
   paymentStatus,
 }: OrderSection3Props) {
   return (
-    <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 sm:p-6">
       <Paragraph3 className="text-base font-bold text-gray-900 mb-4">
         Payment breakdown
       </Paragraph3>

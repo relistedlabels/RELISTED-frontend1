@@ -14,11 +14,11 @@ import {
 import WalletTable from "./components/WalletTable";
 import EscrowTable from "./components/EscrowTable";
 import TransactionsTable from "./components/TransactionsTable";
-import WithdrawalRequestTable from "./components/WithdrawalRequestTable";
 import PayoutsTable from "./components/PayoutsTable";
 import MetricsCard from "./components/MetricsCard";
+import { AdminTabBar, AdminTabButton } from "../../components/AdminSectionTabs";
 
-type TabType = "wallet" | "escrow" | "transactions" | "withdrawals" | "payouts";
+type TabType = "wallet" | "escrow" | "transactions" | "payouts";
 
 interface MetricData {
   label: string;
@@ -202,12 +202,9 @@ export default function WalletsPage() {
     <div className="min-h-screen">
       {/* Header Section */}
       <div className="mb-8">
-        <Paragraph2 className="mb-2 text-gray-900">
-          Payments & balances
-        </Paragraph2>
+        <Paragraph2 className="mb-2 text-gray-900">Payments</Paragraph2>
         <Paragraph1 className="text-gray-600">
-          Balances, held funds, withdrawals, lister payouts, and platform
-          revenue.
+          Balances, held funds, lister payouts, and platform revenue.
         </Paragraph1>
       </div>
 
@@ -236,7 +233,7 @@ export default function WalletsPage() {
             />
           </div>
         </div>
-        <div className="hidden flex- gap-2 w-full md:w-auto">
+        <div className="hidden md:flex gap-2 w-full md:w-auto">
           <button className="flex items-center gap-2 hover:bg-gray-50 px-4 py-2 border border-gray-300 rounded-lg font-medium">
             <Download size={18} />
             Export CSV
@@ -250,33 +247,28 @@ export default function WalletsPage() {
 
       {/* Tabs Section */}
       <div className="bg-white rounded-lg overflow-hidden">
-        <div className="flex border-gray-200 border-b">
-          <TabButton
+        <AdminTabBar>
+          <AdminTabButton
             active={activeTab === "wallet"}
             onClick={() => setActiveTab("wallet")}
             label="Wallet"
           />
-          <TabButton
+          <AdminTabButton
             active={activeTab === "escrow"}
             onClick={() => setActiveTab("escrow")}
             label="Escrow"
           />
-          <TabButton
+          <AdminTabButton
             active={activeTab === "transactions"}
             onClick={() => setActiveTab("transactions")}
             label="Transactions"
           />
-          <TabButton
-            active={activeTab === "withdrawals"}
-            onClick={() => setActiveTab("withdrawals")}
-            label="Withdrawal Requests"
-          />
-          <TabButton
+          <AdminTabButton
             active={activeTab === "payouts"}
             onClick={() => setActiveTab("payouts")}
             label="Payouts"
           />
-        </div>
+        </AdminTabBar>
 
         {/* Table Content */}
         <div className="py-6">
@@ -285,35 +277,11 @@ export default function WalletsPage() {
           {activeTab === "transactions" && (
             <TransactionsTable searchQuery={searchQuery} />
           )}
-          {activeTab === "withdrawals" && (
-            <WithdrawalRequestTable searchQuery={searchQuery} />
-          )}
           {activeTab === "payouts" && (
             <PayoutsTable searchQuery={searchQuery} />
           )}
         </div>
       </div>
     </div>
-  );
-}
-
-interface TabButtonProps {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-}
-
-function TabButton({ active, onClick, label }: TabButtonProps) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-6 py-4 font-medium transition-colors ${
-        active
-          ? "text-gray-900 border-b-2 border-gray-900"
-          : "text-gray-600 hover:text-gray-900"
-      }`}
-    >
-      <Paragraph1>{label}</Paragraph1>
-    </button>
   );
 }

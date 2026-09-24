@@ -6,6 +6,10 @@ import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import {
+  ResponsiveDataTable,
+  type ResponsiveColumnDef,
+} from "@/common/ui/ResponsiveDataTable";
 import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
 import { useAdminClosets } from "@/lib/queries/admin/useAdminClosets";
 import { useAdminSiteFeatures } from "@/lib/queries/admin/useAdminSiteFeatures";
@@ -65,6 +69,100 @@ export default function AdminClosetsPage() {
 
   const fromIdx = total === 0 ? 0 : (page - 1) * limit + 1;
   const toIdx = Math.min(page * limit, total);
+
+  const closetColumns: ResponsiveColumnDef<AdminClosetListRow>[] = [
+    {
+      id: "closet",
+      header: "Closet",
+      mobile: "primary",
+      render: (c) => (
+        <div className="flex items-center gap-3">
+          {c.imageUrl ? (
+            <img
+              src={c.imageUrl}
+              alt=""
+              className="h-10 w-10 shrink-0 rounded-lg border border-gray-100 object-cover"
+            />
+          ) : (
+            <div className="h-10 w-10 shrink-0 rounded-lg border border-gray-200 bg-gray-100" />
+          )}
+          <div className="min-w-0">
+            <Paragraph1 className="truncate text-sm font-medium text-gray-900">
+              {c.name}
+            </Paragraph1>
+            <Paragraph1 className="truncate font-mono text-xs text-gray-500">
+              {c.slug}
+            </Paragraph1>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "owner",
+      header: "Owner",
+      mobile: "detail",
+      render: (c) => (
+        <div>
+          <Paragraph1 className="text-sm font-medium text-gray-900">
+            {c.owner.name}
+          </Paragraph1>
+          <Paragraph1 className="max-w-[200px] truncate text-xs text-gray-500">
+            {c.owner.email}
+          </Paragraph1>
+        </div>
+      ),
+    },
+    {
+      id: "items",
+      header: "Items",
+      mobile: "detail",
+      render: (c) => (
+        <Paragraph1 className="tabular-nums text-gray-900">
+          {c.productCount}
+        </Paragraph1>
+      ),
+    },
+    {
+      id: "wallet",
+      header: "Closet wallet",
+      mobile: "detail",
+      render: (c) => (
+        <Paragraph1 className="font-medium tabular-nums text-gray-900">
+          {formatCurrency(c.closetWalletBalance)}
+        </Paragraph1>
+      ),
+    },
+    {
+      id: "status",
+      header: "Status",
+      mobile: "badge",
+      render: (c) => (
+        <span
+          className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
+            c.isActive
+              ? "bg-green-100 text-green-800"
+              : "bg-gray-100 text-gray-700"
+          }`}
+        >
+          {c.isActive ? "Active" : "Inactive"}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      mobile: "action",
+      render: (c) => (
+        <Link
+          href={`/admin/${adminId}/closets/${c.id}`}
+          className="inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900"
+        >
+          <Paragraph1>View</Paragraph1>
+          <ChevronRight size={16} />
+        </Link>
+      ),
+    },
+  ];
 
   return (
     <div className="min-h-screen">
@@ -149,124 +247,17 @@ export default function AdminClosetsPage() {
         <TableSkeleton rows={8} columns={6} />
       ) : (
         <>
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-50 border-gray-200 border-b">
-                    <th className="px-6 py-4 text-left">
-                      <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                        Closet
-                      </Paragraph1>
-                    </th>
-                    <th className="px-6 py-4 text-left">
-                      <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                        Owner
-                      </Paragraph1>
-                    </th>
-                    <th className="px-6 py-4 text-left">
-                      <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                        Items
-                      </Paragraph1>
-                    </th>
-                    <th className="px-6 py-4 text-left">
-                      <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                        Closet wallet
-                      </Paragraph1>
-                    </th>
-                    <th className="px-6 py-4 text-left">
-                      <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                        Status
-                      </Paragraph1>
-                    </th>
-                    <th className="px-6 py-4 text-left">
-                      <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                        Actions
-                      </Paragraph1>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {empty ? (
-                    <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center">
-                        <Paragraph1 className="text-gray-500">
-                          No closets match your search.
-                        </Paragraph1>
-                      </td>
-                    </tr>
-                  ) : (
-                    closets.map((c) => (
-                      <tr
-                        key={c.id}
-                        className="hover:bg-gray-50 border-gray-100 last:border-0 border-b transition-colors"
-                      >
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            {c.imageUrl ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={c.imageUrl}
-                                alt=""
-                                className="border border-gray-100 rounded-lg w-10 h-10 object-cover shrink-0"
-                              />
-                            ) : (
-                              <div className="bg-gray-100 border border-gray-200 rounded-lg w-10 h-10 shrink-0" />
-                            )}
-                            <div className="min-w-0">
-                              <Paragraph1 className="font-medium text-gray-900 text-sm truncate">
-                                {c.name}
-                              </Paragraph1>
-                              <Paragraph1 className="font-mono text-gray-500 text-xs truncate">
-                                {c.slug}
-                              </Paragraph1>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <Paragraph1 className="font-medium text-gray-900 text-sm">
-                            {c.owner.name}
-                          </Paragraph1>
-                          <Paragraph1 className="max-w-[200px] text-gray-500 text-xs truncate">
-                            {c.owner.email}
-                          </Paragraph1>
-                        </td>
-                        <td className="px-6 py-4">
-                          <Paragraph1 className="tabular-nums text-gray-900">
-                            {c.productCount}
-                          </Paragraph1>
-                        </td>
-                        <td className="px-6 py-4">
-                          <Paragraph1 className="font-medium tabular-nums text-gray-900">
-                            {formatCurrency(c.closetWalletBalance)}
-                          </Paragraph1>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
-                              c.isActive
-                                ? "bg-green-100 text-green-800"
-                                : "bg-gray-100 text-gray-700"
-                            }`}
-                          >
-                            {c.isActive ? "Active" : "Inactive"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <Link
-                            href={`/admin/${adminId}/closets/${c.id}`}
-                            className="inline-flex items-center gap-1 font-medium text-gray-600 hover:text-gray-900 text-sm"
-                          >
-                            <Paragraph1>View</Paragraph1>
-                            <ChevronRight size={16} />
-                          </Link>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+            <ResponsiveDataTable
+              rows={closets}
+              columns={closetColumns}
+              getRowKey={(c) => c.id}
+              emptyState={
+                <Paragraph1 className="py-12 text-center text-gray-500">
+                  No closets match your search.
+                </Paragraph1>
+              }
+            />
           </div>
 
           {totalPages > 1 && (

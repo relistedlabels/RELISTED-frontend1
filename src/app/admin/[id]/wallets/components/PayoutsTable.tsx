@@ -2,8 +2,11 @@
 
 import React from "react";
 import { Paragraph1 } from "@/common/ui/Text";
+import {
+  ResponsiveDataTable,
+  type ResponsiveColumnDef,
+} from "@/common/ui/ResponsiveDataTable";
 import { usePayouts } from "@/lib/queries/admin/useWallets";
-import { usePublicUserById } from "@/lib/queries/user/usePublicUserById";
 import AdminTablePagination, {
   EMPTY_WALLET_PAGINATION,
   useWalletTablePage,
@@ -13,106 +16,120 @@ interface PayoutsTableProps {
   searchQuery: string;
 }
 
-// Component to display a single payout row
-function PayoutRow({
-  payout,
-}: {
-  payout: {
+type PayoutRow = {
+  id: string;
+  userId: string;
+  user: {
     id: string;
-    userId: string;
-    user: {
-      id: string;
-      name: string;
-      email: string;
-      avatar: string;
-    };
-    bankAccount: {
-      accountNumber: string;
-      bankName: string;
-      accountName: string;
-    };
-    amount: number;
-    status: "completed" | "paid";
-    completedDate: string;
+    name: string;
+    email: string;
+    avatar: string;
   };
-}) {
-  const { data: userDetails } = usePublicUserById(payout.userId);
-
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 0,
-    }).format(amount);
+  bankAccount: {
+    accountNumber: string;
+    bankName: string;
+    accountName: string;
   };
+  amount: number;
+  status: "completed" | "paid";
+  completedDate: string;
+};
 
-  const getInitials = (name: string): string => {
-    return name
-      .split(" ")
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase()
-      .substring(0, 2);
-  };
+const formatCurrency = (amount: number): string =>
+  new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: 0,
+  }).format(amount);
 
-  const getCompleteDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
+const getInitials = (name: string): string =>
+  name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase()
+    .substring(0, 2);
 
-  return (
-    <tr className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
-      <td className="px-6 py-4">
-        <div className="flex items-center gap-3">
-          {userDetails?.avatar ? (
-            <img
-              src={userDetails.avatar}
-              alt={payout.user.name}
-              className="w-8 h-8 rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center text-xs font-semibold">
-              {getInitials(payout.user.name)}
-            </div>
-          )}
-          <div>
-            <Paragraph1 className="font-medium text-gray-900">
-              {payout.user.name}
-            </Paragraph1>
-            <span className="text-xs text-gray-500">{payout.user.email}</span>
+const getCompleteDate = (dateString: string): string =>
+  new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+
+const columns: ResponsiveColumnDef<PayoutRow>[] = [
+  {
+    id: "user",
+    header: "User",
+    mobile: "primary",
+    render: (payout) => (
+      <div className="flex items-center gap-3">
+        {payout.user.avatar ? (
+          <img
+            src={payout.user.avatar}
+            alt={payout.user.name}
+            className="h-8 w-8 rounded-full object-cover"
+          />
+        ) : (
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-300 text-xs font-semibold text-gray-700">
+            {getInitials(payout.user.name)}
           </div>
+        )}
+        <div>
+          <Paragraph1 className="font-medium text-gray-900">
+            {payout.user.name}
+          </Paragraph1>
+          <span className="text-xs text-gray-500">{payout.user.email}</span>
         </div>
-      </td>
-      <td className="px-6 py-4">
-        <Paragraph1 className="text-gray-900 font-medium">
+      </div>
+    ),
+  },
+  {
+    id: "bankAccount",
+    header: "Bank Account",
+    mobile: "detail",
+    render: (payout) => (
+      <div>
+        <Paragraph1 className="font-medium text-gray-900">
           {payout.bankAccount.accountNumber}
         </Paragraph1>
         <span className="text-xs text-gray-500">
           {payout.bankAccount.bankName}
         </span>
-      </td>
-      <td className="px-6 py-4">
-        <Paragraph1 className="text-gray-900 font-semibold">
-          {formatCurrency(payout.amount)}
-        </Paragraph1>
-      </td>
-      <td className="px-6 py-4">
-        <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-          Completed
-        </span>
-      </td>
-      <td className="px-6 py-4">
-        <Paragraph1 className="text-gray-600">
-          {getCompleteDate(payout.completedDate)}
-        </Paragraph1>
-      </td>
-    </tr>
-  );
-}
+      </div>
+    ),
+  },
+  {
+    id: "amount",
+    header: "Amount",
+    mobile: "detail",
+    render: (payout) => (
+      <Paragraph1 className="font-semibold text-gray-900">
+        {formatCurrency(payout.amount)}
+      </Paragraph1>
+    ),
+  },
+  {
+    id: "status",
+    header: "Status",
+    mobile: "badge",
+    render: () => (
+      <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+        Completed
+      </span>
+    ),
+  },
+  {
+    id: "completedDate",
+    header: "Completed Date",
+    mobile: "detail",
+    render: (payout) => (
+      <Paragraph1 className="text-gray-600">
+        {getCompleteDate(payout.completedDate)}
+      </Paragraph1>
+    ),
+  },
+];
 
 export default function PayoutsTable({ searchQuery }: PayoutsTableProps) {
   const { page, setPage, limit } = useWalletTablePage(searchQuery);
@@ -123,58 +140,22 @@ export default function PayoutsTable({ searchQuery }: PayoutsTableProps) {
 
   return (
     <div>
-      <div className="overflow-x-auto">
-        <table className="w-full">
-        <thead>
-          <tr className="border-b border-gray-200 bg-gray-50">
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="text-gray-900 font-semibold">
-                USER
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="text-gray-900 font-semibold">
-                BANK ACCOUNT
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="text-gray-900 font-semibold">
-                AMOUNT
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="text-gray-900 font-semibold">
-                STATUS
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="text-gray-900 font-semibold">
-                COMPLETED DATE
-              </Paragraph1>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {payoutsQuery.isPending ? (
-            <tr>
-              <td colSpan={5} className="px-6 py-8 text-center">
-                <p className="text-gray-500">Loading payouts...</p>
-              </td>
-            </tr>
-          ) : payouts.length === 0 ? (
-            <tr>
-              <td colSpan={5} className="px-6 py-8 text-center">
-                <p className="text-gray-500">No payouts found</p>
-              </td>
-            </tr>
-          ) : (
-            payouts.map((payout: any) => (
-              <PayoutRow key={payout.id} payout={payout} />
-            ))
-          )}
-        </tbody>
-      </table>
-      </div>
+      <ResponsiveDataTable
+        rows={payouts as unknown as PayoutRow[]}
+        columns={columns}
+        getRowKey={(payout) => payout.id}
+        loading={payoutsQuery.isPending}
+        loadingState={
+          <div className="px-4 py-8 text-center md:px-6">
+            <p className="text-gray-500">Loading payouts...</p>
+          </div>
+        }
+        emptyState={
+          <div className="px-4 py-8 text-center md:px-6">
+            <p className="text-gray-500">No payouts found</p>
+          </div>
+        }
+      />
       <AdminTablePagination
         pagination={pagination}
         onPageChange={setPage}

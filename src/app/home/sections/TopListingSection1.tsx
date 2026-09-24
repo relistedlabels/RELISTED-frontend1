@@ -20,7 +20,7 @@ const TopListingSection = () => {
     error,
   } = useProducts({
     sort: "newest",
-    tags: "Black Tie",
+    tags: "Black Tie Outfits",
     limit: 7,
   });
 
@@ -80,12 +80,6 @@ const TopListingSection = () => {
             Find the perfect look for your black tie events, no matter the style
             or season.
           </Paragraph1>
-          <Link
-            href={`/shop?tags=${encodeURIComponent("Black Tie")}&title=${encodeURIComponent("BLACK TIE OUTFITS")}&description=${encodeURIComponent("Find the perfect look for your black tie events, no matter the style or season.")}`}
-            className="mt-4 hidden text-sm font-bold border-b hover:opacity-70 transition-opacity"
-          >
-            Browse All →
-          </Link>
         </div>
 
         {/* Products or No Products Message */}
@@ -139,7 +133,7 @@ const TopListingSection = () => {
         )}
         <div className="flex justify-center items-center mt-2 w-full">
           <Link
-            href={`/shop?tags=${encodeURIComponent("Black Tie")}&title=${encodeURIComponent("BLACK TIE OUTFITS")}`}
+            href={`/shop?tags=${encodeURIComponent("Black Tie Outfits")}&title=${encodeURIComponent("BLACK TIE OUTFITS")}`}
             className="inline-flex justify-center items-center bg-black hover:bg-neutral-800 px-8 py-3 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 w-full max-w-md font-medium text-white text-sm tracking-wider transition-colors duration-200"
             aria-label="Browse all items"
           >

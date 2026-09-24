@@ -12,6 +12,7 @@ import PendingTable from "./components/PendingTable";
 import ResolvedTable from "./components/ResolvedTable";
 import StatusCard from "./components/StatusCard";
 import UnderReviewTable from "./components/UnderReviewTable";
+import { AdminTabBar, AdminTabButton } from "../../components/AdminSectionTabs";
 
 type TabType = "pending" | "under-review" | "resolved";
 
@@ -220,23 +221,23 @@ export default function DisputesPage() {
 
       {/* Tabs and Table Section */}
       <div className="bg-white rounded-lg overflow-hidden">
-        <div className="flex border-gray-200 border-b">
-          <TabButton
+        <AdminTabBar>
+          <AdminTabButton
             active={activeTab === "pending"}
             onClick={() => setActiveTab("pending")}
             label={`Pending (${pendingCountDisplay})`}
           />
-          <TabButton
+          <AdminTabButton
             active={activeTab === "under-review"}
             onClick={() => setActiveTab("under-review")}
             label={`Under Review (${underReviewCountDisplay})`}
           />
-          <TabButton
+          <AdminTabButton
             active={activeTab === "resolved"}
             onClick={() => setActiveTab("resolved")}
             label={`Resolved (${resolvedCountDisplay})`}
           />
-        </div>
+        </AdminTabBar>
 
         {/* Table Content */}
         <div className="py-6">
@@ -267,27 +268,5 @@ export default function DisputesPage() {
         </div>
       </div>
     </div>
-  );
-}
-
-interface TabButtonProps {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-}
-
-function TabButton({ active, onClick, label }: TabButtonProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`px-6 py-4 font-medium transition-colors ${
-        active
-          ? "text-gray-900 border-b-2 border-gray-900"
-          : "text-gray-600 hover:text-gray-900"
-      }`}
-    >
-      <Paragraph1>{label}</Paragraph1>
-    </button>
   );
 }

@@ -10,6 +10,10 @@ import {
   HiOutlineShoppingBag,
 } from "react-icons/hi2";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import {
+  ResponsiveDataTable,
+  type ResponsiveColumnDef,
+} from "@/common/ui/ResponsiveDataTable";
 import { StatCardSkeleton, TableSkeleton } from "@/common/ui/SkeletonLoaders";
 import { AdminComboBox } from "@/app/admin/components/AdminComboBox";
 import { AdminListingThumb } from "@/app/admin/lib/adminListingDisplay";
@@ -44,6 +48,128 @@ const formatDateTime = (value?: string | null): string => {
     minute: "2-digit",
   });
 };
+
+function buildRequestColumns(
+  openRequest: (id: string) => void,
+): ResponsiveColumnDef<AvailabilityRequest>[] {
+  return [
+    {
+      id: "item",
+      header: "Item",
+      mobile: "primary",
+      render: (request) => (
+        <div className="flex min-w-[220px] items-center gap-3">
+          <AdminListingThumb
+            url={request.product?.image ?? null}
+            alt={request.product?.name}
+          />
+          <div className="min-w-0">
+            <Paragraph1 className="max-w-[180px] truncate text-sm font-medium text-gray-900">
+              {request.product?.name || "Unknown item"}
+            </Paragraph1>
+            <Paragraph1 className="max-w-[180px] truncate text-xs text-gray-400">
+              {request.product?.brand || "No brand"}
+            </Paragraph1>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "type",
+      header: "Type",
+      mobile: "badge",
+      render: (request) => (
+        <span
+          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+            request.requestType === "purchase"
+              ? "bg-violet-100 text-violet-800"
+              : "bg-sky-100 text-sky-800"
+          }`}
+        >
+          {request.requestType === "purchase"
+            ? "Purchase"
+            : `Rental · ${request.rentalDays}d`}
+        </span>
+      ),
+    },
+    {
+      id: "renter",
+      header: "Renter",
+      mobile: "detail",
+      render: (request) => (
+        <div className="min-w-[140px]">
+          <Paragraph1 className="text-sm font-medium text-gray-900">
+            {request.requester?.name || "—"}
+          </Paragraph1>
+          <Paragraph1 className="max-w-[160px] truncate text-xs text-gray-400">
+            {request.requester?.email || ""}
+          </Paragraph1>
+        </div>
+      ),
+    },
+    {
+      id: "lister",
+      header: "Lister",
+      mobile: "detail",
+      render: (request) => (
+        <div className="min-w-[140px]">
+          <Paragraph1 className="text-sm font-medium text-gray-900">
+            {request.lister?.name || "—"}
+          </Paragraph1>
+          <Paragraph1 className="max-w-[160px] truncate text-xs text-gray-400">
+            {request.lister?.email || ""}
+          </Paragraph1>
+        </div>
+      ),
+    },
+    {
+      id: "value",
+      header: "Value",
+      mobile: "detail",
+      render: (request) => (
+        <span className="whitespace-nowrap text-sm font-medium">
+          {formatCurrency(request.totalPrice)}
+        </span>
+      ),
+    },
+    {
+      id: "status",
+      header: "Status",
+      mobile: "badge",
+      render: (request) => (
+        <span
+          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${getAvailabilityStatusColor(request.status)}`}
+        >
+          {getAvailabilityStatusLabel(request.status)}
+        </span>
+      ),
+    },
+    {
+      id: "requested",
+      header: "Requested",
+      mobile: "detail",
+      render: (request) => (
+        <span className="whitespace-nowrap text-sm text-gray-600">
+          {formatDateTime(request.createdAt)}
+        </span>
+      ),
+    },
+    {
+      id: "action",
+      header: "Action",
+      mobile: "action",
+      render: (request) => (
+        <button
+          type="button"
+          onClick={() => openRequest(request.id)}
+          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-800 transition hover:bg-gray-100"
+        >
+          View
+        </button>
+      ),
+    },
+  ];
+}
 
 const STATUS_FILTERS = [
   "All",
@@ -140,6 +266,8 @@ export default function RequestsPage() {
     setSelectedRequestId(id);
     setIsDetailOpen(true);
   };
+
+  const requestColumns = buildRequestColumns(openRequest);
 
   const attentionCount = stats?.needingAttention ?? 0;
 
@@ -310,102 +438,12 @@ export default function RequestsPage() {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="bg-gray-50 border-gray-100 border-b text-gray-500 text-xs uppercase tracking-wide">
-                    <th className="px-4 sm:px-6 py-3 font-medium">Item</th>
-                    <th className="px-4 py-3 font-medium">Type</th>
-                    <th className="px-4 py-3 font-medium">Renter</th>
-                    <th className="px-4 py-3 font-medium">Lister</th>
-                    <th className="px-4 py-3 font-medium">Value</th>
-                    <th className="px-4 py-3 font-medium">Status</th>
-                    <th className="px-4 py-3 font-medium">Requested</th>
-                    <th className="px-4 sm:px-6 py-3 font-medium text-right">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className={listFetching ? "opacity-60" : ""}>
-                  {requests.map((request) => (
-                    <tr
-                      key={request.id}
-                      className="hover:bg-gray-50 border-gray-100 border-b transition-colors"
-                    >
-                      <td className="px-4 sm:px-6 py-4">
-                        <div className="flex items-center gap-3 min-w-[220px]">
-                          <AdminListingThumb
-                            url={request.product?.image ?? null}
-                            alt={request.product?.name}
-                          />
-                          <div className="min-w-0">
-                            <Paragraph1 className="font-medium text-gray-900 text-sm truncate max-w-[180px]">
-                              {request.product?.name || "Unknown item"}
-                            </Paragraph1>
-                            <Paragraph1 className="text-gray-400 text-xs truncate max-w-[180px]">
-                              {request.product?.brand || "No brand"}
-                            </Paragraph1>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
-                            request.requestType === "purchase"
-                              ? "bg-violet-100 text-violet-800"
-                              : "bg-sky-100 text-sky-800"
-                          }`}
-                        >
-                          {request.requestType === "purchase"
-                            ? "Purchase"
-                            : `Rental · ${request.rentalDays}d`}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 min-w-[140px]">
-                        <Paragraph1 className="font-medium text-gray-900 text-sm">
-                          {request.requester?.name || "—"}
-                        </Paragraph1>
-                        <Paragraph1 className="text-gray-400 text-xs truncate max-w-[160px]">
-                          {request.requester?.email || ""}
-                        </Paragraph1>
-                      </td>
-                      <td className="px-4 py-4 min-w-[140px]">
-                        <Paragraph1 className="font-medium text-gray-900 text-sm">
-                          {request.lister?.name || "—"}
-                        </Paragraph1>
-                        <Paragraph1 className="text-gray-400 text-xs truncate max-w-[160px]">
-                          {request.lister?.email || ""}
-                        </Paragraph1>
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap font-medium text-sm">
-                        {formatCurrency(request.totalPrice)}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getAvailabilityStatusColor(
-                            request.status,
-                          )}`}
-                        >
-                          {getAvailabilityStatusLabel(request.status)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 text-gray-600 text-sm whitespace-nowrap">
-                        {formatDateTime(request.createdAt)}
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 text-right">
-                        <button
-                          type="button"
-                          onClick={() => openRequest(request.id)}
-                          className="hover:bg-gray-100 px-3 py-1.5 border border-gray-200 rounded-lg font-medium text-gray-800 text-sm transition"
-                        >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ResponsiveDataTable
+              rows={requests}
+              columns={requestColumns}
+              getRowKey={(request) => request.id}
+              className={listFetching ? "opacity-60" : ""}
+            />
 
             {pagination.total > 0 && (
               <div className="flex sm:flex-row flex-col sm:justify-between sm:items-center gap-3 px-6 py-4 border-gray-100 border-t">

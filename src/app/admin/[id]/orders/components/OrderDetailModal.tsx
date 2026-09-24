@@ -1,15 +1,13 @@
 // ENDPOINTS: GET /api/admin/orders/:orderId
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
-import {
-  slidePanelBackdrop,
-  slidePanelSheet,
-} from "@/common/ui/dashboardClasses";
+import { slidePanelBackdrop } from "@/common/ui/dashboardClasses";
 import OrderSection2 from "./OrderSection2";
 import OrderSection3 from "./OrderSection3";
 import OrderItemsSection from "./OrderItemsSection";
@@ -69,7 +67,12 @@ export default function OrderDetailModal({
   orderId,
 }: OrderDetailModalProps) {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { data, isLoading, isError } = useOrderById(orderId ?? "", isOpen);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const cancelOrder = useCancelOrder();
   const order = data?.data as OrderDetail | undefined;
 
@@ -99,7 +102,9 @@ export default function OrderDetailModal({
     }
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && orderId && (
         <>
@@ -116,51 +121,56 @@ export default function OrderDetailModal({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className={`${slidePanelSheet} z-50 md:w-3/4`}
+            className="fixed inset-0 z-[100] flex h-[100dvh] w-full max-w-full flex-col overflow-y-auto bg-white shadow-2xl hide-scrollbar md:inset-y-0 md:left-auto md:w-[min(100%,48rem)] lg:w-3/4"
           >
-            <div className="top-0 sticky bg-white p-6 border-gray-200 border-b">
-              <div className="flex justify-between items-start gap-4">
+            <div className="top-0 sticky bg-white border-gray-200 border-b p-4 sm:p-6">
+              <div className="flex items-start gap-3">
                 <button
                   onClick={onClose}
                   className="shrink-0 -ml-1 p-1 text-gray-400 hover:text-gray-600 transition"
+                  aria-label="Close order details"
                 >
                   <X size={20} />
                 </button>
 
-                <div className="flex-1">
-                  <Paragraph3 className="mb-1 font-bold text-gray-900 text-lg">
-                    Order details
-                  </Paragraph3>
-                  <Paragraph1 className="text-gray-500 text-xs">
-                    {orderId}
-                    {order?.date ? ` · ${order.date}` : ""}
-                  </Paragraph1>
-                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <Paragraph3 className="mb-1 font-bold text-gray-900 text-lg">
+                        Order details
+                      </Paragraph3>
+                      <Paragraph1 className="break-all text-gray-500 text-xs">
+                        {orderId}
+                        {order?.date ? ` · ${order.date}` : ""}
+                      </Paragraph1>
+                    </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  {!isLoading && order && (
-                    <span
-                      className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                        statusLabel,
-                      )}`}
-                    >
-                      {statusLabel}
-                    </span>
-                  )}
-                  {canCancel && (
-                    <button
-                      type="button"
-                      onClick={() => setCancelModalOpen(true)}
-                      className="px-3 py-1 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition"
-                    >
-                      Cancel order
-                    </button>
-                  )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {!isLoading && order && (
+                        <span
+                          className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(
+                            statusLabel,
+                          )}`}
+                        >
+                          {statusLabel}
+                        </span>
+                      )}
+                      {canCancel && (
+                        <button
+                          type="button"
+                          onClick={() => setCancelModalOpen(true)}
+                          className="rounded-lg bg-red-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-red-700"
+                        >
+                          Cancel order
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-6 p-6">
+            <div className="space-y-4 px-4 py-4 sm:space-y-6 sm:px-6 sm:py-6">
               {isLoading && (
                 <Paragraph1 className="text-gray-500 text-sm">
                   Loading order details…
@@ -221,7 +231,7 @@ export default function OrderDetailModal({
                   />
 
                   {(order.escrows?.length ?? 0) > 0 && (
-                    <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 sm:p-6">
                       <Paragraph3 className="text-base font-bold text-gray-900 mb-4">
                         Escrow
                       </Paragraph3>
@@ -255,6 +265,7 @@ export default function OrderDetailModal({
           />
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

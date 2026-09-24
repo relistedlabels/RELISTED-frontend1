@@ -37,8 +37,8 @@ export default function AdminSignInForm() {
     /verify|verification|inbox/i.test(msg);
 
   return (
-    <div className="font-sans-">
-      <div className="bg-white p-4 md:p-8 pb-[100px] sm:pb-0 sm:rounded-3xl w-full sm:w-[500px] text-gray-600 max-">
+    <div className="font-sans">
+      <div className="w-full max-w-[500px] bg-white p-4 pb-[100px] text-gray-600 sm:rounded-3xl sm:pb-0 md:p-8">
         {/* Header */}
         <div className="flex flex-col justify-center items-center mb-8 text-center">
           <img src="/images/logo1.svg" alt="" className="mb-4 w-10 h-10" />
