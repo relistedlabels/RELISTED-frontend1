@@ -42,7 +42,7 @@ export default async function ProductDetailsPage({
           <ProductAccordion productId={id} />
         </div>
       </div>
-      <TopListingSection />
+      <TopListingSection productId={id} />
     </div>
   );
 }
