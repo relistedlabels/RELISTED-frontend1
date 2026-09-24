@@ -400,7 +400,7 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
       {lister && (
         <UserProfile
           name={lister.name || "Verified Lister"}
-          rating={lister.rating || 4.5}
+          rating={lister.rating ?? 0}
           avatar={lister.avatar}
           userId={product.curatorId}
         />

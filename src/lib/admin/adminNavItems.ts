@@ -91,6 +91,11 @@ export function getAdminNavItemDefinitions(): AdminNavItemDefinition[] {
       countKey: "pendingDisputes",
     },
     {
+      id: "reviews",
+      label: "Reviews",
+      getHref: (id) => `/admin/${id}/reviews`,
+    },
+    {
       id: "settings",
       label: "Settings",
       getHref: (id) => `/admin/${id}/settings`,
