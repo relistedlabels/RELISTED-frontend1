@@ -7,6 +7,7 @@ export const ONBOARDING_IDLE_PROMPT_MS = 90_000;
 /** Paths that suggest the user may need guidance (never cart/checkout: active purchase flow). */
 export const ONBOARDING_TROUBLE_PATH_PREFIXES = [
   "/renters/wallet",
+  "/renters/withdraw",
   "/renters/account",
   "/listers/inventory/product-upload",
   "/listers/wallet",

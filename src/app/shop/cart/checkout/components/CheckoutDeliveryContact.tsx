@@ -22,7 +22,7 @@ export default function CheckoutDeliveryContact({
       {contactName?.trim() ? (
         <div className="px-3 py-2.5">
           <CheckoutFieldLabel>Name</CheckoutFieldLabel>
-          <p className="mt-0.5 text-gray-900 text-sm leading-snug">
+          <p className="mt-0.5 font-medium text-gray-900 text-sm leading-snug">
             {contactName.trim()}
           </p>
         </div>

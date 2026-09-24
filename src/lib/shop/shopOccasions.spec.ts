@@ -7,7 +7,7 @@ describe("shopOccasionsFromFilterOptions", () => {
     const occasions = shopOccasionsFromFilterOptions({
       ...EMPTY_LISTING_FILTER_OPTIONS,
       tags: [
-        { id: "1", name: "Night Out" },
+        { id: "1", name: "Night out" },
         { id: "2", name: "Unused Tag" },
       ],
     });

@@ -56,7 +56,7 @@ export default function CheckoutEditableField({
         <CheckoutFieldLabel>{label}</CheckoutFieldLabel>
         <p
           className={`mt-0.5 text-sm leading-snug ${
-            isEmpty ? "text-gray-500" : "text-gray-900"
+            isEmpty ? "text-gray-500" : "font-medium text-gray-900"
           }`}
         >
           {displayValue}

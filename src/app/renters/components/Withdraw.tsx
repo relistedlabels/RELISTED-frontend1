@@ -500,7 +500,11 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
 // --------------------
 // Main Component
 // --------------------
-const Withdraw: React.FC = () => {
+type WithdrawProps = {
+  className?: string;
+};
+
+const Withdraw: React.FC<WithdrawProps> = ({ className = "flex-1" }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -508,8 +512,9 @@ const Withdraw: React.FC = () => {
       {/* Toggle Button */}
 
       <button
+        type="button"
         onClick={() => setIsOpen(true)}
-        className={`${buttonPrimary} flex-1 py-3`}
+        className={`${buttonPrimary} ${className} py-3`}
       >
         <Paragraph1>Withdraw</Paragraph1>
         <HiOutlineArrowDownRight className="w-4 h-4 ml-1" />

@@ -35,6 +35,7 @@ const ACTIVE_TASK_BYPASS_PREFIXES = [
   "/listers/wallet",
   "/renters/account",
   "/renters/wallet",
+  "/renters/withdraw",
 ] as const;
 
 export function shouldBypassOnboardingForPath(

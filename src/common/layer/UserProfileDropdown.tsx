@@ -13,6 +13,7 @@ import {
   ChevronDown,
   LayoutDashboard,
   Compass,
+  ArrowDownToLine,
 } from "lucide-react";
 import { authRoleToOnboardingRole } from "@/lib/onboarding/onboardingGate";
 import {
@@ -62,6 +63,11 @@ export default function UserProfileDropdown({
       label: "Wallet",
       icon: Wallet,
       href: "/renters/wallet",
+    },
+    {
+      label: "Withdraw",
+      icon: ArrowDownToLine,
+      href: "/renters/withdraw",
     },
     {
       label: "Disputes",
