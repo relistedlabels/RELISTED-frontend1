@@ -252,6 +252,17 @@ export const productApi = {
       },
     ),
 
+  getSimilar: (id: string, limit = 20) => {
+    const params = new URLSearchParams();
+    params.set("limit", limit.toString());
+    return apiFetch<ProductsResponse>(
+      `/api/public/products/${id}/similar?${params.toString()}`,
+      {
+        method: "GET",
+      },
+    );
+  },
+
   // Authenticated API - Get user's own product
   getById: (id: string) =>
     apiFetch<UserProduct>(`/product/${id}`, {
