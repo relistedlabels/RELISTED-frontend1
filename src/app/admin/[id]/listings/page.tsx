@@ -17,6 +17,7 @@ import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { TableSkeleton, StatCardSkeleton } from "@/common/ui/SkeletonLoaders";
+import { AdminSectionTabs } from "../../components/AdminSectionTabs";
 import ListingDetailModal from "./components/ListingDetailModal";
 import PendingListingsTable from "./components/PendingListingsTable";
 import ActiveListingsTable from "./components/ActiveListingsTable";
@@ -773,27 +774,15 @@ export default function ListingsPage() {
         )}
       </div>
 
-      {/* Tabs */}
-      <div className="mb-6 border-b border-gray-200">
-        <div className="flex gap-8">
-          {TABS.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => {
-                setActiveTab(tab);
-                setSelectedIds(new Set());
-              }}
-              className={`py-4 px-0 font-medium text-sm transition-colors border-b-2 ${
-                activeTab === tab
-                  ? "text-gray-900 border-black"
-                  : "text-gray-500 border-transparent hover:text-gray-700"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-      </div>
+      <AdminSectionTabs
+        className="mb-6"
+        tabs={TABS.map((tab) => ({ id: tab, label: tab }))}
+        activeTab={activeTab}
+        onChange={(tab) => {
+          setActiveTab(tab as TabType);
+          setSelectedIds(new Set());
+        }}
+      />
 
       {/* Listings Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">

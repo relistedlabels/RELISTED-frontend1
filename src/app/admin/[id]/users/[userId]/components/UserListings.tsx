@@ -4,6 +4,10 @@
 import React, { useState } from "react";
 import { Eye } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
+import {
+  ResponsiveDataTable,
+  type ResponsiveColumnDef,
+} from "@/common/ui/ResponsiveDataTable";
 import { UserListing } from "@/lib/api/admin/users";
 import { usePublicProductById } from "@/lib/queries/product/usePublicProductById";
 import ListingDetailModal from "../../../listings/components/ListingDetailModal";
@@ -28,28 +32,25 @@ const getStatusColor = (status: string) => {
   }
 };
 
-// Product image row component
 const ProductImageRow: React.FC<{ productId: string }> = ({ productId }) => {
   const { data: product, isLoading, isError } = usePublicProductById(productId);
-
-  // Extract first image from product attachments
   const firstImageUrl = firstProductAttachmentImageUrl(
     product?.attachments?.uploads,
   );
 
   return (
-    <div className="w-16 h-16 rounded object-cover bg-gray-100 flex items-center justify-center overflow-hidden">
+    <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded bg-gray-100 object-cover">
       {isLoading ? (
-        <div className="w-full h-full bg-gray-200 animate-pulse" />
+        <div className="h-full w-full animate-pulse bg-gray-200" />
       ) : isError || !firstImageUrl ? (
-        <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+        <div className="flex h-full w-full items-center justify-center bg-gray-300">
           <span className="text-xs text-gray-600">N/A</span>
         </div>
       ) : (
         <img
           src={firstImageUrl}
           alt="Product"
-          className="w-full h-full object-cover"
+          className="h-full w-full object-cover"
           onError={(e) => {
             e.currentTarget.style.display = "none";
           }}
@@ -58,6 +59,98 @@ const ProductImageRow: React.FC<{ productId: string }> = ({ productId }) => {
     </div>
   );
 };
+
+function buildColumns(
+  onViewListing: (listing: UserListing) => void,
+): ResponsiveColumnDef<UserListing>[] {
+  return [
+    {
+      id: "image",
+      header: "Image",
+      mobile: "hidden",
+      render: (listing) => <ProductImageRow productId={listing.id} />,
+    },
+    {
+      id: "itemName",
+      header: "Item Name",
+      mobile: "primary",
+      render: (listing) => (
+        <Paragraph1 className="font-medium text-gray-900">{listing.name}</Paragraph1>
+      ),
+    },
+    {
+      id: "originalValue",
+      header: "Original Value",
+      mobile: "detail",
+      render: (listing) => (
+        <Paragraph1 className="font-medium text-gray-900">
+          ₦{(listing.originalValue || 0).toLocaleString()}
+        </Paragraph1>
+      ),
+    },
+    {
+      id: "pricePerDay",
+      header: "Price/Day",
+      mobile: "detail",
+      render: (listing) => (
+        <Paragraph1 className="font-medium text-gray-900">
+          ₦{listing.dailyPrice.toLocaleString()}
+        </Paragraph1>
+      ),
+    },
+    {
+      id: "quantity",
+      header: "Quantity",
+      mobile: "detail",
+      render: (listing) => (
+        <Paragraph1 className="text-sm text-gray-900">
+          {listing.quantity || 0}
+        </Paragraph1>
+      ),
+    },
+    {
+      id: "status",
+      header: "Status",
+      mobile: "badge",
+      render: (listing) => (
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(listing.status)}`}
+        >
+          {listing.status}
+        </span>
+      ),
+    },
+    {
+      id: "dateAdded",
+      header: "Date Added",
+      mobile: "detail",
+      render: (listing) => (
+        <Paragraph1 className="text-sm text-gray-900">
+          {new Date(listing.createdAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "2-digit",
+          })}
+        </Paragraph1>
+      ),
+    },
+    {
+      id: "action",
+      header: "Action",
+      mobile: "action",
+      render: (listing) => (
+        <button
+          type="button"
+          onClick={() => onViewListing(listing)}
+          className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50"
+        >
+          <Eye size={18} />
+          View
+        </button>
+      ),
+    },
+  ];
+}
 
 export default function UserListings({ listings }: UserListingsProps) {
   const [selectedListing, setSelectedListing] = useState<any>(null);
@@ -81,6 +174,8 @@ export default function UserListings({ listings }: UserListingsProps) {
     setIsModalOpen(true);
   };
 
+  const columns = buildColumns(handleViewListing);
+
   return (
     <div>
       {selectedListing && (
@@ -91,110 +186,16 @@ export default function UserListings({ listings }: UserListingsProps) {
         />
       )}
 
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-200 bg-gray-50">
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                Image
-              </th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                Item Name
-              </th>
-
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                Original Value
-              </th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                Price/Day
-              </th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                Quantity
-              </th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                Status
-              </th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                Date Added
-              </th>
-              <th className="text-left py-4 px-6 text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                Action
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {listings && listings.length === 0 ? (
-              <tr>
-                <td colSpan={10} className="py-8 text-center">
-                  <Paragraph1 className="text-gray-500">
-                    No listings found
-                  </Paragraph1>
-                </td>
-              </tr>
-            ) : (
-              listings &&
-              listings.map((listing) => (
-                <tr
-                  key={listing.id}
-                  className="border-b border-gray-200 hover:bg-gray-50 transition"
-                >
-                  <td className="py-4 px-6">
-                    <ProductImageRow productId={listing.id} />
-                  </td>
-                  <td className="py-4 px-6">
-                    <Paragraph1 className="font-medium text-gray-900">
-                      {listing.name}
-                    </Paragraph1>
-                  </td>
-
-                  <td className="py-4 px-6">
-                    <Paragraph1 className="font-medium text-gray-900">
-                      ₦{(listing.originalValue || 0).toLocaleString()}
-                    </Paragraph1>
-                  </td>
-                  <td className="py-4 px-6">
-                    <Paragraph1 className="font-medium text-gray-900">
-                      ₦{listing.dailyPrice.toLocaleString()}
-                    </Paragraph1>
-                  </td>
-                  <td className="py-4 px-6">
-                    <Paragraph1 className="text-sm text-gray-900">
-                      {listing.quantity || 0}
-                    </Paragraph1>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                        listing.status,
-                      )}`}
-                    >
-                      {listing.status}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <Paragraph1 className="text-sm text-gray-900">
-                      {new Date(listing.createdAt).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "2-digit",
-                      })}
-                    </Paragraph1>
-                  </td>
-                  <td className="py-4 px-6">
-                    <button
-                      onClick={() => handleViewListing(listing)}
-                      className="px-3 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 font-medium text-sm"
-                    >
-                      <Eye size={18} />
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <ResponsiveDataTable
+        rows={listings ?? []}
+        columns={columns}
+        getRowKey={(listing) => listing.id}
+        emptyState={
+          <Paragraph1 className="py-8 text-center text-gray-500">
+            No listings found
+          </Paragraph1>
+        }
+      />
     </div>
   );
 }

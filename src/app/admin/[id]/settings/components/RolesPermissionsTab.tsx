@@ -4,6 +4,10 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import {
+  ResponsiveDataTable,
+  type ResponsiveColumnDef,
+} from "@/common/ui/ResponsiveDataTable";
 import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
 import { Edit2, X } from "lucide-react";
 import { useRoles } from "@/lib/queries/admin/useSettings";
@@ -38,6 +42,53 @@ export default function RolesPermissionsTab() {
     platformSettings: true,
   });
 
+  type RoleRow = (typeof roles)[0];
+  const roleColumns: ResponsiveColumnDef<RoleRow>[] = [
+    {
+      id: "name",
+      header: "Role Name",
+      mobile: "primary",
+      render: (role) => (
+        <Paragraph1 className="font-medium text-gray-900">{role.name}</Paragraph1>
+      ),
+    },
+    {
+      id: "description",
+      header: "Description",
+      mobile: "detail",
+      render: (role) => (
+        <Paragraph1 className="text-gray-600">{role.description}</Paragraph1>
+      ),
+    },
+    {
+      id: "adminCount",
+      header: "Number of Admins",
+      mobile: "detail",
+      render: (role) => (
+        <Paragraph1 className="font-medium text-gray-900">{role.adminCount}</Paragraph1>
+      ),
+    },
+    {
+      id: "action",
+      header: "Action",
+      mobile: "action",
+      render: (role) => (
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedRole(role);
+            setPermissions(role.permissions);
+            setShowEditPermissionsModal(true);
+          }}
+          className="flex items-center gap-2 rounded-lg border border-gray-900 px-4 py-2 font-medium text-gray-900 hover:bg-gray-50"
+        >
+          <Edit2 size={16} />
+          <Paragraph1 className="text-gray-900">Edit Permissions</Paragraph1>
+        </button>
+      ),
+    },
+  ];
+
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
@@ -54,83 +105,16 @@ export default function RolesPermissionsTab() {
       {showSkeleton ? (
         <TableSkeleton rows={4} columns={4} />
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-300">
-                <th className="text-left py-4 px-4">
-                  <Paragraph1 className="text-gray-900 font-bold">
-                    ROLE NAME
-                  </Paragraph1>
-                </th>
-                <th className="text-left py-4 px-4">
-                  <Paragraph1 className="text-gray-900 font-bold">
-                    DESCRIPTION
-                  </Paragraph1>
-                </th>
-                <th className="text-left py-4 px-4">
-                  <Paragraph1 className="text-gray-900 font-bold">
-                    NUMBER OF ADMINS
-                  </Paragraph1>
-                </th>
-                <th className="text-left py-4 px-4">
-                  <Paragraph1 className="text-gray-900 font-bold">
-                    ACTION
-                  </Paragraph1>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {roles.length > 0 ? (
-                roles.map((role) => (
-                  <tr
-                    key={role.id}
-                    className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="py-4 px-4">
-                      <Paragraph1 className="text-gray-900 font-medium">
-                        {role.name}
-                      </Paragraph1>
-                    </td>
-                    <td className="py-4 px-4">
-                      <Paragraph1 className="text-gray-600">
-                        {role.description}
-                      </Paragraph1>
-                    </td>
-                    <td className="py-4 px-4">
-                      <Paragraph1 className="text-gray-900 font-medium">
-                        {role.adminCount}
-                      </Paragraph1>
-                    </td>
-                    <td className="py-4 px-4">
-                      <button
-                        onClick={() => {
-                          setSelectedRole(role);
-                          setPermissions(role.permissions);
-                          setShowEditPermissionsModal(true);
-                        }}
-                        className="px-4 py-2 border border-gray-900 text-gray-900 rounded-lg hover:bg-gray-50 font-medium flex items-center gap-2"
-                      >
-                        <Edit2 size={16} />
-                        <Paragraph1 className="text-gray-900">
-                          Edit Permissions
-                        </Paragraph1>
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={4} className="py-8 px-4 text-center">
-                    <Paragraph1 className="text-gray-500">
-                      No roles found
-                    </Paragraph1>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <ResponsiveDataTable
+          rows={roles}
+          columns={roleColumns}
+          getRowKey={(role) => role.id}
+          emptyState={
+            <Paragraph1 className="py-8 text-center text-gray-500">
+              No roles found
+            </Paragraph1>
+          }
+        />
       )}
 
       {/* Create Role Modal */}

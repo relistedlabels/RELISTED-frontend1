@@ -6,6 +6,10 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, LayoutGrid } from "lucide-react";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import {
+  ResponsiveDataTable,
+  type ResponsiveColumnDef,
+} from "@/common/ui/ResponsiveDataTable";
 import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
 import { useAdminClosetDetail } from "@/lib/queries/admin/useAdminClosets";
 import AdminVaultClosetSaleWaitlistCard from "../components/AdminVaultClosetSaleWaitlistCard";
@@ -17,6 +21,109 @@ const formatCurrency = (value: number): string =>
     currency: "NGN",
     minimumFractionDigits: 0,
   }).format(value);
+
+type ClosetProductRow = {
+  id: string;
+  name: string;
+  imageUrl?: string | null;
+  listingType: string;
+  status: string;
+  dailyPrice?: number | null;
+  resalePrice?: number | null;
+  productVerified?: boolean;
+};
+
+const productColumns: ResponsiveColumnDef<ClosetProductRow>[] = [
+  {
+    id: "image",
+    header: "Image",
+    mobile: "hidden",
+    render: (p) => (
+      <div className="relative h-12 w-12 overflow-hidden rounded-lg border border-gray-100 bg-gray-100">
+        {p.imageUrl ? (
+          <Image
+            src={p.imageUrl}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="48px"
+            unoptimized
+          />
+        ) : null}
+      </div>
+    ),
+  },
+  {
+    id: "product",
+    header: "Product",
+    mobile: "primary",
+    render: (p) => (
+      <div>
+        <Paragraph1 className="line-clamp-2 max-w-[240px] text-sm font-medium text-gray-900">
+          {p.name}
+        </Paragraph1>
+        <Paragraph1 className="mt-0.5 font-mono text-xs text-gray-400">
+          {p.id.slice(0, 8)}…
+        </Paragraph1>
+      </div>
+    ),
+  },
+  {
+    id: "type",
+    header: "Type",
+    mobile: "detail",
+    render: (p) => (
+      <Paragraph1 className="text-sm text-gray-700">{p.listingType}</Paragraph1>
+    ),
+  },
+  {
+    id: "status",
+    header: "Status",
+    mobile: "badge",
+    render: (p) => (
+      <Paragraph1 className="text-sm text-gray-700">{p.status}</Paragraph1>
+    ),
+  },
+  {
+    id: "rental",
+    header: "Rental / day",
+    mobile: "detail",
+    render: (p) => (
+      <Paragraph1 className="tabular-nums text-sm text-gray-900">
+        {listingPriceDisplay(p).listingType === "RESALE"
+          ? "—"
+          : p.dailyPrice != null
+            ? formatCurrency(p.dailyPrice)
+            : "—"}
+      </Paragraph1>
+    ),
+  },
+  {
+    id: "resale",
+    header: "Resale",
+    mobile: "detail",
+    render: (p) => (
+      <Paragraph1 className="tabular-nums text-sm text-gray-900">
+        {p.resalePrice != null ? formatCurrency(p.resalePrice) : "—"}
+      </Paragraph1>
+    ),
+  },
+  {
+    id: "verified",
+    header: "Verified",
+    mobile: "detail",
+    render: (p) =>
+      p.productVerified ? (
+        <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
+          Yes
+        </span>
+      ) : (
+        <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
+          No
+        </span>
+      ),
+  },
+];
 
 export default function AdminClosetDetailPage() {
   const params = useParams();
@@ -143,122 +250,17 @@ export default function AdminClosetDetailPage() {
             <Paragraph1 className="mb-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">
               Products in this closet
             </Paragraph1>
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-gray-50 border-b border-gray-200">
-                      <th className="px-6 py-4 text-left w-[72px]">
-                        <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                          Image
-                        </Paragraph1>
-                      </th>
-                      <th className="px-6 py-4 text-left">
-                        <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                          Product
-                        </Paragraph1>
-                      </th>
-                      <th className="px-6 py-4 text-left">
-                        <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                          Type
-                        </Paragraph1>
-                      </th>
-                      <th className="px-6 py-4 text-left">
-                        <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                          Status
-                        </Paragraph1>
-                      </th>
-                      <th className="px-6 py-4 text-left">
-                        <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                          Rental / day
-                        </Paragraph1>
-                      </th>
-                      <th className="px-6 py-4 text-left">
-                        <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                          Resale
-                        </Paragraph1>
-                      </th>
-                      <th className="px-6 py-4 text-left">
-                        <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                          Verified
-                        </Paragraph1>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {c.products.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} className="px-6 py-12 text-center">
-                          <Paragraph1 className="text-gray-500">
-                            No products in this closet.
-                          </Paragraph1>
-                        </td>
-                      </tr>
-                    ) : (
-                      c.products.map((p) => (
-                        <tr
-                          key={p.id}
-                          className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors"
-                        >
-                          <td className="px-6 py-4">
-                            <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 border border-gray-100">
-                              {p.imageUrl ? (
-                                <Image
-                                  src={p.imageUrl}
-                                  alt=""
-                                  fill
-                                  className="object-cover"
-                                  sizes="48px"
-                                  unoptimized
-                                />
-                              ) : null}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <Paragraph1 className="text-gray-900 font-medium text-sm max-w-[240px] line-clamp-2">
-                              {p.name}
-                            </Paragraph1>
-                            <Paragraph1 className="text-gray-400 text-xs font-mono mt-0.5">
-                              {p.id.slice(0, 8)}…
-                            </Paragraph1>
-                          </td>
-                          <td className="px-6 py-4">
-                            <Paragraph1 className="text-gray-700 text-sm">{p.listingType}</Paragraph1>
-                          </td>
-                          <td className="px-6 py-4">
-                            <Paragraph1 className="text-gray-700 text-sm">{p.status}</Paragraph1>
-                          </td>
-                          <td className="px-6 py-4">
-                            <Paragraph1 className="text-gray-900 text-sm tabular-nums">
-                              {listingPriceDisplay(p).listingType === "RESALE"
-                                ? "—"
-                                : p.dailyPrice != null
-                                  ? formatCurrency(p.dailyPrice)
-                                  : "—"}
-                            </Paragraph1>
-                          </td>
-                          <td className="px-6 py-4">
-                            <Paragraph1 className="text-gray-900 text-sm tabular-nums">
-                              {p.resalePrice != null ? formatCurrency(p.resalePrice) : "—"}
-                            </Paragraph1>
-                          </td>
-                          <td className="px-6 py-4">
-                            {p.productVerified ? (
-                              <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                Yes
-                              </span>
-                            ) : (
-                              <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                                No
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+            <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+              <ResponsiveDataTable
+                rows={c.products as unknown as ClosetProductRow[]}
+                columns={productColumns}
+                getRowKey={(p) => p.id}
+                emptyState={
+                  <Paragraph1 className="py-12 text-center text-gray-500">
+                    No products in this closet.
+                  </Paragraph1>
+                }
+              />
             </div>
           </div>
 

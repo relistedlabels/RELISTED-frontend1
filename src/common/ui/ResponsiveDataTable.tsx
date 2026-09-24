@@ -5,6 +5,7 @@ import { Paragraph1 } from "@/common/ui/Text";
 
 export type ResponsiveColumnMobileRole =
   | "primary"
+  | "thumbnail"
   | "badge"
   | "detail"
   | "action"
@@ -36,6 +37,8 @@ function inferMobileRole<T>(
   const id = column.id.toLowerCase();
   const label = normalizeHeaderLabel(column.header).toLowerCase();
   if (id.includes("action") || label.includes("action")) return "action";
+  if (id.includes("image") || id.includes("thumb") || label.includes("image"))
+    return "thumbnail";
   if (id.includes("status") || label.includes("status")) return "badge";
   if (index === 0) return "primary";
   if (index === total - 1 && label.includes("action")) return "action";
@@ -105,8 +108,11 @@ export function ResponsiveDataTable<T>({
 
   return (
     <div className={className}>
-      <div className="divide-y divide-gray-100 md:hidden">
+      <div className="flex flex-col gap-3 bg-gray-50 p-3 md:hidden">
         {rows.map((row, rowIndex) => {
+          const thumbnailCols = columnMeta.filter(
+            (c) => c.mobileRole === "thumbnail",
+          );
           const primaryCols = columnMeta.filter((c) => c.mobileRole === "primary");
           const badgeCols = columnMeta.filter((c) => c.mobileRole === "badge");
           const detailCols = columnMeta.filter((c) => c.mobileRole === "detail");
@@ -128,19 +134,31 @@ export function ResponsiveDataTable<T>({
                     }
                   : undefined
               }
-              className={`bg-white px-4 py-4 ${
-                onRowClick ? "cursor-pointer active:bg-gray-50" : ""
+              className={`rounded-xl border border-gray-200 bg-white px-4 py-4 shadow-sm ${
+                onRowClick
+                  ? "cursor-pointer transition-colors hover:border-gray-300 active:bg-gray-50"
+                  : ""
               }`}
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1 space-y-1">
-                  {(primaryCols.length > 0 ? primaryCols : [columnMeta[0]]).map(
-                    (col) => (
+                <div className="flex min-w-0 flex-1 items-start gap-3">
+                  {thumbnailCols.length > 0 ? (
+                    <div className="shrink-0">
+                      {thumbnailCols.map((col) => (
+                        <div key={col.id}>{col.render(row, rowIndex)}</div>
+                      ))}
+                    </div>
+                  ) : null}
+                  <div className="min-w-0 flex-1 space-y-1">
+                    {(primaryCols.length > 0
+                      ? primaryCols
+                      : [columnMeta[0]]
+                    ).map((col) => (
                       <div key={col.id} className="min-w-0">
                         {col.render(row, rowIndex)}
                       </div>
-                    ),
-                  )}
+                    ))}
+                  </div>
                 </div>
                 {badgeCols.length > 0 ? (
                   <div className="flex shrink-0 flex-col items-end gap-1">
@@ -152,16 +170,13 @@ export function ResponsiveDataTable<T>({
               </div>
 
               {detailCols.length > 0 ? (
-                <dl className="mt-3 space-y-2 border-t border-gray-100 pt-3">
+                <dl className="mt-3 space-y-3 border-t border-gray-200 pt-3">
                   {detailCols.map((col) => (
-                    <div
-                      key={col.id}
-                      className="flex items-start justify-between gap-4"
-                    >
-                      <dt className="shrink-0 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    <div key={col.id} className="flex flex-col gap-0.5">
+                      <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                         {col.mobileLabel ?? normalizeHeaderLabel(col.header)}
                       </dt>
-                      <dd className="min-w-0 text-right text-sm text-gray-900">
+                      <dd className="min-w-0 break-words text-sm text-gray-900">
                         {col.render(row, rowIndex)}
                       </dd>
                     </div>
@@ -171,7 +186,7 @@ export function ResponsiveDataTable<T>({
 
               {actionCols.length > 0 ? (
                 <div
-                  className="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-gray-100 pt-3"
+                  className="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-gray-200 pt-3"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {actionCols.map((col) => (

@@ -1,13 +1,16 @@
 "use client";
-// ENDPOINTS: GET /api/admin/wallets?search=&page=1&limit=20, GET /api/public/users/:userId
+// ENDPOINTS: GET /api/admin/wallets?search=&page=1&limit=20
 
 import React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
+import {
+  ResponsiveDataTable,
+  type ResponsiveColumnDef,
+} from "@/common/ui/ResponsiveDataTable";
 import { useWallets } from "@/lib/queries/admin/useWallets";
-import { usePublicUserById } from "@/lib/queries/user/usePublicUserById";
 import AdminTablePagination, {
   EMPTY_WALLET_PAGINATION,
   useWalletTablePage,
@@ -17,91 +20,84 @@ interface WalletTableProps {
   searchQuery: string;
 }
 
-// Component to display a single wallet row with user details
-function WalletRow({
-  wallet,
-  adminSegment,
-}: {
-  wallet: {
-    id: string;
-    userId: string;
-    mainBalance: number;
-    availableBalance: number;
-    collateralBalance: number;
-    createdAt: string;
-    user: {
-      name: string;
-      email: string;
-    };
+type WalletRow = {
+  id: string;
+  userId: string;
+  mainBalance: number;
+  availableBalance: number;
+  collateralBalance: number;
+  createdAt: string;
+  user: {
+    name: string;
+    email: string;
+    role?: string;
+    avatar?: string | null;
   };
-  adminSegment: string;
-}) {
-  const { data: userDetails, isLoading } = usePublicUserById(wallet.userId);
-  const userHref =
-    adminSegment && wallet.userId
-      ? `/admin/${adminSegment}/users/${wallet.userId}`
-      : "#";
+};
 
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
+const formatCurrency = (amount: number): string =>
+  new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: 0,
+  }).format(amount);
 
-  const truncateWalletId = (id: string): string => {
-    return id.substring(0, 5);
-  };
+const truncateWalletId = (id: string): string => id.substring(0, 5);
 
-  const getLastUpdatedDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
+const getLastUpdatedDate = (dateString: string): string =>
+  new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 
-  const getRoleBadgeColor = (role: string | undefined): string => {
-    switch (role?.toLowerCase()) {
-      case "lister":
-        return "bg-blue-100 text-blue-700";
-      case "renter":
-        return "bg-purple-100 text-purple-700";
-      case "admin":
-        return "bg-red-100 text-red-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
-  };
+const getRoleBadgeColor = (role: string | undefined): string => {
+  switch (role?.toLowerCase()) {
+    case "lister":
+      return "bg-blue-100 text-blue-700";
+    case "renter":
+      return "bg-purple-100 text-purple-700";
+    case "admin":
+      return "bg-red-100 text-red-700";
+    default:
+      return "bg-gray-100 text-gray-700";
+  }
+};
 
-  const getInitials = (name: string): string => {
-    return name
-      .split(" ")
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase()
-      .substring(0, 2);
-  };
+const getInitials = (name: string): string =>
+  name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase()
+    .substring(0, 2);
 
-  return (
-    <tr className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
-      <td className="px-6 py-4">
-        <Paragraph1 className="text-gray-900 font-medium">
+function buildWalletColumns(adminSegment: string): ResponsiveColumnDef<WalletRow>[] {
+  return [
+    {
+      id: "walletId",
+      header: "Wallet ID",
+      mobile: "detail",
+      render: (wallet) => (
+        <Paragraph1 className="font-medium text-gray-900">
           {truncateWalletId(wallet.id)}
         </Paragraph1>
-      </td>
-      <td className="px-6 py-4">
+      ),
+    },
+    {
+      id: "user",
+      header: "User",
+      mobile: "primary",
+      render: (wallet) => (
         <div className="flex items-center gap-3">
-          {userDetails?.avatar ? (
+          {wallet.user.avatar ? (
             <img
-              src={userDetails.avatar}
+              src={wallet.user.avatar}
               alt={wallet.user.name}
-              className="w-8 h-8 rounded-full object-cover"
+              className="h-8 w-8 rounded-full object-cover"
             />
           ) : (
-            <div className="w-8 h-8 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center text-xs font-semibold">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-300 text-xs font-semibold text-gray-700">
               {getInitials(wallet.user.name)}
             </div>
           )}
@@ -112,51 +108,82 @@ function WalletRow({
             <span className="text-xs text-gray-500">{wallet.user.email}</span>
           </div>
         </div>
-      </td>
-      <td className="px-6 py-4">
-        <Paragraph1 className="text-gray-900 font-semibold">
+      ),
+    },
+    {
+      id: "mainBalance",
+      header: "Total Balance",
+      mobile: "detail",
+      render: (wallet) => (
+        <Paragraph1 className="font-semibold text-gray-900">
           {formatCurrency(wallet.mainBalance)}
         </Paragraph1>
-      </td>
-      <td className="px-6 py-4">
-        <Paragraph1 className="text-green-600 font-medium">
+      ),
+    },
+    {
+      id: "availableBalance",
+      header: "Available",
+      mobile: "detail",
+      render: (wallet) => (
+        <Paragraph1 className="font-medium text-green-600">
           {formatCurrency(wallet.availableBalance)}
         </Paragraph1>
-      </td>
-      <td className="px-6 py-4">
-        <Paragraph1 className="text-orange-600 font-medium">
+      ),
+    },
+    {
+      id: "collateralBalance",
+      header: "Collateral",
+      mobile: "detail",
+      render: (wallet) => (
+        <Paragraph1 className="font-medium text-orange-600">
           {formatCurrency(wallet.collateralBalance)}
         </Paragraph1>
-      </td>
-      <td className="px-6 py-4">
-        {isLoading ? (
-          <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-            Loading...
-          </span>
-        ) : (
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${getRoleBadgeColor(userDetails?.role)}`}
-          >
-            {userDetails?.role || "N/A"}
-          </span>
-        )}
-      </td>
-      <td className="px-6 py-4">
+      ),
+    },
+    {
+      id: "role",
+      header: "Role",
+      mobile: "badge",
+      render: (wallet) => (
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${getRoleBadgeColor(wallet.user.role)}`}
+        >
+          {wallet.user.role || "N/A"}
+        </span>
+      ),
+    },
+    {
+      id: "lastUpdated",
+      header: "Last Updated",
+      mobile: "detail",
+      render: (wallet) => (
         <Paragraph1 className="text-gray-600">
           {getLastUpdatedDate(wallet.createdAt)}
         </Paragraph1>
-      </td>
-      <td className="px-6 py-4">
-        <Link
-          href={userHref}
-          className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900 font-medium"
-          aria-label={`View user ${wallet.user.name}`}
-        >
-          <Paragraph1>View</Paragraph1> <ChevronRight size={16} />
-        </Link>
-      </td>
-    </tr>
-  );
+      ),
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      mobile: "action",
+      render: (wallet) => {
+        const userHref =
+          adminSegment && wallet.userId
+            ? `/admin/${adminSegment}/users/${wallet.userId}`
+            : "#";
+
+        return (
+          <Link
+            href={userHref}
+            className="inline-flex items-center gap-1 font-medium text-gray-600 hover:text-gray-900"
+            aria-label={`View user ${wallet.user.name}`}
+          >
+            <Paragraph1>View</Paragraph1> <ChevronRight size={16} />
+          </Link>
+        );
+      },
+    },
+  ];
 }
 
 export default function WalletTable({ searchQuery }: WalletTableProps) {
@@ -167,80 +194,26 @@ export default function WalletTable({ searchQuery }: WalletTableProps) {
   const wallets = walletsQuery.data?.data?.wallets ?? [];
   const pagination =
     walletsQuery.data?.data?.pagination ?? EMPTY_WALLET_PAGINATION;
+  const columns = buildWalletColumns(adminSegment);
 
   return (
     <div>
-      <div className="overflow-x-auto">
-        <table className="w-full">
-        <thead>
-          <tr className="border-b border-gray-200 bg-gray-50">
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="text-gray-900 font-semibold">
-                WALLET ID
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="text-gray-900 font-semibold">
-                USER
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="text-gray-900 font-semibold">
-                TOTAL BALANCE
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="text-gray-900 font-semibold">
-                AVAILABLE
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="text-gray-900 font-semibold">
-                COLLATERAL
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="text-gray-900 font-semibold">
-                ROLE
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="text-gray-900 font-semibold">
-                LAST UPDATED
-              </Paragraph1>
-            </th>
-            <th className="px-6 py-4 text-left">
-              <Paragraph1 className="text-gray-900 font-semibold">
-                ACTIONS
-              </Paragraph1>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {walletsQuery.isPending ? (
-            <tr>
-              <td colSpan={8} className="px-6 py-8 text-center">
-                <p className="text-gray-500">Loading wallets...</p>
-              </td>
-            </tr>
-          ) : wallets.length === 0 ? (
-            <tr>
-              <td colSpan={8} className="px-6 py-8 text-center">
-                <p className="text-gray-500">No wallets found</p>
-              </td>
-            </tr>
-          ) : (
-            wallets.map((wallet: any) => (
-              <WalletRow
-                key={wallet.id}
-                wallet={wallet}
-                adminSegment={adminSegment}
-              />
-            ))
-          )}
-        </tbody>
-      </table>
-      </div>
+      <ResponsiveDataTable
+        rows={wallets as unknown as WalletRow[]}
+        columns={columns}
+        getRowKey={(wallet) => wallet.id}
+        loading={walletsQuery.isPending}
+        loadingState={
+          <div className="px-4 py-8 text-center md:px-6">
+            <p className="text-gray-500">Loading wallets...</p>
+          </div>
+        }
+        emptyState={
+          <div className="px-4 py-8 text-center md:px-6">
+            <p className="text-gray-500">No wallets found</p>
+          </div>
+        }
+      />
       <AdminTablePagination
         pagination={pagination}
         onPageChange={setPage}

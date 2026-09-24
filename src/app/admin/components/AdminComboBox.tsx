@@ -127,8 +127,8 @@ export function AdminFilterField({
   className?: string;
 }) {
   return (
-    <div className={className}>
-      <span className="block mb-1 font-medium text-gray-500 text-xs">{label}</span>
+    <div className={`min-w-0 ${className}`}>
+      <span className="mb-1.5 block text-xs font-semibold text-gray-700">{label}</span>
       {children}
     </div>
   );

@@ -9,7 +9,6 @@ import AdminTopNavbar from "./AdminTopNavbar";
 import SessionExpiredModal from "./SessionExpiredModal";
 import { useLogout } from "@/lib/mutations";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
-import MobileDesktopRecommendation from "@/common/ui/MobileDesktopRecommendation";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import { useCheckDashboardSelection } from "@/lib/queries/auth/useCheckDashboardSelection";
 import {
@@ -117,11 +116,10 @@ export default function AdminLayoutWrapper({
   return (
     <div className="flex h-screen overflow-hidden bg-gray-100">
       <SessionExpiredModal />
-      <MobileDesktopRecommendation />
       <AdminTopNavbar onLogout={handleLogout} />
       <AdminSidebar onLogout={handleLogout} />
 
-      <main className="hide-scrollbar flex-1 overflow-auto bg-white p-2 pt-20 sm:p-8 sm:pt-[100px]">
+      <main className="hide-scrollbar min-w-0 flex-1 overflow-auto bg-white p-3 pt-[4.5rem] sm:p-8 sm:pt-[100px]">
         {children}
       </main>
 

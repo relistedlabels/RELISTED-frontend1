@@ -5,6 +5,10 @@ import React from "react";
 import { Download } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import {
+  ResponsiveDataTable,
+  type ResponsiveColumnDef,
+} from "@/common/ui/ResponsiveDataTable";
+import {
   UserWallet as UserWalletType,
   Transaction,
 } from "@/lib/api/admin/users";
@@ -43,6 +47,71 @@ const getStatusColor = (status: string) => {
   }
 };
 
+const transactionColumns: ResponsiveColumnDef<Transaction>[] = [
+  {
+    id: "date",
+    header: "Date",
+    mobile: "detail",
+    render: (transaction) => (
+      <div>
+        <Paragraph1 className="text-sm text-gray-700">
+          {new Date(transaction.createdAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "2-digit",
+          })}
+        </Paragraph1>
+        <Paragraph1 className="text-xs text-gray-500">
+          {new Date(transaction.createdAt).toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </Paragraph1>
+      </div>
+    ),
+  },
+  {
+    id: "note",
+    header: "Note",
+    mobile: "primary",
+    render: (transaction) => (
+      <Paragraph1 className="text-sm text-gray-700">{transaction.note}</Paragraph1>
+    ),
+  },
+  {
+    id: "type",
+    header: "Type",
+    mobile: "detail",
+    render: (transaction) => (
+      <Paragraph1 className={getTypeColor(transaction.type)}>
+        {transaction.type}
+      </Paragraph1>
+    ),
+  },
+  {
+    id: "amount",
+    header: "Amount",
+    mobile: "detail",
+    render: (transaction) => (
+      <Paragraph1 className="text-sm font-semibold text-gray-900">
+        ₦{transaction.amount.toLocaleString()}
+      </Paragraph1>
+    ),
+  },
+  {
+    id: "status",
+    header: "Status",
+    mobile: "badge",
+    render: (transaction) => (
+      <span
+        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(transaction.status)}`}
+      >
+        {transaction.status}
+      </span>
+    ),
+  },
+];
+
 export default function UserWallet({
   wallet,
   transactions,
@@ -51,7 +120,7 @@ export default function UserWallet({
 }: UserWalletProps) {
   if (!wallet) {
     return (
-      <div className="text-center py-12">
+      <div className="py-12 text-center">
         <Paragraph1 className="text-gray-500">
           No wallet data available
         </Paragraph1>
@@ -61,49 +130,44 @@ export default function UserWallet({
 
   return (
     <div className="space-y-6">
-      {/* Wallet Balance Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Main Balance */}
-        <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">
-          <Paragraph1 className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-6">
+          <Paragraph1 className="mb-2 text-xs font-semibold uppercase tracking-wide text-blue-600">
             Main Balance
           </Paragraph1>
           <Paragraph3 className="text-2xl font-bold text-blue-900">
             ₦{wallet.mainBalance.toLocaleString()}
           </Paragraph3>
-          <Paragraph1 className="text-xs text-blue-600 mt-2">
+          <Paragraph1 className="mt-2 text-xs text-blue-600">
             Available for withdrawal
           </Paragraph1>
         </div>
 
-        {/* Available Balance */}
-        <div className="bg-green-50 rounded-lg p-6 border border-green-200">
-          <Paragraph1 className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-2">
+        <div className="rounded-lg border border-green-200 bg-green-50 p-6">
+          <Paragraph1 className="mb-2 text-xs font-semibold uppercase tracking-wide text-green-600">
             Available Balance
           </Paragraph1>
           <Paragraph3 className="text-2xl font-bold text-green-900">
             ₦{wallet.availableBalance.toLocaleString()}
           </Paragraph3>
-          <Paragraph1 className="text-xs text-green-600 mt-2">
+          <Paragraph1 className="mt-2 text-xs text-green-600">
             Pending transactions
           </Paragraph1>
         </div>
 
-        {/* Collateral Balance */}
-        <div className="bg-orange-50 rounded-lg p-6 border border-orange-200">
-          <Paragraph1 className="text-xs font-semibold text-orange-600 uppercase tracking-wide mb-2">
+        <div className="rounded-lg border border-orange-200 bg-orange-50 p-6">
+          <Paragraph1 className="mb-2 text-xs font-semibold uppercase tracking-wide text-orange-600">
             Collateral Balance
           </Paragraph1>
           <Paragraph3 className="text-2xl font-bold text-orange-900">
             ₦{wallet.collateralBalance.toLocaleString()}
           </Paragraph3>
-          <Paragraph1 className="text-xs text-orange-600 mt-2">
+          <Paragraph1 className="mt-2 text-xs text-orange-600">
             Collateral held
           </Paragraph1>
         </div>
       </div>
 
-      {/* Last Updated */}
       <div className="flex items-center justify-between">
         <Paragraph1 className="text-xs text-gray-500">
           Last updated:{" "}
@@ -115,15 +179,17 @@ export default function UserWallet({
             minute: "2-digit",
           })}
         </Paragraph1>
-        <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium text-sm text-gray-700">
+        <button
+          type="button"
+          className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+        >
           <Download size={18} />
           Export Statement
         </button>
       </div>
 
-      {/* Transaction History */}
       <div>
-        <Paragraph3 className="text-base font-bold mb-6 text-gray-900">
+        <Paragraph3 className="mb-6 text-base font-bold text-gray-900">
           Transaction History
         </Paragraph3>
 
@@ -134,96 +200,17 @@ export default function UserWallet({
             Error loading transactions
           </Paragraph1>
         ) : (
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200 bg-white">
-                    <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      Date
-                    </th>
-                    <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      Note
-                    </th>
-                    <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      Type
-                    </th>
-                    <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      Amount
-                    </th>
-                    <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {transactions && transactions.length > 0 ? (
-                    transactions.map((transaction) => (
-                      <tr
-                        key={transaction.id}
-                        className="border-b border-gray-200 hover:bg-gray-50 transition"
-                      >
-                        <td className="py-4 px-6">
-                          <Paragraph1 className="text-sm text-gray-700">
-                            {new Date(transaction.createdAt).toLocaleDateString(
-                              "en-US",
-                              {
-                                year: "numeric",
-                                month: "short",
-                                day: "2-digit",
-                              },
-                            )}
-                          </Paragraph1>
-                          <Paragraph1 className="text-xs text-gray-500">
-                            {new Date(transaction.createdAt).toLocaleTimeString(
-                              "en-US",
-                              {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              },
-                            )}
-                          </Paragraph1>
-                        </td>
-                        <td className="py-4 px-6">
-                          <Paragraph1 className="text-sm text-gray-700">
-                            {transaction.note}
-                          </Paragraph1>
-                        </td>
-                        <td className="py-4 px-6">
-                          <Paragraph1
-                            className={getTypeColor(transaction.type)}
-                          >
-                            {transaction.type}
-                          </Paragraph1>
-                        </td>
-                        <td className="py-4 px-6">
-                          <Paragraph1 className="text-sm font-semibold text-gray-900">
-                            ₦{transaction.amount.toLocaleString()}
-                          </Paragraph1>
-                        </td>
-                        <td className="py-4 px-6">
-                          <span
-                            className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                              transaction.status,
-                            )}`}
-                          >
-                            {transaction.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={5} className="py-8 px-6 text-center">
-                        <Paragraph1 className="text-gray-500">
-                          No transactions found
-                        </Paragraph1>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+            <ResponsiveDataTable
+              rows={transactions ?? []}
+              columns={transactionColumns}
+              getRowKey={(transaction) => transaction.id}
+              emptyState={
+                <Paragraph1 className="py-8 text-center text-gray-500">
+                  No transactions found
+                </Paragraph1>
+              }
+            />
           </div>
         )}
       </div>

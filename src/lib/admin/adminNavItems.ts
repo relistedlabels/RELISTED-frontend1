@@ -1,8 +1,19 @@
+export type AdminNavCountKey =
+  | "pendingListings"
+  | "pendingAvailabilityRequests"
+  | "activeOrders"
+  | "pendingShipments"
+  | "pendingWithdrawals"
+  | "pendingDisputes";
+
 export type AdminNavItemDefinition = {
   id: string;
   label: string;
+  /** Compact label shown under the icon when the mobile sidebar is collapsed. */
+  shortLabel?: string;
   getHref: (adminId: string) => string;
   showNewBadge?: boolean;
+  countKey?: AdminNavCountKey;
 };
 
 /** Serializable admin sidebar entries (icons are attached in AdminSidebar). */
@@ -22,6 +33,7 @@ export function getAdminNavItemDefinitions(): AdminNavItemDefinition[] {
       id: "listings",
       label: "Listings",
       getHref: (id) => `/admin/${id}/listings`,
+      countKey: "pendingListings",
     },
     {
       id: "shop",
@@ -32,18 +44,22 @@ export function getAdminNavItemDefinitions(): AdminNavItemDefinition[] {
     {
       id: "requests",
       label: "Availability Requests",
+      shortLabel: "Availability",
       getHref: (id) => `/admin/${id}/requests`,
       showNewBadge: true,
+      countKey: "pendingAvailabilityRequests",
     },
     {
       id: "orders",
       label: "Orders",
       getHref: (id) => `/admin/${id}/orders`,
+      countKey: "activeOrders",
     },
     {
       id: "shipments",
       label: "Shipments",
       getHref: (id) => `/admin/${id}/shipments`,
+      countKey: "pendingShipments",
     },
     {
       id: "closets",
@@ -58,13 +74,21 @@ export function getAdminNavItemDefinitions(): AdminNavItemDefinition[] {
     },
     {
       id: "wallet",
-      label: "Payments & balances",
+      label: "Payments",
       getHref: (id) => `/admin/${id}/wallets`,
+    },
+    {
+      id: "withdrawals",
+      label: "Withdrawal Requests",
+      shortLabel: "Withdrawals",
+      getHref: (id) => `/admin/${id}/withdrawal-requests`,
+      countKey: "pendingWithdrawals",
     },
     {
       id: "dispute",
       label: "Dispute",
       getHref: (id) => `/admin/${id}/disputes`,
+      countKey: "pendingDisputes",
     },
     {
       id: "settings",

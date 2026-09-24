@@ -7,6 +7,7 @@ import { TableSkeleton, StatCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import {
   ChevronLeft,
   ChevronRight,
+  Search,
 } from "lucide-react";
 import { HiOutlineShoppingBag } from "react-icons/hi";
 import { PiCheckCircle, PiWarning, PiPackage } from "react-icons/pi";
@@ -21,7 +22,23 @@ import {
   getShipmentLegDisplayLabel,
 } from "@/lib/orders/shipmentAndOrderLabels";
 import { adminOrderListStatusToApiParam } from "@/lib/orders/adminOrderListFilters";
-import { AdminComboBox } from "@/app/admin/components/AdminComboBox";
+import {
+  AdminComboBox,
+  AdminFilterField,
+} from "@/app/admin/components/AdminComboBox";
+import {
+  ADMIN_FILTER_BAR_CLASS,
+  ADMIN_FILTER_DATE_CLASS,
+  ADMIN_FILTER_FIELD_WIDTH,
+  ADMIN_FILTER_INPUT_CLASS,
+  ADMIN_FILTER_SECTION_CLASS,
+  DISPATCH_FILTER_LABEL,
+  DISPATCH_FILTER_OPTIONS,
+  type DispatchFilter,
+} from "@/lib/admin/adminListFilters";
+import { AdminTabBar, AdminTabButton } from "../../components/AdminSectionTabs";
+import { ResponsiveDataTable } from "@/common/ui/ResponsiveDataTable";
+import { orderColumns, returnColumns } from "./orderListColumns";
 
 const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat("en-NG", {
@@ -74,8 +91,6 @@ const TYPE_FILTERS: Array<ShipmentType | "All"> = [
   "RESALE",
 ];
 
-type FulfillmentFilter = "all" | "manual" | "automated";
-
 const ORDER_STATUS_FILTERS = [
   "All",
   "Preparing",
@@ -94,12 +109,6 @@ const TYPE_FILTER_OPTIONS = TYPE_FILTERS.map((t) => ({
   label: t === "All" ? "All types" : getShipmentLegDisplayLabel(t),
 }));
 
-const FULFILLMENT_FILTER_OPTIONS = [
-  { value: "all", label: "All fulfillment" },
-  { value: "manual", label: "Relisted dispatch" },
-  { value: "automated", label: "Carrier booking" },
-] as const;
-
 const ORDER_STATUS_FILTER_OPTIONS = ORDER_STATUS_FILTERS.map((status) => ({
   value: status,
   label: status === "All" ? "All statuses" : status,
@@ -109,8 +118,7 @@ export default function OrdersPage() {
   const [activeTab, setActiveTab] = useState("active");
   const [statusFilter, setStatusFilter] = useState<OrderStatusFilter>("All");
   const [typeFilter, setTypeFilter] = useState<ShipmentType | "All">("All");
-  const [fulfillmentFilter, setFulfillmentFilter] =
-    useState<FulfillmentFilter>("all");
+  const [dispatchFilter, setDispatchFilter] = useState<DispatchFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -133,7 +141,7 @@ export default function OrdersPage() {
     statusFilter,
     debouncedSearch,
     typeFilter,
-    fulfillmentFilter,
+    dispatchFilter,
     dateFrom,
     dateTo,
   ]);
@@ -141,9 +149,9 @@ export default function OrdersPage() {
   const isReturnsView = statusFilter === "Returns";
 
   const manualFulfillmentParam =
-    fulfillmentFilter === "manual"
+    dispatchFilter === "manual"
       ? true
-      : fulfillmentFilter === "automated"
+      : dispatchFilter === "automated"
         ? false
         : undefined;
 
@@ -297,112 +305,127 @@ export default function OrdersPage() {
           </div>
 
           {/* Tabs */}
-          <div className="border-gray-200 border-b">
-            <div className="flex items-center gap-8 px-6">
-              {[
-                { id: "active", label: "Active" },
-                { id: "completed", label: "Completed" },
-                { id: "rejected", label: "Rejected" },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    if (statusFilter === "Returns") {
-                      setStatusFilter("All");
-                    }
-                  }}
-                  className={`py-4 font-medium text-sm border-b-2 transition-colors ${
-                    activeTab === tab.id
-                      ? "text-gray-900 border-black"
-                      : "text-gray-500 border-transparent hover:text-gray-700"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex flex-col lg:flex-row flex-wrap items-stretch lg:items-center gap-3 px-6 py-4 border-gray-200 border-b">
-            <div className="flex flex-1 items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg min-w-[220px]">
-              <svg
-                className="w-4 h-4 text-gray-400 shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              <input
-                type="text"
-                placeholder="Order id, renter, or lister..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 bg-transparent outline-none text-gray-900 text-sm placeholder-gray-500"
-              />
-            </div>
-
-            {!isReturnsView && (
-              <>
-                <div className="min-w-[160px]">
-                  <AdminComboBox
-                    value={typeFilter}
-                    onChange={(value) =>
-                      setTypeFilter(value as ShipmentType | "All")
-                    }
-                    options={TYPE_FILTER_OPTIONS}
-                    ariaLabel="Order type"
-                  />
-                </div>
-
-                <div className="min-w-[180px]">
-                  <AdminComboBox
-                    value={fulfillmentFilter}
-                    onChange={(value) =>
-                      setFulfillmentFilter(value as FulfillmentFilter)
-                    }
-                    options={[...FULFILLMENT_FILTER_OPTIONS]}
-                    ariaLabel="Fulfillment"
-                  />
-                </div>
-              </>
-            )}
-
-            <div className="min-w-[180px]">
-              <AdminComboBox
-                value={statusFilter}
-                onChange={(value) =>
-                  setStatusFilter(value as OrderStatusFilter)
+          <AdminTabBar className="px-6">
+            <AdminTabButton
+              active={activeTab === "active"}
+              onClick={() => {
+                setActiveTab("active");
+                if (statusFilter === "Returns") {
+                  setStatusFilter("All");
                 }
-                options={ORDER_STATUS_FILTER_OPTIONS}
-                ariaLabel="Status"
-              />
+              }}
+              label="Active"
+            />
+            <AdminTabButton
+              active={activeTab === "completed"}
+              onClick={() => {
+                setActiveTab("completed");
+                if (statusFilter === "Returns") {
+                  setStatusFilter("All");
+                }
+              }}
+              label="Completed"
+            />
+            <AdminTabButton
+              active={activeTab === "rejected"}
+              onClick={() => {
+                setActiveTab("rejected");
+                if (statusFilter === "Returns") {
+                  setStatusFilter("All");
+                }
+              }}
+              label="Rejected"
+            />
+          </AdminTabBar>
+
+          <div className={ADMIN_FILTER_SECTION_CLASS}>
+            <div className={ADMIN_FILTER_BAR_CLASS}>
+              <AdminFilterField
+                label="Search"
+                className={ADMIN_FILTER_FIELD_WIDTH.search}
+              >
+                <div className="relative">
+                  <Search
+                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                    aria-hidden
+                  />
+                  <input
+                    type="text"
+                    placeholder="Order id, renter, or lister..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={`${ADMIN_FILTER_INPUT_CLASS} pl-9`}
+                  />
+                </div>
+              </AdminFilterField>
+
+              {!isReturnsView && (
+                <>
+                  <AdminFilterField
+                    label="Leg type"
+                    className={ADMIN_FILTER_FIELD_WIDTH.type}
+                  >
+                    <AdminComboBox
+                      value={typeFilter}
+                      onChange={(value) =>
+                        setTypeFilter(value as ShipmentType | "All")
+                      }
+                      options={TYPE_FILTER_OPTIONS}
+                      ariaLabel="Leg type"
+                    />
+                  </AdminFilterField>
+
+                  <AdminFilterField
+                    label={DISPATCH_FILTER_LABEL}
+                    className={ADMIN_FILTER_FIELD_WIDTH.dispatch}
+                  >
+                    <AdminComboBox
+                      value={dispatchFilter}
+                      onChange={(value) =>
+                        setDispatchFilter(value as DispatchFilter)
+                      }
+                      options={DISPATCH_FILTER_OPTIONS}
+                      ariaLabel={DISPATCH_FILTER_LABEL}
+                    />
+                  </AdminFilterField>
+                </>
+              )}
+
+              <AdminFilterField
+                label="Status"
+                className={ADMIN_FILTER_FIELD_WIDTH.status}
+              >
+                <AdminComboBox
+                  value={statusFilter}
+                  onChange={(value) =>
+                    setStatusFilter(value as OrderStatusFilter)
+                  }
+                  options={ORDER_STATUS_FILTER_OPTIONS}
+                  ariaLabel="Status"
+                />
+              </AdminFilterField>
+
+              <AdminFilterField label="Created from">
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className={ADMIN_FILTER_DATE_CLASS}
+                  aria-label="Created from"
+                />
+              </AdminFilterField>
+
+              <AdminFilterField label="Created to">
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  min={dateFrom || undefined}
+                  className={ADMIN_FILTER_DATE_CLASS}
+                  aria-label="Created to"
+                />
+              </AdminFilterField>
             </div>
-
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[160px] text-gray-900 text-sm"
-              aria-label="Created from"
-            />
-
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              min={dateFrom || undefined}
-              className="px-4 py-2.5 border border-gray-200 rounded-lg min-w-[160px] text-gray-900 text-sm"
-              aria-label="Created to"
-            />
           </div>
 
         {/* Orders/Returns Table */}
@@ -417,291 +440,20 @@ export default function OrdersPage() {
                 ordersFetching ? "opacity-60" : "opacity-100"
               }`}
             >
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-gray-50 border-gray-200 border-b">
-                      {statusFilter === "Returns" ? (
-                        <>
-                          <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                              Return ID
-                            </Paragraph1>
-                          </th>
-                          <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                              Order ID
-                            </Paragraph1>
-                          </th>
-                          <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                              Item Name
-                            </Paragraph1>
-                          </th>
-                          <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                              Lister
-                            </Paragraph1>
-                          </th>
-                          <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                              Renter
-                            </Paragraph1>
-                          </th>
-                          <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                              Condition
-                            </Paragraph1>
-                          </th>
-                          <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                              Damage Notes
-                            </Paragraph1>
-                          </th>
-                          <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                              Status
-                            </Paragraph1>
-                          </th>
-                          <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                              Date
-                            </Paragraph1>
-                          </th>
-                        </>
-                      ) : (
-                        <>
-                          <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                              Order ID
-                            </Paragraph1>
-                          </th>
-                          <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                              Date
-                            </Paragraph1>
-                          </th>
-                          <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                              Lister
-                            </Paragraph1>
-                          </th>
-                          <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                              Renter
-                            </Paragraph1>
-                          </th>
-                          <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                              Items
-                            </Paragraph1>
-                          </th>
-                          <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                              Total
-                            </Paragraph1>
-                          </th>
-                          <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                              Status
-                            </Paragraph1>
-                          </th>
-                          <th className="px-6 py-4 text-left">
-                            <Paragraph1 className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
-                              Return Due
-                            </Paragraph1>
-                          </th>
-                        </>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orders.map((item: any) => (
-                      <tr
-                        key={item.id}
-                        onClick={() => {
-                          if (statusFilter === "Returns") {
-                            setSelectedReturn(item);
-                            setIsReturnDetailModalOpen(true);
-                          } else {
-                            setSelectedOrderId(item.id);
-                            setIsDetailModalOpen(true);
-                          }
-                        }}
-                        className={`border-b border-gray-100 ${
-                          statusFilter !== "Returns"
-                            ? "hover:bg-gray-50 cursor-pointer"
-                            : "hover:bg-gray-50 cursor-pointer"
-                        } transition`}
-                      >
-                        {statusFilter === "Returns" ? (
-                          <>
-                            <td className="px-6 py-4">
-                              <Paragraph1 className="font-medium text-gray-900 text-sm">
-                                {item.id}
-                              </Paragraph1>
-                            </td>
-                            <td className="px-6 py-4">
-                              <Paragraph1 className="text-gray-700 text-sm">
-                                {item.orderId}
-                              </Paragraph1>
-                            </td>
-                            <td className="px-6 py-4">
-                              <Paragraph1 className="text-gray-900 text-sm">
-                                {item.itemName}
-                              </Paragraph1>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-2">
-                                <img
-                                  src={
-                                    item.lister.avatar ||
-                                    getDefaultAvatar(item.lister.name)
-                                  }
-                                  alt={item.lister.name}
-                                  className="rounded-full w-8 h-8 object-cover"
-                                />
-                                <Paragraph1 className="text-gray-900 text-sm">
-                                  {item.lister.name}
-                                </Paragraph1>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-2">
-                                <img
-                                  src={
-                                    item.renter.avatar ||
-                                    getDefaultAvatar(item.renter.name)
-                                  }
-                                  alt={item.renter.name}
-                                  className="rounded-full w-8 h-8 object-cover"
-                                />
-                                <Paragraph1 className="text-gray-900 text-sm">
-                                  {item.renter.name}
-                                </Paragraph1>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className="inline-block bg-blue-100 px-3 py-1 rounded-full font-semibold text-blue-700 text-xs">
-                                {item.itemCondition}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <Paragraph1 className="text-gray-700 text-sm">
-                                {item.damageNotes || "-"}
-                              </Paragraph1>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span
-                                className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                                  item.status === "APPROVED"
-                                    ? "bg-green-100 text-green-700"
-                                    : item.status === "REJECTED"
-                                      ? "bg-red-100 text-red-700"
-                                      : "bg-yellow-100 text-yellow-700"
-                                }`}
-                              >
-                                {item.status}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <Paragraph1 className="text-gray-700 text-sm">
-                                {new Date(item.createdAt).toLocaleDateString()}
-                              </Paragraph1>
-                            </td>
-                          </>
-                        ) : (
-                          <>
-                            {(() => {
-                              const statusLabel = getAdminOrderStatusLabel(item.status);
-                              return (
-                                <>
-                                  <td className="px-6 py-4">
-                                    <Paragraph1 className="font-medium text-gray-900 text-sm">
-                                      {item.id}
-                                    </Paragraph1>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <Paragraph1 className="text-gray-700 text-sm">
-                                      {item.date}
-                                    </Paragraph1>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    {item.lister ? (
-                                      <div className="flex items-center gap-2">
-                                        <img
-                                          src={
-                                            item.lister.avatar ||
-                                            getDefaultAvatar(item.lister.name)
-                                          }
-                                          alt={item.lister.name}
-                                          className="rounded-full w-8 h-8 object-cover"
-                                        />
-                                        <Paragraph1 className="text-gray-900 text-sm">
-                                          {item.lister.name}
-                                        </Paragraph1>
-                                      </div>
-                                    ) : (
-                                      <Paragraph1 className="text-gray-500 text-sm">
-                                        N/A
-                                      </Paragraph1>
-                                    )}
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    {item.renter ? (
-                                      <div className="flex items-center gap-2">
-                                        <img
-                                          src={
-                                            item.renter.avatar ||
-                                            getDefaultAvatar(item.renter.name)
-                                          }
-                                          alt={item.renter.name}
-                                          className="rounded-full w-8 h-8 object-cover"
-                                        />
-                                        <Paragraph1 className="text-gray-900 text-sm">
-                                          {item.renter.name}
-                                        </Paragraph1>
-                                      </div>
-                                    ) : (
-                                      <Paragraph1 className="text-gray-500 text-sm">
-                                        N/A
-                                      </Paragraph1>
-                                    )}
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <Paragraph1 className="text-gray-700 text-sm">
-                                      {item.items} items
-                                    </Paragraph1>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <Paragraph1 className="font-medium text-gray-900 text-sm">
-                                      {formatCurrency(item.total)}
-                                    </Paragraph1>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <span
-                                      className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                                        statusLabel,
-                                      )}`}
-                                    >
-                                      {statusLabel}
-                                    </span>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <Paragraph1 className="text-gray-700 text-sm">
-                                      {item.returnDue}
-                                    </Paragraph1>
-                                  </td>
-                                </>
-                              );
-                            })()}
-                          </>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <ResponsiveDataTable
+                rows={orders}
+                columns={statusFilter === "Returns" ? returnColumns : orderColumns}
+                getRowKey={(item) => item.id}
+                onRowClick={(item) => {
+                  if (statusFilter === "Returns") {
+                    setSelectedReturn(item);
+                    setIsReturnDetailModalOpen(true);
+                  } else {
+                    setSelectedOrderId(item.id);
+                    setIsDetailModalOpen(true);
+                  }
+                }}
+              />
             </div>
 
             {/* Pagination */}

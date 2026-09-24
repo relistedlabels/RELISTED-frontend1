@@ -20,9 +20,12 @@ import {
   HiOutlineBuildingStorefront,
   HiOutlineClipboardDocumentList,
   HiOutlineArchiveBox,
+  HiOutlineBanknotes,
 } from "react-icons/hi2";
 import { Paragraph1 } from "@/common/ui/Text";
 import { settingsApi } from "@/lib/api/admin/settings";
+import type { AdminNavCountKey } from "@/lib/admin/adminNavItems";
+import { useAdminNavCounts } from "@/lib/queries/admin/useAdminNavCounts";
 import { useAdminNavState } from "@/lib/queries/admin/useSettings";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
@@ -31,9 +34,11 @@ import { getAdminNavItemDefinitions } from "@/lib/admin/adminNavItems";
 interface NavItem {
   id: string;
   label: string;
+  shortLabel?: string;
   icon: React.ElementType;
   getHref: (adminId: string) => string;
   showNewBadge?: boolean;
+  countKey?: AdminNavCountKey;
 }
 
 const ADMIN_NAV_ICONS: Record<string, React.ElementType> = {
@@ -47,6 +52,7 @@ const ADMIN_NAV_ICONS: Record<string, React.ElementType> = {
   closets: HiOutlineArchiveBox,
   sales: HiOutlineRectangleStack,
   wallet: HiOutlineCreditCard,
+  withdrawals: HiOutlineBanknotes,
   dispute: HiOutlineFolder,
   settings: HiOutlineCog6Tooth,
 };
@@ -90,6 +96,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
   const queryClient = useQueryClient();
   const { data: user } = useMe();
   const { data: navState } = useAdminNavState();
+  const navCounts = useAdminNavCounts();
   const seenNavIds = navState?.data.seenNavIds ?? [];
   const pathname = usePathname();
   const params = useParams();
@@ -117,21 +124,30 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
   };
 
   const linkBaseClasses =
-    "flex items-center w-full p-3 mb-2 rounded-xl transition-colors duration-200 group";
+    "flex w-full rounded-xl transition-colors duration-200 group";
 
   const activeLinkClasses = "bg-black text-white shadow-sm";
   const inactiveLinkClasses =
     "bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-900";
 
   return (
-    <div
-      className={`h-screen bg-white sm:py-[100px] border-r border-gray-200 flex flex-col py-6 transition-all duration-300 z-20
+    <>
+      {isMobileExpanded ? (
+        <button
+          type="button"
+          aria-label="Close navigation menu"
+          className="fixed inset-0 z-10 bg-black/40 lg:hidden"
+          onClick={() => setIsMobileExpanded(false)}
+        />
+      ) : null}
+      <div
+        className={`z-20 flex h-screen flex-col border-r border-gray-200 bg-white py-6 transition-all duration-300 sm:py-[100px]
         ${
           isMobileExpanded
-            ? "w-64 absolute lg:relative shadow-2xl lg:shadow-none"
-            : "w-20 lg:w-62 relative"
+            ? "absolute w-64 shadow-2xl lg:relative lg:w-64 lg:shadow-none"
+            : "relative w-[6.5rem] lg:w-64"
         }`}
-    >
+      >
       {/* Mobile toggle */}
       <div className="lg:hidden flex justify-center mb-4 px-4">
         <button
@@ -170,7 +186,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1- px-4 overflow-y-auto- hide-scrollbar-">
+      <nav className="flex-1 min-h-0 overflow-y-auto hide-scrollbar px-2 sm:px-4">
         <ul>
           {navItems.map((item) => {
             const href = item.getHref(resolvedAdminId);
@@ -178,9 +194,14 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
               pathname === href || pathname.startsWith(href + "/");
             const showNewBadge =
               item.showNewBadge && !seenNavIds.includes(item.id);
+            const pendingCount = item.countKey
+              ? navCounts[item.countKey]
+              : 0;
+            const mobileStacked = !isMobileExpanded;
+            const navLabel = item.shortLabel ?? item.label;
 
             return (
-              <li key={item.id}>
+              <li key={item.id} className="relative mb-2">
                 <Link
                   href={href}
                   onClick={() => {
@@ -190,63 +211,95 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onLogout }) => {
                   className={`${linkBaseClasses} ${
                     isActive ? activeLinkClasses : inactiveLinkClasses
                   } ${
-                    !isMobileExpanded ? "justify-center lg:justify-start" : ""
+                    mobileStacked
+                      ? "flex-col items-center gap-1 px-1 py-2.5 text-center lg:flex-row lg:items-center lg:gap-0 lg:p-3 lg:text-left"
+                      : "items-center p-3"
                   }`}
                 >
                   <item.icon
-                    className={`w-6 h-6 shrink-0 ${
+                    className={`h-6 w-6 shrink-0 ${
                       isActive ? "text-white" : "text-gray-500"
                     }`}
                   />
 
+                  {mobileStacked ? (
+                    <span
+                      className={`block w-full max-w-full break-words text-[10px] font-medium leading-snug lg:hidden ${
+                        isActive ? "text-white" : "text-gray-600"
+                      }`}
+                    >
+                      {navLabel}
+                    </span>
+                  ) : null}
+
                   <Paragraph1
-                    className={`ml-4 text-sm ${
-                      !isMobileExpanded ? "hidden lg:block" : "block"
+                    className={`text-sm ${
+                      mobileStacked
+                        ? "hidden lg:ml-4 lg:block"
+                        : "ml-4 block"
                     }`}
                   >
                     {item.label}
                   </Paragraph1>
 
-                  {showNewBadge && (
+                  {showNewBadge && pendingCount === 0 ? (
                     <span
-                      className={`ml-auto text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full ${
+                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
                         isActive
                           ? "bg-white text-black"
                           : "bg-black text-white"
                       } ${
-                        !isMobileExpanded ? "hidden lg:inline" : "inline"
+                        mobileStacked
+                          ? "mt-0.5 lg:ml-auto lg:mt-0"
+                          : "ml-auto"
                       }`}
                     >
                       New
                     </span>
-                  )}
+                  ) : null}
                 </Link>
+
+                {pendingCount > 0 ? (
+                  <span
+                    className="pointer-events-none absolute -right-2 -top-2 z-10 flex h-7 min-w-7 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1.5 text-xs font-bold leading-none text-white"
+                    aria-label={`${pendingCount} pending`}
+                  >
+                    {pendingCount > 99 ? "99+" : pendingCount}
+                  </span>
+                ) : null}
               </li>
             );
           })}
+
+          <li className="relative mb-2 mt-2 border-t border-gray-100 pt-2">
+            <button
+              type="button"
+              onClick={onLogout}
+              className={`${linkBaseClasses} ${inactiveLinkClasses} hover:bg-red-50 hover:text-red-600 ${
+                !isMobileExpanded
+                  ? "flex-col items-center gap-1 px-1 py-2.5 text-center lg:flex-row lg:items-center lg:gap-0 lg:p-3 lg:text-left"
+                  : "items-center p-3"
+              }`}
+            >
+              <HiOutlineArrowRightOnRectangle className="h-6 w-6 shrink-0" />
+              {!isMobileExpanded ? (
+                <span className="block w-full break-words text-[10px] font-medium leading-snug text-gray-600 lg:hidden">
+                  Log out
+                </span>
+              ) : null}
+              <Paragraph1
+                className={`${
+                  !isMobileExpanded ? "hidden lg:ml-4 lg:block" : "ml-4 block"
+                }`}
+              >
+                Log Out
+              </Paragraph1>
+            </button>
+          </li>
         </ul>
       </nav>
-
-      {/* Logout */}
-      <div className="mb-4 px-4">
-        <button
-          type="button"
-          onClick={onLogout}
-          className={`${linkBaseClasses} ${inactiveLinkClasses} hover:bg-red-50 hover:text-red-600 ${
-            !isMobileExpanded ? "justify-center lg:justify-start" : ""
-          }`}
-        >
-          <HiOutlineArrowRightOnRectangle className="w-6 h-6" />
-          <Paragraph1
-            className={`ml-4 ${
-              !isMobileExpanded ? "hidden lg:block" : "block"
-            }`}
-          >
-            Log Out
-          </Paragraph1>
-        </button>
-      </div>
     </div>
+    </>
   );
 };
 

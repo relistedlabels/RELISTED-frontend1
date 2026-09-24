@@ -1,17 +1,10 @@
+import type { AdminNavCountKey } from "@/lib/admin/adminNavItems";
 import { useAvailabilityRequestStats } from "./useAvailabilityRequests";
 import { useDisputes } from "./useDisputes";
 import { useListingsStatistics } from "./useListings";
 import { useOrderStats } from "./useOrders";
 import { useShipments } from "./useShipments";
 import { useWithdrawalRequests } from "./useWallets";
-
-export type AdminNavCountKey =
-  | "pendingListings"
-  | "pendingAvailabilityRequests"
-  | "activeOrders"
-  | "pendingShipments"
-  | "pendingWithdrawals"
-  | "pendingDisputes";
 
 export function useAdminNavCounts(): Record<AdminNavCountKey, number> {
   const { data: listingsStats } = useListingsStatistics();

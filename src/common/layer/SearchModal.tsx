@@ -9,6 +9,7 @@ import { Paragraph1, ParagraphLink1 } from "@/common/ui/Text";
 import { usePublicSearch } from "@/lib/queries/search/usePublicSearch";
 import { useRouter, useSearchParams } from "next/navigation";
 import { isShopRentMode } from "@/lib/shop/shopBrowse";
+import { mergePreservedShopParams } from "@/lib/shop/listingFilters";
 import { productDetailHref } from "@/lib/shop/productDetailLinks";
 import Image from "next/image";
 import Link from "next/link";
@@ -57,10 +58,20 @@ export default function SearchModal({ showLabel = false }: SearchModalProps) {
     return { products, listers };
   }, [results]);
 
-  // Persist current query as search term before navigating to recent searches
+  const goToFullResults = (term?: string) => {
+    const trimmed = (term ?? query).trim();
+    if (!trimmed) return;
+    addSearch(trimmed);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("search", trimmed);
+    mergePreservedShopParams(params, searchParams);
+    params.delete("page");
+    setOpen(false);
+    router.push(`/shop?${params.toString()}#shop-all-listings`);
+  };
+
   const handleRecentSearchClick = (term: string) => {
-    setQuery(term); // Reset input to clicked term
-    // Query automatically runs
+    goToFullResults(term);
   };
 
   return (
@@ -106,8 +117,10 @@ export default function SearchModal({ showLabel = false }: SearchModalProps) {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && query.trim())
-                      addSearch(query.trim());
+                    if (e.key === "Enter" && query.trim()) {
+                      e.preventDefault();
+                      goToFullResults();
+                    }
                   }}
                   placeholder="Search products and brands..."
                   className="py-3 pr-4 pl-10 border border-gray-400 rounded-xl outline-none w-full"
@@ -290,6 +303,17 @@ export default function SearchModal({ showLabel = false }: SearchModalProps) {
                           No results found for "{query}"
                         </Paragraph1>
                       )}
+
+                    {query.trim() ? (
+                      <button
+                        type="button"
+                        onClick={() => goToFullResults()}
+                        className="flex justify-between items-center hover:bg-gray-100 mt-2 p-3 border border-gray-200 rounded-lg w-full font-semibold text-sm transition cursor-pointer"
+                      >
+                        View all results
+                        <ArrowRight className="rotate-225 shrink-0" />
+                      </button>
+                    ) : null}
                   </div>
                 )}
               </div>

@@ -2,11 +2,62 @@
 
 import { CardGridSkeleton } from "@/common/ui/SkeletonLoaders";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import {
+  ResponsiveDataTable,
+  type ResponsiveColumnDef,
+} from "@/common/ui/ResponsiveDataTable";
 import { useTopItems } from "@/lib/queries/admin/useAnalytics";
 
 interface TopItemsProps {
   limit?: number;
 }
+
+type TopItemRow = {
+  id: string;
+  name: string;
+  brand: string | null;
+  rentalsCount: number;
+  earnings: number;
+};
+
+const columns: ResponsiveColumnDef<TopItemRow>[] = [
+  {
+    id: "item",
+    header: "Item",
+    mobile: "primary",
+    render: (item) => (
+      <Paragraph1 className="font-medium text-gray-900">{item.name}</Paragraph1>
+    ),
+  },
+  {
+    id: "brand",
+    header: "Brand",
+    mobile: "detail",
+    render: (item) => (
+      <Paragraph1 className="font-medium text-gray-900">
+        {item.brand ?? "null"}
+      </Paragraph1>
+    ),
+  },
+  {
+    id: "rentals",
+    header: "Rentals",
+    mobile: "detail",
+    render: (item) => (
+      <Paragraph1 className="text-gray-700">{item.rentalsCount}</Paragraph1>
+    ),
+  },
+  {
+    id: "earnings",
+    header: "Earnings",
+    mobile: "detail",
+    render: (item) => (
+      <Paragraph1 className="font-semibold text-gray-900">
+        ₦{item.earnings.toLocaleString()}
+      </Paragraph1>
+    ),
+  },
+];
 
 export default function TopItems({ limit = 5 }: TopItemsProps) {
   const { data, isPending, error } = useTopItems(limit);
@@ -16,12 +67,11 @@ export default function TopItems({ limit = 5 }: TopItemsProps) {
     (Array.isArray(data?.data) ? data.data : undefined) ??
     [];
 
-  const items = rawList.map((item) => ({
+  const items: TopItemRow[] = rawList.map((item) => ({
     id: item.id,
     name: item.name,
     brand: item.brand ?? null,
     rentalsCount: item.rentalsCount ?? 0,
-    dailyPrice: item.dailyPrice ?? 0,
     earnings: (item.rentalsCount ?? 0) * (item.dailyPrice ?? 0),
   }));
 
@@ -31,11 +81,11 @@ export default function TopItems({ limit = 5 }: TopItemsProps) {
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg p-6 border border-gray-200">
-        <Paragraph3 className="text-xl font-semibold mb-2 text-gray-900">
+      <div className="rounded-lg border border-gray-200 bg-white p-6">
+        <Paragraph3 className="mb-2 text-xl font-semibold text-gray-900">
           Top Items
         </Paragraph3>
-        <Paragraph2 className="text-gray-600 text-sm">
+        <Paragraph2 className="text-sm text-gray-600">
           Unable to load this chart. Check the API logs for{" "}
           <span className="font-mono text-xs">
             GET /api/admin/analytics/top-items
@@ -47,70 +97,18 @@ export default function TopItems({ limit = 5 }: TopItemsProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg p-6 border border-gray-200">
+    <div className="rounded-lg border border-gray-200 bg-white p-6">
       <div className="mb-6">
-        <Paragraph3 className="text-xl font-semibold mb-4 text-gray-900">
+        <Paragraph3 className="mb-4 text-xl font-semibold text-gray-900">
           Top Items
         </Paragraph3>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-200">
-              <th className="px-4 py-3 text-left">
-                <Paragraph1 className="text-gray-600 font-semibold">
-                  ITEM
-                </Paragraph1>
-              </th>
-              <th className="px-4 py-3 text-center">
-                <Paragraph1 className="text-gray-600 font-semibold">
-                  BRAND
-                </Paragraph1>
-              </th>
-              <th className="px-4 py-3 text-center">
-                <Paragraph1 className="text-gray-600 font-semibold">
-                  RENTALS
-                </Paragraph1>
-              </th>
-              <th className="px-4 py-3 text-center">
-                <Paragraph1 className="text-gray-600 font-semibold">
-                  EARNINGS
-                </Paragraph1>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr
-                key={item.id}
-                className="border-b border-gray-100 hover:bg-gray-50 transition-colors last:border-b-0"
-              >
-                <td className="px-4 py-4">
-                  <Paragraph1 className="text-gray-900 font-medium">
-                    {item.name}
-                  </Paragraph1>
-                </td>
-                <td className="px-4 py-4 text-center">
-                  <Paragraph1 className="text-gray-900 font-medium">
-                    {item.brand ?? "null"}
-                  </Paragraph1>
-                </td>
-                <td className="px-4 py-4 text-center">
-                  <Paragraph1 className="text-gray-700">
-                    {item.rentalsCount}
-                  </Paragraph1>
-                </td>
-                <td className="px-4 py-4 text-center">
-                  <Paragraph1 className="text-gray-900 font-semibold">
-                    ₦{item.earnings.toLocaleString()}
-                  </Paragraph1>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ResponsiveDataTable
+        rows={items}
+        columns={columns}
+        getRowKey={(item) => item.id}
+      />
     </div>
   );
 }
