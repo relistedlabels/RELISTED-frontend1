@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Search, Clock, X, ArrowRight } from "lucide-react";
 import ProductCard from "@/common/ui/ProductCard";

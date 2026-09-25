@@ -91,7 +91,7 @@ export function getMyRelistedNavItems(options: {
       icon: Heart,
     },
     {
-      label: "My Rentals & Orders",
+      label: "My Orders",
       href: authAwareHref("/renters/orders", isLoggedIn),
       icon: Calendar,
     },
