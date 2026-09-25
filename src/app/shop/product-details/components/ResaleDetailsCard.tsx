@@ -21,6 +21,7 @@ import {
   submitGuestAvailabilityCheck,
   type GuestAvailabilitySubmitResponse,
 } from "@/lib/api/publicAvailability";
+import { buildAvailabilityCheckingUrl } from "@/lib/shop/buildAvailabilityCheckingUrl";
 import { DetailPanelSkeleton } from "@/common/ui/SkeletonLoaders";
 import GuestContactModal from "./GuestContactModal";
 import { usePublicSiteFeatures } from "@/lib/queries/site/useSiteFeatures";
@@ -147,14 +148,14 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
       router.push(checkingUrl);
       return;
     }
-    if (requestId && accessToken) {
-      router.push(
-        `/shop/availability/checking?requestId=${requestId}&token=${accessToken}`,
-      );
-      return;
-    }
     if (requestId) {
-      router.push(`/shop/availability/checking?requestId=${requestId}`);
+      router.push(
+        buildAvailabilityCheckingUrl({
+          requestId,
+          token: accessToken,
+          productId: product?.id,
+        }),
+      );
     }
   };
 
