@@ -265,9 +265,6 @@ const ExampleWithdrawalForm: React.FC = () => {
             </Paragraph1>
           </div>
         )}
-        <Paragraph1 className="mt-1 text-gray-500 text-xs">
-          Make only 5 withdrawals per month
-        </Paragraph1>
       </div>
 
       {/* Profile Account Details - Step 0 */}

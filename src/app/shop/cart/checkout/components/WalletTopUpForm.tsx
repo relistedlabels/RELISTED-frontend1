@@ -171,13 +171,13 @@ export default function WalletTopUpForm({ isActive = true }: WalletTopUpFormProp
 
       {!isLoading && isVerified ? (
         <>
-          <div className="bg-gradient-to-r from-black to-gray-800 p-5 rounded-xl text-white">
-            <div className="flex justify-between items-start gap-3">
+          <div className="rounded-xl border border-white/10 bg-[#1E1B1B] p-5 text-white shadow-sm">
+            <div className="flex items-start justify-between gap-3">
               <div>
-                <Paragraph1 className="mb-1 font-medium text-gray-300 text-xs">
+                <Paragraph1 className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-400">
                   Available balance
                 </Paragraph1>
-                <Paragraph1 className="font-bold text-2xl">
+                <Paragraph1 className="text-2xl font-bold text-emerald-300">
                   {CURRENCY}
                   {formatCurrency(availableBalance)}
                 </Paragraph1>
@@ -186,12 +186,12 @@ export default function WalletTopUpForm({ isActive = true }: WalletTopUpFormProp
                 type="button"
                 onClick={() => void refreshFundWalletState()}
                 disabled={isRefreshing || walletLoading}
-                className="hover:bg-gray-700 disabled:opacity-50 p-2 rounded-lg transition-colors"
+                className="rounded-lg p-2 text-gray-300 transition-colors hover:bg-white/10 disabled:opacity-50"
                 aria-label="Refresh wallet balance"
               >
                 <RefreshCw
                   size={18}
-                  className={isRefreshing ? "animate-spin" : ""}
+                  className={`text-gray-300 ${isRefreshing ? "animate-spin" : ""}`}
                 />
               </button>
             </div>
