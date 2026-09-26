@@ -29,14 +29,20 @@ export default function ReviewCarousel() {
   const [index, setIndex] = useState(0);
 
   // Fetch 5-star reviews for social proof
-  const {
-    data: reviews = [],
-    isLoading,
-    error,
-  } = usePublicReviews({
+  const { data, isLoading, error } = usePublicReviews({
     minRating: 5,
     limit: 10,
   });
+  const reviews: Review[] = (data?.reviews ?? []).map((review) => ({
+    id: review.id,
+    name: review.name || "Renter",
+    role: review.role || "Verified renter",
+    text: review.text || "",
+    image:
+      review.image ||
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80",
+    rating: review.rating,
+  }));
 
   const prev = () => {
     setIndex((prev) => (prev === 0 ? reviews.length - 1 : prev - 1));

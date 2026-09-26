@@ -63,10 +63,12 @@ export function AdminTabButton({
   active,
   onClick,
   label,
+  children,
 }: {
   active: boolean;
   onClick: () => void;
-  label: string;
+  label?: string;
+  children?: React.ReactNode;
 }) {
   return (
     <button
@@ -78,7 +80,7 @@ export function AdminTabButton({
           : "text-gray-600 hover:text-gray-900"
       }`}
     >
-      <Paragraph1>{label}</Paragraph1>
+      <Paragraph1>{children ?? label}</Paragraph1>
     </button>
   );
 }

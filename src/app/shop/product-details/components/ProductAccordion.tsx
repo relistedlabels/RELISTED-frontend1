@@ -6,7 +6,8 @@ import { Paragraph1 } from "@/common/ui/Text";
 import ProductMetadataSection from "./ProductMetadataSection";
 import ProductDetailsBlock from "./Specification";
 import ProductCareDetails from "./ProductCareDetails";
-import ExampleReviewsBlock from "./Review";
+import ProductReviewsBlock from "./Review";
+import { useProductReviews } from "@/lib/queries/review/useProductReviews";
 import DeliveryAndReturnDetails from "./DeliveryAndReturnDetails";
 import { usePublicProductById } from "@/lib/queries/product/usePublicProductById";
 import { DetailPanelSkeleton } from "@/common/ui/SkeletonLoaders";
@@ -17,6 +18,8 @@ interface ProductAccordionProps {
 
 const ProductAccordion: React.FC<ProductAccordionProps> = ({ productId }) => {
   const { data: product, isLoading } = usePublicProductById(productId);
+  const { data: reviewData } = useProductReviews(productId, { limit: 1 });
+  const reviewCount = reviewData?.summary?.totalReviews ?? 0;
 
   if (isLoading || !product) {
     return <DetailPanelSkeleton />;
@@ -50,8 +53,8 @@ const ProductAccordion: React.FC<ProductAccordionProps> = ({ productId }) => {
         />
       </AccordionItem>
 
-      <AccordionItem title="REVIEWS" count={0}>
-        <ExampleReviewsBlock productId={productId} />
+      <AccordionItem title="REVIEWS" count={reviewCount}>
+        <ProductReviewsBlock productId={productId} />
       </AccordionItem>
 
       <AccordionItem title="DELIVERY & RETURN">

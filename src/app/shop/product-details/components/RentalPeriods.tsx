@@ -27,6 +27,7 @@ import {
   submitGuestAvailabilityCheck,
   type GuestAvailabilitySubmitResponse,
 } from "@/lib/api/publicAvailability";
+import { buildAvailabilityCheckingUrl } from "@/lib/shop/buildAvailabilityCheckingUrl";
 import { useAddCartItem } from "@/lib/mutations/renters/useAddCartItem";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { getCartItemsApi } from "@/lib/api/cart";
@@ -185,14 +186,14 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
       window.location.assign(checkingUrl);
       return;
     }
-    if (requestId && accessToken) {
-      router.replace(
-        `/shop/availability/checking?requestId=${requestId}&token=${accessToken}`,
-      );
-      return;
-    }
     if (requestId) {
-      router.replace(`/shop/availability/checking?requestId=${requestId}`);
+      router.replace(
+        buildAvailabilityCheckingUrl({
+          requestId,
+          token: accessToken,
+          productId,
+        }),
+      );
     }
   };
 

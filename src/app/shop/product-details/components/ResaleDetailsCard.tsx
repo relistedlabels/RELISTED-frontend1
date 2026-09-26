@@ -21,6 +21,7 @@ import {
   submitGuestAvailabilityCheck,
   type GuestAvailabilitySubmitResponse,
 } from "@/lib/api/publicAvailability";
+import { buildAvailabilityCheckingUrl } from "@/lib/shop/buildAvailabilityCheckingUrl";
 import { DetailPanelSkeleton } from "@/common/ui/SkeletonLoaders";
 import GuestContactModal from "./GuestContactModal";
 import { usePublicSiteFeatures } from "@/lib/queries/site/useSiteFeatures";
@@ -147,14 +148,14 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
       router.push(checkingUrl);
       return;
     }
-    if (requestId && accessToken) {
-      router.push(
-        `/shop/availability/checking?requestId=${requestId}&token=${accessToken}`,
-      );
-      return;
-    }
     if (requestId) {
-      router.push(`/shop/availability/checking?requestId=${requestId}`);
+      router.push(
+        buildAvailabilityCheckingUrl({
+          requestId,
+          token: accessToken,
+          productId: product?.id,
+        }),
+      );
     }
   };
 
@@ -400,7 +401,7 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
       {lister && (
         <UserProfile
           name={lister.name || "Verified Lister"}
-          rating={lister.rating || 4.5}
+          rating={lister.rating ?? 0}
           avatar={lister.avatar}
           userId={product.curatorId}
         />

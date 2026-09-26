@@ -3,7 +3,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import {
   CalendarClock,
-  ChevronDown,
   FileText,
   HelpCircle,
   LayoutDashboard,
@@ -22,14 +21,14 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React, { type ReactNode, useState } from "react";
 import {
-  Header2Plus,
   HeaderAny,
   Paragraph1,
   Paragraph3,
 } from "@/common/ui/Text";
 import { useLogout } from "@/lib/mutations";
 import { useBusinessProfile } from "@/lib/queries/listers/useBusinessProfile";
-import { usePendingAvailabilityCount } from "@/lib/queries/listers/usePendingAvailabilityCount";
+import { useOpenAvailabilityRequestsCount } from "@/lib/queries/listers/useOpenAvailabilityRequestsCount";
+import { useActiveOrdersCount } from "@/lib/queries/listers/useActiveOrdersCount";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import { useUserStore } from "@/store/useUserStore";
 import { UserProfileBadge } from "./UserProfileBadge";
@@ -46,15 +45,8 @@ export type NavItem = {
   badgeCount?: number;
 };
 
-export type UserProfile = {
-  name: string;
-  role?: string;
-  avatarUrl?: string;
-};
-
 interface DashboardLayoutProps {
   children: ReactNode;
-  brand?: string;
 }
 
 const BrandHeader: React.FC = () => {
@@ -97,32 +89,45 @@ const SidebarNav: React.FC<{
   onItemClick?: () => void;
 }> = ({ navItems, onItemClick }) => {
   return (
-    <nav className="space-y-2">
-      {navItems.map((item) => (
-        <Link
-          key={item.name}
-          href={item.href}
-          onClick={onItemClick}
-          className={`flex items-center justify-between p-3 rounded-xl transition duration-150 ${
-            item.isActive
-              ? "bg-white text-black font-semibold"
-              : "text-gray-300 hover:bg-gray-800"
-          }`}
-        >
-          <div className="flex items-center min-w-0">
-            <item.icon className="w-5 h-5 mr-3 shrink-0" />
-            <Paragraph1 className="text-sm">{item.name}</Paragraph1>
-          </div>
-          {typeof item.badgeCount === "number" && item.badgeCount > 0 ? (
-            <span
-              className="ml-2 flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] font-bold leading-none text-white"
-              aria-label={`${item.badgeCount} pending`}
-            >
-              {item.badgeCount > 99 ? "99+" : item.badgeCount}
-            </span>
-          ) : null}
-        </Link>
-      ))}
+    <nav>
+      <Paragraph1 className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
+        Menu
+      </Paragraph1>
+      <div className="space-y-1 pr-2">
+        {navItems.map((item) => (
+          <Link
+            key={item.name}
+            href={item.href}
+            onClick={onItemClick}
+            className={`group relative flex items-center px-3 py-2.5 rounded-xl transition duration-150 ${
+              item.isActive
+                ? "bg-white text-black font-semibold shadow-lg shadow-black/30"
+                : "text-gray-400 hover:bg-white/[0.06] hover:text-white"
+            }`}
+          >
+            <div className="flex items-center min-w-0">
+              <item.icon
+                className={`w-5 h-5 mr-3 shrink-0 transition-colors duration-150 ${
+                  item.isActive
+                    ? "text-black"
+                    : "text-gray-500 group-hover:text-gray-200"
+                }`}
+              />
+              <Paragraph1 className="text-sm whitespace-nowrap">
+                {item.name}
+              </Paragraph1>
+            </div>
+            {typeof item.badgeCount === "number" && item.badgeCount > 0 ? (
+              <span
+                className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] font-bold leading-none text-white ring-2 ring-[#241F20]"
+                aria-label={`${item.badgeCount} pending`}
+              >
+                {item.badgeCount > 99 ? "99+" : item.badgeCount}
+              </span>
+            ) : null}
+          </Link>
+        ))}
+      </div>
     </nav>
   );
 };
@@ -138,30 +143,23 @@ const SidebarFooter = ({
   isLoggingOut?: boolean;
 }) => {
   return (
-    <div className="mt-8 space-y-2 border-t border-gray-800 pt-6">
-      <Link
-        href="/listers/settings"
-        className="flex items-center w-full p-3 rounded-xl text-gray-300 hover:bg-gray-800 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <Settings className="w-4 h-4 mr-2" />
-        <Paragraph1 className="text-xs">Settings</Paragraph1>
-      </Link>
+    <div className="mt-6 border-t border-white/10 pt-4 space-y-1">
       <button
         type="button"
         onClick={onLogoutClick}
         disabled={isLoggingOut}
-        className="flex items-center w-full p-3 rounded-xl text-gray-300 hover:bg-gray-800 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="group flex items-center w-full px-3 py-2.5 rounded-xl text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-400"
       >
-        <LogOut className="w-5 h-5 mr-3" />
+        <LogOut className="w-5 h-5 mr-3 shrink-0" />
         <Paragraph1 className="text-sm">
           {isLoggingOut ? "Logging out..." : "Log Out"}
         </Paragraph1>
       </button>
       <Link
         href="/contact-us"
-        className="flex items-center p-3 text-gray-500 text-xs mt-4"
+        className="flex items-center px-3 py-2 rounded-xl text-gray-500 hover:text-gray-300 hover:bg-white/[0.05] transition duration-150"
       >
-        <HelpCircle className="w-4 h-4 mr-2" />
+        <HelpCircle className="w-4 h-4 mr-2 shrink-0" />
         <Paragraph1 className="text-xs">Help & Support</Paragraph1>
       </Link>
     </div>
@@ -171,10 +169,7 @@ const SidebarFooter = ({
 // --------------------
 // Main Layout
 // --------------------
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({
-  children,
-  brand = "DASHBOARD",
-}) => {
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const pathname = usePathname();
   const router = useRouter();
   const clearUser = useUserStore((s) => s.clearUser);
@@ -198,14 +193,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     setShowLogoutModal(false);
   };
 
-  const { data: pendingAvailabilityCount = 0 } = usePendingAvailabilityCount();
-
-  // TODO: replace this mock with real auth/user hook (Supabase, Firebase, API, etc.)
-  const user: UserProfile = {
-    name: "Jane Graham",
-    role: "- CURATOR -",
-    avatarUrl: "https://i.pravatar.cc/150?u=jane",
-  };
+  const { data: openRequestsCount = 0 } = useOpenAvailabilityRequestsCount();
+  const { data: activeOrdersCount = 0 } = useActiveOrdersCount();
 
   // Centralized navigation (NOT passed from parents)
   const navItems: NavItem[] = [
@@ -220,19 +209,26 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       href: "/listers/orders",
       icon: ShoppingCart,
       isActive: pathname.startsWith("/listers/orders"),
+      badgeCount: activeOrdersCount,
     },
     {
-      name: "Availability Requests",
+      name: "Requests",
       href: "/listers/availability-requests",
       icon: CalendarClock,
       isActive: pathname.startsWith("/listers/availability-requests"),
-      badgeCount: pendingAvailabilityCount,
+      badgeCount: openRequestsCount,
     },
     {
       name: "Inventory",
       href: "/listers/inventory",
       icon: Package,
       isActive: pathname.startsWith("/listers/inventory"),
+    },
+    {
+      name: "Inbox",
+      href: "/listers/inbox",
+      icon: Mail,
+      isActive: pathname.startsWith("/listers/inbox"),
     },
     {
       name: "Wallet",
@@ -247,6 +243,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       icon: FileText,
       isActive: pathname.startsWith("/listers/dispute"),
     },
+    {
+      name: "Settings",
+      href: "/listers/settings",
+      icon: Settings,
+      isActive: pathname.startsWith("/listers/settings"),
+    },
   ];
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -256,13 +258,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex  flex-col w-64 h-screen overflow-hidden hide-scrollbar  overflow-y-auto bg-[#241F20] text-white p-6 sticky top-0">
-        <div className="mb-10">
+      <aside className="hidden md:flex flex-col w-72 h-screen overflow-hidden hide-scrollbar overflow-y-auto bg-[#241F20] text-white p-6 sticky top-0">
+        <div className="mb-6">
           <BrandHeader />
         </div>
 
         {/* Profile */}
-        <div className="flex items-center border-b border-gray-800 pb-4 mb-4 space-x-3">
+        <div className="rounded-2xl bg-white/[0.04] ring-1 ring-white/10 p-3 mb-6">
           <UserProfileBadge />
         </div>
 
@@ -278,23 +280,29 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
       {/* Mobile Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-90 w-64 bg-black text-white p-6 transform transition-transform md:hidden ${
+        className={`fixed inset-y-0 left-0 z-90 w-72 bg-[#241F20] text-white p-6 flex flex-col transform transition-transform duration-300 md:hidden ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex justify-between items-start mb-8">
+        <div className="flex justify-between items-center mb-6">
           <div className="max-w-[180px]">
             <BrandHeader />
           </div>
 
-          <button onClick={toggleMobile}>
-            <X className="w-6 h-6" />
+          <button
+            onClick={toggleMobile}
+            aria-label="Close menu"
+            className="p-2 -mr-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition duration-150"
+          >
+            <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="flex items-center border-b border-gray-800 pb-4 mb-4 space-x-3">
+        <div className="rounded-2xl bg-white/[0.04] ring-1 ring-white/10 p-3 mb-6">
           <UserProfileBadge />
         </div>
-        <SidebarNav navItems={navItems} onItemClick={toggleMobile} />
+        <div className="flex-1 overflow-y-auto hide-scrollbar">
+          <SidebarNav navItems={navItems} onItemClick={toggleMobile} />
+        </div>
         <SidebarFooter
           onLogoutClick={() => setShowLogoutModal(true)}
           isLoggingOut={logout.isPending}
@@ -312,9 +320,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       <div className="flex-1 flex flex-col">
         {/* Top Bar */}
         <header className="flex items-center justify-between px-4 sm:px-8 h-16 bg-[#241F20]">
-          <div className="md:hidden">
-            <button onClick={toggleMobile}>
-              <Menu className="w-6 h-6 text-white" />
+<div className="md:hidden">
+            <button
+              onClick={toggleMobile}
+              aria-label="Open menu"
+              className="p-2 -ml-2 rounded-lg text-white hover:bg-white/10 transition duration-150"
+            >
+              <Menu className="w-6 h-6" />
             </button>
           </div>
 

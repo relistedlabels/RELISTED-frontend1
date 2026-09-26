@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { clearActionPromptSessionStorage } from "@/lib/actionPrompts/actionPromptStorage";
 import { useCartCountStore } from "@/store/useCartCountStore";
 
 const AUTHENTICATED_QUERY_PREFIXES = [
@@ -19,5 +20,6 @@ export function clearAuthenticatedClientSession(queryClient: QueryClient) {
   for (const queryKey of AUTHENTICATED_QUERY_PREFIXES) {
     queryClient.removeQueries({ queryKey });
   }
+  clearActionPromptSessionStorage();
   useCartCountStore.getState().setCartCount(0);
 }

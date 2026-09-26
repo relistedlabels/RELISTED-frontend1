@@ -5,7 +5,7 @@ import Link from "next/link";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Calendar, Clock, Package } from "lucide-react";
+import { ArrowRight, Calendar, Clock, Package } from "lucide-react";
 
 import { buttonPrimary } from "@/common/ui/buttonClasses";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
@@ -14,29 +14,25 @@ import {
   getListerOrderStatusLabel,
   getListerOrderBadgeClassName,
   isListerAvailabilityPending,
+  normalizeListerOrderStatusKey,
 } from "@/lib/listers/listerOrderStatus";
 import {
   shouldShowListerNotifyRenterForDispatchWindow,
   isListerAvailabilityRequestRow,
+  isListerAvailabilityExpiredStatusRow,
+  isListerAvailabilityCancelledByRenterRow,
   isListerResaleOrder,
   shouldShowListerAvailabilityDeadlineUi,
 } from "@/lib/listers/listerOrderRow";
 import type { ListerOrdersSummary } from "@/lib/api/listers";
 import { useNudgeRenterForExpiredAvailability } from "@/lib/mutations/listers/useNudgeRenterForExpiredAvailability";
 
-type ListerTabKey = "all" | "pending" | "ongoing" | "completed" | "cancelled";
+type ListerTabKey = "all" | "ongoing" | "completed" | "cancelled";
 
-const TABS: ListerTabKey[] = [
-  "all",
-  "pending",
-  "ongoing",
-  "completed",
-  "cancelled",
-];
+const TABS: ListerTabKey[] = ["all", "ongoing", "completed", "cancelled"];
 
 const TAB_LABEL: Record<ListerTabKey, string> = {
   all: "All",
-  pending: "Pending Approval",
   ongoing: "In Progress",
   completed: "Completed",
   cancelled: "Cancelled",
@@ -48,8 +44,6 @@ function tabSummaryCount(
 ): number | undefined {
   if (!summary) return undefined;
   switch (tab) {
-    case "pending":
-      return summary.pendingApprovalCount;
     case "ongoing":
       return (summary.ongoingCount ?? 0) + (summary.inDisputeCount ?? 0);
     case "completed":
@@ -57,16 +51,87 @@ function tabSummaryCount(
     case "cancelled":
       return summary.cancelledCount;
     case "all": {
-      const a = summary.pendingApprovalCount ?? 0;
       const b = summary.ongoingCount ?? 0;
       const e = summary.inDisputeCount ?? 0;
       const c = summary.completedCount ?? 0;
       const d = summary.cancelledCount ?? 0;
-      return a + b + c + d + e;
+      return b + c + d + e;
     }
     default:
       return undefined;
   }
+}
+
+type AvailabilityTabKey =
+  | "all"
+  | "pending"
+  | "awaiting_payment"
+  | "expired"
+  | "cancelled";
+
+const AVAILABILITY_TABS: AvailabilityTabKey[] = [
+  "all",
+  "pending",
+  "awaiting_payment",
+  "expired",
+  "cancelled",
+];
+
+const AVAILABILITY_TAB_LABEL: Record<AvailabilityTabKey, string> = {
+  all: "All",
+  pending: "Pending",
+  awaiting_payment: "Awaiting Payment",
+  expired: "Expired",
+  cancelled: "Cancelled",
+};
+
+function availabilityTabMatches(
+  order: Record<string, unknown>,
+  tab: AvailabilityTabKey,
+): boolean {
+  if (tab === "all") return true;
+
+  const statusKey = normalizeListerOrderStatusKey(
+    String(
+      order.availabilityStatus ?? order.availability_status ?? order.status ?? "",
+    ),
+  );
+  const label = String(order.statusLabel ?? "").toLowerCase();
+
+  switch (tab) {
+    case "pending":
+      return isListerAvailabilityPending(order);
+    case "awaiting_payment":
+      return (
+        statusKey === "AWAITING_PAYMENT" ||
+        label.includes("awaiting renter payment")
+      );
+    case "expired":
+      return isListerAvailabilityExpiredStatusRow(order);
+    case "cancelled":
+      return (
+        isListerAvailabilityCancelledByRenterRow(order) ||
+        statusKey === "REJECTED" ||
+        label.includes("rejected")
+      );
+    default:
+      return true;
+  }
+}
+
+type AvailabilityCounts = Record<AvailabilityTabKey, number>;
+
+function countAvailabilityTabs(
+  orders: Record<string, unknown>[],
+): AvailabilityCounts {
+  return AVAILABILITY_TABS.reduce(
+    (acc, tab) => {
+      acc[tab] = orders.filter((order) => availabilityTabMatches(order, tab))
+        .length;
+      return acc;
+    },
+    {} as AvailabilityCounts,
+  );
 }
 
 function resolveOrderExpiresAt(
@@ -99,23 +164,87 @@ type OrdersManagementProps = {
   availabilityRequestsOnly?: boolean;
 };
 
+function OrderTabs<T extends string>({
+  tabs,
+  labels,
+  active,
+  counts,
+  onSelect,
+  layoutId,
+}: {
+  tabs: T[];
+  labels: Record<T, string>;
+  active: T;
+  counts?: Partial<Record<T, number>>;
+  onSelect: (tab: T) => void;
+  layoutId: string;
+}) {
+  return (
+    <div className="relative mb-8 w-full overflow-hidden">
+      <div className="w-[340px] sm:w-full max-w-full sm:overflow-visible overflow-x-auto hide-scrollbar scrollbar-hide">
+        <div className="inline-flex gap-1 bg-[#F9F9F7] p-1 border border-gray-300 rounded-xl whitespace-nowrap">
+          {tabs.map((tab) => {
+            const isActive = active === tab;
+            const count = counts?.[tab];
+
+            return (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => onSelect(tab)}
+                className={`relative shrink-0 px-4 sm:px-8 py-2.5 text-sm font-bold transition-colors duration-300 z-10 ${
+                  isActive ? "text-white" : "text-gray-500 hover:text-black"
+                }`}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId={layoutId}
+                    className="z-[-1] absolute inset-0 bg-black rounded-lg"
+                    transition={{
+                      type: "spring",
+                      bounce: 0.2,
+                      duration: 0.5,
+                    }}
+                  />
+                )}
+                <Paragraph1 className="capitalize">
+                  {labels[tab]}
+                  {typeof count === "number" ? (
+                    <span className="opacity-90 font-semibold"> ({count})</span>
+                  ) : null}
+                </Paragraph1>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const OrdersManagement: React.FC<OrdersManagementProps> = ({
   availabilityRequestsOnly = false,
 }) => {
-  const [activeTab, setActiveTab] = useState<ListerTabKey>("pending");
+  const [activeTab, setActiveTab] = useState<ListerTabKey>("ongoing");
+  const [availabilityTab, setAvailabilityTab] =
+    useState<AvailabilityTabKey>("all");
 
   const apiStatus = availabilityRequestsOnly
-    ? "pending"
+    ? undefined
     : activeTab === "all"
       ? undefined
       : activeTab;
 
-  const { data: ordersData, isLoading } = useOrders(apiStatus, 1, 20) as {
+  const { data: ordersData, isLoading } = useOrders(
+    apiStatus,
+    1,
+    availabilityRequestsOnly ? 100 : 20,
+  ) as {
     data?: any;
     isLoading: boolean;
   };
 
-  const { orders, summary, pagination } = useMemo(() => {
+  const { orders, summary, pagination, availabilityCounts } = useMemo(() => {
     if (!ordersData?.data) {
       return {
         orders: [] as Record<string, unknown>[],
@@ -123,6 +252,7 @@ const OrdersManagement: React.FC<OrdersManagementProps> = ({
         pagination: undefined as
           | { page: number; limit: number; total: number; pages: number }
           | undefined,
+        availabilityCounts: undefined as AvailabilityCounts | undefined,
       };
     }
     const d = ordersData.data;
@@ -135,70 +265,67 @@ const OrdersManagement: React.FC<OrdersManagementProps> = ({
       expiresAt: resolveOrderExpiresAt(order),
     });
     const enriched = rawOrders.map(enrich);
+
+    if (availabilityRequestsOnly) {
+      const requestRows = enriched.filter((order) =>
+        isListerAvailabilityRequestRow(order),
+      );
+      return {
+        orders: requestRows.filter((order) =>
+          availabilityTabMatches(order, availabilityTab),
+        ),
+        summary: undefined,
+        pagination: undefined,
+        availabilityCounts: countAvailabilityTabs(requestRows),
+      };
+    }
+
     return {
-      orders: availabilityRequestsOnly
-        ? enriched.filter((order) => isListerAvailabilityRequestRow(order))
-        : enriched,
+      orders: enriched.filter((order) => !isListerAvailabilityRequestRow(order)),
       summary: Array.isArray(d)
         ? undefined
         : (d.summary as ListerOrdersSummary),
       pagination: Array.isArray(d)
         ? ordersData.pagination
         : (d.pagination ?? ordersData.pagination),
+      availabilityCounts: undefined,
     };
-  }, [ordersData, availabilityRequestsOnly]);
+  }, [ordersData, availabilityRequestsOnly, availabilityTab]);
 
   const emptyLabel = availabilityRequestsOnly
-    ? "availability requests"
-    : TAB_LABEL[activeTab].toLowerCase();
+    ? AVAILABILITY_TAB_LABEL[availabilityTab].toLowerCase()
+    : activeTab === "all"
+      ? "orders"
+      : TAB_LABEL[activeTab].toLowerCase();
+
+  const availabilityRequestCount = summary?.pendingApprovalCount ?? 0;
+
+  const orderTabCounts = Object.fromEntries(
+    TABS.map((tab) => [tab, tabSummaryCount(tab, summary)]),
+  ) as Partial<Record<ListerTabKey, number>>;
 
   return (
     <div className="w-full">
       {/* 1. Tab Switcher with Motion Pill */}
-      {!availabilityRequestsOnly ? (
-      <div className="relative mb-8 w-full overflow-hidden">
-        <div className="w-[340px] sm:w-full max-w-full sm:overflow-visible overflow-x-auto hide-scrollbar scrollbar-hide">
-          <div className="inline-flex gap-1 bg-[#F9F9F7] p-1 border border-gray-300 rounded-xl whitespace-nowrap">
-            {TABS.map((tab) => {
-              const isActive = activeTab === tab;
-              const count = tabSummaryCount(tab, summary);
-
-              return (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setActiveTab(tab)}
-                  className={`relative shrink-0 px-4 sm:px-8 py-2.5 text-sm font-bold transition-colors duration-300 z-10 ${
-                    isActive ? "text-white" : "text-gray-500 hover:text-black"
-                  }`}
-                >
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeOrderTab"
-                      className="z-[-1] absolute inset-0 bg-black rounded-lg"
-                      transition={{
-                        type: "spring",
-                        bounce: 0.2,
-                        duration: 0.5,
-                      }}
-                    />
-                  )}
-                  <Paragraph1 className="capitalize">
-                    {TAB_LABEL[tab]}
-                    {typeof count === "number" ? (
-                      <span className="opacity-90 font-semibold">
-                        {" "}
-                        ({count})
-                      </span>
-                    ) : null}
-                  </Paragraph1>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-      ) : null}
+      {availabilityRequestsOnly ? (
+        <OrderTabs
+          tabs={AVAILABILITY_TABS}
+          labels={AVAILABILITY_TAB_LABEL}
+          active={availabilityTab}
+          counts={availabilityCounts}
+          onSelect={setAvailabilityTab}
+          layoutId="activeAvailabilityTab"
+        />
+      ) : (
+        <OrderTabs
+          tabs={TABS}
+          labels={TAB_LABEL}
+          active={activeTab}
+          counts={orderTabCounts}
+          onSelect={setActiveTab}
+          layoutId="activeOrderTab"
+        />
+      )}
 
       {/* 2. Orders List with Staggered Reveal */}
       <div className="space-y-4">
@@ -217,7 +344,7 @@ const OrdersManagement: React.FC<OrdersManagementProps> = ({
             </div>
           ) : (
             <motion.div
-              key={availabilityRequestsOnly ? "availability-requests" : activeTab}
+              key={availabilityRequestsOnly ? availabilityTab : activeTab}
               initial="hidden"
               animate="visible"
               exit="hidden"
@@ -289,6 +416,17 @@ const OrdersManagement: React.FC<OrdersManagementProps> = ({
           )}
         </AnimatePresence>
       </div>
+
+      {!availabilityRequestsOnly && availabilityRequestCount > 0 ? (
+        <Link
+          href="/listers/availability-requests"
+          className="mt-6 flex items-center justify-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-black transition-colors"
+        >
+          {availabilityRequestCount} availability request
+          {availabilityRequestCount === 1 ? "" : "s"}
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+      ) : null}
 
       {pagination && pagination.total > 0 ? (
         <Paragraph1 className="mt-6 text-gray-500 text-xs text-center">

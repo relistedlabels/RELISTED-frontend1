@@ -460,19 +460,43 @@ export const publicApi = {
   getReviews: (params?: {
     minRating?: number;
     limit?: number;
-    sort?: "newest" | "oldest" | "helpful";
-    type?: "product" | "lister" | "general";
+    sort?: "newest" | "oldest" | "helpful" | "rating_high" | "rating_low";
+    productId?: string;
+    curatorId?: string;
+    page?: number;
   }) => {
     const queryParams = new URLSearchParams();
     if (params?.minRating)
       queryParams.append("minRating", params.minRating.toString());
     if (params?.limit) queryParams.append("limit", params.limit.toString());
     if (params?.sort) queryParams.append("sort", params.sort);
-    if (params?.type) queryParams.append("type", params.type);
+    if (params?.productId) queryParams.append("productId", params.productId);
+    if (params?.curatorId) queryParams.append("curatorId", params.curatorId);
+    if (params?.page) queryParams.append("page", params.page.toString());
 
     const url = queryParams.toString()
       ? `/api/public/reviews?${queryParams.toString()}`
       : "/api/public/reviews";
+
+    return apiFetch<PublicReviewsResponse>(url, { method: "GET" });
+  },
+
+  getProductReviews: (
+    productId: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      sort?: "newest" | "oldest" | "rating_high" | "rating_low";
+    },
+  ) => {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.sort) queryParams.append("sort", params.sort);
+
+    const url = queryParams.toString()
+      ? `/api/public/products/${encodeURIComponent(productId)}/reviews?${queryParams.toString()}`
+      : `/api/public/products/${encodeURIComponent(productId)}/reviews`;
 
     return apiFetch<PublicReviewsResponse>(url, { method: "GET" });
   },

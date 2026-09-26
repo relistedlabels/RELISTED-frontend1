@@ -20,6 +20,7 @@ import {
   HiOutlineClipboardDocumentList,
   HiOutlineArchiveBox,
   HiOutlineBanknotes,
+  HiOutlineStar,
 } from "react-icons/hi2";
 import { Paragraph1 } from "@/common/ui/Text";
 import { settingsApi } from "@/lib/api/admin/settings";
@@ -53,6 +54,7 @@ const ADMIN_NAV_ICONS: Record<string, React.ElementType> = {
   wallet: HiOutlineCreditCard,
   withdrawals: HiOutlineBanknotes,
   dispute: HiOutlineFolder,
+  reviews: HiOutlineStar,
   settings: HiOutlineCog6Tooth,
 };
 

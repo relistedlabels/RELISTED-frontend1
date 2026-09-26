@@ -201,6 +201,98 @@ export default function ProductCuratorDetails({
           })}
         </div>
 
+        <details className="group border-t border-gray-100">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 bg-gray-50/50 px-3 py-2.5 text-sm font-semibold text-gray-900 marker:content-none [&::-webkit-details-marker]:hidden">
+            Payment breakdown
+            <ChevronDown
+              size={16}
+              className="shrink-0 text-gray-400 transition group-open:rotate-180"
+            />
+          </summary>
+          <div className="space-y-2 border-t border-gray-100 px-3 py-2.5 text-sm">
+            {!resaleOnlyOrder && rentalSubtotal > 0 ? (
+              <div className="flex justify-between gap-4 text-gray-600">
+                <span>Rental</span>
+                <span className="font-semibold tabular-nums text-gray-900">
+                  {CURRENCY}
+                  {formatCurrency(rentalSubtotal)}
+                </span>
+              </div>
+            ) : null}
+            {cleaningFeesTotal > 0 ? (
+              <div className="flex justify-between gap-4 text-gray-600">
+                <span>Cleaning</span>
+                <span className="font-semibold tabular-nums text-gray-900">
+                  {CURRENCY}
+                  {formatCurrency(cleaningFeesTotal)}
+                </span>
+              </div>
+            ) : null}
+            {resaleSubtotal > 0 ? (
+              <div className="flex justify-between gap-4 text-gray-600">
+                <span>{resaleOnlyOrder ? "Purchase" : "Resale items"}</span>
+                <span className="font-semibold tabular-nums text-gray-900">
+                  {CURRENCY}
+                  {formatCurrency(resaleSubtotal)}
+                </span>
+              </div>
+            ) : null}
+            {rentalSubtotal <= 0 &&
+            cleaningFeesTotal <= 0 &&
+            resaleSubtotal <= 0 &&
+            merchandiseTotal > 0 ? (
+              <div className="flex justify-between gap-4 text-gray-600">
+                <span>Merchandise</span>
+                <span className="font-semibold tabular-nums text-gray-900">
+                  {CURRENCY}
+                  {formatCurrency(merchandiseTotal)}
+                </span>
+              </div>
+            ) : null}
+            {collateralSum > 0 ? (
+              <div className="flex justify-between gap-4 text-gray-600">
+                <span>Collateral (escrow)</span>
+                <span className="font-semibold tabular-nums text-gray-900">
+                  {CURRENCY}
+                  {formatCurrency(collateralSum)}
+                </span>
+              </div>
+            ) : null}
+            <div className="flex justify-between gap-4 text-gray-600">
+              <span>{resaleOnlyOrder ? "Delivery" : "Delivery & return"}</span>
+              <span className="font-semibold tabular-nums text-gray-900">
+                {CURRENCY}
+                {formatCurrency(orderDeliveryFee)}
+              </span>
+            </div>
+            {orderVatAmount > 0 ? (
+              <div className="flex justify-between gap-4 text-gray-600">
+                <span>VAT</span>
+                <span className="font-semibold tabular-nums text-gray-900">
+                  {CURRENCY}
+                  {formatCurrency(orderVatAmount)}
+                </span>
+              </div>
+            ) : null}
+            <div className="flex justify-between gap-4 text-gray-600">
+              <span>Service fee</span>
+              <span className="font-semibold tabular-nums text-gray-900">
+                {CURRENCY}
+                {formatCurrency(serviceFeeDisplay)}
+              </span>
+            </div>
+            {Math.abs(otherAdjust) > 1 ? (
+              <div className="flex justify-between gap-4 text-gray-600">
+                <span>Adjustments</span>
+                <span className="font-semibold tabular-nums text-gray-900">
+                  {CURRENCY}
+                  {formatCurrency(otherAdjust)}
+                </span>
+              </div>
+            ) : null}
+          </div>
+        </details>
+
         <div className="flex items-center justify-between gap-3 border-t border-gray-100 bg-gray-50/80 px-3 py-2.5">
           <Paragraph1 className="text-sm font-semibold text-gray-900">Total paid</Paragraph1>
           <Paragraph1 className="text-sm font-bold tabular-nums text-gray-900">
@@ -230,98 +322,6 @@ export default function ProductCuratorDetails({
           </Paragraph1>
         </div>
       </div>
-
-      <details className="group overflow-hidden rounded-xl border border-gray-200 bg-white">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3.5 py-3 text-sm font-semibold text-gray-900 marker:content-none [&::-webkit-details-marker]:hidden">
-          Payment breakdown
-          <ChevronDown
-            size={16}
-            className="shrink-0 text-gray-400 transition group-open:rotate-180"
-          />
-        </summary>
-        <div className="space-y-2 border-t border-gray-100 px-3.5 pb-3.5 pt-2 text-sm">
-          {!resaleOnlyOrder && rentalSubtotal > 0 ? (
-            <div className="flex justify-between gap-4 text-gray-600">
-              <span>Rental</span>
-              <span className="font-semibold tabular-nums text-gray-900">
-                {CURRENCY}
-                {formatCurrency(rentalSubtotal)}
-              </span>
-            </div>
-          ) : null}
-          {cleaningFeesTotal > 0 ? (
-            <div className="flex justify-between gap-4 text-gray-600">
-              <span>Cleaning</span>
-              <span className="font-semibold tabular-nums text-gray-900">
-                {CURRENCY}
-                {formatCurrency(cleaningFeesTotal)}
-              </span>
-            </div>
-          ) : null}
-          {resaleSubtotal > 0 ? (
-            <div className="flex justify-between gap-4 text-gray-600">
-              <span>{resaleOnlyOrder ? "Purchase" : "Resale items"}</span>
-              <span className="font-semibold tabular-nums text-gray-900">
-                {CURRENCY}
-                {formatCurrency(resaleSubtotal)}
-              </span>
-            </div>
-          ) : null}
-          {rentalSubtotal <= 0 &&
-          cleaningFeesTotal <= 0 &&
-          resaleSubtotal <= 0 &&
-          merchandiseTotal > 0 ? (
-            <div className="flex justify-between gap-4 text-gray-600">
-              <span>Merchandise</span>
-              <span className="font-semibold tabular-nums text-gray-900">
-                {CURRENCY}
-                {formatCurrency(merchandiseTotal)}
-              </span>
-            </div>
-          ) : null}
-          {collateralSum > 0 ? (
-            <div className="flex justify-between gap-4 text-gray-600">
-              <span>Collateral (escrow)</span>
-              <span className="font-semibold tabular-nums text-gray-900">
-                {CURRENCY}
-                {formatCurrency(collateralSum)}
-              </span>
-            </div>
-          ) : null}
-          <div className="flex justify-between gap-4 text-gray-600">
-            <span>{resaleOnlyOrder ? "Delivery" : "Delivery & return"}</span>
-            <span className="font-semibold tabular-nums text-gray-900">
-              {CURRENCY}
-              {formatCurrency(orderDeliveryFee)}
-            </span>
-          </div>
-          {orderVatAmount > 0 ? (
-            <div className="flex justify-between gap-4 text-gray-600">
-              <span>VAT</span>
-              <span className="font-semibold tabular-nums text-gray-900">
-                {CURRENCY}
-                {formatCurrency(orderVatAmount)}
-              </span>
-            </div>
-          ) : null}
-          <div className="flex justify-between gap-4 text-gray-600">
-            <span>Service fee</span>
-            <span className="font-semibold tabular-nums text-gray-900">
-              {CURRENCY}
-              {formatCurrency(serviceFeeDisplay)}
-            </span>
-          </div>
-          {Math.abs(otherAdjust) > 1 ? (
-            <div className="flex justify-between gap-4 text-gray-600">
-              <span>Adjustments</span>
-              <span className="font-semibold tabular-nums text-gray-900">
-                {CURRENCY}
-                {formatCurrency(otherAdjust)}
-              </span>
-            </div>
-          ) : null}
-        </div>
-      </details>
     </div>
   );
 }

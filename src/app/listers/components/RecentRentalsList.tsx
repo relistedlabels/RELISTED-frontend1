@@ -15,15 +15,29 @@ const StatusBadge: React.FC<{
     status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, " ");
 
   switch (status.toLowerCase()) {
-    case "delivered":
+    case "active":
+    case "approved":
+    case "in_progress":
+    case "ongoing":
       classes = "bg-blue-100 text-blue-800";
+      break;
+    case "in_transit":
+    case "dispatched":
+    case "delivered":
+      classes = "bg-indigo-100 text-indigo-800";
       break;
     case "return_due":
       classes = "bg-yellow-100 text-yellow-800";
       break;
     case "completed":
     case "returned":
+    case "return_received":
       classes = "bg-green-100 text-green-800";
+      break;
+    case "cancelled":
+    case "cancelled_by_renter":
+    case "rejected":
+      classes = "bg-red-100 text-red-700";
       break;
     default:
       classes = "bg-gray-100 text-gray-800";
@@ -79,13 +93,17 @@ const RentalRow: React.FC<{
 
       {/* Return Due */}
       <div className="w-1/6 text-left hidden sm:block">
-        <Paragraph1 className="text-sm text-gray-500">Return Due</Paragraph1>
+        <Paragraph1 className="text-sm text-gray-500">
+          {returnDueDate ? "Return Due" : "Type"}
+        </Paragraph1>
         <Paragraph1 className="font-semibold text-gray-800">
-          {new Date(returnDueDate).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })}
+          {returnDueDate
+            ? new Date(returnDueDate).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })
+            : "Purchase"}
         </Paragraph1>
       </div>
 
@@ -128,7 +146,7 @@ const RecentRentalsList: React.FC = () => {
     <div className="w-full">
       {/* Header */}
       <Paragraph3 className="text-xl mb-4 font-semibold text-black">
-        Recent Rentals
+        Recent Orders
       </Paragraph3>
 
       {/* List of Rental Rows */}
@@ -150,7 +168,7 @@ const RecentRentalsList: React.FC = () => {
           ))
         ) : (
           <div className="text-center py-8">
-            <Paragraph1 className="text-gray-500">No recent rentals</Paragraph1>
+            <Paragraph1 className="text-gray-500">No recent orders</Paragraph1>
           </div>
         )}
       </div>

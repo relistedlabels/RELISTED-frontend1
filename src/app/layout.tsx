@@ -16,6 +16,7 @@ import { FavoritesInitializer } from "@/common/layer/FavoritesInitializer";
 import Footer from "@/common/layer/Footer";
 import { UnauthorizedSignInRedirect } from "@/common/layer/UnauthorizedSignInRedirect";
 import { OnboardingPromptGuard } from "@/common/layer/OnboardingPromptGuard";
+import { ActionPromptGuard } from "@/common/layer/ActionPromptGuard";
 import { UploaderProvider } from "@/context/UploaderProvider";
 import QueryProvider from "@/lib/providers/query-provider";
 import SerwistRegistration from "@/components/pwa/SerwistRegistration";
@@ -115,6 +116,7 @@ export default function RootLayout({
           <AuthStateMonitorProvider>
             <UnauthorizedSignInRedirect />
             <OnboardingPromptGuard />
+            <ActionPromptGuard />
             <FavoritesInitializer />
             <UploaderProvider>
               <SiteHeader />

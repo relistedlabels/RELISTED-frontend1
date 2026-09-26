@@ -216,7 +216,6 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
 
   const availableBalance =
     walletBalance?.data?.wallet?.balance?.availableBalance ?? 0;
-  const totalBalance = walletBalance?.data?.wallet?.balance?.totalBalance ?? 0;
 
   const walletBankRows = bankListPayload?.bankAccounts ?? [];
   const primaryWalletBank =
@@ -408,7 +407,7 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
               {/* Wallet Balance Card */}
               <div className="bg-gray-100 mb-6 p-4 rounded-xl">
                 <Paragraph1 className="mb-1 text-gray-500 text-sm">
-                  Total Balance
+                  Available Balance
                 </Paragraph1>
                 <div className="flex items-center space-x-2">
                   <img src="/icons/lock2.png" className="w-auto h-[41px]" />
@@ -416,23 +415,15 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
                   {walletLoading ? (
                     <div className="bg-slate-300 rounded w-32 h-8 animate-pulse" />
                   ) : walletBalance ? (
-                    <div className="flex flex-col">
-                      <Paragraph3 className="font-extrabold text-black text-3xl">
-                        ₦{totalBalance.toLocaleString()}
-                      </Paragraph3>
-                      <Paragraph1 className="mt-1 text-gray-600 text-xs">
-                        Available: ₦{availableBalance.toLocaleString()}
-                      </Paragraph1>
-                    </div>
+                    <Paragraph3 className="font-extrabold text-black text-3xl">
+                      ₦{availableBalance.toLocaleString()}
+                    </Paragraph3>
                   ) : (
                     <Paragraph1 className="text-red-600">
                       Failed to load wallet balance
                     </Paragraph1>
                   )}
                 </div>
-                <Paragraph1 className="mt-2 text-gray-500 text-xs">
-                  Make only 5 withdrawals per month
-                </Paragraph1>
               </div>
 
               {/* Bank Account Card */}

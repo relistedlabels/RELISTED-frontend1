@@ -47,6 +47,14 @@ export type PublicAvailabilityStatus =
   | "checking"
   | string;
 
+export type PublicAvailabilitySimilarShop = {
+  categoryId?: string | null;
+  brandName?: string | null;
+  color?: string | null;
+  size?: string | null;
+  primaryTag?: string | null;
+};
+
 export type PublicAvailabilityStatusResponse = {
   success: boolean;
   data: {
@@ -54,7 +62,9 @@ export type PublicAvailabilityStatusResponse = {
     status: PublicAvailabilityStatus;
     canStillBeApproved: boolean;
     businessExpiresAt: string;
+    productId?: string;
     productName?: string;
+    similarShop?: PublicAvailabilitySimilarShop;
     rentalDays: number;
     rentalStartDate?: string | null;
     rentalEndDate?: string | null;
@@ -71,5 +81,20 @@ export async function getPublicAvailabilityStatus(
   const q = new URLSearchParams({ token });
   return apiFetch<PublicAvailabilityStatusResponse>(
     `/api/public/availability-requests/${requestId}?${q.toString()}`,
+  );
+}
+
+export type AvailabilityShopFiltersResponse = {
+  success: boolean;
+  data: {
+    productId: string;
+    rentalDays: number;
+    similarShop: PublicAvailabilitySimilarShop;
+  };
+};
+
+export async function getAvailabilityShopFilters(requestId: string) {
+  return apiFetch<AvailabilityShopFiltersResponse>(
+    `/api/public/availability-requests/${requestId}/shop-filters`,
   );
 }

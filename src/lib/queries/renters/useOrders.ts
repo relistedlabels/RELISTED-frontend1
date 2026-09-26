@@ -7,6 +7,7 @@ export const useOrders = (
   page = 1,
   limit = 10,
   sort: "newest" | "oldest" | "ending_soon" = "newest",
+  options?: { enabled?: boolean },
 ) => {
   const token = useUserStore((s) => s.token);
 
@@ -23,7 +24,7 @@ export const useOrders = (
     },
     staleTime: 5 * 60 * 1000,
     retry: 1,
-    enabled: token !== null,
+    enabled: token !== null && options?.enabled !== false,
   });
 };
 

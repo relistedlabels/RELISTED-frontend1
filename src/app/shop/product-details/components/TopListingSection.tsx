@@ -32,9 +32,9 @@ export default function TopListingSection({
   const [autoScrolling, setAutoScrolling] = useState(true);
   const [speed, setSpeed] = useState(30);
 
-  // Detect screen + adjust speed
+  // Detect screen + adjust speed (duration in seconds — higher is slower)
   useEffect(() => {
-    const checkScreen = () => setSpeed(window.innerWidth < 768 ? 40 : 120);
+    const checkScreen = () => setSpeed(window.innerWidth < 768 ? 80 : 220);
     checkScreen();
     window.addEventListener("resize", checkScreen);
     return () => window.removeEventListener("resize", checkScreen);

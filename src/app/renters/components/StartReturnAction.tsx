@@ -10,6 +10,7 @@ interface StartReturnActionProps {
   orderId: string;
   shipmentId?: string | null;
   variant?: "footer" | "dashboard";
+  urgent?: boolean;
   className?: string;
 }
 
@@ -17,6 +18,7 @@ export default function StartReturnAction({
   orderId,
   shipmentId,
   variant = "footer",
+  urgent = false,
   className = "",
 }: StartReturnActionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,7 +45,9 @@ export default function StartReturnAction({
   const base =
     variant === "footer"
       ? `${buttonPrimary} flex-1`
-      : `${buttonSecondary} w-full sm:w-auto`;
+      : urgent
+        ? `${buttonPrimary} w-full sm:w-auto`
+        : `${buttonSecondary} w-full sm:w-auto`;
 
   return (
     <>

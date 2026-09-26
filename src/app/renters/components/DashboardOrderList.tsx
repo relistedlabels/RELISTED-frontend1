@@ -3,7 +3,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Calendar, Package, Store } from "lucide-react";
+import { Calendar, Package, Store, Truck } from "lucide-react";
 import {
   segmentTabActive,
   segmentTabIdle,
@@ -14,6 +14,10 @@ import OrderDetails from "./OrderDetails1";
 import DashboardStartReturnButton from "./DashboardStartReturnButton";
 import { useOrders } from "@/lib/queries/renters/useOrders";
 import { resolveRenterStartReturn } from "@/lib/orders/renterStartReturn";
+import {
+  isReturnDueUrgentOnListOrder,
+  shouldPromoteReturnOnListOrder,
+} from "@/lib/orders/returnDueUrgency";
 import { useSearchParams } from "next/navigation";
 import {
   getRenterOrderBadgeClassName,
@@ -130,12 +134,61 @@ export default function DashboardOrderList() {
             showStartReturn: order.showStartReturn,
             startReturnShipmentId: order.startReturnShipmentId,
           });
+          const returnPromoted = shouldPromoteReturnOnListOrder({
+            status: order.status,
+            showStartReturn: startReturn.showStartReturn,
+          });
+          const returnDueNow = isReturnDueUrgentOnListOrder({
+            status: order.status,
+            showStartReturn: startReturn.showStartReturn,
+          });
 
           return (
             <div
               key={order.orderId}
-              className="rounded-xl border border-gray-200 bg-white p-4"
+              className={`rounded-xl border bg-white p-4 ${
+                returnPromoted
+                  ? returnDueNow
+                    ? "border-amber-300 bg-amber-50/40"
+                    : "border-gray-300 bg-gray-50/60"
+                  : "border-gray-200"
+              }`}
             >
+              {returnPromoted ? (
+                <div
+                  className={`mb-3 flex items-start gap-2 rounded-lg border px-3 py-2 ${
+                    returnDueNow
+                      ? "border-amber-200 bg-amber-50"
+                      : "border-gray-200 bg-white"
+                  }`}
+                >
+                  <Truck
+                    size={16}
+                    className={`mt-0.5 shrink-0 ${
+                      returnDueNow ? "text-amber-900" : "text-gray-800"
+                    }`}
+                  />
+                  <div>
+                    <Paragraph1
+                      className={`text-sm font-semibold ${
+                        returnDueNow ? "text-amber-950" : "text-gray-900"
+                      }`}
+                    >
+                      {returnDueNow
+                        ? "Return due today"
+                        : "Ready to start your return"}
+                    </Paragraph1>
+                    <Paragraph1
+                      className={`text-xs ${
+                        returnDueNow ? "text-amber-900/90" : "text-gray-600"
+                      }`}
+                    >
+                      Start your return request to schedule pickup.
+                    </Paragraph1>
+                  </div>
+                </div>
+              ) : null}
+
               <div className="mb-3 flex items-center justify-between gap-3">
                 <Paragraph1 className="font-semibold text-gray-900 text-sm tracking-wide">
                   {order.orderId}
@@ -177,6 +230,7 @@ export default function DashboardOrderList() {
                     <DashboardStartReturnButton
                       orderId={order.orderId}
                       shipmentId={startReturn.returnShipmentId}
+                      urgent={returnPromoted}
                     />
                   ) : null}
                   <OrderDetails

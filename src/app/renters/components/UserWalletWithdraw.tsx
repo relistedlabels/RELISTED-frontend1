@@ -107,9 +107,6 @@ export const WithdrawalForm: React.FC<WithdrawalFormProps> = ({
               {balance}
             </Paragraph1>
           </div>
-          <Paragraph1 className="mt-1 text-gray-500 text-xs">
-            Make only 5 debits in a month
-          </Paragraph1>
         </div>
       )}
 
