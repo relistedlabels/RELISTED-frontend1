@@ -44,13 +44,12 @@ const getStatCardConfig = (
         change: changePercent,
         isPositive,
         icon: ShoppingCart,
-        info: "All confirmed orders placed within the selected time range.",
+        info: "All confirmed rental and purchase orders placed within the selected time range.",
       };
     case "Active Rentals":
       return {
         title,
-        value:
-          typeof value === "number" ? value.toString().padStart(2, "0") : value,
+        value: typeof value === "number" ? value.toString() : value,
         change: changePercent,
         isPositive,
         icon: Archive,
@@ -167,7 +166,7 @@ const DashboardStatsRow: React.FC = () => {
           Welcome back, {name}
         </Paragraph3>
         <Paragraph1 className="text-sm text-gray-500">
-          Here's Your Current Sales Overview
+          Rentals and sales at a glance
         </Paragraph1>
       </div>
 
