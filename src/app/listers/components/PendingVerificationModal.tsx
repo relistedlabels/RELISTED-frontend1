@@ -99,7 +99,7 @@ export default function PendingVerificationModal({
             <div className="mb-6 text-center">
               <Paragraph3 className="text-gray-600 leading-relaxed">
                 Your account is pending verification. To continue with listing
-                items, please verify your identity by providing your BVN and NIN
+                items, please verify your identity by providing your NIN
                 information.
               </Paragraph3>
             </div>

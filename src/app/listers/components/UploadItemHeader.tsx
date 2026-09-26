@@ -41,12 +41,12 @@ const UploadItemHeader: React.FC<UploadItemHeaderProps> = ({
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
 
-  // Check if user is verified on mount
-  useEffect(() => {
-    if (profile?.bvn) {
-      setIsVerified(true);
-    }
-  }, [profile]);
+   // Check if user is verified on mount
+   useEffect(() => {
+     if (profile?.nin) {
+       setIsVerified(true);
+     }
+   }, [profile]);
 
   const handleSubmit = () => {
     // Check if user is verified

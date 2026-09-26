@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { User } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useListerProfile } from "@/lib/queries/listers/useListerProfile";
@@ -8,13 +9,12 @@ export function UserProfileBadge() {
   const { data } = useListerProfile();
   const profile = data?.data.profile;
 
-  
   const name = profile?.fullName?.trim() || "New user";
   const role = profile?.role;
   const avatar = profile?.profileImage ?? null;
 
   return (
-    <div className="flex items-center gap-3 min-w-0">
+    <Link href="/listers/profile" className="flex items-center gap-3 min-w-0">
       <div className="w-12 h-12 rounded-full bg-gray-800 ring-1 ring-white/15 overflow-hidden flex items-center justify-center shrink-0">
         {avatar ? (
           <img src={avatar} alt={name} className="w-full h-full object-cover" />
@@ -33,6 +33,6 @@ export function UserProfileBadge() {
           </Paragraph1>
         )}
       </div>
-    </div>
+    </Link>
   );
 }

@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  Banknote,
   CalendarClock,
   FileText,
   HelpCircle,
@@ -233,7 +234,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       icon: Wallet,
       isActive: pathname.startsWith("/listers/wallet"),
     },
-
+    {
+      name: "Withdrawals",
+      href: "/listers/withdrawals",
+      icon: Banknote,
+      isActive: pathname.startsWith("/listers/withdrawals"),
+    },
     {
       name: "Dispute",
       href: "/listers/dispute",
