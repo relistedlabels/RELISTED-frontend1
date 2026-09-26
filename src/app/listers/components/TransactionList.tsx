@@ -39,6 +39,27 @@ const TransactionList: React.FC = () => {
     isError,
   } = useTransactions(page, 10, type, "-date");
 
+  const normalizeType = (raw: unknown): "credit" | "debit" => {
+    const t = String(raw ?? "").toLowerCase();
+    if (
+      t.includes("credit") ||
+      t.includes("payout") ||
+      t.includes("deposit") ||
+      t.includes("refund") ||
+      t.includes("earning")
+    ) {
+      return "credit";
+    }
+    return "debit";
+  };
+
+  const statusBadgeClass = (status: unknown) => {
+    const s = String(status ?? "").toLowerCase();
+    if (s.includes("fail")) return "bg-red-50 text-red-600";
+    if (s.includes("pending")) return "bg-[#FFF9E5] text-[#D4A017]";
+    return "bg-[#E8F8F0] text-[#1DB954]";
+  };
+
   const typeColor = (txType: "credit" | "debit") => {
     return txType === "debit" ? "text-[#FF5C5C]" : "text-[#1DB954]";
   };
@@ -74,7 +95,9 @@ const TransactionList: React.FC = () => {
             </div>
           ))
         ) : transactionsData?.data && transactionsData.data.length > 0 ? (
-          transactionsData.data.map((tx, index) => (
+          transactionsData.data.map((tx, index) => {
+            const dir = normalizeType(tx.type);
+            return (
             <motion.div
               key={`${tx.id}-${index}`}
               variants={itemVariants}
@@ -109,12 +132,12 @@ const TransactionList: React.FC = () => {
                     Type
                   </Paragraph1>
                   <div
-                    className={`flex items-center text-sm font-bold ${typeColor(tx.type)}`}
+                    className={`flex items-center text-sm font-bold ${typeColor(dir)}`}
                   >
                     <Paragraph1>
-                      {tx.type === "credit" ? "Credit" : "Debit"}
+                      {dir === "credit" ? "Credit" : "Debit"}
                     </Paragraph1>
-                    {typeIcon(tx.type)}
+                    {typeIcon(dir)}
                   </div>
                 </div>
 
@@ -140,10 +163,10 @@ const TransactionList: React.FC = () => {
                   </Paragraph1>
                   <Paragraph1
                     className={`text-sm font-bold ${
-                      tx.type === "credit" ? "text-[#1DB954]" : "text-black"
+                      dir === "credit" ? "text-[#1DB954]" : "text-black"
                     }`}
                   >
-                    {tx.type === "credit" ? "+" : "-"}₦
+                    {dir === "credit" ? "+" : "-"}₦
                     {tx.amount.toLocaleString("en-US", {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
@@ -152,13 +175,16 @@ const TransactionList: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-end">
-                  <div className="px-4 py-1.5 bg-[#E8F8F0] text-[#1DB954] text-[10px] font-bold rounded-lg uppercase tracking-wider">
+                  <div
+                    className={`px-4 py-1.5 text-[10px] font-bold rounded-lg uppercase tracking-wider ${statusBadgeClass(tx.status)}`}
+                  >
                     {tx.status}
                   </div>
                 </div>
               </div>
             </motion.div>
-          ))
+            );
+          })
         ) : (
           <div className="text-center py-8">
             <Paragraph1 className="text-gray-500">
