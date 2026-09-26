@@ -74,9 +74,9 @@ const ProductReviewsBlock: React.FC<{ productId: string }> = ({ productId }) => 
   }
 
   const mappedReviews = (data?.reviews ?? []).map((r) => ({
-    name: r.renterName || r.name || "Anonymous",
+    name: r.name || "Anonymous",
     rating: r.rating,
-    comment: r.text || r.comment || "",
+    comment: r.text || "",
   }));
 
   return <ProductReviews reviews={mappedReviews} />;

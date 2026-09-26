@@ -35,11 +35,11 @@ export default function ReviewCarousel() {
   });
   const reviews: Review[] = (data?.reviews ?? []).map((review) => ({
     id: review.id,
-    name: review.name || review.renterName || "Renter",
-    role: review.productName ? "Verified renter" : "Verified renter",
-    text: review.text || review.comment || "",
+    name: review.name || "Renter",
+    role: review.role || "Verified renter",
+    text: review.text || "",
     image:
-      review.avatarUrl ||
+      review.image ||
       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80",
     rating: review.rating,
   }));

@@ -9,7 +9,12 @@ export function useSubmitReview() {
       orderId: string;
       rating: number;
       comment?: string;
-    }) => rentersApi.submitReview(data),
+    }) =>
+      rentersApi.submitReview({
+        orderId: data.orderId,
+        rating: data.rating,
+        comment: data.comment ?? "",
+      }),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["renters", "orders"] });
       queryClient.invalidateQueries({
