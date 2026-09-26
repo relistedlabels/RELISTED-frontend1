@@ -64,22 +64,30 @@ export function UserProfileBadge2() {
             className="absolute right-0 mt-3 w-56 origin-top-right rounded-xl bg-[#241F20] z-50 overflow-hidden"
           >
             <div className="py-2">
-              <Link
-                href="/shop"
-                className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
-                onClick={() => setIsOpen(false)}
-              >
-                <ShoppingBag size={18} />
-                <span>View the Market</span>
-              </Link>
-              <Link
-                href="/renters/orders"
-                className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
-                onClick={() => setIsOpen(false)}
-              >
-                <LayoutDashboard size={18} />
-                <span>Renter Dashboard</span>
-              </Link>
+               <Link
+                 href="/listers/profile"
+                 className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+                 onClick={() => setIsOpen(false)}
+               >
+                 <User size={18} />
+                 <span>Profile</span>
+               </Link>
+               <Link
+                 href="/shop"
+                 className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+                 onClick={() => setIsOpen(false)}
+               >
+                 <ShoppingBag size={18} />
+                 <span>View the Market</span>
+               </Link>
+               <Link
+                 href="/renters/orders"
+                 className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+                 onClick={() => setIsOpen(false)}
+               >
+                 <LayoutDashboard size={18} />
+                 <span>Renter Dashboard</span>
+               </Link>
             </div>
           </motion.div>
         )}

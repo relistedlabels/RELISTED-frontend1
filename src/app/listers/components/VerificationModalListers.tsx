@@ -14,7 +14,6 @@ interface VerificationModalListersProps {
   isOpen: boolean;
   onClose: () => void;
   onVerified: () => void;
-  currentBvn?: string | null;
 }
 
 type VerificationStep = "welcome" | "input" | "submitting";
@@ -23,10 +22,8 @@ export default function VerificationModalListers({
   isOpen,
   onClose,
   onVerified,
-  currentBvn,
 }: VerificationModalListersProps) {
   const [step, setStep] = useState<VerificationStep>("welcome");
-  const [bvn, setBvn] = useState("");
   const [nin, setNin] = useState("");
   const [ninDocument, setNinDocument] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string>("");
@@ -81,51 +78,50 @@ export default function VerificationModalListers({
     }
   };
 
-  const handleVerify = async () => {
-    if (!bvn.trim() || !nin.trim() || !ninDocument || !uploadId) {
-      setError("Please fill in all fields and upload NIN document");
-      return;
-    }
+   const handleVerify = async () => {
+     if (!nin.trim() || !ninDocument || !uploadId) {
+       setError("Please fill in all fields and upload NIN document");
+       return;
+     }
 
-    setError("");
-    setIsSubmitting(true);
-    setStep("submitting");
+     setError("");
+     setIsSubmitting(true);
+     setStep("submitting");
 
-    try {
-      // Update BVN/NIN via profile endpoint so VA creation follows backend flow.
-      const promises = [];
+     try {
+       // Update NIN via profile endpoint so VA creation follows backend flow.
+       const promises = [];
 
-      promises.push(
-        updateListerProfileMutation.mutateAsync({
-          bvn: bvn.trim(),
-          nin,
-        }),
-      );
+       promises.push(
+         updateListerProfileMutation.mutateAsync({
+           nin,
+         }),
+       );
 
-      // POST /api/listers/verifications/id (uploadId + idType)
-      promises.push(
-        uploadNinMutation.mutateAsync({
-          uploadId,
-          idType: "NIN",
-        }),
-      );
+       // POST /api/listers/verifications/id (uploadId + idType)
+       promises.push(
+         uploadNinMutation.mutateAsync({
+           uploadId,
+           idType: "NIN",
+         }),
+       );
 
-      await Promise.all(promises);
+       await Promise.all(promises);
 
-      // Show success message
-      alert("Submission Successful! Processing your document...");
+       // Show success message
+       alert("Submission Successful! Processing your document...");
 
-      // Close modal and start countdown
-      onVerified();
-      onClose();
-    } catch (err) {
-      console.error("Verification error:", err);
-      setError("Submission failed. Please try again.");
-      setStep("input");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+       // Close modal and start countdown
+       onVerified();
+       onClose();
+     } catch (err) {
+       console.error("Verification error:", err);
+       setError("Submission failed. Please try again.");
+       setStep("input");
+     } finally {
+       setIsSubmitting(false);
+     }
+   };
 
   return (
     <AnimatePresence>
@@ -210,18 +206,7 @@ export default function VerificationModalListers({
                     Verify Your Identity
                   </Paragraph3>
                   <Paragraph1 className="text-sm text-gray-600">
-                    Enter your BVN and NIN to verify your identity
-                  </Paragraph1>
-                </div>
-
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <Paragraph1 className="text-xs font-medium text-amber-900 mb-1">
-                    ⚠️ Important: Use your correct BVN
-                  </Paragraph1>
-                  <Paragraph1 className="text-xs text-amber-800">
-                    Ensure the BVN you provide is accurate. An incorrect BVN
-                    will prevent you from making purchases and delay your
-                    verification.
+                    Enter your NIN to verify your identity
                   </Paragraph1>
                 </div>
 
@@ -232,21 +217,6 @@ export default function VerificationModalListers({
                     </Paragraph1>
                   </div>
                 )}
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    BVN (Bank Verification Number)
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Enter your 11-digit BVN"
-                    value={bvn}
-                    onChange={(e) => setBvn(e.target.value.replace(/\D/g, ""))}
-                    maxLength={11}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                  />
-                </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -426,14 +396,13 @@ export default function VerificationModalListers({
                   </button>
                   <button
                     onClick={handleVerify}
-                    disabled={
-                      !bvn.trim() ||
-                      !nin.trim() ||
-                      !ninDocument ||
-                      !uploadId ||
-                      isUploadingFile ||
-                      isSubmitting
-                    }
+                     disabled={
+                       !nin.trim() ||
+                       !ninDocument ||
+                       !uploadId ||
+                       isUploadingFile ||
+                       isSubmitting
+                     }
                     className={`${buttonPrimary} flex-1 py-3 font-bold`}
                   >
                     {isSubmitting && (

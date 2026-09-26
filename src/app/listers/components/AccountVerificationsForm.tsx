@@ -1,7 +1,7 @@
 "use client";
 
 // ENDPOINTS: GET /api/listers/verifications/status, GET /api/listers/verifications/documents,
-// POST /api/listers/verifications/nin, POST /api/listers/verifications/bvn, PUT /api/listers/profile (NIN),
+// POST /api/listers/verifications/nin, PUT /api/listers/profile (NIN),
 // PUT /api/listers/verifications/emergency-contact
 
 import { useQueryClient } from "@tanstack/react-query";
@@ -305,26 +305,19 @@ const AccountVerificationsForm: React.FC = () => {
 
   const [isUploadingFile, setIsUploadingFile] = useState(false);
 
-  const [ninNumber, setNinNumber] = useState("");
-  const [ninFile, setNinFile] = useState<File | null>(null);
-  const [ninError, setNinError] = useState<string | null>(null);
-  const [documentType, setDocumentType] = useState<string>(
-    ID_TYPE_OPTIONS[0].value,
-  );
-  const [isDraggingNin, setIsDraggingNin] = useState(false);
+   const [ninNumber, setNinNumber] = useState("");
+   const [ninFile, setNinFile] = useState<File | null>(null);
+   const [ninError, setNinError] = useState<string | null>(null);
+   const [documentType, setDocumentType] = useState<string>(
+     ID_TYPE_OPTIONS[0].value,
+   );
+   const [isDraggingNin, setIsDraggingNin] = useState(false);
 
-  const [bvnInput, setBvnInput] = useState("");
-  const [bvnError, setBvnError] = useState<string | null>(null);
-
-  const listerIdStatusRaw =
+   const listerIdStatusRaw =
     statusData?.data?.verifications?.validId?.status ??
     statusData?.data?.verifications?.nin?.status;
 
-  const idVerificationStatus = mapApiStatusToUI(listerIdStatusRaw);
-
-  const bvnVerificationStatus = mapApiStatusToUI(
-    statusData?.data?.verifications?.bvn?.status,
-  );
+   const idVerificationStatus = mapApiStatusToUI(listerIdStatusRaw);
 
   const assignIdFile = (file: File | null) => {
     if (!file) {
@@ -597,134 +590,7 @@ const AccountVerificationsForm: React.FC = () => {
         </div>
       )}
 
-      {/* Bank Verification */}
-      <div
-        className="flex flex-wrap justify-between items-center gap-2 mb-4"
-        data-onboarding-target="lister-bvn-section"
-      >
-        <Paragraph1 className="font-bold text-gray-900 text-lg">
-          Bank Verification Number
-        </Paragraph1>
-        <VerificationBadge status={bvnVerificationStatus} />
-      </div>
-
-      {bvnVerificationStatus !== "Verified" && (
-        <div className="bg-amber-50 mb-4 p-4 border border-amber-300 rounded-lg">
-          <Paragraph1 className="font-medium text-amber-900 text-sm">
-            ⚠️ Important: Add your correct BVN
-          </Paragraph1>
-          <Paragraph1 className="mt-2 text-amber-800 text-xs">
-            A correct BVN is essential for your account. Without it, you will:
-          </Paragraph1>
-          <ul className="space-y-1 mt-2 ml-4 text-amber-800 text-xs list-disc">
-            <li>Not be able to make purchases on the platform</li>
-            <li>Experience delays in the verification process</li>
-            <li>Have limited access to platform features</li>
-          </ul>
-          <Paragraph1 className="mt-2 text-amber-800 text-xs">
-            Please ensure you provide a valid and accurate BVN to proceed.
-          </Paragraph1>
-        </div>
-      )}
-
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-2">
-          <Paragraph1 className="text-gray-900 text-base">
-            {bvnVerificationStatus === "Verified"
-              ? "Bank Verification Number (BVN)"
-              : profile?.bvn
-                ? "Update BVN"
-                : "Bank Verification Number (BVN)"}
-          </Paragraph1>
-        </div>
-        <div className="flex md:flex-row flex-col justify-between items-center gap-2 bg-gray-50 p-4 border border-gray-300 rounded-lg">
-          {bvnVerificationStatus === "Verified" ? (
-            <>
-              <div className="w-full">
-                <input
-                  type="text"
-                  value={
-                    statusData?.data?.verifications?.bvn?.maskedValue
-                      ? statusData.data.verifications.bvn.maskedValue.replace(
-                          /X/g,
-                          "*",
-                        )
-                      : profile?.bvn
-                        ? `${profile.bvn.slice(0, 4)}****${profile.bvn.slice(-3)}`
-                        : "BVN Verified"
-                  }
-                  readOnly
-                  className="bg-gray-50 outline-none w-full font-mono text-gray-700 text-lg tracking-wider"
-                />
-                <Paragraph1 className="mt-2 text-gray-500 text-xs">
-                  Your BVN is encrypted and secure. Only partial digits shown.
-                </Paragraph1>
-              </div>
-            </>
-          ) : (
-            <>
-              <input
-                type="text"
-                value={bvnInput}
-                onChange={(e) => setBvnInput(e.target.value.replace(/\D/g, ""))}
-                placeholder={
-                  profile?.bvn
-                    ? `Current: ${profile.bvn}`
-                    : "Enter your 11-digit BVN"
-                }
-                maxLength={11}
-                className="bg-white px-3 py-2 border border-gray-300 rounded-md outline-none w-full font-mono text-gray-700 text-lg tracking-wider"
-                disabled={updateProfileMutation.isPending}
-              />
-              <button
-                type="button"
-                className={`${buttonPrimary} md:ml-4 mt-2 md:mt-0 ml-0 whitespace-nowrap`}
-                disabled={
-                  updateProfileMutation.isPending ||
-                  !bvnInput ||
-                  bvnInput.length !== 11
-                }
-                onClick={() => {
-                  setBvnError(null);
-                  if (!bvnInput || bvnInput.length !== 11) {
-                    setBvnError("Please enter a valid 11-digit BVN.");
-                    return;
-                  }
-                  updateProfileMutation.mutate(
-                    { bvn: bvnInput },
-                    {
-                      onSuccess: async () => {
-                        setBvnInput("");
-                        await queryClient.invalidateQueries({
-                          queryKey: ["listers", "verifications", "status"],
-                        });
-                        await queryClient.invalidateQueries({
-                          queryKey: ["profile"],
-                        });
-                      },
-                      onError: () => {
-                        setBvnError("Failed to submit BVN. Please try again.");
-                      },
-                    },
-                  );
-                }}
-              >
-                {updateProfileMutation.isPending ? "Submitting..." : "Submit BVN"}
-              </button>
-            </>
-          )}
-        </div>
-        {bvnError && (
-          <Paragraph1 className="mt-2 text-red-600 text-xs">
-            {bvnError}
-          </Paragraph1>
-        )}
-        <Paragraph1 className="mt-2 text-gray-500 text-xs">
-          Your BVN is encrypted and secure. Only the last 4 digits are shown.
-        </Paragraph1>
-      </div>
-
-      {profile && (
+       {profile && (
         <EmergencyContactBlock
           key={profile.id}
           contact={profile.emergencyContact}

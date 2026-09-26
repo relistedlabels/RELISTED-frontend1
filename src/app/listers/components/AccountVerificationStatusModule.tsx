@@ -1,6 +1,6 @@
 import React from "react";
 import { Paragraph1 } from "@/common/ui/Text";
-import { HiOutlineDocumentText, HiOutlineCreditCard } from "react-icons/hi2";
+import { HiOutlineDocumentText } from "react-icons/hi2";
 
 // Define possible status types for the badge
 type StatusType = "Verified" | "Pending" | "Failed";
@@ -76,21 +76,6 @@ const VerificationStatusModule: React.FC = () => {
           status="Verified"
         />
 
-        {/* 2. Bank Verification Number (BVN) */}
-        <VerificationItem
-          title="Bank Verification Number (BVN)"
-          description="Linked to account ending **345"
-          icon={<HiOutlineCreditCard className="w-6 h-6" />}
-          status="Verified"
-        />
-
-        {/* Add more verification items here if needed */}
-        {/* <VerificationItem
-            title="Proof of Address"
-            description="Utility Bill"
-            icon={<HiOutlineDocumentText className="w-6 h-6" />}
-            status="Pending"
-        /> */}
       </div>
     </div>
   );
