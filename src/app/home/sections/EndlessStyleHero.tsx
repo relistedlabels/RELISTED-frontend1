@@ -77,7 +77,7 @@ export default function EndlessStyleHero() {
             transition={{ duration: 0.9 }}
           >
             <FashionLead className="text-white/90 text-base sm:text-lg xl:text-xl leading-relaxed tracking-wide text-balance">
-              Rent or shop pre-loved fashion from wardrobes you love.
+              Rent or shop fashion from wardrobes you love.
             </FashionLead>
           </motion.div>
 
