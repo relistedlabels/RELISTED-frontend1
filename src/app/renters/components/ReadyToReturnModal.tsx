@@ -73,17 +73,10 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
 
   const uploadMutation = useUpload();
   const { data: orderData } = useOrderDetails(isOpen && orderId ? orderId : "");
-  const orderItems = (orderData?.items as Array<{
-    name?: string;
-    imageUrl?: string | null;
-  }> | undefined) ?? [];
   const resolvedItemImage =
-    itemImageUrl ?? orderItems[0]?.imageUrl ?? orderData?.itemImages?.[0] ?? null;
+    itemImageUrl ?? orderData?.itemImages?.[0] ?? null;
   const resolvedItemLabel =
-    itemLabel?.trim() ||
-    orderItems[0]?.name?.trim() ||
-    orderData?.itemName?.trim() ||
-    null;
+    itemLabel?.trim() || orderData?.itemName?.trim() || null;
 
   const {
     data: windowOptions,
