@@ -15,7 +15,7 @@ export async function selectRoleAndOpenSignUp(
 ): Promise<void> {
   await page.goto("/auth/create-account");
   const pattern =
-    role === "renter" ? /continue as a renter/i : /continue as a lister/i;
+    role === "renter" ? /continue as a shopper/i : /continue as a lister/i;
   await page.getByRole("button", { name: pattern }).click();
   await page.waitForURL(/\/auth\/create-account\/sign-up/);
 }
