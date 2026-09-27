@@ -38,7 +38,7 @@ export function OnboardingPromptModal({
             role="dialog"
             aria-modal="true"
             aria-labelledby="onboarding-prompt-title"
-            className="fixed inset-x-4 bottom-20 z-[121] mx-auto max-w-md rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2 xl:bottom-8 xl:right-8 xl:left-auto xl:translate-y-0"
+            className="fixed inset-x-4 bottom-20 z-[121] mx-auto max-w-md rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2 xl:inset-x-auto xl:bottom-8 xl:right-8 xl:top-auto xl:w-full xl:max-w-md xl:translate-y-0"
             initial={{ opacity: 0, y: 24, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
