@@ -31,10 +31,10 @@ export function HelpTourButton() {
     <button
       type="button"
       onClick={handleTakeTour}
-      className="flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-100"
+      className="flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/10"
     >
-      <Compass size={18} className="text-gray-600 flex-shrink-0" aria-hidden />
-      <span className="text-sm font-medium text-gray-700">Take the tour</span>
+      <Compass size={18} className="text-gray-400 flex-shrink-0" aria-hidden />
+      <span className="text-sm font-medium text-white">Take the tour</span>
     </button>
   );
 }
