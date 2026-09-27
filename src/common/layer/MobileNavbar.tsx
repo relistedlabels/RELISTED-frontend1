@@ -1,19 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ComponentType } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
+import { AnimatePresence, motion } from "framer-motion";
 import { ChevronRight, LogOut, Menu, X } from "lucide-react";
-import NavbarNotificationBell from "@/components/notifications/NavbarNotificationBell";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Header1Plus, Paragraph1 } from "../ui/Text";
-import SearchModal from "./SearchModal";
-import LogoutConfirmModal from "./LogoutConfirmModal";
-import { useMobileMenuStore } from "@/store/useMobileMenuStore";
-import { useMe } from "@/lib/queries/auth/useMe";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { type ComponentType, useEffect, useMemo, useState } from "react";
+import NavbarNotificationBell from "@/components/notifications/NavbarNotificationBell";
 import { useLogout } from "@/lib/mutations";
+import { useUpgradeLister } from "@/lib/mutations/listers/useUpgradeLister";
 import {
   getMyRelistedNavItems,
   HELP_NAV_ITEMS,
@@ -21,15 +17,23 @@ import {
   SHOP_NAV_ITEMS,
   type SiteNavItem,
 } from "@/lib/nav/siteNavItems";
+import { useMe } from "@/lib/queries/auth/useMe";
+import { useMobileMenuStore } from "@/store/useMobileMenuStore";
+import { useUserStore } from "@/store/useUserStore";
+import { Header1Plus, Paragraph1 } from "../ui/Text";
+import LogoutConfirmModal from "./LogoutConfirmModal";
+import SearchModal from "./SearchModal";
 
 type MobileNavLinkProps = {
-  href: string;
+  href?: string;
   label: string;
   icon: ComponentType<{ className?: string }>;
   onNavigate: () => void;
   labelClassName?: string;
   iconClassName?: string;
   showChevron?: boolean;
+  onClick?: () => void;
+  disabled?: boolean;
 };
 
 function MobileNavLink({
@@ -40,21 +44,47 @@ function MobileNavLink({
   labelClassName = "text-white",
   iconClassName = "text-gray-400",
   showChevron = true,
+  onClick,
+  disabled = false,
 }: MobileNavLinkProps) {
+  const className =
+    "flex items-center gap-3 rounded-lg px-1 py-2.5 transition-colors hover:bg-white/5 disabled:opacity-50";
+
+  if (href) {
+    return (
+      <Link href={href} onClick={onNavigate} className={className}>
+        <Icon className={`h-5 w-5 shrink-0 ${iconClassName}`} aria-hidden />
+        <Paragraph1 className={`flex-1 text-base ${labelClassName}`}>
+          {label}
+        </Paragraph1>
+        {showChevron ? (
+          <ChevronRight
+            className="h-4 w-4 shrink-0 text-gray-500"
+            aria-hidden
+          />
+        ) : null}
+      </Link>
+    );
+  }
+
   return (
-    <Link
-      href={href}
-      onClick={onNavigate}
-      className="flex items-center gap-3 rounded-lg px-1 py-2.5 transition-colors hover:bg-white/5"
+    <button
+      type="button"
+      onClick={() => {
+        onNavigate();
+        onClick?.();
+      }}
+      disabled={disabled}
+      className={className}
     >
       <Icon className={`h-5 w-5 shrink-0 ${iconClassName}`} aria-hidden />
       <Paragraph1 className={`flex-1 text-base ${labelClassName}`}>
-        {label}
+        {disabled ? "Setting up your listing profile..." : label}
       </Paragraph1>
       {showChevron ? (
         <ChevronRight className="h-4 w-4 shrink-0 text-gray-500" aria-hidden />
       ) : null}
-    </Link>
+    </button>
   );
 }
 
@@ -98,6 +128,9 @@ function MobileNavbarContent() {
   const closeMenu = useMobileMenuStore((state) => state.closeMenu);
   const { data: user, isLoading } = useMe();
   const logout = useLogout();
+  const upgradeLister = useUpgradeLister();
+  const queryClient = useQueryClient();
+  const setUser = useUserStore((s) => s.setUser);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [signInRedirectUrl, setSignInRedirectUrl] = useState(pathname);
 
@@ -113,7 +146,7 @@ function MobileNavbarContent() {
 
   useEffect(() => {
     closeMenu();
-  }, [pathname, closeMenu]);
+  }, [closeMenu]);
 
   useEffect(() => {
     const qs = searchParams.toString();
@@ -135,6 +168,29 @@ function MobileNavbarContent() {
     logout.mutate(undefined, {
       onSuccess: () => {
         router.replace("/auth/sign-in");
+      },
+    });
+  };
+
+  const handleListWardrobe = () => {
+    closeMenu();
+    if (!user) {
+      router.push("/auth/create-account");
+      return;
+    }
+    if (isLister) {
+      router.push("/listers/inventory");
+      return;
+    }
+    upgradeLister.mutate(undefined, {
+      onSuccess: () => {
+        setUser({ role: "LISTER" });
+        queryClient.setQueryData(["auth", "me"], (old) =>
+          old ? { ...old, role: "LISTER" } : old,
+        );
+        queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
+        queryClient.invalidateQueries({ queryKey: ["listers", "profile"] });
+        router.push("/listers/inventory");
       },
     });
   };
@@ -211,7 +267,16 @@ function MobileNavbarContent() {
                   <div className="border-t border-gray-800" />
 
                   <MobileNavSection title="List">
-                    {renderNavItems(LIST_NAV_ITEMS, closeMenu)}
+                    {LIST_NAV_ITEMS.map((item) => (
+                      <MobileNavLink
+                        key={`${item.label}-${item.href}`}
+                        label={item.label}
+                        icon={item.icon}
+                        onNavigate={closeMenu}
+                        onClick={handleListWardrobe}
+                        disabled={upgradeLister.isPending}
+                      />
+                    ))}
                   </MobileNavSection>
 
                   <div className="border-t border-gray-800" />

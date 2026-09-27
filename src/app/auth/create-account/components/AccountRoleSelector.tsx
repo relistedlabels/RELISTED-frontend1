@@ -79,7 +79,7 @@ const AccountRoleSelector: React.FC = () => {
         </Paragraph1>
         <div className="gap-6 grid grid-cols-1 md:grid-cols-2">
           <RoleOption
-            title="Renter or Buyer"
+            title="Shopper"
             description="I want to rent or buy stylish, quality pieces for events, everyday wear, or content creation."
             imageUrl="/images/sin1.jpg"
             onContinue={handleRoleSelection}
