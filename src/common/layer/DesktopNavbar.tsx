@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import {
-  HelpCircle,
   Package,
   ShoppingCart,
   Sparkles,
@@ -21,6 +20,7 @@ import { useNavbarCartCount } from "@/lib/queries/renters/useNavbarCartCount";
 import { useNavbarOrderCount } from "@/lib/queries/renters/useNavbarOrderCount";
 import { DesktopSalesNavLink } from "./SalesNavLink";
 import NavDropdown from "./NavDropdown";
+import HelpDropdown from "./HelpDropdown";
 import { useUserStore } from "@/store/useUserStore";
 import {
   HELP_NAV_ITEMS,
@@ -77,11 +77,7 @@ function DesktopNavbarContent() {
               <Sparkles className="h-5 w-5" aria-hidden />
               <ParagraphLink1>Style Spotlight</ParagraphLink1>
             </Link>
-            <NavDropdown
-              label="Help"
-              icon={HelpCircle}
-              items={HELP_NAV_ITEMS}
-            />
+            <HelpDropdown items={HELP_NAV_ITEMS} />
             <DesktopSalesNavLink />
           </div>
 
