@@ -1,5 +1,4 @@
 import { afterAll, describe, expect, test } from "bun:test";
-import { INHOUSE_USER_ID } from "@/lib/inhouseManager";
 import {
   isClosetInventoryLister,
   parseClosetInventoryAllowlist,
@@ -14,31 +13,23 @@ afterAll(() => {
 });
 
 describe("parseClosetInventoryAllowlist", () => {
-  test("defaults to the inhouse manager id when env is unset or blank", () => {
-    expect(parseClosetInventoryAllowlist(undefined, INHOUSE_USER_ID)).toEqual([
-      INHOUSE_USER_ID,
-    ]);
-    expect(parseClosetInventoryAllowlist("   ", INHOUSE_USER_ID)).toEqual([
-      INHOUSE_USER_ID,
-    ]);
+  test("returns empty array when env is unset or blank", () => {
+    expect(parseClosetInventoryAllowlist(undefined, "")).toEqual([]);
+    expect(parseClosetInventoryAllowlist("   ", "")).toEqual([]);
   });
 
   test("parses comma-separated allowlist from env", () => {
     expect(
-      parseClosetInventoryAllowlist(
-        " uuid-a , uuid-b ,uuid-c ",
-        INHOUSE_USER_ID,
-      ),
+      parseClosetInventoryAllowlist(" uuid-a , uuid-b ,uuid-c ", ""),
     ).toEqual(["uuid-a", "uuid-b", "uuid-c"]);
   });
 });
 
 describe("isClosetInventoryLister", () => {
-  test("allows only the default inhouse id when env overrides are absent", () => {
+  test("returns false for all users when env override is absent", () => {
     delete process.env.NEXT_PUBLIC_CLOSET_INVENTORY_USER_IDS;
 
-    expect(isClosetInventoryLister(INHOUSE_USER_ID)).toBe(true);
-    expect(isClosetInventoryLister("other-user-id")).toBe(false);
+    expect(isClosetInventoryLister("any-user")).toBe(false);
     expect(isClosetInventoryLister(undefined)).toBe(false);
   });
 
@@ -46,6 +37,7 @@ describe("isClosetInventoryLister", () => {
     process.env.NEXT_PUBLIC_CLOSET_INVENTORY_USER_IDS = "partner-a, partner-b";
 
     expect(isClosetInventoryLister("partner-a")).toBe(true);
-    expect(isClosetInventoryLister(INHOUSE_USER_ID)).toBe(false);
+    expect(isClosetInventoryLister("partner-b")).toBe(true);
+    expect(isClosetInventoryLister("other-user")).toBe(false);
   });
 });

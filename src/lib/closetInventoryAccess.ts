@@ -25,8 +25,9 @@ export function parseClosetInventoryAllowlist(
 
 export function isClosetInventoryLister(userId: string | undefined): boolean {
   if (!userId) return false;
-  return parseClosetInventoryAllowlist(
+  const allowlist = parseClosetInventoryAllowlist(
     process.env.NEXT_PUBLIC_CLOSET_INVENTORY_USER_IDS,
-    INHOUSE_USER_ID,
-  ).includes(userId);
+    "",
+  );
+  return allowlist.includes(userId);
 }
