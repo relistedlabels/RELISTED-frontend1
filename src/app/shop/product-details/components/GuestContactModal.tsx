@@ -1,21 +1,22 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
+import { Calendar, Loader2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { X, Loader2, Calendar } from "lucide-react";
 import { HiOutlineEnvelope, HiOutlineUser } from "react-icons/hi2";
-import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
+import { PhoneInput } from "@/app/auth/profile-setup/components/PhoneInput";
+import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
+import {
+  bottomSheetBackdrop,
+  bottomSheetPanel,
+} from "@/common/ui/dashboardClasses";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import {
   readGuestContact,
   saveGuestContact,
 } from "@/lib/guest/guestContactStorage";
-import { PhoneInput } from "@/app/auth/profile-setup/components/PhoneInput";
-import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
 import { validatePhoneNumber } from "@/lib/phone";
-import {
-  bottomSheetBackdrop,
-  bottomSheetPanel,
-} from "@/common/ui/dashboardClasses";
 
 type GuestContactModalProps = {
   isOpen: boolean;
@@ -63,7 +64,18 @@ export default function GuestContactModal({
     ).trim();
 
     const phoneError = validatePhoneNumber(whatsappValue);
-    if (!firstNameValue || !emailValue || phoneError) return;
+    if (!firstNameValue) {
+      toast.error("Please enter your first name.");
+      return;
+    }
+    if (!emailValue) {
+      toast.error("Please enter your email address.");
+      return;
+    }
+    if (phoneError) {
+      toast.error(phoneError);
+      return;
+    }
 
     const contact = {
       firstName: firstNameValue,
@@ -164,7 +176,11 @@ export default function GuestContactModal({
                 <Paragraph1 className="mb-2 font-medium text-gray-900 text-sm">
                   WhatsApp number
                 </Paragraph1>
-                <input type="hidden" name="whatsappPhone" value={whatsappPhone} />
+                <input
+                  type="hidden"
+                  name="whatsappPhone"
+                  value={whatsappPhone}
+                />
                 <PhoneInput
                   value={whatsappPhone || "+234"}
                   onChange={setWhatsappPhone}
