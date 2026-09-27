@@ -125,7 +125,7 @@ export function CheckoutShippingLegHeader({
 
   return (
     <div className="flex justify-between items-start gap-4">
-      <div className="min-w-0 flex-1 border-gray-900 border-l-2 pl-3">
+      <div className="min-w-0 flex-1">
         <Paragraph1 className="font-bold text-[11px] text-gray-900 uppercase tracking-[0.12em]">
           {sectionLabel}
         </Paragraph1>

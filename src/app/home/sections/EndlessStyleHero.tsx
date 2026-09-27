@@ -56,7 +56,7 @@ export default function EndlessStyleHero() {
           }}
         >
           <motion.div
-            className="mb-6 sm:mb-8"
+            className="mb-2 sm:mb-3"
             variants={{
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0 },
@@ -76,7 +76,7 @@ export default function EndlessStyleHero() {
             }}
             transition={{ duration: 0.9 }}
           >
-            <FashionLead className="text-white/90 text-base sm:text-lg xl:text-xl leading-relaxed tracking-wide text-balance">
+            <FashionLead className="text-white/70 font-light text-base sm:text-lg xl:text-xl leading-relaxed tracking-wide text-balance">
               Rent or buy fashion from wardrobes you love.
             </FashionLead>
           </motion.div>
