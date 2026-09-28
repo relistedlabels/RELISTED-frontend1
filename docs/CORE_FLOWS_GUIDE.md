@@ -98,7 +98,7 @@ The order summary shows rental fees, any security deposit, and delivery. Tap **P
 
 Checkout at [relistedlabels.com/shop/cart/checkout](https://relistedlabels.com/shop/cart/checkout) has two steps: **Delivery** and **Payment**.
 
-**Step 1: Delivery and return**
+**Step 1: Delivery and Pickup**
 
 - Confirm or add your delivery address and phone number
 - Choose your delivery method and delivery window

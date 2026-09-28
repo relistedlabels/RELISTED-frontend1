@@ -43,9 +43,7 @@ import type { CheckoutStep } from "./CheckoutStepper";
 import { CheckoutShippingLegHeader } from "./CheckoutDispatchLegPreview";
 import CheckoutSectionHeading from "./CheckoutSectionHeading";
 import CheckoutStepIntro from "./CheckoutStepIntro";
-import CheckoutStepNav, {
-  checkoutStepContinueLabel,
-} from "./CheckoutStepNav";
+import CheckoutStepNav, { checkoutStepContinueLabel } from "./CheckoutStepNav";
 import {
   buildCheckoutStickySummaryLines,
   computeDisplayOutboundShipping,
@@ -166,7 +164,8 @@ const isSameDayShippingTierName = (tierName: string) => {
 };
 
 const showSameDayCutoffDisclaimer = (tierName: string) =>
-  isSameDayShippingTierName(tierName) && !isShipbubbleShippingTierName(tierName);
+  isSameDayShippingTierName(tierName) &&
+  !isShipbubbleShippingTierName(tierName);
 
 // === Skeleton Loader ===
 const ContactSkeleton = () => (
@@ -214,10 +213,7 @@ function FetchingDeliveryOptions({ label }: { label: string }) {
 }
 
 // === Delivery Tier Helper Function ===
-const getDeliveryTierDetails = (
-  tierName: string,
-  tierDescription?: string,
-) => {
+const getDeliveryTierDetails = (tierName: string, tierDescription?: string) => {
   const normalized = tierName.toLowerCase();
   if (normalized.includes("via shipbubble")) {
     return {
@@ -336,7 +332,8 @@ export default function CheckoutContactAndPayment({
         shipmentBucketsMeta,
         selectedTierTotal: tierList.find((t) => t.name === selectedShippingTier)
           ?.totalShippingCost,
-        summaryOutboundTotal: orderSummary?.data?.summary?.outboundShippingTotal ?? 0,
+        summaryOutboundTotal:
+          orderSummary?.data?.summary?.outboundShippingTotal ?? 0,
       }),
     [
       usePerBucketOutbound,
@@ -360,7 +357,8 @@ export default function CheckoutContactAndPayment({
         selectedReturnTierTotal: returnTierList.find(
           (t) => t.name === selectedReturnShippingTier,
         )?.totalShippingCost,
-        summaryReturnTotal: orderSummary?.data?.summary?.returnShippingTotal ?? 0,
+        summaryReturnTotal:
+          orderSummary?.data?.summary?.returnShippingTotal ?? 0,
       }),
     [
       showReturnShippingTierPicker,
@@ -413,8 +411,7 @@ export default function CheckoutContactAndPayment({
       }, 0);
     } else {
       const outboundRow = tierList.find((t) => t.name === selectedShippingTier);
-      selectedOutboundCost =
-        outboundRow?.totalShippingCost ?? baselineOutbound;
+      selectedOutboundCost = outboundRow?.totalShippingCost ?? baselineOutbound;
     }
 
     let selectedReturnCost = baselineReturn;
@@ -654,14 +651,14 @@ export default function CheckoutContactAndPayment({
     renterProfileDetails?.profile,
   );
   const returnPickupAddressLine =
-    formatReturnPickupAddressLine(returnPickupAddress ?? {}) ??
-    deliveryAddress;
+    formatReturnPickupAddressLine(returnPickupAddress ?? {}) ?? deliveryAddress;
 
   const stickyNavProps = {
     checkoutGrandTotalNgN,
     itemCount: checkoutItemCount,
     summaryLines: stickySummaryLines,
-    summaryLoading: isShippingTiersLoading && checkoutGrandTotalNgN === undefined,
+    summaryLoading:
+      isShippingTiersLoading && checkoutGrandTotalNgN === undefined,
   };
 
   const formatCurrency = (amount: number): string => {
@@ -673,11 +670,11 @@ export default function CheckoutContactAndPayment({
       {checkoutStep === 1 ? (
         <>
           <CheckoutStepIntro
-            title={isResaleOnly ? "Delivery" : "Delivery and return"}
+            title={isResaleOnly ? "Delivery" : "Delivery and Pickup"}
             subtitle={
               isResaleOnly
                 ? "Add your address and pick a delivery option."
-                : "Set your addresses, then pick your delivery options."
+                : "Set your delivery address and pickup address, then pick your delivery options."
             }
           />
 
@@ -685,7 +682,9 @@ export default function CheckoutContactAndPayment({
             <div className="p-4 sm:p-5">
               <CheckoutShippingLegHeader
                 sectionLabel={
-                  showReturnShippingTierPicker ? "DELIVERY" : "DELIVERY METHOD"
+                  showReturnShippingTierPicker
+                    ? "DELIVERY ADDRESS"
+                    : "DELIVERY METHOD"
                 }
                 leg="outbound"
               />
@@ -750,7 +749,8 @@ export default function CheckoutContactAndPayment({
                     <FetchingDeliveryOptions label="Fetching delivery options…" />
                   ) : showSplitOutboundSections ? (
                     <div className="space-y-8">
-                      {showQuoteDispatchLoading && !hasSummaryDispatchPreview ? (
+                      {showQuoteDispatchLoading &&
+                      !hasSummaryDispatchPreview ? (
                         <div className="mb-4 pb-4 border-gray-100 border-b">
                           <DispatchWindowsQuoteSkeleton />
                         </div>
@@ -764,11 +764,12 @@ export default function CheckoutContactAndPayment({
                           orderReviewDelivery.shipments.find(
                             (row) => row.bucketIndex === bucket.bucketIndex,
                           ) ?? orderReviewDelivery.shipments[bucketIndex];
-                        const deliveryWindowText = resolveOutboundDeliveryWindowText(
-                          shipment,
-                          dispatchContexts,
-                          dispatchSelections ?? {},
-                        );
+                        const deliveryWindowText =
+                          resolveOutboundDeliveryWindowText(
+                            shipment,
+                            dispatchContexts,
+                            dispatchSelections ?? {},
+                          );
                         return (
                           <div key={bucket.bucketIndex} className="space-y-3">
                             {bucketIndex > 0 ? (
@@ -807,7 +808,8 @@ export default function CheckoutContactAndPayment({
                     </div>
                   ) : unifiedOutboundTiers.length > 0 ? (
                     <div className="space-y-3">
-                      {showQuoteDispatchLoading && !hasSummaryDispatchPreview ? (
+                      {showQuoteDispatchLoading &&
+                      !hasSummaryDispatchPreview ? (
                         <DispatchWindowsQuoteSkeleton />
                       ) : (
                         <CheckoutReadonlyDetail
@@ -825,8 +827,8 @@ export default function CheckoutContactAndPayment({
                           ? (selectedOutboundTierByBucket[
                               outboundBuckets[0].bucketIndex
                             ] ??
-                            unifiedOutboundTiers[0]?.name ??
-                            "")
+                              unifiedOutboundTiers[0]?.name ??
+                              "")
                           : selectedShippingTier,
                         outboundBuckets.length === 1
                           ? `outboundBucket-${outboundBuckets[0].bucketIndex}`
@@ -853,7 +855,10 @@ export default function CheckoutContactAndPayment({
           {!isResaleOnly ? (
             <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
               <div className="p-4 sm:p-5">
-                <CheckoutShippingLegHeader sectionLabel="RETURN" leg="return" />
+                <CheckoutShippingLegHeader
+                  sectionLabel="PICKUP ADDRESS"
+                  leg="return"
+                />
                 <hr className="my-4 text-gray-100" />
 
                 <CheckoutReturnPickupContact
@@ -925,8 +930,8 @@ export default function CheckoutContactAndPayment({
                             ? (selectedReturnTierByBucket[
                                 returnBuckets[0].bucketIndex
                               ] ??
-                              unifiedReturnTiers[0]?.name ??
-                              "")
+                                unifiedReturnTiers[0]?.name ??
+                                "")
                             : selectedReturnShippingTier,
                           returnBuckets.length === 1
                             ? `returnBucket-${returnBuckets[0].bucketIndex}`
@@ -952,32 +957,32 @@ export default function CheckoutContactAndPayment({
             </div>
           ) : null}
 
-      {hasDeliveryAddress && checkoutBlockingIssues.length > 0 ? (
-        <div className="bg-amber-50 p-4 border border-amber-200 rounded-xl">
-          <Paragraph1 className="font-semibold text-amber-950 text-sm">
-            Before you pay
-          </Paragraph1>
-          <div className="space-y-1 mt-2">
-            {checkoutBlockingIssues.map((issue) => (
-              <Paragraph1 key={issue} className="text-amber-900 text-sm">
-                {issue}
+          {hasDeliveryAddress && checkoutBlockingIssues.length > 0 ? (
+            <div className="bg-amber-50 p-4 border border-amber-200 rounded-xl">
+              <Paragraph1 className="font-semibold text-amber-950 text-sm">
+                Before you pay
               </Paragraph1>
-            ))}
-          </div>
-        </div>
-      ) : null}
+              <div className="space-y-1 mt-2">
+                {checkoutBlockingIssues.map((issue) => (
+                  <Paragraph1 key={issue} className="text-amber-900 text-sm">
+                    {issue}
+                  </Paragraph1>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
-      {hasDeliveryAddress && phoneNeedsUpdate ? (
-        <div className="bg-amber-50 p-4 border border-amber-200 rounded-xl">
-          <Paragraph1 className="font-semibold text-amber-950 text-sm">
-            Update your phone number
-          </Paragraph1>
-          <Paragraph1 className="mt-1 text-amber-900 text-sm">
-            Your saved phone number needs to be updated before you can
-            continue. Tap Phone above to fix it.
-          </Paragraph1>
-        </div>
-      ) : null}
+          {hasDeliveryAddress && phoneNeedsUpdate ? (
+            <div className="bg-amber-50 p-4 border border-amber-200 rounded-xl">
+              <Paragraph1 className="font-semibold text-amber-950 text-sm">
+                Update your phone number
+              </Paragraph1>
+              <Paragraph1 className="mt-1 text-amber-900 text-sm">
+                Your saved phone number needs to be updated before you can
+                continue. Tap Phone above to fix it.
+              </Paragraph1>
+            </div>
+          ) : null}
 
           <CheckoutStepNav
             onContinue={
@@ -989,7 +994,6 @@ export default function CheckoutContactAndPayment({
           />
         </>
       ) : null}
-
     </div>
   );
 }

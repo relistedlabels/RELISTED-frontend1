@@ -39,7 +39,8 @@ const stepMeta = [
   },
   {
     title: "How Renting Works",
-    subtitle: "Pay, lock your deposit, get it back after return.",
+    subtitle:
+      "Rent your look. Your security deposit is refundable after a successful return.",
   },
   {
     title: "Verify Your Identity",
@@ -58,14 +59,8 @@ const stepMeta = [
 export function RenterOnboardingFlow() {
   const router = useRouter();
   const userId = useOnboardingUserId();
-  const {
-    step,
-    hydrated,
-    goNext,
-    goBack,
-    isFirstStep,
-    isLastStep,
-  } = useOnboardingProgress("renter", RENTER_ONBOARDING_STEPS);
+  const { step, hydrated, goNext, goBack, isFirstStep, isLastStep } =
+    useOnboardingProgress("renter", RENTER_ONBOARDING_STEPS);
 
   const finish = () => {
     markOnboardingComplete(userId, "renter");
@@ -89,7 +84,8 @@ export function RenterOnboardingFlow() {
 
   const startVerificationTask = () =>
     startOnboardingDetour(renterVerificationOnboardingTask);
-  const startWalletTask = () => startOnboardingDetour(renterWalletOnboardingTask);
+  const startWalletTask = () =>
+    startOnboardingDetour(renterWalletOnboardingTask);
 
   if (!hydrated) {
     return (
@@ -139,7 +135,7 @@ export function RenterOnboardingFlow() {
           <Paragraph1
             className={`text-gray-600 text-center ${ONBOARDING_SECONDARY_TEXT}`}
           >
-            Purchases skip the deposit and are yours to keep.
+            Buying instead? Purchases don&apos;t require a security deposit.
           </Paragraph1>
         </div>
       ) : null}

@@ -37,7 +37,10 @@ export default function CheckoutReviewDeliverySection({
   return (
     <div className="space-y-4">
       <div className="bg-white p-4 border border-gray-100 rounded-xl">
-        <CheckoutShippingLegHeader sectionLabel="DELIVERY" leg="outbound" />
+        <CheckoutShippingLegHeader
+          sectionLabel="DELIVERY ADDRESS"
+          leg="outbound"
+        />
         <hr className="my-4 text-gray-100" />
 
         <div className="space-y-4">
@@ -58,7 +61,10 @@ export default function CheckoutReviewDeliverySection({
 
       {returnReview ? (
         <div className="bg-white p-4 border border-gray-100 rounded-xl">
-          <CheckoutShippingLegHeader sectionLabel="RETURN" leg="return" />
+          <CheckoutShippingLegHeader
+            sectionLabel="PICKUP ADDRESS"
+            leg="return"
+          />
           <hr className="my-4 text-gray-100" />
 
           <div className="space-y-4">

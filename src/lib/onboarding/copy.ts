@@ -19,17 +19,20 @@ export type OnboardingStep = {
 export const renterHowItWorksSteps: readonly OnboardingStep[] = [
   {
     title: "Pay from your wallet",
-    description: "Checkout uses rental fee plus a security deposit.",
+    description:
+      "Your rental fee and refundable security deposit are paid from your wallet.",
     icon: "wallet",
   },
   {
-    title: "Refundable security deposit",
-    description: "Your deposit is held until the item is returned and approved.",
+    title: "Your deposit is held securely",
+    description:
+      "Your security deposit is held for the duration of your rental.",
     icon: "choice",
   },
   {
-    title: "Return the item",
-    description: "After the lister approves, your deposit returns to Available Balance.",
+    title: "We collect your return",
+    description:
+      "After your rental, we'll collect the item from your selected pickup address. Once approved, your deposit is returned to your Available Balance, where you can withdraw it to your bank account.",
     icon: "return",
   },
 ];
@@ -117,7 +120,8 @@ export const renterWalletSteps: readonly OnboardingStep[] = [
   },
   {
     title: "After return",
-    description: "Deposit returns to Available Balance. Disputes are under My Orders.",
+    description:
+      "Deposit returns to Available Balance. Disputes are under My Orders.",
     icon: "return",
   },
 ];

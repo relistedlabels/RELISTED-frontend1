@@ -387,8 +387,8 @@ test.describe("Checkout mixed carts (mocked API)", () => {
 
     await gotoCheckoutStep(page, 1);
 
-    await expect(page.getByText("Delivery and return")).toBeVisible();
-    await expect(page.getByText("RETURN", { exact: true })).toBeVisible();
+    await expect(page.getByText("Delivery and Pickup")).toBeVisible();
+    await expect(page.getByText("PICKUP ADDRESS", { exact: true })).toBeVisible();
   });
 
   test("@smoke hides return UI on steps 1 and 2 when only purchase is approved", async ({
