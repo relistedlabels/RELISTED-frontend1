@@ -155,7 +155,7 @@ const minutesUntil = (targetIso: string) => {
   return Math.round((target - now) / 60000);
 };
 
-export const DISPATCH_WINDOW_START_HOUR = 8;
+export const DISPATCH_WINDOW_START_HOUR = 9;
 /** Last hour any dispatch window may end (Lagos). Rental delivery, purchase delivery, and return pickup. */
 export const DISPATCH_WINDOW_END_HOUR = 16;
 export const MIN_DISPATCH_WINDOW_MINUTES = 60;

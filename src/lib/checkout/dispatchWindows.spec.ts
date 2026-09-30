@@ -43,7 +43,7 @@ describe("buildDispatchWindowFromForm", () => {
       durationMinutes: 60,
     });
     expect(result.window).toBeUndefined();
-    expect(result.errors.some((e) => e.includes("8:00am"))).toBe(true);
+    expect(result.errors.some((e) => e.includes("9:00am"))).toBe(true);
   });
 
   test("rejects window ending after 4pm cutoff", () => {
