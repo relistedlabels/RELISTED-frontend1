@@ -12,6 +12,7 @@ import {
   AlertCircle,
   Package,
   Heart,
+  ShieldCheck,
   X,
   CheckCircle,
 } from "lucide-react";
@@ -40,6 +41,7 @@ import UserListings from "./components/UserListings";
 import UserWallet from "./components/UserWallet";
 import UserDisputes from "./components/UserDisputes";
 import SavedItems from "./components/SavedItems";
+import UserVerification from "./components/UserVerification";
 import { AdminSectionTabs } from "../../../components/AdminSectionTabs";
 
 interface UserDetailPageProps {
@@ -54,6 +56,7 @@ const TABS = [
   { id: "listings", label: "Listings", icon: Package },
   { id: "wallet", label: "Wallet", icon: Wallet },
   { id: "disputes", label: "Disputes", icon: AlertCircle },
+  { id: "verification", label: "Verification", icon: ShieldCheck },
   { id: "favorites", label: "Saved Items", icon: Heart },
 ];
 
@@ -178,6 +181,8 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
         ) : (
           <UserDisputes disputes={userDisputes.data?.data?.disputes || []} />
         );
+      case "verification":
+        return user ? <UserVerification user={user} /> : <TableSkeleton />;
       case "favorites":
         return userFavorites.isLoading ? (
           <TableSkeleton />
@@ -194,26 +199,36 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
   };
 
   return (
-    <div className="min-h-screen ">
-      <div className="">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4 mb-6 border-b border-gray-200 pb-6">
-          <div className="flex items-start gap-4 flex-1">
-            <img
-              src={
-                user?.profile?.avatarUpload?.url ||
-                "https://i.pravatar.cc/150?img=0"
-              }
-              alt={user?.name || "User"}
-              className="w-12 h-12 rounded-full object-cover"
-            />
-            <div>
-              <Paragraph2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-                {user?.name || "Loading..."}
-              </Paragraph2>
-              <Paragraph1 className="text-2xl py-1 text-gray-900 tracking-tight">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 border-b border-gray-200 pb-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+          <button
+            type="button"
+            onClick={handleGoBack}
+            aria-label="Back to users"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 text-gray-600 transition hover:bg-gray-50 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-100 text-sm font-semibold text-gray-600">
+            {user?.profile?.avatarUpload?.url ? (
+              <img
+                src={user.profile.avatarUpload.url}
+                alt={user?.name || "User"}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              user?.name?.trim()?.charAt(0).toUpperCase() || "U"
+            )}
+          </div>
+          <div className="min-w-0">
+            <h1 className="truncate text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
+              {user?.name || "Loading..."}
+            </h1>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium uppercase text-gray-700">
                 {user?.role || "Loading..."}
-              </Paragraph1>
+              </span>
               <Paragraph1 className="text-xs text-gray-500">
                 Joined{" "}
                 {user?.createdAt
@@ -226,61 +241,57 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
               </Paragraph1>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            {user?.isVerified ? (
-              <button
-                disabled
-                className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium text-sm flex items-center gap-2 opacity-75 cursor-not-allowed"
-              >
-                Verified <CheckCircle />
-              </button>
-            ) : (
-              <button
-                onClick={() => setShowVerifyModal(true)}
-                disabled={isVerifying}
-                className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition font-medium text-sm disabled:opacity-50"
-              >
-                {isVerifying ? "Verifying..." : "Verify User"}
-              </button>
-            )}
-            <button
-              onClick={() => setShowActionModal(true)}
-              className={`px-4 py-2 text-white rounded-lg transition font-medium text-sm ${
-                user?.isSuspended
-                  ? "bg-green-600 hover:bg-green-700"
-                  : "bg-red-600 hover:bg-red-700"
-              }`}
-            >
-              {user?.isSuspended ? "Restore" : "Suspend"}
-            </button>
-            <button
-              onClick={handleGoBack}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              ✕
-            </button>
-          </div>
         </div>
-
-        <AdminSectionTabs
-          tabs={TABS}
-          activeTab={activeTab}
-          onChange={handleTabChange}
-          thickActiveBorder
-        />
-
-        {/* Tab Content */}
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, x: direction * 100 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: direction * -100 }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-          className="py-6"
-        >
-          {renderTabContent()}
-        </motion.div>
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+          {user?.isVerified ? (
+            <button
+              type="button"
+              disabled
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-green-700 px-4 text-sm font-medium text-white opacity-75"
+            >
+              Verified <CheckCircle size={16} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowVerifyModal(true)}
+              disabled={isVerifying}
+              className="inline-flex h-10 items-center rounded-xl bg-gray-900 px-4 text-sm font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
+            >
+              {isVerifying ? "Verifying..." : "Verify User"}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setShowActionModal(true)}
+            className={`inline-flex h-10 items-center rounded-xl px-4 text-sm font-medium text-white transition ${
+              user?.isSuspended
+                ? "bg-green-600 hover:bg-green-700"
+                : "bg-red-600 hover:bg-red-700"
+            }`}
+          >
+            {user?.isSuspended ? "Restore" : "Suspend"}
+          </button>
+        </div>
       </div>
+
+      <AdminSectionTabs
+        tabs={TABS}
+        activeTab={activeTab}
+        onChange={handleTabChange}
+        thickActiveBorder
+      />
+
+      <motion.div
+        key={activeTab}
+        initial={{ opacity: 0, x: direction * 100 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: direction * -100 }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+        className="min-w-0 py-6"
+      >
+        {renderTabContent()}
+      </motion.div>
 
       {/* Action Confirmation Modal */}
       {showActionModal && user && (

@@ -168,7 +168,7 @@ export default function UserWallet({
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Paragraph1 className="text-xs text-gray-500">
           Last updated:{" "}
           {new Date(wallet.updatedAt).toLocaleDateString("en-US", {
@@ -181,7 +181,7 @@ export default function UserWallet({
         </Paragraph1>
         <button
           type="button"
-          className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 sm:w-auto"
         >
           <Download size={18} />
           Export Statement

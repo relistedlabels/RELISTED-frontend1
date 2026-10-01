@@ -88,28 +88,30 @@ export default function UsersPage() {
         className="!mb-0"
         title="Users"
         description="Manage renters and listers."
+        action={
+          <button
+            type="button"
+            onClick={() => setIsNewsletterModalOpen(true)}
+            className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2"
+          >
+            <Mail className="h-5 w-5" />
+            Newsletter
+          </button>
+        }
       />
 
-      <div className="flex flex-col md:flex-row justify-between gap-4">
-        <div className="relative w-full md:w-2/3">
+      <div className="grid grid-cols-1 gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:grid-cols-[minmax(0,1fr)_minmax(13rem,0.34fr)]">
+        <div className="relative min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
             placeholder="Search users..."
-            className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-black"
+            className="h-11 w-full rounded-xl border border-gray-200 bg-white py-2 pl-10 pr-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-900/10"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <button
-          type="button"
-          onClick={() => setIsNewsletterModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-black text-white rounded-lg hover:bg-gray-800 transition font-semibold text-sm"
-        >
-          <Mail className="w-5 h-5" />
-          Newsletter
-        </button>
-        <div className="w-full md:w-1/4">
+        <div className="min-w-0">
           <AdminComboBox
             value={statusFilter}
             onChange={setStatusFilter}
@@ -119,26 +121,27 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <AdminSectionTabs
-        tabs={TABS.map((tab) => ({
-          id: tab,
-          label: tabLabel(tab, listerCount, renterCount),
-        }))}
-        activeTab={activeTab}
-        onChange={(tabId) => setActiveTab(tabId as UserRole)}
-      />
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <AdminSectionTabs
+          className="bg-white px-2 sm:px-3"
+          tabs={TABS.map((tab) => ({
+            id: tab,
+            label: tabLabel(tab, listerCount, renterCount),
+          }))}
+          activeTab={activeTab}
+          onChange={(tabId) => setActiveTab(tabId as UserRole)}
+        />
 
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         {showTableSkeleton ? (
           <TableSkeleton />
         ) : isError ? (
-          <div className="text-center py-12">
+          <div className="py-12 text-center">
             <Paragraph1 className="text-red-600">
               Failed to load users. Check your session and try again.
             </Paragraph1>
           </div>
         ) : filteredData.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="py-12 text-center">
             <Paragraph1 className="text-gray-500">
               No users found matching your criteria.
             </Paragraph1>

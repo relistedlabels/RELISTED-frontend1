@@ -19,7 +19,17 @@ interface AnalyticsStatsProps {
   month?: number;
 }
 
-const SKELETON_KEYS = ["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8"];
+const SKELETON_KEYS = [
+  "s1",
+  "s2",
+  "s3",
+  "s4",
+  "s5",
+  "s6",
+  "s7",
+  "s8",
+  "s9",
+];
 
 const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
   const { data, isLoading, error } = useAnalyticsStats({
@@ -165,6 +175,13 @@ const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
         value={`${(stats.disputeRate * 100).toFixed(1)}%`}
         label="Disputed order share"
         detail={`${formatNumber(stats.ordersWithDisputes)} of ${formatNumber(stats.totalOrders)} selected-period orders have a dispute`}
+      />
+
+      <StatCard
+        icon={<HiOutlineScale className="w-5 h-5" />}
+        value={formatNumber(stats.ordersWithDisputes)}
+        label="Orders with disputes"
+        detail="Selected-period orders with at least one dispute"
       />
 
       <StatCard
