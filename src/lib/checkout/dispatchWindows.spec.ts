@@ -3,7 +3,9 @@ import {
   addDaysToDateString,
   buildDispatchWindowChoices,
   buildDispatchWindowFromForm,
+  deriveDefaultDispatchWindow,
   differenceInDays,
+  getLagosDateTimeParts,
   parseTimeToMinutes,
   DEFAULT_DISPATCH_WINDOW_MINUTES,
   DISPATCH_WINDOW_END_HOUR,
@@ -35,6 +37,17 @@ describe("addDaysToDateString", () => {
   });
 });
 
+describe("deriveDefaultDispatchWindow", () => {
+  test("starts the suggested window at 9am Lagos time", () => {
+    const result = deriveDefaultDispatchWindow("2030-06-01T09:00:00+01:00");
+
+    expect(getLagosDateTimeParts(result.window.start)).toMatchObject({
+      hour: 9,
+      minute: 0,
+    });
+  });
+});
+
 describe("buildDispatchWindowFromForm", () => {
   test("rejects start time before dispatch window opens", () => {
     const result = buildDispatchWindowFromForm({
@@ -43,7 +56,7 @@ describe("buildDispatchWindowFromForm", () => {
       durationMinutes: 60,
     });
     expect(result.window).toBeUndefined();
-    expect(result.errors.some((e) => e.includes("8:00am"))).toBe(true);
+    expect(result.errors.some((e) => e.includes("9:00am"))).toBe(true);
   });
 
   test("rejects window ending after 4pm cutoff", () => {
