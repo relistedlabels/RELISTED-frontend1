@@ -168,10 +168,6 @@ function WalletsPageInner() {
           cardBg: "bg-emerald-50 border-emerald-100",
           iconBg: "bg-emerald-100",
           iconText: "text-emerald-700",
-          trendPercent: monthOverMonthPercent(
-            currentMonth?.revenue ?? 0,
-            previousMonth?.revenue ?? 0,
-          ),
         },
         {
           label: "Completed orders (this month)",
@@ -194,10 +190,6 @@ function WalletsPageInner() {
           cardBg: "bg-violet-50 border-violet-100",
           iconBg: "bg-violet-100",
           iconText: "text-violet-600",
-          trendPercent: monthOverMonthPercent(
-            currentMonth?.payoutsToListers ?? 0,
-            previousMonth?.payoutsToListers ?? 0,
-          ),
         },
         {
           label: "Platform service fees (this month)",
@@ -207,10 +199,6 @@ function WalletsPageInner() {
           cardBg: "bg-amber-50 border-amber-100",
           iconBg: "bg-amber-100",
           iconText: "text-amber-600",
-          trendPercent: monthOverMonthPercent(
-            currentMonth?.serviceFees ?? 0,
-            previousMonth?.serviceFees ?? 0,
-          ),
         },
         {
           label: "Wallet balances",
@@ -237,10 +225,6 @@ function WalletsPageInner() {
           value: formatCurrency(currentMonth?.vat ?? 0),
           currency: "₦",
           icon: <Receipt className="h-5 w-5" />,
-          trendPercent: monthOverMonthPercent(
-            currentMonth?.vat ?? 0,
-            previousMonth?.vat ?? 0,
-          ),
         },
       ]
     : [];
