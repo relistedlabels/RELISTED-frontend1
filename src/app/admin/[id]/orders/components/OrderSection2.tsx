@@ -26,7 +26,6 @@ interface OrderSection2Props {
   returnDue: string;
   paymentReference: string;
   paymentStatus?: string;
-  trackingNumber?: string | null;
   rentalPeriod?: string;
   lister: PersonInfo;
   additionalListers?: PersonInfo[];
@@ -38,7 +37,6 @@ export default function OrderSection2({
   returnDue,
   paymentReference,
   paymentStatus,
-  trackingNumber,
   rentalPeriod,
   lister,
   additionalListers = [],
@@ -109,12 +107,6 @@ export default function OrderSection2({
             <div className={detailRowClass}>
               <Paragraph1 className={detailLabelClass}>Payment</Paragraph1>
               <Paragraph1 className={detailValueClass}>{paymentStatus}</Paragraph1>
-            </div>
-          )}
-          {trackingNumber && trackingNumber !== "N/A" && (
-            <div className={detailRowClass}>
-              <Paragraph1 className={detailLabelClass}>Tracking</Paragraph1>
-              <Paragraph1 className={detailValueClass}>{trackingNumber}</Paragraph1>
             </div>
           )}
         </div>

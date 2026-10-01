@@ -15,10 +15,12 @@ export type ResponsiveColumnDef<T> = {
   id: string;
   header: React.ReactNode;
   render: (row: T, index: number) => React.ReactNode;
+  renderMobile?: (row: T, index: number) => React.ReactNode;
   headerClassName?: string;
   cellClassName?: string;
   mobile?: ResponsiveColumnMobileRole;
   mobileLabel?: React.ReactNode;
+  mobileDetailClassName?: string;
 };
 
 function normalizeHeaderLabel(header: React.ReactNode): string {
@@ -63,6 +65,8 @@ export type ResponsiveDataTableProps<T> = {
   className?: string;
   tableClassName?: string;
   desktopMinWidthClassName?: string;
+  renderMobileCard?: (row: T, index: number) => React.ReactNode;
+  mobileDetailsLayout?: "stack" | "grid";
 };
 
 export function ResponsiveDataTable<T>({
@@ -76,6 +80,8 @@ export function ResponsiveDataTable<T>({
   className = "",
   tableClassName = "w-full",
   desktopMinWidthClassName = "md:min-w-full",
+  renderMobileCard,
+  mobileDetailsLayout = "grid",
 }: ResponsiveDataTableProps<T>) {
   const columnMeta = columns.map((col, index) => ({
     ...col,
@@ -110,6 +116,34 @@ export function ResponsiveDataTable<T>({
     <div className={className}>
       <div className="flex flex-col gap-3 bg-gray-50 p-3 md:hidden">
         {rows.map((row, rowIndex) => {
+          if (renderMobileCard) {
+            return (
+              <div
+                key={getRowKey(row)}
+                role={onRowClick ? "button" : undefined}
+                tabIndex={onRowClick ? 0 : undefined}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                onKeyDown={
+                  onRowClick
+                    ? (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          onRowClick(row);
+                        }
+                      }
+                    : undefined
+                }
+                className={`rounded-xl border border-gray-200 bg-white p-4 shadow-sm ${
+                  onRowClick
+                    ? "cursor-pointer transition-colors hover:border-gray-300 active:bg-gray-50"
+                    : ""
+                }`}
+              >
+                {renderMobileCard(row, rowIndex)}
+              </div>
+            );
+          }
+
           const thumbnailCols = columnMeta.filter(
             (c) => c.mobileRole === "thumbnail",
           );
@@ -170,14 +204,25 @@ export function ResponsiveDataTable<T>({
               </div>
 
               {detailCols.length > 0 ? (
-                <dl className="mt-3 space-y-3 border-t border-gray-200 pt-3">
+                <dl
+                  className={`mt-4 border-t border-gray-100 pt-4 ${
+                    mobileDetailsLayout === "grid"
+                      ? "grid grid-cols-2 gap-x-4 gap-y-4"
+                      : "space-y-3"
+                  }`}
+                >
                   {detailCols.map((col) => (
-                    <div key={col.id} className="flex flex-col gap-0.5">
-                      <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    <div
+                      key={col.id}
+                      className={`flex min-w-0 flex-col gap-0.5 ${col.mobileDetailClassName ?? ""}`}
+                    >
+                      <dt className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                         {col.mobileLabel ?? normalizeHeaderLabel(col.header)}
                       </dt>
-                      <dd className="min-w-0 break-words text-sm text-gray-900">
-                        {col.render(row, rowIndex)}
+                      <dd className="mt-0.5 min-w-0 break-words text-sm text-gray-900">
+                        {col.renderMobile
+                          ? col.renderMobile(row, rowIndex)
+                          : col.render(row, rowIndex)}
                       </dd>
                     </div>
                   ))}
@@ -223,9 +268,22 @@ export function ResponsiveDataTable<T>({
             {rows.map((row, rowIndex) => (
               <tr
                 key={getRowKey(row)}
+                tabIndex={onRowClick ? 0 : undefined}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
+                onKeyDown={
+                  onRowClick
+                    ? (event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          onRowClick(row);
+                        }
+                      }
+                    : undefined
+                }
                 className={`border-b border-gray-200 transition-colors ${
-                  onRowClick ? "cursor-pointer hover:bg-gray-50" : "hover:bg-gray-50"
+                  onRowClick
+                    ? "cursor-pointer hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gray-400"
+                    : "hover:bg-gray-50"
                 }`}
               >
                 {columns.map((col) => (

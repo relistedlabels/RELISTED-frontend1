@@ -12,7 +12,7 @@ export const DISPATCH_FILTER_OPTIONS: AdminComboBoxOption[] = [
 ];
 
 export const ADMIN_FILTER_INPUT_CLASS =
-  "w-full px-3 py-2 border border-gray-200 rounded-lg bg-white text-gray-900 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900";
+  "h-11 w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 transition placeholder:text-gray-400 hover:border-gray-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black";
 
 export const ADMIN_FILTER_DATE_CLASS = ADMIN_FILTER_INPUT_CLASS;
 

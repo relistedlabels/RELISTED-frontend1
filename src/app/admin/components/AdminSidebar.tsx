@@ -2,7 +2,6 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import type React from "react";
@@ -30,6 +29,7 @@ import { settingsApi } from "@/lib/api/admin/settings";
 import { useAdminNavCounts } from "@/lib/queries/admin/useAdminNavCounts";
 import { useAdminNavState } from "@/lib/queries/admin/useSettings";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
+import AdminBrand from "./AdminBrand";
 
 interface NavItem {
   id: string;
@@ -122,17 +122,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
       >
         {/* Brand header (mobile drawer only) */}
         <div className="mb-4 flex items-center justify-between border-b border-gray-100 px-4 pb-4 lg:hidden">
-          <div className="flex items-center gap-2.5">
-            <Image
-              src="/images/logo.svg"
-              alt="Relisted Labels"
-              width={30}
-              height={30}
-            />
-            <span className="text-sm font-bold tracking-wide text-gray-900">
-              RELISTED LABELS
-            </span>
-          </div>
+          <AdminBrand />
           <button
             type="button"
             onClick={onClose}

@@ -5,6 +5,7 @@ import { useState } from "react";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
+import AdminBrand from "./AdminBrand";
 import AdminSearchBar from "./AdminSearchBar";
 
 interface AdminTopNavbarProps {
@@ -64,20 +65,7 @@ export default function AdminTopNavbar({
         <Menu size={20} />
       </button>
 
-      {/* Logo + Brand */}
-      <div className="flex flex-shrink-0 items-center gap-2.5">
-        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#1a1a2e] text-xs font-bold text-white">
-          RL
-        </div>
-        <div className="hidden min-w-0 sm:block">
-          <p className="text-[13px] font-bold leading-tight tracking-wide text-gray-900">
-            RELISTED LABELS
-          </p>
-          <p className="text-[11px] leading-tight text-gray-500">
-            Admin Dashboard
-          </p>
-        </div>
-      </div>
+      <AdminBrand className="hidden sm:flex" />
 
       {/* Center: Search Bar */}
       <div className="flex min-w-0 flex-1 justify-center px-2 sm:px-6">

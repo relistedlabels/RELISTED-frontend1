@@ -26,7 +26,6 @@ import {
   useEscrows,
   useWalletStats,
   useWallets,
-  useWalletTransactions,
 } from "@/lib/queries/admin/useWallets";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { AdminTabBar, AdminTabButton } from "../../components/AdminSectionTabs";
@@ -122,11 +121,6 @@ function WalletsPageInner() {
     search: searchQuery,
     enabled: activeTab === "escrow",
   });
-  const transactionsQuery = useWalletTransactions({
-    search: searchQuery,
-    enabled: activeTab === "transactions",
-  });
-
   // Log errors
   if (statsQuery.isError) {
     console.error("Wallet stats error:", statsQuery.error);
@@ -137,10 +131,6 @@ function WalletsPageInner() {
   if (escrowsQuery.isError) {
     console.error("Failed to fetch escrows:", escrowsQuery.error);
   }
-  if (transactionsQuery.isError) {
-    console.error("Failed to fetch transactions:", transactionsQuery.error);
-  }
-
   const handleExport = async () => {
     setIsExporting(true);
     try {
@@ -262,93 +252,28 @@ function WalletsPageInner() {
   return (
     <div className="min-h-screen">
       {/* Header Section */}
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="mb-6">
         <div>
           <Paragraph2 className="mb-2 text-gray-900">Finance</Paragraph2>
           <Paragraph1 className="text-gray-600">
             Track payments, payouts and revenue.
           </Paragraph1>
         </div>
-        <button
-          type="button"
-          onClick={handleExport}
-          disabled={isExporting}
-          className="flex items-center justify-center gap-2 rounded-lg bg-black px-4 py-2.5 font-medium text-white transition hover:bg-gray-900 disabled:opacity-60"
-        >
-          {isExporting ? (
-            <Loader2 size={18} className="animate-spin" />
-          ) : (
-            <Download size={18} />
-          )}
-          Export
-        </button>
       </div>
 
-      {/* Metrics Section */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {statsQuery.isPending ? (
-          <MetricCardsSkeleton count={8} />
-        ) : (
-          metrics.map((metric) => (
-            <MetricsCard key={metric.label} {...metric} />
-          ))
-        )}
-      </div>
-
-      {/* Overview tab content */}
       {activeTab === "overview" ? (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <RecentTransactionsPanel adminId={adminId} />
-            <WithdrawalSummaryPanel adminId={adminId} />
-          </div>
-
-          {/* Reports */}
-          <section className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5">
-            <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-gray-900">
-              Reports
-            </h3>
-            <button
-              type="button"
-              onClick={handleExport}
-              disabled={isExporting}
-              className="flex w-full items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 p-4 text-left transition hover:border-gray-200 hover:bg-gray-100 disabled:opacity-60 sm:max-w-sm"
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
-                <FileSpreadsheet className="h-5 w-5" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[13px] font-semibold text-gray-900">
-                  Transactions report
-                </span>
-                <span className="block text-[12px] text-gray-500">
-                  Download the full ledger as CSV
-                </span>
-              </span>
-              <Download className="h-4 w-4 shrink-0 text-gray-400" />
-            </button>
-          </section>
-        </div>
-      ) : null}
-
-      {/* Filters Section (table tabs only) */}
-      {isTableTab ? (
-        <div className="mb-6 flex flex-col items-center justify-between gap-4 rounded-lg bg-white py-4 md:flex-row">
-          <div className="w-full flex-1 md:w-auto">
-            <div className="relative">
-              <Search
-                className="absolute left-3 top-3 text-gray-400"
-                size={20}
-              />
-              <input
-                type="text"
-                placeholder="Search by user name or reference"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-black"
-              />
-            </div>
-          </div>
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {statsQuery.isPending ? (
+            <MetricCardsSkeleton count={8} />
+          ) : statsQuery.isError ? (
+            <p className="col-span-full rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              Finance summary could not be loaded.
+            </p>
+          ) : (
+            metrics.map((metric) => (
+              <MetricsCard key={metric.label} {...metric} />
+            ))
+          )}
         </div>
       ) : null}
 
@@ -383,7 +308,50 @@ function WalletsPageInner() {
         </AdminTabBar>
 
         {/* Table Content */}
-        <div className="py-6">
+        {isTableTab ? (
+          <div className="flex flex-col gap-3 border-b border-gray-200 p-4 sm:flex-row sm:items-end sm:p-5">
+            <div className="min-w-0 flex-1">
+              <label
+                htmlFor="finance-record-search"
+                className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-600"
+              >
+                Search records
+              </label>
+              <div className="relative">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={18}
+                  aria-hidden
+                />
+                <input
+                  id="finance-record-search"
+                  type="text"
+                  placeholder="Search by user name or reference"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-11 w-full rounded-xl border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+                />
+              </div>
+            </div>
+            {activeTab === "transactions" ? (
+              <button
+                type="button"
+                onClick={handleExport}
+                disabled={isExporting}
+                className="inline-flex h-11 items-center justify-center gap-2 self-start rounded-lg border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-800 transition hover:bg-gray-50 disabled:opacity-60"
+              >
+                {isExporting ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Download size={16} />
+                )}
+                Export CSV
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+
+        <div className="p-4 sm:p-5">
           {activeTab === "wallet" && <WalletTable searchQuery={searchQuery} />}
           {activeTab === "escrow" && <EscrowTable searchQuery={searchQuery} />}
           {activeTab === "transactions" && (
@@ -393,16 +361,50 @@ function WalletsPageInner() {
             <WithdrawalRequestTable searchQuery={searchQuery} />
           )}
           {activeTab === "overview" && (
-            <p className="px-4 text-[13px] text-gray-500">
-              Switch to a tab above for detailed records, or{" "}
-              <Link
-                href={`/admin/${adminId}/insights`}
-                className="font-medium text-blue-600 hover:underline"
-              >
-                open Insights
-              </Link>{" "}
-              for revenue trends.
-            </p>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <RecentTransactionsPanel adminId={adminId} />
+                <WithdrawalSummaryPanel adminId={adminId} />
+              </div>
+
+              <section className="rounded-xl border border-gray-200 bg-white p-4 sm:p-5">
+                <div className="mb-3 flex items-center gap-2">
+                  <FileSpreadsheet className="h-4 w-4 text-gray-500" />
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Finance report
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleExport}
+                  disabled={isExporting}
+                  className="flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 text-left transition hover:bg-gray-100 disabled:opacity-60 sm:max-w-sm"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                    <FileSpreadsheet className="h-5 w-5" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[13px] font-semibold text-gray-900">
+                      Transactions report
+                    </span>
+                    <span className="block text-[12px] text-gray-500">
+                      Download the full ledger as CSV
+                    </span>
+                  </span>
+                  <Download className="h-4 w-4 shrink-0 text-gray-400" />
+                </button>
+              </section>
+              <p className="text-sm text-gray-500">
+                For revenue trends, visit{" "}
+                <Link
+                  href={`/admin/${adminId}/insights`}
+                  className="font-medium text-blue-600 hover:underline"
+                >
+                  Insights
+                </Link>
+                .
+              </p>
+            </div>
           )}
         </div>
       </div>

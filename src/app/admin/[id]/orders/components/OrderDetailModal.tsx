@@ -78,6 +78,15 @@ export default function OrderDetailModal({
   const order = data?.data as OrderDetail | undefined;
 
   const statusLabel = order ? getAdminOrderStatusLabel(order.status) : "—";
+  const listingType = String(order?.listingType ?? "").toUpperCase();
+  const isPurchaseOrder = Boolean(
+    order &&
+      (listingType === "RESALE" ||
+        listingType === "PURCHASE" ||
+        (listingType === "RENT_OR_RESALE" &&
+          order.items_details.length > 0 &&
+          order.items_details.every((item) => item.rentalDays === 0))),
+  );
   const canCancel =
     !!order && CANCELLABLE_STATUSES.has(String(order.status).toUpperCase());
 
@@ -189,7 +198,6 @@ export default function OrderDetailModal({
                     returnDue={order.returnDue ?? "N/A"}
                     paymentReference={order.paymentReference ?? "N/A"}
                     paymentStatus={order.payment?.paymentStatus}
-                    trackingNumber={order.trackingNumber}
                     rentalPeriod={order.shipping?.rentalPeriod}
                     lister={{
                       name: order.lister?.name ?? "N/A",
@@ -218,7 +226,10 @@ export default function OrderDetailModal({
                     formatMoney={formatMoney}
                   />
 
-                  <OrderShipmentsSection orderId={orderId} />
+                  <OrderShipmentsSection
+                    orderId={orderId}
+                    isPurchaseOrder={isPurchaseOrder}
+                  />
 
                   <ReturnRequestSection returnRequest={order.returnRequest} />
 

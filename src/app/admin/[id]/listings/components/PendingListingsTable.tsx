@@ -12,9 +12,10 @@ import {
   curatorAvatarUrl,
   listingThumbnailUrl,
 } from "@/app/admin/lib/adminListingDisplay";
+import { listingPriceDisplay } from "@/lib/product/listingPriceDisplay";
 import { ApprovalConfirmationModal } from "./ApprovalConfirmationModal";
 import ItemTypeBadge from "./ItemTypeBadge";
-import { listingPriceDisplay } from "@/lib/product/listingPriceDisplay";
+import { ListingPriceSummary } from "./ListingPriceSummary";
 
 interface PendingListingsTableProps {
   products: Product[];
@@ -94,7 +95,7 @@ function buildColumns(
     },
     {
       id: "curator",
-      header: "Curator",
+      header: "Lister",
       mobile: "detail",
       render: (product) => {
         const safeProduct = {
@@ -125,41 +126,8 @@ function buildColumns(
       id: "price",
       header: "Price",
       mobile: "detail",
-      render: (product) => {
-        const safeProduct = {
-          ...product,
-          curator: product.curator
-            ? { ...product.curator, isVerified: true }
-            : undefined,
-        };
-        const priceInfo = listingPriceDisplay(
-          safeProduct as typeof safeProduct & {
-            listingType?: string;
-            resalePrice?: number;
-          },
-        );
-        return (
-          <div>
-            <Paragraph1 className="font-medium text-gray-900">
-              ₦{safeProduct.originalValue?.toLocaleString() || 0}
-            </Paragraph1>
-            <div className="mt-1 space-y-1">
-              {priceInfo.listingType !== "RESALE" && (
-                <Paragraph1 className="text-xs text-gray-700">
-                  {priceInfo.primary.label}: ₦
-                  {priceInfo.primary.amount.toLocaleString()}
-                </Paragraph1>
-              )}
-              {(priceInfo.secondary || priceInfo.listingType === "RESALE") && (
-                <Paragraph1 className="text-xs text-gray-700">
-                  {(priceInfo.secondary ?? priceInfo.primary).label}: ₦
-                  {(priceInfo.secondary ?? priceInfo.primary).amount.toLocaleString()}
-                </Paragraph1>
-              )}
-            </div>
-          </div>
-        );
-      },
+      mobileDetailClassName: "col-span-2 rounded-lg bg-gray-50 px-3 py-2.5",
+      render: (product) => <ListingPriceSummary product={product} />,
     },
     {
       id: "actions",

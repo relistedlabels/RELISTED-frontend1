@@ -251,9 +251,17 @@ export default function TransactionsTable({
           </div>
         }
         emptyState={
-          <div className="px-4 py-8 text-center md:px-6">
-            <p className="text-gray-500">No transactions found</p>
-          </div>
+          transactionsQuery.isError ? (
+            <div className="px-4 py-8 text-center md:px-6">
+              <p className="text-red-600">
+                Could not load transactions. Please try again.
+              </p>
+            </div>
+          ) : (
+            <div className="px-4 py-8 text-center md:px-6">
+              <p className="text-gray-500">No transactions found</p>
+            </div>
+          )
         }
       />
       <AdminTablePagination

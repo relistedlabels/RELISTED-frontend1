@@ -76,11 +76,13 @@ import {
   AdminFilterField,
 } from "@/app/admin/components/AdminComboBox";
 import {
+  AdminFilterButton,
+  AdminFilterDrawer,
+} from "@/app/admin/components/AdminFilterDrawer";
+import {
   ADMIN_FILTER_BAR_CLASS,
   ADMIN_FILTER_DATE_CLASS,
-  ADMIN_FILTER_FIELD_WIDTH,
   ADMIN_FILTER_INPUT_CLASS,
-  ADMIN_FILTER_SECTION_CLASS,
   DISPATCH_FILTER_LABEL,
   DISPATCH_FILTER_OPTIONS,
   type DispatchFilter,
@@ -335,7 +337,7 @@ function buildShipmentListColumns(handlers: {
     {
       id: "item",
       header: "Item",
-      mobile: "hidden",
+      mobile: "thumbnail",
       render: (shipment) => {
         const itemThumb = firstShipmentItemThumbnail(shipment);
         const firstItemName =
@@ -380,6 +382,16 @@ function buildShipmentListColumns(handlers: {
       id: "type",
       header: "Type",
       mobile: "detail",
+      renderMobile: (shipment) => (
+        <div className="flex flex-col items-start gap-1.5 text-sm text-gray-900">
+          <span>{getShipmentLegDisplayLabel(shipment.type)}</span>
+          {shipment.manualFulfillment ? (
+            <span className="text-xs font-medium text-gray-500">
+              Relisted dispatch
+            </span>
+          ) : null}
+        </div>
+      ),
       render: (shipment) => (
         <div className="flex min-w-[9.5rem] flex-col items-start gap-1.5">
           <span className={`${ADMIN_SHIPMENT_CHIP_CLASS} bg-gray-100 text-gray-800`}>
@@ -451,7 +463,7 @@ function buildShipmentListColumns(handlers: {
     {
       id: "actions",
       header: "Actions",
-      mobile: "action",
+      mobile: "hidden",
       render: (shipment) => (
         <div className="flex items-center gap-2">
           {shipment.status === "DISPATCH_FAILED" && !shipment.manualFulfillment ? (
@@ -494,8 +506,6 @@ const STATUS_FILTERS: Array<ShipmentStatus | "All"> = [
 ];
 
 const TYPE_FILTERS: Array<ShipmentType | "All"> = ["All", "OUTBOUND", "RETURN", "RESALE"];
-
-const FILTER_INPUT_CLASS = ADMIN_FILTER_INPUT_CLASS;
 
 const ADMIN_FIELD_INPUT_CLASS = ADMIN_FILTER_INPUT_CLASS;
 
@@ -561,20 +571,32 @@ function ShipmentModalSection({
   children: React.ReactNode;
 }) {
   return (
-    <details className="group border border-gray-100 rounded-lg" open={defaultOpen}>
-      <summary className="[&::-webkit-details-marker]:hidden flex justify-between items-center gap-3 p-3.5 cursor-pointer list-none">
-        <div className="min-w-0">
-          <Paragraph1 className="font-medium text-gray-900 text-sm">{title}</Paragraph1>
+    <details
+      className="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:border-gray-300 hover:shadow-md open:border-gray-300"
+      open={defaultOpen}
+    >
+      <summary className="flex list-none cursor-pointer items-center justify-between gap-3 bg-gray-50/70 px-4 py-3.5 transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gray-400 [&::-webkit-details-marker]:hidden">
+        <div className="min-w-0 flex-1">
+          <Paragraph1 className="font-semibold text-gray-900 text-sm">
+            {title}
+          </Paragraph1>
           {summary ? (
-            <Paragraph1 className="mt-0.5 text-gray-500 text-xs truncate">{summary}</Paragraph1>
+            <Paragraph1 className="mt-1 line-clamp-2 text-gray-600 text-xs leading-relaxed sm:line-clamp-1">
+              {summary}
+            </Paragraph1>
           ) : null}
         </div>
-        <ChevronDown
-          size={16}
-          className="text-gray-400 group-open:rotate-180 transition shrink-0"
-        />
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors group-hover:border-gray-300 group-hover:text-gray-700 group-open:bg-gray-100">
+          <ChevronDown
+            size={17}
+            className="transition-transform group-open:rotate-180"
+            aria-hidden
+          />
+        </span>
       </summary>
-      <div className="space-y-4 px-3.5 pb-3.5 border-gray-100 border-t">{children}</div>
+      <div className="space-y-4 border-t border-gray-100 bg-white px-4 py-4 sm:px-5">
+        {children}
+      </div>
     </details>
   );
 }
@@ -661,9 +683,42 @@ function DetailField({
   className?: string;
 }) {
   return (
-    <div className={className}>
-      <Paragraph1 className="mb-1 text-gray-500 text-xs">{label}</Paragraph1>
+    <div className={`min-w-0 rounded-lg border border-gray-100 bg-gray-50/80 p-3 ${className ?? ""}`}>
+      <Paragraph1 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+        {label}
+      </Paragraph1>
       {children}
+    </div>
+  );
+}
+
+function AddressCard({
+  address,
+}: {
+  address: Record<string, unknown> | undefined;
+}) {
+  const lines = formatAddressLines(address);
+
+  return (
+    <div className="min-h-full rounded-lg border border-gray-100 bg-gray-50/80 px-3 py-3">
+      {lines.length ? (
+        <div className="space-y-1">
+          {lines.map((line, index) => (
+            <Paragraph1
+              key={`${index}-${line}`}
+              className={
+                index === 0
+                  ? "break-words text-sm font-semibold leading-snug text-gray-900"
+                  : "break-words text-xs leading-relaxed text-gray-600"
+              }
+            >
+              {line}
+            </Paragraph1>
+          ))}
+        </div>
+      ) : (
+        <Paragraph1 className="text-sm text-gray-500">—</Paragraph1>
+      )}
     </div>
   );
 }
@@ -686,8 +741,8 @@ function shortenId(id: string, keep = 8): string {
 /**
  * Snapshot shape matches `topship.provider` / checkout: name, phone, email, city, state, street, zip.
  */
-function formatAddress(addr: Record<string, unknown> | undefined): string {
-  if (!addr || typeof addr !== "object") return "—";
+function formatAddressLines(addr: Record<string, unknown> | undefined): string[] {
+  if (!addr || typeof addr !== "object") return [];
   const name = addr.name as string | undefined;
   const phone = addr.phone as string | undefined;
   const street =
@@ -698,10 +753,11 @@ function formatAddress(addr: Record<string, unknown> | undefined): string {
   const zip = addr.zip as string | undefined;
   const email = addr.email as string | undefined;
   const line2 = [city, state].filter(Boolean).join(", ");
-  const parts = [name, phone, email, street, line2, zip].filter(
+  const contacts = [phone, email].filter(Boolean).join(" · ");
+  const parts = [name, contacts, street, line2, zip].filter(
     (p): p is string => Boolean(p && String(p).trim()),
   );
-  return parts.length ? parts.join(" · ") : JSON.stringify(addr);
+  return parts.length ? parts : [JSON.stringify(addr) ?? "Address details unavailable"];
 }
 
 /** Receiver snapshot street/city/state — source of truth for checkout drop-off (not Topship pickup-hub). */
@@ -802,8 +858,16 @@ function ShipmentsPageInner() {
   const [costsOpen, setCostsOpen] = useState(false);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [costDateFrom, setCostDateFrom] = useState("");
   const [costDateTo, setCostDateTo] = useState("");
+
+  const activeFilterCount =
+    Number(typeFilter !== "All") +
+    Number(dispatchFilter !== "all") +
+    Number(statusFilter !== "All") +
+    Number(Boolean(dateFrom)) +
+    Number(Boolean(dateTo));
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 350);
@@ -1338,7 +1402,7 @@ function ShipmentsPageInner() {
           Shipments
         </Paragraph2>
         <Paragraph1 className="text-gray-600">
-          View dispatch state, windows, and tracking for all platform shipments (admin).
+          View dispatch state, windows, and tracking for all platform shipments.
         </Paragraph1>
       </div>
 
@@ -1482,31 +1546,43 @@ function ShipmentsPageInner() {
       </div>
 
       <div className="bg-white mb-6 border border-gray-200 rounded-lg overflow-hidden">
-        <div className={ADMIN_FILTER_SECTION_CLASS}>
-          <div className={ADMIN_FILTER_BAR_CLASS}>
-            <AdminFilterField
-              label="Search"
-              className={ADMIN_FILTER_FIELD_WIDTH.search}
-            >
-              <div className="relative">
-                <Search
-                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-                  aria-hidden
-                />
-                <input
-                  type="text"
-                  placeholder="Order id or UUID…"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`${FILTER_INPUT_CLASS} pl-9`}
-                />
-              </div>
-            </AdminFilterField>
+        <div className="flex items-end gap-2 border-b border-gray-200 px-4 py-4 sm:px-6">
+          <AdminFilterField label="Search" className="min-w-0 flex-1">
+            <div className="relative">
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                aria-hidden
+              />
+              <input
+                type="text"
+                placeholder="Order id or UUID…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`${ADMIN_FILTER_INPUT_CLASS} pl-9`}
+              />
+            </div>
+          </AdminFilterField>
+          <AdminFilterButton
+            onClick={() => setFiltersOpen(true)}
+            activeCount={activeFilterCount}
+          />
+        </div>
 
-            <AdminFilterField
-              label="Leg type"
-              className={ADMIN_FILTER_FIELD_WIDTH.type}
-            >
+        <AdminFilterDrawer
+          isOpen={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          onClear={() => {
+            setTypeFilter("All");
+            setDispatchFilter("all");
+            setStatusFilter("All");
+            setDateFrom("");
+            setDateTo("");
+          }}
+          activeCount={activeFilterCount}
+          title="Shipment filters"
+        >
+          <div className="space-y-5">
+            <AdminFilterField label="Leg type">
               <AdminComboBox
                 value={typeFilter}
                 onChange={(value) => setTypeFilter(value as ShipmentType | "All")}
@@ -1514,35 +1590,22 @@ function ShipmentsPageInner() {
                 ariaLabel="Leg type"
               />
             </AdminFilterField>
-
-            <AdminFilterField
-              label={DISPATCH_FILTER_LABEL}
-              className={ADMIN_FILTER_FIELD_WIDTH.dispatch}
-            >
+            <AdminFilterField label={DISPATCH_FILTER_LABEL}>
               <AdminComboBox
                 value={dispatchFilter}
-                onChange={(value) =>
-                  setDispatchFilter(value as DispatchFilter)
-                }
+                onChange={(value) => setDispatchFilter(value as DispatchFilter)}
                 options={DISPATCH_FILTER_OPTIONS}
                 ariaLabel={DISPATCH_FILTER_LABEL}
               />
             </AdminFilterField>
-
-            <AdminFilterField
-              label="Status"
-              className={ADMIN_FILTER_FIELD_WIDTH.status}
-            >
+            <AdminFilterField label="Status">
               <AdminComboBox
                 value={statusFilter}
-                onChange={(value) =>
-                  setStatusFilter(value as ShipmentStatus | "All")
-                }
+                onChange={(value) => setStatusFilter(value as ShipmentStatus | "All")}
                 options={STATUS_FILTER_OPTIONS}
                 ariaLabel="Status"
               />
             </AdminFilterField>
-
             <AdminFilterField label="Scheduled from">
               <input
                 type="date"
@@ -1552,7 +1615,6 @@ function ShipmentsPageInner() {
                 aria-label="Scheduled from"
               />
             </AdminFilterField>
-
             <AdminFilterField label="Scheduled to">
               <input
                 type="date"
@@ -1564,7 +1626,7 @@ function ShipmentsPageInner() {
               />
             </AdminFilterField>
           </div>
-        </div>
+        </AdminFilterDrawer>
 
       {isLoading || isError ? (
         isError ? (
@@ -1641,37 +1703,41 @@ function ShipmentsPageInner() {
 
       {isDetailModalOpen && selectedShipment && displayShipment && (
         <div
-          className="z-50 fixed inset-0 flex justify-center items-center bg-black/50 p-4"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-4"
           onClick={() => setIsDetailModalOpen(false)}
           onKeyDown={(e) => e.key === "Escape" && setIsDetailModalOpen(false)}
           role="presentation"
         >
           <div
-            className="relative bg-white shadow-lg rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            className="relative flex max-h-[100dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border border-gray-200 bg-white shadow-2xl sm:max-h-[90vh] sm:rounded-2xl"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal
             aria-labelledby="shipment-detail-title"
           >
             {detailQuery.isFetching && !detailFromApi && (
-              <div className="z-10 absolute inset-0 flex justify-center items-center bg-white/70 rounded-lg">
+              <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/70">
                 <Loader2 className="w-8 h-8 text-gray-600 animate-spin" aria-label="Loading details" />
               </div>
             )}
-            <div className="p-5 border-gray-200 border-b">
-              <div className="flex justify-between items-start gap-4">
-                <div className="min-w-0">
+            <div className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4 sm:px-6">
+              <div className="relative min-w-0">
+                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2 pr-10">
                   <h2
                     id="shipment-detail-title"
-                    className="font-bold text-gray-900 text-lg leading-tight"
+                    className="text-xs font-bold uppercase leading-tight tracking-[0.12em] text-gray-500 sm:text-sm"
                   >
-                    {getShipmentLegDisplayLabel(displayShipment.type)}
+                    {getShipmentLegDisplayLabel(displayShipment.type)} shipment
                   </h2>
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                    <ShipmentStatusBadge
-                      status={displayShipment.status}
-                      type={displayShipment.type}
-                    />
+                  <ShipmentStatusBadge
+                    status={displayShipment.status}
+                    type={displayShipment.type}
+                  />
+                </div>
+                {displayShipment.reconciledAsManualAt ||
+                (displayShipment.manualFulfillment &&
+                  !displayShipment.reconciledAsManualAt) ? (
+                  <div className="mt-2 flex flex-wrap gap-1.5 pr-10">
                     {displayShipment.reconciledAsManualAt ? (
                       <span
                         className={`${ADMIN_SHIPMENT_CHIP_CLASS} bg-gray-100 text-gray-800`}
@@ -1679,81 +1745,105 @@ function ShipmentsPageInner() {
                         Manually dispatched
                       </span>
                     ) : null}
-                    {displayShipment.manualFulfillment && !displayShipment.reconciledAsManualAt ? (
+                    {displayShipment.manualFulfillment &&
+                    !displayShipment.reconciledAsManualAt ? (
                       <span className={RELISTED_DISPATCH_BADGE_CLASS}>
                         Relisted dispatch
                       </span>
                     ) : null}
                   </div>
-                  <Paragraph1 className="mt-1 font-medium text-gray-900 text-sm">
-                    {displayShipment.order?.orderId ?? "—"}
-                  </Paragraph1>
-                  <Paragraph1 className="mt-0.5 text-gray-600 text-sm truncate">
-                    {displayShipment.order?.user?.name || "—"}
-                    {displayShipment.order?.user?.email
-                      ? ` · ${displayShipment.order.user.email}`
-                      : ""}
-                  </Paragraph1>
-                </div>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => setIsDetailModalOpen(false)}
-                  className="hover:bg-gray-100 p-1 rounded-lg text-gray-500 hover:text-gray-700 shrink-0"
+                  className="absolute right-0 top-0 shrink-0 rounded-lg p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
                   aria-label="Close"
                 >
-                  <XCircle size={24} />
+                  <XCircle size={22} />
                 </button>
               </div>
-            </div>
-            <div className="space-y-4 p-5">
-              <div className="space-y-2 bg-white p-3.5 border border-gray-100 rounded-lg text-sm">
-                {dispatchWindowLabel ? (
-                  <div className="flex gap-2">
-                    <span className="w-20 text-gray-500 shrink-0">Window</span>
-                    <span className="text-gray-900">{dispatchWindowLabel}</span>
-                  </div>
-                ) : null}
-                {dispatchedAtLabel ? (
-                  <div className="flex gap-2">
-                    <span className="w-20 text-gray-500 shrink-0">Dispatched</span>
-                    <span className="text-gray-900">{dispatchedAtLabel}</span>
-                  </div>
-                ) : null}
-                <div className="flex gap-2">
-                  <span className="w-20 text-gray-500 shrink-0">Carrier</span>
-                  <span className="text-gray-900 break-all">
-                    {formatAdminPricingTier(displayShipment.pricingTier)}
-                  </span>
-                </div>
-                {displayShipment.trackingId || displayShipment.providerTrackingUrl ? (
-                  <div className="flex gap-2">
-                    <span className="w-20 text-gray-500 shrink-0">Tracking</span>
-                    <span className="text-gray-900">
-                      <ShipmentTrackingContact
-                        trackingId={displayShipment.trackingId}
-                        providerTrackingUrl={displayShipment.providerTrackingUrl}
-                      />
-                    </span>
-                  </div>
-                ) : null}
-                <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1 text-gray-600 text-xs">
-                  <span>Charged {koboToNaira(displayShipment.shipmentCharge)}</span>
-                  {showPickupFeeRow ? (
-                    <span>Pickup {koboToNaira(displayShipment.pickupCharge)}</span>
-                  ) : null}
-                  <span>VAT {koboToNaira(displayShipment.vatCharge)}</span>
-                  {displayShipment.actualFulfillmentCostKobo != null ? (
-                    <span>
-                      Actual {koboToNaira(displayShipment.actualFulfillmentCostKobo)}
-                    </span>
-                  ) : null}
-                </div>
-                {displayShipment.adminReconcileNote ? (
-                  <Paragraph1 className="pt-1 text-gray-600 text-xs">
-                    Note: {displayShipment.adminReconcileNote}
+              <div className="mt-3 grid w-full grid-cols-2 gap-2 rounded-xl border border-gray-200 bg-gray-50/80 p-3">
+                <div className="min-w-0">
+                  <Paragraph1 className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                    Order
                   </Paragraph1>
-                ) : null}
+                  <Paragraph1 className="break-all font-mono text-xs font-medium leading-relaxed text-gray-800">
+                    {displayShipment.order?.orderId ?? "—"}
+                  </Paragraph1>
+                </div>
+                <div className="min-w-0 border-l border-gray-200 pl-3">
+                  <Paragraph1 className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                    Renter
+                  </Paragraph1>
+                  <Paragraph1 className="break-words text-sm font-semibold leading-snug text-gray-900">
+                    {displayShipment.order?.user?.name || "—"}
+                  </Paragraph1>
+                  {displayShipment.order?.user?.email ? (
+                    <Paragraph1 className="mt-0.5 break-all text-xs leading-snug text-gray-500">
+                      {displayShipment.order.user.email}
+                    </Paragraph1>
+                  ) : null}
+                </div>
               </div>
+            </div>
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4 sm:space-y-4 sm:px-6 sm:py-5">
+              <section
+                aria-label="Shipment overview"
+                className="grid grid-cols-2 gap-2 rounded-xl border border-gray-200 bg-gray-50 p-3 sm:gap-3 sm:p-4"
+              >
+                {[
+                  ...(dispatchWindowLabel || displayShipment.scheduledDate
+                    ? [
+                        {
+                          label: "Scheduled",
+                          value:
+                            dispatchWindowLabel ??
+                            (displayShipment.scheduledDate
+                              ? formatLagosDate(displayShipment.scheduledDate, {
+                                  includeWeekday: true,
+                                })
+                              : "—"),
+                        },
+                      ]
+                    : []),
+                  {
+                    label: "Carrier",
+                    value: formatAdminPricingTier(displayShipment.pricingTier),
+                  },
+                  ...(displayShipment.trackingId ||
+                  displayShipment.providerTrackingUrl
+                    ? [
+                        {
+                          label: "Tracking",
+                          value: (
+                            <ShipmentTrackingContact
+                              trackingId={displayShipment.trackingId}
+                              providerTrackingUrl={
+                                displayShipment.providerTrackingUrl
+                              }
+                            />
+                          ),
+                        },
+                      ]
+                    : []),
+                  {
+                    label: "Total charged",
+                    value: formatShipmentRowCost(displayShipment),
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="min-w-0 rounded-lg bg-white px-3 py-2.5"
+                  >
+                    <Paragraph1 className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                      {item.label}
+                    </Paragraph1>
+                    <div className="break-words text-sm font-medium text-gray-900">
+                      {item.value}
+                    </div>
+                  </div>
+                ))}
+              </section>
 
               {showCarrierBookingPanel && (
                 <ShipmentModalSection
@@ -1769,7 +1859,7 @@ function ShipmentsPageInner() {
                     <div
                       role="radiogroup"
                       aria-label="Rate quote window"
-                      className="gap-2 grid grid-cols-1 sm:grid-cols-2"
+                      className="gap-2 grid grid-cols-2"
                     >
                       <RateQuoteOptionCard
                         selected={rateForImmediate}
@@ -1885,7 +1975,7 @@ function ShipmentsPageInner() {
                           No carrier rates available.
                         </Paragraph1>
                       ) : selectableCarrierTiers.length > 0 ? (
-                        <div className="gap-2 grid grid-cols-1 sm:grid-cols-2">
+                        <div className="gap-2 grid grid-cols-2">
                           {selectableCarrierTiers.map((tier: ShipmentRateTier) => (
                             <label
                               key={tier.pricingTier}
@@ -2060,7 +2150,7 @@ function ShipmentsPageInner() {
                   summary={shipmentItemSummary}
                   defaultOpen
                 >
-                  <ul className="space-y-4">
+                  <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {shipmentItems.map((line) => {
                       const name = line.product?.name ?? "Item";
                       const thumb = shipmentLineItemThumbnailUrl(line);
@@ -2070,30 +2160,30 @@ function ShipmentsPageInner() {
                           key={line.id ?? name}
                           className="bg-gray-50 p-3 border border-gray-100 rounded-lg"
                         >
-                          <div className="flex items-start gap-3">
-                            <div className="w-14 h-14 shrink-0">
+                          <div className="flex items-center gap-3">
+                            <div className="h-14 w-14 shrink-0">
                               <AdminListingThumb url={thumb} alt={name} />
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <Paragraph1 className="font-medium text-gray-900 text-sm">
+                            <div className="min-w-0 flex-1">
+                              <Paragraph1 className="text-sm font-semibold text-gray-900">
                                 {name}
                               </Paragraph1>
-                              {metadata.length > 0 ? (
-                                <dl className="gap-x-4 gap-y-1.5 grid grid-cols-1 sm:grid-cols-2 mt-2">
-                                  {metadata.map((row) => (
-                                    <div key={row.label}>
-                                      <dt className="text-gray-500 text-xs">{row.label}</dt>
-                                      <dd className="text-gray-800 text-sm">{row.value}</dd>
-                                    </div>
-                                  ))}
-                                </dl>
-                              ) : (
-                                <Paragraph1 className="mt-1 text-gray-500 text-xs">
-                                  No listing details available
-                                </Paragraph1>
-                              )}
                             </div>
                           </div>
+                          {metadata.length > 0 ? (
+                            <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-gray-100 pt-3">
+                              {metadata.map((row) => (
+                                <div key={row.label} className="min-w-0">
+                                  <dt className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">{row.label}</dt>
+                                  <dd className="mt-0.5 break-words text-sm font-medium leading-snug text-gray-800">{row.value}</dd>
+                                </div>
+                              ))}
+                            </dl>
+                          ) : (
+                            <Paragraph1 className="mt-3 border-t border-gray-100 pt-3 text-xs text-gray-500">
+                              No listing details available
+                            </Paragraph1>
+                          )}
                         </li>
                       );
                     })}
@@ -2103,52 +2193,34 @@ function ShipmentsPageInner() {
 
               <ShipmentModalSection title="Shipment details" summary={shipmentDetailsSummary}>
                 <div className="space-y-4">
-                  <div className="gap-4 grid grid-cols-1 sm:grid-cols-2">
-                    <DetailField label="Carrier / tier">
-                      <Paragraph1 className="font-medium text-gray-900 text-sm break-all">
-                        {formatAdminPricingTier(displayShipment.pricingTier)}
-                      </Paragraph1>
-                    </DetailField>
+                  <div className="grid grid-cols-2 gap-3">
                     <DetailField label="Pickup partner">
                       <Paragraph1 className="font-medium text-gray-900 text-sm">
                         {displayShipment.pickupPartner ?? "—"}
                       </Paragraph1>
                     </DetailField>
-                    <DetailField label="Delivery address" className="sm:col-span-2">
-                      <Paragraph1 className="font-medium text-gray-900 text-sm">
+                    <DetailField label="Delivery address">
+                      <Paragraph1 className="break-words font-medium text-gray-900 text-sm">
                         {formatCheckoutDeliveryStreetLine(displayShipment)}
                       </Paragraph1>
                     </DetailField>
-                    <DetailField label="Partner pickup booking" className="sm:col-span-2">
-                      <Paragraph1 className="font-medium text-gray-900 text-sm break-all">
-                        {displayShipment.pickupId ?? "—"}
-                      </Paragraph1>
-                    </DetailField>
-                    {(displayShipment.trackingId || displayShipment.providerTrackingUrl) && (
-                      <DetailField label="Tracking" className="sm:col-span-2">
-                        <Paragraph1 className="font-medium text-gray-900 text-sm">
-                          <ShipmentTrackingContact
-                            trackingId={displayShipment.trackingId}
-                            providerTrackingUrl={displayShipment.providerTrackingUrl}
-                          />
+                    <DetailField label="Tracking">
+                      {displayShipment.trackingId ||
+                      displayShipment.providerTrackingUrl ? (
+                        <ShipmentTrackingContact
+                          trackingId={displayShipment.trackingId}
+                          providerTrackingUrl={displayShipment.providerTrackingUrl}
+                          linkClassName="inline-flex items-center gap-1 text-blue-700 hover:text-blue-900 hover:underline"
+                        />
+                      ) : (
+                        <Paragraph1 className="text-sm text-gray-500">
+                          No tracking link available
                         </Paragraph1>
-                      </DetailField>
-                    )}
-                    <DetailField label="Dispatch attempts (latest run)">
+                      )}
+                    </DetailField>
+                    <DetailField label="Dispatch attempts">
                       <Paragraph1 className="font-medium text-gray-900 text-sm">
                         {displayShipment.dispatchAttempts ?? 0}
-                      </Paragraph1>
-                      <Paragraph1 className="mt-0.5 text-gray-500 text-xs">
-                        Cleared when you retry booking.
-                      </Paragraph1>
-                    </DetailField>
-                    <DetailField label="Charged (NGN)">
-                      <Paragraph1 className="font-medium text-gray-900 text-sm">
-                        {koboToNaira(displayShipment.shipmentCharge)}
-                        {showPickupFeeRow
-                          ? ` · pickup ${koboToNaira(displayShipment.pickupCharge)}`
-                          : ""}
-                        {` · VAT ${koboToNaira(displayShipment.vatCharge)}`}
                       </Paragraph1>
                     </DetailField>
                     {displayShipment.actualFulfillmentCostKobo != null ? (
@@ -2159,7 +2231,7 @@ function ShipmentsPageInner() {
                       </DetailField>
                     ) : null}
                     {displayShipment.adminReconcileNote ? (
-                      <DetailField label="Internal note" className="sm:col-span-2">
+                      <DetailField label="Internal note" className="col-span-2">
                         <Paragraph1 className="font-medium text-gray-900 text-sm">
                           {displayShipment.adminReconcileNote}
                         </Paragraph1>
@@ -2167,32 +2239,28 @@ function ShipmentsPageInner() {
                     ) : null}
                   </div>
 
-                  <div className="space-y-3 pt-1 border-gray-100 border-t">
-                    <div>
-                      <Paragraph1 className="flex items-center gap-1 mb-1.5 text-gray-500 text-xs">
+                  <div className="grid grid-cols-2 gap-3 border-t border-gray-100 pt-4">
+                    <div className="min-w-0">
+                      <Paragraph1 className="mb-2 flex items-center gap-1 text-xs font-semibold text-gray-600">
                         <Package size={12} />
                         {detailPartyLabels.pickupHeading}
                       </Paragraph1>
-                      <Paragraph1 className="bg-gray-50 p-3 border border-gray-100 rounded-lg text-gray-800 text-sm">
-                        {formatAddress(displayShipment.pickupAddress)}
-                      </Paragraph1>
+                      <AddressCard address={displayShipment.pickupAddress} />
                     </div>
-                    <div>
-                      <Paragraph1 className="flex items-center gap-1 mb-1.5 text-gray-500 text-xs">
+                    <div className="min-w-0">
+                      <Paragraph1 className="mb-2 flex items-center gap-1 text-xs font-semibold text-gray-600">
                         <Truck size={12} />
                         {detailPartyLabels.deliveryHeading}
                       </Paragraph1>
-                      <Paragraph1 className="bg-gray-50 p-3 border border-gray-100 rounded-lg text-gray-800 text-sm">
-                        {formatAddress(displayShipment.deliveryAddress)}
-                      </Paragraph1>
+                      <AddressCard address={displayShipment.deliveryAddress} />
                     </div>
                   </div>
                 </div>
               </ShipmentModalSection>
 
               <ShipmentModalSection title="Delivery window" summary={deliveryWindowSummary}>
-                <div className="gap-4 grid grid-cols-1 sm:grid-cols-2">
-                  <DetailField label="Scheduled date (Lagos)">
+                <div className="gap-3 grid grid-cols-2">
+                  <DetailField label="Scheduled date">
                     <Paragraph1 className="font-medium text-gray-900 text-sm">
                       {displayShipment.scheduledDate
                         ? formatLagosDate(displayShipment.scheduledDate, {
@@ -2228,7 +2296,7 @@ function ShipmentsPageInner() {
                 {sortedDispatchAttemptLogs.length === 0 ? (
                   <Paragraph1 className="text-gray-500 text-sm">No attempts recorded yet.</Paragraph1>
                 ) : (
-                  <div className="space-y-2 pr-1 max-h-72 overflow-y-auto">
+                  <div className="grid max-h-72 grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
                     {sortedDispatchAttemptLogs.map((log, idx) => {
                       const dur = formatDispatchDurationMs(log.durationMs);
                       const codeLine = formatDispatchErrorCode(log.errorCode);
@@ -2264,7 +2332,7 @@ function ShipmentsPageInner() {
                 )}
               </ShipmentModalSection>
 
-              <div className="flex sm:flex-row flex-col gap-3 pt-2 border-gray-200 border-t">
+              <div className="-mx-4 sticky bottom-0 flex flex-col gap-2 border-t border-gray-200 bg-white/95 px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur sm:-mx-6 sm:flex-row sm:gap-3 sm:px-6 sm:pb-4">
                 {displayShipment.status === "DISPATCH_FAILED" &&
                   !displayShipment.manualFulfillment &&
                   !showCarrierBookingPanel && (
