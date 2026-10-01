@@ -91,7 +91,6 @@ const WalletBalanceCard: React.FC = () => {
     ];
   }, []);
 
-  const totalBalance = walletData?.data?.wallet?.balance?.totalBalance ?? 0;
   const availableBalance =
     walletData?.data?.wallet?.balance?.availableBalance ?? 0;
 
@@ -102,7 +101,6 @@ const WalletBalanceCard: React.FC = () => {
     });
   };
 
-  const displayTotalBalance = `₦${formatCurrency(totalBalance)}`;
   const displayAvailableBalance = `₦${formatCurrency(availableBalance)}`;
 
   return (
@@ -138,27 +136,14 @@ const WalletBalanceCard: React.FC = () => {
       <div className="relative z-40 space-y-3">
         <div>
           <Paragraph1 className="text-xs text-gray-400 mb-1">
-            Total Balance
+            Available to withdraw
           </Paragraph1>
           {isLoading ? (
             <div className="h-8 bg-gray-700 rounded w-1/2 animate-pulse" />
           ) : (
             <Paragraph2 className="font-bold text-white text-2xl">
-              {displayTotalBalance}
-            </Paragraph2>
-          )}
-        </div>
-
-        <div>
-          <Paragraph1 className="text-xs text-gray-400 mb-1">
-            Available Balance
-          </Paragraph1>
-          {isLoading ? (
-            <div className="h-6 bg-gray-700 rounded w-1/3 animate-pulse" />
-          ) : (
-            <Paragraph1 className="font-semibold text-gray-300">
               {displayAvailableBalance}
-            </Paragraph1>
+            </Paragraph2>
           )}
         </div>
       </div>
