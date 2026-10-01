@@ -26,7 +26,7 @@ export const ItemDescription: React.FC = () => {
           <Paragraph1 className="text-xs font-medium text-gray-700">
             Description
           </Paragraph1>
-          <ToolInfo content="Tell the story of your item. What makes it special? Is it a rare piece, vintage find, limited edition, or mini style? Share what makes renters want to wear it." />
+          <ToolInfo content="Tell the story of your item. What makes it special? Is it a rare piece, vintage find, limited edition, or mini style? Share what makes shoppers want to choose it." />
         </div>
         <textarea
           value={data.description}
@@ -56,7 +56,7 @@ export const ItemDescription: React.FC = () => {
           <Paragraph1 className="text-xs font-medium text-gray-700">
             Styling Tips
           </Paragraph1>
-          <ToolInfo content="Share ideas on how to style or use this item to inspire potential renters." />
+          <ToolInfo content="Share ideas on how to style or use this item to inspire potential shoppers." />
         </div>
         <textarea
           value={data.stylingTip}

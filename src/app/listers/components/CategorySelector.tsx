@@ -44,7 +44,7 @@ export const CategorySelector: React.FC = () => {
         <Paragraph1 className="text-xs font-bold text-gray-700">
           Primary Category
         </Paragraph1>
-        <ToolInfo content="Specify the main type or style of item this is. Choose from categories like Dresses, Tops, Bags, Shoes, Accessories, etc. This helps renters find exactly what they're looking for." />
+        <ToolInfo content="Specify the main type or style of item this is. Choose from categories like Dresses, Tops, Bags, Shoes, Accessories, etc. This helps shoppers find exactly what they're looking for." />
       </div>
 
       <button

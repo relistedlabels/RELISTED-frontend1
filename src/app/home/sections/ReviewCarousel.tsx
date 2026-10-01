@@ -35,8 +35,8 @@ export default function ReviewCarousel() {
   });
   const reviews: Review[] = (data?.reviews ?? []).map((review) => ({
     id: review.id,
-    name: review.name || "Renter",
-    role: review.role || "Verified renter",
+    name: review.name || "Shopper",
+    role: review.role || "Verified shopper",
     text: review.text || "",
     image:
       review.image ||

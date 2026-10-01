@@ -122,7 +122,7 @@ export default function ProfileImageUploadModal({
                   Add Your Photo
                 </h2>
                 <Paragraph3 className="text-gray-600 text-sm">
-                  Help renters get to know you
+                  Help shoppers get to know you
                 </Paragraph3>
               </div>
 

@@ -33,7 +33,7 @@ export const TagSelector: React.FC = () => {
       <CategorySelector />
       <div className="flex items-center gap-2 mt-4 mb-3">
         <Paragraph1 className="text-xs font-bol">Sub Categories</Paragraph1>
-        <ToolInfo content="Tell renters where they can happily wear this item — pick occasions, events, and moments perfect for this piece. For example: 'Date night', 'Wedding guest', 'Brunch outfit', 'Vacation', 'Party', or 'Night out'." />
+        <ToolInfo content="Show shoppers where they can happily wear this item — pick occasions, events, and moments perfect for this piece. For example: 'Date night', 'Wedding guest', 'Brunch outfit', 'Vacation', 'Party', or 'Night out'." />
       </div>
 
       <div className="flex flex-wrap gap-2">

@@ -115,7 +115,7 @@ export function RenterOnboardingFlow() {
           <div className="rounded-xl w-full h-48 overflow-hidden">
             <img
               src="/images/sin1.jpg"
-              alt="RELISTED renter fashion"
+              alt="RELISTED shopper fashion"
               className="w-full h-full object-cover"
             />
           </div>
