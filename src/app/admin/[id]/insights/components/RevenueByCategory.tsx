@@ -1,118 +1,101 @@
 "use client";
 
-import { Paragraph3 } from "@/common/ui/Text";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { ChartSkeleton } from "@/common/ui/SkeletonLoaders";
 import { useRevenueByCategory } from "@/lib/queries/admin/useAnalytics";
-import React from "react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
-interface RevenueByCategory {
+interface RevenueByCategoryProps {
   timeframe: "all_time" | "year" | "month";
   year?: number;
   month?: number;
 }
 
-const COLORS = ["#D97706", "#000000", "#4B5563", "#D1D5DB", "#9CA3AF"];
+const formatCurrency = (value: number) =>
+  `₦${Number(value).toLocaleString("en-NG")}`;
 
-const RADIAN = Math.PI / 180;
-const renderCustomizedLabel = ({
-  cx,
-  cy,
-  midAngle,
-  innerRadius,
-  outerRadius,
-  percent,
-  index,
-  name,
-}: any) => {
-  const radius = outerRadius * 1.1;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-  return (
-    <text
-      x={x}
-      y={y}
-      fill={COLORS[index % COLORS.length]}
-      textAnchor={x > cx ? "start" : "end"}
-      dominantBaseline="central"
-      fontSize={14}
-    >
-      {`${name} ${percent > 0 ? Math.round(percent * 100) : 0}%`}
-    </text>
-  );
-};
-
-const RevenueByCategory = ({ timeframe, year, month }: RevenueByCategory) => {
+const RevenueByCategory = ({
+  timeframe,
+  year,
+  month,
+}: RevenueByCategoryProps) => {
   const { data, isPending, error } = useRevenueByCategory({
     timeframe,
     year,
     month,
   });
 
-  if (error) {
-    console.log("RevenueByCategory error:", error);
+  if (isPending) return <ChartSkeleton />;
+  if (error || !data?.data) {
+    return (
+      <div className="rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-600">
+        Could not load rental revenue by category.
+      </div>
+    );
   }
 
-  // Map API response to expected format
-  const chartData = Array.isArray(data?.data)
-    ? data.data.map((item) => ({
-        category: item.category,
-        revenue: item.revenue,
-        name: item.category, // Add name for label
-      }))
-    : // @ts-ignore
-      data?.data?.breakdown || [];
-
-  if (isPending || error) {
-    return <ChartSkeleton />;
-  }
+  const chartData = [...data.data.revenue]
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 8);
 
   return (
-    <div className="bg-white p-6 rounded-xl h-full border border-gray-200">
-      <Paragraph3 className="text-xl font-semibold mb-4 text-gray-900">
-        Revenue by Category
-      </Paragraph3>
-      <ResponsiveContainer width="100%" height={300}>
-        <PieChart>
-          <Pie
+    <article className="rounded-xl border border-gray-200 bg-white p-5">
+      <h3 className="font-semibold text-gray-900">
+        Rental revenue by category
+      </h3>
+      <p className="mt-1 text-xs text-gray-500">
+        Rental amounts recorded in the selected period; excludes resale revenue
+      </p>
+      {chartData.length ? (
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart
             data={chartData}
-            cx="50%"
-            cy="50%"
-            labelLine={false}
-            label={renderCustomizedLabel}
-            outerRadius={100}
-            fill="#8884d8"
-            dataKey="revenue"
-            nameKey="category"
+            layout="vertical"
+            margin={{ top: 12, right: 18, bottom: 4, left: 12 }}
           >
-            {chartData.map(
-              (
-                entry: { category: string; revenue: number; name: string },
-                index: number,
-              ) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
-                  stroke="none"
-                />
-              ),
-            )}
-          </Pie>
-          <Tooltip
-            formatter={(value: any, name, props) => {
-              if (name === "revenue") {
-                return [`₦${value}`, props.payload.category];
-              }
-              return value;
-            }}
-            labelFormatter={(label, payload) =>
-              payload && payload[0] ? payload[0].payload.category : label
-            }
-          />
-        </PieChart>
-      </ResponsiveContainer>
-    </div>
+            <CartesianGrid stroke="#E5E7EB" horizontal={false} />
+            <XAxis
+              type="number"
+              tickFormatter={formatCurrency}
+              stroke="#6B7280"
+              tick={{ fontSize: 11 }}
+            />
+            <YAxis
+              type="category"
+              dataKey="category"
+              width={104}
+              stroke="#6B7280"
+              tickLine={false}
+              axisLine={false}
+              tick={{ fontSize: 11 }}
+            />
+            <Tooltip
+              formatter={(value) => [
+                formatCurrency(Number(value ?? 0)),
+                "Rental revenue",
+              ]}
+            />
+            <Bar
+              dataKey="amount"
+              name="Rental revenue"
+              fill="#D97706"
+              radius={[0, 4, 4, 0]}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      ) : (
+        <p className="py-16 text-center text-sm text-gray-500">
+          No rental revenue was recorded in this period.
+        </p>
+      )}
+    </article>
   );
 };
 

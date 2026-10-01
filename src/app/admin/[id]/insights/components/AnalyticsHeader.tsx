@@ -321,7 +321,7 @@ const AnalyticsHeader: React.FC<AnalyticsHeaderProps> = ({
       {/* Top Row: Title and Actions */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <Paragraph2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-          Analytics Overview
+          Marketplace insights
         </Paragraph2>
 
         <div className="flex items-center gap-3 flex-wrap">

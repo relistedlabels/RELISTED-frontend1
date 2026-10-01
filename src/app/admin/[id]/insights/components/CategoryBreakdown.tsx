@@ -1,18 +1,17 @@
 "use client";
 
-import { Paragraph3 } from "@/common/ui/Text";
-import { ChartSkeleton } from "@/common/ui/SkeletonLoaders";
-import { useCategoryBreakdown } from "@/lib/queries/admin/useAnalytics";
-import React from "react";
 import {
-  BarChart,
   Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
 } from "recharts";
+import { ChartSkeleton } from "@/common/ui/SkeletonLoaders";
+import { useCategoryBreakdown } from "@/lib/queries/admin/useAnalytics";
 
 interface CategoryBreakdownProps {
   timeframe: "all_time" | "year" | "month";
@@ -31,73 +30,76 @@ const CategoryBreakdown = ({
     month,
   });
 
+  if (isPending) return <ChartSkeleton />;
   if (error || !data?.data) {
     return (
-      <div className="bg-white border border-gray-200 p-6 rounded-xl h-full">
-        <ChartSkeleton />
+      <div className="rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-600">
+        Could not load category supply and demand.
       </div>
     );
   }
 
-  // Map API response to expected format and show only top 10 by value
-  const chartData = Array.isArray(data.data)
-    ? data.data
-        .map((item) => ({
-          category: item.category,
-          value: item.value,
-          percentage: item.percentage,
-        }))
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 5)
-    : (data.data.breakdown || [])
-        .map((item: any) => ({
-          category: item.category,
-          value: item.value,
-          percentage: item.percentage,
-        }))
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 10);
-
-  if (isPending || error) {
-    return <ChartSkeleton />;
-  }
+  const chartData = [...data.data]
+    .sort(
+      (a, b) =>
+        b.availabilityRequests - a.availabilityRequests ||
+        b.activeListings - a.activeListings,
+    )
+    .slice(0, 8);
 
   return (
-    <div className="bg-white p-6 rounded-xl h-full border border-gray-200">
-      <Paragraph3 className="text-xl font-semibold mb-4 text-gray-900">
-        Category Breakdown
-      </Paragraph3>
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart
-          data={chartData}
-          margin={{
-            top: 20,
-            right: 30,
-            left: 20,
-            bottom: 20,
-          }}
-        >
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis
-            dataKey="category"
-            stroke="#6B7280"
-            tickLine={false}
-            angle={-20}
-            textAnchor="end"
-            interval={0}
-            height={60}
-          />
-          <YAxis stroke="#6B7280" tickLine={false} axisLine={false} />
-          <Tooltip cursor={{ fill: "transparent" }} />
-          <Bar
-            dataKey="value"
-            fill="#000000"
-            radius={[4, 4, 0, 0]}
-            barSize={40}
-          />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
+    <article className="rounded-xl border border-gray-200 bg-white p-5">
+      <h3 className="font-semibold text-gray-900">
+        Supply & demand by category
+      </h3>
+      <p className="mt-1 text-xs text-gray-500">
+        Live verified listings now vs availability requests in the selected
+        period
+      </p>
+      {chartData.length ? (
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart
+            data={chartData}
+            layout="vertical"
+            margin={{ top: 12, right: 16, bottom: 28, left: 12 }}
+          >
+            <CartesianGrid stroke="#E5E7EB" horizontal={false} />
+            <XAxis type="number" allowDecimals={false} stroke="#6B7280" />
+            <YAxis
+              type="category"
+              dataKey="category"
+              width={104}
+              stroke="#6B7280"
+              tickLine={false}
+              axisLine={false}
+              tick={{ fontSize: 11 }}
+            />
+            <Tooltip />
+            <Legend
+              verticalAlign="bottom"
+              align="left"
+              wrapperStyle={{ fontSize: 12, paddingTop: 12 }}
+            />
+            <Bar
+              dataKey="activeListings"
+              name="Live listings (now)"
+              fill="#111827"
+              radius={[0, 4, 4, 0]}
+            />
+            <Bar
+              dataKey="availabilityRequests"
+              name="Availability requests (period)"
+              fill="#D97706"
+              radius={[0, 4, 4, 0]}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      ) : (
+        <p className="py-16 text-center text-sm text-gray-500">
+          No product categories are available yet.
+        </p>
+      )}
+    </article>
   );
 };
 

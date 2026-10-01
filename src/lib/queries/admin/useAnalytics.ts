@@ -77,18 +77,36 @@ export const useRevenueByCategory = (params: TimeframeParams) =>
     retry: 1,
   });
 
-export const useTopCurators = (limit: number = 5) =>
+export const useTopCurators = (params: TimeframeParams, limit = 5) =>
   useQuery({
-    queryKey: ["admin", "analytics", "top", "curators", limit],
-    queryFn: () => analyticsApi.getTopCurators(limit),
+    queryKey: [
+      "admin",
+      "analytics",
+      "top",
+      "curators",
+      params.timeframe,
+      params.year,
+      params.month,
+      limit,
+    ],
+    queryFn: () => analyticsApi.getTopCurators({ ...params, limit }),
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
 
-export const useTopItems = (limit: number = 5) =>
+export const useTopItems = (params: TimeframeParams, limit = 5) =>
   useQuery({
-    queryKey: ["admin", "analytics", "top", "items", limit],
-    queryFn: () => analyticsApi.getTopItems(limit),
+    queryKey: [
+      "admin",
+      "analytics",
+      "top",
+      "items",
+      params.timeframe,
+      params.year,
+      params.month,
+      limit,
+    ],
+    queryFn: () => analyticsApi.getTopItems({ ...params, limit }),
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });

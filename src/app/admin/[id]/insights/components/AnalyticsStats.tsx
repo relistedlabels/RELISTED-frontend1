@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import {
   HiOutlineBuildingStorefront,
+  HiOutlineChartBar,
   HiOutlineClock,
   HiOutlineCurrencyDollar,
   HiOutlineScale,
@@ -18,7 +19,7 @@ interface AnalyticsStatsProps {
   month?: number;
 }
 
-const SKELETON_KEYS = ["s1", "s2", "s3", "s4", "s5", "s6"];
+const SKELETON_KEYS = ["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8"];
 
 const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
   const { data, isLoading, error } = useAnalyticsStats({
@@ -45,10 +46,9 @@ const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
 
   if (error || !data?.data) {
     return (
-      <div className="gap-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 mt-6">
-        {SKELETON_KEYS.map((key) => (
-          <StatCardSkeleton key={key} />
-        ))}
+      <div className="mt-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
+        Analytics metrics could not be loaded. Refresh the page or check the
+        admin analytics API.
       </div>
     );
   }
@@ -71,6 +71,28 @@ const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
     return num.toLocaleString();
   };
 
+  const comparisonDetail = (
+    current: number,
+    previous: number | undefined,
+    format: (value: number) => string,
+  ) => {
+    if (previous === undefined) return undefined;
+    const difference = current - previous;
+    const formattedDifference =
+      difference < 0
+        ? `-${format(Math.abs(difference))}`
+        : difference > 0
+          ? `+${format(difference)}`
+          : format(0);
+    const change =
+      previous > 0
+        ? ` (${difference > 0 ? "+" : ""}${Math.round((difference / previous) * 100)}%)`
+        : current > 0
+          ? " (up from 0)"
+          : "";
+    return `${formattedDifference} vs previous period${change}`;
+  };
+
   const formatAvgDeliveryMinutes = (
     days: number | string | undefined | null,
     minutesFromApi?: number | string | null,
@@ -89,33 +111,60 @@ const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
       <StatCard
         icon={<HiOutlineShoppingBag className="w-5 h-5" />}
         value={formatNumber(stats.totalOrders)}
-        label="Successful orders"
-        detail="Since official launch"
+        label="Non-cancelled orders"
+        detail={comparisonDetail(
+          stats.totalOrders,
+          stats.previousPeriod?.orders,
+          formatNumber,
+        )}
       />
 
       <StatCard
         icon={<HiOutlineCurrencyDollar className="w-5 h-5" />}
         value={formatRevenue(stats.totalRevenue)}
-        label="Total revenue"
+        label="Gross order value"
+        detail={comparisonDetail(
+          stats.totalRevenue,
+          stats.previousPeriod?.revenue,
+          formatRevenue,
+        )}
+      />
+
+      <StatCard
+        icon={<HiOutlineCurrencyDollar className="w-5 h-5" />}
+        value={formatRevenue(
+          stats.totalOrders > 0 ? stats.totalRevenue / stats.totalOrders : 0,
+        )}
+        label="Average order value"
+        detail="Gross order value per non-cancelled order"
       />
 
       <StatCard
         icon={<HiOutlineBuildingStorefront className="w-5 h-5" />}
         value={formatNumber(stats.activeListings)}
-        label="Active listings"
+        label="Live listings"
+        detail="Current supply snapshot"
       />
 
       <StatCard
         icon={<HiOutlineScale className="w-5 h-5" />}
         value={(stats.activeDisputes ?? 0).toString()}
-        label="Active disputes"
+        label="Open disputes"
+        detail="Current operations snapshot"
       />
 
       <StatCard
         icon={<HiOutlineUsers className="w-5 h-5" />}
         value={formatNumber(stats.activeUsers)}
         label="Active users"
-        detail="Order, availability request, or app visit in this period"
+        detail="Engaged in selected period"
+      />
+
+      <StatCard
+        icon={<HiOutlineChartBar className="w-5 h-5" />}
+        value={`${(stats.disputeRate * 100).toFixed(1)}%`}
+        label="Disputed order share"
+        detail={`${formatNumber(stats.ordersWithDisputes)} of ${formatNumber(stats.totalOrders)} selected-period orders have a dispute`}
       />
 
       <StatCard
@@ -125,7 +174,7 @@ const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
           stats.avgDeliveryTimeMinutes,
         )}
         label="Avg delivery time"
-        detail="Dispatch to delivered"
+        detail={`Dispatch to delivered · ${formatNumber(stats.deliveryTimeSampleSize)} delivered orders`}
       />
     </div>
   );

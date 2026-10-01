@@ -1,8 +1,7 @@
-// ENDPOINTS: GET /api/admin/analytics/rentals-revenue-trend, GET /api/admin/analytics/category-breakdown, GET /api/admin/analytics/revenue-by-category, GET /api/admin/analytics/top-curators, GET /api/admin/analytics/top-items
-// AnalyticsDashboard.tsx
 "use client";
 
 import CategoryBreakdown from "./CategoryBreakdown";
+import OperationsSignals from "./OperationsSignals";
 import RentalsRevenueTrend from "./RentalsRevenueTrend";
 import RevenueByCategory from "./RevenueByCategory";
 import TopCurators from "./TopCurators";
@@ -14,6 +13,19 @@ interface AnalyticsDashboardProps {
   month?: number;
 }
 
+const SectionHeading = ({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) => (
+  <div className="mb-4">
+    <h2 className="text-lg font-bold text-gray-900">{title}</h2>
+    <p className="mt-1 text-sm text-gray-500">{description}</p>
+  </div>
+);
+
 const AnalyticsDashboard = ({
   timeframe,
   year,
@@ -22,31 +34,44 @@ const AnalyticsDashboard = ({
   const params = { timeframe, year, month };
 
   return (
-    <div className="mt-6 min-h-screen">
-      {/* The first chart spans 1 column on medium screens */}
-      <div className="col-span-1">
+    <div className="mt-8 space-y-9">
+      <section>
+        <SectionHeading
+          title="Marketplace performance"
+          description="Order volume and gross order value use separate charts and scales."
+        />
         <RentalsRevenueTrend {...params} />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 mt-4 gap-4">
-        {/* The second chart spans 1 column */}
-        <div className="col-span-1">
-          <CategoryBreakdown {...params} />
-        </div>
-        {/* The third chart spans 1 column */}
-        <div className="col-span-1">
-          <RevenueByCategory {...params} />
-        </div>
-      </div>
+      </section>
 
-      {/* Top Curators and Top Items section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 mt-4 gap-4">
-        <div className="col-span-1">
-          <TopCurators />
+      <section>
+        <SectionHeading
+          title="Supply & demand"
+          description="Compare today's verified live inventory with customer availability requests in the selected period."
+        />
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <CategoryBreakdown {...params} />
+          <TopItems {...params} />
         </div>
-        <div className="col-span-1">
-          <TopItems />
+      </section>
+
+      <section>
+        <SectionHeading
+          title="Revenue drivers"
+          description="See which categories and listers generated rental value during the selected period."
+        />
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <RevenueByCategory {...params} />
+          <TopCurators {...params} />
         </div>
-      </div>
+      </section>
+
+      <section>
+        <SectionHeading
+          title="Fulfilment & operations"
+          description="Review current admin queues alongside period-based dispute and delivery metrics above."
+        />
+        <OperationsSignals />
+      </section>
     </div>
   );
 };
