@@ -215,10 +215,10 @@ export default function OrdersPage() {
     const stats = statsData?.data;
     return [
       {
-        label: "TOTAL LISTINGS",
-        value: stats?.totalListings?.toString() || "0",
-        icon: HiOutlineShoppingBag,
-        bgColor: "bg-gray-50",
+        label: "ACTIVE ORDERS",
+        value: stats?.activeOrders?.toString() || "0",
+        icon: PiPackage,
+        bgColor: "bg-green-50",
       },
       {
         label: "COMPLETED ORDERS",
@@ -227,23 +227,11 @@ export default function OrdersPage() {
         bgColor: "bg-blue-50",
       },
       {
-        label: "ACTIVE ORDERS",
-        value: stats?.activeOrders?.toString() || "0",
-        icon: PiPackage,
-        bgColor: "bg-green-50",
-      },
-      {
         label: "DISPUTED ORDERS",
         value: stats?.disputedOrders?.toString() || "0",
         icon: PiWarning,
         bgColor: "bg-yellow-50",
-      },
-      {
-        label: "REVENUE (in naira)",
-        value: stats?.totalRevenue ? formatCurrency(stats.totalRevenue) : "₦0",
-        icon: PiHash,
-        bgColor: "bg-pink-50",
-      },
+      }
     ];
   }, [statsData]);
 
@@ -346,7 +334,7 @@ export default function OrdersPage() {
               >
                 <div className="relative">
                   <Search
-                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                    className="top-1/2 left-3 absolute w-4 h-4 text-gray-400 -translate-y-1/2 pointer-events-none"
                     aria-hidden
                   />
                   <input

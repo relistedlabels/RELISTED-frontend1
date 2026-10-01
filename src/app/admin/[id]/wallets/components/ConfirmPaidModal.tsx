@@ -1,12 +1,12 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
+import { Loader2, X } from "lucide-react";
 import React, { useState } from "react";
-import { X, Loader2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Paragraph1, Header2 } from "@/common/ui/Text";
+import { toast } from "sonner";
 import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
 import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
-import { toast } from "sonner";
+import { Header2, Paragraph1 } from "@/common/ui/Text";
 
 interface ConfirmPaidModalProps {
   isOpen: boolean;

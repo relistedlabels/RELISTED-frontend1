@@ -57,6 +57,42 @@ export interface TopItem {
   };
 }
 
+export interface DashboardActivityItem {
+  id: string;
+  kind:
+    | "rental_request"
+    | "purchase_request"
+    | "listing_review"
+    | "order_placed"
+    | "order_completed"
+    | "dispute_opened"
+    | "withdrawal_requested"
+    | "payout_released";
+  title: string;
+  detail: string;
+  amount: number | null;
+  createdAt: string;
+}
+
+export interface DashboardOverview {
+  needsAttention: {
+    newListingReviews: number;
+    availabilityRequests: number;
+    listersNotResponding: number;
+    returnOverdue: number;
+    deliveriesToday: number;
+    disputesPending: number;
+    withdrawalRequests: number;
+  };
+  today: {
+    rentalsGoingOut: number;
+    returnsExpected: number;
+    ordersAwaitingFulfilment: number;
+  };
+  recentActivity: DashboardActivityItem[];
+  generatedAt: string;
+}
+
 interface TimeframeParams {
   timeframe: "all_time" | "year" | "month";
   year?: number;
@@ -76,6 +112,11 @@ function buildTimeframeParams(params: TimeframeParams): string {
 }
 
 export const analyticsApi = {
+  getDashboardOverview: () =>
+    apiFetch<{ success: true; data: DashboardOverview }>(
+      `/api/admin/analytics/dashboard-overview`,
+    ),
+
   getStats: (params: TimeframeParams) =>
     apiFetch<{ success: true; data: AnalyticsStats }>(
       `/api/admin/analytics/stats?${buildTimeframeParams(params)}`,

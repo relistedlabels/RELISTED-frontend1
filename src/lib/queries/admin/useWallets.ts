@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { walletsApi } from "@/lib/api/admin/";
 
 interface WalletListParams {
@@ -27,13 +27,7 @@ interface TransactionListParams {
 
 interface WithdrawalListParams {
   search?: string;
-  page?: number;
-  limit?: number;
-  enabled?: boolean;
-}
-
-interface PayoutListParams {
-  search?: string;
+  status?: string;
   page?: number;
   limit?: number;
   enabled?: boolean;
@@ -106,6 +100,7 @@ export const useWithdrawalRequests = (params: WithdrawalListParams = {}) =>
       "admin",
       "wallets",
       "withdrawal-requests",
+      params.status,
       params.search,
       params.page,
       params.limit,
@@ -135,7 +130,6 @@ export const useUpdateAdminWithdrawalStatus = () => {
     },
   });
 };
-
 export const useMarkWithdrawalAsPaid = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -153,19 +147,3 @@ export const useMarkWithdrawalAsPaid = () => {
     },
   });
 };
-
-export const usePayouts = (params: PayoutListParams = {}) =>
-  useQuery({
-    queryKey: [
-      "admin",
-      "wallets",
-      "payouts",
-      params.search,
-      params.page,
-      params.limit,
-    ],
-    queryFn: () => walletsApi.getPayouts(params),
-    staleTime: 5 * 60 * 1000,
-    retry: 1,
-    enabled: params.enabled !== false,
-  });

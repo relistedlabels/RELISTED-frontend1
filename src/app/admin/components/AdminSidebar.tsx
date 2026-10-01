@@ -1,40 +1,39 @@
 "use client";
 
-import { Menu, X } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { X } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
 import type React from "react";
-import { useState } from "react";
 import {
+  HiOutlineArchiveBox,
+  HiOutlineBanknotes,
+  HiOutlineBuildingStorefront,
+  HiOutlineChartBar,
+  HiOutlineClipboardDocumentList,
   HiOutlineCog6Tooth,
   HiOutlineCreditCard,
   HiOutlineCube,
   HiOutlineFolder,
   HiOutlineHome,
-  HiOutlineShoppingCart,
-  HiOutlineUsers,
-  HiOutlineTruck,
   HiOutlineRectangleStack,
-  HiOutlineBuildingStorefront,
-  HiOutlineClipboardDocumentList,
-  HiOutlineArchiveBox,
-  HiOutlineBanknotes,
+  HiOutlineShoppingCart,
   HiOutlineStar,
+  HiOutlineTruck,
+  HiOutlineUsers,
 } from "react-icons/hi2";
 import { Paragraph1 } from "@/common/ui/Text";
-import { settingsApi } from "@/lib/api/admin/settings";
 import type { AdminNavCountKey } from "@/lib/admin/adminNavItems";
+import { getAdminNavItemDefinitions } from "@/lib/admin/adminNavItems";
+import { settingsApi } from "@/lib/api/admin/settings";
 import { useAdminNavCounts } from "@/lib/queries/admin/useAdminNavCounts";
 import { useAdminNavState } from "@/lib/queries/admin/useSettings";
-import { useMe } from "@/lib/queries/auth/useMe";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
-import { getAdminNavItemDefinitions } from "@/lib/admin/adminNavItems";
 
 interface NavItem {
   id: string;
   label: string;
-  shortLabel?: string;
   icon: React.ElementType;
   getHref: (adminId: string) => string;
   showNewBadge?: boolean;
@@ -43,6 +42,7 @@ interface NavItem {
 
 const ADMIN_NAV_ICONS: Record<string, React.ElementType> = {
   overview: HiOutlineHome,
+  insights: HiOutlineChartBar,
   users: HiOutlineUsers,
   listings: HiOutlineCube,
   shop: HiOutlineBuildingStorefront,
@@ -65,37 +65,12 @@ const getNavItems = (): NavItem[] =>
   }));
 
 interface AdminSidebarProps {
-  onLogout?: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-const getInitials = (name: string): string => {
-  if (!name) return "";
-  const parts = name.trim().split(/\s+/);
-  if (parts.length > 0) {
-    return parts[0].substring(0, 2).toUpperCase();
-  }
-  return "";
-};
-
-const getAvatarBgColor = (name: string): string => {
-  const colors = [
-    "bg-red-400",
-    "bg-blue-400",
-    "bg-green-400",
-    "bg-yellow-400",
-    "bg-purple-400",
-    "bg-pink-400",
-  ];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
-};
-
-const AdminSidebar: React.FC<AdminSidebarProps> = () => {
+const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
   const queryClient = useQueryClient();
-  const { data: user } = useMe();
   const { data: navState } = useAdminNavState();
   const navCounts = useAdminNavCounts();
   const seenNavIds = navState?.data.seenNavIds ?? [];
@@ -104,7 +79,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
   const adminId = useAdminIdStore((state) => state.adminId);
   const paramAdminId = Array.isArray(params.id) ? params.id[0] : params.id;
   const resolvedAdminId = paramAdminId ?? adminId ?? "";
-  const [isMobileExpanded, setIsMobileExpanded] = useState(false);
 
   const navItems = getNavItems();
 
@@ -124,156 +98,111 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
     void settingsApi.dismissNav(navId);
   };
 
-  const linkBaseClasses =
-    "flex w-full rounded-xl transition-colors duration-200 group";
-
   const activeLinkClasses = "bg-black text-white shadow-sm";
   const inactiveLinkClasses =
     "bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-900";
 
   return (
     <>
-      {isMobileExpanded ? (
+      {isOpen ? (
         <button
           type="button"
           aria-label="Close navigation menu"
-          className="fixed inset-0 z-10 bg-black/40 lg:hidden"
-          onClick={() => setIsMobileExpanded(false)}
+          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+          onClick={onClose}
         />
       ) : null}
-      <div
-        className={`z-20 flex h-screen flex-col border-r border-gray-200 bg-white py-6 transition-all duration-300 sm:py-[100px]
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-gray-200 bg-white pb-6 pt-6 transition-transform duration-300 lg:static lg:mt-16 lg:h-[calc(100vh-4rem)] lg:translate-x-0
         ${
-          isMobileExpanded
-            ? "absolute w-64 shadow-2xl lg:relative lg:w-64 lg:shadow-none"
-            : "relative w-[6.5rem] lg:w-64"
+          isOpen
+            ? "translate-x-0 shadow-2xl lg:shadow-none"
+            : "-translate-x-full"
         }`}
       >
-      {/* Mobile toggle */}
-      <div className="lg:hidden flex justify-center mb-4 px-4">
-        <button
-          type="button"
-          onClick={() => setIsMobileExpanded(!isMobileExpanded)}
-          className="hover:bg-gray-100 p-2 rounded-lg text-gray-500"
-        >
-          {isMobileExpanded ? <X /> : <Menu />}
-        </button>
-      </div>
-
-      {/* User */}
-      <div className="mb-6 px-4">
-        <div
-          className={`flex items-center gap-4 ${
-            !isMobileExpanded ? "justify-center lg:justify-start" : ""
-          }`}
-        >
-          <div
-            className={`w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center font-bold text-white text-sm ${getAvatarBgColor(
-              user?.name || "",
-            )}`}
+        {/* Brand header (mobile drawer only) */}
+        <div className="mb-4 flex items-center justify-between border-b border-gray-100 px-4 pb-4 lg:hidden">
+          <div className="flex items-center gap-2.5">
+            <Image
+              src="/images/logo.svg"
+              alt="Relisted Labels"
+              width={30}
+              height={30}
+            />
+            <span className="text-sm font-bold tracking-wide text-gray-900">
+              RELISTED LABELS
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-gray-500 transition hover:bg-gray-100"
+            aria-label="Close navigation menu"
           >
-            {getInitials(user?.name || "")}
-          </div>
-
-          <div className={`${!isMobileExpanded ? "hidden lg:block" : "block"}`}>
-            <Paragraph1 className="font-bold text-sm truncate">
-              {user?.name || "Loading..."}
-            </Paragraph1>
-            <Paragraph1 className="text-[10px] text-gray-500 uppercase">
-              -{user?.role || "ADMIN"}-
-            </Paragraph1>
-          </div>
+            <X size={20} />
+          </button>
         </div>
-      </div>
 
-      {/* Navigation */}
-      <nav className="hide-scrollbar max-h-[calc(100dvh-11rem)] overflow-y-auto px-2 sm:max-h-[calc(100dvh-13rem)] sm:px-4">
-        <ul className="pb-2">
-          {navItems.map((item) => {
-            const href = item.getHref(resolvedAdminId);
-            const isActive =
-              pathname === href || pathname.startsWith(href + "/");
-            const showNewBadge =
-              item.showNewBadge && !seenNavIds.includes(item.id);
-            const pendingCount = item.countKey
-              ? navCounts[item.countKey]
-              : 0;
-            const mobileStacked = !isMobileExpanded;
-            const navLabel = item.shortLabel ?? item.label;
+        {/* Navigation */}
+        <nav className="hide-scrollbar flex-1 overflow-y-auto px-2 sm:px-6">
+          <ul className="pb-2">
+            {navItems.map((item) => {
+              const href = item.getHref(resolvedAdminId);
+              const isActive =
+                pathname === href || pathname.startsWith(`${href}/`);
+              const showNewBadge =
+                item.showNewBadge && !seenNavIds.includes(item.id);
+              const pendingCount = item.countKey ? navCounts[item.countKey] : 0;
 
-            return (
-              <li key={item.id} className="relative mb-2">
-                <Link
-                  href={href}
-                  onClick={() => {
-                    setIsMobileExpanded(false);
-                    if (showNewBadge) dismissNavBadge(item.id);
-                  }}
-                  className={`${linkBaseClasses} ${
-                    isActive ? activeLinkClasses : inactiveLinkClasses
-                  } ${
-                    mobileStacked
-                      ? "flex-col items-center gap-1 px-1 py-2.5 text-center lg:flex-row lg:items-center lg:gap-0 lg:p-3 lg:text-left"
-                      : "items-center p-3"
-                  }`}
-                >
-                  <item.icon
-                    className={`h-6 w-6 shrink-0 ${
-                      isActive ? "text-white" : "text-gray-500"
-                    }`}
-                  />
-
-                  {mobileStacked ? (
-                    <span
-                      className={`block w-full max-w-full break-words text-[10px] font-medium leading-snug lg:hidden ${
-                        isActive ? "text-white" : "text-gray-600"
-                      }`}
-                    >
-                      {navLabel}
-                    </span>
-                  ) : null}
-
-                  <Paragraph1
-                    className={`text-sm ${
-                      mobileStacked
-                        ? "hidden lg:ml-4 lg:block"
-                        : "ml-4 block"
+              return (
+                <li key={item.id} className="relative mb-2">
+                  <Link
+                    href={href}
+                    onClick={() => {
+                      onClose();
+                      if (showNewBadge) dismissNavBadge(item.id);
+                    }}
+                    className={`flex w-full items-center rounded-xl p-3 transition-colors duration-200 group ${
+                      isActive ? activeLinkClasses : inactiveLinkClasses
                     }`}
                   >
-                    {item.label}
-                  </Paragraph1>
-
-                  {showNewBadge && pendingCount === 0 ? (
-                    <span
-                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                        isActive
-                          ? "bg-white text-black"
-                          : "bg-black text-white"
-                      } ${
-                        mobileStacked
-                          ? "mt-0.5 lg:ml-auto lg:mt-0"
-                          : "ml-auto"
+                    <item.icon
+                      className={`h-6 w-6 shrink-0 ${
+                        isActive ? "text-white" : "text-gray-500"
                       }`}
+                    />
+
+                    <Paragraph1 className="ml-4 block text-sm">
+                      {item.label}
+                    </Paragraph1>
+
+                    {showNewBadge && pendingCount === 0 ? (
+                      <span
+                        className={`ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                          isActive
+                            ? "bg-white text-black"
+                            : "bg-black text-white"
+                        }`}
+                      >
+                        New
+                      </span>
+                    ) : null}
+                  </Link>
+
+                  {pendingCount > 0 ? (
+                    <span
+                      className="pointer-events-none absolute -right-1 -top-1.5 z-10 flex h-7 min-w-7 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1.5 text-xs font-bold leading-none text-white"
+                      title={`${pendingCount} pending`}
                     >
-                      New
+                      {pendingCount > 99 ? "99+" : pendingCount}
                     </span>
                   ) : null}
-                </Link>
-
-                {pendingCount > 0 ? (
-                  <span
-                    className="pointer-events-none absolute -right-2 -top-2 z-10 flex h-7 min-w-7 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1.5 text-xs font-bold leading-none text-white"
-                    aria-label={`${pendingCount} pending`}
-                  >
-                    {pendingCount > 99 ? "99+" : pendingCount}
-                  </span>
-                ) : null}
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-    </div>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      </aside>
     </>
   );
 };

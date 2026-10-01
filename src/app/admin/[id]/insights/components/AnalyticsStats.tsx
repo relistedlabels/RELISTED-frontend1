@@ -1,15 +1,15 @@
 "use client";
 import { useEffect } from "react";
 import {
-  HiOutlineUsers,
-  HiOutlineScale,
-  HiOutlineClock,
   HiOutlineBuildingStorefront,
+  HiOutlineClock,
   HiOutlineCurrencyDollar,
+  HiOutlineScale,
   HiOutlineShoppingBag,
+  HiOutlineUsers,
 } from "react-icons/hi2";
-import { useAnalyticsStats } from "@/lib/queries/admin/useAnalytics";
 import { StatCardSkeleton } from "@/common/ui/SkeletonLoaders";
+import { useAnalyticsStats } from "@/lib/queries/admin/useAnalytics";
 import StatCard from "./StatCard";
 
 interface AnalyticsStatsProps {
@@ -17,6 +17,8 @@ interface AnalyticsStatsProps {
   year?: number;
   month?: number;
 }
+
+const SKELETON_KEYS = ["s1", "s2", "s3", "s4", "s5", "s6"];
 
 const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
   const { data, isLoading, error } = useAnalyticsStats({
@@ -34,8 +36,8 @@ const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
   if (isLoading) {
     return (
       <div className="gap-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 mt-6">
-        {[...Array(6)].map((_, i) => (
-          <StatCardSkeleton key={i} />
+        {SKELETON_KEYS.map((key) => (
+          <StatCardSkeleton key={key} />
         ))}
       </div>
     );
@@ -44,8 +46,8 @@ const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
   if (error || !data?.data) {
     return (
       <div className="gap-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 mt-6">
-        {[...Array(6)].map((_, i) => (
-          <StatCardSkeleton key={i} />
+        {SKELETON_KEYS.map((key) => (
+          <StatCardSkeleton key={key} />
         ))}
       </div>
     );
@@ -54,7 +56,7 @@ const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
   const stats = data.data;
 
   const formatRevenue = (amount: number | undefined | null) => {
-    if (typeof amount !== "number" || isNaN(amount)) return "₦0";
+    if (typeof amount !== "number" || Number.isNaN(amount)) return "₦0";
     if (amount >= 1000000) {
       return `₦${(amount / 1000000).toFixed(1)}M`;
     }
@@ -65,7 +67,7 @@ const AnalyticsStats = ({ timeframe, year, month }: AnalyticsStatsProps) => {
   };
 
   const formatNumber = (num: number | undefined | null) => {
-    if (typeof num !== "number" || isNaN(num)) return "0";
+    if (typeof num !== "number" || Number.isNaN(num)) return "0";
     return num.toLocaleString();
   };
 

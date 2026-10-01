@@ -1,24 +1,24 @@
 "use client";
 
-import React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, RefreshCw, X } from "lucide-react";
-import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import React from "react";
+import { AdminListingThumb } from "@/app/admin/lib/adminListingDisplay";
 import {
   slidePanelBackdrop,
   slidePanelSheet,
 } from "@/common/ui/dashboardClasses";
-import { AdminListingThumb } from "@/app/admin/lib/adminListingDisplay";
+import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import type { AvailabilityRequest } from "@/lib/api/admin/availabilityRequests";
-import { useAvailabilityRequestById } from "@/lib/queries/admin/useAvailabilityRequests";
-import {
-  useNudgeAvailabilityRequestRenter,
-  useResendAvailabilityRequestToLister,
-} from "@/lib/mutations/admin";
 import {
   formatLagosDate,
   formatWindowRange,
 } from "@/lib/checkout/dispatchWindows";
+import {
+  useNudgeAvailabilityRequestRenter,
+  useResendAvailabilityRequestToLister,
+} from "@/lib/mutations/admin";
+import { useAvailabilityRequestById } from "@/lib/queries/admin/useAvailabilityRequests";
 
 const formatCurrency = (value: number): string =>
   new Intl.NumberFormat("en-NG", {
@@ -40,7 +40,9 @@ const formatDateTime = (value?: string | null): string => {
   });
 };
 
-const formatWindow = (window: { start: string; end: string } | null): string => {
+const formatWindow = (
+  window: { start: string; end: string } | null,
+): string => {
   if (!window) return "—";
   return formatWindowRange(window);
 };
@@ -109,7 +111,9 @@ function DetailRow({
 }) {
   return (
     <div className="flex sm:flex-row flex-col sm:justify-between gap-1 sm:gap-4 py-3 border-gray-100 last:border-0 border-b">
-      <Paragraph1 className="text-gray-500 text-sm shrink-0">{label}</Paragraph1>
+      <Paragraph1 className="text-gray-500 text-sm shrink-0">
+        {label}
+      </Paragraph1>
       <div className="text-gray-900 text-sm sm:text-right">{value}</div>
     </div>
   );
@@ -180,9 +184,7 @@ export default function RequestDetailModal({
     null;
   const actionSuccess =
     nudgeMutation.isSuccess || resendMutation.isSuccess
-      ? nudgeMutation.data?.message ||
-        resendMutation.data?.message ||
-        "Done"
+      ? nudgeMutation.data?.message || resendMutation.data?.message || "Done"
       : null;
 
   return (
@@ -202,7 +204,7 @@ export default function RequestDetailModal({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className={`${slidePanelSheet} z-50 flex flex-col md:w-[520px]`}
+            className={`${slidePanelSheet} z-[100] flex flex-col md:w-[520px]`}
           >
             <div className="bg-white p-6 border-gray-200 border-b shrink-0">
               <div className="flex justify-between items-start gap-4">
@@ -390,9 +392,7 @@ export default function RequestDetailModal({
                     className="flex justify-center items-center gap-2 hover:bg-gray-50 disabled:opacity-40 px-4 py-2.5 border border-gray-200 rounded-lg font-medium text-gray-800 text-sm transition disabled:cursor-not-allowed"
                   >
                     <Bell size={16} />
-                    {nudgeMutation.isPending
-                      ? "Sending…"
-                      : "Email renter"}
+                    {nudgeMutation.isPending ? "Sending…" : "Email renter"}
                   </button>
                 </div>
 

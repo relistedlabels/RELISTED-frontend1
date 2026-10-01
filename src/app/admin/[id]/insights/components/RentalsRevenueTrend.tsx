@@ -2,21 +2,20 @@
 // RentalsRevenueTrend.tsx
 "use client";
 import { useEffect } from "react";
-import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
-import React from "react";
 import {
-  ComposedChart,
-  Line,
   Area,
+  CartesianGrid,
+  ComposedChart,
+  Legend,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
 } from "recharts";
-import { useRentalsRevenueTrend } from "@/lib/queries/admin/useAnalytics";
 import { ChartSkeleton } from "@/common/ui/SkeletonLoaders";
+import { Paragraph3 } from "@/common/ui/Text";
+import { useRentalsRevenueTrend } from "@/lib/queries/admin/useAnalytics";
 
 interface RentalsRevenueTrendProps {
   timeframe: "all_time" | "year" | "month";
@@ -58,9 +57,7 @@ const RentalsRevenueTrend = ({
   }
 
   const chartData = (
-    Array.isArray(data.data)
-      ? data.data
-      : (data.data.trend ?? [])
+    Array.isArray(data.data) ? data.data : (data.data.trend ?? [])
   ).map((item) => ({
     month: item.month,
     orders: item.orders ?? item.rentals ?? 0,

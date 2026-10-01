@@ -7,6 +7,15 @@ interface TimeframeParams {
   month?: number;
 }
 
+export const useDashboardOverview = () =>
+  useQuery({
+    queryKey: ["admin", "analytics", "dashboard-overview"],
+    queryFn: () => analyticsApi.getDashboardOverview(),
+    staleTime: 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+    retry: 1,
+  });
+
 export const useAnalyticsStats = (params: TimeframeParams) =>
   useQuery({
     queryKey: [

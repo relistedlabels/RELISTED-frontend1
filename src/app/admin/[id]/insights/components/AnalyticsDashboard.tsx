@@ -2,9 +2,8 @@
 // AnalyticsDashboard.tsx
 "use client";
 
-import React from "react";
-import RentalsRevenueTrend from "./RentalsRevenueTrend";
 import CategoryBreakdown from "./CategoryBreakdown";
+import RentalsRevenueTrend from "./RentalsRevenueTrend";
 import RevenueByCategory from "./RevenueByCategory";
 import TopCurators from "./TopCurators";
 import TopItems from "./TopItems";

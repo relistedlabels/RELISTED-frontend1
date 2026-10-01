@@ -1,13 +1,14 @@
 "use client";
+
 // ENDPOINTS: GET /api/admin/wallets/transactions?search=&page=1&limit=20&type=&status=
 
+import { ArrowDownLeft, ArrowUpRight, Send } from "lucide-react";
 import React from "react";
-import { ArrowUpRight, ArrowDownLeft, Send } from "lucide-react";
-import { Paragraph1 } from "@/common/ui/Text";
 import {
-  ResponsiveDataTable,
   type ResponsiveColumnDef,
+  ResponsiveDataTable,
 } from "@/common/ui/ResponsiveDataTable";
+import { Paragraph1 } from "@/common/ui/Text";
 import { useWalletTransactions } from "@/lib/queries/admin/useWallets";
 import AdminTablePagination, {
   EMPTY_WALLET_PAGINATION,

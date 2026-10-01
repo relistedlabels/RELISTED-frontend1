@@ -1,15 +1,16 @@
 "use client";
+
 // ENDPOINTS: GET /api/admin/wallets?search=&page=1&limit=20
 
-import React from "react";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ChevronRight } from "lucide-react";
-import { Paragraph1 } from "@/common/ui/Text";
+import React from "react";
 import {
-  ResponsiveDataTable,
   type ResponsiveColumnDef,
+  ResponsiveDataTable,
 } from "@/common/ui/ResponsiveDataTable";
+import { Paragraph1 } from "@/common/ui/Text";
 import { useWallets } from "@/lib/queries/admin/useWallets";
 import AdminTablePagination, {
   EMPTY_WALLET_PAGINATION,
@@ -72,7 +73,9 @@ const getInitials = (name: string): string =>
     .toUpperCase()
     .substring(0, 2);
 
-function buildWalletColumns(adminSegment: string): ResponsiveColumnDef<WalletRow>[] {
+function buildWalletColumns(
+  adminSegment: string,
+): ResponsiveColumnDef<WalletRow>[] {
   return [
     {
       id: "walletId",

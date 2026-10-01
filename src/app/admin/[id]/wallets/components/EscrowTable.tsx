@@ -1,13 +1,14 @@
 "use client";
+
 // ENDPOINTS: GET /api/admin/wallets/escrow?search=&page=1&limit=20, PUT /api/admin/wallets/escrow/:escrowId/release
 
+import { AlertCircle, Lock, Unlock } from "lucide-react";
 import React from "react";
-import { Lock, Unlock, AlertCircle } from "lucide-react";
-import { Paragraph1 } from "@/common/ui/Text";
 import {
-  ResponsiveDataTable,
   type ResponsiveColumnDef,
+  ResponsiveDataTable,
 } from "@/common/ui/ResponsiveDataTable";
+import { Paragraph1 } from "@/common/ui/Text";
 import { useEscrows } from "@/lib/queries/admin/useWallets";
 import AdminTablePagination, {
   EMPTY_WALLET_PAGINATION,
@@ -169,7 +170,9 @@ const columns: ResponsiveColumnDef<EscrowRow>[] = [
     header: "Reason",
     mobile: "detail",
     render: (escrow) => (
-      <Paragraph1 className="text-gray-600">{escrow.reason || "N/A"}</Paragraph1>
+      <Paragraph1 className="text-gray-600">
+        {escrow.reason || "N/A"}
+      </Paragraph1>
     ),
   },
   {

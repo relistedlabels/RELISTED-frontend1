@@ -1,11 +1,11 @@
 "use client";
 
+import {
+  type ResponsiveColumnDef,
+  ResponsiveDataTable,
+} from "@/common/ui/ResponsiveDataTable";
 import { CardGridSkeleton } from "@/common/ui/SkeletonLoaders";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
-import {
-  ResponsiveDataTable,
-  type ResponsiveColumnDef,
-} from "@/common/ui/ResponsiveDataTable";
 import { useTopItems } from "@/lib/queries/admin/useAnalytics";
 
 interface TopItemsProps {

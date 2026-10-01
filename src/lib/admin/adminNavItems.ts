@@ -9,8 +9,6 @@ export type AdminNavCountKey =
 export type AdminNavItemDefinition = {
   id: string;
   label: string;
-  /** Compact label shown under the icon when the mobile sidebar is collapsed. */
-  shortLabel?: string;
   getHref: (adminId: string) => string;
   showNewBadge?: boolean;
   countKey?: AdminNavCountKey;
@@ -23,6 +21,11 @@ export function getAdminNavItemDefinitions(): AdminNavItemDefinition[] {
       id: "overview",
       label: "Overview",
       getHref: (id) => `/admin/${id}/dashboard`,
+    },
+    {
+      id: "insights",
+      label: "Insights",
+      getHref: (id) => `/admin/${id}/insights`,
     },
     {
       id: "users",
@@ -44,7 +47,6 @@ export function getAdminNavItemDefinitions(): AdminNavItemDefinition[] {
     {
       id: "requests",
       label: "Availability Requests",
-      shortLabel: "Availability",
       getHref: (id) => `/admin/${id}/requests`,
       showNewBadge: true,
       countKey: "pendingAvailabilityRequests",
@@ -74,14 +76,8 @@ export function getAdminNavItemDefinitions(): AdminNavItemDefinition[] {
     },
     {
       id: "wallet",
-      label: "Payments",
+      label: "Finances",
       getHref: (id) => `/admin/${id}/wallets`,
-    },
-    {
-      id: "withdrawals",
-      label: "Withdrawal Requests",
-      shortLabel: "Withdrawals",
-      getHref: (id) => `/admin/${id}/withdrawal-requests`,
       countKey: "pendingWithdrawals",
     },
     {

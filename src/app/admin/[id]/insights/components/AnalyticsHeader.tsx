@@ -1,15 +1,16 @@
 // ENDPOINTS: GET /api/admin/analytics/stats (with timeframe filters)
 "use client";
-import React, { useState, useRef, useEffect } from "react";
-import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
-import {
-  HiOutlineChevronDown,
-  HiOutlineMapPin,
-  HiOutlineClock,
-  HiOutlineScale,
-  HiOutlineAcademicCap,
-} from "react-icons/hi2";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
 import { HiOutlineDownload } from "react-icons/hi";
+import {
+  HiOutlineAcademicCap,
+  HiOutlineChevronDown,
+  HiOutlineClock,
+  HiOutlineMapPin,
+  HiOutlineScale,
+} from "react-icons/hi2";
+import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 
 interface AnalyticsHeaderProps {
   timeframeType: "all_time" | "year" | "month";
@@ -104,7 +105,7 @@ const TimeframeDropdown: React.FC<{
     <div ref={dropdownRef} className="flex items-center gap-2">
       {/* Main Timeframe Dropdown */}
       <div className="relative">
-        <button
+        <button type="button"
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center justify-between px-4 py-2 border border-gray-200 rounded-lg bg-white cursor-pointer hover:bg-gray-50 transition-colors min-w-[180px]"
         >
@@ -120,7 +121,7 @@ const TimeframeDropdown: React.FC<{
 
         {isOpen && (
           <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-            <button
+            <button type="button"
               onClick={() => {
                 onTimeframeChange("all_time");
                 setIsOpen(false);
@@ -137,7 +138,7 @@ const TimeframeDropdown: React.FC<{
                 All Time
               </Paragraph1>
             </button>
-            <button
+            <button type="button"
               onClick={() => {
                 onTimeframeChange("year");
                 setIsOpen(false);
@@ -152,7 +153,7 @@ const TimeframeDropdown: React.FC<{
                 By Year
               </Paragraph1>
             </button>
-            <button
+            <button type="button"
               onClick={() => {
                 onTimeframeChange("month");
                 setIsOpen(false);
@@ -176,7 +177,7 @@ const TimeframeDropdown: React.FC<{
       {/* Year Dropdown - Show when "year" is selected */}
       {timeframeType === "year" && (
         <div className="relative">
-          <button
+          <button type="button"
             onClick={() => setIsYearOpen(!isYearOpen)}
             className="flex items-center justify-between px-4 py-2 border border-yellow-300 rounded-lg bg-yellow-50 cursor-pointer hover:bg-yellow-100 transition-colors min-w-[140px]"
           >
@@ -193,7 +194,7 @@ const TimeframeDropdown: React.FC<{
           {isYearOpen && (
             <div className="absolute top-full left-0 mt-2 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
               {getYears().map((year) => (
-                <button
+                <button type="button"
                   key={year}
                   onClick={() => {
                     onYearChange(year);
@@ -221,7 +222,7 @@ const TimeframeDropdown: React.FC<{
       {timeframeType === "month" && (
         <>
           <div className="relative">
-            <button
+            <button type="button"
               onClick={() => setIsMonthOpen(!isMonthOpen)}
               className="flex items-center justify-between px-4 py-2 border border-yellow-300 rounded-lg bg-yellow-50 cursor-pointer hover:bg-yellow-100 transition-colors min-w-[140px]"
             >
@@ -238,7 +239,7 @@ const TimeframeDropdown: React.FC<{
             {isMonthOpen && (
               <div className="absolute top-full left-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
                 {months.map((month, index) => (
-                  <button
+                  <button type="button"
                     key={month}
                     onClick={() => {
                       onMonthChange(index);
@@ -262,7 +263,7 @@ const TimeframeDropdown: React.FC<{
           </div>
 
           <div className="relative">
-            <button
+            <button type="button"
               onClick={() => setIsYearOpen(!isYearOpen)}
               className="flex items-center justify-between px-4 py-2 border border-yellow-300 rounded-lg bg-yellow-50 cursor-pointer hover:bg-yellow-100 transition-colors min-w-[140px]"
             >
@@ -279,7 +280,7 @@ const TimeframeDropdown: React.FC<{
             {isYearOpen && (
               <div className="absolute top-full left-0 mt-2 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
                 {getYears().map((year) => (
-                  <button
+                  <button type="button"
                     key={year}
                     onClick={() => {
                       onYearChange(year);
@@ -335,7 +336,7 @@ const AnalyticsHeader: React.FC<AnalyticsHeaderProps> = ({
           />
 
           {/* Export Button */}
-          <button className="flex- hidden items-center gap-2 px-5 py-2 bg-yellow-600 hover:bg-yellow-700 transition-colors rounded-lg text-white shadow-sm">
+          <button type="button" className="flex- hidden items-center gap-2 px-5 py-2 bg-yellow-600 hover:bg-yellow-700 transition-colors rounded-lg text-white shadow-sm">
             <HiOutlineDownload className="w-4 h-4" />
             <Paragraph1 className="text-sm font-bold">Export Report</Paragraph1>
           </button>

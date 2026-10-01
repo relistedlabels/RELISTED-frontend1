@@ -1,22 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
 import { Loader2, MoreHorizontal } from "lucide-react";
+import React, { useState } from "react";
 import { toast } from "sonner";
+import {
+  type ResponsiveColumnDef,
+  ResponsiveDataTable,
+} from "@/common/ui/ResponsiveDataTable";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
-  ResponsiveDataTable,
-  type ResponsiveColumnDef,
-} from "@/common/ui/ResponsiveDataTable";
-import {
-  useWithdrawalRequests,
-  useUpdateAdminWithdrawalStatus,
   useMarkWithdrawalAsPaid,
+  useUpdateAdminWithdrawalStatus,
+  useWithdrawalRequests,
 } from "@/lib/queries/admin/useWallets";
-import ConfirmPaidModal from "./ConfirmPaidModal";
-import ApproveWithdrawalModal from "./ApproveWithdrawalModal";
-import RejectWithdrawalModal from "./RejectWithdrawalModal";
-import WithdrawalActionsPickerModal from "./WithdrawalActionsPickerModal";
 import {
   normalizeAdminWithdrawalStatus,
   withdrawalAdminStatusLabel,
@@ -27,6 +23,10 @@ import AdminTablePagination, {
   EMPTY_WALLET_PAGINATION,
   useWalletTablePage,
 } from "./AdminTablePagination";
+import ApproveWithdrawalModal from "./ApproveWithdrawalModal";
+import ConfirmPaidModal from "./ConfirmPaidModal";
+import RejectWithdrawalModal from "./RejectWithdrawalModal";
+import WithdrawalActionsPickerModal from "./WithdrawalActionsPickerModal";
 
 interface WithdrawalRequestTableProps {
   searchQuery: string;
@@ -99,8 +99,7 @@ function WithdrawalRowActions({ withdrawal }: { withdrawal: WithdrawalRow }) {
   const [isApproveOpen, setIsApproveOpen] = useState(false);
   const [isRejectOpen, setIsRejectOpen] = useState(false);
 
-  const actionsBusy =
-    statusMutation.isPending || markPaidMutation.isPending;
+  const actionsBusy = statusMutation.isPending || markPaidMutation.isPending;
 
   const handleApprove = async (note?: string) => {
     try {
@@ -131,9 +130,7 @@ function WithdrawalRowActions({ withdrawal }: { withdrawal: WithdrawalRow }) {
       setIsRejectOpen(false);
     } catch (error: unknown) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to reject withdrawal.",
+        error instanceof Error ? error.message : "Failed to reject withdrawal.",
       );
     }
   };
@@ -234,9 +231,7 @@ const columns: ResponsiveColumnDef<WithdrawalRow>[] = [
           <Paragraph1 className="font-medium text-gray-900">
             {withdrawal.user.name}
           </Paragraph1>
-          <span className="text-xs text-gray-500">
-            {withdrawal.user.email}
-          </span>
+          <span className="text-xs text-gray-500">{withdrawal.user.email}</span>
         </div>
       </div>
     ),
