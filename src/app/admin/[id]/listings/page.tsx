@@ -1,50 +1,51 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
-  Search,
-  Download,
-  Globe,
-  CheckCircle,
   AlertCircle,
-  XCircle,
+  CheckCircle,
   ChevronLeft,
   ChevronRight,
+  Download,
+  Globe,
   Power,
   RotateCcw,
+  Search,
+  XCircle,
 } from "lucide-react";
-import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
-import { useQueryClient } from "@tanstack/react-query";
+import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
-import { AdminSectionTabs } from "../../components/AdminSectionTabs";
-import ListingDetailModal from "./components/ListingDetailModal";
-import PendingListingsTable from "./components/PendingListingsTable";
-import ActiveListingsTable from "./components/ActiveListingsTable";
-import SoldListingsTable from "./components/SoldListingsTable";
-import RejectedListingsTable from "./components/RejectedListingsTable";
-import ManagementPanel from "./components/ManagementPanel";
+import AdminPageHeader from "@/app/admin/components/AdminPageHeader";
 import ListingFilterPanel, {
   ListingFilterButton,
 } from "@/app/shop/components/ListingFilterPanel";
-import type { ListingFilterValues } from "@/lib/shop/listingFilters";
-import { pickerFiltersToApiParams } from "@/lib/shop/listingFilters";
-import { countActiveListingFilters } from "@/lib/shop/countActiveListingFilters";
+import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
+import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import { type Product, ProductDetail } from "@/lib/api/admin/listings";
 import {
-  useListingsStatistics,
-  useApproveListing,
-  useRejectListing,
-  useSendProductToPending,
-  useSetAvailability,
-  usePendingProducts,
   useActiveProducts,
-  useRentedProducts,
-  useInactiveProducts,
-  useRejectedProducts,
+  useApproveListing,
   useBulkDeactivate,
   useBulkReactivate,
+  useInactiveProducts,
+  useListingsStatistics,
+  usePendingProducts,
+  useRejectedProducts,
+  useRejectListing,
+  useRentedProducts,
+  useSendProductToPending,
+  useSetAvailability,
 } from "@/lib/queries/admin/useListings";
-import { Product, ProductDetail } from "@/lib/api/admin/listings";
+import { countActiveListingFilters } from "@/lib/shop/countActiveListingFilters";
+import type { ListingFilterValues } from "@/lib/shop/listingFilters";
+import { pickerFiltersToApiParams } from "@/lib/shop/listingFilters";
+import { AdminSectionTabs } from "../../components/AdminSectionTabs";
+import ActiveListingsTable from "./components/ActiveListingsTable";
+import ListingDetailModal from "./components/ListingDetailModal";
+import ManagementPanel from "./components/ManagementPanel";
+import PendingListingsTable from "./components/PendingListingsTable";
+import RejectedListingsTable from "./components/RejectedListingsTable";
+import SoldListingsTable from "./components/SoldListingsTable";
 
 type TabType =
   | "Pending"
@@ -520,12 +521,14 @@ export default function ListingsPage() {
     bulkDeactivateMutation.mutate([productId], {
       onSuccess: (response) => {
         setDeactivatingProductId(null);
-        toast.success(response.message || 'Listing deactivated successfully');
+        toast.success(response.message || "Listing deactivated successfully");
       },
       onError: (error: any) => {
         setDeactivatingProductId(null);
         const errorMessage =
-          error?.response?.data?.message || error?.message || 'Failed to deactivate listing';
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to deactivate listing";
         toast.error(errorMessage);
       },
     });
@@ -533,10 +536,10 @@ export default function ListingsPage() {
 
   const handleBulkDeactivate = () => {
     if (selectedIds.size === 0) return;
-    
+
     if (
       !window.confirm(
-        `Deactivate ${selectedIds.size} listing${selectedIds.size > 1 ? 's' : ''}? You can reactivate them from the Inactive tab.`,
+        `Deactivate ${selectedIds.size} listing${selectedIds.size > 1 ? "s" : ""}? You can reactivate them from the Inactive tab.`,
       )
     ) {
       return;
@@ -544,12 +547,14 @@ export default function ListingsPage() {
 
     bulkDeactivateMutation.mutate(Array.from(selectedIds), {
       onSuccess: (response) => {
-        toast.success(response.message || 'Listings deactivated successfully');
+        toast.success(response.message || "Listings deactivated successfully");
         setSelectedIds(new Set());
       },
       onError: (error: any) => {
         const errorMessage =
-          error?.response?.data?.message || error?.message || 'Failed to deactivate listings';
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to deactivate listings";
         toast.error(errorMessage);
       },
     });
@@ -566,10 +571,10 @@ export default function ListingsPage() {
 
   const handleBulkReactivate = () => {
     if (selectedIds.size === 0) return;
-    
+
     if (
       !window.confirm(
-        `Reactivate ${selectedIds.size} listing${selectedIds.size > 1 ? 's' : ''}?`,
+        `Reactivate ${selectedIds.size} listing${selectedIds.size > 1 ? "s" : ""}?`,
       )
     ) {
       return;
@@ -577,12 +582,14 @@ export default function ListingsPage() {
 
     bulkReactivateMutation.mutate(Array.from(selectedIds), {
       onSuccess: (response) => {
-        toast.success(response.message || 'Listings reactivated successfully');
+        toast.success(response.message || "Listings reactivated successfully");
         setSelectedIds(new Set());
       },
       onError: (error: any) => {
         const errorMessage =
-          error?.response?.data?.message || error?.message || 'Failed to reactivate listings';
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to reactivate listings";
         toast.error(errorMessage);
       },
     });
@@ -593,11 +600,7 @@ export default function ListingsPage() {
       inactiveProducts.find((item) => item.id === productId) ??
       rejectedProducts.find((item) => item.id === productId);
     const productName = product?.name || "this listing";
-    if (
-      !window.confirm(
-        `Reactivate "${productName}"?`,
-      )
-    ) {
+    if (!window.confirm(`Reactivate "${productName}"?`)) {
       return;
     }
 
@@ -605,12 +608,14 @@ export default function ListingsPage() {
     bulkReactivateMutation.mutate([productId], {
       onSuccess: (response) => {
         setReactivatingProductId(null);
-        toast.success(response.message || 'Listing reactivated successfully');
+        toast.success(response.message || "Listing reactivated successfully");
       },
       onError: (error: any) => {
         setReactivatingProductId(null);
         const errorMessage =
-          error?.response?.data?.message || error?.message || 'Failed to reactivate listing';
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to reactivate listing";
         toast.error(errorMessage);
       },
     });
@@ -661,14 +666,10 @@ export default function ListingsPage() {
       )}
 
       {/* Header */}
-      <div className="mb-6">
-        <Paragraph2 className="text-2xl font-extrabold text-gray-900 tracking-tight mb-2">
-          Listings
-        </Paragraph2>
-        <Paragraph1 className="text-sm text-gray-600">
-          Manage and review all curator-submitted listings.
-        </Paragraph1>
-      </div>
+      <AdminPageHeader
+        title="Listings"
+        description="Review and manage submitted listings."
+      />
 
       <div className="mb-6 flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
         <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto sm:flex-1">

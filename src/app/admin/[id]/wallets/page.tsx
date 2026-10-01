@@ -10,15 +10,15 @@ import {
   Lock,
   Receipt,
   Search,
-  Shield,
   ShoppingBag,
   TrendingUp,
   Wallet,
 } from "lucide-react";
 import Link from "next/link";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
+import AdminPageHeader from "@/app/admin/components/AdminPageHeader";
 import { MetricCardsSkeleton } from "@/common/ui/SkeletonLoaders";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import { walletsApi } from "@/lib/api/admin/";
@@ -26,12 +26,14 @@ import {
   useEscrows,
   useWalletStats,
   useWallets,
+  useWithdrawalRequests,
 } from "@/lib/queries/admin/useWallets";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { AdminTabBar, AdminTabButton } from "../../components/AdminSectionTabs";
 import EscrowTable from "./components/EscrowTable";
 import MetricsCard from "./components/MetricsCard";
 import RecentTransactionsPanel from "./components/RecentTransactionsPanel";
+import RecentWithdrawalRequestsPanel from "./components/RecentWithdrawalRequestsPanel";
 import TransactionsTable from "./components/TransactionsTable";
 import WalletTable from "./components/WalletTable";
 import WithdrawalRequestTable from "./components/WithdrawalRequestTable";
@@ -84,7 +86,6 @@ const monthOverMonthPercent = (
 };
 
 function WalletsPageInner() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const params = useParams();
   const storeAdminId = useAdminIdStore((state) => state.adminId);
@@ -97,29 +98,34 @@ function WalletsPageInner() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isExporting, setIsExporting] = useState(false);
 
-  // Keep tab in sync when navigated with ?tab= from other pages (e.g. Overview).
+  const selectedTab = activeTab;
+
   useEffect(() => {
-    const fromUrl = asTab(searchParams.get("tab"));
-    if (fromUrl && fromUrl !== activeTab) {
-      setActiveTab(fromUrl);
-    }
-  }, [searchParams, activeTab]);
+    const urlTab = asTab(searchParams.get("tab"));
+    if (urlTab) setActiveTab(urlTab);
+  }, [searchParams]);
 
   const changeTab = (tab: string) => {
     const next = asTab(tab) ?? "overview";
     setActiveTab(next);
-    router.replace(`/admin/${adminId}/wallets?tab=${next}`, { scroll: false });
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", next);
+    window.history.pushState(null, "", url.toString());
   };
 
   // Fetch data from APIs - only when tab is active (lazy loading)
   const statsQuery = useWalletStats();
+  const withdrawalRequestsQuery = useWithdrawalRequests({
+    page: 1,
+    limit: 1,
+  });
   const walletsQuery = useWallets({
     search: searchQuery,
-    enabled: activeTab === "wallet",
+    enabled: selectedTab === "wallet",
   });
   const escrowsQuery = useEscrows({
     search: searchQuery,
-    enabled: activeTab === "escrow",
+    enabled: selectedTab === "escrow",
   });
   // Log errors
   if (statsQuery.isError) {
@@ -149,13 +155,8 @@ function WalletsPageInner() {
   const stats = statsQuery.data?.data;
   const currentMonth = stats?.monthComparison?.currentMonth;
   const previousMonth = stats?.monthComparison?.previousMonth;
-
-  const sinceLaunch = stats?.orderAnalyticsCutoff
-    ? `Since ${new Date(stats.orderAnalyticsCutoff).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`
-    : "Since official launch";
-  const excludesTest = stats?.excludesTestAccounts
-    ? "Excludes staging curator and test inboxes"
-    : undefined;
+  const withdrawalRequestCount =
+    withdrawalRequestsQuery.data?.data?.pagination.total;
 
   const metrics: MetricData[] = stats
     ? [
@@ -212,27 +213,24 @@ function WalletsPageInner() {
           ),
         },
         {
-          label: "Total wallet balance",
+          label: "Wallet balances",
           value: formatCurrency(stats.totalWalletBalance || 0),
           currency: "₦",
           icon: <Wallet className="h-5 w-5" />,
-          detail: excludesTest,
+          detail: "Includes renter collateral.",
         },
         {
           label: "Order escrow (locked)",
           value: formatCurrency(stats.totalEscrowBalance || 0),
           currency: "₦",
           icon: <Lock className="h-5 w-5" />,
-          detail: `${sinceLaunch}. Lister payouts held until order release.`,
+          detail: "Rental, resale and cleaning funds awaiting release.",
         },
         {
-          label: "Wallet collateral (locked)",
-          value: formatCurrency(stats.totalCollateralLocked ?? 0),
+          label: "Total paid to listers",
+          value: formatCurrency(stats.totalReleasedToListers || 0),
           currency: "₦",
-          icon: <Shield className="h-5 w-5" />,
-          detail:
-            excludesTest ??
-            "Renter security deposits held on wallets until return is confirmed.",
+          icon: <Landmark className="h-5 w-5" />,
         },
         {
           label: "VAT collected (this month)",
@@ -247,21 +245,17 @@ function WalletsPageInner() {
       ]
     : [];
 
-  const isTableTab = activeTab !== "overview";
+  const isTableTab = selectedTab !== "overview";
 
   return (
     <div className="min-h-screen">
       {/* Header Section */}
-      <div className="mb-6">
-        <div>
-          <Paragraph2 className="mb-2 text-gray-900">Finance</Paragraph2>
-          <Paragraph1 className="text-gray-600">
-            Track payments, payouts and revenue.
-          </Paragraph1>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="Finance"
+        description="Manage payments and payouts."
+      />
 
-      {activeTab === "overview" ? (
+      {selectedTab === "overview" ? (
         <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {statsQuery.isPending ? (
             <MetricCardsSkeleton count={8} />
@@ -281,27 +275,31 @@ function WalletsPageInner() {
       <div className="overflow-hidden rounded-lg bg-white">
         <AdminTabBar>
           <AdminTabButton
-            active={activeTab === "overview"}
+            active={selectedTab === "overview"}
             onClick={() => changeTab("overview")}
             label="Overview"
           />
           <AdminTabButton
-            active={activeTab === "withdrawal-requests"}
+            active={selectedTab === "withdrawal-requests"}
             onClick={() => changeTab("withdrawal-requests")}
-            label="Withdrawal Requests"
+            label={
+              withdrawalRequestCount === undefined
+                ? "Withdrawal Requests"
+                : `Withdrawal Requests (${withdrawalRequestCount})`
+            }
           />
           <AdminTabButton
-            active={activeTab === "wallet"}
+            active={selectedTab === "wallet"}
             onClick={() => changeTab("wallet")}
             label="Wallets"
           />
           <AdminTabButton
-            active={activeTab === "escrow"}
+            active={selectedTab === "escrow"}
             onClick={() => changeTab("escrow")}
             label="Escrow"
           />
           <AdminTabButton
-            active={activeTab === "transactions"}
+            active={selectedTab === "transactions"}
             onClick={() => changeTab("transactions")}
             label="Transactions"
           />
@@ -333,7 +331,7 @@ function WalletsPageInner() {
                 />
               </div>
             </div>
-            {activeTab === "transactions" ? (
+            {selectedTab === "transactions" ? (
               <button
                 type="button"
                 onClick={handleExport}
@@ -352,60 +350,76 @@ function WalletsPageInner() {
         ) : null}
 
         <div className="p-4 sm:p-5">
-          {activeTab === "wallet" && <WalletTable searchQuery={searchQuery} />}
-          {activeTab === "escrow" && <EscrowTable searchQuery={searchQuery} />}
-          {activeTab === "transactions" && (
-            <TransactionsTable searchQuery={searchQuery} />
-          )}
-          {activeTab === "withdrawal-requests" && (
-            <WithdrawalRequestTable searchQuery={searchQuery} />
-          )}
-          {activeTab === "overview" && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div
+            className={`grid grid-cols-1 items-start gap-5 ${
+              selectedTab === "overview"
+                ? "xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]"
+                : ""
+            }`}
+          >
+            <div className="min-w-0">
+              {selectedTab === "wallet" && (
+                <WalletTable searchQuery={searchQuery} />
+              )}
+              {selectedTab === "escrow" && (
+                <EscrowTable searchQuery={searchQuery} />
+              )}
+              {selectedTab === "transactions" && (
+                <TransactionsTable searchQuery={searchQuery} />
+              )}
+              {selectedTab === "withdrawal-requests" && (
+                <WithdrawalRequestTable searchQuery={searchQuery} />
+              )}
+              {selectedTab === "overview" && (
+                <div className="space-y-4">
+                  <RecentWithdrawalRequestsPanel adminId={adminId} />
+                  <section className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5">
+                    <div className="mb-3 flex items-center gap-2">
+                      <FileSpreadsheet className="h-4 w-4 text-gray-500" />
+                      <h3 className="text-sm font-bold uppercase tracking-wide text-gray-900">
+                        Finance report
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleExport}
+                      disabled={isExporting}
+                      className="flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 text-left transition hover:bg-gray-100 disabled:opacity-60 sm:max-w-sm"
+                    >
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                        <FileSpreadsheet className="h-5 w-5" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[13px] font-semibold text-gray-900">
+                          Transactions report
+                        </span>
+                        <span className="block text-[12px] text-gray-500">
+                          Download the full ledger as CSV
+                        </span>
+                      </span>
+                      <Download className="h-4 w-4 shrink-0 text-gray-400" />
+                    </button>
+                  </section>
+                  <p className="text-sm text-gray-500">
+                    For revenue trends, visit{" "}
+                    <Link
+                      href={`/admin/${adminId}/insights`}
+                      className="font-medium text-blue-600 hover:underline"
+                    >
+                      Insights
+                    </Link>
+                    .
+                  </p>
+                </div>
+              )}
+            </div>
+            {selectedTab === "overview" ? (
+              <div className="space-y-4">
                 <RecentTransactionsPanel adminId={adminId} />
                 <WithdrawalSummaryPanel adminId={adminId} />
               </div>
-
-              <section className="rounded-xl border border-gray-200 bg-white p-4 sm:p-5">
-                <div className="mb-3 flex items-center gap-2">
-                  <FileSpreadsheet className="h-4 w-4 text-gray-500" />
-                  <h3 className="text-sm font-semibold text-gray-900">
-                    Finance report
-                  </h3>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleExport}
-                  disabled={isExporting}
-                  className="flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 text-left transition hover:bg-gray-100 disabled:opacity-60 sm:max-w-sm"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
-                    <FileSpreadsheet className="h-5 w-5" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[13px] font-semibold text-gray-900">
-                      Transactions report
-                    </span>
-                    <span className="block text-[12px] text-gray-500">
-                      Download the full ledger as CSV
-                    </span>
-                  </span>
-                  <Download className="h-4 w-4 shrink-0 text-gray-400" />
-                </button>
-              </section>
-              <p className="text-sm text-gray-500">
-                For revenue trends, visit{" "}
-                <Link
-                  href={`/admin/${adminId}/insights`}
-                  className="font-medium text-blue-600 hover:underline"
-                >
-                  Insights
-                </Link>
-                .
-              </p>
-            </div>
-          )}
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

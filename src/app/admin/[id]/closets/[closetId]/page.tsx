@@ -1,19 +1,20 @@
 // ENDPOINTS: GET /api/admin/closets/:closetId, GET /api/admin/closets/vault-closet-sale/waitlist, POST /api/admin/closets/vault-closet-sale/notify-waitlist
 "use client";
 
+import { ChevronLeft, ChevronRight, LayoutGrid } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ChevronLeft, ChevronRight, LayoutGrid } from "lucide-react";
-import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import AdminPageHeader from "@/app/admin/components/AdminPageHeader";
 import {
-  ResponsiveDataTable,
   type ResponsiveColumnDef,
+  ResponsiveDataTable,
 } from "@/common/ui/ResponsiveDataTable";
 import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
+import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import { listingPriceDisplay } from "@/lib/product/listingPriceDisplay";
 import { useAdminClosetDetail } from "@/lib/queries/admin/useAdminClosets";
 import AdminVaultClosetSaleWaitlistCard from "../components/AdminVaultClosetSaleWaitlistCard";
-import { listingPriceDisplay } from "@/lib/product/listingPriceDisplay";
 
 const formatCurrency = (value: number): string =>
   new Intl.NumberFormat("en-NG", {
@@ -134,24 +135,27 @@ export default function AdminClosetDetailPage() {
   const c = data?.data;
 
   const errMsg =
-    isError && error instanceof Error ? error.message : isError ? "Failed to load" : null;
+    isError && error instanceof Error
+      ? error.message
+      : isError
+        ? "Failed to load"
+        : null;
 
   return (
     <div className="min-h-screen">
       <div className="mb-6">
         <Link
           href={`/admin/${adminId}/closets`}
-          className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 font-medium mb-4 transition-colors"
+          className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
         >
           <ChevronLeft className="w-4 h-4" aria-hidden />
-          <Paragraph1>Back to closets</Paragraph1>
+          Back to closets
         </Link>
-        <Paragraph2 className="mb-1 font-extrabold text-gray-900 text-2xl tracking-tight">
-          Closet detail
-        </Paragraph2>
-        <Paragraph1 className="text-gray-600">
-          Wallet balance, owner, and inventory for this closet.
-        </Paragraph1>
+        <AdminPageHeader
+          className="!mb-0"
+          title="Closet detail"
+          description="Owner, wallet balance, and listings."
+        />
       </div>
 
       {isLoading ? (
@@ -164,12 +168,12 @@ export default function AdminClosetDetailPage() {
           <Paragraph1 className="text-red-600">{errMsg}</Paragraph1>
         </div>
       ) : c ? (
-        <div className="space-y-6">
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+        <div className="space-y-5">
+          <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex gap-4 min-w-0">
                 {c.imageUrl ? (
-                  <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 shrink-0">
+                  <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-gray-200">
                     <Image
                       src={c.imageUrl}
                       alt=""
@@ -180,15 +184,17 @@ export default function AdminClosetDetailPage() {
                     />
                   </div>
                 ) : (
-                  <div className="w-20 h-20 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center shrink-0">
+                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-gray-50">
                     <LayoutGrid className="w-8 h-8 text-gray-400" aria-hidden />
                   </div>
                 )}
                 <div className="min-w-0">
-                  <Paragraph2 className="mb-1 font-extrabold text-gray-900 text-xl sm:text-2xl tracking-tight">
+                  <Paragraph2 className="mb-1 text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
                     {c.name}
                   </Paragraph2>
-                  <Paragraph1 className="text-gray-500 font-mono text-sm mb-2">{c.slug}</Paragraph1>
+                  <Paragraph1 className="mb-2 font-mono text-sm text-gray-500">
+                    {c.slug}
+                  </Paragraph1>
                   {c.description ? (
                     <Paragraph1 className="text-gray-600 text-sm max-w-2xl leading-relaxed">
                       {c.description}
@@ -196,61 +202,65 @@ export default function AdminClosetDetailPage() {
                   ) : null}
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <span
-                      className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
-                        c.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"
+                      className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
+                        c.isActive
+                          ? "bg-green-100 text-green-800"
+                          : "bg-gray-100 text-gray-700"
                       }`}
                     >
                       {c.isActive ? "Active" : "Inactive"}
                     </span>
                     <Paragraph1 className="text-gray-400 text-xs">
-                      {c.products.length} product{c.products.length === 1 ? "" : "s"}
+                      {c.products.length} product
+                      {c.products.length === 1 ? "" : "s"}
                     </Paragraph1>
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-lg border border-gray-200 bg-gray-50/80 p-5 lg:min-w-[280px] shrink-0">
-                <Paragraph1 className="text-gray-600 text-xs font-semibold uppercase tracking-wide mb-1">
+              <div className="shrink-0 rounded-xl border border-gray-200 bg-gray-50/80 p-4 lg:min-w-[280px]">
+                <Paragraph1 className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
                   Closet wallet balance
                 </Paragraph1>
                 <Paragraph2 className="text-gray-900 text-2xl font-bold tabular-nums tracking-tight">
                   {formatCurrency(c.closetWalletBalance)}
                 </Paragraph2>
-                <Paragraph1 className="text-gray-500 text-xs mt-2 leading-relaxed">
-                  Tracked lister payout share for partner settlements (same integer units as
-                  lister wallet).
+                <Paragraph1 className="mt-2 text-xs leading-relaxed text-gray-500">
+                  Lister payout share for partner settlements.
                 </Paragraph1>
               </div>
             </div>
-          </div>
+          </section>
 
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <Paragraph1 className="mb-4 font-semibold text-gray-500 text-xs uppercase tracking-wide">
-              Owner (lister account)
-            </Paragraph1>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+            <h2 className="mb-3 text-sm font-semibold text-gray-900">Owner</h2>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <Paragraph1 className="text-gray-900 font-medium">{c.owner.name}</Paragraph1>
-                <Paragraph1 className="text-gray-600 text-sm">{c.owner.email}</Paragraph1>
+                <Paragraph1 className="text-gray-900 font-medium">
+                  {c.owner.name}
+                </Paragraph1>
+                <Paragraph1 className="text-gray-600 text-sm">
+                  {c.owner.email}
+                </Paragraph1>
                 <Paragraph1 className="text-gray-500 text-xs mt-1 capitalize">
                   Role: {c.owner.role.toLowerCase()}
                 </Paragraph1>
               </div>
               <Link
                 href={`/admin/${adminId}/users/${c.owner.id}`}
-                className="inline-flex items-center gap-1 self-start sm:self-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                className="inline-flex h-10 items-center gap-1 self-start rounded-lg border border-gray-200 px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 sm:self-center"
               >
                 <Paragraph1>User profile</Paragraph1>
                 <ChevronRight size={16} />
               </Link>
             </div>
-          </div>
+          </section>
 
-          <div>
-            <Paragraph1 className="mb-3 font-semibold text-gray-500 text-xs uppercase tracking-wide">
-              Products in this closet
-            </Paragraph1>
-            <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+          <section>
+            <h2 className="mb-3 text-sm font-semibold text-gray-900">
+              Products
+            </h2>
+            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
               <ResponsiveDataTable
                 rows={c.products as unknown as ClosetProductRow[]}
                 columns={productColumns}
@@ -262,7 +272,7 @@ export default function AdminClosetDetailPage() {
                 }
               />
             </div>
-          </div>
+          </section>
 
           <AdminVaultClosetSaleWaitlistCard />
         </div>

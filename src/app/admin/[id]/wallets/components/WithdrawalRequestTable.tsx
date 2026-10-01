@@ -1,7 +1,7 @@
 "use client";
 
-import { Loader2, MoreHorizontal } from "lucide-react";
-import React, { useState } from "react";
+import { Check, Copy, Loader2, MoreHorizontal } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   type ResponsiveColumnDef,
@@ -32,7 +32,7 @@ interface WithdrawalRequestTableProps {
   searchQuery: string;
 }
 
-type WithdrawalRow = {
+export type WithdrawalRow = {
   id: string;
   userId: string;
   user: {
@@ -59,7 +59,7 @@ const formatCurrency = (amount: number): string =>
     minimumFractionDigits: 0,
   }).format(amount);
 
-const getStatusBadgeColor = (status: string): string => {
+export const getStatusBadgeColor = (status: string): string => {
   const n = normalizeAdminWithdrawalStatus(status);
   if (n === "paid" || n === "completed") {
     return "bg-green-100 text-green-700";
@@ -76,6 +76,59 @@ const getStatusBadgeColor = (status: string): string => {
   return "bg-gray-100 text-gray-700";
 };
 
+export function CopyWithdrawalDetailsButton({
+  withdrawal,
+}: {
+  withdrawal: WithdrawalRow;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    const details = [
+      "Bank Account",
+      withdrawal.bankAccount.accountNumber,
+      withdrawal.bankAccount.bankName,
+      "",
+      "Amount",
+      formatCurrency(withdrawal.amount),
+    ].join("\n");
+
+    try {
+      await navigator.clipboard.writeText(details);
+      setCopied(true);
+      toast.success("Payout details copied");
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Could not copy payout details.");
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      aria-label={
+        copied
+          ? `Payout details copied for ${withdrawal.user.name}`
+          : `Copy payout details for ${withdrawal.user.name}`
+      }
+      title={copied ? "Copied" : "Copy payout details"}
+      onClick={handleCopy}
+      className={`inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 ${
+        copied
+          ? "border-green-200 bg-green-50 text-green-700"
+          : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900"
+      }`}
+    >
+      {copied ? (
+        <Check size={16} aria-hidden="true" />
+      ) : (
+        <Copy size={16} aria-hidden="true" />
+      )}
+      <span>{copied ? "Copied" : "Copy"}</span>
+    </button>
+  );
+}
+
 const getInitials = (name: string): string =>
   name
     .split(" ")
@@ -91,7 +144,11 @@ const getLastUpdatedDate = (dateString: string): string =>
     day: "numeric",
   });
 
-function WithdrawalRowActions({ withdrawal }: { withdrawal: WithdrawalRow }) {
+export function WithdrawalRowActions({
+  withdrawal,
+}: {
+  withdrawal: WithdrawalRow;
+}) {
   const markPaidMutation = useMarkWithdrawalAsPaid();
   const statusMutation = useUpdateAdminWithdrawalStatus();
   const [isActionsPickerOpen, setIsActionsPickerOpen] = useState(false);
@@ -287,7 +344,12 @@ const columns: ResponsiveColumnDef<WithdrawalRow>[] = [
     id: "actions",
     header: "Actions",
     mobile: "action",
-    render: (withdrawal) => <WithdrawalRowActions withdrawal={withdrawal} />,
+    render: (withdrawal) => (
+      <div className="flex items-center gap-2">
+        <CopyWithdrawalDetailsButton withdrawal={withdrawal} />
+        <WithdrawalRowActions withdrawal={withdrawal} />
+      </div>
+    ),
   },
 ];
 

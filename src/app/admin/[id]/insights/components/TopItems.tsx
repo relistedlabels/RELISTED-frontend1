@@ -5,7 +5,7 @@ import {
   ResponsiveDataTable,
 } from "@/common/ui/ResponsiveDataTable";
 import { CardGridSkeleton } from "@/common/ui/SkeletonLoaders";
-import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import { Paragraph1 } from "@/common/ui/Text";
 import { useTopItems } from "@/lib/queries/admin/useAnalytics";
 
 interface TopItemsProps {
@@ -90,19 +90,17 @@ export default function TopItems({
   if (error) {
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <Paragraph3 className="mb-2 text-xl font-semibold text-gray-900">
-          Most rented items
-        </Paragraph3>
-        <Paragraph2 className="text-xs text-gray-500">
+        <h3 className="font-semibold text-gray-900">Most rented items</h3>
+        <p className="mt-1 text-xs text-gray-500">
           Rental count and rental value in the selected period.
-        </Paragraph2>
-        <Paragraph2 className="text-sm text-gray-600">
+        </p>
+        <p className="mt-3 text-sm text-gray-600">
           Unable to load this chart. Check the API logs for{" "}
           <span className="font-mono text-xs">
             GET /api/admin/analytics/top-items
           </span>
           .
-        </Paragraph2>
+        </p>
       </div>
     );
   }
@@ -110,12 +108,10 @@ export default function TopItems({
   if (items.length === 0) {
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <Paragraph3 className="mb-2 text-xl font-semibold text-gray-900">
-          Most rented items
-        </Paragraph3>
-        <Paragraph2 className="text-sm text-gray-600">
+        <h3 className="font-semibold text-gray-900">Most rented items</h3>
+        <p className="mt-3 text-sm text-gray-600">
           No rentals were recorded in this period.
-        </Paragraph2>
+        </p>
       </div>
     );
   }
@@ -123,12 +119,10 @@ export default function TopItems({
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
       <div className="mb-6">
-        <Paragraph3 className="mb-4 text-xl font-semibold text-gray-900">
-          Most rented items
-        </Paragraph3>
-        <Paragraph2 className="text-xs text-gray-500">
+        <h3 className="font-semibold text-gray-900">Most rented items</h3>
+        <p className="mt-1 text-xs text-gray-500">
           Rental count and rental value in the selected period.
-        </Paragraph2>
+        </p>
       </div>
 
       <ResponsiveDataTable

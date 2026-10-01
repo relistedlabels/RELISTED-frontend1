@@ -4,7 +4,6 @@
 
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
 import { useWalletTransactions } from "@/lib/queries/admin/useWallets";
 
 const formatCurrency = (amount: number): string =>
@@ -19,24 +18,18 @@ const formatDateTime = (dateString: string): string => {
   return `${date.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}, ${date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false })}`;
 };
 
-const statusBadge = (status: string): ReactNode => {
-  const s = status?.toUpperCase();
-  const cls =
-    s === "SUCCESS"
-      ? "bg-green-100 text-green-700"
-      : s === "PENDING"
-        ? "bg-yellow-100 text-yellow-700"
-        : s === "FAILED"
-          ? "bg-red-100 text-red-700"
-          : "bg-gray-100 text-gray-700";
-  return (
-    <span
-      className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${cls}`}
-    >
-      {s === "SUCCESS" ? "Completed" : (s?.toLowerCase() ?? "—")}
-    </span>
+const formatTransactionNote = (note: string): string =>
+  note.replace(
+    /(Collateral locked:\s*)(?:₦\s*)?([\d,]+(?:\.\d+)?)/i,
+    (_match, label: string, amount: string) => {
+      const value = Number(amount.replaceAll(",", ""));
+      return Number.isFinite(value)
+        ? `${label}₦${new Intl.NumberFormat("en-NG", {
+            maximumFractionDigits: 2,
+          }).format(value)}`
+        : _match;
+    },
   );
-};
 
 const RecentTransactionsPanel = ({ adminId }: { adminId: string }) => {
   const transactionsQuery = useWalletTransactions({
@@ -97,7 +90,11 @@ const RecentTransactionsPanel = ({ adminId }: { adminId: string }) => {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[13px] font-semibold text-gray-900">
-                    {t.note || (isCredit ? "Credit" : "Debit")}
+                    {t.note
+                      ? formatTransactionNote(t.note)
+                      : isCredit
+                        ? "Credit"
+                        : "Debit"}
                   </span>
                   <span className="block truncate text-[12px] text-gray-500">
                     {t.wallet?.user?.name ?? "—"} ·{" "}
@@ -113,9 +110,6 @@ const RecentTransactionsPanel = ({ adminId }: { adminId: string }) => {
                     {isCredit ? "+" : "-"}
                     {formatCurrency(t.amount)}
                   </span>
-                </span>
-                <span className="hidden shrink-0 sm:block">
-                  {statusBadge(t.status)}
                 </span>
               </li>
             );

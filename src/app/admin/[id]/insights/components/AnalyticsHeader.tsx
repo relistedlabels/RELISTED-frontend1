@@ -10,7 +10,8 @@ import {
   HiOutlineMapPin,
   HiOutlineScale,
 } from "react-icons/hi2";
-import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import AdminPageHeader from "@/app/admin/components/AdminPageHeader";
+import { Paragraph1 } from "@/common/ui/Text";
 
 interface AnalyticsHeaderProps {
   timeframeType: "all_time" | "year" | "month";
@@ -319,29 +320,30 @@ const AnalyticsHeader: React.FC<AnalyticsHeaderProps> = ({
   return (
     <div className="w-full ">
       {/* Top Row: Title and Actions */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <Paragraph2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-          Marketplace insights
-        </Paragraph2>
+      <AdminPageHeader
+        title="Marketplace insights"
+        action={
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Timeframe Selection */}
+            <TimeframeDropdown
+              timeframeType={timeframeType}
+              selectedYear={selectedYear}
+              selectedMonth={selectedMonth}
+              onTimeframeChange={onTimeframeChange}
+              onYearChange={onYearChange}
+              onMonthChange={onMonthChange}
+            />
 
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* Timeframe Selection */}
-          <TimeframeDropdown
-            timeframeType={timeframeType}
-            selectedYear={selectedYear}
-            selectedMonth={selectedMonth}
-            onTimeframeChange={onTimeframeChange}
-            onYearChange={onYearChange}
-            onMonthChange={onMonthChange}
-          />
-
-          {/* Export Button */}
-          <button type="button" className="flex- hidden items-center gap-2 px-5 py-2 bg-yellow-600 hover:bg-yellow-700 transition-colors rounded-lg text-white shadow-sm">
-            <HiOutlineDownload className="w-4 h-4" />
-            <Paragraph1 className="text-sm font-bold">Export Report</Paragraph1>
-          </button>
-        </div>
-      </div>
+            {/* Export Button */}
+            <button type="button" className="flex- hidden items-center gap-2 px-5 py-2 bg-yellow-600 hover:bg-yellow-700 transition-colors rounded-lg text-white shadow-sm">
+              <HiOutlineDownload className="w-4 h-4" />
+              <Paragraph1 className="text-sm font-bold">
+                Export Report
+              </Paragraph1>
+            </button>
+          </div>
+        }
+      />
 
       {/* Bottom Row: Inline Stats */}
       <div className="flex- hidden items-center py-4 border-y border-gray-300">

@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Search, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { FormSkeleton } from "@/common/ui/SkeletonLoaders";
+import { Paragraph1 } from "@/common/ui/Text";
 import { useAllBrands } from "@/lib/queries/admin/useListings";
 import {
   usePrioritizedShopBrands,
@@ -54,8 +54,7 @@ export default function ShopBrandPriorityPanel() {
 
   const availableBrands = useMemo(() => {
     const list = (brands ?? []).filter(
-      (brand) =>
-        brand.isShopVisible !== false && !prioritizedSet.has(brand.id),
+      (brand) => brand.isShopVisible !== false && !prioritizedSet.has(brand.id),
     );
     const query = searchQuery.trim().toLowerCase();
     const filtered = query
@@ -97,38 +96,51 @@ export default function ShopBrandPriorityPanel() {
   const showSkeleton = isLoading || Boolean(error);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
-      <Paragraph3 className="text-gray-900 mb-1">Brand priority</Paragraph3>
-      <Paragraph1 className="text-sm text-gray-600 mb-6">
-        Top brands appear first on the shop page. Listings follow this order.
-      </Paragraph1>
+    <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-gray-100 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-5">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900">
+            Brand priority
+          </h2>
+          <Paragraph1 className="mt-1 text-sm text-gray-500">
+            Set the order brands appear in the shop.
+          </Paragraph1>
+        </div>
+        {!showSkeleton ? (
+          <span className="inline-flex w-fit rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium tabular-nums text-gray-600">
+            {orderedIds.length} prioritized
+          </span>
+        ) : null}
+      </div>
 
       {showSkeleton ? (
-        <FormSkeleton fields={4} />
+        <div className="p-5">
+          <FormSkeleton fields={4} />
+        </div>
       ) : (
         <>
-          <div className="mb-6">
-            <Paragraph3 className="text-sm text-gray-900 mb-2">
-              Priority order
-            </Paragraph3>
+          <div className="border-b border-gray-100 p-4 sm:p-5">
+            <h3 className="mb-3 text-sm font-semibold text-gray-900">
+              Current order
+            </h3>
             {orderedIds.length === 0 ? (
-              <div className="border border-dashed border-gray-200 rounded-lg p-4 text-sm text-gray-500">
-                No priority brands yet.
+              <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/50 p-4 text-sm text-gray-500">
+                No priority order set.
               </div>
             ) : (
-              <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
+              <div className="divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200">
                 {orderedIds.map((brandId, index) => {
                   const brand = brandById.get(brandId);
                   if (!brand) return null;
                   return (
                     <div
                       key={brandId}
-                      className="flex items-center gap-2 px-3 py-2.5"
+                      className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-gray-50/70"
                     >
-                      <span className="w-6 text-xs font-medium text-gray-400 text-center">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-gray-100 text-xs font-semibold tabular-nums text-gray-600">
                         {index + 1}
                       </span>
-                      <span className="flex-1 text-sm text-gray-900">
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-900">
                         {brand.name}
                       </span>
                       <div className="flex items-center gap-1">
@@ -136,7 +148,7 @@ export default function ShopBrandPriorityPanel() {
                           type="button"
                           onClick={() => moveBrand(index, "up")}
                           disabled={index === 0}
-                          className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                          className="rounded-md p-1.5 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
                           aria-label={`Move ${brand.name} up`}
                         >
                           <ChevronUp size={16} className="text-gray-600" />
@@ -145,7 +157,7 @@ export default function ShopBrandPriorityPanel() {
                           type="button"
                           onClick={() => moveBrand(index, "down")}
                           disabled={index === orderedIds.length - 1}
-                          className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                          className="rounded-md p-1.5 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
                           aria-label={`Move ${brand.name} down`}
                         >
                           <ChevronDown size={16} className="text-gray-600" />
@@ -153,7 +165,7 @@ export default function ShopBrandPriorityPanel() {
                         <button
                           type="button"
                           onClick={() => removeBrand(brandId)}
-                          className="p-1 rounded hover:bg-gray-100"
+                          className="rounded-md p-1.5 transition-colors hover:bg-gray-100"
                           aria-label={`Remove ${brand.name}`}
                         >
                           <X size={16} className="text-gray-500" />
@@ -166,11 +178,11 @@ export default function ShopBrandPriorityPanel() {
             )}
           </div>
 
-          <div>
-            <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between mb-3">
-              <Paragraph3 className="text-sm text-gray-900">
+          <div className="p-4 sm:p-5">
+            <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h3 className="text-sm font-semibold text-gray-900">
                 Add brands
-              </Paragraph3>
+              </h3>
               <div className="relative w-full sm:max-w-xs">
                 <Search
                   size={16}
@@ -180,13 +192,14 @@ export default function ShopBrandPriorityPanel() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  aria-label="Search available brands"
                   placeholder="Search brands..."
-                  className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
+                  className="h-10 w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
                 />
               </div>
             </div>
 
-            <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
+            <div className="max-h-60 overflow-y-auto divide-y divide-gray-100 rounded-xl border border-gray-200">
               {availableBrands.length === 0 ? (
                 <div className="p-4 text-sm text-gray-500">
                   {searchQuery.trim()
@@ -199,7 +212,7 @@ export default function ShopBrandPriorityPanel() {
                     key={brand.id}
                     type="button"
                     onClick={() => addBrand(brand.id)}
-                    className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50"
+                    className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-gray-50"
                   >
                     <span className="text-sm text-gray-900">{brand.name}</span>
                     <span className="text-xs font-medium text-gray-500">
@@ -211,19 +224,21 @@ export default function ShopBrandPriorityPanel() {
             </div>
           </div>
 
-          <div className="mt-6 flex items-center gap-3">
+          <div className="flex items-center gap-3 border-t border-gray-100 bg-gray-50/70 px-4 py-4 sm:px-5">
             <button
+              type="button"
               onClick={handleSave}
               disabled={!hasChanges || setPrioritizedBrands.isPending}
-              className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-10 rounded-lg bg-gray-900 px-4 text-sm font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {setPrioritizedBrands.isPending ? "Saving..." : "Save changes"}
             </button>
             {hasChanges && (
               <button
+                type="button"
                 onClick={() => setOrderedIds(savedBrandIds)}
                 disabled={setPrioritizedBrands.isPending}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700 disabled:opacity-50"
+                className="h-10 rounded-lg border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Reset
               </button>
@@ -231,6 +246,6 @@ export default function ShopBrandPriorityPanel() {
           </div>
         </>
       )}
-    </div>
+    </section>
   );
 }

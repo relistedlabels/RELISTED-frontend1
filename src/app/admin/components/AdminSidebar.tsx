@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { X } from "lucide-react";
+import { LogOut, X } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import type React from "react";
@@ -67,9 +67,14 @@ const getNavItems = (): NavItem[] =>
 interface AdminSidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  onLogout: () => void;
 }
 
-const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
+const AdminSidebar: React.FC<AdminSidebarProps> = ({
+  isOpen,
+  onClose,
+  onLogout,
+}) => {
   const queryClient = useQueryClient();
   const { data: navState } = useAdminNavState();
   const navCounts = useAdminNavCounts();
@@ -192,6 +197,21 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
             })}
           </ul>
         </nav>
+        <div className="mx-2 mt-3 border-t border-gray-200 px-0 pt-4 sm:mx-6">
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              onLogout();
+            }}
+            className="group flex w-full items-center rounded-xl px-3 py-3 text-red-600 transition-colors duration-200 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+          >
+            <LogOut className="h-5 w-5 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
+            <Paragraph1 className="ml-4 block text-sm font-medium text-red-600">
+              Log Out
+            </Paragraph1>
+          </button>
+        </div>
       </aside>
     </>
   );

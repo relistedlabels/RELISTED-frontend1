@@ -10,8 +10,9 @@ export interface WalletMonthFinanceMetrics {
 }
 
 export interface WalletStats {
+  /** Sum of mainBalance and collateralBalance across eligible wallets. */
   totalWalletBalance: number;
-  /** Funds in order escrow records (lister payouts), not wallet collateral */
+  /** Outstanding order-escrow amounts, excluding renter collateral held in wallets. */
   totalEscrowBalance: number;
   /** Sum of wallet.collateralBalance (renter deposits), matches wallet table column */
   totalCollateralLocked?: number;

@@ -122,7 +122,11 @@ export default function AdminLayoutWrapper({
         onLogout={handleLogout}
         onMenuClick={() => setIsNavOpen(true)}
       />
-      <AdminSidebar isOpen={isNavOpen} onClose={() => setIsNavOpen(false)} />
+      <AdminSidebar
+        isOpen={isNavOpen}
+        onClose={() => setIsNavOpen(false)}
+        onLogout={handleLogout}
+      />
 
       <main className="hide-scrollbar min-w-0 flex-1 overflow-auto bg-white p-3 pt-20 sm:p-8 sm:pt-20">
         {children}

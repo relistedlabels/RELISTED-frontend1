@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronDown, LogOut, Menu } from "lucide-react";
+import { ChevronDown, LogOut, Menu, Settings } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import { useMe } from "@/lib/queries/auth/useMe";
@@ -90,6 +91,9 @@ export default function AdminTopNavbar({
             type="button"
             onClick={() => setShowUserMenu(!showUserMenu)}
             className="flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-gray-100"
+            aria-label={`Open ${user?.name || "Admin"} menu`}
+            aria-expanded={showUserMenu}
+            aria-haspopup="menu"
           >
             <div
               className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${getAvatarBgColor(
@@ -119,15 +123,38 @@ export default function AdminTopNavbar({
                 className="fixed inset-0 z-30 cursor-default"
                 onClick={() => setShowUserMenu(false)}
               />
-              <div className="absolute right-0 top-full z-40 mt-1 w-48 rounded-lg border border-gray-200 bg-white shadow-lg">
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="flex w-full items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-                >
-                  <LogOut size={16} />
-                  Log Out
-                </button>
+              <div
+                role="menu"
+                className="absolute right-0 top-full z-40 mt-2 w-60 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg shadow-gray-900/10"
+              >
+                <div className="border-b border-gray-100 px-4 py-3">
+                  <p className="truncate text-sm font-semibold text-gray-900">
+                    {user?.name || "Admin"}
+                  </p>
+                  <p className="mt-0.5 text-xs text-gray-500">Administrator</p>
+                </div>
+                {adminId ? (
+                  <Link
+                    href={`/admin/${adminId}/settings`}
+                    role="menuitem"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                  >
+                    <Settings size={17} className="text-gray-500" />
+                    Account settings
+                  </Link>
+                ) : null}
+                <div className="border-t border-gray-100 p-1.5">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                  >
+                    <LogOut size={17} />
+                    Log Out
+                  </button>
+                </div>
               </div>
             </>
           )}

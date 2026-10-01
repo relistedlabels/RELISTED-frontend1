@@ -1,27 +1,31 @@
 // ENDPOINTS: GET /api/admin/availability-requests, GET /api/admin/availability-requests/stats, GET /api/admin/availability-requests/:id, POST .../nudge-renter, POST .../resend-to-lister
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   HiOutlineClock,
   HiOutlineExclamationTriangle,
   HiOutlineHandRaised,
   HiOutlineShoppingBag,
 } from "react-icons/hi2";
-import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import {
-  ResponsiveDataTable,
-  type ResponsiveColumnDef,
-} from "@/common/ui/ResponsiveDataTable";
-import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
-import { AdminComboBox, AdminFilterField } from "@/app/admin/components/AdminComboBox";
+  AdminComboBox,
+  AdminFilterField,
+} from "@/app/admin/components/AdminComboBox";
 import {
   AdminFilterButton,
   AdminFilterDrawer,
 } from "@/app/admin/components/AdminFilterDrawer";
-import { ADMIN_FILTER_INPUT_CLASS } from "@/lib/admin/adminListFilters";
+import AdminPageHeader from "@/app/admin/components/AdminPageHeader";
 import { AdminListingThumb } from "@/app/admin/lib/adminListingDisplay";
+import {
+  type ResponsiveColumnDef,
+  ResponsiveDataTable,
+} from "@/common/ui/ResponsiveDataTable";
+import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
+import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import { ADMIN_FILTER_INPUT_CLASS } from "@/lib/admin/adminListFilters";
 import type { AvailabilityRequest } from "@/lib/api/admin/availabilityRequests";
 import {
   useAvailabilityRequestStats,
@@ -177,10 +181,7 @@ const TYPE_FILTERS = [
 
 const STATUS_FILTER_OPTIONS = STATUS_FILTERS.map((status) => ({
   value: status,
-  label:
-    status === "All"
-      ? "All statuses"
-      : getAvailabilityStatusLabel(status),
+  label: status === "All" ? "All statuses" : getAvailabilityStatusLabel(status),
 }));
 
 type StatusFilter = (typeof STATUS_FILTERS)[number];
@@ -275,14 +276,10 @@ export default function RequestsPage() {
 
   return (
     <div className="min-h-screen space-y-6">
-      <div>
-        <Paragraph2 className="mb-1 text-2xl font-extrabold tracking-tight text-gray-900">
-          Availability requests
-        </Paragraph2>
-        <Paragraph1 className="text-gray-600">
-          Review purchase and rental requests from renters.
-        </Paragraph1>
-      </div>
+      <AdminPageHeader
+        title="Availability requests"
+        description="Review renter purchase and rental requests."
+      />
 
       {statsError && (
         <Paragraph1 className="text-red-600 text-sm">
@@ -365,17 +362,17 @@ export default function RequestsPage() {
         <div className="flex items-end gap-2 border-b border-gray-200 px-4 py-4 sm:px-6">
           <AdminFilterField label="Search" className="min-w-0 flex-1">
             <div className="relative">
-            <Search
+              <Search
                 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
                 aria-hidden
-            />
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Item, renter, lister, or request id..."
                 className={`${ADMIN_FILTER_INPUT_CLASS} pl-9`}
-            />
+              />
             </div>
           </AdminFilterField>
           <AdminFilterButton
@@ -419,8 +416,7 @@ export default function RequestsPage() {
             {pagination.total > 0 && (
               <div className="flex sm:flex-row flex-col sm:justify-between sm:items-center gap-3 px-6 py-4 border-gray-100 border-t">
                 <Paragraph1 className="text-gray-600 text-sm">
-                  Showing{" "}
-                  {(pagination.page - 1) * pagination.limit + 1} to{" "}
+                  Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
                   {Math.min(
                     pagination.page * pagination.limit,
                     pagination.total,
@@ -445,9 +441,7 @@ export default function RequestsPage() {
                       listFetching || pagination.page >= pagination.pages
                     }
                     onClick={() =>
-                      setCurrentPage((p) =>
-                        Math.min(pagination.pages, p + 1),
-                      )
+                      setCurrentPage((p) => Math.min(pagination.pages, p + 1))
                     }
                     className="hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed p-2 border border-gray-200 rounded-lg"
                   >

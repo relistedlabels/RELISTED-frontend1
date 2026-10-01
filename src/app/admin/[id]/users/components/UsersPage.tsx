@@ -1,15 +1,16 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
-import { Search, Mail } from "lucide-react";
+import { Mail, Search } from "lucide-react";
+import { useMemo, useState } from "react";
 import { AdminComboBox } from "@/app/admin/components/AdminComboBox";
+import AdminPageHeader from "@/app/admin/components/AdminPageHeader";
 import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
-import DresserTable from "./DresserTable";
-import CuratorTable from "./CuratorTable";
-import NewsletterModal from "./NewsletterModal";
+import { Paragraph1 } from "@/common/ui/Text";
 import { useAdminAllUsers } from "@/lib/queries/admin/useUsers";
 import { AdminSectionTabs } from "../../../components/AdminSectionTabs";
+import CuratorTable from "./CuratorTable";
+import DresserTable from "./DresserTable";
+import NewsletterModal from "./NewsletterModal";
 
 type UserRole = "LISTER" | "RENTER" | "ADMIN";
 
@@ -19,11 +20,7 @@ const STATUS_FILTER_OPTIONS = [
   { value: "Suspended", label: "Suspended" },
 ] as const;
 
-function tabLabel(
-  role: UserRole,
-  listerCount?: number,
-  renterCount?: number,
-) {
+function tabLabel(role: UserRole, listerCount?: number, renterCount?: number) {
   if (listerCount === undefined || renterCount === undefined) {
     return role === "LISTER" ? "Lister" : "Renters";
   }
@@ -53,23 +50,30 @@ export default function UsersPage() {
 
   const filteredData = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return users.filter((user: { name: string; email: string; isSuspended: boolean; role: string }) => {
-      const matchesSearch =
-        !q ||
-        user.name.toLowerCase().includes(q) ||
-        user.email.toLowerCase().includes(q);
+    return users.filter(
+      (user: {
+        name: string;
+        email: string;
+        isSuspended: boolean;
+        role: string;
+      }) => {
+        const matchesSearch =
+          !q ||
+          user.name.toLowerCase().includes(q) ||
+          user.email.toLowerCase().includes(q);
 
-      const matchesStatus =
-        statusFilter === "All Status"
-          ? true
-          : statusFilter === "Active"
-            ? !user.isSuspended
-            : user.isSuspended;
+        const matchesStatus =
+          statusFilter === "All Status"
+            ? true
+            : statusFilter === "Active"
+              ? !user.isSuspended
+              : user.isSuspended;
 
-      const matchesRole = user.role === activeTab;
+        const matchesRole = user.role === activeTab;
 
-      return matchesSearch && matchesStatus && matchesRole;
-    });
+        return matchesSearch && matchesStatus && matchesRole;
+      },
+    );
   }, [users, activeTab, searchQuery, statusFilter]);
 
   if (error) {
@@ -79,8 +83,12 @@ export default function UsersPage() {
   const TABS: UserRole[] = ["LISTER", "RENTER"];
 
   return (
-    <div className="flex flex-col space-y-6">
-      <Paragraph3 className="text-3xl font-bold">Users</Paragraph3>
+    <div className="flex flex-col gap-6">
+      <AdminPageHeader
+        className="!mb-0"
+        title="Users"
+        description="Manage renters and listers."
+      />
 
       <div className="flex flex-col md:flex-row justify-between gap-4">
         <div className="relative w-full md:w-2/3">

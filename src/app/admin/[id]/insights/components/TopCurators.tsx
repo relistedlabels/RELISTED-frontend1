@@ -5,7 +5,7 @@ import {
   ResponsiveDataTable,
 } from "@/common/ui/ResponsiveDataTable";
 import { ListItemSkeleton } from "@/common/ui/SkeletonLoaders";
-import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import { Paragraph1 } from "@/common/ui/Text";
 import { useTopCurators } from "@/lib/queries/admin/useAnalytics";
 
 interface TopCuratorsProps {
@@ -96,21 +96,19 @@ export default function TopCurators({
   if (error) {
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <Paragraph3 className="mb-2 text-xl font-semibold text-gray-900">
-          Top listers by rentals
-        </Paragraph3>
-        <Paragraph2 className="text-xs text-gray-500">
+        <h3 className="font-semibold text-gray-900">Top listers by rentals</h3>
+        <p className="mt-1 text-xs text-gray-500">
           Ranked by rentals and rental value in the selected period. Product
           count is current.
-        </Paragraph2>
-        <Paragraph2 className="text-sm text-gray-600">
+        </p>
+        <p className="mt-3 text-sm text-gray-600">
           Unable to load this chart. The server returned an error (check the API
           logs for{" "}
           <span className="font-mono text-xs">
             GET /api/admin/analytics/top-curators
           </span>
           ).
-        </Paragraph2>
+        </p>
       </div>
     );
   }
@@ -118,12 +116,10 @@ export default function TopCurators({
   if (curators.length === 0) {
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <Paragraph3 className="mb-2 text-xl font-semibold text-gray-900">
-          Top listers by rentals
-        </Paragraph3>
-        <Paragraph2 className="text-sm text-gray-600">
+        <h3 className="font-semibold text-gray-900">Top listers by rentals</h3>
+        <p className="mt-3 text-sm text-gray-600">
           No rentals were recorded in this period.
-        </Paragraph2>
+        </p>
       </div>
     );
   }
@@ -131,13 +127,11 @@ export default function TopCurators({
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
       <div className="mb-6">
-        <Paragraph3 className="mb-4 text-xl font-semibold text-gray-900">
-          Top listers by rentals
-        </Paragraph3>
-        <Paragraph2 className="text-xs text-gray-500">
+        <h3 className="font-semibold text-gray-900">Top listers by rentals</h3>
+        <p className="mt-1 text-xs text-gray-500">
           Ranked by rentals and rental value in the selected period. Product
           count is current.
-        </Paragraph2>
+        </p>
       </div>
 
       <ResponsiveDataTable

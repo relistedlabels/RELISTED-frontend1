@@ -2,14 +2,15 @@
 
 import { Search } from "lucide-react";
 import { useState } from "react";
-import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import { toast } from "sonner";
+import AdminPageHeader from "@/app/admin/components/AdminPageHeader";
 import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
+import { Paragraph1 } from "@/common/ui/Text";
 import {
   useAdminReviewModeration,
   useAdminReviews,
 } from "@/lib/queries/admin/useAdminReviews";
 import { AdminTabBar, AdminTabButton } from "../../components/AdminSectionTabs";
-import { toast } from "sonner";
 
 type VisibilityTab = "all" | "visible" | "hidden";
 
@@ -28,12 +29,11 @@ export default function AdminReviewsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <Paragraph1 className="font-bold text-2xl text-gray-900">Reviews</Paragraph1>
-        <Paragraph2 className="text-gray-600">
-          Moderate renter feedback on listers and products.
-        </Paragraph2>
-      </div>
+      <AdminPageHeader
+        className="!mb-0"
+        title="Reviews"
+        description="Review and moderate feedback."
+      />
 
       <AdminTabBar>
         {(["all", "visible", "hidden"] as VisibilityTab[]).map((tab) => (

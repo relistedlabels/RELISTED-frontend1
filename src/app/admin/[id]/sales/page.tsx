@@ -1,15 +1,16 @@
 "use client";
 
+import { ChevronRight, Megaphone, Plus } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
-import { ChevronRight, Plus } from "lucide-react";
-import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import AdminPageHeader from "@/app/admin/components/AdminPageHeader";
 import {
-  ResponsiveDataTable,
   type ResponsiveColumnDef,
+  ResponsiveDataTable,
 } from "@/common/ui/ResponsiveDataTable";
 import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
+import { Paragraph1 } from "@/common/ui/Text";
 import { useAdminShopSales } from "@/lib/queries/admin/useShopSales";
 import {
   formatSalePhaseLabel,
@@ -123,24 +124,19 @@ export default function AdminSalesPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <Paragraph2 className="mb-1 text-2xl font-extrabold tracking-tight text-gray-900">
-            Campaigns
-          </Paragraph2>
-          <Paragraph1 className="max-w-2xl text-gray-600">
-            Create timed campaigns with a custom banner, shop page, and hand-picked
-            listings. Turn a campaign on or off anytime.
-          </Paragraph1>
-        </div>
-        <Link
-          href={`/admin/${adminId}/sales/new`}
-          className="inline-flex w-fit shrink-0 self-start items-center justify-center gap-2 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800"
-        >
-          <Plus size={18} />
-          New campaign
-        </Link>
-      </div>
+      <AdminPageHeader
+        title="Campaigns"
+        description="Create and manage promotional campaigns."
+        action={
+          <Link
+            href={`/admin/${adminId}/sales/new`}
+            className="inline-flex w-fit shrink-0 self-start items-center justify-center gap-2 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800"
+          >
+            <Plus size={18} />
+            New campaign
+          </Link>
+        }
+      />
 
       {errMsg ? (
         <div className="rounded-lg border border-gray-200 bg-white p-8 text-center">
@@ -149,20 +145,26 @@ export default function AdminSalesPage() {
       ) : isLoading ? (
         <TableSkeleton rows={6} columns={5} />
       ) : sales.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
-          <Paragraph1 className="mb-4 text-gray-600">
-            No campaigns yet. Create your first campaign to get started.
+        <div className="rounded-2xl border border-gray-200 bg-white px-6 py-14 text-center shadow-sm">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 text-gray-600">
+            <Megaphone size={22} aria-hidden="true" />
+          </div>
+          <h2 className="text-base font-semibold text-gray-900">
+            No campaigns yet
+          </h2>
+          <Paragraph1 className="mt-1 text-sm text-gray-500">
+            Create a campaign to feature selected listings.
           </Paragraph1>
           <Link
             href={`/admin/${adminId}/sales/new`}
-            className="inline-flex w-fit items-center justify-center gap-2 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800"
+            className="mt-5 inline-flex w-fit items-center justify-center gap-2 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800"
           >
             <Plus size={18} />
             New campaign
           </Link>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
           <ResponsiveDataTable
             rows={sales}
             columns={columns}

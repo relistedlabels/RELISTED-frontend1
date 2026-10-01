@@ -6,43 +6,62 @@
 
 "use client";
 
-import React, { Suspense, useMemo, useState, useEffect, useRef } from "react";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import {
-  ResponsiveDataTable,
-  type ResponsiveColumnDef,
-} from "@/common/ui/ResponsiveDataTable";
-import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
-import {
-  Truck,
-  Package,
-  ExternalLink,
-  RefreshCw,
-  XCircle,
-  CheckCircle,
-  Clock,
   AlertTriangle,
-  Loader2,
+  CheckCircle,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
   ChevronUp,
+  Clock,
+  ExternalLink,
+  Loader2,
+  Package,
+  RefreshCw,
   Search,
+  Truck,
+  XCircle,
 } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import type React from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import {
-  useShipments,
-  useShipmentCosts,
-  useShipment,
-  useCancelShipment,
-  useRedispatchShipment,
-  useCompleteManualShipment,
-  useMarkManualShipmentDelivered,
-  useAdminShipmentRatePreview,
-  useDispatchShipmentNow,
-  useReconcileManualShipment,
-  useSwitchShipmentToManual,
-} from "@/lib/queries/admin/useShipments";
+  AdminComboBox,
+  AdminFilterField,
+} from "@/app/admin/components/AdminComboBox";
+import {
+  AdminFilterButton,
+  AdminFilterDrawer,
+} from "@/app/admin/components/AdminFilterDrawer";
+import AdminPageHeader from "@/app/admin/components/AdminPageHeader";
+import ReturnRequestSection from "@/app/admin/components/ReturnRequestSection";
+import {
+  AdminListingThumb,
+  listingThumbnailUrl,
+} from "@/app/admin/lib/adminListingDisplay";
+import ActionConfirmModal from "@/common/layer/ActionConfirmModal";
+import {
+  type ResponsiveColumnDef,
+  ResponsiveDataTable,
+} from "@/common/ui/ResponsiveDataTable";
+import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
+import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import {
+  ADMIN_FILTER_BAR_CLASS,
+  ADMIN_FILTER_DATE_CLASS,
+  ADMIN_FILTER_INPUT_CLASS,
+  DISPATCH_FILTER_LABEL,
+  DISPATCH_FILTER_OPTIONS,
+  type DispatchFilter,
+} from "@/lib/admin/adminListFilters";
+import {
+  ADMIN_RATE_PREVIEW_PROVIDER_LABEL,
+  ADMIN_SHIPMENT_CHIP_CLASS,
+  formatAdminPricingTier,
+  formatShippingQuoteWarningMessage,
+  RELISTED_DISPATCH_BADGE_CLASS,
+} from "@/lib/admin/shipmentDisplay";
 import type {
   DispatchAttemptLog,
   Shipment,
@@ -52,42 +71,28 @@ import type {
   ShipmentType,
 } from "@/lib/api/shipments";
 import { getShipment } from "@/lib/api/shipments";
-import { formatLagosDate, formatWindowRange } from "@/lib/checkout/dispatchWindows";
 import {
-  ADMIN_SHIPMENT_CHIP_CLASS,
-  ADMIN_RATE_PREVIEW_PROVIDER_LABEL,
-  formatAdminPricingTier,
-  formatShippingQuoteWarningMessage,
-  RELISTED_DISPATCH_BADGE_CLASS,
-} from "@/lib/admin/shipmentDisplay";
+  formatLagosDate,
+  formatWindowRange,
+} from "@/lib/checkout/dispatchWindows";
 import {
   getShipmentLegDisplayLabel,
   getShipmentPartyRowLabels,
   getShipmentStatusLabel,
 } from "@/lib/orders/shipmentAndOrderLabels";
-import { toast } from "sonner";
 import {
-  AdminListingThumb,
-  listingThumbnailUrl,
-} from "@/app/admin/lib/adminListingDisplay";
-import ReturnRequestSection from "@/app/admin/components/ReturnRequestSection";
-import {
-  AdminComboBox,
-  AdminFilterField,
-} from "@/app/admin/components/AdminComboBox";
-import {
-  AdminFilterButton,
-  AdminFilterDrawer,
-} from "@/app/admin/components/AdminFilterDrawer";
-import {
-  ADMIN_FILTER_BAR_CLASS,
-  ADMIN_FILTER_DATE_CLASS,
-  ADMIN_FILTER_INPUT_CLASS,
-  DISPATCH_FILTER_LABEL,
-  DISPATCH_FILTER_OPTIONS,
-  type DispatchFilter,
-} from "@/lib/admin/adminListFilters";
-import ActionConfirmModal from "@/common/layer/ActionConfirmModal";
+  useAdminShipmentRatePreview,
+  useCancelShipment,
+  useCompleteManualShipment,
+  useDispatchShipmentNow,
+  useMarkManualShipmentDelivered,
+  useReconcileManualShipment,
+  useRedispatchShipment,
+  useShipment,
+  useShipmentCosts,
+  useShipments,
+  useSwitchShipmentToManual,
+} from "@/lib/queries/admin/useShipments";
 
 const PROVIDER_LABELS: Record<string, string> = {
   all: "All",
@@ -97,7 +102,9 @@ const PROVIDER_LABELS: Record<string, string> = {
   manual: "Relisted dispatch",
 };
 
-function shipmentLineItemThumbnailUrl(line: ShipmentOrderLineItem): string | null {
+function shipmentLineItemThumbnailUrl(
+  line: ShipmentOrderLineItem,
+): string | null {
   if (!line.product) return null;
   return listingThumbnailUrl(line.product);
 }
@@ -128,7 +135,9 @@ const koboToNaira = (k?: number | null): string => {
 function formatRateDelta(deltaKobo: number): string {
   if (deltaKobo === 0) return "Same as renter paid";
   const abs = formatCurrency(Math.abs(deltaKobo) / 100);
-  return deltaKobo > 0 ? `${abs} above renter paid` : `${abs} below renter paid`;
+  return deltaKobo > 0
+    ? `${abs} above renter paid`
+    : `${abs} below renter paid`;
 }
 
 function isHttpUrl(value: string): boolean {
@@ -136,9 +145,10 @@ function isHttpUrl(value: string): boolean {
 }
 
 /** Maps admin URL/rider input to API tracking fields. */
-function parseAdminTrackingContact(
-  urlOrRider: string,
-): { trackingId?: string; trackingUrl?: string } {
+function parseAdminTrackingContact(urlOrRider: string): {
+  trackingId?: string;
+  trackingUrl?: string;
+} {
   const contact = urlOrRider.trim();
   if (!contact) return {};
   if (isHttpUrl(contact)) return { trackingUrl: contact };
@@ -191,7 +201,8 @@ function ShipmentTrackingContact({
   );
 }
 
-const ADMIN_TRACKING_CONTACT_PLACEHOLDER = "Paste a tracking link or rider phone no.";
+const ADMIN_TRACKING_CONTACT_PLACEHOLDER =
+  "Paste a tracking link or rider phone no.";
 
 function isShipmentScheduledInFuture(shipment: Shipment): boolean {
   const now = Date.now();
@@ -394,11 +405,15 @@ function buildShipmentListColumns(handlers: {
       ),
       render: (shipment) => (
         <div className="flex min-w-[9.5rem] flex-col items-start gap-1.5">
-          <span className={`${ADMIN_SHIPMENT_CHIP_CLASS} bg-gray-100 text-gray-800`}>
+          <span
+            className={`${ADMIN_SHIPMENT_CHIP_CLASS} bg-gray-100 text-gray-800`}
+          >
             {getShipmentLegDisplayLabel(shipment.type)}
           </span>
           {shipment.manualFulfillment ? (
-            <span className={RELISTED_DISPATCH_BADGE_CLASS}>Relisted dispatch</span>
+            <span className={RELISTED_DISPATCH_BADGE_CLASS}>
+              Relisted dispatch
+            </span>
           ) : null}
         </div>
       ),
@@ -454,9 +469,7 @@ function buildShipmentListColumns(handlers: {
       mobile: "detail",
       render: (shipment) => (
         <Paragraph1 className="text-sm text-gray-700">
-          {shipment.order?.user?.name ||
-            shipment.order?.user?.email ||
-            "—"}
+          {shipment.order?.user?.name || shipment.order?.user?.email || "—"}
         </Paragraph1>
       ),
     },
@@ -466,7 +479,8 @@ function buildShipmentListColumns(handlers: {
       mobile: "hidden",
       render: (shipment) => (
         <div className="flex items-center gap-2">
-          {shipment.status === "DISPATCH_FAILED" && !shipment.manualFulfillment ? (
+          {shipment.status === "DISPATCH_FAILED" &&
+          !shipment.manualFulfillment ? (
             <button
               type="button"
               onClick={() => handlers.onRedispatch(shipment.id)}
@@ -505,7 +519,12 @@ const STATUS_FILTERS: Array<ShipmentStatus | "All"> = [
   "CANCELLED",
 ];
 
-const TYPE_FILTERS: Array<ShipmentType | "All"> = ["All", "OUTBOUND", "RETURN", "RESALE"];
+const TYPE_FILTERS: Array<ShipmentType | "All"> = [
+  "All",
+  "OUTBOUND",
+  "RETURN",
+  "RESALE",
+];
 
 const ADMIN_FIELD_INPUT_CLASS = ADMIN_FILTER_INPUT_CLASS;
 
@@ -545,7 +564,8 @@ function shipmentLineItemMetadata(
     product.listingType
       ? {
           label: "Listing type",
-          value: formatListingTypeLabel(product.listingType) ?? product.listingType,
+          value:
+            formatListingTypeLabel(product.listingType) ?? product.listingType,
         }
       : null,
     line.days && line.days > 0
@@ -556,7 +576,9 @@ function shipmentLineItemMetadata(
       : null,
   ];
 
-  return rows.filter((row): row is { label: string; value: string } => row != null);
+  return rows.filter(
+    (row): row is { label: string; value: string } => row != null,
+  );
 }
 
 function ShipmentModalSection({
@@ -624,8 +646,12 @@ function RateQuoteOptionCard({
           : "border-gray-200 bg-white hover:border-gray-300"
       }`}
     >
-      <Paragraph1 className="font-medium text-gray-900 text-sm">{title}</Paragraph1>
-      <Paragraph1 className="mt-0.5 text-gray-500 text-xs">{description}</Paragraph1>
+      <Paragraph1 className="font-medium text-gray-900 text-sm">
+        {title}
+      </Paragraph1>
+      <Paragraph1 className="mt-0.5 text-gray-500 text-xs">
+        {description}
+      </Paragraph1>
     </button>
   );
 }
@@ -642,8 +668,12 @@ function ShipmentActionCard({
   return (
     <div className="space-y-3 bg-gray-50 p-3 border border-gray-100 rounded-lg">
       <div>
-        <Paragraph1 className="font-medium text-gray-900 text-sm">{title}</Paragraph1>
-        <Paragraph1 className="mt-0.5 text-gray-500 text-xs">{description}</Paragraph1>
+        <Paragraph1 className="font-medium text-gray-900 text-sm">
+          {title}
+        </Paragraph1>
+        <Paragraph1 className="mt-0.5 text-gray-500 text-xs">
+          {description}
+        </Paragraph1>
       </div>
       {children}
     </div>
@@ -683,7 +713,9 @@ function DetailField({
   className?: string;
 }) {
   return (
-    <div className={`min-w-0 rounded-lg border border-gray-100 bg-gray-50/80 p-3 ${className ?? ""}`}>
+    <div
+      className={`min-w-0 rounded-lg border border-gray-100 bg-gray-50/80 p-3 ${className ?? ""}`}
+    >
       <Paragraph1 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
         {label}
       </Paragraph1>
@@ -741,7 +773,9 @@ function shortenId(id: string, keep = 8): string {
 /**
  * Snapshot shape matches `topship.provider` / checkout: name, phone, email, city, state, street, zip.
  */
-function formatAddressLines(addr: Record<string, unknown> | undefined): string[] {
+function formatAddressLines(
+  addr: Record<string, unknown> | undefined,
+): string[] {
   if (!addr || typeof addr !== "object") return [];
   const name = addr.name as string | undefined;
   const phone = addr.phone as string | undefined;
@@ -754,10 +788,12 @@ function formatAddressLines(addr: Record<string, unknown> | undefined): string[]
   const email = addr.email as string | undefined;
   const line2 = [city, state].filter(Boolean).join(", ");
   const contacts = [phone, email].filter(Boolean).join(" · ");
-  const parts = [name, contacts, street, line2, zip].filter(
-    (p): p is string => Boolean(p && String(p).trim()),
+  const parts = [name, contacts, street, line2, zip].filter((p): p is string =>
+    Boolean(p && String(p).trim()),
   );
-  return parts.length ? parts : [JSON.stringify(addr) ?? "Address details unavailable"];
+  return parts.length
+    ? parts
+    : [JSON.stringify(addr) ?? "Address details unavailable"];
 }
 
 /** Receiver snapshot street/city/state — source of truth for checkout drop-off (not Topship pickup-hub). */
@@ -781,10 +817,13 @@ function formatCheckoutDeliveryStreetLine(
   return legacy && String(legacy).trim() ? String(legacy).trim() : "—";
 }
 
-function sortDispatchAttemptLogs(logs: DispatchAttemptLog[] | undefined): DispatchAttemptLog[] {
+function sortDispatchAttemptLogs(
+  logs: DispatchAttemptLog[] | undefined,
+): DispatchAttemptLog[] {
   if (!logs?.length) return [];
   return [...logs].sort(
-    (a, b) => new Date(a.attemptedAt).getTime() - new Date(b.attemptedAt).getTime(),
+    (a, b) =>
+      new Date(a.attemptedAt).getTime() - new Date(b.attemptedAt).getTime(),
   );
 }
 
@@ -800,13 +839,17 @@ function formatAttemptedAt(iso: string | undefined): string {
       });
 }
 
-function formatDispatchDurationMs(ms: number | null | undefined): string | null {
+function formatDispatchDurationMs(
+  ms: number | null | undefined,
+): string | null {
   if (ms == null || ms < 0) return null;
   if (ms < 1000) return `${ms} ms`;
   return `${(ms / 1000).toFixed(1)} s`;
 }
 
-function formatDispatchErrorCode(code: string | null | undefined): string | null {
+function formatDispatchErrorCode(
+  code: string | null | undefined,
+): string | null {
   if (code == null || String(code).trim() === "") return null;
   const c = String(code).trim();
   if (/^\d{3}$/.test(c)) return `HTTP ${c}`;
@@ -833,12 +876,16 @@ function ShipmentsPageInner() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [statusFilter, setStatusFilter] = useState<ShipmentStatus | "All">("All");
+  const [statusFilter, setStatusFilter] = useState<ShipmentStatus | "All">(
+    "All",
+  );
   const [typeFilter, setTypeFilter] = useState<ShipmentType | "All">("All");
   const [dispatchFilter, setDispatchFilter] = useState<DispatchFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
+  const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(
+    null,
+  );
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [manualTrackingUrl, setManualTrackingUrl] = useState("");
@@ -849,9 +896,8 @@ function ShipmentsPageInner() {
   );
   const [reconcileTrackingUrl, setReconcileTrackingUrl] = useState("");
   const [reconcileActualCostNgn, setReconcileActualCostNgn] = useState("");
-  const [pendingConfirm, setPendingConfirm] = useState<ShipmentConfirmAction | null>(
-    null,
-  );
+  const [pendingConfirm, setPendingConfirm] =
+    useState<ShipmentConfirmAction | null>(null);
   const [reconcileNote, setReconcileNote] = useState("");
   const [costProvider, setCostProvider] = useState("all");
   const [costCourier, setCostCourier] = useState("all");
@@ -905,7 +951,14 @@ function ShipmentsPageInner() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, typeFilter, dispatchFilter, debouncedSearch, dateFrom, dateTo]);
+  }, [
+    statusFilter,
+    typeFilter,
+    dispatchFilter,
+    debouncedSearch,
+    dateFrom,
+    dateTo,
+  ]);
 
   useEffect(() => {
     setCostProvider("all");
@@ -1061,7 +1114,9 @@ function ShipmentsPageInner() {
   const deliveryWindowSummary = useMemo(() => {
     if (dispatchWindowLabel) return dispatchWindowLabel;
     if (displayShipment?.scheduledDate) {
-      return formatLagosDate(displayShipment.scheduledDate, { includeWeekday: true });
+      return formatLagosDate(displayShipment.scheduledDate, {
+        includeWeekday: true,
+      });
     }
     return undefined;
   }, [dispatchWindowLabel, displayShipment?.scheduledDate]);
@@ -1077,17 +1132,22 @@ function ShipmentsPageInner() {
   const dispatchHistorySummary = useMemo(() => {
     const n = sortedDispatchAttemptLogs.length;
     if (n === 0) return "No attempts yet";
-    const failCount = sortedDispatchAttemptLogs.filter((log) => !log.success).length;
+    const failCount = sortedDispatchAttemptLogs.filter(
+      (log) => !log.success,
+    ).length;
     if (failCount === n) return `${n} ${n === 1 ? "try" : "tries"}, all failed`;
     const latest = sortedDispatchAttemptLogs[n - 1];
-    if (latest?.success) return `${n} ${n === 1 ? "try" : "tries"}, latest succeeded`;
+    if (latest?.success)
+      return `${n} ${n === 1 ? "try" : "tries"}, latest succeeded`;
     return `${n} ${n === 1 ? "try" : "tries"}, latest failed`;
   }, [sortedDispatchAttemptLogs]);
 
   const shipmentItems = displayShipment?.order?.orderItems ?? [];
   const shipmentItemSummary = useMemo(() => {
     if (shipmentItems.length === 0) return undefined;
-    const names = shipmentItems.map((line) => line.product?.name ?? "Item").slice(0, 2);
+    const names = shipmentItems
+      .map((line) => line.product?.name ?? "Item")
+      .slice(0, 2);
     const extra =
       shipmentItems.length > 2 ? ` +${shipmentItems.length - 2} more` : "";
     return `${shipmentItems.length} ${shipmentItems.length === 1 ? "item" : "items"} · ${names.join(", ")}${extra}`;
@@ -1194,21 +1254,19 @@ function ShipmentsPageInner() {
       displayShipment.status === "DISPATCHING" ||
       displayShipment.status === "DISPATCH_FAILED");
 
-  const showMarkManualDispatchedPanel =
-    Boolean(
-      displayShipment?.manualFulfillment &&
-        (displayShipment.status === "PENDING" ||
-          displayShipment.status === "DISPATCHING"),
-    );
+  const showMarkManualDispatchedPanel = Boolean(
+    displayShipment?.manualFulfillment &&
+      (displayShipment.status === "PENDING" ||
+        displayShipment.status === "DISPATCHING"),
+  );
 
-  const showMarkCompletedPanel =
-    Boolean(
-      displayShipment &&
-        (displayShipment.status === "PENDING" ||
-          displayShipment.status === "DISPATCH_FAILED" ||
-          displayShipment.status === "DISPATCHED" ||
-          displayShipment.status === "IN_TRANSIT"),
-    );
+  const showMarkCompletedPanel = Boolean(
+    displayShipment &&
+      (displayShipment.status === "PENDING" ||
+        displayShipment.status === "DISPATCH_FAILED" ||
+        displayShipment.status === "DISPATCHED" ||
+        displayShipment.status === "IN_TRANSIT"),
+  );
 
   const markCompletedDescription =
     displayShipment?.status === "DISPATCH_FAILED"
@@ -1263,7 +1321,9 @@ function ShipmentsPageInner() {
           const dispatchResult = await dispatchShipmentNow.mutateAsync({
             shipmentId: displayShipment.id,
             pricingTier: pendingConfirm.pricingTier,
-            updateWindow: shipmentScheduledInFuture ? rateForImmediate : undefined,
+            updateWindow: shipmentScheduledInFuture
+              ? rateForImmediate
+              : undefined,
           });
           toast.success(dispatchResult.message);
           setIsDetailModalOpen(false);
@@ -1397,14 +1457,10 @@ function ShipmentsPageInner() {
 
   return (
     <div className="min-h-screen">
-      <div className="mb-6">
-        <Paragraph2 className="mb-1 font-extrabold text-gray-900 text-2xl tracking-tight">
-          Shipments
-        </Paragraph2>
-        <Paragraph1 className="text-gray-600">
-          View dispatch state, windows, and tracking for all platform shipments.
-        </Paragraph1>
-      </div>
+      <AdminPageHeader
+        title="Shipments"
+        description="Track dispatch, delivery windows, and status."
+      />
 
       <div className="bg-white mb-4 border border-gray-200 rounded-lg overflow-hidden">
         <button
@@ -1415,11 +1471,19 @@ function ShipmentsPageInner() {
         >
           <div className="flex items-center gap-2 min-w-0">
             {costsOpen ? (
-              <ChevronUp className="w-4 h-4 text-gray-500 shrink-0" aria-hidden />
+              <ChevronUp
+                className="w-4 h-4 text-gray-500 shrink-0"
+                aria-hidden
+              />
             ) : (
-              <ChevronDown className="w-4 h-4 text-gray-500 shrink-0" aria-hidden />
+              <ChevronDown
+                className="w-4 h-4 text-gray-500 shrink-0"
+                aria-hidden
+              />
             )}
-            <Paragraph2 className="font-semibold text-gray-900 text-sm">Shipping costs</Paragraph2>
+            <Paragraph2 className="font-semibold text-gray-900 text-sm">
+              Shipping costs
+            </Paragraph2>
           </div>
           {!costsOpen && costs && costs.count > 0 && (
             <Paragraph1 className="text-gray-500 text-sm shrink-0">
@@ -1452,7 +1516,10 @@ function ShipmentsPageInner() {
                 />
               </AdminFilterField>
 
-              <AdminFilterField label="Provider" className="col-span-2 sm:col-span-1 lg:w-44">
+              <AdminFilterField
+                label="Provider"
+                className="col-span-2 sm:col-span-1 lg:w-44"
+              >
                 <AdminComboBox
                   value={costProvider}
                   onChange={(value) => {
@@ -1465,7 +1532,10 @@ function ShipmentsPageInner() {
               </AdminFilterField>
 
               {(costs?.couriers.length ?? 0) > 0 && (
-                <AdminFilterField label="Courier" className="col-span-2 sm:col-span-1 lg:w-44">
+                <AdminFilterField
+                  label="Courier"
+                  className="col-span-2 sm:col-span-1 lg:w-44"
+                >
                   <AdminComboBox
                     value={costCourier}
                     onChange={setCostCourier}
@@ -1478,7 +1548,9 @@ function ShipmentsPageInner() {
             {costs && costs.count > 0 ? (
               <div className="gap-6 grid grid-cols-1 md:grid-cols-2">
                 <div>
-                  <Paragraph1 className="mb-2 font-medium text-gray-700 text-sm">By month</Paragraph1>
+                  <Paragraph1 className="mb-2 font-medium text-gray-700 text-sm">
+                    By month
+                  </Paragraph1>
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-gray-200 border-b text-gray-500 text-xs text-left uppercase">
@@ -1489,7 +1561,10 @@ function ShipmentsPageInner() {
                     </thead>
                     <tbody>
                       {costs.trend.map((row) => (
-                        <tr key={row.month} className="border-gray-100 border-b">
+                        <tr
+                          key={row.month}
+                          className="border-gray-100 border-b"
+                        >
                           <td className="py-2 pr-2">{row.month}</td>
                           <td className="py-2 pr-2">{row.count}</td>
                           <td className="py-2">{koboToNaira(row.kobo)}</td>
@@ -1507,13 +1582,17 @@ function ShipmentsPageInner() {
                 </div>
                 <div>
                   <Paragraph1 className="mb-2 font-medium text-gray-700 text-sm">
-                    {costProvider !== "all" || costCourier !== "all" ? "By courier" : "By provider"}
+                    {costProvider !== "all" || costCourier !== "all"
+                      ? "By courier"
+                      : "By provider"}
                   </Paragraph1>
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-gray-200 border-b text-gray-500 text-xs text-left uppercase">
                         <th className="py-2 pr-2">
-                          {costProvider !== "all" || costCourier !== "all" ? "Courier" : "Provider"}
+                          {costProvider !== "all" || costCourier !== "all"
+                            ? "Courier"
+                            : "Provider"}
                         </th>
                         <th className="py-2 pr-2">Shipments</th>
                         <th className="py-2">Cost</th>
@@ -1539,7 +1618,9 @@ function ShipmentsPageInner() {
                 </div>
               </div>
             ) : (
-              <Paragraph1 className="text-gray-500 text-sm">No cost data for these filters.</Paragraph1>
+              <Paragraph1 className="text-gray-500 text-sm">
+                No cost data for these filters.
+              </Paragraph1>
             )}
           </div>
         )}
@@ -1585,7 +1666,9 @@ function ShipmentsPageInner() {
             <AdminFilterField label="Leg type">
               <AdminComboBox
                 value={typeFilter}
-                onChange={(value) => setTypeFilter(value as ShipmentType | "All")}
+                onChange={(value) =>
+                  setTypeFilter(value as ShipmentType | "All")
+                }
                 options={TYPE_FILTER_OPTIONS}
                 ariaLabel="Leg type"
               />
@@ -1601,7 +1684,9 @@ function ShipmentsPageInner() {
             <AdminFilterField label="Status">
               <AdminComboBox
                 value={statusFilter}
-                onChange={(value) => setStatusFilter(value as ShipmentStatus | "All")}
+                onChange={(value) =>
+                  setStatusFilter(value as ShipmentStatus | "All")
+                }
                 options={STATUS_FILTER_OPTIONS}
                 ariaLabel="Status"
               />
@@ -1628,77 +1713,82 @@ function ShipmentsPageInner() {
           </div>
         </AdminFilterDrawer>
 
-      {isLoading || isError ? (
-        isError ? (
-          <div className="p-8 text-center">
-            <Paragraph1 className="text-red-600">
-              Failed to load shipments. Check your session and try again.
-            </Paragraph1>
-          </div>
-        ) : (
-          <TableSkeleton rows={6} columns={10} />
-        )
-      ) : (
-        <>
-          <ResponsiveDataTable
-            rows={shipments}
-            columns={shipmentColumns}
-            getRowKey={(shipment) => shipment.id}
-            onRowClick={handleViewDetails}
-            emptyState={
-              <Paragraph1 className="p-8 text-center text-gray-500">
-                No shipments match these filters.
+        {isLoading || isError ? (
+          isError ? (
+            <div className="p-8 text-center">
+              <Paragraph1 className="text-red-600">
+                Failed to load shipments. Check your session and try again.
               </Paragraph1>
-            }
-          />
-
-          {pagination.pages > 1 && (
-            <div className="flex sm:flex-row flex-col sm:justify-between sm:items-center gap-4 px-6 py-4 border-gray-200 border-t">
-              <Paragraph1 className="text-gray-600 text-sm">
-                Showing {(currentPage - 1) * pagination.limit + 1} to{" "}
-                {Math.min(currentPage * pagination.limit, pagination.total)} of{" "}
-                {pagination.total} results
-              </Paragraph1>
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="flex items-center gap-1 hover:bg-gray-50 disabled:opacity-50 px-3 py-2 border border-gray-300 rounded-lg font-medium text-sm transition disabled:cursor-not-allowed"
-                >
-                  <ChevronLeft size={16} />
-                  Previous
-                </button>
-                <div className="flex flex-wrap items-center gap-1">
-                  {Array.from({ length: pagination.pages }, (_, i) => i + 1).map((page) => (
-                    <button
-                      key={page}
-                      type="button"
-                      onClick={() => setCurrentPage(page)}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
-                        currentPage === page
-                          ? "bg-gray-900 text-white"
-                          : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setCurrentPage((p) => Math.min(pagination.pages, p + 1))}
-                  disabled={currentPage === pagination.pages}
-                  className="flex items-center gap-1 hover:bg-gray-50 disabled:opacity-50 px-3 py-2 border border-gray-300 rounded-lg font-medium text-sm transition disabled:cursor-not-allowed"
-                >
-                  Next
-                  <ChevronRight size={16} />
-                </button>
-              </div>
             </div>
-          )}
-        </>
-      )}
+          ) : (
+            <TableSkeleton rows={6} columns={10} />
+          )
+        ) : (
+          <>
+            <ResponsiveDataTable
+              rows={shipments}
+              columns={shipmentColumns}
+              getRowKey={(shipment) => shipment.id}
+              onRowClick={handleViewDetails}
+              emptyState={
+                <Paragraph1 className="p-8 text-center text-gray-500">
+                  No shipments match these filters.
+                </Paragraph1>
+              }
+            />
+
+            {pagination.pages > 1 && (
+              <div className="flex sm:flex-row flex-col sm:justify-between sm:items-center gap-4 px-6 py-4 border-gray-200 border-t">
+                <Paragraph1 className="text-gray-600 text-sm">
+                  Showing {(currentPage - 1) * pagination.limit + 1} to{" "}
+                  {Math.min(currentPage * pagination.limit, pagination.total)}{" "}
+                  of {pagination.total} results
+                </Paragraph1>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="flex items-center gap-1 hover:bg-gray-50 disabled:opacity-50 px-3 py-2 border border-gray-300 rounded-lg font-medium text-sm transition disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft size={16} />
+                    Previous
+                  </button>
+                  <div className="flex flex-wrap items-center gap-1">
+                    {Array.from(
+                      { length: pagination.pages },
+                      (_, i) => i + 1,
+                    ).map((page) => (
+                      <button
+                        key={page}
+                        type="button"
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+                          currentPage === page
+                            ? "bg-gray-900 text-white"
+                            : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(pagination.pages, p + 1))
+                    }
+                    disabled={currentPage === pagination.pages}
+                    className="flex items-center gap-1 hover:bg-gray-50 disabled:opacity-50 px-3 py-2 border border-gray-300 rounded-lg font-medium text-sm transition disabled:cursor-not-allowed"
+                  >
+                    Next
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {isDetailModalOpen && selectedShipment && displayShipment && (
@@ -1717,7 +1807,10 @@ function ShipmentsPageInner() {
           >
             {detailQuery.isFetching && !detailFromApi && (
               <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/70">
-                <Loader2 className="w-8 h-8 text-gray-600 animate-spin" aria-label="Loading details" />
+                <Loader2
+                  className="w-8 h-8 text-gray-600 animate-spin"
+                  aria-label="Loading details"
+                />
               </div>
             )}
             <div className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-4 sm:px-6">
@@ -1891,7 +1984,10 @@ function ShipmentsPageInner() {
                     >
                       {ratesLoading ? (
                         <span className="inline-flex items-center gap-2">
-                          <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
+                          <Loader2
+                            className="w-4 h-4 animate-spin"
+                            aria-hidden
+                          />
                           Loading…
                         </span>
                       ) : (
@@ -1926,16 +2022,17 @@ function ShipmentsPageInner() {
                   {ratePreviewOpen &&
                     !ratesSourcesLoading &&
                     ratePreviewQuery.isError && (
-                    <Paragraph1 className="text-red-700 text-sm">
-                      Could not fetch rates.
-                    </Paragraph1>
-                  )}
+                      <Paragraph1 className="text-red-700 text-sm">
+                        Could not fetch rates.
+                      </Paragraph1>
+                    )}
 
                   {ratePreviewOpen && !ratesSourcesLoading && (
                     <div className="space-y-3 pt-1">
                       {ratePreview && (
                         <Paragraph1 className="text-gray-500 text-xs">
-                          Renter paid {koboToNaira(ratePreview.renterChargedKobo)}
+                          Renter paid{" "}
+                          {koboToNaira(ratePreview.renterChargedKobo)}
                           {ratePreview.forImmediate ? " · today" : ""}
                         </Paragraph1>
                       )}
@@ -1953,8 +2050,9 @@ function ShipmentsPageInner() {
                                   aria-hidden
                                 />
                                 Loading{" "}
-                                {ADMIN_RATE_PREVIEW_PROVIDER_LABEL[p.provider] ??
-                                  p.provider}
+                                {ADMIN_RATE_PREVIEW_PROVIDER_LABEL[
+                                  p.provider
+                                ] ?? p.provider}
                                 …
                               </li>
                             ))}
@@ -1976,33 +2074,39 @@ function ShipmentsPageInner() {
                         </Paragraph1>
                       ) : selectableCarrierTiers.length > 0 ? (
                         <div className="gap-2 grid grid-cols-2">
-                          {selectableCarrierTiers.map((tier: ShipmentRateTier) => (
-                            <label
-                              key={tier.pricingTier}
-                              className={`flex items-start gap-2.5 p-3 border rounded-lg cursor-pointer transition ${
-                                selectedCarrierTier === tier.pricingTier
-                                  ? "border-gray-900 bg-gray-50 ring-1 ring-gray-900"
-                                  : "border-gray-200 bg-white hover:border-gray-300"
-                              }`}
-                            >
-                              <input
-                                type="radio"
-                                name="carrier-tier"
-                                checked={selectedCarrierTier === tier.pricingTier}
-                                onChange={() => setSelectedCarrierTier(tier.pricingTier)}
-                                className="sr-only"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <Paragraph1 className="font-medium text-gray-900 text-sm">
-                                  {tier.name}
-                                </Paragraph1>
-                                <Paragraph1 className="text-gray-500 text-xs">
-                                  {koboToNaira(tier.totalCostKobo)} ·{" "}
-                                  {formatRateDelta(tier.deltaKobo)}
-                                </Paragraph1>
-                              </div>
-                            </label>
-                          ))}
+                          {selectableCarrierTiers.map(
+                            (tier: ShipmentRateTier) => (
+                              <label
+                                key={tier.pricingTier}
+                                className={`flex items-start gap-2.5 p-3 border rounded-lg cursor-pointer transition ${
+                                  selectedCarrierTier === tier.pricingTier
+                                    ? "border-gray-900 bg-gray-50 ring-1 ring-gray-900"
+                                    : "border-gray-200 bg-white hover:border-gray-300"
+                                }`}
+                              >
+                                <input
+                                  type="radio"
+                                  name="carrier-tier"
+                                  checked={
+                                    selectedCarrierTier === tier.pricingTier
+                                  }
+                                  onChange={() =>
+                                    setSelectedCarrierTier(tier.pricingTier)
+                                  }
+                                  className="sr-only"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <Paragraph1 className="font-medium text-gray-900 text-sm">
+                                    {tier.name}
+                                  </Paragraph1>
+                                  <Paragraph1 className="text-gray-500 text-xs">
+                                    {koboToNaira(tier.totalCostKobo)} ·{" "}
+                                    {formatRateDelta(tier.deltaKobo)}
+                                  </Paragraph1>
+                                </div>
+                              </label>
+                            ),
+                          )}
                         </div>
                       ) : null}
                       {selectableCarrierTiers.length > 0 && (
@@ -2011,10 +2115,15 @@ function ShipmentsPageInner() {
                           onClick={() => {
                             void handleDispatchNow();
                           }}
-                          disabled={dispatchShipmentNow.isPending || !selectedCarrierTier}
+                          disabled={
+                            dispatchShipmentNow.isPending ||
+                            !selectedCarrierTier
+                          }
                           className={ADMIN_PRIMARY_BTN}
                         >
-                          {dispatchShipmentNow.isPending ? "Booking…" : "Book selected rate"}
+                          {dispatchShipmentNow.isPending
+                            ? "Booking…"
+                            : "Book selected rate"}
                         </button>
                       )}
                     </div>
@@ -2069,7 +2178,9 @@ function ShipmentsPageInner() {
                               min="0"
                               step="1"
                               value={reconcileActualCostNgn}
-                              onChange={(e) => setReconcileActualCostNgn(e.target.value)}
+                              onChange={(e) =>
+                                setReconcileActualCostNgn(e.target.value)
+                              }
                               className={ADMIN_FIELD_INPUT_CLASS}
                               placeholder="Optional"
                             />
@@ -2096,7 +2207,9 @@ function ShipmentsPageInner() {
                         disabled={reconcileManualShipment.isPending}
                         className={ADMIN_PRIMARY_BTN}
                       >
-                        {reconcileManualShipment.isPending ? "Saving…" : "Mark dispatched"}
+                        {reconcileManualShipment.isPending
+                          ? "Saving…"
+                          : "Mark dispatched"}
                       </button>
                     </ShipmentActionCard>
                   </div>
@@ -2121,7 +2234,9 @@ function ShipmentsPageInner() {
                     disabled={completeManualShipment.isPending}
                     className={ADMIN_PRIMARY_BTN}
                   >
-                    {completeManualShipment.isPending ? "Saving…" : "Mark dispatched"}
+                    {completeManualShipment.isPending
+                      ? "Saving…"
+                      : "Mark dispatched"}
                   </button>
                 </ShipmentModalSection>
               )}
@@ -2139,7 +2254,9 @@ function ShipmentsPageInner() {
                     disabled={markManualDelivered.isPending}
                     className={ADMIN_PRIMARY_BTN}
                   >
-                    {markManualDelivered.isPending ? "Saving…" : "Mark completed"}
+                    {markManualDelivered.isPending
+                      ? "Saving…"
+                      : "Mark completed"}
                   </button>
                 </ShipmentModalSection>
               )}
@@ -2174,8 +2291,12 @@ function ShipmentsPageInner() {
                             <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-gray-100 pt-3">
                               {metadata.map((row) => (
                                 <div key={row.label} className="min-w-0">
-                                  <dt className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">{row.label}</dt>
-                                  <dd className="mt-0.5 break-words text-sm font-medium leading-snug text-gray-800">{row.value}</dd>
+                                  <dt className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                                    {row.label}
+                                  </dt>
+                                  <dd className="mt-0.5 break-words text-sm font-medium leading-snug text-gray-800">
+                                    {row.value}
+                                  </dd>
                                 </div>
                               ))}
                             </dl>
@@ -2191,7 +2312,10 @@ function ShipmentsPageInner() {
                 </ShipmentModalSection>
               ) : null}
 
-              <ShipmentModalSection title="Shipment details" summary={shipmentDetailsSummary}>
+              <ShipmentModalSection
+                title="Shipment details"
+                summary={shipmentDetailsSummary}
+              >
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
                     <DetailField label="Pickup partner">
@@ -2209,7 +2333,9 @@ function ShipmentsPageInner() {
                       displayShipment.providerTrackingUrl ? (
                         <ShipmentTrackingContact
                           trackingId={displayShipment.trackingId}
-                          providerTrackingUrl={displayShipment.providerTrackingUrl}
+                          providerTrackingUrl={
+                            displayShipment.providerTrackingUrl
+                          }
                           linkClassName="inline-flex items-center gap-1 text-blue-700 hover:text-blue-900 hover:underline"
                         />
                       ) : (
@@ -2226,7 +2352,9 @@ function ShipmentsPageInner() {
                     {displayShipment.actualFulfillmentCostKobo != null ? (
                       <DetailField label="Actual cost (NGN)">
                         <Paragraph1 className="font-medium text-gray-900 text-sm">
-                          {koboToNaira(displayShipment.actualFulfillmentCostKobo)}
+                          {koboToNaira(
+                            displayShipment.actualFulfillmentCostKobo,
+                          )}
                         </Paragraph1>
                       </DetailField>
                     ) : null}
@@ -2258,7 +2386,10 @@ function ShipmentsPageInner() {
                 </div>
               </ShipmentModalSection>
 
-              <ShipmentModalSection title="Delivery window" summary={deliveryWindowSummary}>
+              <ShipmentModalSection
+                title="Delivery window"
+                summary={deliveryWindowSummary}
+              >
                 <div className="gap-3 grid grid-cols-2">
                   <DetailField label="Scheduled date">
                     <Paragraph1 className="font-medium text-gray-900 text-sm">
@@ -2283,7 +2414,10 @@ function ShipmentsPageInner() {
               </ShipmentModalSection>
 
               {displayShipment.type === "RETURN" ? (
-                <ShipmentModalSection title="Return request" summary={returnRequestSummary}>
+                <ShipmentModalSection
+                  title="Return request"
+                  summary={returnRequestSummary}
+                >
                   <ReturnRequestSection
                     returnRequest={displayShipment.returnRequest}
                     visible
@@ -2292,9 +2426,14 @@ function ShipmentsPageInner() {
                 </ShipmentModalSection>
               ) : null}
 
-              <ShipmentModalSection title="Dispatch history" summary={dispatchHistorySummary}>
+              <ShipmentModalSection
+                title="Dispatch history"
+                summary={dispatchHistorySummary}
+              >
                 {sortedDispatchAttemptLogs.length === 0 ? (
-                  <Paragraph1 className="text-gray-500 text-sm">No attempts recorded yet.</Paragraph1>
+                  <Paragraph1 className="text-gray-500 text-sm">
+                    No attempts recorded yet.
+                  </Paragraph1>
                 ) : (
                   <div className="grid max-h-72 grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
                     {sortedDispatchAttemptLogs.map((log, idx) => {
@@ -2308,7 +2447,13 @@ function ShipmentsPageInner() {
                           <div className="flex flex-wrap justify-between gap-2 mb-1">
                             <Paragraph1 className="font-medium text-gray-900">
                               Try #{idx + 1}{" "}
-                              <span className={log.success ? "text-green-600" : "text-red-600"}>
+                              <span
+                                className={
+                                  log.success
+                                    ? "text-green-600"
+                                    : "text-red-600"
+                                }
+                              >
                                 {log.success ? "OK" : "Fail"}
                               </span>
                             </Paragraph1>
@@ -2323,7 +2468,9 @@ function ShipmentsPageInner() {
                             </Paragraph1>
                           )}
                           {!log.success && codeLine && (
-                            <Paragraph1 className="mt-1 text-gray-600 text-xs">{codeLine}</Paragraph1>
+                            <Paragraph1 className="mt-1 text-gray-600 text-xs">
+                              {codeLine}
+                            </Paragraph1>
                           )}
                         </div>
                       );
@@ -2336,17 +2483,19 @@ function ShipmentsPageInner() {
                 {displayShipment.status === "DISPATCH_FAILED" &&
                   !displayShipment.manualFulfillment &&
                   !showCarrierBookingPanel && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleRedispatchShipment(displayShipment.id);
-                    }}
-                    disabled={redispatchShipment.isPending}
-                    className={`flex-1 ${ADMIN_PRIMARY_BTN}`}
-                  >
-                    {redispatchShipment.isPending ? "Booking…" : "Retry booking"}
-                  </button>
-                )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleRedispatchShipment(displayShipment.id);
+                      }}
+                      disabled={redispatchShipment.isPending}
+                      className={`flex-1 ${ADMIN_PRIMARY_BTN}`}
+                    >
+                      {redispatchShipment.isPending
+                        ? "Booking…"
+                        : "Retry booking"}
+                    </button>
+                  )}
                 {displayShipment.status === "PENDING" && (
                   <button
                     type="button"
@@ -2356,7 +2505,9 @@ function ShipmentsPageInner() {
                     disabled={cancelShipment.isPending}
                     className="flex-1 hover:bg-red-50 disabled:opacity-50 px-4 py-2 border border-red-200 rounded-lg font-medium text-red-700 text-sm transition"
                   >
-                    {cancelShipment.isPending ? "Cancelling…" : "Cancel shipment"}
+                    {cancelShipment.isPending
+                      ? "Cancelling…"
+                      : "Cancel shipment"}
                   </button>
                 )}
               </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import { useMe } from "@/lib/queries/auth/useMe";
 
 const greetingForHour = (hour: number): string => {
@@ -20,13 +21,13 @@ const OverviewHeader = () => {
   });
 
   return (
-    <div className="px-4 pt-3 pb-2 sm:px-5 sm:pb-4">
-      <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
+    <div className="px-4 pb-4 pt-3 sm:px-5">
+      <Paragraph2 className="text-xl font-bold leading-7 tracking-tight text-gray-900 sm:text-2xl">
         {greetingForHour(now.getHours())}, {firstName} 👋
-      </h1>
-      <p className="mt-3 text-[13px] text-gray-500">
-        {dateLabel} · Here&apos;s what needs your attention today.
-      </p>
+      </Paragraph2>
+      <Paragraph1 className="mt-1 text-sm leading-5 text-gray-500">
+        {dateLabel} · Needs your attention today.
+      </Paragraph1>
     </div>
   );
 };
