@@ -22,10 +22,10 @@ const STATUS_FILTER_OPTIONS = [
 
 function tabLabel(role: UserRole, listerCount?: number, renterCount?: number) {
   if (listerCount === undefined || renterCount === undefined) {
-    return role === "LISTER" ? "Lister" : "Renters";
+    return role === "LISTER" ? "Lister" : "Shoppers";
   }
   if (role === "LISTER") return `Lister (${listerCount})`;
-  return `Renters (${renterCount})`;
+  return `Shoppers (${renterCount})`;
 }
 
 export default function UsersPage() {
@@ -87,7 +87,7 @@ export default function UsersPage() {
       <AdminPageHeader
         className="!mb-0"
         title="Users"
-        description="Manage renters and listers."
+        description="Manage shoppers and listers."
         action={
           <button
             type="button"

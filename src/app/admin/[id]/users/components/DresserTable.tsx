@@ -7,6 +7,7 @@ import {
   type ResponsiveColumnDef,
 } from "@/common/ui/ResponsiveDataTable";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
+import { userRoleLabel } from "@/lib/utils/userRoleLabel";
 const StatusPill = ({ isSuspended }: { isSuspended: boolean }) => {
   const isActive = !isSuspended;
   return (
@@ -73,7 +74,7 @@ function buildColumns(
                 {user.name}
               </Paragraph1>
               <Paragraph1 className="text-xs text-gray-500">
-                {user.role}
+                {userRoleLabel(user.role)}
               </Paragraph1>
             </div>
           </div>

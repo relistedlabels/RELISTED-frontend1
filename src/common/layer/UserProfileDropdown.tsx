@@ -19,6 +19,7 @@ import { useUserStore } from "@/store/useUserStore";
 import LogoutConfirmModal from "./LogoutConfirmModal";
 import { useLogout } from "@/lib/mutations";
 import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
+import { userRoleLabel } from "@/lib/utils/userRoleLabel";
 
 interface UserProfileDropdownProps {
   userName: string | null;
@@ -167,7 +168,9 @@ export default function UserProfileDropdown({
               <p className="text-sm font-semibold text-gray-900 truncate">
                 {userName || "User"}
               </p>
-              <p className="text-xs text-gray-400 capitalize">{userRole}</p>
+              <p className="text-xs text-gray-400 capitalize">
+                {userRoleLabel(userRole)}
+              </p>
             </div>
 
             {/* Menu Items */}

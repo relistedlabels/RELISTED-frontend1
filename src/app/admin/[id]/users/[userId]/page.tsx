@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
+import { userRoleLabel } from "@/lib/utils/userRoleLabel";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
 import {
@@ -227,7 +228,7 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
             </h1>
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium uppercase text-gray-700">
-                {user?.role || "Loading..."}
+                {user ? userRoleLabel(user.role) : "Loading..."}
               </span>
               <Paragraph1 className="text-xs text-gray-500">
                 Joined{" "}

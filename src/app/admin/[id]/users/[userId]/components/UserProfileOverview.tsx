@@ -4,6 +4,7 @@
 import React from "react";
 import { AlertCircle, MapPin, Store } from "lucide-react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { userRoleLabel } from "@/lib/utils/userRoleLabel";
 
 interface UserProfileOverviewProps {
   user: any;
@@ -61,7 +62,7 @@ export default function UserProfileOverview({
           Account Overview
         </Paragraph3>
         <Paragraph1 className="text-sm text-gray-600 leading-relaxed">
-          {user.name} is a {user.role.toLowerCase()} on the Relisted platform.
+          {user.name} is a {userRoleLabel(user.role).toLowerCase()} on the Relisted platform.
           {user.isSuspended && " Account is currently suspended."}
           Account created on {joinDate}.
         </Paragraph1>

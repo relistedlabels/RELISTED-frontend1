@@ -12,6 +12,7 @@ import {
 } from "@/common/ui/ResponsiveDataTable";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useWallets } from "@/lib/queries/admin/useWallets";
+import { userRoleLabel } from "@/lib/utils/userRoleLabel";
 import AdminTablePagination, {
   EMPTY_WALLET_PAGINATION,
   useWalletTablePage,
@@ -151,7 +152,7 @@ function buildWalletColumns(
         <span
           className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${getRoleBadgeColor(wallet.user.role)}`}
         >
-          {wallet.user.role || "N/A"}
+          {userRoleLabel(wallet.user.role) || "N/A"}
         </span>
       ),
     },

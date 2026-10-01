@@ -122,7 +122,7 @@ function firstListerAvailabilityPrompt(
       orderId: id,
       orderNumber: String(row.orderNumber ?? ""),
       productLabel: firstItem?.name?.trim() || "a request",
-      renterLabel: dresser?.name?.trim() || "A renter",
+      renterLabel: dresser?.name?.trim() || "A shopper",
       imageUrl: firstItem?.image ?? firstItem?.imageUrl ?? null,
     };
   }
