@@ -181,7 +181,7 @@ function OrderTabs<T extends string>({
 }) {
   return (
     <div className="relative mb-8 w-full overflow-hidden">
-      <div className="w-[340px] sm:w-full max-w-full sm:overflow-visible overflow-x-auto hide-scrollbar scrollbar-hide">
+      <div className="w-full max-w-full overflow-x-auto sm:overflow-visible hide-scrollbar scrollbar-hide">
         <div className="inline-flex gap-1 bg-[#F9F9F7] p-1 border border-gray-300 rounded-xl whitespace-nowrap">
           {tabs.map((tab) => {
             const isActive = active === tab;
