@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Clock3, XCircle } from "lucide-react";
+import { CheckCircle2, Clock3, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
@@ -146,12 +146,16 @@ export default function AvailabilityCheckingPage() {
       <div className="flex min-h-[55vh] flex-col items-center justify-center px-6 py-16 text-center">
         <div
           className={`mb-6 flex h-16 w-16 items-center justify-center rounded-full ${
-            isUnavailable
-              ? "bg-red-50 text-red-600"
-              : "bg-amber-50 text-amber-700"
+            isApprovedForShopper
+              ? "bg-green-50 text-green-700"
+              : isUnavailable
+                ? "bg-red-50 text-red-600"
+                : "bg-amber-50 text-amber-700"
           }`}
         >
-          {isUnavailable ? (
+          {isApprovedForShopper ? (
+            <CheckCircle2 className="h-8 w-8" />
+          ) : isUnavailable ? (
             <XCircle className="h-8 w-8" />
           ) : (
             <Clock3 className="h-8 w-8" />
@@ -159,18 +163,24 @@ export default function AvailabilityCheckingPage() {
         </div>
 
         <Header1Plus className="mb-3">
-          {isLoading && !status
-            ? "Loading…"
-            : isDatesPassed
-              ? "These dates have passed"
-              : isUnavailable
-                ? "Not available"
-                : isAwaitingLister
-                  ? "Still waiting on the lister"
-                  : "We're checking availability"}
+          {isApprovedForShopper
+            ? "Availability confirmed"
+            : isLoading && !status
+              ? "Loading…"
+              : isDatesPassed
+                ? "These dates have passed"
+                : isUnavailable
+                  ? "Not available"
+                  : isAwaitingLister
+                    ? "Still waiting on the lister"
+                    : "We're checking availability"}
         </Header1Plus>
 
         <Paragraph1 className="max-w-md text-gray-600 leading-relaxed">
+          {isApprovedForShopper &&
+            (isPurchase
+              ? `${productName} is available to buy. Continue to complete your order.`
+              : `${productName} is available for your dates. Continue to complete your order.`)}
           {isDatesPassed &&
             (isPurchase
               ? `These dates are no longer valid for ${productName}. Check again if you would still like to buy it.`
@@ -184,7 +194,8 @@ export default function AvailabilityCheckingPage() {
             (isPurchase
               ? `We have not heard back yet on ${productName}. The lister can still confirm while your request is valid. We will email you if it is available.`
               : `We have not heard back yet on your dates for ${productName}. The lister can still confirm while your dates are valid. We will email you if it is available.`)}
-          {!isUnavailable &&
+          {!isApprovedForShopper &&
+            !isUnavailable &&
             !isAwaitingLister &&
             !(isAvailable && canStillBeApproved) &&
             (isPurchase
@@ -194,10 +205,6 @@ export default function AvailabilityCheckingPage() {
 
         {isApprovedForShopper ? (
           <div className="mt-8 flex w-full max-w-sm flex-col gap-3">
-            <Paragraph1 className="text-sm font-medium text-green-700">
-              The lister has approved your request. Continue to complete your
-              order.
-            </Paragraph1>
             <Link
               href={
                 completeRentalUrl ??
@@ -215,7 +222,9 @@ export default function AvailabilityCheckingPage() {
         <div className="mt-8 flex w-full max-w-sm flex-col gap-3 sm:flex-row">
           <Link
             href={similarShopHref}
-            className="inline-flex flex-1 items-center justify-center rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-900"
+            className={`inline-flex items-center justify-center rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-900 ${
+              isApprovedForShopper ? "w-full" : "flex-1"
+            }`}
           >
             View similar pieces
           </Link>
