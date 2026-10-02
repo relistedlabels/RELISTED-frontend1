@@ -64,7 +64,7 @@ const OrderSummaryEscrow: React.FC<OrderSummaryEscrowProps> = ({
       platformFee?.grossAmount ??
       orderData?.listerMerchandise?.total ??
       orderData?.listerMerchandise?.rentalSubtotal ??
-      Number(rentalFeeTotal) + cleaningFeesTotal,
+      (Number(rentalFeeTotal) + cleaningFeesTotal),
   );
   const platformFeeRate = Number(
     platformFee?.ratePercent ?? LISTER_PLATFORM_FEE_PERCENT,
