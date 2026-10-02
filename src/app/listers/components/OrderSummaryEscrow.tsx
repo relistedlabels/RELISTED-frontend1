@@ -46,7 +46,7 @@ const OrderSummaryEscrow: React.FC<OrderSummaryEscrowProps> = ({
       orderData?.escrow?.purchasePrice ||
       orderData?.totalAmount ||
       propEscrowValueHeld
-    : (clickedItem?.itemValueHeld ??
+    : clickedItem?.itemValueHeld ??
       orderData?.escrow?.itemValueHeld ??
       propEscrowValueHeld ??
       0;
@@ -64,7 +64,7 @@ const OrderSummaryEscrow: React.FC<OrderSummaryEscrowProps> = ({
       platformFee?.grossAmount ??
       orderData?.listerMerchandise?.total ??
       orderData?.listerMerchandise?.rentalSubtotal ??
-      Number(rentalFeeTotal) + cleaningFeesTotal,
+      (Number(rentalFeeTotal) + cleaningFeesTotal),
   );
   const platformFeeRate = Number(
     platformFee?.ratePercent ?? LISTER_PLATFORM_FEE_PERCENT,
@@ -163,8 +163,8 @@ const OrderSummaryEscrow: React.FC<OrderSummaryEscrowProps> = ({
           </div>
           <Paragraph1 className="text-gray-700 text-sm leading-relaxed">
             Funds move to your wallet after{" "}
-            {isResale ? "delivery confirmation" : releaseCondition}, per escrow
-            rules for this order.
+            {isResale ? "delivery confirmation" : releaseCondition}
+            , per escrow rules for this order.
           </Paragraph1>
         </div>
       </div>

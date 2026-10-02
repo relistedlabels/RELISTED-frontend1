@@ -287,6 +287,20 @@ export interface OrderDetails extends Order {
     status: string;
     createdAt: string;
   };
+  listerMerchandise?: {
+    rentalSubtotal?: number;
+    cleaningFeesTotal?: number;
+    resaleSubtotal?: number;
+    total?: number;
+  };
+  platformFee?: {
+    ratePercent?: number;
+    baseAmount?: number;
+    grossEarnings?: number;
+    grossAmount?: number;
+    amount?: number;
+    netEarnings?: number;
+  };
 }
 
 export interface OrderDetailsResponse {
