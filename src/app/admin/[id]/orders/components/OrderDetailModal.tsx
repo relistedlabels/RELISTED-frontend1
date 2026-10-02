@@ -1,22 +1,23 @@
 // ENDPOINTS: GET /api/admin/orders/:orderId
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
+import { X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
 import { toast } from "sonner";
-import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { slidePanelBackdrop } from "@/common/ui/dashboardClasses";
+import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import type { OrderDetail } from "@/lib/api/admin/orders";
+import { useCancelOrder } from "@/lib/mutations/admin";
+import { getAdminOrderStatusLabel } from "@/lib/orders/shipmentAndOrderLabels";
+import { useOrderById } from "@/lib/queries/admin/useOrders";
+import ReturnRequestSection from "../../../components/ReturnRequestSection";
+import CancelOrderModal from "./CancelOrderModal";
+import OrderItemsSection from "./OrderItemsSection";
 import OrderSection2 from "./OrderSection2";
 import OrderSection3 from "./OrderSection3";
-import OrderItemsSection from "./OrderItemsSection";
-import CancelOrderModal from "./CancelOrderModal";
-import { useOrderById } from "@/lib/queries/admin/useOrders";
-import { useCancelOrder } from "@/lib/mutations/admin";
-import type { OrderDetail } from "@/lib/api/admin/orders";
-import { getAdminOrderStatusLabel } from "@/lib/orders/shipmentAndOrderLabels";
-import ReturnRequestSection from "../../../components/ReturnRequestSection";
+import OrderShipmentsSection from "./OrderShipmentsSection";
 
 interface OrderDetailModalProps {
   isOpen: boolean;
@@ -76,9 +77,16 @@ export default function OrderDetailModal({
   const cancelOrder = useCancelOrder();
   const order = data?.data as OrderDetail | undefined;
 
-  const statusLabel = order
-    ? getAdminOrderStatusLabel(order.status)
-    : "—";
+  const statusLabel = order ? getAdminOrderStatusLabel(order.status) : "—";
+  const listingType = String(order?.listingType ?? "").toUpperCase();
+  const isPurchaseOrder = Boolean(
+    order &&
+      (listingType === "RESALE" ||
+        listingType === "PURCHASE" ||
+        (listingType === "RENT_OR_RESALE" &&
+          order.items_details.length > 0 &&
+          order.items_details.every((item) => item.rentalDays === 0))),
+  );
   const canCancel =
     !!order && CANCELLABLE_STATUSES.has(String(order.status).toUpperCase());
 
@@ -190,7 +198,6 @@ export default function OrderDetailModal({
                     returnDue={order.returnDue ?? "N/A"}
                     paymentReference={order.paymentReference ?? "N/A"}
                     paymentStatus={order.payment?.paymentStatus}
-                    trackingNumber={order.trackingNumber}
                     rentalPeriod={order.shipping?.rentalPeriod}
                     lister={{
                       name: order.lister?.name ?? "N/A",
@@ -219,6 +226,11 @@ export default function OrderDetailModal({
                     formatMoney={formatMoney}
                   />
 
+                  <OrderShipmentsSection
+                    orderId={orderId}
+                    isPurchaseOrder={isPurchaseOrder}
+                  />
+
                   <ReturnRequestSection returnRequest={order.returnRequest} />
 
                   <OrderSection3
@@ -226,7 +238,9 @@ export default function OrderDetailModal({
                     serviceFee={formatMoney(order.payment?.serviceFee ?? 0)}
                     deliveryFee={formatMoney(order.payment?.deliveryFee ?? 0)}
                     vat={formatMoney(order.payment?.vat ?? 0)}
-                    total={formatMoney(order.payment?.total ?? order.total ?? 0)}
+                    total={formatMoney(
+                      order.payment?.total ?? order.total ?? 0,
+                    )}
                     paymentStatus={order.payment?.paymentStatus}
                   />
 

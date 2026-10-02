@@ -40,7 +40,7 @@ export const listerProfileOnboardingTask = {
     {
       target: '[data-onboarding-target="lister-avatar"]',
       title: "Add a profile photo",
-      body: "Tap anywhere in this section to upload a clear photo renters will recognize.",
+      body: "Tap anywhere in this section to upload a clear photo shoppers will recognize.",
       tab: "profile",
     },
     {

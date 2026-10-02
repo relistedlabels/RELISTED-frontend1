@@ -11,7 +11,7 @@ import {
   curatorAvatarUrl,
   listingThumbnailUrl,
 } from "@/app/admin/lib/adminListingDisplay";
-import { listingPriceDisplay } from "@/lib/product/listingPriceDisplay";
+import { ListingPriceSummary } from "./ListingPriceSummary";
 
 interface ApprovedListingsTableProps {
   products: Product[];
@@ -47,7 +47,7 @@ function buildColumns(
     },
     {
       id: "curator",
-      header: "Curator",
+      header: "Lister",
       mobile: "detail",
       render: (product) => (
         <div className="flex items-center gap-2">
@@ -75,24 +75,8 @@ function buildColumns(
       id: "price",
       header: "Price",
       mobile: "detail",
-      render: (product) => {
-        const price = listingPriceDisplay(
-          product as Product & { listingType?: string; resalePrice?: number },
-        );
-        return (
-          <div>
-            <Paragraph1 className="font-medium text-gray-900">
-              ₦{price.primary.amount.toLocaleString()}
-            </Paragraph1>
-            {price.secondary ? (
-              <Paragraph1 className="mt-1 text-xs text-gray-600">
-                {price.secondary.label}: ₦
-                {price.secondary.amount.toLocaleString()}
-              </Paragraph1>
-            ) : null}
-          </div>
-        );
-      },
+      mobileDetailClassName: "col-span-2 rounded-lg bg-gray-50 px-3 py-2.5",
+      render: (product) => <ListingPriceSummary product={product} />,
     },
     {
       id: "availability",

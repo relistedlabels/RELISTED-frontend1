@@ -3,7 +3,9 @@ import {
   addDaysToDateString,
   buildDispatchWindowChoices,
   buildDispatchWindowFromForm,
+  deriveDefaultDispatchWindow,
   differenceInDays,
+  getLagosDateTimeParts,
   parseTimeToMinutes,
   DEFAULT_DISPATCH_WINDOW_MINUTES,
   DISPATCH_WINDOW_END_HOUR,
@@ -32,6 +34,17 @@ describe("differenceInDays", () => {
 describe("addDaysToDateString", () => {
   test("adds days to YYYY-MM-DD", () => {
     expect(addDaysToDateString("2026-08-01", 2)).toBe("2026-08-03");
+  });
+});
+
+describe("deriveDefaultDispatchWindow", () => {
+  test("starts the suggested window at 9am Lagos time", () => {
+    const result = deriveDefaultDispatchWindow("2030-06-01T09:00:00+01:00");
+
+    expect(getLagosDateTimeParts(result.window.start)).toMatchObject({
+      hour: 9,
+      minute: 0,
+    });
   });
 });
 

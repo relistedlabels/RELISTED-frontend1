@@ -86,7 +86,7 @@ export function UserProfileBadge2() {
                  onClick={() => setIsOpen(false)}
                >
                  <LayoutDashboard size={18} />
-                 <span>Renter Dashboard</span>
+                 <span>Shopper Dashboard</span>
                </Link>
             </div>
           </motion.div>

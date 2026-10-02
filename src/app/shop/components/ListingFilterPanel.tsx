@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Search, SlidersVertical, X } from "lucide-react";
+import { Search, SlidersHorizontal, SlidersVertical, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
@@ -118,24 +118,33 @@ export function ListingFilterButton({
   onClick,
   activeCount = 0,
   className,
+  compactOnMobile = false,
 }: {
   onClick: () => void;
   activeCount?: number;
   className?: string;
+  compactOnMobile?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={
-        className ??
-        "border px-4 items-center py-2 flex gap-1 font-semibold text-sm border-black hover:bg-gray-100 transition shrink-0"
+      aria-label={
+        activeCount > 0
+          ? `Filters, ${activeCount} active`
+          : "Filters"
       }
+      className={className ?? "inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-900 transition hover:border-gray-400 hover:bg-gray-50 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"}
     >
-      <Paragraph1>
-        Filters{activeCount > 0 ? ` (${activeCount})` : ""}
-      </Paragraph1>
-      <SlidersVertical size={18} />
+      <SlidersHorizontal size={16} aria-hidden />
+      <span className={compactOnMobile ? "hidden sm:inline" : undefined}>
+        Filters
+      </span>
+      {activeCount > 0 ? (
+        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-black px-1 text-[11px] font-bold text-white">
+          {activeCount}
+        </span>
+      ) : null}
     </button>
   );
 }

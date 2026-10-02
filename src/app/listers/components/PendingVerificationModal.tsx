@@ -113,7 +113,7 @@ export default function PendingVerificationModal({
             >
               <p className="text-sm text-blue-900">
                 <span className="font-semibold">Why verify?</span> This helps us
-                ensure a safe and trustworthy community for all renters and
+                ensure a safe and trustworthy community for all shoppers and
                 listers.
               </p>
             </motion.div>

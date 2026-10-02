@@ -1,22 +1,31 @@
 // ENDPOINTS: GET /api/admin/availability-requests, GET /api/admin/availability-requests/stats, GET /api/admin/availability-requests/:id, POST .../nudge-renter, POST .../resend-to-lister
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   HiOutlineClock,
   HiOutlineExclamationTriangle,
   HiOutlineHandRaised,
   HiOutlineShoppingBag,
 } from "react-icons/hi2";
-import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import {
-  ResponsiveDataTable,
-  type ResponsiveColumnDef,
-} from "@/common/ui/ResponsiveDataTable";
-import { StatCardSkeleton, TableSkeleton } from "@/common/ui/SkeletonLoaders";
-import { AdminComboBox } from "@/app/admin/components/AdminComboBox";
+  AdminComboBox,
+  AdminFilterField,
+} from "@/app/admin/components/AdminComboBox";
+import {
+  AdminFilterButton,
+  AdminFilterDrawer,
+} from "@/app/admin/components/AdminFilterDrawer";
+import AdminPageHeader from "@/app/admin/components/AdminPageHeader";
 import { AdminListingThumb } from "@/app/admin/lib/adminListingDisplay";
+import {
+  type ResponsiveColumnDef,
+  ResponsiveDataTable,
+} from "@/common/ui/ResponsiveDataTable";
+import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
+import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
+import { ADMIN_FILTER_INPUT_CLASS } from "@/lib/admin/adminListFilters";
 import type { AvailabilityRequest } from "@/lib/api/admin/availabilityRequests";
 import {
   useAvailabilityRequestStats,
@@ -49,9 +58,7 @@ const formatDateTime = (value?: string | null): string => {
   });
 };
 
-function buildRequestColumns(
-  openRequest: (id: string) => void,
-): ResponsiveColumnDef<AvailabilityRequest>[] {
+function buildRequestColumns(): ResponsiveColumnDef<AvailabilityRequest>[] {
   return [
     {
       id: "item",
@@ -154,20 +161,6 @@ function buildRequestColumns(
         </span>
       ),
     },
-    {
-      id: "action",
-      header: "Action",
-      mobile: "action",
-      render: (request) => (
-        <button
-          type="button"
-          onClick={() => openRequest(request.id)}
-          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-800 transition hover:bg-gray-100"
-        >
-          View
-        </button>
-      ),
-    },
   ];
 }
 
@@ -188,10 +181,7 @@ const TYPE_FILTERS = [
 
 const STATUS_FILTER_OPTIONS = STATUS_FILTERS.map((status) => ({
   value: status,
-  label:
-    status === "All"
-      ? "All statuses"
-      : getAvailabilityStatusLabel(status),
+  label: status === "All" ? "All statuses" : getAvailabilityStatusLabel(status),
 }));
 
 type StatusFilter = (typeof STATUS_FILTERS)[number];
@@ -205,6 +195,7 @@ export default function RequestsPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(
     null,
   );
@@ -267,21 +258,28 @@ export default function RequestsPage() {
     setIsDetailOpen(true);
   };
 
-  const requestColumns = buildRequestColumns(openRequest);
+  const requestColumns = buildRequestColumns();
 
   const attentionCount = stats?.needingAttention ?? 0;
+  const activeFilterCount =
+    Number(statusFilter !== "All") +
+    Number(typeFilter !== "all") +
+    Number(Boolean(dateFrom)) +
+    Number(Boolean(dateTo));
+
+  const clearFilters = () => {
+    setStatusFilter("All");
+    setTypeFilter("all");
+    setDateFrom("");
+    setDateTo("");
+  };
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
-      <div>
-        <Paragraph3 className="font-bold text-gray-900 text-2xl">
-          Purchase & rental requests
-        </Paragraph3>
-        <Paragraph1 className="mt-1 text-gray-500 text-sm max-w-2xl">
-          Track purchase and rental requests from renters. Follow up with
-          listers or nudge renters when a request is waiting or has expired.
-        </Paragraph1>
-      </div>
+    <div className="min-h-screen space-y-6">
+      <AdminPageHeader
+        title="Availability requests"
+        description="Review renter purchase and rental requests."
+      />
 
       {statsError && (
         <Paragraph1 className="text-red-600 text-sm">
@@ -289,129 +287,98 @@ export default function RequestsPage() {
         </Paragraph1>
       )}
 
-      <div className="gap-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
         {statsLoading ? (
           <>
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
+            {Array.from({ length: 4 }, (_, index) => (
+              <div
+                key={index}
+                className="flex h-[76px] animate-pulse items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 lg:h-24 lg:p-4"
+              >
+                <div className="h-10 w-10 shrink-0 rounded-lg bg-gray-200" />
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="h-3 w-20 rounded bg-gray-200" />
+                  <div className="h-5 w-12 rounded bg-gray-200" />
+                </div>
+              </div>
+            ))}
           </>
         ) : (
           <>
-            <div className="bg-white shadow-sm p-5 border border-gray-100 rounded-2xl">
-              <div className="flex justify-between items-start">
-                <div>
-                  <Paragraph1 className="text-gray-500 text-sm">
-                    Needs attention
+            {[
+              {
+                label: "Needs attention",
+                value: attentionCount,
+                icon: HiOutlineExclamationTriangle,
+                color: "bg-amber-50",
+                iconColor: "text-amber-700",
+              },
+              {
+                label: "Awaiting lister",
+                value: stats?.pending ?? 0,
+                icon: HiOutlineClock,
+                color: "bg-sky-50",
+                iconColor: "text-sky-700",
+              },
+              {
+                label: "Purchase requests",
+                value: stats?.purchase ?? 0,
+                icon: HiOutlineShoppingBag,
+                color: "bg-violet-50",
+                iconColor: "text-violet-700",
+              },
+              {
+                label: "Rental requests",
+                value: stats?.rental ?? 0,
+                icon: HiOutlineHandRaised,
+                color: "bg-emerald-50",
+                iconColor: "text-emerald-700",
+              },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                className="flex min-w-0 items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 lg:p-4"
+              >
+                <div
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${stat.color}`}
+                >
+                  <stat.icon size={20} className={stat.iconColor} />
+                </div>
+                <div className="min-w-0">
+                  <Paragraph1 className="break-words text-[10px] font-semibold uppercase leading-tight tracking-wide text-gray-500 sm:text-xs">
+                    {stat.label}
                   </Paragraph1>
-                  <Paragraph2 className="mt-2 font-bold text-gray-900 text-2xl">
-                    {attentionCount}
-                  </Paragraph2>
-                  <Paragraph1 className="mt-1 text-gray-400 text-xs">
-                    Awaiting lister + expired
-                  </Paragraph1>
-                </div>
-                <div className="bg-amber-50 p-2 rounded-xl text-amber-700">
-                  <HiOutlineExclamationTriangle size={20} />
-                </div>
-              </div>
-            </div>
-            <div className="bg-white shadow-sm p-5 border border-gray-100 rounded-2xl">
-              <div className="flex justify-between items-start">
-                <div>
-                  <Paragraph1 className="text-gray-500 text-sm">
-                    Awaiting lister
-                  </Paragraph1>
-                  <Paragraph2 className="mt-2 font-bold text-gray-900 text-2xl">
-                    {stats?.pending ?? 0}
-                  </Paragraph2>
-                </div>
-                <div className="bg-sky-50 p-2 rounded-xl text-sky-700">
-                  <HiOutlineClock size={20} />
-                </div>
-              </div>
-            </div>
-            <div className="bg-white shadow-sm p-5 border border-gray-100 rounded-2xl">
-              <div className="flex justify-between items-start">
-                <div>
-                  <Paragraph1 className="text-gray-500 text-sm">
-                    Purchase requests
-                  </Paragraph1>
-                  <Paragraph2 className="mt-2 font-bold text-gray-900 text-2xl">
-                    {stats?.purchase ?? 0}
-                  </Paragraph2>
-                </div>
-                <div className="bg-violet-50 p-2 rounded-xl text-violet-700">
-                  <HiOutlineShoppingBag size={20} />
-                </div>
-              </div>
-            </div>
-            <div className="bg-white shadow-sm p-5 border border-gray-100 rounded-2xl">
-              <div className="flex justify-between items-start">
-                <div>
-                  <Paragraph1 className="text-gray-500 text-sm">
-                    Rental requests
-                  </Paragraph1>
-                  <Paragraph2 className="mt-2 font-bold text-gray-900 text-2xl">
-                    {stats?.rental ?? 0}
+                  <Paragraph2 className="mt-0.5 text-xl font-bold text-gray-900">
+                    {stat.value}
                   </Paragraph2>
                 </div>
-                <div className="bg-emerald-50 p-2 rounded-xl text-emerald-700">
-                  <HiOutlineHandRaised size={20} />
-                </div>
               </div>
-            </div>
+            ))}
           </>
         )}
       </div>
 
-      <div className="bg-white shadow-sm border border-gray-100 rounded-2xl overflow-hidden">
-        <div className="flex flex-col xl:flex-row xl:items-end gap-3 p-4 sm:p-5 border-gray-100 border-b">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search
-              size={16}
-              className="top-1/2 left-3 absolute text-gray-400 -translate-y-1/2"
-            />
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search item, renter, lister, or request id"
-              className="bg-gray-50 py-2.5 pr-3 pl-9 border border-gray-200 focus:border-gray-400 rounded-lg outline-none w-full text-sm"
-            />
-          </div>
-          <div className="w-full sm:w-44">
-            <AdminComboBox
-              ariaLabel="Filter by status"
-              value={statusFilter}
-              onChange={(v) => setStatusFilter(v as StatusFilter)}
-              options={STATUS_FILTER_OPTIONS}
-            />
-          </div>
-          <div className="w-full sm:w-40">
-            <AdminComboBox
-              ariaLabel="Filter by request type"
-              value={typeFilter}
-              onChange={(v) => setTypeFilter(v as TypeFilter)}
-              options={[...TYPE_FILTERS]}
-            />
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="bg-gray-50 px-3 py-2.5 border border-gray-200 rounded-lg text-sm"
-            />
-            <span className="text-gray-400 text-sm">to</span>
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className="bg-gray-50 px-3 py-2.5 border border-gray-200 rounded-lg text-sm"
-            />
-          </div>
+      <div className="mb-6 overflow-hidden rounded-lg border border-gray-200 bg-white">
+        <div className="flex items-end gap-2 border-b border-gray-200 px-4 py-4 sm:px-6">
+          <AdminFilterField label="Search" className="min-w-0 flex-1">
+            <div className="relative">
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                aria-hidden
+              />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Item, renter, lister, or request id..."
+                className={`${ADMIN_FILTER_INPUT_CLASS} pl-9`}
+              />
+            </div>
+          </AdminFilterField>
+          <AdminFilterButton
+            onClick={() => setFiltersOpen(true)}
+            activeCount={activeFilterCount}
+          />
         </div>
 
         {listError && (
@@ -442,14 +409,14 @@ export default function RequestsPage() {
               rows={requests}
               columns={requestColumns}
               getRowKey={(request) => request.id}
+              onRowClick={(request) => openRequest(request.id)}
               className={listFetching ? "opacity-60" : ""}
             />
 
             {pagination.total > 0 && (
               <div className="flex sm:flex-row flex-col sm:justify-between sm:items-center gap-3 px-6 py-4 border-gray-100 border-t">
                 <Paragraph1 className="text-gray-600 text-sm">
-                  Showing{" "}
-                  {(pagination.page - 1) * pagination.limit + 1} to{" "}
+                  Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
                   {Math.min(
                     pagination.page * pagination.limit,
                     pagination.total,
@@ -474,9 +441,7 @@ export default function RequestsPage() {
                       listFetching || pagination.page >= pagination.pages
                     }
                     onClick={() =>
-                      setCurrentPage((p) =>
-                        Math.min(pagination.pages, p + 1),
-                      )
+                      setCurrentPage((p) => Math.min(pagination.pages, p + 1))
                     }
                     className="hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed p-2 border border-gray-200 rounded-lg"
                   >
@@ -497,6 +462,48 @@ export default function RequestsPage() {
         }}
         requestId={selectedRequestId}
       />
+      <AdminFilterDrawer
+        isOpen={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        onClear={clearFilters}
+        activeCount={activeFilterCount}
+        title="Request filters"
+      >
+        <div className="space-y-5">
+          <AdminFilterField label="Status">
+            <AdminComboBox
+              ariaLabel="Filter by status"
+              value={statusFilter}
+              onChange={(v) => setStatusFilter(v as StatusFilter)}
+              options={STATUS_FILTER_OPTIONS}
+            />
+          </AdminFilterField>
+          <AdminFilterField label="Request type">
+            <AdminComboBox
+              ariaLabel="Filter by request type"
+              value={typeFilter}
+              onChange={(v) => setTypeFilter(v as TypeFilter)}
+              options={[...TYPE_FILTERS]}
+            />
+          </AdminFilterField>
+          <AdminFilterField label="Requested from">
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="h-11 w-full rounded-xl border border-gray-300 bg-white px-3 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+            />
+          </AdminFilterField>
+          <AdminFilterField label="Requested to">
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="h-11 w-full rounded-xl border border-gray-300 bg-white px-3 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+            />
+          </AdminFilterField>
+        </div>
+      </AdminFilterDrawer>
     </div>
   );
 }

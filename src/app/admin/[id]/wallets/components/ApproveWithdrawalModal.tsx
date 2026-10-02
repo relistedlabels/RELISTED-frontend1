@@ -1,11 +1,11 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
+import { Loader2, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { X, Loader2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Paragraph1, Header2 } from "@/common/ui/Text";
 import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
 import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
+import { Header2, Paragraph1 } from "@/common/ui/Text";
 
 interface ApproveWithdrawalModalProps {
   isOpen: boolean;
@@ -101,8 +101,8 @@ export default function ApproveWithdrawalModal({
             <div className="px-6 py-6">
               <Paragraph1 className="text-gray-600 mb-6">
                 Approve this request so it can be paid out. After approval, use
-                &quot;Mark as paid&quot; and enter the bank transfer reference when
-                the transfer is complete.
+                &quot;Mark as paid&quot; and enter the bank transfer reference
+                when the transfer is complete.
               </Paragraph1>
 
               <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-3">

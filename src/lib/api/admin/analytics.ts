@@ -3,6 +3,10 @@ import { apiFetch } from "../http";
 export interface AnalyticsStats {
   totalOrders: number;
   totalRevenue: number;
+  previousPeriod: {
+    orders: number;
+    revenue: number;
+  } | null;
   activeListings: number;
   activeDisputes: number;
   /** Renters or listers with order, availability request, or app visit in the period */
@@ -11,11 +15,14 @@ export interface AnalyticsStats {
   /** Dispatch → delivered, whole minutes (preferred for display). */
   avgDeliveryTimeMinutes?: number;
   deliveryTimeSampleSize?: number;
+  ordersWithDisputes: number;
+  disputeRate: number;
   timeframe: string;
   period: string;
 }
 
 export interface TrendData {
+  /** Daily label for month views; month/year label for year and all-time views. */
   month: string;
   orders: number;
   revenue: number;
@@ -25,42 +32,76 @@ export interface TrendData {
 
 export interface CategoryBreakdown {
   category: string;
-  quantity: number;
+  activeListings: number;
+  availabilityRequests: number;
 }
 
 export interface RevenueByCategory {
   category: string;
-  percentage: number;
   amount: number;
 }
 
 export interface TopCurator {
   id: string;
   name: string;
-  avatar: string;
-  rentals: number;
+  avatar: string | null;
+  totalRentals: number;
+  totalProducts: number;
   revenue: number;
-  rating: number;
 }
 
 export interface TopItem {
   id: string;
   name: string;
-  category: string;
-  image: string;
-  totalEarnings: number;
-  rentals: number;
-  rating: number;
-  curator: {
-    id: string;
-    name: string;
+  brand: string | null;
+  rentalsCount: number;
+  earnings: number;
+}
+
+export interface DashboardActivityItem {
+  id: string;
+  kind:
+    | "rental_request"
+    | "purchase_request"
+    | "listing_review"
+    | "order_placed"
+    | "order_completed"
+    | "dispute_opened"
+    | "withdrawal_requested"
+    | "payout_released";
+  title: string;
+  detail: string;
+  amount: number | null;
+  createdAt: string;
+}
+
+export interface DashboardOverview {
+  needsAttention: {
+    newListingReviews: number;
+    availabilityRequests: number;
+    listersNotResponding: number;
+    returnOverdue: number;
+    deliveriesToday: number;
+    disputesPending: number;
+    withdrawalRequests: number;
   };
+  today: {
+    rentalsGoingOut: number;
+    returnsExpected: number;
+    ordersAwaitingFulfilment: number;
+  };
+  recentActivity: DashboardActivityItem[];
+  generatedAt: string;
 }
 
 interface TimeframeParams {
   timeframe: "all_time" | "year" | "month";
   year?: number;
   month?: number;
+}
+
+interface TopListParams extends TimeframeParams {
+  limit?: number;
 }
 
 function buildTimeframeParams(params: TimeframeParams): string {
@@ -76,6 +117,11 @@ function buildTimeframeParams(params: TimeframeParams): string {
 }
 
 export const analyticsApi = {
+  getDashboardOverview: () =>
+    apiFetch<{ success: true; data: DashboardOverview }>(
+      `/api/admin/analytics/dashboard-overview`,
+    ),
+
   getStats: (params: TimeframeParams) =>
     apiFetch<{ success: true; data: AnalyticsStats }>(
       `/api/admin/analytics/stats?${buildTimeframeParams(params)}`,
@@ -92,7 +138,7 @@ export const analyticsApi = {
   getCategoryBreakdown: (params: TimeframeParams) =>
     apiFetch<{
       success: true;
-      data: { breakdown: CategoryBreakdown[]; timeframe: string };
+      data: CategoryBreakdown[];
     }>(
       `/api/admin/analytics/category-breakdown?${buildTimeframeParams(params)}`,
     ),
@@ -109,13 +155,13 @@ export const analyticsApi = {
       `/api/admin/analytics/revenue-by-category?${buildTimeframeParams(params)}`,
     ),
 
-  getTopCurators: (limit: number = 5) =>
-    apiFetch<{ success: true; data: { topCurators: TopCurator[] } }>(
-      `/api/admin/analytics/top-curators?limit=${limit}`,
+  getTopCurators: (params: TopListParams) =>
+    apiFetch<{ success: true; data: TopCurator[] }>(
+      `/api/admin/analytics/top-curators?${buildTimeframeParams(params)}&limit=${params.limit ?? 5}`,
     ),
 
-  getTopItems: (limit: number = 5) =>
-    apiFetch<{ success: true; data: { topItems: TopItem[] } }>(
-      `/api/admin/analytics/top-items?limit=${limit}`,
+  getTopItems: (params: TopListParams) =>
+    apiFetch<{ success: true; data: TopItem[] }>(
+      `/api/admin/analytics/top-items?${buildTimeframeParams(params)}&limit=${params.limit ?? 5}`,
     ),
 };

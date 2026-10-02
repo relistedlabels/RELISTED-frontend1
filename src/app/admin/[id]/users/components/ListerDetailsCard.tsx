@@ -3,6 +3,7 @@
 import React from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { User } from "@/lib/api/user";
+import { userRoleLabel } from "@/lib/utils/userRoleLabel";
 
 interface ListerDetailsCardProps {
   user: User;
@@ -28,7 +29,9 @@ export default function ListerDetailsCard({ user }: ListerDetailsCardProps) {
           <Paragraph3 className="text-base font-bold text-gray-900">
             {user.name}
           </Paragraph3>
-          <Paragraph1 className="text-xs text-gray-500">{user.role}</Paragraph1>
+          <Paragraph1 className="text-xs text-gray-500">
+            {userRoleLabel(user.role)}
+          </Paragraph1>
           <div className="mt-1 px-2 py-0.5 bg-green-50 text-green-700 rounded-full w-fit">
             <Paragraph1 className="text-xs font-medium">
               {user.isSuspended ? "Suspended" : "Active"}

@@ -4,15 +4,15 @@
 
 import { AlertCircle, CheckCircle, Clock, Search } from "lucide-react";
 import { useState } from "react";
+import AdminPageHeader from "@/app/admin/components/AdminPageHeader";
 import { StatCardSkeleton, TableSkeleton } from "@/common/ui/SkeletonLoaders";
-import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import type { Dispute, DisputesListStatus } from "@/lib/api/admin/disputes";
 import { useDisputeStats, useDisputes } from "@/lib/queries/admin/useDisputes";
+import { AdminTabBar, AdminTabButton } from "../../components/AdminSectionTabs";
 import PendingTable from "./components/PendingTable";
 import ResolvedTable from "./components/ResolvedTable";
 import StatusCard from "./components/StatusCard";
 import UnderReviewTable from "./components/UnderReviewTable";
-import { AdminTabBar, AdminTabButton } from "../../components/AdminSectionTabs";
 
 type TabType = "pending" | "under-review" | "resolved";
 
@@ -134,10 +134,7 @@ export default function DisputesPage() {
 
   const underReviewTotalFromList = readDisputesListTotal(underReviewCountData);
   const resolvedTotalFromList = readDisputesListTotal(resolvedCountData);
-  const pendingCountDisplay = Math.max(
-    pendingCount,
-    pendingTotalFromList,
-  );
+  const pendingCountDisplay = Math.max(pendingCount, pendingTotalFromList);
   const underReviewCountDisplay = Math.max(
     underReviewCount,
     underReviewTotalFromList,
@@ -183,12 +180,10 @@ export default function DisputesPage() {
   return (
     <div className="min-h-screen">
       {/* Header Section */}
-      <div className="mb-8">
-        <Paragraph2 className="mb-2 text-gray-900">Disputes</Paragraph2>
-        <Paragraph1 className="text-gray-600">
-          Manage and resolve disputes between dressers and curators.
-        </Paragraph1>
-      </div>
+      <AdminPageHeader
+        title="Disputes"
+        description="Review and resolve platform disputes."
+      />
 
       {/* Status Cards */}
       <div className="gap-4 grid grid-cols-1 md:grid-cols-3 mb-8">

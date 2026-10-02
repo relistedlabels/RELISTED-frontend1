@@ -104,7 +104,7 @@ export default function FirstListingModal({
                         Go Live
                       </Paragraph1>
                       <Paragraph3 className="text-xs text-gray-600">
-                        Your items are visible to all renters
+                        Your items are visible to all shoppers
                       </Paragraph3>
                     </div>
                   </div>

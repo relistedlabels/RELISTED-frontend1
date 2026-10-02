@@ -55,7 +55,7 @@ function shouldAttachAuthHeader(path: string, token: string | null): boolean {
   return true;
 }
 
-async function doFetch<T>(
+async function doFetch(
   path: string,
   options: RequestInit,
   token: string | null,
@@ -66,8 +66,7 @@ async function doFetch<T>(
     ...options,
     // Avoid browser HTTP cache + conditional revalidation (304) on auth APIs;
     // React Query owns client caching.
-    cache:
-      options.cache ?? (bearer ? ("no-store" as RequestCache) : "default"),
+    cache: options.cache ?? (bearer ? ("no-store" as RequestCache) : "default"),
     headers: {
       ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
@@ -104,7 +103,7 @@ export async function apiFetch<T>(
     try {
       const error = await res.json();
       errorMessage = error?.message ?? errorMessage;
-    } catch (parseError) {
+    } catch {
       // If response body is not JSON, try to get text
       try {
         const text = await res.text();
@@ -166,4 +165,37 @@ export async function apiFetch<T>(
   }
 
   return res.json() as Promise<T>;
+}
+
+/** Download a binary/text file from an authenticated endpoint and save it. */
+export async function apiDownloadFile(
+  path: string,
+  filename: string,
+): Promise<void> {
+  const token = getAuthToken();
+  const res = await fetch(`${BASE_URL}${path}`, {
+    cache: "no-store",
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+
+  if (!res.ok) {
+    let errorMessage = "Download failed";
+    try {
+      const error = await res.json();
+      errorMessage = error?.message ?? errorMessage;
+    } catch {
+      // keep default message
+    }
+    throw new Error(errorMessage);
+  }
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
 }

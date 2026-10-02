@@ -7,6 +7,7 @@ import {
   type ResponsiveColumnDef,
 } from "@/common/ui/ResponsiveDataTable";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
+import { userRoleLabel } from "@/lib/utils/userRoleLabel";
 const StatusPill = ({ isSuspended }: { isSuspended: boolean }) => {
   const isActive = !isSuspended;
   return (
@@ -73,7 +74,7 @@ function buildColumns(
                 {user.name}
               </Paragraph1>
               <Paragraph1 className="text-xs text-gray-500">
-                {user.role}
+                {userRoleLabel(user.role)}
               </Paragraph1>
             </div>
           </div>
@@ -134,11 +135,12 @@ function buildColumns(
       header: "Action",
       mobile: "action",
       render: (user) => (
-        <div className="whitespace-nowrap rounded-md bg-black px-2 py-1 text-white">
-          <Link href={`/admin/${adminId || ""}/users/${user.id}`}>
-            <Paragraph1> View Details</Paragraph1>
-          </Link>
-        </div>
+        <Link
+          href={`/admin/${adminId || ""}/users/${user.id}`}
+          className="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-lg bg-gray-900 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2"
+        >
+          View details
+        </Link>
       ),
     },
   );

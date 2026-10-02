@@ -13,7 +13,7 @@ import {
   listingThumbnailUrl,
 } from "@/app/admin/lib/adminListingDisplay";
 import ItemTypeBadge from "./ItemTypeBadge";
-import { listingPriceDisplay } from "@/lib/product/listingPriceDisplay";
+import { ListingPriceSummary } from "./ListingPriceSummary";
 import { canDeactivateListing } from "@/lib/admin/listingDeactivate";
 
 interface ActiveListingsTableProps {
@@ -120,7 +120,7 @@ function buildColumns(
     },
     {
       id: "curator",
-      header: "Curator",
+      header: "Lister",
       mobile: "detail",
       render: (product) => {
         const safeProduct = {
@@ -173,31 +173,8 @@ function buildColumns(
       id: "price",
       header: "Price",
       mobile: "detail",
-      render: (product) => {
-        const safeProduct = {
-          ...product,
-          listingType: (product as any).listingType || "RENTAL",
-        };
-        const price = listingPriceDisplay(
-          safeProduct as typeof safeProduct & {
-            listingType?: string;
-            resalePrice?: number;
-          },
-        );
-        return (
-          <div>
-            <Paragraph1 className="font-medium text-gray-900">
-              ₦{price.primary.amount.toLocaleString()}
-            </Paragraph1>
-            {price.secondary ? (
-              <Paragraph1 className="mt-1 text-xs text-gray-600">
-                {price.secondary.label}: ₦
-                {price.secondary.amount.toLocaleString()}
-              </Paragraph1>
-            ) : null}
-          </div>
-        );
-      },
+      mobileDetailClassName: "col-span-2 rounded-lg bg-gray-50 px-3 py-2.5",
+      render: (product) => <ListingPriceSummary product={product} />,
     },
     {
       id: "actions",

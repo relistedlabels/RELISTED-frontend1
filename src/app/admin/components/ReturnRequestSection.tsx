@@ -90,7 +90,7 @@ export default function ReturnRequestSection({
         </Paragraph1>
       ) : (
         <div className="space-y-4">
-          <div className="gap-4 grid grid-cols-1 sm:grid-cols-2">
+          <div className="gap-3 grid grid-cols-2">
             <div>
               <Paragraph1 className="mb-1 text-gray-500 text-xs">Status</Paragraph1>
               <span
@@ -107,7 +107,7 @@ export default function ReturnRequestSection({
                 {formatSubmittedAt(returnRequest.createdAt)}
               </Paragraph1>
             </div>
-            <div>
+            <div className="min-w-0">
               <Paragraph1 className="mb-1 text-gray-500 text-xs">
                 Renter condition report
               </Paragraph1>
@@ -129,10 +129,10 @@ export default function ReturnRequestSection({
 
           {(returnRequest.pickupWindowStart && returnRequest.pickupWindowEnd) ||
           returnRequest.pickupAddress ? (
-            <div className="gap-4 grid grid-cols-1 sm:grid-cols-2">
+            <div className="gap-3 grid grid-cols-2">
               {returnRequest.pickupWindowStart &&
                 returnRequest.pickupWindowEnd && (
-                  <div>
+                  <div className="min-w-0">
                     <Paragraph1 className="mb-1 text-gray-500 text-xs">
                       Pickup window
                     </Paragraph1>
@@ -149,7 +149,7 @@ export default function ReturnRequestSection({
                   <Paragraph1 className="mb-1 text-gray-500 text-xs">
                     Pickup address
                   </Paragraph1>
-                  <Paragraph1 className="font-medium text-gray-900 text-sm">
+                  <Paragraph1 className="break-words font-medium text-gray-900 text-sm">
                     {returnRequest.pickupAddress}
                   </Paragraph1>
                 </div>
@@ -158,35 +158,36 @@ export default function ReturnRequestSection({
           ) : null}
 
           {returnRequest.trackingNumber && (
-            <div>
+            <div className="break-words">
               <Paragraph1 className="mb-1 text-gray-500 text-xs">
                 Return tracking
               </Paragraph1>
-              <Paragraph1 className="font-medium text-gray-900 text-sm">
+              <Paragraph1 className="break-all font-medium text-gray-900 text-sm">
                 {returnRequest.trackingNumber}
               </Paragraph1>
             </div>
           )}
 
-          <div>
-            <Paragraph1 className="mb-1 text-gray-500 text-xs">
-              Renter damage notes
-            </Paragraph1>
-            <Paragraph1 className="text-gray-800 text-sm leading-relaxed">
-              {returnRequest.damageNotes?.trim() || "None reported"}
-            </Paragraph1>
-          </div>
-
-          {returnRequest.listerDamageNotes?.trim() && (
-            <div>
+          <div className="gap-3 grid grid-cols-2">
+            <div className="min-w-0">
               <Paragraph1 className="mb-1 text-gray-500 text-xs">
-                Lister damage notes
+                Renter damage notes
               </Paragraph1>
-              <Paragraph1 className="text-gray-800 text-sm leading-relaxed">
-                {returnRequest.listerDamageNotes}
+              <Paragraph1 className="break-words text-gray-800 text-sm leading-relaxed">
+                {returnRequest.damageNotes?.trim() || "None reported"}
               </Paragraph1>
             </div>
-          )}
+            {returnRequest.listerDamageNotes?.trim() && (
+              <div className="min-w-0">
+                <Paragraph1 className="mb-1 text-gray-500 text-xs">
+                  Lister damage notes
+                </Paragraph1>
+                <Paragraph1 className="break-words text-gray-800 text-sm leading-relaxed">
+                  {returnRequest.listerDamageNotes}
+                </Paragraph1>
+              </div>
+            )}
+          </div>
 
           <PhotoGrid urls={returnRequest.imageUrls} label="Renter photos" />
           {(returnRequest.listerConfirmationImages.length > 0 ||
@@ -198,7 +199,7 @@ export default function ReturnRequestSection({
           )}
 
           {(returnRequest.shippedAt || returnRequest.deliveredAt) && (
-            <div className="gap-4 grid grid-cols-1 sm:grid-cols-2 pt-2 border-gray-200 border-t">
+            <div className="gap-3 grid grid-cols-2 pt-2 border-gray-200 border-t">
               {returnRequest.shippedAt && (
                 <div>
                   <Paragraph1 className="mb-1 text-gray-500 text-xs">Shipped</Paragraph1>

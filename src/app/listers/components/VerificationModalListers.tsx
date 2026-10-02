@@ -165,7 +165,7 @@ export default function VerificationModalListers({
                     Let's Verify Your Account! 🎉
                   </Paragraph3>
                   <Paragraph1 className="text-gray-600 text-sm leading-relaxed">
-                    To start listing items and build trust with renters, we need
+                    To start listing items and build trust with shoppers, we need
                     to verify your identity. It takes less than 2 minutes!
                   </Paragraph1>
                 </div>

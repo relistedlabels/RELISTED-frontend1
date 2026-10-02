@@ -18,7 +18,7 @@ import Withdraw from "./Withdraw";
 import { useWallet } from "@/lib/queries/renters/useWallet";
 import { motion } from "framer-motion";
 
-type BalanceCardVariant = "available" | "locked";
+type BalanceCardVariant = "locked";
 
 interface BalanceCardProps {
   title: string;
@@ -37,7 +37,6 @@ interface MetricCardProps {
 }
 
 const balanceAmountClasses: Record<BalanceCardVariant, string> = {
-  available: "text-emerald-300",
   locked: "text-amber-200",
 };
 
@@ -144,10 +143,10 @@ const UserWalletDashboard: React.FC = () => {
           <div className="md:col-span-1 flex flex-col justify-between">
             <div className="mb-6">
               <Paragraph1 className="text-sm text-gray-400">
-                Your Total Balance
+                Available to spend
               </Paragraph1>
               <Paragraph3 className="text-4xl font-extrabold mt-1">
-                ₦{(balance.totalBalance ?? 0).toLocaleString()}
+                ₦{(balance.availableBalance ?? 0).toLocaleString()}
               </Paragraph3>
               <Paragraph1 className="text-xs text-gray-500 mt-2">
                 Last updated:{" "}
@@ -163,21 +162,19 @@ const UserWalletDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <BalanceCard
-              title="Available Balance"
-              amount={`₦${(balance.availableBalance ?? 0).toLocaleString()}`}
-              icon={<img src="/icons/lock2.png" className="h-14 w-auto" alt="" />}
-              note="Available to spend on rentals"
-              variant="available"
-            />
-
+          <div className="md:col-span-2 grid grid-cols-1 gap-4">
             <div data-onboarding-target="renter-locked-balance">
               <BalanceCard
-                title="Locked Balance"
+                title="Security deposit on hold"
                 amount={`₦${(balance.lockedBalance ?? 0).toLocaleString()}`}
-                icon={<img src="/icons/lock1.png" className="h-14 w-auto" alt="" />}
-                note="Security deposit held during active rentals"
+                icon={
+                  <img
+                    src="/icons/lock1.png"
+                    className="h-14 w-auto"
+                    alt=""
+                  />
+                }
+                note="Returned to your available balance when the rental is complete."
                 variant="locked"
               />
             </div>

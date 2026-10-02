@@ -1,11 +1,11 @@
 "use client";
 
-import React from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Banknote, CheckCircle2, X, XCircle } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Paragraph1, Header2 } from "@/common/ui/Text";
+import React from "react";
 import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
 import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
+import { Header2, Paragraph1 } from "@/common/ui/Text";
 
 interface WithdrawalActionsPickerModalProps {
   isOpen: boolean;

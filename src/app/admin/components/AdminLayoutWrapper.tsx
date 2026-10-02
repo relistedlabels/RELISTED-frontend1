@@ -1,23 +1,23 @@
 "use client";
 
-import React, { ReactNode, useEffect, useMemo, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { X, LogOut } from "lucide-react";
-import AdminSidebar from "./AdminSidebar";
-import AdminTopNavbar from "./AdminTopNavbar";
-import SessionExpiredModal from "./SessionExpiredModal";
-import { useLogout } from "@/lib/mutations";
-import { useAdminIdStore } from "@/store/useAdminIdStore";
+import { LogOut, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
-import { useCheckDashboardSelection } from "@/lib/queries/auth/useCheckDashboardSelection";
+import { useUserStoreHydrated } from "@/hooks/useUserStoreHydrated";
 import {
   adminIdFromPathname,
   getAdminLoginPath,
 } from "@/lib/auth/adminLoginPath";
-import { useUserStoreHydrated } from "@/hooks/useUserStoreHydrated";
-import { useUserStore } from "@/store/useUserStore";
+import { useLogout } from "@/lib/mutations";
+import { useCheckDashboardSelection } from "@/lib/queries/auth/useCheckDashboardSelection";
+import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { useSessionStore } from "@/store/useSessionStore";
+import { useUserStore } from "@/store/useUserStore";
+import AdminSidebar from "./AdminSidebar";
+import AdminTopNavbar from "./AdminTopNavbar";
+import SessionExpiredModal from "./SessionExpiredModal";
 
 interface AdminLayoutWrapperProps {
   children: ReactNode;
@@ -49,8 +49,10 @@ export default function AdminLayoutWrapper({
   const adminId = useAdminIdStore((state) => state.adminId);
   const logout = useLogout();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isNavOpen, setIsNavOpen] = useState(false);
 
   const isAuthRoute = pathname.includes("/auth");
+
   const adminLoginPath = useMemo(
     () => getAdminLoginPath(adminId ?? adminIdFromPathname(pathname)),
     [adminId, pathname],
@@ -116,10 +118,17 @@ export default function AdminLayoutWrapper({
   return (
     <div className="flex h-screen overflow-hidden bg-gray-100">
       <SessionExpiredModal />
-      <AdminTopNavbar onLogout={handleLogout} />
-      <AdminSidebar onLogout={handleLogout} />
+      <AdminTopNavbar
+        onLogout={handleLogout}
+        onMenuClick={() => setIsNavOpen(true)}
+      />
+      <AdminSidebar
+        isOpen={isNavOpen}
+        onClose={() => setIsNavOpen(false)}
+        onLogout={handleLogout}
+      />
 
-      <main className="hide-scrollbar min-w-0 flex-1 overflow-auto bg-white p-3 pt-[4.5rem] sm:p-8 sm:pt-[100px]">
+      <main className="hide-scrollbar min-w-0 flex-1 overflow-auto bg-white p-3 pt-20 sm:p-8 sm:pt-20">
         {children}
       </main>
 
@@ -141,8 +150,11 @@ export default function AdminLayoutWrapper({
           >
             <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
               <div className="mb-4 flex items-center justify-between">
-                <Paragraph2 className="font-bold text-gray-900">Logout</Paragraph2>
+                <Paragraph2 className="font-bold text-gray-900">
+                  Logout
+                </Paragraph2>
                 <button
+                  type="button"
                   onClick={() => setShowLogoutModal(false)}
                   className="text-gray-400 hover:text-gray-600"
                 >
@@ -157,6 +169,7 @@ export default function AdminLayoutWrapper({
 
               <div className="space-y-3">
                 <button
+                  type="button"
                   onClick={confirmLogout}
                   disabled={logout.isPending}
                   className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3 font-medium text-white transition hover:bg-red-700 disabled:opacity-50"
@@ -168,6 +181,7 @@ export default function AdminLayoutWrapper({
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => setShowLogoutModal(false)}
                   disabled={logout.isPending}
                   className="w-full rounded-lg border border-gray-300 px-4 py-3 font-medium text-gray-900 transition hover:bg-gray-50 disabled:opacity-50"

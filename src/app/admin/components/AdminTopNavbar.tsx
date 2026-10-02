@@ -1,47 +1,164 @@
 "use client";
 
-import React from "react";
-import { LogOut } from "lucide-react";
+import { ChevronDown, LogOut, Menu, Settings } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 import NotificationBell from "@/components/notifications/NotificationBell";
+import { useMe } from "@/lib/queries/auth/useMe";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
+import AdminBrand from "./AdminBrand";
+import AdminSearchBar from "./AdminSearchBar";
 
 interface AdminTopNavbarProps {
   onLogout?: () => void;
+  onMenuClick?: () => void;
 }
 
-export default function AdminTopNavbar({ onLogout }: AdminTopNavbarProps) {
+const getInitials = (name: string): string => {
+  if (!name) return "";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length > 0) {
+    return parts[0].substring(0, 2).toUpperCase();
+  }
+  return "";
+};
+
+const getAvatarBgColor = (name: string): string => {
+  const colors = [
+    "bg-red-400",
+    "bg-blue-400",
+    "bg-green-400",
+    "bg-yellow-400",
+    "bg-purple-400",
+    "bg-pink-400",
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+};
+
+export default function AdminTopNavbar({
+  onLogout,
+  onMenuClick,
+}: AdminTopNavbarProps) {
   const adminId = useAdminIdStore((state) => state.adminId);
+  const { data: user } = useMe();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
   const handleLogout = () => {
+    setShowUserMenu(false);
     if (onLogout) {
       onLogout();
     }
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-40 flex h-14 items-center justify-between border-b border-gray-200 bg-white px-3 sm:h-16 sm:px-8">
-      <div className="flex min-w-0 items-center">
-        <h1 className="truncate text-sm font-bold text-gray-900 sm:text-lg">
-          RELISTED LABELS
-        </h1>
+    <div className="fixed top-0 left-0 right-0 z-40 flex h-16 items-center gap-3 border-b border-gray-200 bg-white px-4 sm:px-6">
+      {/* Left: Burger menu (mobile only) */}
+      <button
+        type="button"
+        onClick={onMenuClick}
+        className="-ml-2 flex-shrink-0 rounded-lg p-2 text-gray-700 transition-colors hover:bg-gray-100 lg:hidden"
+        aria-label="Open navigation menu"
+      >
+        <Menu size={20} />
+      </button>
+
+      <AdminBrand className="hidden sm:flex" />
+
+      {/* Center: Search Bar */}
+      <div className="flex min-w-0 flex-1 justify-center px-2 sm:px-6">
+        <div className="w-full max-w-md">
+          <AdminSearchBar />
+        </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+      {/* Right: Notifications + User */}
+      <div className="flex flex-shrink-0 items-center gap-3">
         {adminId ? (
           <NotificationBell
             href={`/admin/${adminId}/notifications`}
             iconClassName="h-5 w-5 text-gray-700"
-            badgeClassName="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white"
+            badgeClassName="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-red-500"
           />
         ) : null}
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900 sm:px-4"
-          aria-label="Log out"
-        >
-          <LogOut size={18} />
-          <span className="hidden sm:inline">Log Out</span>
-        </button>
+
+        {/* User Profile Section with Dropdown */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-gray-100"
+            aria-label={`Open ${user?.name || "Admin"} menu`}
+            aria-expanded={showUserMenu}
+            aria-haspopup="menu"
+          >
+            <div
+              className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${getAvatarBgColor(
+                user?.name || "",
+              )}`}
+            >
+              {getInitials(user?.name || "")}
+            </div>
+            <div className="hidden min-w-0 text-left sm:block">
+              <p className="truncate text-[13px] font-semibold leading-tight text-gray-900">
+                {user?.name || "Admin"}
+              </p>
+              <p className="text-[11px] leading-tight text-gray-500">Admin</p>
+            </div>
+            <ChevronDown
+              size={16}
+              className="hidden flex-shrink-0 text-gray-400 sm:block"
+            />
+          </button>
+
+          {/* User Dropdown Menu */}
+          {showUserMenu && (
+            <>
+              <button
+                type="button"
+                aria-label="Close user menu"
+                className="fixed inset-0 z-30 cursor-default"
+                onClick={() => setShowUserMenu(false)}
+              />
+              <div
+                role="menu"
+                className="absolute right-0 top-full z-40 mt-2 w-60 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg shadow-gray-900/10"
+              >
+                <div className="border-b border-gray-100 px-4 py-3">
+                  <p className="truncate text-sm font-semibold text-gray-900">
+                    {user?.name || "Admin"}
+                  </p>
+                  <p className="mt-0.5 text-xs text-gray-500">Administrator</p>
+                </div>
+                {adminId ? (
+                  <Link
+                    href={`/admin/${adminId}/settings`}
+                    role="menuitem"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                  >
+                    <Settings size={17} className="text-gray-500" />
+                    Account settings
+                  </Link>
+                ) : null}
+                <div className="border-t border-gray-100 p-1.5">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                  >
+                    <LogOut size={17} />
+                    Log Out
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -1,21 +1,24 @@
 "use client";
 
-import { ListItemSkeleton } from "@/common/ui/SkeletonLoaders";
-import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
 import {
-  ResponsiveDataTable,
   type ResponsiveColumnDef,
+  ResponsiveDataTable,
 } from "@/common/ui/ResponsiveDataTable";
+import { ListItemSkeleton } from "@/common/ui/SkeletonLoaders";
+import { Paragraph1 } from "@/common/ui/Text";
 import { useTopCurators } from "@/lib/queries/admin/useAnalytics";
 
 interface TopCuratorsProps {
+  timeframe: "all_time" | "year" | "month";
+  year?: number;
+  month?: number;
   limit?: number;
 }
 
 type TopCuratorRow = {
   id: string;
   name: string;
-  avatar?: string;
+  avatar?: string | null;
   totalRentals: number;
   totalProducts: number;
   revenue: number;
@@ -44,7 +47,7 @@ const columns: ResponsiveColumnDef<TopCuratorRow>[] = [
   },
   {
     id: "revenue",
-    header: "Revenue",
+    header: "Rental value",
     mobile: "detail",
     render: (curator) => (
       <Paragraph1 className="font-semibold text-gray-900">
@@ -64,19 +67,24 @@ const columns: ResponsiveColumnDef<TopCuratorRow>[] = [
   },
 ];
 
-export default function TopCurators({ limit = 5 }: TopCuratorsProps) {
-  const { data, isPending, error } = useTopCurators(limit);
+export default function TopCurators({
+  timeframe,
+  year,
+  month,
+  limit = 5,
+}: TopCuratorsProps) {
+  const { data, isPending, error } = useTopCurators(
+    { timeframe, year, month },
+    limit,
+  );
 
-  const rawList =
-    data?.data?.topCurators ??
-    (Array.isArray(data?.data) ? data.data : undefined) ??
-    [];
+  const rawList = data?.data ?? [];
 
   const curators: TopCuratorRow[] = rawList.map((item) => ({
     id: item.id,
     name: item.name,
     avatar: item.avatar,
-    totalRentals: item.totalRentals ?? item.rentals ?? 0,
+    totalRentals: item.totalRentals ?? 0,
     totalProducts: item.totalProducts ?? 0,
     revenue: item.revenue ?? 0,
   }));
@@ -88,17 +96,30 @@ export default function TopCurators({ limit = 5 }: TopCuratorsProps) {
   if (error) {
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <Paragraph3 className="mb-2 text-xl font-semibold text-gray-900">
-          Top Listers
-        </Paragraph3>
-        <Paragraph2 className="text-sm text-gray-600">
+        <h3 className="font-semibold text-gray-900">Top listers by rentals</h3>
+        <p className="mt-1 text-xs text-gray-500">
+          Ranked by rentals and rental value in the selected period. Product
+          count is current.
+        </p>
+        <p className="mt-3 text-sm text-gray-600">
           Unable to load this chart. The server returned an error (check the API
           logs for{" "}
           <span className="font-mono text-xs">
             GET /api/admin/analytics/top-curators
           </span>
           ).
-        </Paragraph2>
+        </p>
+      </div>
+    );
+  }
+
+  if (curators.length === 0) {
+    return (
+      <div className="rounded-lg border border-gray-200 bg-white p-6">
+        <h3 className="font-semibold text-gray-900">Top listers by rentals</h3>
+        <p className="mt-3 text-sm text-gray-600">
+          No rentals were recorded in this period.
+        </p>
       </div>
     );
   }
@@ -106,9 +127,11 @@ export default function TopCurators({ limit = 5 }: TopCuratorsProps) {
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
       <div className="mb-6">
-        <Paragraph3 className="mb-4 text-xl font-semibold text-gray-900">
-          Top Listers
-        </Paragraph3>
+        <h3 className="font-semibold text-gray-900">Top listers by rentals</h3>
+        <p className="mt-1 text-xs text-gray-500">
+          Ranked by rentals and rental value in the selected period. Product
+          count is current.
+        </p>
       </div>
 
       <ResponsiveDataTable

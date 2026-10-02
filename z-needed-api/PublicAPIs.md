@@ -616,7 +616,7 @@ Retrieve detailed information about a specific lister/curator. Displayed on thei
 - Verification status (verified badge)
 - Featured products from this lister
 - Recent reviews from renters
-- Shop policies and about information
+- Shop policies, when configured, and about information
 
 **Request Format:**
 
@@ -644,11 +644,7 @@ GET /api/public/users/user_001
       "isVerified": true,
       "verificationDate": "2024-01-20T00:00:00Z",
       "featured": true,
-      "shopPolicies": {
-        "returnPolicy": "Full refund within 30 days of rental",
-        "deliveryTime": "2-3 business days",
-        "cancellationPolicy": "Free cancellation up to 48 hours before rental"
-      },
+      "shopPolicies": null,
       "featuredProducts": [
         {
           "id": "prod_001",
@@ -683,6 +679,8 @@ GET /api/public/users/user_001
   }
 }
 ```
+
+`shopPolicies` is `null` when the lister has not configured any policies.
 
 **Status Codes:**
 

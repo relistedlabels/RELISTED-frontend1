@@ -13,6 +13,7 @@ import {
   listingThumbnailUrl,
 } from "@/app/admin/lib/adminListingDisplay";
 import ItemTypeBadge from "./ItemTypeBadge";
+import { ListingPriceSummary } from "./ListingPriceSummary";
 
 interface SoldListingsTableProps {
   products: Product[];
@@ -81,7 +82,7 @@ function buildColumns(
     },
     {
       id: "curator",
-      header: "Curator",
+      header: "Lister",
       mobile: "detail",
       render: (product) => {
         const safeProduct = {
@@ -122,11 +123,8 @@ function buildColumns(
       id: "price",
       header: "Price",
       mobile: "detail",
-      render: (product) => (
-        <Paragraph1 className="font-medium text-gray-900">
-          ₦{product.originalValue?.toLocaleString() || 0}
-        </Paragraph1>
-      ),
+      mobileDetailClassName: "col-span-2 rounded-lg bg-gray-50 px-3 py-2.5",
+      render: (product) => <ListingPriceSummary product={product} />,
     },
     {
       id: "actions",
