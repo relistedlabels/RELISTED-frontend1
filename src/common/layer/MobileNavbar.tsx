@@ -54,7 +54,9 @@ function MobileNavLink({
     return (
       <Link href={href} onClick={onNavigate} className={className}>
         <Icon className={`h-5 w-5 shrink-0 ${iconClassName}`} aria-hidden />
-        <Paragraph1 className={`flex-1 text-base ${labelClassName}`}>
+        <Paragraph1
+          className={`min-w-0 flex-1 text-left text-base ${labelClassName}`}
+        >
           {label}
         </Paragraph1>
         {showChevron ? (
@@ -78,7 +80,9 @@ function MobileNavLink({
       className={className}
     >
       <Icon className={`h-5 w-5 shrink-0 ${iconClassName}`} aria-hidden />
-      <Paragraph1 className={`flex-1 text-left text-base ${labelClassName}`}>
+      <Paragraph1
+        className={`min-w-0 flex-1 text-left text-base ${labelClassName}`}
+      >
         {disabled ? "Setting up your listing profile..." : label}
       </Paragraph1>
       {showChevron ? (

@@ -1,6 +1,6 @@
 // store/useUserStore.ts
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 type UserState = {
   token: string | null;
@@ -27,7 +27,7 @@ type UserState = {
 
   setMfaSession: (data: { sessionToken: string; email: string }) => void;
 
-  clearUser: () => void;
+  clearUser: () => Promise<void>;
 };
 
 export const useUserStore = create<UserState>()(
@@ -65,12 +65,8 @@ export const useUserStore = create<UserState>()(
           requiresMfa: true,
         }),
 
-      clearUser: () => {
+      clearUser: async () => {
         // Clear cookies on the server
-        fetch("/api/auth/clear-token", { method: "POST" }).catch((err) =>
-          console.error("Failed to clear token cookie:", err),
-        );
-
         set({
           token: null,
           userId: null,
@@ -80,6 +76,21 @@ export const useUserStore = create<UserState>()(
           sessionToken: null,
           requiresMfa: false,
         });
+
+        try {
+          const response = await fetch("/api/auth/clear-token", {
+            method: "POST",
+          });
+          if (!response.ok) {
+            console.error(
+              "Failed to clear token cookie:",
+              response.status,
+              response.statusText,
+            );
+          }
+        } catch (err) {
+          console.error("Failed to clear token cookie:", err);
+        }
       },
     }),
     {

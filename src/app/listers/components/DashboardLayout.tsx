@@ -31,7 +31,6 @@ import { useBusinessProfile } from "@/lib/queries/listers/useBusinessProfile";
 import { useOpenAvailabilityRequestsCount } from "@/lib/queries/listers/useOpenAvailabilityRequestsCount";
 import { useActiveOrdersCount } from "@/lib/queries/listers/useActiveOrdersCount";
 import NotificationBell from "@/components/notifications/NotificationBell";
-import { useUserStore } from "@/store/useUserStore";
 import { UserProfileBadge } from "./UserProfileBadge";
 import { UserProfileBadge2 } from "./UserProfileBadge2";
 
@@ -170,14 +169,12 @@ const SidebarFooter = ({
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const pathname = usePathname();
   const router = useRouter();
-  const clearUser = useUserStore((s) => s.clearUser);
   const logout = useLogout();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleConfirmLogout = () => {
     logout.mutate(undefined, {
       onSuccess: () => {
-        clearUser();
         setShowLogoutModal(false);
         router.push("/auth/sign-in");
       },
@@ -259,9 +256,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const toggleMobile = () => setMobileOpen((p) => !p);
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen w-full bg-gray-50">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-72 h-screen overflow-hidden hide-scrollbar overflow-y-auto bg-[#241F20] text-white p-6 sticky top-0">
+      <aside className="hidden md:flex w-72 shrink-0 flex-col h-screen overflow-hidden hide-scrollbar overflow-y-auto bg-[#241F20] text-white p-6 sticky top-0">
         <div className="mb-6">
           <BrandHeader />
         </div>
@@ -320,10 +317,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex min-w-0 flex-1 flex-col">
         {/* Top Bar */}
-        <header className="flex items-center justify-between px-4 sm:px-8 h-16 bg-[#241F20]">
-<div className="md:hidden">
+        <header className="flex w-full shrink-0 items-center justify-between px-4 sm:px-8 h-16 bg-[#241F20]">
+          <div className="md:hidden">
             <button
               onClick={toggleMobile}
               aria-label="Open menu"
@@ -348,7 +345,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 h-[90vh] max-h-[90vh] overflow-hidden overflow-y-auto p-4 md:p-8">
+        <main className="min-w-0 flex-1 h-[90vh] max-h-[90vh] overflow-hidden overflow-y-auto p-4 md:p-8">
           {children}
         </main>
       </div>
