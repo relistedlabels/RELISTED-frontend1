@@ -9,6 +9,10 @@ import {
   isListerResaleOrder,
   isResaleItem,
 } from "@/lib/listers/listerOrderRow";
+import {
+  computePlatformFee,
+  LISTER_PLATFORM_FEE_PERCENT,
+} from "@/lib/listers/platformFee";
 
 interface OrderSummaryEscrowProps {
   rentalFeeTotal?: string;
@@ -53,6 +57,22 @@ const OrderSummaryEscrow: React.FC<OrderSummaryEscrowProps> = ({
         orderData?.escrow?.cleaningFeeTotal ??
         0,
     ) || 0;
+  const platformFee = orderData?.platformFee;
+  const platformFeeBase = Number(
+    platformFee?.baseAmount ??
+      platformFee?.grossEarnings ??
+      platformFee?.grossAmount ??
+      (Number(rentalFeeTotal) + cleaningFeesTotal),
+  );
+  const platformFeeRate = Number(
+    platformFee?.ratePercent ?? LISTER_PLATFORM_FEE_PERCENT,
+  );
+  const platformFeeAmount = Number.isFinite(Number(platformFee?.amount))
+    ? Number(platformFee.amount)
+    : computePlatformFee(platformFeeBase, platformFeeRate);
+  const netEarnings = Number.isFinite(Number(platformFee?.netEarnings))
+    ? Number(platformFee.netEarnings)
+    : Math.max(0, platformFeeBase - platformFeeAmount);
   const releaseCondition =
     orderData?.escrow?.releaseCondition || "return confirmation";
 
@@ -102,15 +122,15 @@ const OrderSummaryEscrow: React.FC<OrderSummaryEscrowProps> = ({
         )}
       </div>
 
-      {orderData?.platformFee && (
+      {!isResale && (
         <div className="space-y-1 mb-4 text-gray-500 text-sm">
           <div className="flex justify-between">
-            <span>Platform fee ({orderData.platformFee.ratePercent}%)</span>
-            <span>-{formatCurrency(orderData.platformFee.amount)}</span>
+            <span>Platform fee ({platformFeeRate}%)</span>
+            <span>-{formatCurrency(platformFeeAmount)}</span>
           </div>
           <div className="flex justify-between font-medium text-gray-700">
             <span>You earn</span>
-            <span>{formatCurrency(orderData.platformFee.netEarnings)}</span>
+            <span>{formatCurrency(netEarnings)}</span>
           </div>
         </div>
       )}
