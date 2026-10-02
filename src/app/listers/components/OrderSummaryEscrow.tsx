@@ -1,8 +1,9 @@
 "use client";
+
 // ENDPOINTS: GET /api/listers/orders/:orderId (payment & escrow summary)
 
-import React from "react";
 import { Lock } from "lucide-react";
+import React from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
   isListerResaleOrder,
@@ -45,6 +46,13 @@ const OrderSummaryEscrow: React.FC<OrderSummaryEscrowProps> = ({
       orderData?.escrow?.itemValueHeld ??
       propEscrowValueHeld ??
       0;
+  const cleaningFeesTotal =
+    Number(
+      clickedItem?.cleaningFee ??
+        orderData?.listerMerchandise?.cleaningFeesTotal ??
+        orderData?.escrow?.cleaningFeeTotal ??
+        0,
+    ) || 0;
   const releaseCondition =
     orderData?.escrow?.releaseCondition || "return confirmation";
 
@@ -81,6 +89,17 @@ const OrderSummaryEscrow: React.FC<OrderSummaryEscrowProps> = ({
             {formatCurrency(escrowValueHeld)}
           </Paragraph1>
         </div>
+
+        {!isResale && cleaningFeesTotal > 0 && (
+          <div className="flex justify-between items-center">
+            <Paragraph1 className="font-bold text-black text-lg">
+              Cleaning Fee:
+            </Paragraph1>
+            <Paragraph1 className="font-bold text-black text-2xl">
+              {formatCurrency(cleaningFeesTotal)}
+            </Paragraph1>
+          </div>
+        )}
       </div>
 
       {orderData?.platformFee && (
