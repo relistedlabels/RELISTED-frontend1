@@ -92,6 +92,16 @@ describe("computeCheckoutGrandTotal", () => {
     );
     expect(total).toBe(99250);
   });
+
+  test("includes the exact whole-naira platform fee supplied by checkout", () => {
+    expect(
+      computeCheckoutGrandTotal(
+        { purchaseTotal: 4125, serviceCharge: 15 },
+        0,
+        0,
+      ),
+    ).toBe(4140);
+  });
 });
 
 describe("buildCheckoutStickySummaryLines", () => {

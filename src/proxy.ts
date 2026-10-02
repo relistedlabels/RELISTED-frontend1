@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -46,6 +46,7 @@ export function proxy(req: NextRequest) {
 
   // Restrict admins to /admin routes only (public shop allowed for sale preview)
   if (
+    token &&
     userRole === "ADMIN" &&
     !pathname.startsWith("/admin") &&
     !isPublicShopRoute
