@@ -4,6 +4,7 @@
 import React, { useMemo, useEffect, useRef } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { ToolInfo } from "@/common/ui/ToolInfo";
+import { PayoutHint } from "./PayoutHint";
 import { useProductDraftStore } from "@/store/useProductDraftStore";
 
 const formatNumber = (value: number) =>
@@ -107,6 +108,7 @@ export const PricingFields: React.FC = () => {
                   setField("resalePrice", parseNumber(e.target.value))
                 }
               />
+              <PayoutHint amount={data.resalePrice} />
             </div>
           </div>
         </>
@@ -154,6 +156,7 @@ export const PricingFields: React.FC = () => {
               <p className="mt-1 text-[11px] text-gray-500">
                 Suggested ≈ ₦{formatNumber(suggestedDailyRentalPrice)}
               </p>
+              <PayoutHint amount={data.dailyRentalPrice} suffix="/day" />
             </div>
           </div>
 
@@ -222,6 +225,7 @@ export const PricingFields: React.FC = () => {
                   setField("resalePrice", parseNumber(e.target.value))
                 }
               />
+              <PayoutHint amount={data.resalePrice} />
             </div>
           </div>
 
@@ -245,6 +249,7 @@ export const PricingFields: React.FC = () => {
               <p className="mt-1 text-[11px] text-gray-500">
                 Suggested ≈ ₦{formatNumber(suggestedDailyRentalPrice)}
               </p>
+              <PayoutHint amount={data.dailyRentalPrice} suffix="/day" />
             </div>
 
             <div>

@@ -13,7 +13,7 @@ export default function TermsAndConditions() {
             Terms and Conditions
           </Header1Plus>
           <Paragraph1 className="text-gray-300">
-            Last updated: March 2026
+            Last updated: October 2026
           </Paragraph1>
         </div>
       </section>
@@ -114,6 +114,41 @@ export default function TermsAndConditions() {
                     Used to cover repair or replacement costs if necessary
                   </li>
                 </ul>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-black mb-3">
+                  Platform Fee
+                </h3>
+                <Paragraph1 className="text-gray-700 leading-relaxed mb-3">
+                  Relisted Labels charges vendors a platform fee of{" "}
+                  <strong>10%</strong> of the rental charge or sale price of
+                  each completed transaction. The fee is deducted automatically
+                  when your earnings are released to your wallet.
+                </Paragraph1>
+                <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2 mb-3">
+                  <li>
+                    The fee does not apply to collateral deposits or cleaning
+                    fees
+                  </li>
+                  <li>
+                    The fee applies only to orders placed after this update
+                    takes effect; orders placed earlier are not affected
+                  </li>
+                  <li>
+                    The fee is shown when you create a listing and on each
+                    order, including the amount you receive
+                  </li>
+                  <li>
+                    Where a dispute is resolved in your favour, the fee applies
+                    to the rental or sale amount paid out, not to damage
+                    compensation
+                  </li>
+                </ul>
+                <Paragraph1 className="text-gray-700 leading-relaxed">
+                  We may change the fee in future by updating these Terms.
+                  Changes apply only to orders placed after they take effect.
+                </Paragraph1>
               </div>
 
               <div>
@@ -497,7 +532,7 @@ export default function TermsAndConditions() {
           {/* Last Update */}
           <div className="border-t border-gray-200 pt-8 text-center text-gray-600">
             <p className="text-sm">
-              Last updated: March 2026
+              Last updated: October 2026
               <br />© 2026 RELISTED. All rights reserved.
             </p>
           </div>
