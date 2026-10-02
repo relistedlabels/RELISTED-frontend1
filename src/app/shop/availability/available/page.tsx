@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getPublicAvailabilityStatus } from "@/lib/api/publicAvailability";
 import { useRequestMagicLink } from "@/lib/mutations";
 import { useState } from "react";
+import { useUserStore } from "@/store/useUserStore";
 
 export default function AvailabilityAvailablePage() {
   const searchParams = useSearchParams();
@@ -25,12 +26,26 @@ export default function AvailabilityAvailablePage() {
 
   const productName = data?.data?.productName ?? "this piece";
   const totalPrice = data?.data?.totalPrice;
-  const requesterEmail = data?.data?.requesterEmail as string | null | undefined;
+  const requesterEmail = data?.data?.requesterEmail as
+    | string
+    | null
+    | undefined;
   const isPurchase = data?.data?.rentalDays === 0;
 
   const completeRentalUrl = data?.data?.completeRentalUrl;
 
+  const signedInEmail = useUserStore((s) => s.email);
+  const isSignedInAsRequester = Boolean(
+    signedInEmail &&
+      requesterEmail &&
+      signedInEmail.toLowerCase() === requesterEmail.toLowerCase(),
+  );
+
   const handleLoginLink = () => {
+    if (isSignedInAsRequester) {
+      window.location.href = "/shop/cart/checkout";
+      return;
+    }
     if (completeRentalUrl) {
       window.location.href = completeRentalUrl;
       return;
@@ -58,9 +73,7 @@ export default function AvailabilityAvailablePage() {
       <Paragraph1 className="max-w-md text-gray-600 leading-relaxed">
         {isLoading
           ? "Loading your details…"
-          : isPurchase
-            ? `${productName} is available to buy. Tap the button below and we will email you a one-tap sign-in link to complete checkout.`
-            : `${productName} is available for your dates. Tap the button below and we will email you a one-tap sign-in link to complete checkout.`}
+          : `${productName} is available ${isPurchase ? "to buy" : "for your dates"}. Continue to checkout to complete your order.`}
       </Paragraph1>
       {totalPrice ? (
         <Paragraph1 className="mt-2 text-lg font-bold text-gray-900">
@@ -76,9 +89,7 @@ export default function AvailabilityAvailablePage() {
           disabled={requestMagicLink.isPending}
           className="flex-1 rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
         >
-          {requestMagicLink.isPending
-            ? "Sending link…"
-            : "Email me a login link"}
+          {requestMagicLink.isPending ? "Please wait…" : "Continue to checkout"}
         </button>
         <Link
           href="/shop?listingType=RENTAL,RENT_OR_RESALE"
@@ -90,8 +101,7 @@ export default function AvailabilityAvailablePage() {
 
       {linkSent && (
         <Paragraph1 className="mt-4 max-w-md text-sm text-green-600">
-          Login link sent. Check your inbox and tap the link to sign in and
-          checkout.
+          We emailed you a sign-in link. Tap it to continue to checkout.
         </Paragraph1>
       )}
     </div>
