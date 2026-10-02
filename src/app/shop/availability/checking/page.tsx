@@ -206,12 +206,10 @@ export default function AvailabilityCheckingPage() {
         {isApprovedForShopper ? (
           <div className="mt-8 flex w-full max-w-sm flex-col gap-3">
             <Link
-              href={
-                completeRentalUrl ??
-                (token
-                  ? `/shop/availability/available?requestId=${encodeURIComponent(requestId)}&token=${encodeURIComponent(token)}`
-                  : `/shop/availability/available?requestId=${encodeURIComponent(requestId)}`)
-              }
+              href={completeRentalUrl ??
+                (isAuthenticatedRequester
+                  ? "/shop/cart/checkout"
+                  : `/shop/availability/available?requestId=${encodeURIComponent(requestId)}${token ? `&token=${encodeURIComponent(token)}` : ""}`)}
               className="inline-flex w-full items-center justify-center rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-900"
             >
               Complete your order

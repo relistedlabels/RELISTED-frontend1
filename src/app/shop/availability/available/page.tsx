@@ -6,7 +6,10 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
-import { getPublicAvailabilityStatus } from "@/lib/api/publicAvailability";
+import {
+  getAuthenticatedAvailabilityStatus,
+  getPublicAvailabilityStatus,
+} from "@/lib/api/publicAvailability";
 import { useRequestMagicLink } from "@/lib/mutations";
 import { useUserStore } from "@/store/useUserStore";
 
@@ -17,6 +20,7 @@ export default function AvailabilityAvailablePage() {
   const [linkSent, setLinkSent] = useState(false);
 
   const requestMagicLink = useRequestMagicLink();
+  const signedInUserId = useUserStore((s) => s.userId);
 
   const { data, isLoading } = useQuery({
     queryKey: ["availability-status", requestId, token],
@@ -25,26 +29,45 @@ export default function AvailabilityAvailablePage() {
     refetchInterval: (query) =>
       query.state.data?.data?.status === "available" ? false : 15000,
   });
+  const { data: signedInStatus } = useQuery({
+    queryKey: [
+      "availability-status",
+      requestId,
+      "authenticated",
+      signedInUserId,
+    ],
+    queryFn: () => getAuthenticatedAvailabilityStatus(requestId),
+    enabled: Boolean(requestId && signedInUserId && !token),
+    refetchInterval: (query) =>
+      query.state.data?.data?.status === "available" ? false : 15000,
+  });
 
-  const productName = data?.data?.productName ?? "this piece";
-  const totalPrice = data?.data?.totalPrice;
-  const requesterEmail = data?.data?.requesterEmail as
+  const statusData = token ? data?.data : signedInStatus?.data;
+  const productName = statusData?.productName ?? "this piece";
+  const totalPrice = statusData?.totalPrice;
+  const requesterEmail = statusData?.requesterEmail as
     | string
     | null
     | undefined;
-  const isPurchase = data?.data?.rentalDays === 0;
+  const isPurchase = statusData?.rentalDays === 0;
 
-  const completeRentalUrl = data?.data?.completeRentalUrl;
-
+  const completeRentalUrl = statusData?.completeRentalUrl;
   const signedInEmail = useUserStore((s) => s.email);
+  const signedInRole = useUserStore((s) => s.role);
   const isSignedInAsRequester = Boolean(
-    signedInEmail &&
+    signedInUserId &&
+      signedInEmail &&
       requesterEmail &&
       signedInEmail.toLowerCase() === requesterEmail.toLowerCase(),
   );
+  const isApprovedForSignedInUser =
+    Boolean(signedInUserId) &&
+    (signedInRole === "SHOPPER" || isSignedInAsRequester) &&
+    (signedInStatus?.data?.status ?? data?.data?.status) === "available" &&
+    !statusData?.canStillBeApproved;
 
   const handleLoginLink = () => {
-    if (isSignedInAsRequester) {
+    if (isApprovedForSignedInUser) {
       window.location.href = "/shop/cart/checkout";
       return;
     }
@@ -73,7 +96,7 @@ export default function AvailabilityAvailablePage() {
       </div>
       <Header1Plus className="mb-3">It&apos;s available!</Header1Plus>
       <Paragraph1 className="max-w-md text-gray-600 leading-relaxed">
-        {isLoading
+        {isLoading && !signedInStatus
           ? "Loading your details…"
           : `${productName} is available ${isPurchase ? "to buy" : "for your dates"}. Continue to checkout to complete your order.`}
       </Paragraph1>
