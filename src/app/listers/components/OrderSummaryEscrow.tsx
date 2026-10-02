@@ -58,21 +58,30 @@ const OrderSummaryEscrow: React.FC<OrderSummaryEscrowProps> = ({
         0,
     ) || 0;
   const platformFee = orderData?.platformFee;
-  const platformFeeBase = Number(
+  const platformFeeBaseValue = Number(
     platformFee?.baseAmount ??
       platformFee?.grossEarnings ??
       platformFee?.grossAmount ??
+      orderData?.listerMerchandise?.total ??
+      orderData?.listerMerchandise?.rentalSubtotal ??
       (Number(rentalFeeTotal) + cleaningFeesTotal),
   );
   const platformFeeRate = Number(
     platformFee?.ratePercent ?? LISTER_PLATFORM_FEE_PERCENT,
   );
-  const platformFeeAmount = Number.isFinite(Number(platformFee?.amount))
-    ? Number(platformFee.amount)
-    : computePlatformFee(platformFeeBase, platformFeeRate);
-  const netEarnings = Number.isFinite(Number(platformFee?.netEarnings))
-    ? Number(platformFee.netEarnings)
-    : Math.max(0, platformFeeBase - platformFeeAmount);
+  const platformFeeBase = Number.isFinite(platformFeeBaseValue)
+    ? platformFeeBaseValue
+    : 0;
+  const reportedFeeAmount = Number(platformFee?.amount);
+  const platformFeeAmount =
+    platformFee?.amount != null && Number.isFinite(reportedFeeAmount)
+      ? reportedFeeAmount
+      : computePlatformFee(platformFeeBase, platformFeeRate);
+  const reportedNetEarnings = Number(platformFee?.netEarnings);
+  const netEarnings =
+    platformFee?.netEarnings != null && Number.isFinite(reportedNetEarnings)
+      ? reportedNetEarnings
+      : Math.max(0, platformFeeBase - platformFeeAmount);
   const releaseCondition =
     orderData?.escrow?.releaseCondition || "return confirmation";
 
