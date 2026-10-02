@@ -51,7 +51,14 @@ export function getAuthToken(): string | null {
 /** Public catalog endpoints must work for guests even when localStorage has a stale JWT. */
 function shouldAttachAuthHeader(path: string, token: string | null): boolean {
   if (!token) return false;
-  if (path.startsWith("/api/public/")) return false;
+  if (
+    path.startsWith("/api/public/") &&
+    !/^\/api\/public\/availability-requests\/[^/]+\/authenticated-status(?:\?|$)/.test(
+      path,
+    )
+  ) {
+    return false;
+  }
   return true;
 }
 

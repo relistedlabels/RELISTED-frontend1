@@ -84,6 +84,12 @@ export async function getPublicAvailabilityStatus(
   );
 }
 
+export async function getAuthenticatedAvailabilityStatus(requestId: string) {
+  return apiFetch<PublicAvailabilityStatusResponse>(
+    `/api/public/availability-requests/${requestId}/authenticated-status`,
+  );
+}
+
 export type AvailabilityShopFiltersResponse = {
   success: boolean;
   data: {

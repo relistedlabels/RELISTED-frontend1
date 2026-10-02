@@ -1,13 +1,13 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import { CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { CheckCircle2 } from "lucide-react";
+import { useState } from "react";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
-import { useQuery } from "@tanstack/react-query";
 import { getPublicAvailabilityStatus } from "@/lib/api/publicAvailability";
 import { useRequestMagicLink } from "@/lib/mutations";
-import { useState } from "react";
 import { useUserStore } from "@/store/useUserStore";
 
 export default function AvailabilityAvailablePage() {
@@ -22,6 +22,8 @@ export default function AvailabilityAvailablePage() {
     queryKey: ["availability-status", requestId, token],
     queryFn: () => getPublicAvailabilityStatus(requestId, token),
     enabled: Boolean(requestId && token),
+    refetchInterval: (query) =>
+      query.state.data?.data?.status === "available" ? false : 15000,
   });
 
   const productName = data?.data?.productName ?? "this piece";

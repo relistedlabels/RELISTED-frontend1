@@ -1,33 +1,44 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import { Clock3, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Clock3, XCircle } from "lucide-react";
+import { useEffect, useMemo } from "react";
+import TopListingSection from "@/app/shop/product-details/components/TopListingSection";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
-import { useQuery } from "@tanstack/react-query";
 import {
+  getAuthenticatedAvailabilityStatus,
   getAvailabilityShopFilters,
   getPublicAvailabilityStatus,
 } from "@/lib/api/publicAvailability";
-import { getAuthToken } from "@/lib/api/http";
-import { useEffect, useMemo } from "react";
-import { buildSimilarShopHref } from "@/lib/shop/buildSimilarShopHref";
 import { usePublicProductById } from "@/lib/queries/product/usePublicProductById";
-import TopListingSection from "@/app/shop/product-details/components/TopListingSection";
+import { buildSimilarShopHref } from "@/lib/shop/buildSimilarShopHref";
+import { useUserStore } from "@/store/useUserStore";
 
 export default function AvailabilityCheckingPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const requestId = searchParams.get("requestId") ?? "";
   const token = searchParams.get("token") ?? "";
+  const signedInUserId = useUserStore((state) => state.userId);
+  const signedInEmail = useUserStore((state) => state.email);
+  const signedInRole = useUserStore((state) => state.role);
   const productIdFromUrl = searchParams.get("productId") ?? "";
+  const getStatus = () => {
+    if (token) return getPublicAvailabilityStatus(requestId, token);
+    if (signedInUserId) return getAuthenticatedAvailabilityStatus(requestId);
+    throw new Error("Sign in to check this availability request.");
+  };
   const { data, isLoading } = useQuery({
-    queryKey: ["availability-status", requestId, token],
-    queryFn: () => getPublicAvailabilityStatus(requestId, token),
-    enabled: Boolean(requestId && token),
+    queryKey: ["availability-status", requestId, token, signedInUserId],
+    queryFn: getStatus,
+    enabled: Boolean(requestId && (token || signedInUserId)),
     refetchInterval: (query) => {
       const s = query.state.data?.data?.status;
-      return s === "checking" || s === "awaiting_lister" ? 15000 : false;
+      return s === "checking" || s === "awaiting_lister" || s === "available"
+        ? 15000
+        : false;
     },
   });
   const { data: shopFiltersData } = useQuery({
@@ -37,17 +48,22 @@ export default function AvailabilityCheckingPage() {
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
-  const productId =
-    productIdFromUrl || shopFiltersData?.data?.productId || "";
+  const productId = productIdFromUrl || shopFiltersData?.data?.productId || "";
   const { data: productFromUrl } = usePublicProductById(productId);
 
   const status = data?.data?.status;
+  const requesterEmail = data?.data?.requesterEmail;
+  const isSignedInAsRequester = Boolean(
+    signedInEmail &&
+      requesterEmail &&
+      signedInEmail.toLowerCase() === requesterEmail.toLowerCase(),
+  );
   const productName =
     data?.data?.productName ?? productFromUrl?.name ?? "this piece";
   const completeRentalUrl = data?.data?.completeRentalUrl;
   const isPurchase =
-    data?.data?.rentalDays === 0 ||
-    shopFiltersData?.data?.rentalDays === 0;
+    data?.data?.rentalDays === 0 || shopFiltersData?.data?.rentalDays === 0;
+  const canStillBeApproved = data?.data?.canStillBeApproved ?? false;
   const similarShopHref = useMemo(() => {
     const similarShop =
       shopFiltersData?.data?.similarShop ?? data?.data?.similarShop;
@@ -78,6 +94,11 @@ export default function AvailabilityCheckingPage() {
     productFromUrl,
   ]);
   const isAvailable = status === "available";
+  const isAuthenticatedRequester =
+    Boolean(signedInUserId) &&
+    (signedInRole === "SHOPPER" || isSignedInAsRequester);
+  const isApprovedForShopper =
+    isAvailable && !canStillBeApproved && isAuthenticatedRequester;
   const isAwaitingLister = status === "awaiting_lister";
   const isDatesPassed = status === "dates_passed";
   const isUnavailable =
@@ -86,22 +107,36 @@ export default function AvailabilityCheckingPage() {
     status === "cancelled";
 
   useEffect(() => {
-    if (!isAvailable || !requestId || !token) return;
-    if (getAuthToken()) {
-      router.replace("/shop/cart");
+    if (
+      !isAvailable ||
+      canStillBeApproved ||
+      isApprovedForShopper ||
+      !requestId
+    )
       return;
-    }
     const availableUrl =
       completeRentalUrl ??
-      `/shop/availability/available?requestId=${encodeURIComponent(requestId)}&token=${encodeURIComponent(token)}`;
+      (token
+        ? `/shop/availability/available?requestId=${encodeURIComponent(requestId)}&token=${encodeURIComponent(token)}`
+        : `/shop/availability/available?requestId=${encodeURIComponent(requestId)}`);
     router.replace(availableUrl);
-  }, [isAvailable, requestId, token, completeRentalUrl, router]);
+  }, [
+    isAvailable,
+    canStillBeApproved,
+    isApprovedForShopper,
+    requestId,
+    token,
+    completeRentalUrl,
+    router,
+  ]);
 
-  if (isAvailable) {
+  if (isAvailable && !canStillBeApproved && !isApprovedForShopper) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center px-6 py-16 text-center">
         <Header1Plus className="mb-3">It&apos;s available!</Header1Plus>
-        <Paragraph1 className="text-gray-600">Taking you to your cart…</Paragraph1>
+        <Paragraph1 className="text-gray-600">
+          Taking you to your cart…
+        </Paragraph1>
       </div>
     );
   }
@@ -151,10 +186,31 @@ export default function AvailabilityCheckingPage() {
               : `We have not heard back yet on your dates for ${productName}. The lister can still confirm while your dates are valid. We will email you if it is available.`)}
           {!isUnavailable &&
             !isAwaitingLister &&
+            !(isAvailable && canStillBeApproved) &&
             (isPurchase
               ? "We've asked the lister to confirm this item is still available. We'll notify you by email as soon as we hear back."
               : "We've asked the lister to confirm your dates. We'll notify you by email as soon as we hear back.")}
         </Paragraph1>
+
+        {isApprovedForShopper ? (
+          <div className="mt-8 flex w-full max-w-sm flex-col gap-3">
+            <Paragraph1 className="text-sm font-medium text-green-700">
+              The lister has approved your request. Continue to complete your
+              order.
+            </Paragraph1>
+            <Link
+              href={
+                completeRentalUrl ??
+                (token
+                  ? `/shop/availability/available?requestId=${encodeURIComponent(requestId)}&token=${encodeURIComponent(token)}`
+                  : `/shop/availability/available?requestId=${encodeURIComponent(requestId)}`)
+              }
+              className="inline-flex w-full items-center justify-center rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-900"
+            >
+              Complete your order
+            </Link>
+          </div>
+        ) : null}
 
         <div className="mt-8 flex w-full max-w-sm flex-col gap-3 sm:flex-row">
           <Link
