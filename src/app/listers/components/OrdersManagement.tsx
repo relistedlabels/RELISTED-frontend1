@@ -180,9 +180,9 @@ function OrderTabs<T extends string>({
   layoutId: string;
 }) {
   return (
-    <div className="relative mb-8 w-full">
-      <div className="w-full max-w-full">
-        <div className="grid w-full grid-cols-2 gap-1 rounded-xl border border-gray-300 bg-[#F9F9F7] p-1 sm:inline-flex sm:w-auto sm:whitespace-nowrap">
+    <div className="relative mb-8 w-full overflow-hidden">
+      <div className="w-full max-w-full overflow-x-auto sm:overflow-visible hide-scrollbar scrollbar-hide">
+        <div className="inline-flex gap-1 bg-[#F9F9F7] p-1 border border-gray-300 rounded-xl whitespace-nowrap">
           {tabs.map((tab) => {
             const isActive = active === tab;
             const count = counts?.[tab];
@@ -192,7 +192,7 @@ function OrderTabs<T extends string>({
                 key={tab}
                 type="button"
                 onClick={() => onSelect(tab)}
-                className={`relative w-full min-w-0 px-3 py-2.5 text-sm font-bold transition-colors duration-300 z-10 sm:w-auto sm:shrink-0 sm:px-8 ${
+                className={`relative shrink-0 px-4 sm:px-8 py-2.5 text-sm font-bold transition-colors duration-300 z-10 ${
                   isActive ? "text-white" : "text-gray-500 hover:text-black"
                 }`}
               >
@@ -207,7 +207,7 @@ function OrderTabs<T extends string>({
                     }}
                   />
                 )}
-                <Paragraph1 className="text-center capitalize">
+                <Paragraph1 className="capitalize">
                   {labels[tab]}
                   {typeof count === "number" ? (
                     <span className="opacity-90 font-semibold"> ({count})</span>
