@@ -83,6 +83,19 @@ const OrderSummaryEscrow: React.FC<OrderSummaryEscrowProps> = ({
         </div>
       </div>
 
+      {orderData?.platformFee && (
+        <div className="space-y-1 mb-4 text-gray-500 text-sm">
+          <div className="flex justify-between">
+            <span>Platform fee ({orderData.platformFee.ratePercent}%)</span>
+            <span>-{formatCurrency(orderData.platformFee.amount)}</span>
+          </div>
+          <div className="flex justify-between font-medium text-gray-700">
+            <span>You earn</span>
+            <span>{formatCurrency(orderData.platformFee.netEarnings)}</span>
+          </div>
+        </div>
+      )}
+
       {/* Escrow Informational Box */}
       <div className="flex items-start space-x-4 bg-[#FFFCEB] p-4 border border-[#FFEB82] rounded-xl">
         <div className="mt-1 shrink-0">
