@@ -29,13 +29,12 @@ export default function BrandLogosCarousel() {
 
   if (isLoading) return null;
   if (error) return null;
-  if (listingChecks.some((query) => query.isLoading)) return null;
 
   return (
     <div className="w-full container px-4 sm:px-0 mx-auto py-4 sm:py-[17px] bg-whit ">
       <div className="flex sm:justify-center text-gray-600 overflow-hidden overflow-x-auto hide-scrollbar scrollbar-hide gap-1 sm:gap-14 px-">
         {visibleBrands
-          .filter((_, index) => listingChecks[index]?.data === true)
+          .filter((_, index) => listingChecks[index]?.data !== false)
           .slice(0, 10)
           .map((brand) => (
             <Link
