@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Header1Plus, Paragraph1, Paragraph3 } from "@/common/ui/Text";
@@ -25,7 +24,7 @@ const PopularCategorySection = () => {
       <div className="grid grid-cols-2 sm:grid-cols-2 gap-2 sm:gap-4 ">
         {displayCategories.map((category, idx) => (
           <Link
-            key={idx}
+            key={category.title}
             href={category.link}
             className="group relative overflow-hidden  h-48 sm:h-[500px]"
           >
@@ -53,6 +52,15 @@ const PopularCategorySection = () => {
             </div>
           </Link>
         ))}
+      </div>
+
+      <div className="mt-6 flex justify-center">
+        <Link
+          href="/shop?title=Shop&description=Browse+all+collections"
+          className="inline-flex h-11 items-center justify-center rounded-xl bg-black px-6 text-sm font-semibold text-white transition hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+        >
+          Browse All
+        </Link>
       </div>
     </section>
   );
