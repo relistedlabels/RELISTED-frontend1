@@ -116,6 +116,7 @@ function WalletsPageInner() {
   // Fetch data from APIs - only when tab is active (lazy loading)
   const statsQuery = useWalletStats();
   const withdrawalRequestsQuery = useWithdrawalRequests({
+    status: "pending",
     page: 1,
     limit: 1,
   });
