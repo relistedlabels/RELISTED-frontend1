@@ -60,6 +60,7 @@ export function useAdminNavCounts(): Record<AdminNavCountKey, number> {
   });
 
   const pendingWithdrawals = useWithdrawalRequests({
+    status: "PENDING",
     page: 1,
     limit: 1,
   });
