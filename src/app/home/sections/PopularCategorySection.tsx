@@ -57,9 +57,10 @@ const PopularCategorySection = () => {
       <div className="mt-6 flex justify-center">
         <Link
           href="/shop?title=Shop&description=Browse+all+collections"
-          className="inline-flex h-11 items-center justify-center rounded-xl bg-black px-6 text-sm font-semibold text-white transition hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+          className="inline-flex justify-center items-center bg-black hover:bg-neutral-800 px-8 py-3 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 w-full max-w-md font-medium text-white text-sm tracking-wider transition-colors duration-200"
+          aria-label="Browse all items"
         >
-          Browse All
+          <Paragraph1 className="text-white">Browse All</Paragraph1>
         </Link>
       </div>
     </section>
