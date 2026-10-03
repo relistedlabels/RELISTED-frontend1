@@ -151,6 +151,44 @@ export async function mockCheckoutScenario(
       return;
     }
 
+    if (url.includes("/api/renters/orders") && method === "GET") {
+      await json(route, {
+        success: true,
+        data: { orders: [], totalOrders: 0, page: 1, totalPages: 1 },
+      });
+      return;
+    }
+
+    if (url.includes("/api/renters/favorites") && method === "GET") {
+      await json(route, {
+        success: true,
+        data: {
+          favorites: [],
+          totalFavorites: 0,
+          total: 0,
+          page: 1,
+          totalPages: 1,
+        },
+      });
+      return;
+    }
+
+    if (url.includes("/api/renters/profile") && method === "GET") {
+      await json(route, {
+        success: true,
+        data: { profile: {} },
+      });
+      return;
+    }
+
+    if (url.includes("/notifications/unread-count") && method === "GET") {
+      await json(route, {
+        success: true,
+        data: { unreadCount: 0 },
+      });
+      return;
+    }
+
     if (url.includes("/api/public/products/") && method === "GET") {
       const productId = url.split("/").pop()?.split("?")[0] ?? "prod-e2e";
       const listingType = productId.includes("purchase") ? "RESALE" : "RENTAL";
@@ -193,10 +231,7 @@ export async function mockCheckoutScenario(
       return;
     }
 
-    if (
-      /\/api\/renters\/orders\/[^/?]+$/.test(url) &&
-      method === "GET"
-    ) {
+    if (/\/api\/renters\/orders\/[^/?]+$/.test(url) && method === "GET") {
       const orderId =
         url.split("/api/renters/orders/")[1]?.split("?")[0]?.trim() ??
         "ORD-E2E-123";
