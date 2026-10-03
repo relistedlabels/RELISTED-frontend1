@@ -2,22 +2,40 @@
 
 "use client";
 
+import { useQueries } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Header2Plus } from "@/common/ui/Text";
+import { productApi } from "@/lib/api/product";
 import { useBrands } from "@/lib/queries/brand/useBrands";
 
 export default function BrandLogosCarousel() {
   const { data: brands, isLoading, error } = useBrands();
+  const visibleBrands =
+    brands?.filter((brand) => brand.isShopVisible === true) ?? [];
+  const listingChecks = useQueries({
+    queries: visibleBrands.map((brand) => ({
+      queryKey: ["brand-has-listing", brand.id, brand.name],
+      queryFn: async () => {
+        const response = await productApi.getAll({
+          brand: [brand.name],
+          limit: 1,
+        });
+        return response.data.products.length > 0;
+      },
+      staleTime: 5 * 60 * 1000,
+    })),
+  });
 
   if (isLoading) return null;
   if (error) return null;
+  if (listingChecks.some((query) => query.isLoading)) return null;
 
   return (
     <div className="w-full container px-4 sm:px-0 mx-auto py-4 sm:py-[17px] bg-whit ">
       <div className="flex sm:justify-center text-gray-600 overflow-hidden overflow-x-auto hide-scrollbar scrollbar-hide gap-1 sm:gap-14 px-">
-        {brands
-          ?.filter((brand) => brand.isShopVisible === true)
+        {visibleBrands
+          .filter((_, index) => listingChecks[index]?.data === true)
           .slice(0, 10)
           .map((brand) => (
             <Link
