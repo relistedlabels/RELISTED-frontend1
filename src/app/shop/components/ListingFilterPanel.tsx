@@ -3,21 +3,24 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Search, SlidersHorizontal, SlidersVertical, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Paragraph1 } from "@/common/ui/Text";
 import { slidePanelActionsFooter } from "@/common/ui/dashboardClasses";
-import { useListingFilterOptions } from "@/lib/queries/product/useListingFilterOptions";
+import { Paragraph1 } from "@/common/ui/Text";
 import {
-  EMPTY_LISTING_FILTER_OPTIONS,
-} from "@/lib/shop/listingFilterOptions";
+  APPAREL_SIZE_OPTIONS,
+  APPAREL_SIZE_UNITS,
+  formatApparelSize,
+  parseApparelSize,
+} from "@/lib/product/apparelSizes";
+import { useListingFilterOptions } from "@/lib/queries/product/useListingFilterOptions";
+import { EMPTY_LISTING_FILTER_OPTIONS } from "@/lib/shop/listingFilterOptions";
 import {
   appendListingFiltersToParams,
+  type ListingFilterValues,
   listingFiltersFromSearchParams,
   listOrEmpty,
   mergePreservedShopParams,
-  type ListingFilterValues,
 } from "@/lib/shop/listingFilters";
 import PriceFilterInputs from "./PriceFilterInputs";
 
@@ -130,11 +133,12 @@ export function ListingFilterButton({
       type="button"
       onClick={onClick}
       aria-label={
-        activeCount > 0
-          ? `Filters, ${activeCount} active`
-          : "Filters"
+        activeCount > 0 ? `Filters, ${activeCount} active` : "Filters"
       }
-      className={className ?? "inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-900 transition hover:border-gray-400 hover:bg-gray-50 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"}
+      className={
+        className ??
+        "inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-900 transition hover:border-gray-400 hover:bg-gray-50 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+      }
     >
       <SlidersHorizontal size={16} aria-hidden />
       <span className={compactOnMobile ? "hidden sm:inline" : undefined}>
@@ -185,6 +189,37 @@ export default function ListingFilterPanel({
   const [mounted, setMounted] = useState(false);
   const categorySectionRef = useRef<HTMLElement | null>(null);
   const sizeSectionRef = useRef<HTMLElement | null>(null);
+  const sizeOptionsByRegion = useMemo(() => {
+    const apiSizesByRegion = new Map<
+      (typeof APPAREL_SIZE_UNITS)[number],
+      Set<string>
+    >();
+    for (const region of APPAREL_SIZE_UNITS)
+      apiSizesByRegion.set(region, new Set());
+    const other: string[] = [];
+    for (const rawSize of filterOptions.sizes) {
+      const parsed = parseApparelSize(rawSize);
+      if (parsed.region) {
+        apiSizesByRegion.get(parsed.region)?.add(parsed.value);
+      } else {
+        other.push(rawSize);
+      }
+    }
+    return {
+      groups: APPAREL_SIZE_UNITS.map((region) => {
+        const apiSizes = apiSizesByRegion.get(region) ?? new Set<string>();
+        const knownSizes = APPAREL_SIZE_OPTIONS[region];
+        return {
+          region,
+          sizes: [
+            ...knownSizes.filter((size) => apiSizes.has(size)),
+            ...[...apiSizes].filter((size) => !knownSizes.includes(size)),
+          ],
+        };
+      }),
+      other,
+    };
+  }, [filterOptions.sizes]);
 
   useEffect(() => {
     setMounted(true);
@@ -345,13 +380,12 @@ export default function ListingFilterPanel({
                           .includes(categorySearch.toLowerCase()),
                       )
                       .map((cat) => (
-                        <label
-                          key={cat.id}
-                          className={filterOptionLabel}
-                        >
+                        <label key={cat.id} className={filterOptionLabel}>
                           <input
                             type="checkbox"
-                            checked={listOrEmpty(localFilters.category).includes(cat.id)}
+                            checked={listOrEmpty(
+                              localFilters.category,
+                            ).includes(cat.id)}
                             onChange={(e) =>
                               setLocalFilters({
                                 ...localFilters,
@@ -398,16 +432,17 @@ export default function ListingFilterPanel({
                   <div className="max-h-48 overflow-y-auto space-y-1">
                     {filterOptions.tags
                       .filter((tag) =>
-                        tag.name.toLowerCase().includes(tagSearch.toLowerCase()),
+                        tag.name
+                          .toLowerCase()
+                          .includes(tagSearch.toLowerCase()),
                       )
                       .map((tag) => (
-                        <label
-                          key={tag.id}
-                          className={filterOptionLabel}
-                        >
+                        <label key={tag.id} className={filterOptionLabel}>
                           <input
                             type="checkbox"
-                            checked={listOrEmpty(localFilters.tags).includes(tag.name)}
+                            checked={listOrEmpty(localFilters.tags).includes(
+                              tag.name,
+                            )}
                             onChange={(e) =>
                               setLocalFilters({
                                 ...localFilters,
@@ -432,9 +467,7 @@ export default function ListingFilterPanel({
               </section>
 
               <section>
-                <Paragraph1 className={filterSectionTitle}>
-                  Brands
-                </Paragraph1>
+                <Paragraph1 className={filterSectionTitle}>Brands</Paragraph1>
                 <div className="mb-2">
                   <input
                     type="text"
@@ -459,13 +492,12 @@ export default function ListingFilterPanel({
                           .includes(brandSearch.toLowerCase()),
                       )
                       .map((brand) => (
-                        <label
-                          key={brand.id}
-                          className={filterOptionLabel}
-                        >
+                        <label key={brand.id} className={filterOptionLabel}>
                           <input
                             type="checkbox"
-                            checked={listOrEmpty(localFilters.brand).includes(brand.name)}
+                            checked={listOrEmpty(localFilters.brand).includes(
+                              brand.name,
+                            )}
                             onChange={(e) =>
                               setLocalFilters({
                                 ...localFilters,
@@ -490,9 +522,7 @@ export default function ListingFilterPanel({
               </section>
 
               <section>
-                <Paragraph1 className={filterSectionTitle}>
-                  Listers
-                </Paragraph1>
+                <Paragraph1 className={filterSectionTitle}>Listers</Paragraph1>
                 <div className="mb-2">
                   <input
                     type="text"
@@ -517,13 +547,12 @@ export default function ListingFilterPanel({
                           .includes(listerSearch.toLowerCase()),
                       )
                       .map((user) => (
-                        <label
-                          key={user.id}
-                          className={filterOptionLabel}
-                        >
+                        <label key={user.id} className={filterOptionLabel}>
                           <input
                             type="checkbox"
-                            checked={listOrEmpty(localFilters.lister).includes(user.id)}
+                            checked={listOrEmpty(localFilters.lister).includes(
+                              user.id,
+                            )}
                             onChange={(e) =>
                               setLocalFilters({
                                 ...localFilters,
@@ -555,10 +584,7 @@ export default function ListingFilterPanel({
                   <Paragraph1>Loading...</Paragraph1>
                 ) : filterOptions.listingTypes.length > 0 ? (
                   filterOptions.listingTypes.map((item) => (
-                    <label
-                      key={item.value}
-                      className={filterOptionLabel}
-                    >
+                    <label key={item.value} className={filterOptionLabel}>
                       <input
                         type="checkbox"
                         checked={(localFilters.listingTypes ?? []).includes(
@@ -587,36 +613,81 @@ export default function ListingFilterPanel({
               </section>
 
               <section ref={sizeSectionRef}>
-                <Paragraph1 className={filterSectionTitle}>
-                  Size
-                </Paragraph1>
+                <Paragraph1 className={filterSectionTitle}>Size</Paragraph1>
                 {optionsLoading ? (
                   <Paragraph1>Loading...</Paragraph1>
                 ) : filterOptions.sizes.length > 0 ? (
-                  <div className="max-h-48 overflow-y-auto space-y-1">
-                    {filterOptions.sizes.map((item) => (
-                    <label
-                      key={item}
-                      className={filterOptionLabel}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={listOrEmpty(localFilters.size).includes(item)}
-                        onChange={(e) =>
-                          setLocalFilters({
-                            ...localFilters,
-                            size: toggleList(
-                              listOrEmpty(localFilters.size),
-                              item,
-                              e.target.checked,
-                            ),
-                          })
-                        }
-                        className={filterCheckbox}
-                      />
-                      <Paragraph1>{item}</Paragraph1>
-                    </label>
-                  ))}
+                  <div className="max-h-80 space-y-4 overflow-y-auto">
+                    {sizeOptionsByRegion.groups.map(({ region, sizes }) =>
+                      sizes.length > 0 ? (
+                        <fieldset key={region}>
+                          <legend className="mb-1 text-xs font-semibold text-gray-600">
+                            {region}
+                          </legend>
+                          <div className="grid grid-cols-4 gap-2">
+                            {sizes.map((size) => {
+                              const item = formatApparelSize(size, region);
+                              return (
+                                <label
+                                  key={item}
+                                  className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 px-2 py-2 text-sm text-gray-700 hover:border-gray-400"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={listOrEmpty(
+                                      localFilters.size,
+                                    ).includes(item)}
+                                    onChange={(e) =>
+                                      setLocalFilters({
+                                        ...localFilters,
+                                        size: toggleList(
+                                          listOrEmpty(localFilters.size),
+                                          item,
+                                          e.target.checked,
+                                        ),
+                                      })
+                                    }
+                                    className={filterCheckbox}
+                                  />
+                                  <span>{size}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </fieldset>
+                      ) : null,
+                    )}
+                    {sizeOptionsByRegion.other.length > 0 ? (
+                      <fieldset>
+                        <legend className="mb-1 text-xs font-semibold text-gray-600">
+                          Other
+                        </legend>
+                        <div className="space-y-1">
+                          {sizeOptionsByRegion.other.map((item) => (
+                            <label key={item} className={filterOptionLabel}>
+                              <input
+                                type="checkbox"
+                                checked={listOrEmpty(
+                                  localFilters.size,
+                                ).includes(item)}
+                                onChange={(e) =>
+                                  setLocalFilters({
+                                    ...localFilters,
+                                    size: toggleList(
+                                      listOrEmpty(localFilters.size),
+                                      item,
+                                      e.target.checked,
+                                    ),
+                                  })
+                                }
+                                className={filterCheckbox}
+                              />
+                              <Paragraph1>{item}</Paragraph1>
+                            </label>
+                          ))}
+                        </div>
+                      </fieldset>
+                    ) : null}
                   </div>
                 ) : (
                   <Paragraph1 className="text-gray-500 text-sm">
@@ -626,21 +697,18 @@ export default function ListingFilterPanel({
               </section>
 
               <section>
-                <Paragraph1 className={filterSectionTitle}>
-                  Color
-                </Paragraph1>
+                <Paragraph1 className={filterSectionTitle}>Color</Paragraph1>
                 {optionsLoading ? (
                   <Paragraph1>Loading...</Paragraph1>
                 ) : filterOptions.colors.length > 0 ? (
                   <div className="max-h-48 overflow-y-auto space-y-1">
                     {filterOptions.colors.map((item) => (
-                      <label
-                        key={item}
-                        className={filterOptionLabel}
-                      >
+                      <label key={item} className={filterOptionLabel}>
                         <input
                           type="checkbox"
-                          checked={listOrEmpty(localFilters.color).includes(item)}
+                          checked={listOrEmpty(localFilters.color).includes(
+                            item,
+                          )}
                           onChange={(e) =>
                             setLocalFilters({
                               ...localFilters,
@@ -673,10 +741,7 @@ export default function ListingFilterPanel({
                 ) : filterOptions.conditions.length > 0 ? (
                   <div className="max-h-48 overflow-y-auto space-y-1">
                     {filterOptions.conditions.map((item) => (
-                      <label
-                        key={item}
-                        className={filterOptionLabel}
-                      >
+                      <label key={item} className={filterOptionLabel}>
                         <input
                           type="radio"
                           name="condition"
@@ -702,18 +767,13 @@ export default function ListingFilterPanel({
               </section>
 
               <section>
-                <Paragraph1 className={filterSectionTitle}>
-                  Material
-                </Paragraph1>
+                <Paragraph1 className={filterSectionTitle}>Material</Paragraph1>
                 {optionsLoading ? (
                   <Paragraph1>Loading...</Paragraph1>
                 ) : filterOptions.materials.length > 0 ? (
                   <div className="max-h-48 overflow-y-auto space-y-1">
                     {filterOptions.materials.map((item) => (
-                      <label
-                        key={item}
-                        className={filterOptionLabel}
-                      >
+                      <label key={item} className={filterOptionLabel}>
                         <input
                           type="radio"
                           name="material"

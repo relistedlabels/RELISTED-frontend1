@@ -1,19 +1,21 @@
 "use client";
 
+import { ChevronDown } from "lucide-react";
 import {
+  type CSSProperties,
   useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
   useState,
-  type CSSProperties,
 } from "react";
 import { createPortal } from "react-dom";
-import { ChevronDown } from "lucide-react";
 
 export type QuickFilterOption = {
   value: string;
   label: string;
+  groupLabel?: string;
+  disabled?: boolean;
 };
 
 type QuickFilterDropdownProps = {
@@ -24,6 +26,7 @@ type QuickFilterDropdownProps = {
   ariaLabel?: string;
   disabled?: boolean;
   emptyMessage?: string;
+  groupBy?: "groupLabel";
 };
 
 const MENU_MAX_HEIGHT = 280;
@@ -33,8 +36,7 @@ const MENU_Z_INDEX = 250;
 
 function computeMenuPosition(triggerRect: DOMRect, optionCount: number) {
   const estimatedMenuHeight = Math.min(optionCount * 40 + 8, MENU_MAX_HEIGHT);
-  const spaceBelow =
-    window.innerHeight - triggerRect.bottom - VIEWPORT_PADDING;
+  const spaceBelow = window.innerHeight - triggerRect.bottom - VIEWPORT_PADDING;
   const spaceAbove = triggerRect.top - VIEWPORT_PADDING;
   const above =
     spaceBelow < estimatedMenuHeight + MENU_GAP && spaceAbove > spaceBelow;
@@ -79,6 +81,7 @@ export default function QuickFilterDropdown({
   ariaLabel,
   disabled = false,
   emptyMessage = "No options available",
+  groupBy,
 }: QuickFilterDropdownProps) {
   const [open, setOpen] = useState(false);
   const [menuStyle, setMenuStyle] = useState<CSSProperties>({});
@@ -136,21 +139,64 @@ export default function QuickFilterDropdown({
 
   const menu =
     open && mounted ? (
-      <ul
-        role="listbox"
+      <div
         aria-label={ariaLabel ?? label}
-        aria-multiselectable="true"
         data-quick-filter-menu
         style={menuStyle}
         className="overflow-y-auto overscroll-contain rounded-xl border border-gray-200 bg-white py-1 shadow-lg"
       >
         {options.length === 0 ? (
-          <li className="px-3.5 py-2.5 text-sm text-gray-500">{emptyMessage}</li>
+          <li className="px-3.5 py-2.5 text-sm text-gray-500">
+            {emptyMessage}
+          </li>
+        ) : groupBy ? (
+          [
+            ...new Set(options.map((option) => option.groupLabel ?? "")),
+          ].flatMap((group) => [
+            ...(group
+              ? [
+                  <li
+                    key={`group-${group}`}
+                    className="px-3.5 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-gray-500"
+                  >
+                    {group}
+                  </li>,
+                ]
+              : []),
+            ...options
+              .filter((option) => (option.groupLabel ?? "") === group)
+              .map((option) => {
+                const checked = selected.includes(option.value);
+                return (
+                  <li key={option.value}>
+                    {option.disabled ? null : (
+                      <label className="flex cursor-pointer items-center gap-2.5 px-3.5 py-1.5 text-sm text-gray-700 transition hover:bg-gray-50 hover:text-gray-900">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(event) =>
+                            onToggle(option.value, event.target.checked)
+                          }
+                          className="h-4 w-4 shrink-0 rounded border-gray-300 text-black focus:ring-black"
+                        />
+                        <span
+                          className={
+                            checked ? "font-semibold text-gray-900" : ""
+                          }
+                        >
+                          {option.label}
+                        </span>
+                      </label>
+                    )}
+                  </li>
+                );
+              }),
+          ])
         ) : (
           options.map((option) => {
             const checked = selected.includes(option.value);
             return (
-              <li key={option.value} role="option" aria-selected={checked}>
+              <li key={option.value}>
                 <label className="flex cursor-pointer items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 transition hover:bg-gray-50 hover:text-gray-900">
                   <input
                     type="checkbox"
@@ -160,7 +206,9 @@ export default function QuickFilterDropdown({
                     }
                     className="h-4 w-4 shrink-0 rounded border-gray-300 text-black focus:ring-black"
                   />
-                  <span className={checked ? "font-semibold text-gray-900" : ""}>
+                  <span
+                    className={checked ? "font-semibold text-gray-900" : ""}
+                  >
                     {option.label}
                   </span>
                 </label>
@@ -168,7 +216,7 @@ export default function QuickFilterDropdown({
             );
           })
         )}
-      </ul>
+      </div>
     ) : null;
 
   return (

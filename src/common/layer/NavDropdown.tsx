@@ -1,11 +1,18 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useRef, useState, type ComponentType } from "react";
-import { ChevronDown } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ParagraphLink1 } from "../ui/Text";
+import { ChevronDown, ChevronRight } from "lucide-react";
+import Link from "next/link";
+import {
+  type ComponentType,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { SiteNavItem } from "@/lib/nav/siteNavItems";
+import { useCategories } from "@/lib/queries/category/useCategories";
+import { ParagraphLink1 } from "../ui/Text";
 
 type NavDropdownProps = {
   label: string;
@@ -21,8 +28,16 @@ export default function NavDropdown({
   align = "left",
 }: NavDropdownProps) {
   const [open, setOpen] = useState(false);
+  const [expandedListingType, setExpandedListingType] = useState<
+    "rent" | "resale" | null
+  >(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const { data: categories = [] } = useCategories();
+  const categoriesForMenu = useMemo(
+    () => [...categories].sort((a, b) => a.name.localeCompare(b.name)),
+    [categories],
+  );
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -31,6 +46,7 @@ export default function NavDropdown({
         !dropdownRef.current.contains(event.target as Node)
       ) {
         setOpen(false);
+        setExpandedListingType(null);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -43,11 +59,14 @@ export default function NavDropdown({
   };
 
   const handleMouseLeave = () => {
-    closeTimeoutRef.current = setTimeout(() => setOpen(false), 120);
+    closeTimeoutRef.current = setTimeout(() => {
+      setOpen(false);
+      setExpandedListingType(null);
+    }, 120);
   };
 
   return (
-    <div
+    <nav
       ref={dropdownRef}
       className="relative flex h-full items-center"
       onMouseEnter={handleMouseEnter}
@@ -78,16 +97,115 @@ export default function NavDropdown({
             <ul className="py-1">
               {items.map((item) => {
                 const ItemIcon = item.icon;
+                const listingType = item.listingType;
+                const isListingType = listingType !== undefined;
+                const expanded = expandedListingType === listingType;
+                const allItemsHref = isListingType
+                  ? `/shop?listingType=${listingType === "rent" ? "RENTAL,RENT_OR_RESALE" : "RESALE,RENT_OR_RESALE"}`
+                  : item.href;
                 return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      onClick={() => setOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2 transition-colors hover:bg-gray-800/50"
-                    >
-                      <ItemIcon className="h-4 w-4 shrink-0 text-gray-400" />
-                      <ParagraphLink1>{item.label}</ParagraphLink1>
-                    </Link>
+                  <li key={item.href} className="relative">
+                    <div className="flex items-center hover:bg-gray-800/50">
+                      {isListingType ? (
+                        <button
+                          type="button"
+                          aria-expanded={expanded}
+                          onClick={() =>
+                            setExpandedListingType(
+                              expanded ? null : (listingType ?? null),
+                            )
+                          }
+                          className="flex min-w-0 flex-1 items-center gap-2 px-4 py-2 text-left"
+                        >
+                          <ItemIcon className="h-4 w-4 shrink-0 text-gray-400" />
+                          <ParagraphLink1>{item.label}</ParagraphLink1>
+                        </button>
+                      ) : (
+                        <Link
+                          href={item.href}
+                          onClick={() => setOpen(false)}
+                          className="flex min-w-0 flex-1 items-center gap-2 px-4 py-2"
+                        >
+                          <ItemIcon className="h-4 w-4 shrink-0 text-gray-400" />
+                          <ParagraphLink1>{item.label}</ParagraphLink1>
+                        </Link>
+                      )}
+                      {isListingType ? (
+                        <button
+                          type="button"
+                          aria-label={`${expanded ? "Collapse" : "Expand"} ${item.label} categories`}
+                          aria-expanded={expanded}
+                          onClick={() =>
+                            setExpandedListingType(
+                              expanded ? null : (listingType ?? null),
+                            )
+                          }
+                          className="px-3 py-2 text-gray-400 hover:text-white"
+                        >
+                          <ChevronRight
+                            className={`h-4 w-4 transition-transform ${expanded ? "rotate-90" : ""}`}
+                            aria-hidden
+                          />
+                        </button>
+                      ) : null}
+                    </div>
+                    {isListingType ? (
+                      <AnimatePresence>
+                        {expanded ? (
+                          <motion.ul
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.18 }}
+                            className="overflow-hidden bg-white/5"
+                          >
+                            <li>
+                              <Link
+                                href={allItemsHref}
+                                onClick={() => setOpen(false)}
+                                className="block border-b border-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800/60"
+                              >
+                                View all
+                              </Link>
+                            </li>
+                            {categoriesForMenu.map((category) => {
+                              const params = new URLSearchParams();
+                              params.set("title", category.name);
+                              params.set(
+                                "description",
+                                `Shop ${category.name}`,
+                              );
+                              params.set(
+                                "listingType",
+                                listingType === "rent"
+                                  ? "RENTAL,RENT_OR_RESALE"
+                                  : "RESALE,RENT_OR_RESALE",
+                              );
+                              params.set("category", category.id);
+                              return (
+                                <li key={category.id}>
+                                  <Link
+                                    href={`/shop?${params.toString()}`}
+                                    onClick={() => {
+                                      setOpen(false);
+                                      setExpandedListingType(null);
+                                    }}
+                                    className="block py-2 pl-10 pr-4 text-sm text-gray-300 transition-colors hover:bg-gray-800/60 hover:text-white"
+                                  >
+                                    {category.name}
+                                  </Link>
+                                </li>
+                              );
+                            })}
+                            {categoriesForMenu.length === 0 ? (
+                              <li className="px-4 py-2 text-sm text-gray-400">
+                                No categories available
+                              </li>
+                            ) : null}
+                          </motion.ul>
+                        ) : null}
+                      </AnimatePresence>
+                    ) : null}
                   </li>
                 );
               })}
@@ -95,6 +213,6 @@ export default function NavDropdown({
           </motion.div>
         ) : null}
       </AnimatePresence>
-    </div>
+    </nav>
   );
 }
