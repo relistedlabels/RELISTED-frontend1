@@ -18,6 +18,7 @@ import {
   type SiteNavItem,
 } from "@/lib/nav/siteNavItems";
 import { useMe } from "@/lib/queries/auth/useMe";
+import { useCategories } from "@/lib/queries/category/useCategories";
 import { useMobileMenuStore } from "@/store/useMobileMenuStore";
 import { useUserStore } from "@/store/useUserStore";
 import { Header1Plus, Paragraph1 } from "../ui/Text";
@@ -111,6 +112,102 @@ function MobileNavSection({
   );
 }
 
+function MobileShopNavItem({
+  item,
+  categories,
+  expanded,
+  onToggle,
+  onNavigate,
+}: {
+  item: SiteNavItem;
+  categories: Array<{ id: string; name: string }>;
+  expanded: boolean;
+  onToggle: () => void;
+  onNavigate: () => void;
+}) {
+  if (!item.listingType) {
+    return (
+      <MobileNavLink
+        href={item.href}
+        label={item.label}
+        icon={item.icon}
+        onNavigate={onNavigate}
+      />
+    );
+  }
+
+  const Icon = item.icon;
+  const listingType =
+    item.listingType === "rent"
+      ? "RENTAL,RENT_OR_RESALE"
+      : "RESALE,RENT_OR_RESALE";
+
+  return (
+    <div>
+      <button
+        type="button"
+        aria-expanded={expanded}
+        onClick={onToggle}
+        className="flex w-full items-center gap-3 rounded-lg px-1 py-2.5 text-left transition-colors hover:bg-white/5"
+      >
+        <Icon className="h-5 w-5 shrink-0 text-gray-400" aria-hidden />
+        <Paragraph1 className="min-w-0 flex-1 text-base text-white">
+          {item.label}
+        </Paragraph1>
+        <ChevronRight
+          className={`h-4 w-4 shrink-0 text-gray-500 transition-transform ${expanded ? "rotate-90" : ""}`}
+          aria-hidden
+        />
+      </button>
+      <AnimatePresence>
+        {expanded ? (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="overflow-hidden"
+          >
+            <Link
+              href={item.href}
+              onClick={onNavigate}
+              className="ml-9 block border-l border-gray-800 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/5"
+            >
+              View all
+            </Link>
+            {categories.length > 0 ? (
+              <div className="ml-9 flex flex-col border-l border-gray-800 py-1">
+                {categories.map((category) => {
+                  const params = new URLSearchParams({
+                    title: category.name,
+                    description: `Shop ${category.name}`,
+                    listingType,
+                    category: category.id,
+                  });
+                  return (
+                    <Link
+                      key={category.id}
+                      href={`/shop?${params.toString()}`}
+                      onClick={onNavigate}
+                      className="rounded-r-lg px-3 py-2 text-sm text-gray-300 transition-colors hover:bg-white/5 hover:text-white"
+                    >
+                      {category.name}
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="ml-9 px-3 py-2 text-sm text-gray-400">
+                No categories available
+              </p>
+            )}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function renderNavItems(items: SiteNavItem[], onNavigate: () => void) {
   return items.map((item) => (
     <MobileNavLink
@@ -135,6 +232,10 @@ function MobileNavbarContent() {
   const upgradeLister = useUpgradeLister();
   const queryClient = useQueryClient();
   const setUser = useUserStore((s) => s.setUser);
+  const { data: categories = [] } = useCategories();
+  const [expandedListingType, setExpandedListingType] = useState<
+    "rent" | "resale" | null
+  >(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [signInRedirectUrl, setSignInRedirectUrl] = useState(pathname);
 
@@ -146,6 +247,10 @@ function MobileNavbarContent() {
         isLister,
       }),
     [user, isLister],
+  );
+  const sortedCategories = useMemo(
+    () => [...categories].sort((a, b) => a.name.localeCompare(b.name)),
+    [categories],
   );
 
   useEffect(() => {
@@ -202,7 +307,12 @@ function MobileNavbarContent() {
   return (
     <div className="xl:hidden w-full bg-black px-4 py-5 text-white">
       <div className="relative flex items-center">
-        <button onClick={openMenu} className="z-20" aria-label="Open menu">
+        <button
+          type="button"
+          onClick={openMenu}
+          className="z-20"
+          aria-label="Open menu"
+        >
           <Menu className="h-6 w-6" />
         </button>
 
@@ -245,6 +355,7 @@ function MobileNavbarContent() {
             >
               <div className="relative flex shrink-0 items-center justify-center px-4 py-4">
                 <button
+                  type="button"
                   onClick={closeMenu}
                   className="absolute left-4 top-1/2 -translate-y-1/2"
                   aria-label="Close menu"
@@ -265,7 +376,22 @@ function MobileNavbarContent() {
               <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
                 <div className="flex flex-col gap-6 py-2">
                   <MobileNavSection>
-                    {renderNavItems(SHOP_NAV_ITEMS, closeMenu)}
+                    {SHOP_NAV_ITEMS.map((item) => (
+                      <MobileShopNavItem
+                        key={item.href}
+                        item={item}
+                        categories={sortedCategories}
+                        expanded={expandedListingType === item.listingType}
+                        onToggle={() =>
+                          setExpandedListingType((current) =>
+                            current === item.listingType
+                              ? null
+                              : (item.listingType ?? null),
+                          )
+                        }
+                        onNavigate={closeMenu}
+                      />
+                    ))}
                   </MobileNavSection>
 
                   <div className="border-t border-gray-800" />

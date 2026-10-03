@@ -1,23 +1,24 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { ArrowUpDown, SlidersHorizontal } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
+import { parseApparelSize } from "@/lib/product/apparelSizes";
 import { useListingFilterOptions } from "@/lib/queries/product/useListingFilterOptions";
-import {
-  countShopPanelFilters,
-  shopSortFromSearchParams,
-  type ShopSortValue,
-} from "@/lib/shop/shopBrowse";
+import { EMPTY_LISTING_FILTER_OPTIONS } from "@/lib/shop/listingFilterOptions";
 import {
   listingFiltersFromSearchParams,
   mergePreservedShopParams,
   parseMultiSearchParam,
 } from "@/lib/shop/listingFilters";
-import { EMPTY_LISTING_FILTER_OPTIONS } from "@/lib/shop/listingFilterOptions";
+import {
+  countShopPanelFilters,
+  type ShopSortValue,
+  shopSortFromSearchParams,
+} from "@/lib/shop/shopBrowse";
 import { shopOccasionsFromFilterOptions } from "@/lib/shop/shopOccasions";
-import QuickFilterDropdown from "./QuickFilterDropdown";
 import ListingFilterPanel from "./ListingFilterPanel";
+import QuickFilterDropdown from "./QuickFilterDropdown";
 import SortPanel from "./SortPanel";
 
 const toolbarShellClassName =
@@ -41,10 +42,28 @@ export default function ShopFilterBar() {
   const panelFilterCount = countShopPanelFilters(filters);
   const currentSort = shopSortFromSearchParams(searchParams);
 
-  const sizeOptions = useMemo(
-    () => filterOptions.sizes.map((size) => ({ value: size, label: size })),
-    [filterOptions.sizes],
-  );
+  const sizeOptions = useMemo(() => {
+    const groups = new Map<string, Array<{ value: string; label: string }>>();
+    for (const rawSize of filterOptions.sizes) {
+      const parsed = parseApparelSize(rawSize);
+      const group = parsed.unit ?? "Other";
+      const options = groups.get(group) ?? [];
+      options.push({
+        value: rawSize,
+        label: parsed.unit ? parsed.size : rawSize,
+      });
+      groups.set(group, options);
+    }
+    return [...groups.entries()].flatMap(([groupLabel, options]) => [
+      {
+        value: `size-heading-${groupLabel}`,
+        label: groupLabel,
+        groupLabel,
+        disabled: true,
+      },
+      ...options.map((option) => ({ ...option, groupLabel })),
+    ]);
+  }, [filterOptions.sizes]);
 
   const categoryOptions = useMemo(
     () =>
@@ -118,6 +137,7 @@ export default function ShopFilterBar() {
               toggleListParam("size", value, checked)
             }
             emptyMessage="No sizes available"
+            groupBy="groupLabel"
           />
 
           <QuickFilterDropdown
