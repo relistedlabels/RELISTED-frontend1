@@ -25,19 +25,19 @@ export type SiteNavItem = {
 export const SHOP_NAV_ITEMS: SiteNavItem[] = [
   {
     label: "Rent",
-    href: "/shop?listingType=RENTAL,RENT_OR_RESALE",
+    href: "/shop?listingType=rental,rent_or_resale",
     icon: Shirt,
     listingType: "rent",
   },
   {
     label: "Shop Resale",
-    href: "/shop?listingType=RESALE,RENT_OR_RESALE",
+    href: "/shop?listingType=resale,rent_or_resale",
     icon: ShoppingBag,
     listingType: "resale",
   },
   {
     label: "New In",
-    href: "/shop?title=New+In&description=Latest+arrivals&listingType=RENTAL,RENT_OR_RESALE,RESALE&sort=newest",
+    href: "/shop?title=New+In&description=Latest+arrivals&listingType=rental,rent_or_resale,resale&sort=newest",
     icon: Star,
   },
   {

@@ -139,8 +139,8 @@ function MobileShopNavItem({
   const Icon = item.icon;
   const listingType =
     item.listingType === "rent"
-      ? "RENTAL,RENT_OR_RESALE"
-      : "RESALE,RENT_OR_RESALE";
+      ? "rental,rent_or_resale"
+      : "resale,rent_or_resale";
 
   return (
     <div>

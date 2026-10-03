@@ -50,7 +50,7 @@ export function appendListingFiltersToParams(
   }
   const listingTypes = listOrEmpty(filters.listingTypes);
   if (listingTypes.length > 0) {
-    params.set("listingType", listingTypes.join(","));
+    params.set("listingType", listingTypes.join(",").toLowerCase());
   }
   if (filters.minPrice !== undefined) {
     params.set("minPrice", String(filters.minPrice));
@@ -74,7 +74,11 @@ export function listingFiltersFromSearchParams(
       ? searchParams.get("availability")!.split(",")
       : [],
     listingTypes: searchParams.get("listingType")
-      ? searchParams.get("listingType")!.split(",")
+      ? searchParams
+          .get("listingType")!
+          .split(",")
+          .map((listingType) => listingType.trim().toUpperCase())
+          .filter(Boolean)
       : [],
     size: parseMultiSearchParam(searchParams, "size"),
     color: parseMultiSearchParam(searchParams, "color"),
