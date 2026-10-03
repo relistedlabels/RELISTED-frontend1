@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import type React from "react";
+import { useState } from "react";
 import { HiOutlineChevronDown } from "react-icons/hi2";
 import { Paragraph1 } from "@/common/ui/Text";
 
@@ -28,6 +29,7 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
     <div className="border-b border-gray-200">
       {/* Header */}
       <button
+        type="button"
         className="w-full flex items-center justify-between py-4 text-left focus:outline-none"
         onClick={toggleAccordion}
         aria-expanded={isOpen}
@@ -44,15 +46,15 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
       </button>
 
       {/* Content */}
-      <div
+      <section
         id={`accordion-content-${title.replace(/\s/g, "")}`}
-        role="region"
-        className={`overflow-hidden transition-all duration-500 ease-in-out ${
-          isOpen ? "max-h-96 opacity-100 py-2" : "max-h-0 opacity-0 py-0"
-        }`}
+        aria-label={formattedTitle}
+        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
       >
-        <div className="pb-4 text-sm text-gray-700">{children}</div>
-      </div>
+        <div className="min-h-0 overflow-hidden">
+          <div className="pb-4 text-sm text-gray-700">{children}</div>
+        </div>
+      </section>
     </div>
   );
 };
