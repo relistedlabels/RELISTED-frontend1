@@ -1,16 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
 import { Truck } from "lucide-react";
+import { useEffect, useState } from "react";
 import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
-import ReadyToReturnModal from "./ReadyToReturnModal";
 import { useInitiateReturn } from "@/lib/queries/renters/useInitiateReturn";
+import ReadyToReturnModal from "./ReadyToReturnModal";
 
 interface StartReturnActionProps {
   orderId: string;
   shipmentId?: string | null;
   variant?: "footer" | "dashboard";
   urgent?: boolean;
+  autoOpen?: boolean;
   className?: string;
 }
 
@@ -19,10 +20,15 @@ export default function StartReturnAction({
   shipmentId,
   variant = "footer",
   urgent = false,
+  autoOpen = false,
   className = "",
 }: StartReturnActionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const initiateReturnMutation = useInitiateReturn();
+
+  useEffect(() => {
+    if (autoOpen) setIsModalOpen(true);
+  }, [autoOpen]);
 
   const handleReturnConfirm = async (
     images: string[],
@@ -40,7 +46,9 @@ export default function StartReturnAction({
     });
   };
 
-  const label = initiateReturnMutation.isPending ? "Processing…" : "Start return";
+  const label = initiateReturnMutation.isPending
+    ? "Processing…"
+    : "Start return";
 
   const base =
     variant === "footer"

@@ -2,31 +2,30 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
 import { Calendar, Package, Store, Truck } from "lucide-react";
-import {
-  segmentTabActive,
-  segmentTabIdle,
-} from "@/common/ui/buttonClasses";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { segmentTabActive, segmentTabIdle } from "@/common/ui/buttonClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import { formatItemCount } from "@/lib/formatItemCount";
-import OrderDetails from "./OrderDetails1";
-import DashboardStartReturnButton from "./DashboardStartReturnButton";
-import { useOrders } from "@/lib/queries/renters/useOrders";
 import { resolveRenterStartReturn } from "@/lib/orders/renterStartReturn";
 import {
   isReturnDueUrgentOnListOrder,
   shouldPromoteReturnOnListOrder,
 } from "@/lib/orders/returnDueUrgency";
-import { useSearchParams } from "next/navigation";
+import { useOrders } from "@/lib/queries/renters/useOrders";
 import {
   getRenterOrderBadgeClassName,
   getRenterOrderStatusLabel,
 } from "@/lib/renters/renterOrderStatus";
+import DashboardStartReturnButton from "./DashboardStartReturnButton";
+import OrderDetails from "./OrderDetails1";
 
 export default function DashboardOrderList() {
   const searchParams = useSearchParams();
   const deepLinkedOrderId = (searchParams.get("orderId") || "").trim();
+  const startReturnRequested = searchParams.get("startReturn") === "1";
+  const deepLinkedShipmentId = (searchParams.get("shipmentId") || "").trim();
   const [orderView, setOrderView] = useState<"active" | "completed">("active");
   const [deepLinkFallbackTried, setDeepLinkFallbackTried] = useState(false);
 
@@ -87,8 +86,8 @@ export default function DashboardOrderList() {
       <div className="w-full animate-pulse">
         <div className="h-20 bg-gray-300 rounded mb-4"></div>
         <div className="space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-32 bg-gray-300 rounded"></div>
+          {["first", "second", "third"].map((key) => (
+            <div key={key} className="h-32 bg-gray-300 rounded"></div>
           ))}
         </div>
       </div>
@@ -109,9 +108,7 @@ export default function DashboardOrderList() {
         <button
           type="button"
           onClick={() => setOrderView("active")}
-          className={
-            orderView === "active" ? segmentTabActive : segmentTabIdle
-          }
+          className={orderView === "active" ? segmentTabActive : segmentTabIdle}
         >
           Ongoing
         </button>
@@ -134,6 +131,10 @@ export default function DashboardOrderList() {
             showStartReturn: order.showStartReturn,
             startReturnShipmentId: order.startReturnShipmentId,
           });
+          const startReturnShipmentId =
+            order.orderId === deepLinkedOrderId && deepLinkedShipmentId
+              ? deepLinkedShipmentId
+              : startReturn.returnShipmentId;
           const returnPromoted = shouldPromoteReturnOnListOrder({
             status: order.status,
             showStartReturn: startReturn.showStartReturn,
@@ -229,8 +230,12 @@ export default function DashboardOrderList() {
                   {startReturn.showStartReturn ? (
                     <DashboardStartReturnButton
                       orderId={order.orderId}
-                      shipmentId={startReturn.returnShipmentId}
+                      shipmentId={startReturnShipmentId}
                       urgent={returnPromoted}
+                      autoOpen={
+                        order.orderId === deepLinkedOrderId &&
+                        startReturnRequested
+                      }
                     />
                   ) : null}
                   <OrderDetails
