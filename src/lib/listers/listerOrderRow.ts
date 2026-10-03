@@ -140,6 +140,13 @@ export function isListerAvailabilityExpiredStatusRow(
   return false;
 }
 
+/** Lister can notify renter after the renter's chosen delivery window has passed. */
+export function shouldShowListerNotifyRenterForDispatchWindow(
+  order: Record<string, unknown>,
+): boolean {
+  return order.canNotifyRenter === true;
+}
+
 export function isListerAvailabilityDeadlinePassed(
   expiresAt: string | undefined,
 ): boolean {

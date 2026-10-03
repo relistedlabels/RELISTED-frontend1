@@ -4,10 +4,11 @@
 
 import { AlertCircle, CheckCircle, Clock, Search } from "lucide-react";
 import { useState } from "react";
+import AdminPageHeader from "@/app/admin/components/AdminPageHeader";
 import { StatCardSkeleton, TableSkeleton } from "@/common/ui/SkeletonLoaders";
-import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import type { Dispute, DisputesListStatus } from "@/lib/api/admin/disputes";
 import { useDisputeStats, useDisputes } from "@/lib/queries/admin/useDisputes";
+import { AdminTabBar, AdminTabButton } from "../../components/AdminSectionTabs";
 import PendingTable from "./components/PendingTable";
 import ResolvedTable from "./components/ResolvedTable";
 import StatusCard from "./components/StatusCard";
@@ -133,10 +134,7 @@ export default function DisputesPage() {
 
   const underReviewTotalFromList = readDisputesListTotal(underReviewCountData);
   const resolvedTotalFromList = readDisputesListTotal(resolvedCountData);
-  const pendingCountDisplay = Math.max(
-    pendingCount,
-    pendingTotalFromList,
-  );
+  const pendingCountDisplay = Math.max(pendingCount, pendingTotalFromList);
   const underReviewCountDisplay = Math.max(
     underReviewCount,
     underReviewTotalFromList,
@@ -182,12 +180,10 @@ export default function DisputesPage() {
   return (
     <div className="min-h-screen">
       {/* Header Section */}
-      <div className="mb-8">
-        <Paragraph2 className="mb-2 text-gray-900">Disputes</Paragraph2>
-        <Paragraph1 className="text-gray-600">
-          Manage and resolve disputes between dressers and curators.
-        </Paragraph1>
-      </div>
+      <AdminPageHeader
+        title="Disputes"
+        description="Review and resolve platform disputes."
+      />
 
       {/* Status Cards */}
       <div className="gap-4 grid grid-cols-1 md:grid-cols-3 mb-8">
@@ -220,23 +216,23 @@ export default function DisputesPage() {
 
       {/* Tabs and Table Section */}
       <div className="bg-white rounded-lg overflow-hidden">
-        <div className="flex border-gray-200 border-b">
-          <TabButton
+        <AdminTabBar>
+          <AdminTabButton
             active={activeTab === "pending"}
             onClick={() => setActiveTab("pending")}
             label={`Pending (${pendingCountDisplay})`}
           />
-          <TabButton
+          <AdminTabButton
             active={activeTab === "under-review"}
             onClick={() => setActiveTab("under-review")}
             label={`Under Review (${underReviewCountDisplay})`}
           />
-          <TabButton
+          <AdminTabButton
             active={activeTab === "resolved"}
             onClick={() => setActiveTab("resolved")}
             label={`Resolved (${resolvedCountDisplay})`}
           />
-        </div>
+        </AdminTabBar>
 
         {/* Table Content */}
         <div className="py-6">
@@ -267,27 +263,5 @@ export default function DisputesPage() {
         </div>
       </div>
     </div>
-  );
-}
-
-interface TabButtonProps {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-}
-
-function TabButton({ active, onClick, label }: TabButtonProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`px-6 py-4 font-medium transition-colors ${
-        active
-          ? "text-gray-900 border-b-2 border-gray-900"
-          : "text-gray-600 hover:text-gray-900"
-      }`}
-    >
-      <Paragraph1>{label}</Paragraph1>
-    </button>
   );
 }

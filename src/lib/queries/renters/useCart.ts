@@ -1,33 +1,14 @@
 import { useRentalRequests } from "@/lib/queries/renters/useRentalRequests";
 
-/**
- * Fetches all pending rental requests (used as cart items)
- */
+/** Checkout-ready rental lines (lister confirmed availability). */
 export const useCart = () => {
-  // Only pending requests are considered cart items
-  const { data, isLoading, error, refetch } = useRentalRequests("pending");
-  const cartItems = data?.rentalRequests || [];
-  console.log("Rental Requests List:", cartItems);
-  // Fetch product details for each productId and log them
-  const fetchProductDetails = async () => {
-    for (const item of cartItems) {
-      try {
-        const response = await import("@/lib/api/product").then(
-          ({ productApi }) => productApi.getPublicById(item.productId),
-        );
-        console.log(
-          `Product details for productId ${item.productId}:`,
-          response.data,
-        );
-      } catch (err) {
-        console.error(`Error fetching productId ${item.productId}:`, err);
-      }
-    }
-  };
-  if (cartItems.length > 0) {
-    fetchProductDetails();
-  }
-  // Normalize to match previous cart shape
+  const { data, isLoading, error, refetch } = useRentalRequests(
+    "approved",
+    1,
+    100,
+  );
+  const cartItems = data?.rentalRequests ?? [];
+
   return {
     data: {
       cartItems,
@@ -38,14 +19,14 @@ export const useCart = () => {
   };
 };
 
-/**
- * Returns a summary of pending rental requests (cart)
- * Calculates subtotal, delivery, deposit, and total
- */
+/** Summary totals for checkout-ready cart lines. */
 export const useCartSummary = () => {
-  const { data, isLoading, error, refetch } = useRentalRequests("pending");
-  const cartItems = data?.rentalRequests || [];
-  // Calculate summary fields
+  const { data, isLoading, error, refetch } = useRentalRequests(
+    "approved",
+    1,
+    100,
+  );
+  const cartItems = data?.rentalRequests ?? [];
   const subtotal = cartItems.reduce(
     (sum, item) => sum + (item.rentalPrice || 0),
     0,
@@ -60,9 +41,7 @@ export const useCartSummary = () => {
   );
   const cartTotal = subtotal + totalDeliveryFees + totalSecurityDeposit;
   const itemCount = cartItems.length;
-  const expiredItems = cartItems
-    .filter((item) => item.status === "expired")
-    .map((item) => item.requestId);
+
   return {
     data: {
       cartItems,
@@ -71,7 +50,6 @@ export const useCartSummary = () => {
       totalSecurityDeposit,
       cartTotal,
       itemCount,
-      expiredItems,
     },
     isLoading,
     error,

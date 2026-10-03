@@ -11,13 +11,12 @@ import { useCartItems } from "@/lib/queries/renters/useCartItems";
 import { productApi } from "@/lib/api/product";
 import type { CartItem } from "@/lib/api/cart";
 import {
-  isCartRentalMainListRow,
-  canShowInCartList,
   rentalMetaFromCartApiItem,
   resolveRentalMetaForCartLine,
 } from "@/lib/cart/mergeCartLineRental";
 import type { CartCheckoutLine } from "./types";
 import { buildCartApprovedSummaryLines } from "@/lib/cart/buildApprovedCheckoutLines";
+import { resolveLineSecurityDeposit } from "@/app/shop/cart/cartLinePricing";
 import { isLineRentalApproved } from "@/lib/cart/rentalRequestUi";
 
 export default function CartPage() {
@@ -39,8 +38,6 @@ export default function CartPage() {
     error: approvedError,
   } = useRentalRequests("approved", 1, 100);
 
-  const { data: pendingData } = useRentalRequests("pending", 1, 100);
-
   const [cartLines, setCartLines] = useState<CartCheckoutLine[]>([]);
 
   useEffect(() => {
@@ -51,10 +48,7 @@ export default function CartPage() {
         return;
       }
 
-      const allRentals = [
-        ...(pendingData?.rentalRequests ?? []),
-        ...(approvedData?.rentalRequests ?? []),
-      ];
+      const allRentals = [...(approvedData?.rentalRequests ?? [])];
 
       const lineGroups = await Promise.all(
         items.map(async (item: CartItem) => {
@@ -113,6 +107,7 @@ export default function CartPage() {
               : (rentalMeta ?? fromApi);
 
           if (!merged) {
+            if (days > 0) return [];
             return [
               {
                 lineId: item.id,
@@ -130,12 +125,7 @@ export default function CartPage() {
             ];
           }
 
-          const isExpired = merged.status?.trim().toUpperCase() === "EXPIRED";
-
-          if (
-            !isCartRentalMainListRow(merged.status, merged.expiresAt) &&
-            !isExpired
-          ) {
+          if (!isLineRentalApproved(merged.status)) {
             return [];
           }
 
@@ -162,7 +152,7 @@ export default function CartPage() {
       setCartLines(lineGroups.flat());
     }
     buildLinesFromCart();
-  }, [cartData, pendingData, approvedData]);
+  }, [cartData, approvedData]);
 
   // Fetch product details for approved items
   const [approvedItemsWithProduct, setApprovedItemsWithProduct] = useState<
@@ -210,7 +200,10 @@ export default function CartPage() {
       ...line,
       requestId: line.rentalRequestId,
       rentalPrice: line.totalPrice,
-      securityDeposit: 0,
+      securityDeposit: resolveLineSecurityDeposit({
+        isResale: line.isResale,
+        productDetail: line.productDetail,
+      }),
       cleaningFee: 0,
       deliveryFee: line.deliveryFee,
     }));
@@ -247,17 +240,17 @@ export default function CartPage() {
       <div className="mb-4">
         <Breadcrumbs items={path} />
       </div>
-      <Header1Plus className="uppercase mb-8">Your Cart</Header1Plus>
+      <Header1Plus className="uppercase mb-6 sm:mb-8">Your Cart</Header1Plus>
 
-      <div className="grid xl:grid-cols-3 gap-4 sm:gap-16">
-        <div className="col-span-2">
+      <div className="flex flex-col gap-6 min-w-0 w-full xl:grid xl:grid-cols-3 xl:gap-16">
+        <div className="min-w-0 w-full xl:col-span-2">
           <CheckoutProductList
             cartItems={cartLines}
             isLoading={cartIsLoading}
             error={cartError}
           />
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="min-w-0 w-full">
           <FinalOrderSummaryCard
             listerGroups={listerGroups}
             isLoading={approvedIsLoading}

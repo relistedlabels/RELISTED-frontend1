@@ -1,17 +1,9 @@
 "use client";
+
 // ENDPOINTS: GET /api/listers/orders/:orderId/progress (current order status/step)
 
-import React from "react";
-import { motion } from "framer-motion";
-import {
-  Check,
-  Package,
-  Truck,
-  Home,
-  RotateCcw,
-  CheckCircle2,
-  Loader2,
-} from "lucide-react";
+import { Check, Package, RotateCcw, Truck } from "lucide-react";
+import { Fragment } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
   isListerResaleOrder,
@@ -19,23 +11,15 @@ import {
 } from "@/lib/listers/listerOrderRow";
 
 const rentalSteps = [
-  { label: "Pending", icon: CheckCircle2 },
-  { label: "Approved", icon: CheckCircle2 },
-  { label: "Dispatched", icon: Truck },
-  { label: "Processing pickup", icon: Loader2 },
-  { label: "In transit", icon: Package },
-  { label: "Delivered", icon: Home },
-  { label: "Awaiting return", icon: RotateCcw },
-  { label: "Return received", icon: CheckCircle2 },
-  { label: "Completed", icon: Check },
+  { label: "Shipped", shortLabel: "Shipped", icon: Truck },
+  { label: "Rental period", shortLabel: "Rental", icon: Package },
+  { label: "Return pickup", shortLabel: "Return", icon: RotateCcw },
+  { label: "Completed", shortLabel: "Complete", icon: Check },
 ];
 
 const resaleSteps = [
-  { label: "Pending", icon: CheckCircle2 },
-  { label: "Approved", icon: CheckCircle2 },
-  { label: "In Transit", icon: Truck },
-  { label: "Delivered", icon: Home },
-  { label: "Completed", icon: Check },
+  { label: "Shipped", shortLabel: "Shipped", icon: Truck },
+  { label: "Completed", shortLabel: "Complete", icon: Check },
 ];
 
 interface OrderProgressProps {
@@ -65,15 +49,15 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
     if (isResale) {
       const resaleByApi: Record<string, number> = {
         processing: 0,
-        accepted: 1,
-        confirmed: 1,
-        intransit: 2,
-        delivered: 3,
-        active: 3,
-        completed: 4,
-        returned: 4,
-        return_due: 4,
-        in_dispute: 2,
+        accepted: 0,
+        confirmed: 0,
+        intransit: 0,
+        delivered: 0,
+        active: 0,
+        completed: 1,
+        returned: 1,
+        return_due: 0,
+        in_dispute: 0,
         cancelled: 0,
         rejected: 0,
       };
@@ -82,15 +66,15 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
     } else {
       const rentalByApi: Record<string, number> = {
         processing: 0,
-        accepted: 1,
-        confirmed: 3,
-        intransit: 4,
-        delivered: 5,
-        active: 5,
-        return_due: 6,
-        returned: 7,
-        completed: 8,
-        in_dispute: 5,
+        accepted: 0,
+        confirmed: 0,
+        intransit: 0,
+        delivered: 0,
+        active: 1,
+        return_due: 1,
+        returned: 2,
+        completed: 3,
+        in_dispute: 1,
         cancelled: 0,
         rejected: 0,
       };
@@ -98,56 +82,62 @@ const OrderProgress: React.FC<OrderProgressProps> = ({
       if (idx !== undefined) currentStep = idx;
     }
   }
+  currentStep = Math.max(0, Math.min(steps.length - 1, currentStep));
   return (
-    <div className="bg-white p-4 border border-gray-300 rounded-2xl w-full">
-      <Paragraph1 className="mb-4 font-bold text-black text-xl uppercase">
-        Order Progress
+    <section className="w-full rounded-2xl border border-gray-200 bg-white p-4">
+      <Paragraph1 className="mb-4 font-semibold text-gray-900 text-sm">
+        Order progress
       </Paragraph1>
 
-      <div className="relative flex justify-between">
-        {/* Background Line */}
-        <div className="top-5 left-0 z-0 absolute bg-gray-100 w-full h-0.5" />
-
-        {/* Animated Active Line */}
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
-          className="top-5 left-0 z-0 absolute bg-black h-0.5"
-          transition={{ duration: 1, ease: "easeInOut" }}
-        />
-
-        {steps.map((step, index) => {
-          const isActive = index <= currentStep;
-          const Icon = step.icon;
-
-          return (
-            <div
-              key={`${step.label}-${index}`}
-              className="z- relative flex flex-col items-center"
-            >
-              <motion.div
-                initial={false}
-                animate={{
-                  backgroundColor: isActive ? "#000" : "#F6F6F6",
-                  color: isActive ? "#FFF" : "#A1A1A1",
-                }}
-                className="flex justify-center items-center shadow-sm border-4 border-white rounded-full w-10 h-10"
-              >
-                <Icon className="w-5 h-5" />
-              </motion.div>
-
-              <span
-                className={`mt-3 text-[9px] font-bold transition-colors ${
-                  isActive ? "text-black" : "text-gray-300"
-                }`}
-              >
-                {step.label}
-              </span>
-            </div>
-          );
-        })}
+      <div className="flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <ol className="mt-3 flex items-start" aria-label="Order steps">
+            {steps.map((step, index) => {
+              const isComplete = index < currentStep;
+              const isCurrent = index === currentStep;
+              const Icon = step.icon;
+              return (
+                <Fragment key={step.label}>
+                  <li
+                    className="flex min-w-0 flex-1 flex-col items-center gap-1 text-center"
+                    aria-current={isCurrent ? "step" : undefined}
+                  >
+                    <span
+                      className={`flex h-6 w-6 items-center justify-center rounded-full ${
+                        isComplete || isCurrent
+                          ? "bg-gray-900 text-white"
+                          : "bg-gray-100 text-gray-400"
+                      }`}
+                    >
+                      <Icon className="h-3 w-3" aria-hidden />
+                    </span>
+                    <span
+                      className={`max-w-14 text-[9px] leading-tight ${
+                        isCurrent
+                          ? "font-semibold text-gray-900"
+                          : isComplete
+                            ? "text-gray-600"
+                            : "text-gray-400"
+                      }`}
+                    >
+                      {step.shortLabel}
+                    </span>
+                  </li>
+                  {index < steps.length - 1 && (
+                    <span
+                      aria-hidden
+                      className={`mt-3 h-px flex-1 ${
+                        isComplete ? "bg-gray-900" : "bg-gray-200"
+                      }`}
+                    />
+                  )}
+                </Fragment>
+              );
+            })}
+          </ol>
+        </div>
       </div>
-    </div>
+    </section>
   );
 };
 

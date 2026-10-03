@@ -185,6 +185,13 @@ export type OrderSummaryPayload = {
   shipmentBuckets?: CheckoutShipmentBucket[];
   /** Carrier quote failures (checkout can continue with fallback tiers). */
   shippingQuoteWarnings?: ShippingQuoteWarning[];
+  /** Outbound windows rolled forward at checkout when the approved slot passed. */
+  dispatchReschedules?: Array<{
+    cartItemId?: string;
+    productName?: string;
+    outboundSummary?: string;
+    priceUnchanged?: boolean;
+  }>;
 };
 
 export type OrderSummaryResponse = {
@@ -205,8 +212,7 @@ export function formatShippingQuoteWarningLine(
           ? "Topship"
           : warning.provider;
   const who = warning.listerName?.trim();
-  const leg =
-    warning.leg === "return" ? "return shipping" : "delivery shipping";
+  const leg = warning.leg === "return" ? "return pickup" : "delivery";
   return who
     ? `${providerLabel} (${who}, ${leg}): ${warning.message}`
     : `${providerLabel} (${leg}): ${warning.message}`;

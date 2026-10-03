@@ -22,7 +22,7 @@ export default function PriceFilterInputs({
 }: Props) {
   return (
     <section>
-      <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
+      <Paragraph1 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-900">
         Price (NGN)
       </Paragraph1>
       <Paragraph1 className="text-gray-500 text-xs mb-3">
@@ -49,7 +49,7 @@ export default function PriceFilterInputs({
                 maxPrice,
               })
             }
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-gray-400"
+            className="h-11 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-black focus:ring-1 focus:ring-black"
           />
         </div>
         <div>
@@ -72,7 +72,7 @@ export default function PriceFilterInputs({
                 maxPrice: parseOptionalPrice(e.target.value),
               })
             }
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-gray-400"
+            className="h-11 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-black focus:ring-1 focus:ring-black"
           />
         </div>
       </div>

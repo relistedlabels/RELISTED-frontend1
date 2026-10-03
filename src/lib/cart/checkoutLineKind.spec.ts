@@ -5,6 +5,7 @@ import {
   findCartLineForCheckoutItem,
   isCheckoutRentalLine,
   isCheckoutResalePurchaseLine,
+  isCartPurchaseResaleOnly,
 } from "./checkoutLineKind";
 import type { CartItem } from "@/lib/api/cart";
 
@@ -75,6 +76,40 @@ describe("isCheckoutResalePurchaseLine", () => {
         { cartItemId: "cart-2", rentalDays: 7 },
         [{ ...cartItems[1], days: 0 } as CartItem],
       ),
+    ).toBe(true);
+  });
+
+  test("detects purchase when cart days are zero but listingType is missing", () => {
+    const cartWithoutListingType = [
+      { id: "cart-purchase", days: 0, product: {} },
+    ] as CartItem[];
+    expect(
+      isCheckoutResalePurchaseLine(
+        { cartItemId: "cart-purchase" },
+        cartWithoutListingType,
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("isCartPurchaseResaleOnly", () => {
+  test("returns true when every cart line is purchase/resale", () => {
+    expect(isCartPurchaseResaleOnly([cartItems[0]])).toBe(true);
+  });
+
+  test("returns false when the cart includes a rental line", () => {
+    expect(isCartPurchaseResaleOnly(cartItems)).toBe(false);
+  });
+
+  test("returns false for an empty cart", () => {
+    expect(isCartPurchaseResaleOnly([])).toBe(false);
+  });
+
+  test("returns true when all lines have days zero even without listingType", () => {
+    expect(
+      isCartPurchaseResaleOnly([
+        { id: "cart-purchase", days: 0, product: {} },
+      ] as CartItem[]),
     ).toBe(true);
   });
 });

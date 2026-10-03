@@ -1,5 +1,7 @@
 import { useQuery, UseQueryOptions } from "@tanstack/react-query";
 import { checkDashboardSelection } from "@/lib/api/auth";
+import { useUserStoreHydrated } from "@/hooks/useUserStoreHydrated";
+import { useUserStore } from "@/store/useUserStore";
 
 export function useCheckDashboardSelection(
   options?: Omit<
@@ -8,12 +10,23 @@ export function useCheckDashboardSelection(
       user: { id: string; email: string; role: string; name: string };
     }>,
     "queryKey" | "queryFn"
-  >
+  >,
 ) {
-  return useQuery({
+  const hydrated = useUserStoreHydrated();
+  const token = useUserStore((s) => s.token);
+  const { enabled: enabledOption = true, ...rest } = options ?? {};
+  const enabled = hydrated && token !== null && enabledOption;
+
+  const query = useQuery({
     queryKey: ["auth", "dashboard-selection"],
     queryFn: checkDashboardSelection,
     retry: false,
-    ...options,
+    ...rest,
+    enabled,
   });
+
+  return {
+    ...query,
+    data: enabled ? query.data : undefined,
+  };
 }

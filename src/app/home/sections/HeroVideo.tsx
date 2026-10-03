@@ -4,6 +4,20 @@ import { useEffect, useRef, useState } from "react";
 
 const HERO_MP4_SRC = "/videos/hero1.mp4";
 
+function isSafari(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  const isIOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isWebKit = /AppleWebKit/.test(ua);
+  const isOtherIOSBrowser = /(CriOS|FxiOS|OPiOS|EdgiOS)/.test(ua);
+  return (
+    (isWebKit && !/Chrome|Chromium|Edg|OPR|SamsungBrowser/.test(ua)) ||
+    (isIOS && !isOtherIOSBrowser)
+  );
+}
+
 /**
  * Defer attaching the MP4 until the browser is idle (or a short timeout).
  * Keeps the hero poster visible first so the document and JS bundles are not
@@ -21,7 +35,6 @@ export default function HeroVideo() {
     };
 
     let idleId: number | undefined;
-    /** Browser timers are numeric handles; `ReturnType<typeof setTimeout>` can be `NodeJS.Timeout` when Node typings are in scope. */
     let timeoutId: number | undefined;
 
     if (typeof window.requestIdleCallback === "function") {
@@ -37,21 +50,37 @@ export default function HeroVideo() {
     };
   }, []);
 
-  // Do not call video.load() here. Adding <source> triggers a load; an extra load()
-  // can abort the first range request (Network shows "canceled" then a slow retry).
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !srcReady) return;
+
+    video.muted = true;
+
+    const startPlayback = () => {
+      void video.play().catch(() => {});
+    };
+
+    // Never rely on the autoplay attribute: Safari shows a native play overlay when
+    // it is present. Programmatic play after the source attaches works everywhere.
+    if (isSafari()) {
+      window.setTimeout(startPlayback, 0);
+    } else {
+      startPlayback();
+    }
+    video.addEventListener("canplay", startPlayback, { once: true });
+  }, [srcReady]);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !srcReady) return;
 
-    const FADE_DURATION = 0.5; // seconds before end to fade out
+    const FADE_DURATION = 0.5;
 
     const handleTimeUpdate = () => {
       if (!video.duration) return;
 
       const timeLeft = video.duration - video.currentTime;
 
-      // Fade out near the end
       if (timeLeft <= FADE_DURATION) {
         setFade(true);
       } else {
@@ -66,14 +95,13 @@ export default function HeroVideo() {
   return (
     <video
       ref={videoRef}
-      autoPlay
       loop
       muted
       playsInline
       poster="/videos/hero1-poster.jpg"
       preload={srcReady ? "metadata" : "none"}
       className={`
-        absolute inset-0 w-full h-full object-cover sm:object-contain
+        absolute inset-0 w-full h-full object-cover xl:object-contain
         transition-opacity duration-1000 ease-in-out
         ${fade ? "opacity-0" : "opacity-100"}
       `}

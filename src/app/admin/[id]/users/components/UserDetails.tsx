@@ -4,6 +4,13 @@ import React, { useState } from "react";
 import { X, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1 } from "@/common/ui/Text";
+import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
+import {
+  slidePanelBackdrop,
+  slidePanelFooter,
+  slidePanelHeader,
+  slidePanelSheet,
+} from "@/common/ui/dashboardClasses";
 import { useGetUserById } from "@/lib/queries/user/useGetUserById";
 import SuspendUserButton from "./SuspendUserButton";
 import DresserDetailsCard from "./DresserDetailsCard";
@@ -51,14 +58,14 @@ const UserDetailsPanel: React.FC<UserDetailsPanelProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-99 bg-black/70 backdrop-blur-sm"
+          className={slidePanelBackdrop}
           onClick={onClose}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="fixed top-0 right-0 h-screen hide-scrollbar overflow-y-auto bg-white shadow-2xl px-4 flex flex-col w-full sm:w-114"
+            className={`${slidePanelSheet} flex flex-col`}
             role="dialog"
             aria-modal="true"
             aria-label="User Details"
@@ -70,7 +77,7 @@ const UserDetailsPanel: React.FC<UserDetailsPanelProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex justify-between sticky top-0 items-center pb-4 border-b border-gray-100 pt-6 z-10 bg-white">
+            <div className={slidePanelHeader}>
               <button
                 onClick={onClose}
                 className="text-gray-500 xl:hidden hover:text-black p-1 rounded-full transition"
@@ -109,7 +116,7 @@ const UserDetailsPanel: React.FC<UserDetailsPanelProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="mt-auto py-3 bg-white sticky bottom-0 flex flex-col gap-3">
+            <div className={`${slidePanelFooter} flex flex-col gap-3`}>
               {user && (
                 <SuspendUserButton userId={userId} userName={user.name} />
               )}
@@ -122,7 +129,7 @@ const UserDetailsPanel: React.FC<UserDetailsPanelProps> = ({
 
               <button
                 onClick={onClose}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition"
+                className={`${buttonSecondary} w-full`}
               >
                 <Paragraph1>Close Panel</Paragraph1>
               </button>
@@ -151,7 +158,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
+        className={buttonPrimary}
       >
         <Paragraph1>View Profile</Paragraph1>
       </button>

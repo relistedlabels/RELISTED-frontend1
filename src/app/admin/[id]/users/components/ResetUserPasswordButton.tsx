@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { useResetUserPassword } from "@/lib/queries/user/useResetUserPassword";
 import { Paragraph1 } from "@/common/ui/Text";
+import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 
 interface ResetUserPasswordButtonProps {
   userId: string;
@@ -40,8 +42,8 @@ const ResetUserPasswordButton = ({
         <Paragraph1>Reset Password</Paragraph1>
       </button>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm bg-white rounded-xl p-6 text-center">
+        <div className={dialogBackdrop}>
+          <div className={`${dialogCard} max-w-sm text-center`}>
             <Paragraph1 className="font-semibold mb-2">
               Reset User Password
             </Paragraph1>
@@ -59,14 +61,14 @@ const ResetUserPasswordButton = ({
               <button
                 onClick={() => setOpen(false)}
                 disabled={isPending}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50"
+                className={`${buttonSecondary} flex-1`}
               >
                 <Paragraph1>Cancel</Paragraph1>
               </button>
               <button
                 onClick={handleReset}
                 disabled={!newPassword.trim() || isPending}
-                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
+                className={`${buttonPrimary} flex-1`}
               >
                 <Paragraph1>
                   {isPending ? "Resetting..." : "Confirm Reset"}

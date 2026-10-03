@@ -12,10 +12,14 @@ import {
   LogOut,
   ChevronDown,
   LayoutDashboard,
+  ArrowDownToLine,
+  Heart,
 } from "lucide-react";
+import { useUserStore } from "@/store/useUserStore";
 import LogoutConfirmModal from "./LogoutConfirmModal";
 import { useLogout } from "@/lib/mutations";
 import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
+import { userRoleLabel } from "@/lib/utils/userRoleLabel";
 
 interface UserProfileDropdownProps {
   userName: string | null;
@@ -29,6 +33,7 @@ export default function UserProfileDropdown({
   userRole,
 }: UserProfileDropdownProps) {
   const router = useRouter();
+  const userId = useUserStore((s) => s.userId);
   const [isOpen, setIsOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -46,13 +51,18 @@ export default function UserProfileDropdown({
     },
     {
       label: "Favorites",
-      icon: ShoppingBag,
+      icon: Heart,
       href: "/renters/favorites",
     },
     {
       label: "Wallet",
       icon: Wallet,
       href: "/renters/wallet",
+    },
+    {
+      label: "Withdraw",
+      icon: ArrowDownToLine,
+      href: "/renters/withdraw",
     },
     {
       label: "Disputes",
@@ -158,7 +168,9 @@ export default function UserProfileDropdown({
               <p className="text-sm font-semibold text-gray-900 truncate">
                 {userName || "User"}
               </p>
-              <p className="text-xs text-gray-400 capitalize">{userRole}</p>
+              <p className="text-xs text-gray-400 capitalize">
+                {userRoleLabel(userRole)}
+              </p>
             </div>
 
             {/* Menu Items */}
@@ -184,7 +196,6 @@ export default function UserProfileDropdown({
                 );
               })}
 
-              {/* Divider */}
               <div className="border-t border-gray-200 my-2" />
 
               {/* Logout Button */}

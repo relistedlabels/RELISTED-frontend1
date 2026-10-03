@@ -21,8 +21,12 @@ import {
   listerProfileOnboardingTask,
   type OnboardingTask,
 } from "@/lib/onboarding/onboardingTasks";
-import { markOnboardingComplete, startOnboardingTask } from "@/lib/onboarding/onboardingStorage";
-import { useUserStore } from "@/store/useUserStore";
+import {
+  markOnboardingComplete,
+  markOnboardingDismissed,
+  startOnboardingTask,
+} from "@/lib/onboarding/onboardingStorage";
+import { useOnboardingUserId } from "@/lib/onboarding/useOnboardingUserId";
 
 const stepMeta = [
   {
@@ -40,7 +44,7 @@ const stepMeta = [
   {
     title: "Look Trustworthy",
     subtitle:
-      "Add a photo, business name, and verify your ID and BVN for your public profile.",
+      "Add a photo, business name, and verify your ID for your public profile.",
   },
   {
     title: "Create Your First Listing",
@@ -54,7 +58,7 @@ const stepMeta = [
 
 export function ListerOnboardingFlow() {
   const router = useRouter();
-  const userId = useUserStore((s) => s.userId);
+  const userId = useOnboardingUserId();
   const {
     step,
     hydrated,
@@ -70,15 +74,16 @@ export function ListerOnboardingFlow() {
   };
 
   const skipTour = () => {
-    markOnboardingComplete(userId, "lister");
+    markOnboardingDismissed(userId, "lister");
     router.replace("/listers/dashboard");
   };
 
   const startOnboardingDetour = (task: OnboardingTask) => {
+    const resumeStepAfterTask = Math.min(step + 1, LISTER_ONBOARDING_STEPS - 1);
     startOnboardingTask(userId, "lister", {
       taskId: task.id,
       currentStep: step,
-      resumeStepAfterTask: task.resumeStep,
+      resumeStepAfterTask,
     });
     router.push(buildOnboardingTaskUrl(task, 0));
   };
@@ -108,6 +113,7 @@ export function ListerOnboardingFlow() {
       onNext={isLastStep ? finish : goNext}
       nextLabel={isLastStep ? "Go to Dashboard" : "Continue"}
       onSkipTour={skipTour}
+      skipTourLabel="Skip for now"
       showBack={!isFirstStep}
     >
       {step === 0 ? (

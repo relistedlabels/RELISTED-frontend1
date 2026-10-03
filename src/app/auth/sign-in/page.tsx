@@ -2,6 +2,8 @@
 
 import React from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
+import { X } from "lucide-react";
 import SignInForm from "./components/SignInForm";
 
 function Page() {
@@ -10,6 +12,13 @@ function Page() {
       className="relative w-full h-full min-h-screen bg-black bg-cover bg-center"
       style={{ backgroundImage: "url('/images/authbg.jpg')" }}
     >
+      <Link
+        href="/"
+        className="absolute top-4 left-4 z-10 flex items-center justify-center rounded-full bg-white/90 p-2 text-gray-800 hover:bg-white sm:top-6 sm:left-6"
+        aria-label="Close and go back"
+      >
+        <X className="h-5 w-5" />
+      </Link>
       {/* Dark Overlay */}
       <motion.div
         className="absolute inset-0 bg-black/10"

@@ -1,11 +1,13 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Search, SlidersVertical, X } from "lucide-react";
+import { Search, SlidersHorizontal, SlidersVertical, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Paragraph1 } from "@/common/ui/Text";
+import { slidePanelActionsFooter } from "@/common/ui/dashboardClasses";
 import { useListingFilterOptions } from "@/lib/queries/product/useListingFilterOptions";
 import {
   EMPTY_LISTING_FILTER_OPTIONS,
@@ -23,6 +25,21 @@ const variants = {
   hidden: { x: "100%" },
   visible: { x: 0 },
 };
+
+const filterSectionTitle =
+  "text-xs font-semibold uppercase tracking-wide text-gray-900 mb-3";
+
+const filterSearchInput =
+  "mb-2 w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition focus:border-black focus:ring-1 focus:ring-black";
+
+const filterOptionLabel =
+  "flex cursor-pointer select-none items-center gap-2.5 rounded-lg py-1.5 text-sm text-gray-700 transition hover:bg-gray-50 hover:text-gray-900";
+
+const filterCheckbox =
+  "h-4 w-4 shrink-0 rounded border-gray-300 text-black focus:ring-black";
+
+const filterRadio =
+  "h-4 w-4 shrink-0 border-gray-300 text-black focus:ring-black";
 
 type PanelState = ListingFilterValues & {
   search: string;
@@ -83,6 +100,8 @@ function toListingFilters(state: PanelState): ListingFilterValues {
   };
 }
 
+export type ListingFilterSection = "category" | "size";
+
 export type ListingFilterPanelProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -91,6 +110,7 @@ export type ListingFilterPanelProps = {
   onApply?: (filters: ListingFilterValues) => void;
   onClear?: () => void;
   hideSearch?: boolean;
+  initialSection?: ListingFilterSection;
   filterOptionsScope?: "shop" | "admin-picker";
 };
 
@@ -98,24 +118,33 @@ export function ListingFilterButton({
   onClick,
   activeCount = 0,
   className,
+  compactOnMobile = false,
 }: {
   onClick: () => void;
   activeCount?: number;
   className?: string;
+  compactOnMobile?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={
-        className ??
-        "border px-4 items-center py-2 flex gap-1 font-semibold text-sm border-black hover:bg-gray-100 transition shrink-0"
+      aria-label={
+        activeCount > 0
+          ? `Filters, ${activeCount} active`
+          : "Filters"
       }
+      className={className ?? "inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-900 transition hover:border-gray-400 hover:bg-gray-50 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"}
     >
-      <Paragraph1>
-        Filters{activeCount > 0 ? ` (${activeCount})` : ""}
-      </Paragraph1>
-      <SlidersVertical size={18} />
+      <SlidersHorizontal size={16} aria-hidden />
+      <span className={compactOnMobile ? "hidden sm:inline" : undefined}>
+        Filters
+      </span>
+      {activeCount > 0 ? (
+        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-black px-1 text-[11px] font-bold text-white">
+          {activeCount}
+        </span>
+      ) : null}
     </button>
   );
 }
@@ -128,6 +157,7 @@ export default function ListingFilterPanel({
   onApply,
   onClear,
   hideSearch = false,
+  initialSection,
   filterOptionsScope = "shop",
 }: ListingFilterPanelProps) {
   const router = useRouter();
@@ -152,6 +182,13 @@ export default function ListingFilterPanel({
   const [tagSearch, setTagSearch] = useState("");
   const [listerSearch, setListerSearch] = useState("");
   const [localFilters, setLocalFilters] = useState<PanelState>(emptyPanelState);
+  const [mounted, setMounted] = useState(false);
+  const categorySectionRef = useRef<HTMLElement | null>(null);
+  const sizeSectionRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -163,6 +200,28 @@ export default function ListingFilterPanel({
     // Sync draft state only when the panel opens.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !initialSection) return;
+    const target =
+      initialSection === "category"
+        ? categorySectionRef.current
+        : sizeSectionRef.current;
+    if (!target) return;
+    const frame = requestAnimationFrame(() => {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isOpen, initialSection]);
 
   const toggleList = (list: string[], item: string, checked: boolean) =>
     checked ? [...list, item] : list.filter((entry) => entry !== item);
@@ -196,18 +255,20 @@ export default function ListingFilterPanel({
     onClose();
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen ? (
         <motion.div
-          className="fixed inset-0 z-99 bg-black/70 backdrop--blur-sm"
+          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
           onClick={onClose}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="fixed top-0 right-0 h-screen hide-scrollbar overflow-y-auto bg-white shadow-2xl px-4 flex flex-col w-full sm:w-94"
+            className="fixed inset-y-0 right-0 flex h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white shadow-2xl sm:w-[28.5rem]"
             role="dialog"
             aria-modal="true"
             aria-label="Product Filters"
@@ -218,27 +279,27 @@ export default function ListingFilterPanel({
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between sticky top-0 items-center pb-4 border-b border-gray-100 pt-6 z-10 bg-white">
-              <Paragraph1 className="font-bold tracking-widest text-gray-800">
-                FILTERS
+            <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-4 pb-4 pt-6 sm:px-5">
+              <Paragraph1 className="text-sm font-semibold uppercase tracking-wide text-gray-900">
+                Filters
               </Paragraph1>
               <button
                 type="button"
                 onClick={onClose}
-                className="text-gray-500 hover:text-black p-1 rounded-full transition"
+                className="rounded-full p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-black"
                 aria-label="Close filters"
               >
                 <X size={20} />
               </button>
             </div>
 
-            <div className="grow pt-4 pb-20 space-y-8">
+            <div className="min-h-0 flex-1 space-y-8 overflow-y-auto px-4 py-5 sm:px-5">
               {!hideSearch ? (
-                <div className="mb-6">
+                <div>
                   <div className="relative">
                     <input
                       type="text"
-                      placeholder="Search"
+                      placeholder="Search listings..."
                       value={localFilters.search}
                       onChange={(e) =>
                         setLocalFilters({
@@ -246,18 +307,18 @@ export default function ListingFilterPanel({
                           search: e.target.value,
                         })
                       }
-                      className="w-full pl-10 pr-4 py-3 border-gray-100 bg-gray-100 outline-none"
+                      className="h-11 w-full rounded-xl border border-gray-300 py-2 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition focus:border-black focus:ring-1 focus:ring-black"
                     />
                     <Search
                       size={16}
-                      className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
                     />
                   </div>
                 </div>
               ) : null}
 
-              <section>
-                <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
+              <section ref={categorySectionRef}>
+                <Paragraph1 className={filterSectionTitle}>
                   Primary Categories
                 </Paragraph1>
                 <div className="mb-2">
@@ -266,7 +327,7 @@ export default function ListingFilterPanel({
                     placeholder="Search categories..."
                     value={categorySearch}
                     onChange={(e) => setCategorySearch(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded mb-1 text-sm"
+                    className={filterSearchInput}
                   />
                 </div>
                 {optionsLoading ? (
@@ -286,7 +347,7 @@ export default function ListingFilterPanel({
                       .map((cat) => (
                         <label
                           key={cat.id}
-                          className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
+                          className={filterOptionLabel}
                         >
                           <input
                             type="checkbox"
@@ -301,7 +362,7 @@ export default function ListingFilterPanel({
                                 ),
                               })
                             }
-                            className="h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
+                            className={filterCheckbox}
                           />
                           <Paragraph1>{cat.name}</Paragraph1>
                         </label>
@@ -315,7 +376,7 @@ export default function ListingFilterPanel({
               </section>
 
               <section>
-                <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
+                <Paragraph1 className={filterSectionTitle}>
                   Subcategories
                 </Paragraph1>
                 <div className="mb-2">
@@ -324,7 +385,7 @@ export default function ListingFilterPanel({
                     placeholder="Search subcategories..."
                     value={tagSearch}
                     onChange={(e) => setTagSearch(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded mb-1 text-sm"
+                    className={filterSearchInput}
                   />
                 </div>
                 {optionsLoading ? (
@@ -342,7 +403,7 @@ export default function ListingFilterPanel({
                       .map((tag) => (
                         <label
                           key={tag.id}
-                          className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
+                          className={filterOptionLabel}
                         >
                           <input
                             type="checkbox"
@@ -357,7 +418,7 @@ export default function ListingFilterPanel({
                                 ),
                               })
                             }
-                            className="h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
+                            className={filterCheckbox}
                           />
                           <Paragraph1>{tag.name}</Paragraph1>
                         </label>
@@ -371,7 +432,7 @@ export default function ListingFilterPanel({
               </section>
 
               <section>
-                <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
+                <Paragraph1 className={filterSectionTitle}>
                   Brands
                 </Paragraph1>
                 <div className="mb-2">
@@ -380,7 +441,7 @@ export default function ListingFilterPanel({
                     placeholder="Search brands..."
                     value={brandSearch}
                     onChange={(e) => setBrandSearch(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded mb-1 text-sm"
+                    className={filterSearchInput}
                   />
                 </div>
                 {optionsLoading ? (
@@ -400,7 +461,7 @@ export default function ListingFilterPanel({
                       .map((brand) => (
                         <label
                           key={brand.id}
-                          className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
+                          className={filterOptionLabel}
                         >
                           <input
                             type="checkbox"
@@ -415,7 +476,7 @@ export default function ListingFilterPanel({
                                 ),
                               })
                             }
-                            className="h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
+                            className={filterCheckbox}
                           />
                           <Paragraph1>{brand.name}</Paragraph1>
                         </label>
@@ -429,7 +490,7 @@ export default function ListingFilterPanel({
               </section>
 
               <section>
-                <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
+                <Paragraph1 className={filterSectionTitle}>
                   Listers
                 </Paragraph1>
                 <div className="mb-2">
@@ -438,7 +499,7 @@ export default function ListingFilterPanel({
                     placeholder="Search listers..."
                     value={listerSearch}
                     onChange={(e) => setListerSearch(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded mb-1 text-sm"
+                    className={filterSearchInput}
                   />
                 </div>
                 {optionsLoading ? (
@@ -458,7 +519,7 @@ export default function ListingFilterPanel({
                       .map((user) => (
                         <label
                           key={user.id}
-                          className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
+                          className={filterOptionLabel}
                         >
                           <input
                             type="checkbox"
@@ -473,7 +534,7 @@ export default function ListingFilterPanel({
                                 ),
                               })
                             }
-                            className="h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
+                            className={filterCheckbox}
                           />
                           <Paragraph1>{user.name}</Paragraph1>
                         </label>
@@ -487,7 +548,7 @@ export default function ListingFilterPanel({
               </section>
 
               <section>
-                <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
+                <Paragraph1 className={filterSectionTitle}>
                   Listing type
                 </Paragraph1>
                 {optionsLoading ? (
@@ -496,7 +557,7 @@ export default function ListingFilterPanel({
                   filterOptions.listingTypes.map((item) => (
                     <label
                       key={item.value}
-                      className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
+                      className={filterOptionLabel}
                     >
                       <input
                         type="checkbox"
@@ -513,7 +574,7 @@ export default function ListingFilterPanel({
                             ),
                           })
                         }
-                        className="h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
+                        className={filterCheckbox}
                       />
                       <Paragraph1>{item.label}</Paragraph1>
                     </label>
@@ -525,8 +586,8 @@ export default function ListingFilterPanel({
                 )}
               </section>
 
-              <section>
-                <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
+              <section ref={sizeSectionRef}>
+                <Paragraph1 className={filterSectionTitle}>
                   Size
                 </Paragraph1>
                 {optionsLoading ? (
@@ -536,7 +597,7 @@ export default function ListingFilterPanel({
                     {filterOptions.sizes.map((item) => (
                     <label
                       key={item}
-                      className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
+                      className={filterOptionLabel}
                     >
                       <input
                         type="checkbox"
@@ -551,7 +612,7 @@ export default function ListingFilterPanel({
                             ),
                           })
                         }
-                        className="h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
+                        className={filterCheckbox}
                       />
                       <Paragraph1>{item}</Paragraph1>
                     </label>
@@ -565,7 +626,7 @@ export default function ListingFilterPanel({
               </section>
 
               <section>
-                <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
+                <Paragraph1 className={filterSectionTitle}>
                   Color
                 </Paragraph1>
                 {optionsLoading ? (
@@ -575,7 +636,7 @@ export default function ListingFilterPanel({
                     {filterOptions.colors.map((item) => (
                       <label
                         key={item}
-                        className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
+                        className={filterOptionLabel}
                       >
                         <input
                           type="checkbox"
@@ -590,7 +651,7 @@ export default function ListingFilterPanel({
                               ),
                             })
                           }
-                          className="h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
+                          className={filterCheckbox}
                         />
                         <Paragraph1>{item}</Paragraph1>
                       </label>
@@ -604,7 +665,7 @@ export default function ListingFilterPanel({
               </section>
 
               <section>
-                <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
+                <Paragraph1 className={filterSectionTitle}>
                   Condition
                 </Paragraph1>
                 {optionsLoading ? (
@@ -614,7 +675,7 @@ export default function ListingFilterPanel({
                     {filterOptions.conditions.map((item) => (
                       <label
                         key={item}
-                        className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
+                        className={filterOptionLabel}
                       >
                         <input
                           type="radio"
@@ -627,7 +688,7 @@ export default function ListingFilterPanel({
                               condition: e.target.value,
                             })
                           }
-                          className="h-4 w-4 text-black border-gray-300 rounded-full focus:ring-black"
+                          className={filterRadio}
                         />
                         <Paragraph1>{item}</Paragraph1>
                       </label>
@@ -641,7 +702,7 @@ export default function ListingFilterPanel({
               </section>
 
               <section>
-                <Paragraph1 className="uppercase font-bold text-xs mb-3 text-gray-800">
+                <Paragraph1 className={filterSectionTitle}>
                   Material
                 </Paragraph1>
                 {optionsLoading ? (
@@ -651,7 +712,7 @@ export default function ListingFilterPanel({
                     {filterOptions.materials.map((item) => (
                       <label
                         key={item}
-                        className="flex items-center space-x-2 py-1 cursor-pointer select-none text-sm text-gray-700 hover:text-gray-900"
+                        className={filterOptionLabel}
                       >
                         <input
                           type="radio"
@@ -664,7 +725,7 @@ export default function ListingFilterPanel({
                               material: e.target.value,
                             })
                           }
-                          className="h-4 w-4 text-black border-gray-300 rounded-full focus:ring-black"
+                          className={filterRadio}
                         />
                         <Paragraph1>{item}</Paragraph1>
                       </label>
@@ -686,26 +747,27 @@ export default function ListingFilterPanel({
               />
             </div>
 
-            <div className="mt-auto py-2 bg-white flex justify-between gap-4 sticky bottom-0">
+            <div className={slidePanelActionsFooter}>
               <button
                 type="button"
                 onClick={handleClearFilters}
-                className="flex-1 px-4 py-3 text-sm font-semibold border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                className="inline-flex h-11 flex-1 items-center justify-center rounded-xl border border-gray-300 bg-white text-sm font-semibold text-gray-900 transition hover:border-gray-400 hover:bg-gray-50"
               >
-                <Paragraph1>Clear Filters</Paragraph1>
+                Clear all
               </button>
               <button
                 type="button"
                 onClick={handleApplyFilters}
-                className="flex-1 px-4 py-3 text-sm font-semibold bg-black text-white rounded-lg hover:bg-gray-800 transition flex items-center justify-center gap-2"
+                className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-black text-sm font-semibold text-white transition hover:bg-gray-900"
               >
-                <SlidersVertical size={16} />
-                <Paragraph1>Apply Filters</Paragraph1>
+                <SlidersVertical size={16} aria-hidden />
+                Apply
               </button>
             </div>
           </motion.div>
         </motion.div>
       ) : null}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

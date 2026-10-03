@@ -1,6 +1,7 @@
 "use client";
 
 import { Paragraph1 } from "@/common/ui/Text";
+import { formatRentalDuration } from "@/lib/rental/formatRentalDuration";
 import React from "react";
 
 // Define the shape of the props the component expects
@@ -43,7 +44,7 @@ export default function RentalSummaryCard({
           {/* 1. Rental Fee */}
           <div className="flex justify-between items-center">
             <Paragraph1 className="text-gray-700">
-              Rental Fee ( {rentalDays} Days)
+              Rental Fee ({formatRentalDuration(rentalDays)})
             </Paragraph1>
             <Paragraph1 className="font-bold text-gray-900">
               {currency}

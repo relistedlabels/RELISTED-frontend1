@@ -31,7 +31,9 @@ const RentalListItem: React.FC<{
           {name}
         </Paragraph1>
         <Paragraph1 className="text-sm text-gray-500">
-          {rentalsCount} Rentals
+          {rentalsCount > 0
+            ? `${rentalsCount} rental${rentalsCount === 1 ? "" : "s"}`
+            : "No rentals yet"}
         </Paragraph1>
       </div>
 
@@ -58,9 +60,9 @@ const TopRentalsList: React.FC = () => {
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-1">
           <Paragraph3 className="text-xl font-semibold text-black">
-            Top Rentals
+            Top Items
           </Paragraph3>
-          <ToolInfo content="Shows the most rented items, their availability status, and current pricing." />
+          <ToolInfo content="Your best-performing listings by rentals, with availability status and current pricing." />
         </div>
 
         <Link

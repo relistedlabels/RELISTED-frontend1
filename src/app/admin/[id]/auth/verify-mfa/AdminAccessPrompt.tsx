@@ -130,7 +130,13 @@ export default function AdminAccessPrompt({
           </div>
         ) : (
           /* OTP Verification Section */
-          <div className="space-y-5">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleVerifyOtp();
+            }}
+            className="space-y-5"
+          >
             {/* OTP Inputs */}
             <div className="flex justify-between gap-3">
               {OTP_FIELDS.map(({ key, index }) => (
@@ -159,6 +165,10 @@ export default function AdminAccessPrompt({
                   onKeyDown={(e) => {
                     if (e.key === "Backspace" && !otp[index] && index > 0) {
                       inputsRef.current[index - 1]?.focus();
+                    }
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleVerifyOtp();
                     }
                   }}
                   onPaste={(e) => {
@@ -198,14 +208,13 @@ export default function AdminAccessPrompt({
             )}
 
             <button
-              type="button"
-              onClick={handleVerifyOtp}
+              type="submit"
               disabled={otp.length !== 6 || verifyMfa.isPending}
               className="bg-black hover:bg-black/90 disabled:opacity-50 py-3 rounded-lg w-full font-semibold text-white transition"
             >
               {verifyMfa.isPending ? "Verifying..." : "Verify"}
             </button>
-          </div>
+          </form>
         )}
       </div>
     </div>

@@ -21,7 +21,7 @@ export default function LogoutConfirmModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Log Out"
-      description="Are you sure you want to log out? You'll need to sign in again to access the admin dashboard."
+      description="Are you sure you want to log out? You will need to sign in again."
       actionType="negative"
       actionLabel="Log Out"
       cancelLabel="Stay"

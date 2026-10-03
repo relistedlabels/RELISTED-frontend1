@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Calendar, Clock } from "lucide-react";
+import { Calendar, Clock, ExternalLink } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
   formatLagosTime,
@@ -19,6 +19,11 @@ export interface DispatchWindow {
   baseDate: string;
 }
 
+type WindowTracking = {
+  trackingId?: string | null;
+  providerTrackingUrl?: string | null;
+};
+
 interface DispatchWindowsDisplayProps {
   dispatchWindows?: DispatchWindow[];
   orderData?: {
@@ -26,6 +31,9 @@ interface DispatchWindowsDisplayProps {
   };
   /** Panel heading (default: Courier Schedule) */
   sectionTitle?: string;
+  trackingByType?: Partial<
+    Record<DispatchWindow["type"], WindowTracking>
+  >;
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -44,6 +52,7 @@ const DispatchWindowsDisplay: React.FC<DispatchWindowsDisplayProps> = ({
   dispatchWindows,
   orderData: _orderData,
   sectionTitle = "Courier Schedule",
+  trackingByType,
 }) => {
   if (!dispatchWindows || dispatchWindows.length === 0) {
     return null;
@@ -65,20 +74,35 @@ const DispatchWindowsDisplay: React.FC<DispatchWindowsDisplayProps> = ({
           });
           const label = TYPE_LABELS[dw.type] || dw.type;
           const icon = TYPE_ICONS[dw.type] || <Calendar size={16} />;
+          const tracking = trackingByType?.[dw.type];
+          const trackingUrl = tracking?.providerTrackingUrl?.trim();
 
           return (
             <div
               key={`${dw.type}-${dw.window.start}-${dw.window.end}`}
-              className="flex items-center gap-3 bg-white p-3 border border-gray-200 rounded-xl"
+              className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3"
             >
-              <div className="bg-gray-100 p-2 rounded-full text-gray-700 shrink-0">
+              <div className="shrink-0 rounded-full bg-gray-100 p-2 text-gray-700">
                 {icon}
               </div>
-              <div className="flex-1 min-w-0">
-                <Paragraph1 className="font-semibold text-gray-900 text-xs">
-                  {label}
-                </Paragraph1>
-                <Paragraph1 className="mt-1 text-gray-600 text-xs">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                  <Paragraph1 className="text-xs font-semibold text-gray-900">
+                    {label}
+                  </Paragraph1>
+                  {trackingUrl ? (
+                    <a
+                      href={trackingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-blue-600 hover:text-blue-800"
+                    >
+                      Track
+                      <ExternalLink size={10} aria-hidden />
+                    </a>
+                  ) : null}
+                </div>
+                <Paragraph1 className="mt-1 text-xs text-gray-600">
                   {startTime} to {endTime}
                 </Paragraph1>
                 <Paragraph1 className="mt-0.5 text-[10px] text-gray-400">

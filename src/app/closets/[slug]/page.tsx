@@ -1,6 +1,8 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useClosetShopFeatureEnabled } from "@/lib/queries/site/useClosetShopFeatureEnabled";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import ProductCard from "@/common/ui/ProductCard";
@@ -11,8 +13,16 @@ import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 export default function PublicClosetPage() {
+  const router = useRouter();
   const params = useParams();
   const slug = typeof params.slug === "string" ? params.slug : "";
+  const { enabled: closetFeatureEnabled, isLoading: featureLoading } =
+    useClosetShopFeatureEnabled();
+
+  useEffect(() => {
+    if (featureLoading || closetFeatureEnabled) return;
+    router.replace("/shop");
+  }, [closetFeatureEnabled, featureLoading, router]);
 
   const metaQuery = useQuery({
     queryKey: ["public-closet", slug],
@@ -28,6 +38,14 @@ export default function PublicClosetPage() {
     enabled: !!slug && metaQuery.isSuccess,
     retry: 1,
   });
+
+  if (featureLoading || !closetFeatureEnabled) {
+    return (
+      <div className="flex justify-center items-center px-4 min-h-[40vh]">
+        <Paragraph1>Loading…</Paragraph1>
+      </div>
+    );
+  }
 
   if (!slug) {
     return (

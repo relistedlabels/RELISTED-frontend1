@@ -40,13 +40,16 @@
     "import-in-the-middle": "2.0.6"
   },
   "devDependencies": {
-    "@playwright/test": "^1.52.0",
     "@biomejs/biome": "2.2.0",
+    "@playwright/test": "^1.52.0",
+    "@serwist/turbopack": "^9.5.12",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "esbuild": "^0.28.2",
     "plop": "^4.0.5",
+    "serwist": "^9.5.12",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

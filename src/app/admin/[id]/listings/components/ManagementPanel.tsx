@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { productsApi } from "@/lib/api/admin/listings";
 import {
   Trash2,
   Edit2,
@@ -12,6 +14,12 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import {
+  buttonDestructive,
+  buttonPrimary,
+  buttonSecondary,
+} from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 import {
   useAllCategories,
   useDeleteCategory,
@@ -70,6 +78,12 @@ export default function ManagementPanel() {
   const deleteBrand = useDeleteBrand();
   const editBrand = useEditBrand();
   const createBrand = useCreateBrand();
+
+  const { data: brandDeleteImpact } = useQuery({
+    queryKey: ["admin", "brands", "delete-impact", deletingId],
+    queryFn: () => productsApi.getBrandDeleteImpact(deletingId!),
+    enabled: activeTab === "Brands" && Boolean(deletingId),
+  });
 
   const handleStartEdit = (id: string, name: string) => {
     setEditingId(id);
@@ -557,18 +571,36 @@ export default function ManagementPanel() {
 
       {/* Delete Confirmation Modal */}
       {deletingId && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+        <div className={dialogBackdrop}>
+          <div className={dialogCard}>
             <h3 className="text-lg font-bold mb-4">Confirm Delete</h3>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to delete this{" "}
-              {activeTab.toLowerCase().slice(0, -1)}? Related products will be
-              reassigned automatically.
+              {activeTab === "Brands" ? (
+                <>
+                  Are you sure you want to delete this brand?
+                  {brandDeleteImpact?.data?.productCount ? (
+                    <>
+                      {" "}
+                      It has {brandDeleteImpact.data.productCount} listing
+                      {brandDeleteImpact.data.productCount === 1 ? "" : "s"}.
+                      Those listings will lose their brand assignment.
+                    </>
+                  ) : (
+                    <> Related products will lose their brand assignment.</>
+                  )}
+                </>
+              ) : (
+                <>
+                  Are you sure you want to delete this{" "}
+                  {activeTab.toLowerCase().slice(0, -1)}? Related products will
+                  be reassigned automatically.
+                </>
+              )}
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setDeletingId(null)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium"
+                className={`${buttonSecondary} flex-1`}
               >
                 Cancel
               </button>
@@ -579,7 +611,7 @@ export default function ManagementPanel() {
                   deleteTag.isPending ||
                   deleteBrand.isPending
                 }
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium disabled:opacity-50"
+                className={`${buttonDestructive} flex-1`}
               >
                 {deleteCategory.isPending ||
                 deleteTag.isPending ||
@@ -594,8 +626,8 @@ export default function ManagementPanel() {
 
       {/* Bulk Delete Progress Modal */}
       {isDeleting && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+        <div className={dialogBackdrop}>
+          <div className={dialogCard}>
             <div className="flex items-center justify-center mb-4">
               <div className="animate-spin">
                 <Check size={24} className="text-blue-600" />
@@ -622,7 +654,7 @@ export default function ManagementPanel() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            className={dialogBackdrop}
             onClick={() => setShowCreateModal(false)}
           >
             <motion.div
@@ -630,7 +662,7 @@ export default function ManagementPanel() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="bg-white rounded-lg p-6 max-w-md w-full mx-4 border border-gray-200"
+              className={`${dialogCard} mx-4`}
               onClick={(e) => e.stopPropagation()}
             >
               <Paragraph1 className="text-xl font-bold mb-4 text-center text-black">
@@ -718,7 +750,7 @@ export default function ManagementPanel() {
                     createTag.isPending ||
                     createBrand.isPending
                   }
-                  className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition disabled:opacity-50 font-medium"
+                  className={`${buttonPrimary} flex-1`}
                 >
                   {createCategory.isPending ||
                   createTag.isPending ||
@@ -735,7 +767,7 @@ export default function ManagementPanel() {
                     setCreateImagePreview(null);
                     setIsDragOver(false);
                   }}
-                  className="flex-1 px-4 py-2 bg-gray-300 text-black rounded-lg hover:bg-gray-400 transition font-medium"
+                  className={`${buttonSecondary} flex-1`}
                 >
                   Cancel
                 </button>

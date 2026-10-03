@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, memo, useMemo } from "react";
+import React, { useMemo } from "react";
 import type {
   OutboundShippingBucketQuote,
   ReturnShippingBucketQuote,
 } from "@/lib/api/cart";
-import Image from "next/image";
 import Link from "next/link";
-import { Check, CheckCircle, MapPin } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useRouter } from "next/navigation";
 import {
@@ -18,17 +17,15 @@ import {
 } from "@/lib/api/cart";
 import { usePassCart } from "@/lib/mutations/renters/usePassCartMutation";
 import { useQueryClient } from "@tanstack/react-query";
-import { useListerProfile } from "@/lib/queries/shop/useListerProfile";
 import { toast } from "sonner";
-import { isResaleItem } from "@/lib/listers/listerOrderRow";
-import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
-import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
+import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
 import {
   computeCheckoutGrandTotal,
   computeDisplayOutboundShipping,
   computeDisplayReturnShipping,
-  computeListerSubtotal,
 } from "@/lib/checkout/checkoutSummaryTotals";
+import CheckoutOrderItems from "./CheckoutOrderItems";
+import CheckoutWalletBlock from "./CheckoutWalletBlock";
 import type {
   DispatchWindowSelectionMap,
   DispatchWindowsPayload,
@@ -40,227 +37,6 @@ const CURRENCY = "₦";
 const formatCurrency = (amount: number): string => {
   return amount.toLocaleString("en-NG");
 };
-
-// === Lister Summary Card Component ===
-interface ListerSummaryCardProps {
-  group: {
-    listerId: string;
-    items: any[];
-  };
-  orderSummary: any;
-  selectedTierData?: {
-    name: string;
-    totalShippingCost: number;
-    grandTotal: number;
-  };
-  approvedGroups: Array<{
-    listerId: string;
-    items: any[];
-  }>;
-}
-
-const ListerOrderCard = memo(
-  ({
-    group,
-    orderSummary,
-    selectedTierData,
-    approvedGroups,
-  }: ListerSummaryCardProps) => {
-    // Hook called at top level of component
-    const { data: listerData, isLoading: isListerLoading } = useListerProfile(
-      group.listerId,
-    );
-
-    // Use API breakdown data instead of manual calculations
-
-    // Use fetched lister name with fallbacks
-    const listerName =
-      listerData?.name ||
-      group.items[0]?.listerName ||
-      `Lister ${group.listerId}`;
-
-    const calculateListerShippingShare = (
-      totalShippingCost: number,
-      listerItemCount: number,
-      totalItemsCount: number,
-    ): number => {
-      if (totalItemsCount === 0) return 0;
-      return Math.floor(
-        (totalShippingCost * listerItemCount) / totalItemsCount,
-      );
-    };
-
-    return (
-      <div
-        key={group.listerId}
-        className="p-4 border border-gray-200 rounded-xl"
-      >
-        <div className="flex justify-between items-center gap-4 mb-4">
-          <Paragraph1 className="font-bold text-gray-900 text-lg tracking-wide">
-            ORDER SUMMARY
-          </Paragraph1>
-          <Paragraph1 className="font-bold text-gray-500 text-lg tracking-wide">
-            From -{" "}
-            {isListerLoading ? (
-              <span className="inline-block bg-gray-200 rounded w-24 h-5 animate-pulse"></span>
-            ) : (
-              listerName
-            )}
-          </Paragraph1>
-        </div>
-
-        {/* Item List for this Lister */}
-        <div className="space-y-4 pb-6 border-gray-200 border-b">
-          {group.items.map((item) => {
-            const product = item.productDetail || {};
-            const productImageUrl = cloudinaryOptimizedImageUrl(
-              firstProductAttachmentImageUrl(product.attachments?.uploads) ||
-                item.productImage ||
-                "",
-              { preset: "thumb" },
-            );
-
-            return (
-              <div
-                key={item.requestId || item.cartItemId || item.id}
-                className="flex items-start gap-4"
-              >
-                <div className="relative bg-gray-200 border border-gray-100 rounded-md w-16 h-20 overflow-hidden shrink-0">
-                  {productImageUrl && (
-                    <Image
-                      src={productImageUrl}
-                      alt={product.name || item.productName}
-                      fill
-                      className="object-cover"
-                      unoptimized
-                    />
-                  )}
-                </div>
-
-                <div className="grow">
-                  <Paragraph1 className="font-semibold text-gray-800 text-sm uppercase leading-snug">
-                    {product.name || item.productName}
-                  </Paragraph1>
-                  <Paragraph1 className="mt-1 text-gray-600 text-xs leading-snug">
-                    {item.isResale || isResaleItem(item) ? (
-                      <>
-                        Type: <strong>Resale</strong>
-                      </>
-                    ) : (
-                      <>
-                        Duration: <strong>{item.rentalDays} Days</strong>
-                      </>
-                    )}
-                  </Paragraph1>
-                </div>
-
-                <div className="mt-1 font-bold text-gray-900 text-sm shrink-0">
-                  <Paragraph1>
-                    {CURRENCY}
-                    {formatCurrency(item.totalPrice || 0)}
-                  </Paragraph1>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Cost Breakdown for this Lister - From Order Summary */}
-        {orderSummary?.data?.listerBreakdowns &&
-          (() => {
-            const listerBreakdown = orderSummary.data.listerBreakdowns.find(
-              (breakdown: any) => breakdown.listerId === group.listerId,
-            );
-            const hasResaleItems = listerBreakdown?.purchaseTotal > 0;
-            const hasRentalItems = listerBreakdown?.rentalTotal > 0;
-
-            return listerBreakdown ? (
-              <div className="space-y-2 py-4 border-gray-200 border-b">
-                {hasResaleItems && (
-                  <div className="flex justify-between font-medium text-gray-700 text-sm">
-                    <Paragraph1>Purchase Amount</Paragraph1>
-                    <Paragraph1>
-                      {CURRENCY}
-                      {formatCurrency(listerBreakdown.purchaseTotal)}
-                    </Paragraph1>
-                  </div>
-                )}
-                {hasRentalItems && (
-                  <div className="flex justify-between font-medium text-gray-700 text-sm">
-                    <Paragraph1>Rental Amount</Paragraph1>
-                    <Paragraph1>
-                      {CURRENCY}
-                      {formatCurrency(listerBreakdown.rentalTotal)}
-                    </Paragraph1>
-                  </div>
-                )}
-                {hasRentalItems && (
-                  <>
-                    <div className="flex justify-between font-medium text-gray-700 text-sm">
-                      <Paragraph1>Security Deposit</Paragraph1>
-                      <Paragraph1>
-                        {CURRENCY}
-                        {formatCurrency(listerBreakdown.collateralTotal)}
-                      </Paragraph1>
-                    </div>
-                    <div className="flex justify-between font-medium text-gray-700 text-sm">
-                      <Paragraph1>Cleaning Fees</Paragraph1>
-                      <Paragraph1>
-                        {CURRENCY}
-                        {formatCurrency(listerBreakdown.cleaningTotal)}
-                      </Paragraph1>
-                    </div>
-                  </>
-                )}
-                <div className="flex justify-between font-medium text-gray-700 text-sm">
-                  <Paragraph1>Delivery fee</Paragraph1>
-                  <Paragraph1>
-                    {CURRENCY}
-                    {formatCurrency(listerBreakdown.outboundShippingCost || 0)}
-                  </Paragraph1>
-                </div>
-                {hasRentalItems && (
-                  <div className="flex justify-between font-medium text-gray-700 text-sm">
-                    <Paragraph1>Return fee</Paragraph1>
-                    <Paragraph1>
-                      {CURRENCY}
-                      {formatCurrency(listerBreakdown.returnShippingCost || 0)}
-                    </Paragraph1>
-                  </div>
-                )}
-              </div>
-            ) : null;
-          })()}
-
-        {/* Lister Subtotal */}
-        {orderSummary?.data?.listerBreakdowns &&
-          (() => {
-            const listerBreakdown = orderSummary.data.listerBreakdowns.find(
-              (breakdown: any) => breakdown.listerId === group.listerId,
-            );
-            const hasResaleItems = listerBreakdown?.purchaseTotal > 0;
-            const hasRentalItems = listerBreakdown?.rentalTotal > 0;
-
-            return listerBreakdown ? (
-              <div className="flex justify-between items-center pt-4">
-                <Paragraph1 className="font-bold text-gray-900 text-sm">
-                  Subtotal:
-                </Paragraph1>
-                <Paragraph1 className="font-extrabold text-gray-900 text-lg">
-                  {CURRENCY}
-                  {formatCurrency(
-                    computeListerSubtotal(listerBreakdown),
-                  )}
-                </Paragraph1>
-              </div>
-            ) : null;
-          })()}
-      </div>
-    );
-  },
-);
-
-ListerOrderCard.displayName = "ListerOrderCard";
 
 // === Skeleton Loader ===
 const CheckoutSummarySkeleton = () => (
@@ -310,8 +86,16 @@ interface FinalOrderSummaryCardProps {
   orderSummaryLoading?: boolean;
   /** GET /order/summary failed (e.g. expired dispatch window, no approved lines). */
   orderSummaryError?: string | null;
+  hasDeliveryAddress?: boolean;
+  dispatchReschedules?: Array<{
+    cartItemId?: string;
+    productName?: string;
+    outboundSummary?: string;
+    priceUnchanged?: boolean;
+  }>;
   onRefetchOrderSummary?: () => void;
   checkoutBlockingIssues?: string[];
+  checkoutStep?: 1 | 2;
 }
 
 export default function FinalOrderSummaryCard({
@@ -332,13 +116,15 @@ export default function FinalOrderSummaryCard({
   orderSummary,
   orderSummaryLoading = false,
   orderSummaryError = null,
+  hasDeliveryAddress = false,
+  dispatchReschedules = [],
   onRefetchOrderSummary,
   checkoutBlockingIssues = [],
+  checkoutStep = 1,
 }: FinalOrderSummaryCardProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const passCartMutation = usePassCart();
-  const [isAgree, setIsAgree] = useState(false);
   const canCheckout = checkoutBlockingIssues.length === 0;
 
   const dispatchWindowsPayload = useMemo<
@@ -412,11 +198,6 @@ export default function FinalOrderSummaryCard({
   );
 
   const handleCheckout = async () => {
-    if (!isAgree) {
-      alert("Please agree to the terms of service");
-      return;
-    }
-
     if (usePerBucketOutbound) {
       for (const b of outboundShippingByBucket) {
         const pick =
@@ -424,12 +205,12 @@ export default function FinalOrderSummaryCard({
           b.shippingTiers[0]?.name ??
           "";
         if (!pick.trim()) {
-          alert("Please select a delivery shipping method for each order.");
+          alert("Please select a delivery method for each order.");
           return;
         }
       }
     } else if (!selectedShippingTier) {
-      alert("Please select a shipping method");
+      alert("Please select a delivery method");
       return;
     }
     if (hasReturnShippingLeg && usePerBucketReturn) {
@@ -439,18 +220,18 @@ export default function FinalOrderSummaryCard({
           b.shippingTiers[0]?.name ??
           "";
         if (!pick.trim()) {
-          alert("Please select a return shipping method for each rental.");
+          alert("Please select a return pickup method for each rental.");
           return;
         }
       }
     } else if (hasReturnShippingLeg && !selectedReturnShippingTier) {
-      alert("Please select a return shipping method");
+      alert("Please select a return pickup method");
       return;
     }
     if (!canCheckout) {
       toast.error(
         checkoutBlockingIssues[0] ||
-          "Resolve shipment schedule conflicts before checkout.",
+          "Resolve delivery schedule conflicts before checkout.",
       );
       return;
     }
@@ -539,14 +320,56 @@ export default function FinalOrderSummaryCard({
     );
   };
 
-  const showOrderSummarySkeleton =
-    (isLoading || orderSummaryLoading) && !orderSummaryError;
+  const showItemsSkeleton = isLoading && !error;
+  const showPaymentSkeleton =
+    hasDeliveryAddress && orderSummaryLoading && !orderSummaryError;
+  const showCheckoutActions = checkoutStep === 2;
+
+  const checkoutGrandTotalNgN = useMemo(() => {
+    if (!orderSummary?.data?.summary) return undefined;
+    const summaryForTotal = hasReturnShippingLeg
+      ? orderSummary.data.summary
+      : {
+          ...orderSummary.data.summary,
+          rentalTotal: 0,
+          collateralTotal: 0,
+          cleaningTotal: 0,
+        };
+    return computeCheckoutGrandTotal(
+      summaryForTotal,
+      displayOutboundShipping,
+      displayReturnShipping,
+    );
+  }, [
+    orderSummary?.data?.summary,
+    hasReturnShippingLeg,
+    displayOutboundShipping,
+    displayReturnShipping,
+  ]);
 
   return (
     <div className="space-y-6">
-      {showOrderSummarySkeleton && <CheckoutSummarySkeleton />}
+      {showItemsSkeleton && <CheckoutSummarySkeleton />}
 
-      {orderSummaryError ? (
+      {hasDeliveryAddress && dispatchReschedules.length > 0 ? (
+        <div className="space-y-2 bg-amber-50 p-4 border border-amber-200 rounded-xl">
+          {dispatchReschedules.map((entry) => (
+            <Paragraph1
+              key={entry.cartItemId ?? entry.productName ?? entry.outboundSummary}
+              className="text-amber-900 text-sm leading-relaxed"
+            >
+              Your delivery time has passed
+              {entry.outboundSummary
+                ? `. New earliest slot: ${entry.outboundSummary}.`
+                : "."}{" "}
+              Confirm below or pick another.
+              {entry.priceUnchanged ? " Price unchanged." : ""}
+            </Paragraph1>
+          ))}
+        </div>
+      ) : null}
+
+      {hasDeliveryAddress && orderSummaryError ? (
         <div className="space-y-3 bg-amber-50 p-4 border border-amber-200 rounded-xl">
           <Paragraph1 className="font-semibold text-amber-950 text-sm">
             Could not load payment summary
@@ -554,16 +377,11 @@ export default function FinalOrderSummaryCard({
           <Paragraph1 className="text-amber-900 text-sm whitespace-pre-wrap">
             {orderSummaryError}
           </Paragraph1>
-          <Paragraph1 className="text-amber-900 text-sm">
-            Go to your cart and use Request approval again so delivery windows
-            reset to the next available slots, or open the product page to pick
-            dates and send a new request.
-          </Paragraph1>
           <div className="flex flex-wrap gap-2">
             {onRefetchOrderSummary ? (
               <button
                 type="button"
-                className="font-medium text-amber-950 text-sm bg-white hover:bg-amber-100 px-3 py-2 border border-amber-300 rounded-lg transition-colors"
+                className="bg-white hover:bg-amber-100 px-3 py-2 border border-amber-300 rounded-lg font-medium text-amber-950 text-sm transition-colors"
                 onClick={() => onRefetchOrderSummary()}
               >
                 Try again
@@ -571,7 +389,7 @@ export default function FinalOrderSummaryCard({
             ) : null}
             <Link
               href="/shop/cart"
-              className="inline-flex items-center font-medium text-amber-950 text-sm bg-white hover:bg-amber-100 px-3 py-2 border border-amber-300 rounded-lg transition-colors"
+              className="inline-flex items-center bg-white hover:bg-amber-100 px-3 py-2 border border-amber-300 rounded-lg font-medium text-amber-950 text-sm transition-colors"
             >
               Back to cart
             </Link>
@@ -579,12 +397,12 @@ export default function FinalOrderSummaryCard({
         </div>
       ) : null}
 
-      {shippingQuoteWarnings.length > 0 ? (
+      {checkoutStep === 1 && shippingQuoteWarnings.length > 0 ? (
         <div className="space-y-2 bg-amber-50 p-3 border border-amber-200 rounded-xl">
           <Paragraph1 className="font-semibold text-amber-950 text-xs">
-            Shipping quote note
+            Delivery quote note
           </Paragraph1>
-          <ul className="space-y-1 list-disc pl-4 text-amber-900 text-xs">
+          <ul className="space-y-1 pl-4 text-amber-900 text-xs list-disc">
             {shippingQuoteWarnings.map((w, i) => (
               <li
                 key={`${w.provider}-${w.leg}-${w.bucketIndex ?? i}-${w.message}`}
@@ -599,74 +417,43 @@ export default function FinalOrderSummaryCard({
       {error && (
         <div className="bg-yellow-50 p-4 border border-yellow-200 rounded-xl">
           <Paragraph1 className="text-yellow-800 text-sm">
-            Failed to load approved items for checkout. Please try again.
+            Failed to load your checkout items. Please try again.
           </Paragraph1>
         </div>
       )}
 
-      {(orderSummary?.data?.summary?.rentalTotal ?? 0) > 0 && (
-        <div className="bg-white p-4 border border-gray-200 rounded-xl">
-          <Paragraph1 className="mb-4 font-bold text-gray-900 text-lg">
-            Return pickup details
-          </Paragraph1>
-          <div className="flex items-start gap-3">
-            <div className="bg-gray-100 p-2 rounded-full">
-              <MapPin size={18} className="text-gray-700" />
-            </div>
-            <div>
-              <Paragraph1 className="font-semibold text-gray-900 text-sm">
-                {returnPickupAddress
-                  ? `${returnPickupAddress.street}, ${returnPickupAddress.city}`
-                  : "Using your delivery address"}
-              </Paragraph1>
-              <Paragraph1 className="text-gray-600 text-xs">
-                {returnPickupAddress
-                  ? `${returnPickupAddress.contactName} • ${returnPickupAddress.phoneNumber}`
-                  : "Courier collects from the same location as your drop-off."}
-              </Paragraph1>
-              {returnPickupAddress?.instructions && (
-                <Paragraph1 className="mt-1 text-gray-500 text-xs">
-                  {returnPickupAddress.instructions}
-                </Paragraph1>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {!isLoading &&
-        !error &&
-        !orderSummaryError &&
-        approvedGroups.length === 0 && (
+      {!isLoading && !error && approvedGroups.length === 0 && (
         <div className="bg-gray-50 p-4 border border-gray-200 rounded-xl text-center">
           <Paragraph1 className="text-gray-600">
-            No approved items. Add items to get started!
+            No items ready for checkout yet.
           </Paragraph1>
         </div>
       )}
 
-      {!isLoading &&
-        !error &&
-        !orderSummaryError &&
-        approvedGroups.length > 0 && (
+      {!isLoading && !error && approvedGroups.length > 0 && (
         <>
-          {/* Use API summary data directly */}
-          {(() => {
-            return (
-              <>
-                {/* Per-Lister Summary Cards */}
-                {approvedGroups.map((group) => (
-                  <ListerOrderCard
-                    key={group.listerId}
-                    group={group}
-                    orderSummary={orderSummary}
-                    selectedTierData={selectedTierData}
-                    approvedGroups={approvedGroups}
-                  />
-                ))}
+          <div className="p-4 border border-gray-200 rounded-xl">
+            <Paragraph1 className="mb-4 font-bold text-gray-900 text-lg tracking-wide">
+              ORDER SUMMARY
+            </Paragraph1>
+            <CheckoutOrderItems
+              listerGroups={approvedGroups}
+              variant="sidebar"
+              showLineDeposit={showCheckoutActions}
+            />
+          </div>
 
-                {/* Grand Total and Checkout - From Order Summary */}
-                {orderSummary?.data?.summary && (
+          {showPaymentSkeleton && <CheckoutSummarySkeleton />}
+
+          {!hasDeliveryAddress ? (
+            <div className="bg-amber-50 p-4 border border-amber-200 rounded-xl">
+              <Paragraph1 className="text-amber-900 text-sm leading-relaxed">
+                Add a delivery address to finish checkout.
+              </Paragraph1>
+            </div>
+          ) : null}
+
+          {hasDeliveryAddress && orderSummary?.data?.summary ? (
                   <div className="bg-gray-50 p-4 border border-gray-300 rounded-xl">
                     <Paragraph1 className="mb-4 font-bold text-gray-900 text-lg">
                       PAYMENT BREAKDOWN
@@ -677,6 +464,7 @@ export default function FinalOrderSummaryCard({
                       const isResaleOrder =
                         (orderSummary?.data?.summary?.purchaseTotal ?? 0) > 0;
                       const hasRentalItems =
+                        hasReturnShippingLeg &&
                         (orderSummary?.data?.summary?.rentalTotal ?? 0) > 0;
 
                       return (
@@ -765,126 +553,102 @@ export default function FinalOrderSummaryCard({
                       );
                     })()}
 
-                    <div className="flex justify-between items-center mb-6 pt-4">
+                    <div className="flex justify-between items-center pt-4">
                       <Paragraph1 className="font-bold text-gray-900 text-lg">
                         Grand Total:
                       </Paragraph1>
                       <Paragraph1 className="font-extrabold text-gray-900 text-2xl">
                         {CURRENCY}
-                        {formatCurrency(
-                          computeCheckoutGrandTotal(
-                            orderSummary.data.summary,
-                            displayOutboundShipping,
-                            displayReturnShipping,
-                          ),
-                        )}
+                        {formatCurrency(checkoutGrandTotalNgN ?? 0)}
                       </Paragraph1>
                     </div>
-                    <Paragraph1 className="mb-4 text-gray-500 text-xs">
-                      {usePerBucketOutbound ? (
-                        <>
-                          Delivery shipping is chosen per seller location
-                          {usePerBucketReturn
-                            ? "; return shipping is chosen per rental return"
-                            : ""}
-                          .
-                        </>
-                      ) : hasReturnShippingLeg ? (
-                        <>
-                          Delivery shipping:{" "}
-                          <strong>
-                            {selectedShippingTier || "your selection"}
-                          </strong>
-                          . Return shipping:{" "}
-                          <strong>
-                            {selectedReturnShippingTier || "your selection"}
-                          </strong>
-                          .
-                        </>
-                      ) : (
-                        <>
-                          Delivery uses{" "}
-                          <strong>
-                            {selectedShippingTier || "your selected tier"}
-                          </strong>{" "}
-                          rates from our courier partner.
-                        </>
-                      )}
-                    </Paragraph1>
 
-                    {passCartMutation.isError && (
-                      <div className="bg-red-50 mb-4 p-3 border border-red-200 rounded-lg">
-                        <Paragraph1 className="text-red-700 text-xs">
-                          {passCartMutation.error?.message ||
-                            "Failed to complete checkout"}
-                        </Paragraph1>
-                      </div>
-                    )}
-
-                    <button
-                      onClick={handleCheckout}
-                      disabled={!isAgree || passCartMutation.isPending || !canCheckout}
-                      className="flex justify-center bg-black hover:bg-gray-900 disabled:opacity-50 py-3 rounded-lg w-full font-semibold text-white transition-colors disabled:cursor-not-allowed"
-                    >
-                      <Paragraph1>
-                        {passCartMutation.isPending
-                          ? "Processing..."
-                          : "Complete Order"}
-                      </Paragraph1>
-                    </button>
-                    {!canCheckout && (
-                      <div className="bg-red-50 mt-4 p-3 border border-red-200 rounded-lg">
-                        <Paragraph1 className="font-semibold text-red-700 text-xs uppercase tracking-wide">
-                          Checkout blocked
-                        </Paragraph1>
-                        <div className="space-y-1 mt-1">
-                          {checkoutBlockingIssues.map((issue) => (
-                            <Paragraph1 key={issue} className="text-red-700 text-xs">
-                              {issue}
+                    {showCheckoutActions ? (
+                      <>
+                        <CheckoutWalletBlock
+                          checkoutGrandTotalNgN={checkoutGrandTotalNgN}
+                        />
+                        {passCartMutation.isError && (
+                          <div className="bg-red-50 mb-4 p-3 border border-red-200 rounded-lg">
+                            <Paragraph1 className="text-red-700 text-xs">
+                              {passCartMutation.error?.message ||
+                                "Failed to complete checkout"}
                             </Paragraph1>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                          </div>
+                        )}
 
-                    {(orderSummary?.data?.summary?.rentalTotal ?? 0) > 0 && (
-                      <div className="flex items-start gap-2 bg-green-50 mt-4 p-3 border border-green-200 rounded-md text-green-700 text-xs">
-                        <CheckCircle size={16} className="mt-0.5 shrink-0" />
-                        <Paragraph1 className="text-green-700">
-                          Your <strong>security deposit</strong> is held as
-                          Locked Balance and returns to your Available Balance
-                          after return is approved.
+                        {hasReturnShippingLeg &&
+                          (orderSummary?.data?.summary?.rentalTotal ?? 0) >
+                            0 && (
+                          <div className="flex items-start gap-2 bg-green-50 mb-4 p-3 border border-green-200 rounded-md text-green-700 text-xs">
+                            <CheckCircle
+                              size={16}
+                              className="mt-0.5 shrink-0"
+                            />
+                            <Paragraph1 className="text-green-700">
+                              Your <strong>refundable security deposit</strong> is
+                              returned to your wallet after the item is returned
+                              and checked.
+                            </Paragraph1>
+                          </div>
+                        )}
+
+                        <Paragraph1 className="mb-4 text-gray-500 text-xs leading-relaxed">
+                          By completing this order, you agree to our{" "}
+                          <Link
+                            href="/terms-and-conditions"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-semibold text-gray-700 underline underline-offset-2 hover:text-gray-900"
+                          >
+                            Terms of Service
+                          </Link>{" "}
+                          and{" "}
+                          <Link
+                            href="/privacy-policy"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-semibold text-gray-700 underline underline-offset-2 hover:text-gray-900"
+                          >
+                            Data Protection Policy
+                          </Link>
+                          .
                         </Paragraph1>
-                      </div>
-                    )}
 
-                    <label className="flex items-start space-x-2 mt-4 text-gray-700 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={isAgree}
-                        onChange={() => setIsAgree(!isAgree)}
-                        className="hidden"
-                      />
-                      <span
-                        className={`shrink-0 w-6 h-6 rounded border mt-0.5 ${
-                          isAgree
-                            ? "bg-black border-black"
-                            : "bg-white border-gray-400"
-                        } flex items-center justify-center`}
-                      >
-                        {isAgree && <Check size={18} className="text-white" />}
-                      </span>
-                      <Paragraph1 className="text-xs">
-                        By confirming this order you accept our{" "}
-                        <strong>Terms of Service Agreement</strong> and our{" "}
-                        <strong>Data Protection Policy</strong>
-                      </Paragraph1>
-                    </label>
+                        <button
+                          onClick={handleCheckout}
+                          disabled={
+                            passCartMutation.isPending || !canCheckout
+                          }
+                          className={buttonPrimaryFull}
+                        >
+                          <Paragraph1>
+                            {passCartMutation.isPending
+                              ? "Processing..."
+                              : "Complete Order"}
+                          </Paragraph1>
+                        </button>
+                        {!canCheckout && (
+                          <div className="bg-amber-50 mt-4 p-3 border border-amber-200 rounded-lg">
+                            <Paragraph1 className="font-semibold text-amber-900 text-xs uppercase tracking-wide">
+                              Before you pay
+                            </Paragraph1>
+                            <div className="space-y-1 mt-1">
+                              {checkoutBlockingIssues.map((issue) => (
+                                <Paragraph1
+                                  key={issue}
+                                  className="text-amber-900 text-xs"
+                                >
+                                  {issue}
+                                </Paragraph1>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    ) : null}
                   </div>
-                )}
-              </>
-            );
-          })()}
+          ) : null}
         </>
       )}
     </div>

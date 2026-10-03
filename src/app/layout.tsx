@@ -1,31 +1,50 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import {
+  PWA_APP_NAME,
+  PWA_APP_SHORT_NAME,
+  PWA_THEME_COLOR,
+} from "@/lib/pwa/constants";
 import "./globals.css";
 import Script from "next/script";
 import { Toaster } from "sonner";
 import ApiTestComponent from "@/common/debug/ApiTestComponent";
 import { AuthStateMonitorProvider } from "@/common/layer/AuthStateMonitorProvider";
 import SiteHeader from "@/common/layer/SiteHeader";
+import MobileBottomNav from "@/common/layer/MobileBottomNav";
 import DevGuard from "@/common/layer/DevGuard";
 import { FavoritesInitializer } from "@/common/layer/FavoritesInitializer";
 import Footer from "@/common/layer/Footer";
 import { UnauthorizedSignInRedirect } from "@/common/layer/UnauthorizedSignInRedirect";
-import { OnboardingRedirectGuard } from "@/common/layer/OnboardingRedirectGuard";
+import { OnboardingPromptGuard } from "@/common/layer/OnboardingPromptGuard";
+import { ActionPromptGuard } from "@/common/layer/ActionPromptGuard";
 import { UploaderProvider } from "@/context/UploaderProvider";
 import QueryProvider from "@/lib/providers/query-provider";
+import SerwistRegistration from "@/components/pwa/SerwistRegistration";
 import { Header } from "./Header";
 
+const SITE_DESCRIPTION =
+  "We enable individuals rent and buy standout pieces at a fraction of the retail price from each other and the brands they love. At the same time, users earn from their wardrobe by listing pieces through our secure, easy to navigate software.";
+
 export const metadata: Metadata = {
-  title:
-    "RELISTED LABELS is a peer-to-peer rental platform redefining how women access fashion across Africa.",
-  description:
-    "We enable individuals rent and buy standout pieces at a fraction of the retail price from each other and the brands they love. At the same time, users earn from their wardrobe by listing pieces through our secure, easy to navigate software.",
+  applicationName: PWA_APP_NAME,
+  title: {
+    default: PWA_APP_NAME,
+    template: `%s | ${PWA_APP_SHORT_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
   keywords: ["Relisted", "Fashion", "Heritage", "Luxury", "Global Style"],
   authors: [{ name: "Relisted" }],
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: PWA_APP_SHORT_NAME,
+  },
+  formatDetection: {
+    telephone: false,
+  },
   openGraph: {
-    title:
-      "RELISTED LABELS is a peer-to-peer rental platform redefining how women access fashion across Africa.",
-    description:
-      "We enable individuals rent and buy standout pieces at a fraction of the retail price from each other and the brands they love. At the same time, users earn from their wardrobe by listing pieces through our secure, easy to navigate software.",
+    title: PWA_APP_NAME,
+    description: SITE_DESCRIPTION,
     url: "https://www.relisted.com",
     siteName: "Relisted",
     images: [
@@ -52,12 +71,18 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title:
-      "RELISTED LABELS is a peer-to-peer rental platform redefining how women access fashion across Africa.",
-    description:
-      "We enable individuals rent and buy standout pieces at a fraction of the retail price from each other and the brands they love. At the same time, users earn from their wardrobe by listing pieces through our secure, easy to navigate software.",
+    title: PWA_APP_NAME,
+    description: SITE_DESCRIPTION,
     images: ["/og-image.jpg"],
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: PWA_THEME_COLOR,
+  colorScheme: "light",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export const dynamic = "force-dynamic";
@@ -86,22 +111,26 @@ export default function RootLayout({
       </head>
       <body className=" ">
         {/* <DevGuard> */}
+        <SerwistRegistration>
         <QueryProvider>
           <AuthStateMonitorProvider>
             <UnauthorizedSignInRedirect />
-            <OnboardingRedirectGuard />
+            <OnboardingPromptGuard />
+            <ActionPromptGuard />
             <FavoritesInitializer />
             <UploaderProvider>
               <SiteHeader />
 
               {/* <Header /> */}
-              {children}
+              <div className="pb-16 xl:pb-0">{children}</div>
+              <MobileBottomNav />
               <Toaster position="top-right" />
               <Footer />
               {/* <ApiTestComponent /> */}
             </UploaderProvider>
           </AuthStateMonitorProvider>
         </QueryProvider>
+        </SerwistRegistration>
         {/* </DevGuard> */}
       </body>
     </html>

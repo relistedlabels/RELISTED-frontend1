@@ -11,6 +11,8 @@ import {
   CLOSET_AVATAR_SLOT_EDIT,
   useClosetImageUpload,
 } from "@/hooks/useClosetImageUpload";
+import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
+import { slidePanelBackdrop, slidePanelSheet } from "@/common/ui/dashboardClasses";
 
 interface EditClosetModalProps {
   isOpen: boolean;
@@ -99,14 +101,14 @@ const EditClosetModal: React.FC<EditClosetModalProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="z-99 fixed inset-0 bg-black/70 backdrop-blur-sm"
+          className={`${slidePanelBackdrop} z-99`}
           onClick={onClose}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="top-0 right-0 fixed flex flex-col bg-white shadow-2xl px-6 w-full sm:w-96 md:w-[480px] h-screen overflow-y-auto"
+            className={`${slidePanelSheet} px-6 w-full sm:w-96 md:w-[480px]`}
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
@@ -273,14 +275,14 @@ const EditClosetModal: React.FC<EditClosetModalProps> = ({
             <div className="bottom-0 sticky flex gap-4 bg-white py-6 border-gray-200 border-t">
               <button
                 onClick={onClose}
-                className="flex-1 hover:bg-gray-50 px-4 py-3 border border-gray-300 rounded-lg font-semibold text-gray-900 text-sm transition"
+                className={`${buttonSecondary} flex-1 py-3`}
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveUpdate}
                 disabled={updateCloset.isPending || isUploading}
-                className="flex-1 bg-gray-900 hover:bg-black disabled:opacity-50 px-4 py-3 rounded-lg font-semibold text-white text-sm transition"
+                className={`${buttonPrimary} flex-1 py-3`}
               >
                 {updateCloset.isPending ? "Saving…" : "Save Update"}
               </button>

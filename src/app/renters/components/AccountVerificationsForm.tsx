@@ -5,62 +5,37 @@ import {
   HiOutlineDocumentText,
   HiOutlineEnvelope,
   HiOutlineHome,
-  HiOutlinePhone,
   HiOutlinePlus,
   HiOutlineUser,
   HiOutlineUsers,
 } from "react-icons/hi2";
 import { toast } from "sonner";
+import { PhoneInput } from "@/app/auth/profile-setup/components/PhoneInput";
+import { validatePhoneNumber } from "@/lib/phone";
 import { CityLGASelect } from "@/app/auth/profile-setup/components/CityLGASelect";
 import { StateSelect } from "@/app/auth/profile-setup/components/StateSelect";
+import { buttonPrimary } from "@/common/ui/buttonClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useProfile } from "@/lib/queries/renters/useProfile";
 import {
-  useSubmitBvn,
   useUpdateVerificationDetails,
   useUploadIdDocument,
   useVerificationsStatus,
 } from "@/lib/queries/renters/useVerifications";
-
-const ID_TYPE_OPTIONS = [
-  { value: "NIN", label: "National ID (NIN)" },
-  { value: "PASSPORT", label: "International passport" },
-  { value: "DRIVERS_LICENSE", label: "Driver's licence" },
-] as const;
-
-/** Map old/lowercase idType formats to uppercase for backend */
-function normalizeIdType(idType: string): string {
-  const normalized = idType.toUpperCase().trim();
-  const mapping: Record<string, string> = {
-    NATIONALID: "NIN",
-    NATIONAL_ID: "NIN",
-    NIN: "NIN",
-    PASSPORT: "PASSPORT",
-    DRIVERSLICENSE: "DRIVERS_LICENSE",
-    DRIVERS_LICENSE: "DRIVERS_LICENSE",
-    DRIVERS: "DRIVERS_LICENSE",
-    DRIVER: "DRIVERS_LICENSE",
-  };
-  return mapping[normalized] || "NIN";
-}
-
-/** Validate ID number based on document type */
-function validateIdNumber(documentType: string, value: string): string | null {
-  const v = value.trim();
-  if (!v) return "Please enter your ID number.";
-  if (documentType === "NIN") {
-    if (!/^\d{11}$/.test(v)) return "NIN must be exactly 11 digits.";
-    return null;
-  }
-  if (v.length < 5) return "ID number looks too short.";
-  if (v.length > 50) return "ID number is too long.";
-  return null;
-}
+import {
+  FUND_WALLET_ID_TYPE_OPTIONS,
+  getFundWalletIdInputConfig,
+  isFundWalletIdNumberComplete,
+  normalizeFundWalletIdType,
+  sanitizeFundWalletIdInput,
+  validateFundWalletIdNumber,
+} from "@/lib/renters/fundWalletIdUpload";
 
 // Sub-component for displaying a verification status on a document or field
 const VerificationBadge: React.FC<{
   status: "Verified" | "Pending" | "Failed";
-}> = ({ status }) => {
+  verifiedLabel?: string;
+}> = ({ status, verifiedLabel = "Verified" }) => {
   let colorClass = "";
   switch (status) {
     case "Verified":
@@ -73,9 +48,10 @@ const VerificationBadge: React.FC<{
       colorClass = "bg-red-100 text-red-800";
       break;
   }
+  const label = status === "Verified" ? verifiedLabel : status;
   return (
-    <span className={`px-4 py-2 rounded-sm text-xs font-medium ${colorClass}`}>
-      {status}
+    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${colorClass}`}>
+      {label}
     </span>
   );
 };
@@ -85,7 +61,6 @@ const AccountVerificationsForm: React.FC = () => {
   const { data: profile, isLoading } = useProfile();
 
   const { data: statusData } = useVerificationsStatus();
-  const submitBvnMutation = useSubmitBvn();
   const updateVerificationMutation = useUpdateVerificationDetails();
   const uploadIdDocumentMutation = useUploadIdDocument();
 
@@ -114,14 +89,6 @@ const AccountVerificationsForm: React.FC = () => {
     }
   }, [emergencyContact]);
 
-  // ✅ Sync NIN and BVN when profile data loads
-  useEffect(() => {
-    if (profile) {
-      setNinNumber(profile.nin || "");
-      setBvnNumber(profile.bvn || "");
-    }
-  }, [profile?.nin, profile?.bvn]);
-
   const handleEmergencyChange = (
     field: keyof typeof emergencyForm,
     value: string,
@@ -131,9 +98,6 @@ const AccountVerificationsForm: React.FC = () => {
 
   const ninStatusRaw =
     statusData?.data?.verifications?.validId?.status ?? "not_verified";
-  const bvnStatusRaw =
-    statusData?.data?.verifications?.bvn?.status ?? "not_verified";
-
   const mapStatus = (
     status: string | undefined,
   ): "Verified" | "Pending" | "Failed" => {
@@ -165,25 +129,28 @@ const AccountVerificationsForm: React.FC = () => {
   };
 
   const ninStatus = mapStatus(ninStatusRaw);
-  const bvnStatus = mapStatus(bvnStatusRaw);
-
-  // Get overall verification status - use BVN status as overall (matches lister behavior)
-  const getOverallStatus = (): "Verified" | "Pending" | "Failed" => {
-    return bvnStatus;
-  };
-
-  const verificationStatus = getOverallStatus();
 
   const [ninNumber, setNinNumber] = useState(profile?.nin || "");
   const [ninFile, setNinFile] = useState<File | null>(null);
   const [ninError, setNinError] = useState<string | null>(null);
   const [documentType, setDocumentType] = useState<string>(
-    ID_TYPE_OPTIONS[0].value,
+    FUND_WALLET_ID_TYPE_OPTIONS[0].value,
   );
   const [isDraggingNin, setIsDraggingNin] = useState(false);
 
-  const [bvnNumber, setBvnNumber] = useState(profile?.bvn || "");
-  const [bvnError, setBvnError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!profile?.nin) return;
+    if (normalizeFundWalletIdType(documentType) === "NIN") {
+      setNinNumber(sanitizeFundWalletIdInput("NIN", profile.nin));
+    }
+  }, [profile?.nin, documentType]);
+
+  const inputConfig = useMemo(
+    () => getFundWalletIdInputConfig(documentType),
+    [documentType],
+  );
+  const canUploadId =
+    isFundWalletIdNumberComplete(documentType, ninNumber) && ninFile !== null;
 
   const handleNinFileChange: React.ChangeEventHandler<HTMLInputElement> = (
     event,
@@ -218,7 +185,7 @@ const AccountVerificationsForm: React.FC = () => {
       return;
     }
 
-    const idErr = validateIdNumber(documentType, ninNumber);
+    const idErr = validateFundWalletIdNumber(documentType, ninNumber);
     if (idErr) {
       setNinError(idErr);
       return;
@@ -228,7 +195,7 @@ const AccountVerificationsForm: React.FC = () => {
 
     const formData = new FormData();
     formData.append("idDocument", ninFile, ninFile.name);
-    formData.append("idType", normalizeIdType(documentType));
+    formData.append("idType", normalizeFundWalletIdType(documentType));
 
     try {
       await Promise.all([
@@ -249,41 +216,10 @@ const AccountVerificationsForm: React.FC = () => {
       setNinError(message);
     }
   };
-  const handleSubmitBvn = () => {
-    if (!bvnNumber.trim()) {
-      setBvnError("Please enter a BVN number.");
-      return;
-    }
-
-    if (bvnNumber.trim().length !== 11 || !/^\d+$/.test(bvnNumber.trim())) {
-      setBvnError("BVN must be 11 digits.");
-      return;
-    }
-
-    setBvnError(null);
-    updateVerificationMutation.mutate(
-      { bvn: bvnNumber.trim() },
-      {
-        onSuccess: () => {
-          toast.success("BVN submitted successfully!");
-          setBvnNumber("");
-        },
-        onError: (error: any) => {
-          toast.error(
-            error?.message || "Failed to submit BVN. Please try again.",
-          );
-          setBvnError(
-            error?.message || "Failed to submit BVN. Please try again.",
-          );
-        },
-      },
-    );
-  };
-
   if (isLoading && !profile) {
     return (
       <div className="font-sans w-full">
-        <Paragraph1 className="mb-6 uppercase font-bold">
+        <Paragraph1 className="mb-6 font-bold text-gray-900 text-lg">
           Verifications
         </Paragraph1>
         <Paragraph1 className="text-sm text-gray-500">
@@ -295,7 +231,7 @@ const AccountVerificationsForm: React.FC = () => {
 
   return (
     <div className="font-sans w-full">
-      <Paragraph1 className="mb-6 uppercase font-bold">
+      <Paragraph1 className="mb-6 font-bold text-gray-900 text-lg">
         Verifications
       </Paragraph1>
 
@@ -307,7 +243,7 @@ const AccountVerificationsForm: React.FC = () => {
         <Paragraph1 className="text-gray-900 text-lg">
           Identification
         </Paragraph1>
-        <VerificationBadge status={ninStatus} />
+        <VerificationBadge status={ninStatus} verifiedLabel="Uploaded" />
       </div>
 
       {ninStatus !== "Verified" ? (
@@ -330,12 +266,16 @@ const AccountVerificationsForm: React.FC = () => {
             <select
               id="renter-id-document-type"
               value={documentType}
-              onChange={(e) => setDocumentType(e.target.value)}
+              onChange={(e) => {
+                setDocumentType(e.target.value);
+                setNinNumber("");
+                setNinError(null);
+              }}
               disabled={uploadIdDocumentMutation.isPending}
               className="w-full max-w-lg rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-black focus:outline-none focus:ring-1 focus:ring-black disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="ID document type"
             >
-              {ID_TYPE_OPTIONS.map((opt) => (
+              {FUND_WALLET_ID_TYPE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
@@ -349,8 +289,16 @@ const AccountVerificationsForm: React.FC = () => {
               </Paragraph1>
               <input
                 type="text"
+                inputMode={inputConfig.inputMode}
                 value={ninNumber}
-                onChange={(e) => setNinNumber(e.target.value)}
+                onChange={(e) =>
+                  setNinNumber(
+                    sanitizeFundWalletIdInput(documentType, e.target.value),
+                  )
+                }
+                maxLength={inputConfig.maxLength}
+                autoComplete="off"
+                spellCheck={false}
                 className="w-full rounded-md border border-gray-300 p-2 text-sm"
                 placeholder="Enter ID number"
               />
@@ -426,8 +374,8 @@ const AccountVerificationsForm: React.FC = () => {
           <button
             type="button"
             onClick={handleUploadNin}
-            disabled={uploadIdDocumentMutation.isPending}
-            className="mt-1 inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={uploadIdDocumentMutation.isPending || !canUploadId}
+            className={`${buttonPrimary} mt-1 disabled:opacity-50`}
           >
             {uploadIdDocumentMutation.isPending ? "Uploading..." : "Upload ID"}
           </button>
@@ -441,149 +389,16 @@ const AccountVerificationsForm: React.FC = () => {
           </div>
           <div className="flex-1">
             <Paragraph1 className="font-semibold text-green-900 text-base">
-              ✓ Your ID has been verified
+              ✓ Your ID has been uploaded
             </Paragraph1>
             <Paragraph1 className="mt-2 text-green-700 text-sm">
-              Your identification document is verified. You can still update
-              your ID from settings if needed.
+              Your identification document is on file. You can update your ID
+              from settings if needed.
             </Paragraph1>
           </div>
         </div>
       )}
 
-      {/* Bank Verification */}
-      <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
-        <Paragraph1 className="font-bold text-gray-900 text-lg">
-          Bank Verification Number
-        </Paragraph1>
-        <VerificationBadge status={bvnStatus} />
-      </div>
-
-      {bvnStatus !== "Verified" && (
-        <div className="mb-4 p-4 bg-amber-50 border border-amber-300 rounded-lg">
-          <Paragraph1 className="text-sm text-amber-900 font-medium">
-            ⚠️ Important: Add your correct BVN
-          </Paragraph1>
-          <Paragraph1 className="text-xs text-amber-800 mt-2">
-            A correct BVN is essential for your account. Without it, you will:
-          </Paragraph1>
-          <ul className="text-xs text-amber-800 mt-2 ml-4 list-disc space-y-1">
-            <li>Not be able to make purchases on the platform</li>
-            <li>Experience delays in the verification process</li>
-            <li>Have limited access to platform features</li>
-          </ul>
-          <Paragraph1 className="text-xs text-amber-800 mt-2">
-            Please ensure you provide a valid and accurate BVN to proceed.
-          </Paragraph1>
-        </div>
-      )}
-
-      <div
-        className="mb-6"
-        data-onboarding-target="renter-bvn-section"
-      >
-        <div className="flex justify-between items-center mb-2">
-          <Paragraph1 className="text-base text-gray-900">
-            {bvnStatus === "Verified"
-              ? "Bank Verification Number (BVN)"
-              : profile?.bvn
-                ? "Update BVN"
-                : "Bank Verification Number (BVN)"}
-          </Paragraph1>
-        </div>
-        <div className="border bg-gray-50 border-gray-300 rounded-lg flex flex-col md:flex-row justify-between items-center p-4 gap-2">
-          {/* If BVN is verified, show masked value. If not verified, allow BVN input and submission */}
-          {bvnStatus === "Verified" ? (
-            <>
-              <div className="w-full">
-                <input
-                  type="text"
-                  value={
-                    statusData?.data?.verifications?.bvn?.maskedValue
-                      ? statusData.data.verifications.bvn.maskedValue.replace(
-                          /X/g,
-                          "*",
-                        )
-                      : profile?.bvn
-                        ? `${profile.bvn.slice(0, 4)}****${profile.bvn.slice(-3)}`
-                        : "BVN Verified"
-                  }
-                  readOnly
-                  className="w-full outline-none text-lg tracking-wider text-gray-700 font-mono bg-gray-50"
-                />
-                <Paragraph1 className="text-xs text-gray-500 mt-2">
-                  Your BVN is encrypted and secure. Only partial digits shown.
-                </Paragraph1>
-              </div>
-            </>
-          ) : (
-            <>
-              <input
-                type="text"
-                value={bvnNumber}
-                onChange={(e) =>
-                  setBvnNumber(e.target.value.replace(/\D/g, ""))
-                }
-                placeholder={
-                  profile?.bvn
-                    ? `Current: ${profile.bvn}`
-                    : "Enter your 11-digit BVN"
-                }
-                maxLength={11}
-                className="w-full outline-none text-lg tracking-wider text-gray-700 font-mono bg-white border border-gray-300 rounded-md px-3 py-2"
-                disabled={updateVerificationMutation.isPending}
-              />
-              <button
-                type="button"
-                className="ml-0 md:ml-4 mt-2 md:mt-0 px-4 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                disabled={
-                  updateVerificationMutation.isPending ||
-                  !bvnNumber ||
-                  bvnNumber.length !== 11
-                }
-                onClick={() => {
-                  setBvnError(null);
-                  if (!bvnNumber || bvnNumber.length !== 11) {
-                    setBvnError("Please enter a valid 11-digit BVN.");
-                    return;
-                  }
-                  updateVerificationMutation.mutate(
-                    { bvn: bvnNumber },
-                    {
-                      onSuccess: () => {
-                        toast.success("BVN submitted successfully!");
-                        setBvnNumber("");
-                      },
-                      onError: (error: any) => {
-                        toast.error(
-                          error?.message ||
-                            "Failed to submit BVN. Please try again.",
-                        );
-                        setBvnError(
-                          error?.message ||
-                            "Failed to submit BVN. Please try again.",
-                        );
-                      },
-                    },
-                  );
-                }}
-              >
-                {updateVerificationMutation.isPending
-                  ? "Submitting..."
-                  : "Submit BVN"}
-              </button>
-            </>
-          )}
-        </div>
-        {bvnError && (
-          <Paragraph1 className="text-xs text-red-600 mt-2">
-            {bvnError}
-          </Paragraph1>
-        )}
-        <Paragraph1 className="text-xs text-gray-500 mt-2">
-          Your BVN is encrypted and secure. Only the last 4 digits are shown.
-        </Paragraph1>
-      </div>
       <Paragraph1 className="text-lg font-bold text-gray-900 mb-4 pt-4 border-t border-gray-100">
         Emergency Contact Information
       </Paragraph1>
@@ -627,16 +442,10 @@ const AccountVerificationsForm: React.FC = () => {
           <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
             Phone Number
           </Paragraph1>
-          <div className="relative">
-            <HiOutlinePhone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="tel"
-              value={emergencyForm.phone}
-              placeholder="Not provided yet"
-              onChange={(e) => handleEmergencyChange("phone", e.target.value)}
-              className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-black focus:border-black"
-            />
-          </div>
+          <PhoneInput
+            value={emergencyForm.phone || "+234"}
+            onChange={(value) => handleEmergencyChange("phone", value)}
+          />
         </div>
         <div>
           <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
@@ -678,12 +487,13 @@ const AccountVerificationsForm: React.FC = () => {
       </div>
       <div className="flex justify-end pt-4 pb-6">
         <button
-          className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className={buttonPrimary}
           type="button"
           disabled={updateVerificationMutation.isPending}
           onClick={() => {
-            if (!emergencyForm.fullName.trim() || !emergencyForm.phone.trim()) {
-              toast.error("Please fill in name and phone number");
+            const phoneError = validatePhoneNumber(emergencyForm.phone);
+            if (!emergencyForm.fullName.trim() || phoneError) {
+              toast.error(phoneError ?? "Please fill in name and phone number");
               return;
             }
 

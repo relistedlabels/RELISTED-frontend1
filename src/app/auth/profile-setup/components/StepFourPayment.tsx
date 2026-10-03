@@ -7,6 +7,7 @@ import { useProfileStore } from "@/store/useProfileStore";
 import { useRouter } from "next/navigation";
 import { useCreateProfile } from "@/lib/mutations";
 import { BankSelect } from "./BankSelect";
+import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
 
 interface StepFourPaymentProps {
   onBack: () => void;
@@ -130,10 +131,8 @@ const StepFourPayment: React.FC<StepFourPaymentProps> = ({ onBack }) => {
         <button
           type="submit"
           disabled={isLoading}
-          className={`w-1/2 py-3 rounded-lg text-white flex items-center justify-center gap-2 ${
-            isLoading
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-black hover:bg-gray-800"
+          className={`${buttonPrimaryFull} w-1/2 py-3 gap-2 ${
+            isLoading ? "bg-gray-400 cursor-not-allowed hover:bg-gray-400" : ""
           }`}
         >
           {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}

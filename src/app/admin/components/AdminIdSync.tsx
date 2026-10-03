@@ -10,10 +10,12 @@ interface AdminIdSyncProps {
 
 export default function AdminIdSync({ id, children }: AdminIdSyncProps) {
   const setAdminId = useAdminIdStore((state) => state.setAdminId);
+  const clearAdminId = useAdminIdStore((state) => state.clearAdminId);
 
   useEffect(() => {
     setAdminId(id);
-  }, [id, setAdminId]);
+    return () => clearAdminId();
+  }, [id, setAdminId, clearAdminId]);
 
   return <>{children}</>;
 }

@@ -8,6 +8,7 @@ import { Paragraph1 } from "@/common/ui/Text";
 import { useSubmitRentalRequest } from "@/lib/mutations/renters/useRentalRequestMutations";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { getLagosDateString, getTodayInLagos } from "@/lib/checkout/dispatchWindows";
+import { formatRentalDuration } from "@/lib/rental/formatRentalDuration";
 import { useUserStore } from "@/store/useUserStore";
 
 // ============================================================================
@@ -210,6 +211,8 @@ interface RentalDurationSelectorProps {
   suggestedStartLagosYmd?: string;
   /** Lagos YYYY-MM-DD: earliest selectable start (e.g. Vault Closet delivery floor). */
   minSelectableLagosYmd?: string;
+  /** Rendered after the calendar and before the legend (e.g. delivery/pickup times). */
+  afterCalendar?: React.ReactNode;
 }
 
 const RentalDurationSelector = ({
@@ -220,11 +223,12 @@ const RentalDurationSelector = ({
   onChangeRentalDays,
   suggestedStartLagosYmd,
   minSelectableLagosYmd,
+  afterCalendar,
 }: RentalDurationSelectorProps) => {
   const [selectedDuration, setSelectedDuration] = useState<number | "custom">(
-    3,
+    1,
   );
-  const [customDays, setCustomDays] = useState<number>(3);
+  const [customDays, setCustomDays] = useState<number>(1);
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [showCustomInput, setShowCustomInput] = useState(false);
 
@@ -256,16 +260,14 @@ const RentalDurationSelector = ({
   const _token = useUserStore((state) => state.token);
   const _userId = useUserStore((state) => state.userId);
 
-  // Check auth status
   const { isLoading: isCheckingAuth, isError: authError } = useMe();
   const _submitRentalRequest = useSubmitRentalRequest();
 
-  // Show loading state while checking auth
-  if (isCheckingAuth) {
+  if (_token && isCheckingAuth) {
     return (
-      <div className="py-6">
-        <Paragraph1 className="mb-4 font-bold text-gray-800 text-xl tracking-wider">
-          RENTAL DURATION
+      <div className="pt-1">
+        <Paragraph1 className="mb-3 font-semibold text-[11px] text-gray-500 uppercase tracking-[0.14em]">
+          Rental duration
         </Paragraph1>
         <RentalCheckSkeleton />
       </div>
@@ -273,9 +275,9 @@ const RentalDurationSelector = ({
   }
 
   return (
-    <div className="py-6">
-      <Paragraph1 className="mb-4 font-bold text-gray-800 text-xl tracking-wider">
-        RENTAL DURATION
+    <div className="pt-1">
+      <Paragraph1 className="mb-3 font-semibold text-[11px] text-gray-500 uppercase tracking-[0.14em]">
+        Rental duration
       </Paragraph1>
 
       {/* Auth Error Alert */}
@@ -310,7 +312,7 @@ const RentalDurationSelector = ({
       )}
 
       {/* Duration Buttons */}
-      <div className="gap-2 grid grid-cols-2 xl:grid-cols-4 mb-8">
+      <div className="mb-5 grid grid-cols-2 gap-2 xl:grid-cols-4">
         {rentalDayOptions.map((days, _idx) => (
           <button
             type="button"
@@ -330,7 +332,7 @@ const RentalDurationSelector = ({
               `}
           >
             <Paragraph1>
-              {days === 1 ? "1 Day" : `${days} Days`} <br /> ₦
+              {formatRentalDuration(days)} <br /> ₦
               {(days * dailyPrice).toLocaleString()}
             </Paragraph1>
           </button>
@@ -397,8 +399,10 @@ const RentalDurationSelector = ({
         minSelectableLagosYmd={minSelectableLagosYmd}
       />
 
+      {afterCalendar ? <div className="mt-4">{afterCalendar}</div> : null}
+
       {/* Legends */}
-      <div className="flex justify-center gap-6 mt-6 text-gray-600 text-sm">
+      <div className="mt-4 flex justify-center gap-6 text-sm text-gray-600">
         <div className="flex items-center gap-2">
           <span className="bg-yellow-400 rounded w-4 h-4"></span>
           <Paragraph1>Selected range</Paragraph1>

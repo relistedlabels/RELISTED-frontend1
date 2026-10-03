@@ -1,0 +1,974 @@
+[
+  {
+    "label": "1. Landing page — first screen",
+    "url": "http://localhost:3000/",
+    "headings": [
+      "Endless Style",
+      "short plans, long compliments",
+      "brand",
+      "new brand",
+      "new brand 2",
+      "Popular Categories",
+      "VACATION OUTFITS",
+      "Delivered as soon as... today",
+      "BLACK TIE OUTFITS",
+      "Become a Lister",
+      "RELISTED"
+    ],
+    "visibleButtons": [
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop?title=Shop&description=Browse+all+collections"
+      },
+      {
+        "tag": "a",
+        "text": "Style Spotlight",
+        "href": "/style-spotlight"
+      },
+      {
+        "tag": "a",
+        "text": "How it works",
+        "href": "/how-it-works"
+      },
+      {
+        "tag": "a",
+        "text": "",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/renters/favorites"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/shop/cart"
+      },
+      {
+        "tag": "a",
+        "text": "Sign In",
+        "href": "/auth/sign-in?redirect=%2F"
+      },
+      {
+        "tag": "a",
+        "text": "Sign Up",
+        "href": "/auth/create-account?redirect=%2F"
+      },
+      {
+        "tag": "a",
+        "text": "Find Your Next Fit",
+        "href": "/shop"
+      },
+      {
+        "tag": "button",
+        "text": "List Items",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "brand",
+        "href": "/shop?brand=brand&title=brand&description=Shop%20brand%20fashion"
+      },
+      {
+        "tag": "a",
+        "text": "new brand",
+        "href": "/shop?brand=new%20brand&title=new%20brand&description=Shop%20new%20brand%20fashion"
+      },
+      {
+        "tag": "a",
+        "text": "new brand 2",
+        "href": "/shop?brand=new%20brand%202&title=new%20brand%202&description=Shop%20new%20brand%202%20fashion"
+      },
+      {
+        "tag": "a",
+        "text": "Browse All →",
+        "href": "/style-spotlight"
+      },
+      {
+        "tag": "a",
+        "text": "Night OutIrresistible looks designed to turn heads, spark chemistry, and leave a lasting impression.",
+        "href": "/shop?tags=Night%20Out&title=Night%20Out&description=Irresistible%20looks%20designed%20to%20turn%20heads%2C%20spark%20chemistry%2C%20and%20leave%20a%20lasting%20impression."
+      },
+      {
+        "tag": "a",
+        "text": "Brunch OutfitsEffortlessly chic styles made for slow mornings, good vibes, and Instagram-worthy mome",
+        "href": "/shop?tags=Brunch%20Outfits&title=Brunch%20Outfits&description=Effortlessly%20chic%20styles%20made%20for%20slow%20mornings%2C%20good%20vibes%2C%20and%20Instagram-worthy%20moments."
+      },
+      {
+        "tag": "a",
+        "text": "Special OccasionsElevated pieces crafted for moments that matter — when looking unforgettable is non",
+        "href": "/shop?tags=Special%20Occasions&title=Special%20Occasions&description=Elevated%20pieces%20crafted%20for%20moments%20that%20matter%20%E2%80%94%20when%20looking%20unforgettable%20is%20non-negotiable."
+      },
+      {
+        "tag": "a",
+        "text": "Corporate ClosetPower dressing redefined. Polished, confident silhouettes for the modern professiona",
+        "href": "/shop?tags=Corporate%20Closet&title=Corporate%20Closet&description=Power%20dressing%20redefined.%20Polished%2C%20confident%20silhouettes%20for%20the%20modern%20professional%20woman."
+      },
+      {
+        "tag": "a",
+        "text": "Browse All",
+        "href": "/shop?tags=Vacation&title=VACATION%20OUTFITS&description=Explore%20amazing%20outfits%20that%20elevate%20your%20looks%20for%20your%20vacation%20and%20short%20trips"
+      },
+      {
+        "tag": "a",
+        "text": "Learn More About Delivery",
+        "href": "/how-it-works#delivery"
+      },
+      {
+        "tag": "a",
+        "text": "Browse All",
+        "href": "/shop?tags=Black%20Tie&title=BLACK%20TIE%20OUTFITS"
+      },
+      {
+        "tag": "button",
+        "text": "Start Listing",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "About",
+        "href": "/about"
+      },
+      {
+        "tag": "a",
+        "text": "Contact",
+        "href": "/contact-us"
+      },
+      {
+        "tag": "a",
+        "text": "Privacy Policy",
+        "href": "/privacy-policy"
+      },
+      {
+        "tag": "a",
+        "text": "Terms & Conditions",
+        "href": "/terms-and-conditions"
+      },
+      {
+        "tag": "a",
+        "text": "Browse all",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "All Listers",
+        "href": "/listers-marketplace"
+      },
+      {
+        "tag": "a",
+        "text": "Support",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Support%20Request"
+      },
+      {
+        "tag": "a",
+        "text": "Partnerships",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Partnership%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Press",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Press%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Careers",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Career%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Instagram",
+        "href": "https://www.instagram.com/relistedlabels?igsh=ZDZybGdwaGY5YWs5"
+      },
+      {
+        "tag": "a",
+        "text": "TikTok",
+        "href": "https://www.tiktok.com/@relistedlabels?_r=1&_t=ZS-94Ux8kvQOwf"
+      },
+      {
+        "tag": "button",
+        "text": "SUBSCRIBE",
+        "href": ""
+      }
+    ],
+    "mainTextExcerpt": "Shop Style Spotlight How it works 0 0 Sign In Sign Up Endless Style short plans, long compliments Find Your Next Fit List Items brand new brand new brand 2 POPULAR CATEGORIES Explore categories curated for every season, mood, and moment. Browse All → Night Out Irresistible looks designed to turn heads, spark chemistry, and leave a lasting impression. Brunch Outfits Effortlessly chic styles made for slow mornings, good vibes, and Instagram-worthy moments. Special Occasions Elevated pieces crafted for moments that matter — when looking unforgettable is non-negotiable. Corporate Closet Power dressing redefined. Polished, confident silhouettes for the modern professional woman. VACATION OUTFITS Explore amazing outfits that elevate your looks for your vacation and short trips brand Linen Co-ord Set 09 Size: 4-UK Buy ₦155,000 RRP: ₦3,440 new brand 2 Linen Co-ord Set 29 Size: 12-UK Buy ₦195,000 RRP: ₦3,640 new brand Linen Co-ord Set 19 Size: 8-UK Buy ₦175,000 RRP: ₦3,540 Browse All Delivered as soon as... today Same day delivery for items near you, or from anywhere in Lagos Learn More About Delivery BLACK TIE OUTFITS Find the perfect look for your black tie events, no matter the style or season. No products here currently... Browse All Become a Lister Turn your wardrobe into a new source of opportunity & earn effortlessly Start Listing NAVIGATION Home About Contact Privacy Policy Terms & Conditions SHOP Browse all All Listers SUPPORT & CONTACT Support Partnerships Press Careers SOCI",
+    "notes": {
+      "firstScreenIsFullHeightHero": true,
+      "heroHeadline": "Endless Style",
+      "heroSubtext": "short plans, long compliments",
+      "heroPrimaryCTA": "Find Your Next Fit",
+      "heroSecondaryCTA": "List Items",
+      "productCardsVisibleWithoutScrolling": 0,
+      "navLinksIncludeShop": true
+    }
+  },
+  {
+    "label": "2. Shop page — after Find Your Next Fit",
+    "url": "http://localhost:3000/shop",
+    "headings": [
+      "Shop amazing",
+      "RELISTED"
+    ],
+    "visibleButtons": [
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop?title=Shop&description=Browse+all+collections"
+      },
+      {
+        "tag": "a",
+        "text": "Style Spotlight",
+        "href": "/style-spotlight"
+      },
+      {
+        "tag": "a",
+        "text": "How it works",
+        "href": "/how-it-works"
+      },
+      {
+        "tag": "a",
+        "text": "",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/renters/favorites"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/shop/cart"
+      },
+      {
+        "tag": "a",
+        "text": "Sign In",
+        "href": "/auth/sign-in?redirect=%2Fshop"
+      },
+      {
+        "tag": "a",
+        "text": "Sign Up",
+        "href": "/auth/create-account?redirect=%2Fshop"
+      },
+      {
+        "tag": "button",
+        "text": "Filters",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "PrevPrevious",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "1",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "2",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "3",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "4",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "5",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "6",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "7",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "8",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "9",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "10",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Next",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "About",
+        "href": "/about"
+      },
+      {
+        "tag": "a",
+        "text": "Contact",
+        "href": "/contact-us"
+      },
+      {
+        "tag": "a",
+        "text": "Privacy Policy",
+        "href": "/privacy-policy"
+      },
+      {
+        "tag": "a",
+        "text": "Terms & Conditions",
+        "href": "/terms-and-conditions"
+      },
+      {
+        "tag": "a",
+        "text": "Browse all",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "All Listers",
+        "href": "/listers-marketplace"
+      },
+      {
+        "tag": "a",
+        "text": "Support",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Support%20Request"
+      },
+      {
+        "tag": "a",
+        "text": "Partnerships",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Partnership%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Press",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Press%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Careers",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Career%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Instagram",
+        "href": "https://www.instagram.com/relistedlabels?igsh=ZDZybGdwaGY5YWs5"
+      },
+      {
+        "tag": "a",
+        "text": "TikTok",
+        "href": "https://www.tiktok.com/@relistedlabels?_r=1&_t=ZS-94Ux8kvQOwf"
+      },
+      {
+        "tag": "button",
+        "text": "SUBSCRIBE",
+        "href": ""
+      }
+    ],
+    "mainTextExcerpt": "Shop Style Spotlight How it works 0 0 Sign In Sign Up Shop amazing Style Brands Filters RENTED rental Item Size: M Rent from ₦10 RRP: ₦100 brand Statement Jumpsuit 178 Size: L Rent from ₦355 Buy ₦3,140 RRP: ₦10,790 brand Silk Evening Gown 175 Size: 12-UK Rent from ₦280 Buy ₦2,240 RRP: ₦9,740 brand Embellished Crop Top 172 Size: 6-UK Rent from ₦205 Buy ₦1,840 RRP: ₦9,190 brand Beaded Cocktail Dress 169 Size: M Rent from ₦130 Buy ₦1,440 RRP: ₦8,640 brand Structured Blazer 166 Size: 10-UK Rent from ₦355 Buy ₦2,940 RRP: ₦9,990 brand Linen Co-ord Set 163 Size: 4-UK Buy ₦2,540 RRP: ₦9,440 brand Tailored Wide-Leg Trousers 160 Size: S Rent from ₦205 Buy ₦1,640 RRP: ₦8,390 brand Pleated Midi Skirt 157 Size: 8-UK Buy ₦1,240 RRP: ₦7,840 brand Velvet Mini Dress 154 Size: L Buy ₦3,240 RRP: ₦9,690 brand Satin Wrap Dress 151 Size: 12-UK Rent from ₦280 Buy ₦2,340 RRP: ₦8,640 brand Statement Jumpsuit 148 Size: 6-UK Rent from ₦205 Buy ₦1,940 RRP: ₦8,090 brand Silk Evening Gown 145 Size: M Rent from ₦130 Buy ₦1,040 RRP: ₦7,040 brand Embellished Crop Top 142 Size: 10-UK Rent from ₦355 Buy ₦3,040 RRP: ₦8,890 brand Beaded Cocktail Dress 139 Size: 4-UK Rent from ₦280 Buy ₦2,640 RRP: ₦8,340 brand Structured Blazer 136 Size: S Rent from ₦205 Buy ₦1,740 RRP: ₦7,290 brand Linen Co-ord Set 133 Size: 8-UK Rent from ₦130 Buy ₦1,340 RRP: ₦6,740 brand Tailored Wide-Leg Trousers 130 Size: L Rent from ₦355 Buy ₦2,840 RRP: ₦8,090 brand Pleated Midi Skirt 127 Size: 12-UK Rent from ₦280 Buy ₦2,440 RRP: ₦7,540 br",
+    "notes": {
+      "pageHeading": "Shop amazing / Style Brands",
+      "listingsSection": "Available Listings",
+      "filtersVisible": true
+    }
+  },
+  {
+    "label": "3. Product detail — opened from shop card click",
+    "url": "http://localhost:3000/shop/product-details/a76a3dda-befb-4f47-917c-73b1899d3ea9",
+    "headings": [
+      "You might also like",
+      "RELISTED"
+    ],
+    "visibleButtons": [
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop?title=Shop&description=Browse+all+collections"
+      },
+      {
+        "tag": "a",
+        "text": "Style Spotlight",
+        "href": "/style-spotlight"
+      },
+      {
+        "tag": "a",
+        "text": "How it works",
+        "href": "/how-it-works"
+      },
+      {
+        "tag": "a",
+        "text": "",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/renters/favorites"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/shop/cart"
+      },
+      {
+        "tag": "a",
+        "text": "Sign In",
+        "href": "/auth/sign-in?redirect=%2Fshop%2Fproduct-details%2Fa76a3dda-befb-4f47-917c-73b1899d3ea9"
+      },
+      {
+        "tag": "a",
+        "text": "Sign Up",
+        "href": "/auth/create-account?redirect=%2Fshop%2Fproduct-details%2Fa76a3dda-befb-4f47-917c-73b1899d3ea9"
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "About",
+        "href": "/about"
+      },
+      {
+        "tag": "a",
+        "text": "Contact",
+        "href": "/contact-us"
+      },
+      {
+        "tag": "a",
+        "text": "Privacy Policy",
+        "href": "/privacy-policy"
+      },
+      {
+        "tag": "a",
+        "text": "Terms & Conditions",
+        "href": "/terms-and-conditions"
+      },
+      {
+        "tag": "a",
+        "text": "Browse all",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "All Listers",
+        "href": "/listers-marketplace"
+      },
+      {
+        "tag": "a",
+        "text": "Support",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Support%20Request"
+      },
+      {
+        "tag": "a",
+        "text": "Partnerships",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Partnership%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Press",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Press%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Careers",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Career%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Instagram",
+        "href": "https://www.instagram.com/relistedlabels?igsh=ZDZybGdwaGY5YWs5"
+      },
+      {
+        "tag": "a",
+        "text": "TikTok",
+        "href": "https://www.tiktok.com/@relistedlabels?_r=1&_t=ZS-94Ux8kvQOwf"
+      },
+      {
+        "tag": "button",
+        "text": "SUBSCRIBE",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Compiling...",
+        "href": ""
+      }
+    ],
+    "mainTextExcerpt": "Shop Style Spotlight How it works 0 0 Sign In Sign Up Home Shop Product detail YOU MIGHT ALSO LIKE NAVIGATION Home About Contact Privacy Policy Terms & Conditions SHOP Browse all All Listers SUPPORT & CONTACT Support Partnerships Press Careers SOCIAL Instagram TikTok SUBSCRIBE TO NEWSLETTER SUBSCRIBE Copyright © 2026, RELISTED Labels"
+  },
+  {
+    "label": "4. Product — rental side panel / primary action",
+    "url": "http://localhost:3000/shop/product-details/a76a3dda-befb-4f47-917c-73b1899d3ea9",
+    "headings": [
+      "You might also like",
+      "RELISTED"
+    ],
+    "visibleButtons": [
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop?title=Shop&description=Browse+all+collections"
+      },
+      {
+        "tag": "a",
+        "text": "Style Spotlight",
+        "href": "/style-spotlight"
+      },
+      {
+        "tag": "a",
+        "text": "How it works",
+        "href": "/how-it-works"
+      },
+      {
+        "tag": "a",
+        "text": "",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/renters/favorites"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/shop/cart"
+      },
+      {
+        "tag": "a",
+        "text": "Sign In",
+        "href": "/auth/sign-in?redirect=%2Fshop%2Fproduct-details%2Fa76a3dda-befb-4f47-917c-73b1899d3ea9"
+      },
+      {
+        "tag": "a",
+        "text": "Sign Up",
+        "href": "/auth/create-account?redirect=%2Fshop%2Fproduct-details%2Fa76a3dda-befb-4f47-917c-73b1899d3ea9"
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "About",
+        "href": "/about"
+      },
+      {
+        "tag": "a",
+        "text": "Contact",
+        "href": "/contact-us"
+      },
+      {
+        "tag": "a",
+        "text": "Privacy Policy",
+        "href": "/privacy-policy"
+      },
+      {
+        "tag": "a",
+        "text": "Terms & Conditions",
+        "href": "/terms-and-conditions"
+      },
+      {
+        "tag": "a",
+        "text": "Browse all",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "All Listers",
+        "href": "/listers-marketplace"
+      },
+      {
+        "tag": "a",
+        "text": "Support",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Support%20Request"
+      },
+      {
+        "tag": "a",
+        "text": "Partnerships",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Partnership%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Press",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Press%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Careers",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Career%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Instagram",
+        "href": "https://www.instagram.com/relistedlabels?igsh=ZDZybGdwaGY5YWs5"
+      },
+      {
+        "tag": "a",
+        "text": "TikTok",
+        "href": "https://www.tiktok.com/@relistedlabels?_r=1&_t=ZS-94Ux8kvQOwf"
+      },
+      {
+        "tag": "button",
+        "text": "SUBSCRIBE",
+        "href": ""
+      }
+    ],
+    "mainTextExcerpt": "Shop Style Spotlight How it works 0 0 Sign In Sign Up Home Shop Product detail YOU MIGHT ALSO LIKE NAVIGATION Home About Contact Privacy Policy Terms & Conditions SHOP Browse all All Listers SUPPORT & CONTACT Support Partnerships Press Careers SOCIAL Instagram TikTok SUBSCRIBE TO NEWSLETTER SUBSCRIBE Copyright © 2026, RELISTED Labels",
+    "openedVia": null
+  },
+  {
+    "label": "5. After Check Availability (logged out)",
+    "url": "http://localhost:3000/shop/product-details/a76a3dda-befb-4f47-917c-73b1899d3ea9",
+    "headings": [
+      "You might also like",
+      "RELISTED"
+    ],
+    "visibleButtons": [
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop?title=Shop&description=Browse+all+collections"
+      },
+      {
+        "tag": "a",
+        "text": "Style Spotlight",
+        "href": "/style-spotlight"
+      },
+      {
+        "tag": "a",
+        "text": "How it works",
+        "href": "/how-it-works"
+      },
+      {
+        "tag": "a",
+        "text": "",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/renters/favorites"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/shop/cart"
+      },
+      {
+        "tag": "a",
+        "text": "Sign In",
+        "href": "/auth/sign-in?redirect=%2Fshop%2Fproduct-details%2Fa76a3dda-befb-4f47-917c-73b1899d3ea9"
+      },
+      {
+        "tag": "a",
+        "text": "Sign Up",
+        "href": "/auth/create-account?redirect=%2Fshop%2Fproduct-details%2Fa76a3dda-befb-4f47-917c-73b1899d3ea9"
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "About",
+        "href": "/about"
+      },
+      {
+        "tag": "a",
+        "text": "Contact",
+        "href": "/contact-us"
+      },
+      {
+        "tag": "a",
+        "text": "Privacy Policy",
+        "href": "/privacy-policy"
+      },
+      {
+        "tag": "a",
+        "text": "Terms & Conditions",
+        "href": "/terms-and-conditions"
+      },
+      {
+        "tag": "a",
+        "text": "Browse all",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "All Listers",
+        "href": "/listers-marketplace"
+      },
+      {
+        "tag": "a",
+        "text": "Support",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Support%20Request"
+      },
+      {
+        "tag": "a",
+        "text": "Partnerships",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Partnership%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Press",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Press%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Careers",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Career%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Instagram",
+        "href": "https://www.instagram.com/relistedlabels?igsh=ZDZybGdwaGY5YWs5"
+      },
+      {
+        "tag": "a",
+        "text": "TikTok",
+        "href": "https://www.tiktok.com/@relistedlabels?_r=1&_t=ZS-94Ux8kvQOwf"
+      },
+      {
+        "tag": "button",
+        "text": "SUBSCRIBE",
+        "href": ""
+      }
+    ],
+    "mainTextExcerpt": "Shop Style Spotlight How it works 0 0 Sign In Sign Up Home Shop Product detail YOU MIGHT ALSO LIKE NAVIGATION Home About Contact Privacy Policy Terms & Conditions SHOP Browse all All Listers SUPPORT & CONTACT Support Partnerships Press Careers SOCIAL Instagram TikTok SUBSCRIBE TO NEWSLETTER SUBSCRIBE Copyright © 2026, RELISTED Labels",
+    "clickedCheckAvailability": false
+  },
+  {
+    "label": "6. Your cart",
+    "url": "http://localhost:3000/shop/cart",
+    "headings": [
+      "Your Cart",
+      "RELISTED"
+    ],
+    "visibleButtons": [
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop?title=Shop&description=Browse+all+collections"
+      },
+      {
+        "tag": "a",
+        "text": "Style Spotlight",
+        "href": "/style-spotlight"
+      },
+      {
+        "tag": "a",
+        "text": "How it works",
+        "href": "/how-it-works"
+      },
+      {
+        "tag": "a",
+        "text": "",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/renters/favorites"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/shop/cart"
+      },
+      {
+        "tag": "a",
+        "text": "Sign In",
+        "href": "/auth/sign-in?redirect=%2Fshop%2Fcart"
+      },
+      {
+        "tag": "a",
+        "text": "Sign Up",
+        "href": "/auth/create-account?redirect=%2Fshop%2Fcart"
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "About",
+        "href": "/about"
+      },
+      {
+        "tag": "a",
+        "text": "Contact",
+        "href": "/contact-us"
+      },
+      {
+        "tag": "a",
+        "text": "Privacy Policy",
+        "href": "/privacy-policy"
+      },
+      {
+        "tag": "a",
+        "text": "Terms & Conditions",
+        "href": "/terms-and-conditions"
+      },
+      {
+        "tag": "a",
+        "text": "Browse all",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "All Listers",
+        "href": "/listers-marketplace"
+      },
+      {
+        "tag": "a",
+        "text": "Support",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Support%20Request"
+      },
+      {
+        "tag": "a",
+        "text": "Partnerships",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Partnership%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Press",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Press%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Careers",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Career%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Instagram",
+        "href": "https://www.instagram.com/relistedlabels?igsh=ZDZybGdwaGY5YWs5"
+      },
+      {
+        "tag": "a",
+        "text": "TikTok",
+        "href": "https://www.tiktok.com/@relistedlabels?_r=1&_t=ZS-94Ux8kvQOwf"
+      },
+      {
+        "tag": "button",
+        "text": "SUBSCRIBE",
+        "href": ""
+      }
+    ],
+    "mainTextExcerpt": "Shop Style Spotlight How it works 0 0 Sign In Sign Up Home Shop Your Cart YOUR CART No approved items yet This panel only shows items after the lister approves. Pending requests appear in your main cart list on the left. NAVIGATION Home About Contact Privacy Policy Terms & Conditions SHOP Browse all All Listers SUPPORT & CONTACT Support Partnerships Press Careers SOCIAL Instagram TikTok SUBSCRIBE TO NEWSLETTER SUBSCRIBE Copyright © 2026, RELISTED Labels"
+  },
+  {
+    "label": "7. Sign in",
+    "url": "http://localhost:3000/auth/sign-in",
+    "headings": [],
+    "visibleButtons": [
+      {
+        "tag": "a",
+        "text": "Forgot password?",
+        "href": "/auth/forgot-password"
+      },
+      {
+        "tag": "button",
+        "text": "Sign in",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Sign Up",
+        "href": ""
+      }
+    ],
+    "mainTextExcerpt": "Welcome Back Explore fashion at your fingertips — rent unique pieces or manage your listings with ease. Email Address Password Forgot password? Sign in Don’t have an account? Sign Up"
+  },
+  {
+    "label": "8. Create account — choose role",
+    "url": "http://localhost:3000/auth/create-account",
+    "headings": [],
+    "visibleButtons": [
+      {
+        "tag": "button",
+        "text": "Continue as a Renter or Buyer",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Continue as a Lister",
+        "href": ""
+      }
+    ],
+    "mainTextExcerpt": "Who are you joining as? Choose how you want to get started. You can switch roles anytime. Renter or Buyer I want to rent or buy stylish, quality pieces for events, everyday wear, or content creation. Continue as a Renter or Buyer Lister I want to list my fashion pieces and earn by sharing my wardrobe with others. Continue as a Lister"
+  }
+]

@@ -6,6 +6,8 @@ import { AlertTriangle, Loader2 } from "lucide-react";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import { useDeleteProduct } from "@/lib/mutations";
 import { useRouter } from "next/navigation";
+import { buttonSecondary } from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 
 interface DeleteProductModalProps {
   isOpen: boolean;
@@ -39,7 +41,7 @@ const DeleteProductModal: React.FC<DeleteProductModalProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+          className={`${dialogBackdrop} z-50`}
           onClick={onClose}
         >
           <motion.div
@@ -47,7 +49,7 @@ const DeleteProductModal: React.FC<DeleteProductModalProps> = ({
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ type: "spring", damping: 20, stiffness: 300 }}
-            className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
+            className={`${dialogCard} rounded-2xl p-6`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Icon */}
@@ -76,7 +78,7 @@ const DeleteProductModal: React.FC<DeleteProductModalProps> = ({
               <button
                 onClick={onClose}
                 disabled={deleteProduct.isPending}
-                className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className={`${buttonSecondary} flex-1 disabled:opacity-50`}
               >
                 Cancel
               </button>

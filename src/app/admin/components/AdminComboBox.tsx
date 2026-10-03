@@ -67,7 +67,7 @@ export function AdminComboBox({
         aria-controls={listboxId}
         disabled={disabled}
         onClick={() => setOpen((prev) => !prev)}
-        className={`flex w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-left text-sm transition-colors hover:border-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:cursor-not-allowed disabled:opacity-50 ${buttonClassName}`}
+        className={`flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-left text-sm text-gray-900 transition hover:border-gray-400 hover:bg-gray-50 focus:border-black focus:outline-none focus:ring-1 focus:ring-black disabled:cursor-not-allowed disabled:opacity-50 ${buttonClassName}`}
       >
         <span className={selected ? "text-gray-900" : "text-gray-500"}>
           {selected?.label ?? placeholder}
@@ -83,7 +83,7 @@ export function AdminComboBox({
           id={listboxId}
           role="listbox"
           aria-label={ariaLabel}
-          className="absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+          className="absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg"
         >
           {options.map((option) => {
             const isSelected = option.value === value;
@@ -127,8 +127,8 @@ export function AdminFilterField({
   className?: string;
 }) {
   return (
-    <div className={className}>
-      <span className="block mb-1 font-medium text-gray-500 text-xs">{label}</span>
+    <div className={`min-w-0 ${className}`}>
+      <span className="mb-1.5 block text-xs font-semibold text-gray-600">{label}</span>
       {children}
     </div>
   );

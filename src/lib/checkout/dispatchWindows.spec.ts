@@ -1,9 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import {
   addDaysToDateString,
+  buildDispatchWindowChoices,
   buildDispatchWindowFromForm,
+  deriveDefaultDispatchWindow,
   differenceInDays,
+  getLagosDateTimeParts,
   parseTimeToMinutes,
+  DEFAULT_DISPATCH_WINDOW_MINUTES,
   DISPATCH_WINDOW_END_HOUR,
   DISPATCH_WINDOW_START_HOUR,
 } from "./dispatchWindows";
@@ -33,6 +37,17 @@ describe("addDaysToDateString", () => {
   });
 });
 
+describe("deriveDefaultDispatchWindow", () => {
+  test("starts the suggested window at 9am Lagos time", () => {
+    const result = deriveDefaultDispatchWindow("2030-06-01T09:00:00+01:00");
+
+    expect(getLagosDateTimeParts(result.window.start)).toMatchObject({
+      hour: 9,
+      minute: 0,
+    });
+  });
+});
+
 describe("buildDispatchWindowFromForm", () => {
   test("rejects start time before dispatch window opens", () => {
     const result = buildDispatchWindowFromForm({
@@ -41,10 +56,10 @@ describe("buildDispatchWindowFromForm", () => {
       durationMinutes: 60,
     });
     expect(result.window).toBeUndefined();
-    expect(result.errors.some((e) => e.includes("8:00am"))).toBe(true);
+    expect(result.errors.some((e) => e.includes("9:00am"))).toBe(true);
   });
 
-  test("rejects window ending after dispatch cutoff", () => {
+  test("rejects window ending after 4pm cutoff", () => {
     const lastStartHour = DISPATCH_WINDOW_END_HOUR - 1;
     const result = buildDispatchWindowFromForm({
       date: "2030-01-15",
@@ -52,7 +67,11 @@ describe("buildDispatchWindowFromForm", () => {
       durationMinutes: 120,
     });
     expect(result.window).toBeUndefined();
-    expect(result.errors.some((e) => e.includes("2:00pm"))).toBe(true);
+    expect(
+      result.errors.some((e) =>
+        e.includes(`${DISPATCH_WINDOW_END_HOUR % 12 || 12}:00pm`),
+      ),
+    ).toBe(true);
   });
 
   test("accepts valid future window", () => {
@@ -64,5 +83,35 @@ describe("buildDispatchWindowFromForm", () => {
     expect(result.errors).toEqual([]);
     expect(result.window?.start).toContain("2030-06-01");
     expect(result.window?.end).toContain("2030-06-01");
+  });
+});
+
+describe("buildDispatchWindowChoices", () => {
+  test("adds off-hour suggested window before hourly slots", () => {
+    const suggested = {
+      start: "2030-06-15T15:03:00+01:00",
+      end: "2030-06-15T16:03:00+01:00",
+    };
+    const choices = buildDispatchWindowChoices("2030-06-15", suggested);
+    expect(choices[0]?.value).toBe(suggested.start);
+    expect(choices[0]?.isEarliest).toBe(true);
+    expect(choices.length).toBeGreaterThan(1);
+  });
+
+  test("uses hourly slots only when suggested aligns to the grid", () => {
+    const suggested = buildDispatchWindowFromForm({
+      date: "2030-06-15",
+      startTime: "10:00",
+      durationMinutes: DEFAULT_DISPATCH_WINDOW_MINUTES,
+    }).window!;
+    const choices = buildDispatchWindowChoices(
+      "2030-06-15",
+      suggested,
+      DEFAULT_DISPATCH_WINDOW_MINUTES,
+    );
+    expect(choices.some((choice) => choice.window.start === suggested.start)).toBe(
+      true,
+    );
+    expect(choices.some((choice) => choice.isEarliest)).toBe(false);
   });
 });

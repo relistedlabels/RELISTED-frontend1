@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { useDeleteAdminProduct } from "@/lib/queries/admin/useDeleteAdminProduct";
 import { Paragraph1 } from "@/common/ui/Text";
+import { buttonDestructive, buttonSecondary } from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 
 interface DeleteProductButtonProps {
   productId: string;
@@ -35,8 +37,8 @@ const DeleteProductButton = ({
         <Paragraph1>Delete Listing</Paragraph1>
       </button>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm bg-white rounded-xl p-6 text-center">
+        <div className={dialogBackdrop}>
+          <div className={`${dialogCard} max-w-sm text-center`}>
             <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
               <span className="text-red-500 text-lg">⚠</span>
             </div>
@@ -51,14 +53,14 @@ const DeleteProductButton = ({
               <button
                 onClick={() => setOpen(false)}
                 disabled={isPending}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50"
+                className={`${buttonSecondary} flex-1`}
               >
                 <Paragraph1>Cancel</Paragraph1>
               </button>
               <button
                 onClick={handleDelete}
                 disabled={isPending}
-                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition disabled:opacity-50"
+                className={`${buttonDestructive} flex-1`}
               >
                 <Paragraph1>
                   {isPending ? "Deleting..." : "Confirm Delete"}

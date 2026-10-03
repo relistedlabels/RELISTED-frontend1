@@ -9,6 +9,7 @@ import { useCreateDispute } from "@/lib/mutations/listers";
 import { useOrders } from "@/lib/queries/listers/useOrders";
 import { useOrderItems } from "@/lib/queries/listers/useOrderItems";
 import { useUpload } from "@/lib/queries/renters/useUpload";
+import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
 
 const ISSUE_CATEGORIES = [
   "Damaged Item",
@@ -474,7 +475,7 @@ const RaiseDisputeForm: React.FC<RaiseDisputeFormProps> = ({ onSuccess }) => {
         type="button"
         onClick={handleSubmit}
         disabled={createDisputeMutation.isPending}
-        className="bg-black hover:bg-gray-800 disabled:opacity-50 py-3 rounded-lg w-full font-semibold text-white text-lg transition duration-150 disabled:cursor-not-allowed"
+        className={`${buttonPrimaryFull} py-3 text-lg`}
       >
         <Paragraph1>
           {createDisputeMutation.isPending ? "Submitting..." : "Submit Dispute"}

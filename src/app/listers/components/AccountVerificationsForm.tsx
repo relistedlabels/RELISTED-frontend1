@@ -1,7 +1,7 @@
 "use client";
 
 // ENDPOINTS: GET /api/listers/verifications/status, GET /api/listers/verifications/documents,
-// POST /api/listers/verifications/nin, POST /api/listers/verifications/bvn, PUT /api/listers/profile (NIN),
+// POST /api/listers/verifications/nin, PUT /api/listers/profile (NIN),
 // PUT /api/listers/verifications/emergency-contact
 
 import { useQueryClient } from "@tanstack/react-query";
@@ -10,14 +10,16 @@ import { useMemo, useState } from "react";
 import {
   HiOutlineDocumentText,
   HiOutlineEnvelope,
-  HiOutlinePhone,
   HiOutlinePlus,
   HiOutlineUser,
   HiOutlineUsers,
 } from "react-icons/hi2";
 import { toast } from "sonner";
 import { CityLGASelect } from "@/app/auth/profile-setup/components/CityLGASelect";
+import { PhoneInput } from "@/app/auth/profile-setup/components/PhoneInput";
 import { StateSelect } from "@/app/auth/profile-setup/components/StateSelect";
+import { validatePhoneNumber } from "@/lib/phone";
+import { buttonPrimary } from "@/common/ui/buttonClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import { useUpdateEmergencyContact } from "@/lib/mutations/listers/useUpdateEmergencyContact";
 import { useUploadNinDocument } from "@/lib/mutations/listers/useUploadNinDocument";
@@ -83,7 +85,8 @@ function isAllowedIdFile(file: File): boolean {
 // Sub-component for displaying a verification status on a document or field
 const VerificationBadge: React.FC<{
   status: "Verified" | "Pending" | "Failed";
-}> = ({ status }) => {
+  verifiedLabel?: string;
+}> = ({ status, verifiedLabel = "Verified" }) => {
   let colorClass = "";
   switch (status) {
     case "Verified":
@@ -96,9 +99,10 @@ const VerificationBadge: React.FC<{
       colorClass = "bg-red-100 text-red-800";
       break;
   }
+  const label = status === "Verified" ? verifiedLabel : status;
   return (
-    <span className={`px-4 py-2 rounded-sm text-xs font-medium ${colorClass}`}>
-      {status}
+    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${colorClass}`}>
+      {label}
     </span>
   );
 };
@@ -153,7 +157,7 @@ function EmergencyContactBlock({
 
   return (
     <>
-      <Paragraph1 className="mb-4 pt-4 border-gray-100 border-t font-bold text-gray-900 text-lg">
+      <Paragraph1 className="mb-4 border-t border-gray-100 pt-4 text-lg font-bold text-gray-900">
         Emergency Contact Information
       </Paragraph1>
       <Paragraph1 className="mb-4 text-gray-600 text-sm">
@@ -199,16 +203,10 @@ function EmergencyContactBlock({
           <Paragraph1 className="mb-2 font-medium text-gray-900 text-sm">
             Phone Number
           </Paragraph1>
-          <div className="relative">
-            <HiOutlinePhone className="top-1/2 left-3 absolute w-5 h-5 text-gray-400 -translate-y-1/2" />
-            <input
-              type="tel"
-              value={emergencyForm.phone}
-              placeholder="Not provided yet"
-              onChange={(e) => handleEmergencyChange("phone", e.target.value)}
-              className="p-3 pl-10 border border-gray-300 focus:border-black rounded-lg focus:ring-black w-full"
-            />
-          </div>
+          <PhoneInput
+            value={emergencyForm.phone || "+234"}
+            onChange={(value) => handleEmergencyChange("phone", value)}
+          />
         </div>
 
         <div>
@@ -253,15 +251,21 @@ function EmergencyContactBlock({
 
       <div className="flex justify-end pt-4 pb-6">
         <button
-          className="bg-black hover:bg-gray-800 disabled:opacity-50 px-6 py-2 rounded-lg font-semibold text-white text-sm transition disabled:cursor-not-allowed"
+          className={buttonPrimary}
           type="button"
           disabled={updateEmergencyContactMutation.isPending}
           onClick={() => {
+            const phoneError = validatePhoneNumber(emergencyForm.phone);
+            if (phoneError) {
+              toast.error(phoneError);
+              return;
+            }
+
             updateEmergencyContactMutation.mutate(
               {
                 fullName: emergencyForm.fullName,
                 email: emergencyForm.email,
-                phone: emergencyForm.phone,
+                phone: emergencyForm.phone.trim(),
                 relationship: emergencyForm.relationship,
                 city: emergencyForm.city,
                 state: emergencyForm.state,
@@ -301,26 +305,19 @@ const AccountVerificationsForm: React.FC = () => {
 
   const [isUploadingFile, setIsUploadingFile] = useState(false);
 
-  const [ninNumber, setNinNumber] = useState("");
-  const [ninFile, setNinFile] = useState<File | null>(null);
-  const [ninError, setNinError] = useState<string | null>(null);
-  const [documentType, setDocumentType] = useState<string>(
-    ID_TYPE_OPTIONS[0].value,
-  );
-  const [isDraggingNin, setIsDraggingNin] = useState(false);
+   const [ninNumber, setNinNumber] = useState("");
+   const [ninFile, setNinFile] = useState<File | null>(null);
+   const [ninError, setNinError] = useState<string | null>(null);
+   const [documentType, setDocumentType] = useState<string>(
+     ID_TYPE_OPTIONS[0].value,
+   );
+   const [isDraggingNin, setIsDraggingNin] = useState(false);
 
-  const [bvnInput, setBvnInput] = useState("");
-  const [bvnError, setBvnError] = useState<string | null>(null);
-
-  const listerIdStatusRaw =
+   const listerIdStatusRaw =
     statusData?.data?.verifications?.validId?.status ??
     statusData?.data?.verifications?.nin?.status;
 
-  const idVerificationStatus = mapApiStatusToUI(listerIdStatusRaw);
-
-  const bvnVerificationStatus = mapApiStatusToUI(
-    statusData?.data?.verifications?.bvn?.status,
-  );
+   const idVerificationStatus = mapApiStatusToUI(listerIdStatusRaw);
 
   const assignIdFile = (file: File | null) => {
     if (!file) {
@@ -425,7 +422,7 @@ const AccountVerificationsForm: React.FC = () => {
   if (isLoading && !profile) {
     return (
       <div className="w-full font-sans">
-        <Paragraph1 className="mb-6 font-bold uppercase">
+        <Paragraph1 className="mb-6 font-bold text-gray-900 text-lg">
           Verifications
         </Paragraph1>
         <Paragraph1 className="text-gray-500 text-sm">
@@ -437,7 +434,7 @@ const AccountVerificationsForm: React.FC = () => {
 
   return (
     <div className="w-full font-sans">
-      <Paragraph1 className="mb-6 font-bold uppercase">
+      <Paragraph1 className="mb-6 font-bold text-gray-900 text-lg">
         Verifications
       </Paragraph1>
 
@@ -449,7 +446,10 @@ const AccountVerificationsForm: React.FC = () => {
         <Paragraph1 className="text-gray-900 text-lg">
           Identification
         </Paragraph1>
-        <VerificationBadge status={idVerificationStatus} />
+        <VerificationBadge
+          status={idVerificationStatus}
+          verifiedLabel="Uploaded"
+        />
       </div>
 
       {idVerificationStatus !== "Verified" ? (
@@ -566,7 +566,7 @@ const AccountVerificationsForm: React.FC = () => {
             type="button"
             onClick={handleUploadNin}
             disabled={idUploadBusy}
-            className="inline-flex justify-center items-center bg-black hover:bg-gray-800 disabled:opacity-50 mt-1 px-4 py-2 rounded-lg font-semibold text-white text-sm transition disabled:cursor-not-allowed"
+            className={`${buttonPrimary} mt-1`}
           >
             {idUploadBusy ? "Uploading..." : "Upload ID"}
           </button>
@@ -580,144 +580,17 @@ const AccountVerificationsForm: React.FC = () => {
           </div>
           <div className="flex-1">
             <Paragraph1 className="font-semibold text-green-900 text-base">
-              ✓ Your ID has been verified
+              ✓ Your ID has been uploaded
             </Paragraph1>
             <Paragraph1 className="mt-2 text-green-700 text-sm">
-              Your identification document is verified. You can still update
-              your ID from settings if needed.
+              Your identification document is on file. You can update your ID
+              from settings if needed.
             </Paragraph1>
           </div>
         </div>
       )}
 
-      {/* Bank Verification */}
-      <div
-        className="flex flex-wrap justify-between items-center gap-2 mb-4"
-        data-onboarding-target="lister-bvn-section"
-      >
-        <Paragraph1 className="font-bold text-gray-900 text-lg">
-          Bank Verification Number
-        </Paragraph1>
-        <VerificationBadge status={bvnVerificationStatus} />
-      </div>
-
-      {bvnVerificationStatus !== "Verified" && (
-        <div className="bg-amber-50 mb-4 p-4 border border-amber-300 rounded-lg">
-          <Paragraph1 className="font-medium text-amber-900 text-sm">
-            ⚠️ Important: Add your correct BVN
-          </Paragraph1>
-          <Paragraph1 className="mt-2 text-amber-800 text-xs">
-            A correct BVN is essential for your account. Without it, you will:
-          </Paragraph1>
-          <ul className="space-y-1 mt-2 ml-4 text-amber-800 text-xs list-disc">
-            <li>Not be able to make purchases on the platform</li>
-            <li>Experience delays in the verification process</li>
-            <li>Have limited access to platform features</li>
-          </ul>
-          <Paragraph1 className="mt-2 text-amber-800 text-xs">
-            Please ensure you provide a valid and accurate BVN to proceed.
-          </Paragraph1>
-        </div>
-      )}
-
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-2">
-          <Paragraph1 className="text-gray-900 text-base">
-            {bvnVerificationStatus === "Verified"
-              ? "Bank Verification Number (BVN)"
-              : profile?.bvn
-                ? "Update BVN"
-                : "Bank Verification Number (BVN)"}
-          </Paragraph1>
-        </div>
-        <div className="flex md:flex-row flex-col justify-between items-center gap-2 bg-gray-50 p-4 border border-gray-300 rounded-lg">
-          {bvnVerificationStatus === "Verified" ? (
-            <>
-              <div className="w-full">
-                <input
-                  type="text"
-                  value={
-                    statusData?.data?.verifications?.bvn?.maskedValue
-                      ? statusData.data.verifications.bvn.maskedValue.replace(
-                          /X/g,
-                          "*",
-                        )
-                      : profile?.bvn
-                        ? `${profile.bvn.slice(0, 4)}****${profile.bvn.slice(-3)}`
-                        : "BVN Verified"
-                  }
-                  readOnly
-                  className="bg-gray-50 outline-none w-full font-mono text-gray-700 text-lg tracking-wider"
-                />
-                <Paragraph1 className="mt-2 text-gray-500 text-xs">
-                  Your BVN is encrypted and secure. Only partial digits shown.
-                </Paragraph1>
-              </div>
-            </>
-          ) : (
-            <>
-              <input
-                type="text"
-                value={bvnInput}
-                onChange={(e) => setBvnInput(e.target.value.replace(/\D/g, ""))}
-                placeholder={
-                  profile?.bvn
-                    ? `Current: ${profile.bvn}`
-                    : "Enter your 11-digit BVN"
-                }
-                maxLength={11}
-                className="bg-white px-3 py-2 border border-gray-300 rounded-md outline-none w-full font-mono text-gray-700 text-lg tracking-wider"
-                disabled={updateProfileMutation.isPending}
-              />
-              <button
-                type="button"
-                className="bg-black hover:bg-gray-800 disabled:opacity-50 mt-2 md:mt-0 ml-0 md:ml-4 px-4 py-2 rounded-lg font-semibold text-white text-sm whitespace-nowrap transition disabled:cursor-not-allowed"
-                disabled={
-                  updateProfileMutation.isPending ||
-                  !bvnInput ||
-                  bvnInput.length !== 11
-                }
-                onClick={() => {
-                  setBvnError(null);
-                  if (!bvnInput || bvnInput.length !== 11) {
-                    setBvnError("Please enter a valid 11-digit BVN.");
-                    return;
-                  }
-                  updateProfileMutation.mutate(
-                    { bvn: bvnInput },
-                    {
-                      onSuccess: async () => {
-                        setBvnInput("");
-                        await queryClient.invalidateQueries({
-                          queryKey: ["listers", "verifications", "status"],
-                        });
-                        await queryClient.invalidateQueries({
-                          queryKey: ["profile"],
-                        });
-                      },
-                      onError: () => {
-                        setBvnError("Failed to submit BVN. Please try again.");
-                      },
-                    },
-                  );
-                }}
-              >
-                {updateProfileMutation.isPending ? "Submitting..." : "Submit BVN"}
-              </button>
-            </>
-          )}
-        </div>
-        {bvnError && (
-          <Paragraph1 className="mt-2 text-red-600 text-xs">
-            {bvnError}
-          </Paragraph1>
-        )}
-        <Paragraph1 className="mt-2 text-gray-500 text-xs">
-          Your BVN is encrypted and secure. Only the last 4 digits are shown.
-        </Paragraph1>
-      </div>
-
-      {profile && (
+       {profile && (
         <EmergencyContactBlock
           key={profile.id}
           contact={profile.emergencyContact}

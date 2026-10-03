@@ -11,6 +11,8 @@ import { ToolInfo } from "@/common/ui/ToolInfo";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useSubmitRenterAddress } from "@/lib/mutations";
+import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
+import { validatePhoneNumber } from "@/lib/phone";
 
 interface StepOnePersonalProps {
   onNext: () => void;
@@ -31,7 +33,6 @@ const StepOnePersonal: React.FC<StepOnePersonalProps> = ({
   const [address, setAddress] = useState(profile.address.street);
   const [cityLGA, setCityLGA] = useState(profile.address.city);
   const [state, setState] = useState(profile.address.state);
-  const [bvn, setBvn] = useState(profile.bvn);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -39,20 +40,21 @@ const StepOnePersonal: React.FC<StepOnePersonalProps> = ({
     setAddress(profile.address.street || "");
     setCityLGA(profile.address.city || "");
     setState(profile.address.state || "");
-    setBvn(profile.bvn || "");
   }, [
     profile.phoneNumber,
     profile.address.street,
     profile.address.city,
     profile.address.state,
-    profile.bvn,
   ]);
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!phoneNumber || !address || !cityLGA || !state) {
-      setError("Please complete all required fields before continuing.");
+    const phoneError = validatePhoneNumber(phoneNumber);
+    if (phoneError || !address || !cityLGA || !state) {
+      setError(
+        phoneError ?? "Please complete all required fields before continuing.",
+      );
       return;
     }
 
@@ -63,7 +65,6 @@ const StepOnePersonal: React.FC<StepOnePersonalProps> = ({
   const proceedWithFormSubmission = () => {
     const profileData = {
       phoneNumber,
-      bvn,
       address: {
         street: address,
         city: cityLGA,
@@ -76,7 +77,6 @@ const StepOnePersonal: React.FC<StepOnePersonalProps> = ({
     submitAddress.mutate(
       {
         phoneNumber,
-        bvn,
         address: {
           street: address,
           city: cityLGA,
@@ -189,10 +189,8 @@ const StepOnePersonal: React.FC<StepOnePersonalProps> = ({
       <button
         type="submit"
         disabled={isLoading}
-        className={`w-full py-3 rounded-lg text-white flex items-center justify-center gap-2 transition ${
-          isLoading
-            ? "bg-gray-400 cursor-not-allowed"
-            : "bg-black hover:bg-gray-800"
+        className={`${buttonPrimaryFull} py-3 gap-2 ${
+          isLoading ? "bg-gray-400 hover:bg-gray-400 cursor-not-allowed" : ""
         }`}
       >
         {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}

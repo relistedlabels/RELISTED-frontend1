@@ -11,6 +11,14 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { buttonPrimary } from "@/common/ui/buttonClasses";
+import {
+  slidePanelBackdrop,
+  slidePanelFooter,
+  slidePanelHeader,
+  slidePanelSheet,
+  slidePanelTitle,
+} from "@/common/ui/dashboardClasses";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
 import ProductCuratorDetails from "./ProductCuratorDetails";
@@ -52,14 +60,14 @@ const DisputeDetailsPanel: React.FC<DisputeDetailsPanelProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-99 bg-black/70 backdrop--blur-sm"
+          className={slidePanelBackdrop}
           onClick={onClose}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="fixed top-0 right-0 h-screen hide-scrollbar overflow-y-auto bg-white shadow-2xl px-4  flex flex-col w-full sm:w-114"
+            className={slidePanelSheet}
             role="dialog"
             aria-modal="true"
             aria-label="Product DisputeDetails"
@@ -71,7 +79,7 @@ const DisputeDetailsPanel: React.FC<DisputeDetailsPanelProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex justify-between sticky top-0 items-center pb-4 border-b border-gray-100 pt-6 z-10  bg-white">
+            <div className={slidePanelHeader}>
               <button
                 onClick={onClose}
                 className="text-gray-500 xl:hidden hover:text-black p-1 rounded-full transition"
@@ -80,9 +88,8 @@ const DisputeDetailsPanel: React.FC<DisputeDetailsPanelProps> = ({
                 <ArrowLeft size={20} />
               </button>
 
-              <Paragraph1 className=" font-bold uppercase tracking-widest text-gray-800">
-                Dispute #
-                {disputeDetail?.data.dispute.disputeId || disputeId || "---"}
+              <Paragraph1 className={slidePanelTitle}>
+                Dispute #{disputeDetail?.data.dispute.disputeId || disputeId || "---"}
               </Paragraph1>
               <button
                 onClick={onClose}
@@ -99,25 +106,20 @@ const DisputeDetailsPanel: React.FC<DisputeDetailsPanelProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="mt-auto py-2 bg-white flex justify-between gap-4 sticky bottom-0">
+            <div className={`${slidePanelFooter} flex gap-3`}>
               <button
                 type="button"
                 disabled={withdrawMutation.isPending || !disputeId}
                 onClick={() => disputeId && withdrawMutation.mutate()}
-                className="flex-1  px-4 py-3 text-sm font-semibold border border-red-500 text-red-500 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 rounded-lg border border-red-500 px-4 py-2.5 text-sm font-semibold text-red-500 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <Paragraph1>
-                  {withdrawMutation.isPending
-                    ? "Withdrawing..."
-                    : "Withdraw Dispute"}
-                </Paragraph1>
+                {withdrawMutation.isPending
+                  ? "Withdrawing..."
+                  : "Withdraw Dispute"}
               </button>
 
-              <button
-                onClick={onClose}
-                className="flex-1  px-4 py-3 text-sm font-semibold border bg-black text-white rounded-lg hover:bg-gray-900 transition"
-              >
-                <Paragraph1>Close </Paragraph1>
+              <button type="button" onClick={onClose} className={`${buttonPrimary} flex-1`}>
+                Close
               </button>
             </div>
           </motion.div>

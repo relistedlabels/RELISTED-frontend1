@@ -5,7 +5,8 @@ import { X } from "lucide-react";
 import { toast } from "sonner";
 import { shopSaleApi } from "@/lib/api/shopSale";
 import { Paragraph1 } from "@/common/ui/Text";
-import Button from "@/common/ui/Button";
+import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 
 type Props = {
   open: boolean;
@@ -66,7 +67,7 @@ export default function VaultClosetSaleNotifyModal({
 
   return (
     <div
-      className="z-200 fixed inset-0 flex justify-center items-center bg-black/50 backdrop-blur-[2px] p-4"
+      className={`${dialogBackdrop} z-200 backdrop-blur-[2px]`}
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -76,7 +77,7 @@ export default function VaultClosetSaleNotifyModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative bg-white shadow-2xl p-6 sm:p-8 border border-black/10 rounded-md w-full max-w-md"
+        className={`${dialogCard} relative rounded-md p-6 sm:p-8 border-black/10`}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-start gap-3">
@@ -115,27 +116,21 @@ export default function VaultClosetSaleNotifyModal({
             />
           </div>
           <div className="flex flex-wrap justify-end gap-2 pt-1">
-            <Button
+            <button
               type="button"
-              text="Cancel"
               onClick={onClose}
-              simpleHover
               disabled={submitting}
-              backgroundColor="bg-white"
-              color="text-black"
-              border="border border-black/20"
-              additionalClasses="hover:bg-black hover:text-white"
-            />
-            <Button
+              className={buttonSecondary}
+            >
+              Cancel
+            </button>
+            <button
               type="submit"
-              text={submitting ? "Sending…" : "Notify me"}
-              simpleHover
               disabled={submitting}
-              backgroundColor="bg-black"
-              color="text-white"
-              border="border border-black"
-              additionalClasses="disabled:cursor-not-allowed disabled:opacity-50 hover:bg-neutral-800"
-            />
+              className={buttonPrimary}
+            >
+              {submitting ? "Sending…" : "Notify me"}
+            </button>
           </div>
         </form>
       </div>

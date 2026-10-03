@@ -21,6 +21,24 @@ interface DetailedReviewProps {
   userId: string;
 }
 
+const getInitials = (name: string) =>
+  name
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+const formatReviewDate = (date: string) => {
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return date;
+  return parsed.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+
 const FullReviewItem: React.FC<DetailedReview> = ({
   name,
   date,
@@ -39,9 +57,6 @@ const FullReviewItem: React.FC<DetailedReview> = ({
     </span>
   );
 
-  const avatarSrc =
-    avatarUrl ?? `https://i.pravatar.cc/150?u=${encodeURIComponent(name)}`;
-
   return (
     <div className="p-4 bg-white border border-gray-200 rounded-xl mb-4">
       {isMostHelpful && (
@@ -51,12 +66,18 @@ const FullReviewItem: React.FC<DetailedReview> = ({
       )}
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-start space-x-3">
-          <div className="sm:w-16 w-12 h-12 sm:h-16 rounded-full overflow-hidden bg-gray-200 shrink-0">
-            <img
-              src={avatarSrc}
-              alt={`${name} avatar`}
-              className="w-full h-full object-cover"
-            />
+          <div className="sm:w-16 w-12 h-12 sm:h-16 rounded-full overflow-hidden bg-gray-200 shrink-0 flex items-center justify-center">
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={`${name} avatar`}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-sm font-semibold text-gray-600">
+                {getInitials(name)}
+              </span>
+            )}
           </div>
           <div>
             <div className="flex items-center space-x-2">
@@ -71,7 +92,9 @@ const FullReviewItem: React.FC<DetailedReview> = ({
           </div>
         </div>
         <div className="flex flex-col items-end">
-          <Paragraph1 className="text-xs text-gray-500">{date}</Paragraph1>
+          <Paragraph1 className="text-xs text-gray-500">
+            {formatReviewDate(date)}
+          </Paragraph1>
         </div>
       </div>
     </div>
@@ -111,7 +134,7 @@ const DetailedReviewComponent: React.FC<DetailedReviewProps> = ({ userId }) => {
     return (
       <div className="p-4 bg-white border border-gray-200 rounded-xl">
         <Paragraph1 className="text-sm text-gray-600">
-          This curator has no reviews yet.
+          This lister has no reviews yet.
         </Paragraph1>
       </div>
     );

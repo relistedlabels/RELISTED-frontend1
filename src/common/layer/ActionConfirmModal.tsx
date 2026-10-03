@@ -1,9 +1,14 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
-import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import {
+  buttonDestructive,
+  buttonPrimary,
+  buttonSecondary,
+} from "@/common/ui/buttonClasses";
 
 export type ActionType = "positive" | "negative" | "delete" | "update";
 
@@ -32,86 +37,105 @@ export default function ActionConfirmModal({
   isLoading = false,
   children,
 }: ActionConfirmModalProps) {
-  const getActionButtonColor = (type: ActionType) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const getConfirmButtonClass = (type: ActionType) => {
     switch (type) {
       case "negative":
       case "delete":
-        return "bg-red-600 hover:bg-red-700 text-white";
+        return buttonDestructive;
       case "positive":
       case "update":
       default:
-        return "bg-gray-900 hover:bg-gray-800 text-white";
+        return buttonPrimary;
     }
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
+      {isOpen ? (
+        <div
+          className="fixed inset-0 z-[100]"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="action-confirm-title"
+        >
+          <motion.button
+            type="button"
+            aria-label="Close dialog"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed h-screen inset-0 bg-black/50 z-40"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           />
 
-          {/* Modal */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 h-screen z-50 flex items-center justify-center p-4"
-          >
-            <div className="bg-white rounded-lg shadow-lg max-w-md w-full">
-              {/* Header */}
-              <div className="flex items-start justify-between p-6 border-b border-gray-200">
-                <div className="flex-1">
-                  <Paragraph3 className="text-lg font-bold text-gray-900 mb-1">
+          <div className="fixed inset-0 flex items-center justify-center p-4 pointer-events-none">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="pointer-events-auto w-full max-w-sm rounded-xl border border-gray-200 bg-white shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between gap-3 p-5">
+                <div className="min-w-0 flex-1">
+                  <h2
+                    id="action-confirm-title"
+                    className="font-bold text-gray-900 text-base"
+                  >
                     {title}
-                  </Paragraph3>
-                  <Paragraph1 className="text-sm text-gray-600">
+                  </h2>
+                  <p className="mt-2 text-gray-600 text-sm leading-relaxed">
                     {description}
-                  </Paragraph1>
+                  </p>
                 </div>
                 <button
+                  type="button"
                   onClick={onClose}
-                  className="text-gray-400 hover:text-gray-600 transition p-1 -mr-2 flex-shrink-0"
+                  className="shrink-0 p-1 text-gray-400 hover:text-gray-600 transition"
                 >
-                  <X size={20} />
+                  <X size={18} />
                 </button>
               </div>
 
-              {/* Content */}
-              {children && (
-                <div className="p-6 border-b border-gray-200">{children}</div>
-              )}
+              {children ? (
+                <div className="px-5 pb-4 border-gray-100 border-t pt-4">
+                  {children}
+                </div>
+              ) : null}
 
-              {/* Footer */}
-              <div className="p-6 flex gap-3 justify-end">
+              <div className="flex justify-end gap-2.5 px-5 py-4 border-gray-200 border-t bg-gray-50/80">
                 <button
+                  type="button"
                   onClick={onClose}
                   disabled={isLoading}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium text-sm disabled:opacity-50"
+                  className={`${buttonSecondary} disabled:cursor-not-allowed`}
                 >
                   {cancelLabel}
                 </button>
                 <button
+                  type="button"
                   onClick={onConfirm}
                   disabled={isLoading}
-                  className={`px-6 py-2 rounded-lg font-medium text-sm transition disabled:opacity-50 ${getActionButtonColor(
-                    actionType,
-                  )}`}
+                  className={`${getConfirmButtonClass(actionType)} disabled:cursor-not-allowed`}
                 >
                   {isLoading ? "Loading..." : actionLabel}
                 </button>
               </div>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+            </motion.div>
+          </div>
+        </div>
+      ) : null}
+    </AnimatePresence>,
+    document.body,
   );
 }

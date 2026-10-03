@@ -64,7 +64,7 @@ describe("getCheckoutTierBlockingIssue", () => {
         selectedReturnTierByBucket: {},
         selectedReturnShippingTier: "",
       }),
-    ).toBe("Please select a shipping method");
+    ).toBe("Please select a delivery method");
   });
 
   test("blocks when per-bucket outbound tier missing", () => {
@@ -80,7 +80,7 @@ describe("getCheckoutTierBlockingIssue", () => {
         selectedReturnTierByBucket: {},
         selectedReturnShippingTier: "",
       }),
-    ).toBe("Please select a delivery shipping method for each order.");
+    ).toBe("Please select a delivery method for each order.");
   });
 
   test("blocks when return tier missing for rental cart", () => {
@@ -96,7 +96,7 @@ describe("getCheckoutTierBlockingIssue", () => {
         selectedReturnTierByBucket: {},
         selectedReturnShippingTier: "",
       }),
-    ).toBe("Please select a return shipping method");
+    ).toBe("Please select a return pickup method");
   });
 
   test("returns null when all tiers selected", () => {

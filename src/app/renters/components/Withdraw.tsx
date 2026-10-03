@@ -12,6 +12,13 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { buttonPrimary } from "@/common/ui/buttonClasses";
+import {
+  slidePanelBackdrop,
+  slidePanelHeader,
+  slidePanelSheet,
+  slidePanelTitle,
+} from "@/common/ui/dashboardClasses";
 import { Paragraph1, Paragraph2, Header3, Paragraph3 } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
 import WalletTopUpForm from "@/app/shop/cart/checkout/components/WalletTopUpForm";
@@ -61,7 +68,6 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
   );
 
   const wallet = walletResponse?.wallet;
-  const walletBalance = wallet?.balance?.totalBalance ?? 0;
   const availableBalance = wallet?.balance?.availableBalance ?? 0;
 
   const walletBankRows = bankListPayload?.bankAccounts ?? [];
@@ -157,14 +163,14 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-99 bg-black/70 backdrop--blur-sm"
+          className={slidePanelBackdrop}
           onClick={closePanel}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="fixed top-0 right-0 h-screen hide-scrollbar overflow-y-auto bg-white text-gray-900 shadow-2xl px-4 flex flex-col w-full sm:w-114"
+            className={slidePanelSheet}
             role="dialog"
             aria-modal="true"
             aria-label="Product Withdraw"
@@ -176,7 +182,7 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex justify-between sticky top-0 items-center pb-4 border-b border-gray-100 pt-6 z-10  bg-white">
+            <div className={slidePanelHeader}>
               <button
                 onClick={closePanel}
                 className="text-gray-500 xl:hidden hover:text-black p-1 rounded-full transition"
@@ -185,9 +191,7 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
                 <ArrowLeft size={20} />
               </button>
 
-              <Paragraph1 className=" uppercase font-bold tracking-widest text-gray-800">
-                WITHDRAW FUNDS{" "}
-              </Paragraph1>
+              <Paragraph1 className={slidePanelTitle}>Withdraw funds</Paragraph1>
               <button
                 onClick={closePanel}
                 className="text-gray-500  hover:text-black p-1 rounded-full transition"
@@ -204,7 +208,7 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
               {/* Available Balance Display */}
               <div className="p-4 bg-gray-100 rounded-xl mb-6">
                 <Paragraph1 className="text-sm text-gray-500 mb-1">
-                  Total Balance
+                  Available Balance
                 </Paragraph1>
                 <div className="flex items-center space-x-2">
                   <img src="/icons/lock2.png" className="h-[41px] w-auto" />
@@ -212,23 +216,15 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
                   {walletLoading ? (
                     <div className="h-8 w-32 bg-slate-300 rounded animate-pulse" />
                   ) : wallet ? (
-                    <div className="flex flex-col">
-                      <Paragraph3 className="text-3xl text-black font-extrabold">
-                        ₦{walletBalance.toLocaleString()}
-                      </Paragraph3>
-                      <Paragraph1 className="text-xs text-gray-600 mt-1">
-                        Available: ₦{availableBalance.toLocaleString()}
-                      </Paragraph1>
-                    </div>
+                    <Paragraph3 className="text-3xl text-black font-extrabold">
+                      ₦{availableBalance.toLocaleString()}
+                    </Paragraph3>
                   ) : (
                     <Paragraph1 className="text-red-600">
                       Failed to load wallet balance
                     </Paragraph1>
                   )}
                 </div>
-                <Paragraph1 className="text-xs text-gray-500 mt-2">
-                  Make only 5 withdrawals per month
-                </Paragraph1>
               </div>
 
               {/* Bank Account Card */}
@@ -481,7 +477,7 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
                 <Paragraph1>Cancel </Paragraph1>
               </button>
 
-              <button className="flex-1  px-4 py-3  font-semibold border bg-black text-white rounded-lg hover:bg-gray-900 transition">
+              <button className={`${buttonPrimary} flex-1 py-3`}>
                 <Paragraph1>Proceed </Paragraph1>
               </button>
             </div>
@@ -495,7 +491,11 @@ const WithdrawPanel: React.FC<WithdrawPanelProps> = ({ isOpen, onClose }) => {
 // --------------------
 // Main Component
 // --------------------
-const Withdraw: React.FC = () => {
+type WithdrawProps = {
+  className?: string;
+};
+
+const Withdraw: React.FC<WithdrawProps> = ({ className = "flex-1" }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -503,8 +503,9 @@ const Withdraw: React.FC = () => {
       {/* Toggle Button */}
 
       <button
+        type="button"
         onClick={() => setIsOpen(true)}
-        className="flex-1 px-4 py-3 flex items-center justify-center space-x-1 text-sm font-semibold bg-[#333333] text-white rounded-lg hover:bg-[#444444] transition duration-150"
+        className={`${buttonPrimary} ${className} py-3`}
       >
         <Paragraph1>Withdraw</Paragraph1>
         <HiOutlineArrowDownRight className="w-4 h-4 ml-1" />

@@ -13,6 +13,10 @@ import {
 import { formatLagosTime } from "@/lib/checkout/dispatchWindows";
 import { rentersApi } from "@/lib/api/renters";
 import { toast } from "sonner";
+import { buttonPrimary, buttonPrimaryFull } from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
+import { useOrderDetails } from "@/lib/queries/renters/useOrderDetails";
+import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
 interface ReadyToReturnModalProps {
   isOpen: boolean;
@@ -26,6 +30,8 @@ interface ReadyToReturnModalProps {
   isLoading?: boolean;
   orderId?: string;
   shipmentId?: string;
+  itemImageUrl?: string | null;
+  itemLabel?: string | null;
 }
 
 type ModalStep = "confirmation" | "upload" | "success" | "review" | "review-success";
@@ -41,6 +47,8 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
   isLoading: externalIsLoading = false,
   orderId,
   shipmentId,
+  itemImageUrl,
+  itemLabel,
 }) => {
   const [currentStep, setCurrentStep] = useState<ModalStep>("confirmation");
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
@@ -60,11 +68,16 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
     string | null
   >(null);
   const [wasRescheduled, setWasRescheduled] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
   const isMountedRef = useRef(true);
 
   const uploadMutation = useUpload();
+  const { data: orderData } = useOrderDetails(isOpen && orderId ? orderId : "");
+  const resolvedItemImage =
+    itemImageUrl ?? orderData?.itemImages?.[0] ?? null;
+  const resolvedItemLabel =
+    itemLabel?.trim() || orderData?.itemName?.trim() || null;
+
   const {
     data: windowOptions,
     isLoading: windowOptionsLoading,
@@ -103,20 +116,6 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
       isMountedRef.current = false;
     };
   }, []);
-
-  useEffect(() => {
-    if (currentStep === "upload" && contentRef.current) {
-      setTimeout(() => {
-        const shippingSection = contentRef.current?.querySelector(
-          '[data-section="shipping"]',
-        );
-        shippingSection?.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-        });
-      }, 100);
-    }
-  }, [currentStep]);
 
   const resetForm = () => {
     setCurrentStep("confirmation");
@@ -240,14 +239,14 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="z-[9999] fixed inset-0 flex justify-center items-center bg-black/50 backdrop-blur-sm p-4"
+          className={`${dialogBackdrop} z-[9999]`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={handleClose}
         >
           <motion.div
-            className="bg-white shadow-2xl rounded-lg w-full max-w-md max-h-[90vh] md:max-h-[85vh] lg:max-h-[80vh] overflow-y-auto scroll-smooth"
+            className={`${dialogCard} max-h-[90vh] md:max-h-[85vh] lg:max-h-[80vh] overflow-y-auto scroll-smooth rounded-lg p-0`}
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
@@ -265,22 +264,36 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
               </button>
             </div>
 
-            <div className="space-y-6 p-6" ref={contentRef}>
+            <div className="space-y-6 p-6">
               {currentStep === "confirmation" && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="space-y-4"
                 >
-                  <div className="flex justify-center mb-4">
-                    <div className="bg-blue-50 p-4 rounded-full">
-                      <AlertCircle className="text-blue-600" size={40} />
+                  {resolvedItemImage ? (
+                    <div className="overflow-hidden rounded-xl bg-gray-100">
+                      <img
+                        src={cloudinaryOptimizedImageUrl(resolvedItemImage, {
+                          preset: "card",
+                        })}
+                        alt={resolvedItemLabel ?? ""}
+                        className="h-40 w-full object-cover"
+                      />
                     </div>
-                  </div>
+                  ) : (
+                    <div className="flex justify-center">
+                      <div className="rounded-full bg-blue-50 p-4">
+                        <AlertCircle className="text-blue-600" size={40} />
+                      </div>
+                    </div>
+                  )}
 
                   <div className="space-y-3">
                     <Paragraph1 className="font-semibold text-gray-900">
-                      Ready to Return?
+                      {resolvedItemLabel
+                        ? `Ready to return ${resolvedItemLabel}?`
+                        : "Ready to Return?"}
                     </Paragraph1>
                     <Paragraph1 className="text-gray-600 leading-relaxed">
                       Before proceeding, please make sure:
@@ -412,7 +425,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                         windowOptionsError ||
                         !selectedPickupWindow
                       }
-                      className="flex-1 bg-black hover:bg-gray-900 disabled:bg-gray-400 px-4 py-3 rounded-lg font-semibold text-white text-sm transition disabled:cursor-not-allowed"
+                      className={`${buttonPrimary} flex-1 py-3 disabled:bg-gray-400`}
                     >
                       Continue
                     </button>
@@ -426,20 +439,6 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   className="space-y-4"
                 >
-                  {selectedPickupWindow ? (
-                    <div
-                      data-section="shipping"
-                      className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2"
-                    >
-                      <Paragraph1 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                        Selected pickup
-                      </Paragraph1>
-                      <Paragraph1 className="mt-1 text-sm font-medium text-gray-900">
-                        {selectedPickupWindow.summary}
-                      </Paragraph1>
-                    </div>
-                  ) : null}
-
                   <div>
                     <Paragraph1 className="font-semibold text-gray-900">
                       Upload Item Photos
@@ -559,7 +558,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                         uploadedImages.length === 0 ||
                         !selectedPickupWindow
                       }
-                      className="flex-1 bg-black hover:bg-gray-900 disabled:bg-gray-400 px-4 py-3 rounded-lg font-semibold text-white text-sm transition disabled:cursor-not-allowed"
+                      className={`${buttonPrimary} flex-1 py-3 disabled:bg-gray-400`}
                     >
                       {isLoading || externalIsLoading
                         ? "Processing..."
@@ -618,7 +617,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
 
                   <button
                     onClick={() => setCurrentStep("review")}
-                    className="bg-black hover:bg-gray-900 px-4 py-3 rounded-lg w-full font-semibold text-white text-sm transition"
+                    className={buttonPrimaryFull}
                   >
                     Continue to Review
                   </button>
@@ -693,7 +692,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
                     <button
                       onClick={handleSubmitReview}
                       disabled={rating === 0 || isSubmittingReview}
-                      className="flex justify-center bg-black hover:bg-gray-900 disabled:bg-gray-400 px-4 py-3 rounded-lg w-full font-semibold text-white text-sm transition disabled:cursor-not-allowed"
+                      className={`${buttonPrimaryFull} disabled:bg-gray-400`}
                     >
                       {isSubmittingReview ? "Submitting..." : "Submit Review"}
                     </button>
@@ -734,7 +733,7 @@ const ReadyToReturnModal: React.FC<ReadyToReturnModalProps> = ({
 
                   <button
                     onClick={handleSuccessClose}
-                    className="bg-black hover:bg-gray-900 px-4 py-3 rounded-lg w-full font-semibold text-white text-sm transition"
+                    className={buttonPrimaryFull}
                   >
                     Done
                   </button>

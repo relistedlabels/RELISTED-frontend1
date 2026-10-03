@@ -16,7 +16,7 @@ export const useSubmitRentalRequest = () => {
       rentalEndDate: string | null;
       rentalDays: number;
       estimatedRentalPrice: number;
-      deliveryAddressId: string;
+      deliveryAddressId?: string;
       autoPay: boolean;
       currency: string;
       cartItemId?: string;

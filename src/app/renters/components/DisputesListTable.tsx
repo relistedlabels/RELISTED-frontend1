@@ -7,6 +7,7 @@ import { Paragraph1 } from "@/common/ui/Text";
 import { CheckCircle, Clock, FileText, XCircle } from "lucide-react";
 import { useDisputes } from "@/lib/queries/renters/useDisputes";
 import { useOrders } from "@/lib/queries/renters/useOrders";
+import { dashboardCard } from "@/common/ui/dashboardClasses";
 import DisputeSearchBar from "./DisputeSearchBar";
 import DisputeDetails from "./DisputeDetails";
 
@@ -95,7 +96,7 @@ const DisputeTable: React.FC<DisputeTableProps> = ({
 
   if (isLoading) {
     return (
-      <div className="bg-white mb-8 border border-gray-200 rounded-lg font-sans animate-pulse">
+      <div className={`${dashboardCard} mb-8 animate-pulse font-sans`}>
         <div className="space-y-4 p-6">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="bg-gray-200 rounded h-12"></div>
@@ -107,7 +108,7 @@ const DisputeTable: React.FC<DisputeTableProps> = ({
 
   if (error) {
     return (
-      <div className="bg-red-50 mb-8 p-4 border border-red-200 rounded-lg font-sans">
+      <div className="mb-8 rounded-xl border border-red-200 bg-red-50 p-4 font-sans">
         <Paragraph1 className="text-red-600">
           Failed to load disputes. Please try again.
         </Paragraph1>
@@ -117,14 +118,14 @@ const DisputeTable: React.FC<DisputeTableProps> = ({
 
   if (!disputes || disputes.length === 0) {
     return (
-      <div className="bg-white mb-8 p-8 border border-gray-200 rounded-lg font-sans text-center">
+      <div className={`${dashboardCard} mb-8 p-8 text-center font-sans`}>
         <Paragraph1 className="text-gray-500">No disputes found.</Paragraph1>
       </div>
     );
   }
 
   return (
-    <div className="bg-white mb-8 border border-gray-200 rounded-lg sm:overflow-x-auto font-sans">
+    <div className={`${dashboardCard} mb-8 overflow-x-auto font-sans sm:overflow-x-auto`}>
       <div className="sm:min-w-full">
         <div className="hidden gap-4 sm:grid grid-cols-12 bg-gray-200 px-6 py-4 border-gray-200 border-b font-semibold text-gray-700 text-xs uppercase">
           <span className="col-span-2">Dispute ID</span>

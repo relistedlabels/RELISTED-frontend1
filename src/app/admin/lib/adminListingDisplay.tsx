@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
 import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
@@ -46,24 +46,37 @@ export function getInitials(name?: string): string {
     .slice(0, 2);
 }
 
+const LISTING_THUMB_CLASS =
+  "h-16 w-16 shrink-0 rounded bg-gray-200 object-cover";
+
 export function AdminListingThumb({
   url,
   alt,
+  className = LISTING_THUMB_CLASS,
 }: {
   url: string | null;
   alt?: string;
+  className?: string;
 }) {
-  if (!url) {
-    return <div className="w-16 h-16 rounded object-cover bg-gray-200" />;
+  const [failed, setFailed] = useState(false);
+  const src = url ? cloudinaryOptimizedImageUrl(url, { preset: "thumb" }) : "";
+
+  if (!src || failed) {
+    return (
+      <div
+        className={className}
+        role="img"
+        aria-label={alt ? `${alt} (no image)` : "Listing image unavailable"}
+      />
+    );
   }
+
   return (
     <img
-      src={cloudinaryOptimizedImageUrl(url, { preset: "thumb" })}
+      src={src}
       alt={alt || "Product"}
-      className="w-16 h-16 rounded object-cover"
-      onError={(e) => {
-        e.currentTarget.style.display = "none";
-      }}
+      className={className}
+      onError={() => setFailed(true)}
     />
   );
 }

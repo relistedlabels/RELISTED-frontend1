@@ -6,6 +6,7 @@ export * from "./auth/useResendOtp";
 export * from "./auth/useVerifyAdminMfa";
 export * from "./auth/useForgotPassword";
 export * from "./auth/useResetPassword";
+export * from "./auth/useMagicLink";
 export * from "./product/useCreateProduct";
 export * from "./product/useUpdateProduct";
 export * from "./closet/useCreateCloset";

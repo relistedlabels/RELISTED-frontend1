@@ -1,17 +1,23 @@
 "use client";
+
 // ENDPOINTS: GET /api/listers/orders/:orderId
 
-import React, { useState } from "react";
-import { X, ArrowLeft } from "lucide-react";
-
-import { motion, AnimatePresence } from "framer-motion";
-import { Paragraph1 } from "@/common/ui/Text";
-import OrderSummaryCards from "./OrderSummaryCards";
-import OrderProgress from "./OrderProgress";
-import OrderSummaryEscrow from "./OrderSummaryEscrow";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowLeft, X } from "lucide-react";
+import type React from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import {
+  slidePanelBody,
+  slidePanelSheetPinned,
+} from "@/common/ui/dashboardClasses";
+import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import DispatchWindowsDisplay, {
   type DispatchWindow,
 } from "./DispatchWindowsDisplay";
+import OrderProgress from "./OrderProgress";
+import OrderSummaryCards from "./OrderSummaryCards";
+import OrderSummaryEscrow from "./OrderSummaryEscrow";
 
 interface OrderPreviewPanelProps {
   isOpen: boolean;
@@ -20,22 +26,29 @@ interface OrderPreviewPanelProps {
   clickedItem?: Record<string, unknown>;
 }
 
-function formatNgn(n: unknown): string {
-  const v = typeof n === "number" ? n : Number(n);
-  if (!Number.isFinite(v)) return "0";
-  return v.toLocaleString();
-}
-
 const OrderPreviewPanel: React.FC<OrderPreviewPanelProps> = ({
   isOpen,
   onClose,
   orderData,
   clickedItem,
 }) => {
-  const variants = {
-    hidden: { x: "100%" },
-    visible: { x: 0 },
-  };
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isOpen, onClose]);
 
   const lm = orderData?.listerMerchandise as
     | {
@@ -46,172 +59,158 @@ const OrderPreviewPanel: React.FC<OrderPreviewPanelProps> = ({
       }
     | undefined;
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <motion.div
-          className="z-99 fixed inset-0 bg-black/70 backdrop--blur-sm"
-          onClick={onClose}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
+        <>
+          <motion.button
+            type="button"
+            aria-label="Close item details"
+            onClick={onClose}
+            className="fixed inset-0 z-[99] bg-black/35"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          />
           <motion.div
-            className="top-0 right-0 fixed flex flex-col bg-white shadow-2xl px-4 w-full sm:w-114 h-screen overflow-y-auto hide-scrollbar"
+            className={`${slidePanelSheetPinned} z-[100] px-0 sm:w-[32rem]`}
             role="dialog"
             aria-modal="true"
-            aria-label="Order preview"
+            aria-label={String(clickedItem?.name ?? "Item details")}
             initial="hidden"
             animate="visible"
             exit="hidden"
-            variants={variants}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            onClick={(e) => e.stopPropagation()}
+            variants={{
+              hidden: { x: "100%" },
+              visible: { x: 0 },
+            }}
+            transition={{ type: "tween", duration: 0.22, ease: "easeOut" }}
           >
-            <div className="top-0 z-10 sticky flex justify-between items-center bg-white pt-6 pb-4 border-gray-100 border-b">
+            <header className="sticky top-0 z-20 flex shrink-0 items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 sm:px-6">
               <button
+                type="button"
                 onClick={onClose}
-                className="xl:hidden p-1 rounded-full text-gray-500 hover:text-black transition"
+                className="-ml-2 rounded-lg p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
                 aria-label="Close order preview"
               >
-                <ArrowLeft size={20} />
+                <ArrowLeft size={20} aria-hidden />
               </button>
-
-              <Paragraph1 className="font-bold text-gray-800 uppercase tracking-widest">
-                Order preview
-              </Paragraph1>
+              <div className="min-w-0 flex-1">
+                <Paragraph3 className="truncate text-base font-bold text-gray-900">
+                  {String(clickedItem?.name ?? "Item details")}
+                </Paragraph3>
+                <Paragraph1 className="truncate text-xs text-gray-500">
+                  Order #{String(orderData?.orderNumber ?? "")}
+                </Paragraph1>
+              </div>
               <button
+                type="button"
                 onClick={onClose}
-                className="p-1 rounded-full text-gray-500 hover:text-black transition"
-                aria-label="Close order preview"
+                className="rounded-lg p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
+                aria-label="Close item details"
               >
-                <X className="hidden xl:flex" size={20} />
+                <X size={18} aria-hidden />
               </button>
-            </div>
+            </header>
 
-            <div className="space-y-4 pt-4 pb-20 grow">
-              {orderData && (
-                <div className="rounded-2xl border border-gray-200 bg-gray-50/90 px-3 py-3 space-y-1.5">
-                  <Paragraph1 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                    Order
+            <main
+              className={`${slidePanelBody} space-y-4 px-4 py-4 sm:space-y-5 sm:px-6 sm:py-6`}
+            >
+              {Boolean(
+                (orderData?.dresser as { name?: string } | undefined)?.name,
+              ) && (
+                <section className="rounded-2xl border border-gray-200 bg-white p-4">
+                  <Paragraph1 className="mb-3 text-sm font-semibold text-gray-900">
+                    Order information
                   </Paragraph1>
-                  <Paragraph1 className="text-sm text-gray-900">
-                    <span className="font-semibold">#</span>
-                    {String(orderData.orderNumber ?? "")}
-                  </Paragraph1>
-                  {Boolean(
-                    (orderData.dresser as { name?: string } | undefined)?.name,
-                  ) && (
-                    <Paragraph1 className="text-xs text-gray-600">
-                      Renter:{" "}
-                      <span className="font-medium text-gray-900">
-                        {(orderData.dresser as { name: string }).name}
-                      </span>
-                    </Paragraph1>
-                  )}
-                </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="min-w-0">
+                      <Paragraph1 className="text-xs text-gray-500">
+                        Renter
+                      </Paragraph1>
+                      <Paragraph1 className="mt-0.5 break-words text-sm font-medium text-gray-900">
+                        {(orderData?.dresser as { name: string }).name}
+                      </Paragraph1>
+                    </div>
+                    <div className="min-w-0">
+                      <Paragraph1 className="text-xs text-gray-500">
+                        Order
+                      </Paragraph1>
+                      <Paragraph1 className="mt-0.5 break-words text-sm font-medium text-gray-900">
+                        #{String(orderData?.orderNumber ?? "—")}
+                      </Paragraph1>
+                    </div>
+                  </div>
+                </section>
               )}
 
-              {lm && (
-                <div className="rounded-2xl border border-gray-200 p-4 space-y-2">
-                  <Paragraph1 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+              <OrderSummaryCards
+                clickedItem={clickedItem}
+                orderData={orderData}
+              />
+
+              {lm && !clickedItem && (
+                <section className="rounded-2xl border border-gray-200 bg-white p-4">
+                  <h3 className="mb-3 text-sm font-semibold text-gray-900">
                     Your amounts
-                  </Paragraph1>
-                  <div className="space-y-1.5 text-sm text-gray-800">
+                  </h3>
+                  <div className="space-y-2 text-sm text-gray-700">
                     {Number(lm.rentalSubtotal) > 0 && (
                       <div className="flex justify-between gap-4">
                         <span>Rental subtotal</span>
-                        <span className="font-semibold tabular-nums">
-                          ₦{formatNgn(lm.rentalSubtotal)}
+                        <span className="font-medium tabular-nums">
+                          ₦{Number(lm.rentalSubtotal).toLocaleString()}
                         </span>
                       </div>
                     )}
                     {Number(lm.cleaningFeesTotal) > 0 && (
                       <div className="flex justify-between gap-4">
                         <span>Cleaning fees</span>
-                        <span className="font-semibold tabular-nums">
-                          ₦{formatNgn(lm.cleaningFeesTotal)}
+                        <span className="font-medium tabular-nums">
+                          ₦{Number(lm.cleaningFeesTotal).toLocaleString()}
                         </span>
                       </div>
                     )}
                     {Number(lm.resaleSubtotal) > 0 && (
                       <div className="flex justify-between gap-4">
                         <span>Resale</span>
-                        <span className="font-semibold tabular-nums">
-                          ₦{formatNgn(lm.resaleSubtotal)}
+                        <span className="font-medium tabular-nums">
+                          ₦{Number(lm.resaleSubtotal).toLocaleString()}
                         </span>
                       </div>
                     )}
-                    <div className="flex justify-between gap-4 pt-1 border-t border-gray-200">
-                      <span className="font-semibold">Total</span>
-                      <span className="font-bold tabular-nums">
-                        ₦{formatNgn(lm.total)}
+                    <div className="flex justify-between gap-4 border-t border-gray-200 pt-2 font-semibold text-gray-900">
+                      <span>Total</span>
+                      <span className="tabular-nums">
+                        ₦{Number(lm.total ?? 0).toLocaleString()}
                       </span>
                     </div>
                   </div>
-                </div>
+                </section>
               )}
+
+              <OrderProgress orderData={orderData} clickedItem={clickedItem} />
 
               <DispatchWindowsDisplay
                 dispatchWindows={
                   orderData?.dispatchWindows as DispatchWindow[] | undefined
                 }
                 orderData={orderData}
-                sectionTitle="Dispatch windows"
+                sectionTitle="Courier schedule"
               />
-
-              <OrderSummaryCards
-                clickedItem={clickedItem}
-                orderData={orderData}
-              />
-              <OrderProgress orderData={orderData} clickedItem={clickedItem} />
 
               <OrderSummaryEscrow
                 orderData={orderData}
                 clickedItem={clickedItem}
               />
-            </div>
-
-            <div className="bottom-0 sticky flex flex-col gap-4 bg-white mt-auto py-2 border-gray-200 border-t text-black">
-              {Boolean(orderData?.approvalRequired) &&
-                !orderData?.canApprove &&
-                !orderData?.canReject && (
-                  <div className="bg-amber-50 p-3 border border-amber-200 rounded-lg">
-                    <Paragraph1 className="text-amber-700 text-xs">
-                      Approval window expired on{" "}
-                      {String(orderData?.approvalExpiredAt ?? "N/A")}
-                    </Paragraph1>
-                  </div>
-                )}
-
-              <div className="hidden flex- justify-between gap-4">
-                <button
-                  disabled={!orderData?.canReject}
-                  className={`flex-1 px-4 py-3 font-semibold border rounded-lg transition ${
-                    orderData?.canReject
-                      ? "text-red-500 border-red-300 hover:bg-red-50"
-                      : "text-gray-300 border-gray-200 cursor-not-allowed bg-gray-50"
-                  }`}
-                >
-                  <Paragraph1>Decline Order</Paragraph1>
-                </button>
-
-                <button
-                  disabled={!orderData?.canApprove}
-                  className={`flex-1 px-4 py-3 justify-center font-semibold border rounded-lg transition ${
-                    orderData?.canApprove
-                      ? "bg-black/80 text-white hover:bg-gray-900"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  }`}
-                >
-                  <Paragraph1>Approve Order</Paragraph1>
-                </button>
-              </div>
-            </div>
+            </main>
           </motion.div>
-        </motion.div>
+        </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 };
 
@@ -229,10 +228,11 @@ const OrderPreview: React.FC<OrderPreviewProps> = ({
   return (
     <>
       <button
+        type="button"
         onClick={() => setIsOpen(true)}
-        className="font-bold text-black hover:text-gray-600 text-sm underline transition-colors"
+        className="min-h-10 rounded-lg px-3 text-sm font-semibold text-gray-900 underline underline-offset-2 transition hover:bg-gray-100 hover:text-gray-600"
       >
-        <Paragraph1> View Details</Paragraph1>
+        <Paragraph1>View details</Paragraph1>
       </button>
       <OrderPreviewPanel
         isOpen={isOpen}

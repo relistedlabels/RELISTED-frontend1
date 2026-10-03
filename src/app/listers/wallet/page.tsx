@@ -1,9 +1,9 @@
 // ENDPOINTS: GET /api/listers/wallet/stats, GET /api/listers/wallet/transactions, GET /api/listers/wallet/bank-accounts
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import DashboardLayout from "../components/DashboardLayout";
-import { Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import { Paragraph2 } from "@/common/ui/Text";
 import WalletBalanceCard from "../components/WalletBalanceCard";
-import TransactionList from "../components/TransactionList";
+import WalletTabs from "../components/WalletTabs";
 import { Suspense } from "react";
 import { OnboardingTaskMount } from "@/app/onboarding/components/OnboardingTaskMount";
 
@@ -26,7 +26,7 @@ export default function Page() {
       <div>
         <Suspense fallback={null}>
           <WalletBalanceCard />
-          <TransactionList />
+          <WalletTabs />
         </Suspense>
       </div>
     </DashboardLayout>

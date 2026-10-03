@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { ParagraphLink1 } from "../ui/Text";
 import { motion, AnimatePresence } from "framer-motion";
 import { useBrands } from "@/lib/queries/brand/useBrands";
 import { useCategories } from "@/lib/queries/category/useCategories";
+import { shopCategoryNavItems } from "@/lib/nav/shopCategoryNav";
 
-// Type for navigation items
 type NavItem = {
   name: string;
   subMenu: string[] | null;
@@ -17,7 +17,6 @@ type NavItem = {
   description?: string;
 };
 
-// Helper function to build shop URL with filters
 const buildShopUrl = (
   title: string,
   description: string,
@@ -32,71 +31,42 @@ const buildShopUrl = (
   return `/shop?${params.toString()}`;
 };
 
-const NAV_LINKS: NavItem[] = [
-  {
-    name: "Brands",
-    subMenu: null,
-  },
-  // {
-  //   name: "Sale",
-  //   subMenu: null,
-  //   title: "Sale",
-  //   description: "Browse our sale items",
-  // },
-];
-
 const ShopDropdown: React.FC = () => {
-  const { data: brandsData, isLoading: brandsLoading } = useBrands();
+  const { data: brandsData } = useBrands();
   const { data: categoriesData = [] } = useCategories();
   const [isShopModalOpen, setIsShopModalOpen] = useState(false);
   const [expandedBrand, setExpandedBrand] = useState(false);
-  const [navLinks, setNavLinks] = useState<NavItem[]>(NAV_LINKS);
-  const [randomCategories, setRandomCategories] = useState<NavItem[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const shopDropdownTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const brandsSubmenuTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
-  // Select 3 random categories
-  useEffect(() => {
-    if (categoriesData && categoriesData.length > 0) {
-      const shuffled = [...categoriesData].sort(() => 0.5 - Math.random());
-      const randomCats = shuffled.slice(0, 3).map((cat: any) => ({
-        name: cat.name,
-        subMenu: null,
-        title: cat.name,
-        description: `Shop ${cat.name} collection`,
-        filter: { key: "category", value: cat.name },
-      }));
-      setRandomCategories(randomCats);
-    }
-  }, [categoriesData]);
+  const categoryLinks = useMemo(
+    () => shopCategoryNavItems(categoriesData),
+    [categoriesData],
+  );
 
-  // Update NAV_LINKS when brands data is fetched
-  useEffect(() => {
-    if (brandsData && brandsData.length > 0) {
-      const brandNames = brandsData
-        .slice(0, 32)
-        .map((brand: any) => brand.name || brand);
+  const brandNames = useMemo(
+    () =>
+      brandsData
+        ?.slice(0, 32)
+        .map((brand: { name?: string } | string) =>
+          typeof brand === "string" ? brand : (brand.name ?? ""),
+        )
+        .filter((name): name is string => Boolean(name)) ?? [],
+    [brandsData],
+  );
 
-      console.log("Brands loaded:", brandNames);
+  const navLinks = useMemo<NavItem[]>(
+    () => [
+      {
+        name: "Brands",
+        subMenu: brandNames.length > 0 ? brandNames : null,
+      },
+      ...categoryLinks,
+    ],
+    [brandNames, categoryLinks],
+  );
 
-      setNavLinks([
-        {
-          name: "Brands",
-          subMenu: brandNames,
-        },
-        ...randomCategories,
-        // {
-        //   name: "Sale",
-        //   subMenu: null,
-        //   title: "Sale",
-        //   description: "Browse our sale items",
-        // },
-      ]);
-    }
-  }, [brandsData, randomCategories]);
-
-  // Close dropdown if clicked outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -143,6 +113,8 @@ const ShopDropdown: React.FC = () => {
     setExpandedBrand(false);
   };
 
+  const brandsItem = navLinks[0];
+
   return (
     <div
       ref={dropdownRef}
@@ -150,7 +122,6 @@ const ShopDropdown: React.FC = () => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* MAIN SHOP BUTTON */}
       <Link
         href="/shop?title=Shop&description=Browse+all+collections"
         className="flex items-center gap-1 p-2 hover:text-gray-300 transition-colors"
@@ -159,7 +130,6 @@ const ShopDropdown: React.FC = () => {
         <ChevronDown className="w-3 h-3 transition-transform duration-200" />
       </Link>
 
-      {/* MAIN SHOP DROPDOWN */}
       <AnimatePresence>
         {isShopModalOpen && (
           <motion.div
@@ -169,7 +139,7 @@ const ShopDropdown: React.FC = () => {
             transition={{ duration: 0.15 }}
             className="absolute top-full left-0 mt-1 w-48 bg-black/90 backdrop-blur-xl z-40 rounded-md overflow-visible"
           >
-            <ul className="py-1">
+            <ul className="py-1 max-h-[70vh] overflow-y-auto hide-scrollbar">
               {navLinks.map((item) => {
                 const href =
                   item.title && item.description
@@ -202,12 +172,11 @@ const ShopDropdown: React.FC = () => {
                       )}
                     </Link>
 
-                    {/* BRANDS SUBMENU */}
                     <AnimatePresence>
                       {isBrands &&
                         expandedBrand &&
-                        navLinks[0]?.subMenu &&
-                        navLinks[0].subMenu.length > 0 && (
+                        brandsItem?.subMenu &&
+                        brandsItem.subMenu.length > 0 && (
                           <motion.div
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -215,12 +184,11 @@ const ShopDropdown: React.FC = () => {
                             transition={{ duration: 0.15 }}
                             className="absolute top-0 left-full ml-2 bg-black/90 z-50 rounded-md overflow-visible shadow-2xl 0"
                           >
-                            {/* 4-Column Grid Layout */}
                             <div
                               className="grid grid-cols-8 gap-1 py-3 px-3"
                               style={{ width: "auto", minWidth: "800px" }}
                             >
-                              {navLinks[0].subMenu.map((brand, index) => {
+                              {brandsItem.subMenu.map((brand, index) => {
                                 const brandUrl = buildShopUrl(
                                   brand,
                                   `Shop ${brand} collection`,

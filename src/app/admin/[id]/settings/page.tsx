@@ -1,15 +1,16 @@
 // ENDPOINTS: GET /api/admin/settings/profile, GET /api/admin/settings/platform-controls, GET /api/admin/settings/roles, GET /api/admin/settings/admins, GET /api/admin/settings/audit-logs
 "use client";
 
+import { FileText, Settings, Shield, User, Users } from "lucide-react";
 import { useState } from "react";
-import { User, Settings, Users, Shield, FileText } from "lucide-react";
-import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
-import UserHeader from "./components/UserHeader";
-import ProfileSecurityTab from "./components/ProfileSecurityTab";
-import PlatformControlsTab from "./components/PlatformControlsTab";
-import RolesPermissionsTab from "./components/RolesPermissionsTab";
+import AdminPageHeader from "@/app/admin/components/AdminPageHeader";
+import { Paragraph1 } from "@/common/ui/Text";
 import AdminManagementTab from "./components/AdminManagementTab";
 import AuditLogsTab from "./components/AuditLogsTab";
+import PlatformControlsTab from "./components/PlatformControlsTab";
+import ProfileSecurityTab from "./components/ProfileSecurityTab";
+import RolesPermissionsTab from "./components/RolesPermissionsTab";
+import UserHeader from "./components/UserHeader";
 
 type TabType =
   | "profile-security"
@@ -48,12 +49,10 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen">
       {/* Header Section */}
-      <div className="mb-8">
-        <Paragraph2 className="text-gray-900 mb-2">Settings</Paragraph2>
-        <Paragraph1 className="text-gray-600">
-          Manage your account, platform controls, and admin permissions.
-        </Paragraph1>
-      </div>
+      <AdminPageHeader
+        title="Settings"
+        description="Manage platform settings and admin access."
+      />
 
       {/* User Profile Card */}
       <UserHeader />

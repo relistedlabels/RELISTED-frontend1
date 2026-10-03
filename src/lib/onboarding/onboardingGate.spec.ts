@@ -5,6 +5,7 @@ import {
   resolvePostAuthDestination,
   shouldBypassOnboardingForPath,
   shouldRedirectToOnboarding,
+  shouldShowOnboardingPromptForUser,
 } from "./onboardingGate";
 
 describe("shouldBypassOnboardingForPath", () => {
@@ -43,16 +44,16 @@ describe("shouldBypassOnboardingForPath", () => {
 });
 
 describe("resolvePostAuthDestination", () => {
-  test("sends incomplete renters to onboarding", () => {
+  test("sends incomplete renters to shop (browse-first)", () => {
     expect(
       resolvePostAuthDestination({
         role: "RENTER",
         userId: "user-1",
       }),
-    ).toBe("/onboarding/renter");
+    ).toBe("/shop");
   });
 
-  test("honors checkout redirect before onboarding", () => {
+  test("honors checkout redirect before default destination", () => {
     expect(
       resolvePostAuthDestination({
         role: "RENTER",
@@ -62,7 +63,7 @@ describe("resolvePostAuthDestination", () => {
     ).toBe("/shop/cart/checkout?step=2");
   });
 
-  test("prefers onboarding over post-login redirect when incomplete", () => {
+  test("honors post-login redirect for listers when incomplete", () => {
     expect(
       resolvePostAuthDestination({
         role: "LISTER",
@@ -70,12 +71,21 @@ describe("resolvePostAuthDestination", () => {
         redirectUrl: "/listers/inventory",
         honorRedirect: true,
       }),
-    ).toBe("/onboarding/lister");
+    ).toBe("/listers/inventory");
+  });
+
+  test("defaults listers to dashboard", () => {
+    expect(
+      resolvePostAuthDestination({
+        role: "LISTER",
+        userId: "user-2",
+      }),
+    ).toBe("/listers/dashboard");
   });
 });
 
 describe("shouldRedirectToOnboarding", () => {
-  test("redirects authenticated renters on shop when incomplete", () => {
+  test("never forces redirect (browse-first)", () => {
     expect(
       shouldRedirectToOnboarding({
         pathname: "/shop",
@@ -83,7 +93,7 @@ describe("shouldRedirectToOnboarding", () => {
         userId: "user-redirect-1",
         isAuthenticated: true,
       }),
-    ).toBe("/onboarding/renter");
+    ).toBeNull();
   });
 
   test("does not redirect logged out users", () => {
@@ -95,6 +105,28 @@ describe("shouldRedirectToOnboarding", () => {
         isAuthenticated: false,
       }),
     ).toBeNull();
+  });
+});
+
+describe("shouldShowOnboardingPromptForUser", () => {
+  test("offers prompt for new renters", () => {
+    expect(
+      shouldShowOnboardingPromptForUser({
+        role: "RENTER",
+        userId: "prompt-user-1",
+        isAuthenticated: true,
+      }),
+    ).toBe(true);
+  });
+
+  test("skips admins", () => {
+    expect(
+      shouldShowOnboardingPromptForUser({
+        role: "ADMIN",
+        userId: "admin-1",
+        isAuthenticated: true,
+      }),
+    ).toBe(false);
   });
 });
 

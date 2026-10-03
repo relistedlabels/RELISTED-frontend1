@@ -16,6 +16,7 @@ import {
   getListerOrderStatusLabel,
   normalizeListerOrderStatusKey,
 } from "@/lib/listers/listerOrderStatus";
+import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
 
 interface OrderDetailsCardProps {
   orderId: string;
@@ -97,11 +98,13 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
 
   const order = data?.data?.order;
 
-  const availabilityNeedsListerAction = Boolean(
-    order?.approvalRequired && order?.canApprove,
-  );
+  const availabilityNeedsListerAction = Boolean(order?.approvalRequired);
   const isExpiredAvailability =
     String(order?.availabilityStatus ?? "").toUpperCase() === "EXPIRED";
+  const canStillApprove = Boolean(order?.canApprove);
+  const canNotifyRenter = Boolean(order?.canNotifyRenter);
+  const dispatchWindowExpired = Boolean(order?.dispatchWindowExpired);
+  const responseSlaExpired = Boolean(order?.responseSlaExpired);
 
   // State for the timer
   const [secondsRemaining, setSecondsRemaining] = useState(0);
@@ -242,27 +245,38 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-2">
                 <Paragraph1 className="font-bold text-gray-500 text-xs uppercase tracking-widest">
-                  {isExpiredAvailability
-                    ? "Renter request expired"
-                    : isApprovalExpired
-                      ? "Approval time expired"
-                      : "Time remaining to approve"}
+                  {dispatchWindowExpired
+                    ? "Delivery window passed"
+                    : isExpiredAvailability && canStillApprove
+                      ? "Response window passed"
+                      : isExpiredAvailability
+                        ? "Request closed"
+                        : isApprovalExpired
+                          ? "Response window passed"
+                          : "Time remaining to respond"}
                 </Paragraph1>
               </div>
               <div>
                 <Paragraph3
                   className={`text-2xl font-bold font-mono ${timerColor}`}
                 >
-                  {isExpiredAvailability || isApprovalExpired
-                    ? "Expired"
-                    : formatTime(secondsRemaining)}
+                  {canStillApprove &&
+                  (isExpiredAvailability || isApprovalExpired || responseSlaExpired)
+                    ? "Still open"
+                    : isExpiredAvailability || isApprovalExpired
+                      ? "Closed"
+                      : formatTime(secondsRemaining)}
                 </Paragraph3>
                 <Paragraph1 className="mt-1 text-[10px] text-gray-500 text-right">
-                  {isExpiredAvailability
-                    ? "The renter can send a new request from their cart. You can still approve this row if you want to honor the original request."
-                    : isApprovalExpired
-                      ? "This request is no longer within the live approval timer"
-                      : "Approve or reject this request"}
+                  {dispatchWindowExpired
+                    ? "Notify the renter so they can send a new request with a fresh delivery time."
+                    : isExpiredAvailability && canStillApprove
+                      ? "You can still approve while the renter's dates are valid."
+                      : isExpiredAvailability
+                        ? "These dates have passed. The renter will need to check again with new dates."
+                        : isApprovalExpired
+                          ? "You can still approve while the renter's dates are valid."
+                          : "Approve or reject this request"}
                 </Paragraph1>
               </div>
             </div>
@@ -311,8 +325,8 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
           orderData={order}
         />
 
-        {isExpiredAvailability &&
-          availabilityNeedsListerAction &&
+        {availabilityNeedsListerAction &&
+          canNotifyRenter &&
           !showApproveMessage &&
           !showRejectMessage && (
             <div className="mt-6">
@@ -329,7 +343,7 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
               >
                 {nudgeRenterMutation.isPending
                   ? "Sending..."
-                  : "Notify renter item is available"}
+                  : "Notify renter"}
               </button>
             </div>
           )}
@@ -337,17 +351,17 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
         {availabilityNeedsListerAction &&
           !showApproveMessage &&
           !showRejectMessage &&
-          (isExpiredAvailability || !isApprovalExpired) && (
+          canStillApprove && (
             <div className="flex gap-3 mt-8 pt-8 border-gray-300 border-t">
               <button
-                className="flex-1 bg-gray-100 hover:bg-gray-200 px-6 py-3 rounded-lg font-bold text-black text-sm"
+                className={`${buttonSecondary} flex-1 py-3 font-bold`}
                 onClick={() => setShowRejectModal(true)}
                 disabled={rejectMutation.isPending}
               >
                 Reject Order
               </button>
               <button
-                className="flex-1 bg-black hover:bg-gray-900 px-6 py-3 rounded-lg font-bold text-white text-sm"
+                className={`${buttonPrimary} flex-1 py-3 font-bold`}
                 onClick={() => approveMutation.mutate()}
                 disabled={approveMutation.isPending}
               >

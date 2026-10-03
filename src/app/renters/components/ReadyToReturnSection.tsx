@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Truck, Clock, AlertCircle, CheckCircle } from "lucide-react";
+import { buttonPrimary } from "@/common/ui/buttonClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import ReadyToReturnModal from "./ReadyToReturnModal";
 import { useInitiateReturn } from "@/lib/queries/renters/useInitiateReturn";
@@ -151,7 +152,7 @@ const ReadyToReturnSection: React.FC<ReadyToReturnSectionProps> = ({
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           disabled={initiateReturnMutation.isPending}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-black px-4 py-3 font-semibold text-white transition hover:bg-gray-900 disabled:cursor-not-allowed disabled:bg-gray-400"
+          className={`${buttonPrimary} w-full py-3 disabled:bg-gray-400`}
         >
           <Truck size={18} />
           {initiateReturnMutation.isPending

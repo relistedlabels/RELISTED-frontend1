@@ -3,7 +3,7 @@ import { expect, test } from "./fixtures/test";
 test.describe("Home Page", () => {
   test("@smoke should display home page correctly", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    await expect(page).toHaveTitle(/RELISTED/);
+    await expect(page).toHaveTitle("Relisted");
   });
 
   test("@smoke should have navigation to shop", async ({ page }) => {

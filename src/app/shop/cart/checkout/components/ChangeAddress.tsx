@@ -1,12 +1,18 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, ArrowLeft } from "lucide-react";
+import { ArrowLeft, MapPin, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paragraph1 } from "@/common/ui/Text";
+import {
+  slidePanelBackdrop,
+  slidePanelBody,
+  slidePanelHeader,
+  slidePanelSheetPinned,
+  slidePanelTitle,
+} from "@/common/ui/dashboardClasses";
 import AddressInputForm from "./AddressInputForm";
-import { useUpdateProfile } from "@/lib/mutations/user/useUpdateProfile";
-
+import CheckoutEditableField from "./CheckoutEditableField";
 // --------------------
 // Slide-in Address Modal
 // --------------------
@@ -14,43 +20,35 @@ interface ChangeAddressPanelProps {
   isOpen: boolean;
   onClose: () => void;
   onAddressSaved?: () => void;
+  panelTitle?: string;
 }
 
 const ChangeAddressPanel: React.FC<ChangeAddressPanelProps> = ({
   isOpen,
   onClose,
   onAddressSaved,
+  panelTitle = "Update address",
 }) => {
-  const updateProfile = useUpdateProfile();
-
   const variants = {
     hidden: { x: "100%" },
     visible: { x: 0 },
   };
 
-  // Close modal on successful update
-  React.useEffect(() => {
-    if (updateProfile.isSuccess) {
-      const timer = setTimeout(onClose, 1000); // Give user time to see success message
-      return () => clearTimeout(timer);
-    }
-  }, [updateProfile.isSuccess, onClose]);
-
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-99 bg-black/70 backdrop--blur-sm"
+          className={slidePanelBackdrop}
           onClick={onClose}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="fixed top-0 right-0 h-screen hide-scrollbar overflow-y-auto bg-white shadow-2xl px-4 flex flex-col w-full sm:w-114"
+            className={slidePanelSheetPinned}
             role="dialog"
             aria-modal="true"
-            aria-label="Change delivery address"
+            aria-label={panelTitle}
             initial="hidden"
             animate="visible"
             exit="hidden"
@@ -59,7 +57,7 @@ const ChangeAddressPanel: React.FC<ChangeAddressPanelProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex justify-between sticky top-0 items-center pb-4 border-b border-gray-100 pt-6 z-10 bg-white">
+            <div className={slidePanelHeader}>
               <button
                 onClick={onClose}
                 className="text-gray-500 xl:hidden hover:text-black p-1 rounded-full transition"
@@ -68,9 +66,7 @@ const ChangeAddressPanel: React.FC<ChangeAddressPanelProps> = ({
                 <ArrowLeft size={20} />
               </button>
 
-              <Paragraph1 className="font-bold tracking-widest text-gray-800">
-                Change Address
-              </Paragraph1>
+              <Paragraph1 className={slidePanelTitle}>{panelTitle}</Paragraph1>
               <button
                 onClick={onClose}
                 className="text-gray-500 hover:text-black p-1 rounded-full transition"
@@ -81,8 +77,11 @@ const ChangeAddressPanel: React.FC<ChangeAddressPanelProps> = ({
             </div>
 
             {/* Content */}
-            <div className="grow pt-4 pb-20">
-              <AddressInputForm onAddressSaved={onAddressSaved} />
+            <div className={`${slidePanelBody} pt-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]`}>
+              <AddressInputForm
+                onAddressSaved={onAddressSaved}
+                onClose={onClose}
+              />
             </div>
           </motion.div>
         </motion.div>
@@ -96,26 +95,81 @@ const ChangeAddressPanel: React.FC<ChangeAddressPanelProps> = ({
 // --------------------
 interface ChangeAddressProps {
   onAddressSaved?: () => void;
+  buttonLabel?: string;
+  panelTitle?: string;
+  /** Inline text link, full clickable row, field row, or outline button for empty states. */
+  variant?: "link" | "outline" | "row" | "field";
+  addressLine?: string;
+  fieldLabel?: string;
+  grouped?: boolean;
 }
 
-const ChangeAddress: React.FC<ChangeAddressProps> = ({ onAddressSaved }) => {
+const ChangeAddress: React.FC<ChangeAddressProps> = ({
+  onAddressSaved,
+  buttonLabel = "Change",
+  panelTitle = "Update address",
+  variant = "link",
+  addressLine,
+  fieldLabel = "Address",
+  grouped = false,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  const openPanel = () => setIsOpen(true);
+
+  const triggerClassName =
+    variant === "link"
+      ? "shrink-0 whitespace-nowrap text-sm font-semibold text-gray-900 underline-offset-4 hover:underline transition-colors"
+      : "shrink-0 whitespace-nowrap rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-50 transition-colors";
 
   return (
     <>
-      {/* Toggle Button */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className="border px-4 items-center rounded-lg bg-black text-white justify-center w-fit py-2 flex gap-1 cursor-pointer font-semibold hover:bg-gray-900 text-sm transition"
-      >
-        <Paragraph1>Update</Paragraph1>
-      </button>
+      {variant === "field" ? (
+        <CheckoutEditableField
+          label={fieldLabel}
+          value={addressLine}
+          placeholder="Add delivery address"
+          empty={!addressLine?.trim()}
+          grouped={grouped}
+          onClick={openPanel}
+          ariaLabel={
+            addressLine?.trim()
+              ? "Edit delivery address"
+              : "Add delivery address"
+          }
+        />
+      ) : variant === "row" && addressLine ? (
+        <button
+          type="button"
+          onClick={openPanel}
+          aria-label={`${buttonLabel} delivery address`}
+          className="flex w-full items-start gap-3.5 bg-gray-50 hover:bg-gray-100 p-4 sm:p-5 rounded-xl text-left transition-colors"
+        >
+          <MapPin
+            size={20}
+            className="mt-1 text-gray-500 shrink-0"
+            aria-hidden
+          />
+          <div className="flex flex-1 justify-between items-start gap-4 min-w-0">
+            <Paragraph1 className="text-gray-900 text-[15px] leading-relaxed">
+              {addressLine}
+            </Paragraph1>
+            <span className="shrink-0 font-semibold text-gray-900 text-[15px] underline-offset-4">
+              {buttonLabel}
+            </span>
+          </div>
+        </button>
+      ) : (
+        <button type="button" onClick={openPanel} className={triggerClassName}>
+          {buttonLabel}
+        </button>
+      )}
 
-      {/* Address Modal */}
       <ChangeAddressPanel
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
         onAddressSaved={onAddressSaved}
+        panelTitle={panelTitle}
       />
     </>
   );

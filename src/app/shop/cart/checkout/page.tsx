@@ -1,9 +1,19 @@
 "use client";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import { Header1, Header1Plus } from "@/common/ui/Text";
 import CheckoutContactAndPayment from "./components/CheckoutContactAndPayment";
+import {
+  profileHasPhone,
+  resolveProfilePhone,
+} from "@/lib/checkout/profilePhone";
+import { useProfileDetails } from "@/lib/queries/renters/useProfileDetails";
+import CheckoutStepper, {
+  type CheckoutStep,
+} from "./components/CheckoutStepper";
 import FinalOrderSummaryCard from "./components/FinalOrderSummaryCard";
 import { useRentalRequests } from "@/lib/queries/renters/useRentalRequests";
 import { useCartItems } from "@/lib/queries/renters/useCartItems";
@@ -14,6 +24,7 @@ import {
   type ReturnPickupAddressPayload,
 } from "@/lib/api/cart";
 import { useCheckoutOrderSummary } from "@/lib/queries/order/useCheckoutOrderSummary";
+import { profileHasDeliveryAddress } from "@/lib/checkout/deliveryAddress";
 import { useProfile } from "@/lib/queries/user/useProfile";
 import { buildApprovedCheckoutLines } from "@/lib/cart/buildApprovedCheckoutLines";
 import {
@@ -47,6 +58,8 @@ import {
   checkoutItemInActiveSale,
   getCheckoutItemEarliestDeliveryLagosYmd,
 } from "@/lib/shopSale/productSale";
+import type { CheckoutDispatchPreviewGroup } from "@/lib/checkout/checkoutFlow";
+import { parseCheckoutStep } from "@/lib/checkout/parseCheckoutStep";
 
 const RETURN_PICKUP_SUMMARY_DEBOUNCE_MS = 1000;
 
@@ -112,6 +125,10 @@ function bucketEarliestWindowStartMs(
 }
 
 export default function CheckoutPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const checkoutStep = parseCheckoutStep(searchParams.get("step"));
+
   const [selectedShippingTier, setSelectedShippingTier] = useState<string>("");
   const [selectedReturnShippingTier, setSelectedReturnShippingTier] =
     useState<string>("");
@@ -166,7 +183,13 @@ export default function CheckoutPage() {
     RETURN_PICKUP_SUMMARY_DEBOUNCE_MS,
   );
 
+  const queryClient = useQueryClient();
   const { data: profile } = useProfile();
+  const { data: renterProfileDetails } = useProfileDetails();
+  const resolvedProfilePhone = useMemo(
+    () => resolveProfilePhone(profile, renterProfileDetails?.profile),
+    [profile, renterProfileDetails?.profile],
+  );
   const deliveryAddressForSummary = useMemo(
     () => ({
       street: profile?.address?.street,
@@ -182,18 +205,32 @@ export default function CheckoutPage() {
     ],
   );
 
+  const hasDeliveryAddress = profileHasDeliveryAddress(profile);
+
   const orderSummaryQuery = useCheckoutOrderSummary(
     returnPickupForSummary,
     deliveryAddressForSummary,
+    {
+      enabled: hasDeliveryAddress,
+      pollForDispatchRefresh: hasDeliveryAddress,
+    },
   );
+
+  const handleAddressSaved = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ["profile"] });
+    await queryClient.refetchQueries({ queryKey: ["profile"] });
+  }, [queryClient]);
   const orderSummaryErrorMessage = useMemo(() => {
+    if (!hasDeliveryAddress) return null;
     if (!orderSummaryQuery.isError) return null;
     const e = orderSummaryQuery.error;
     if (e instanceof Error && e.message.trim()) return e.message;
     return "Could not load your payment summary.";
-  }, [orderSummaryQuery.isError, orderSummaryQuery.error]);
+  }, [hasDeliveryAddress, orderSummaryQuery.isError, orderSummaryQuery.error]);
   const shippingQuoteWarnings =
     orderSummaryQuery.data?.data?.shippingQuoteWarnings ?? [];
+  const dispatchReschedules =
+    orderSummaryQuery.data?.data?.dispatchReschedules ?? [];
   const shippingTiers =
     orderSummaryQuery.data?.data?.shippingTiers ?? EMPTY_SHIPPING_TIERS;
   const returnShippingTiers =
@@ -343,6 +380,62 @@ export default function CheckoutPage() {
 
   const hasReturnShippingLeg = rentalItems.length > 0;
 
+  const approvedLinesKey = useMemo(
+    () =>
+      approvedOnCheckout
+        .map((item) =>
+          String(item.cartItemId ?? item.requestId ?? item.productId ?? ""),
+        )
+        .sort()
+        .join(","),
+    [approvedOnCheckout],
+  );
+  const prevApprovedLinesKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!hasDeliveryAddress) return;
+    if (prevApprovedLinesKeyRef.current === null) {
+      prevApprovedLinesKeyRef.current = approvedLinesKey;
+      return;
+    }
+    if (prevApprovedLinesKeyRef.current === approvedLinesKey) return;
+    prevApprovedLinesKeyRef.current = approvedLinesKey;
+    void queryClient.invalidateQueries({ queryKey: ["orderSummary"] });
+  }, [approvedLinesKey, hasDeliveryAddress, queryClient]);
+
+  useEffect(() => {
+    if (hasReturnShippingLeg) return;
+    setReturnPickupAddress(undefined);
+    setSelectedReturnShippingTier("");
+    setSelectedReturnTierByBucket({});
+  }, [hasReturnShippingLeg]);
+
+  useEffect(() => {
+    if (!hasReturnShippingLeg || returnPickupAddress || !profile || !hasDeliveryAddress) {
+      return;
+    }
+    const phoneNumber = resolvedProfilePhone?.trim() ?? "";
+    const street = profile.address?.street?.trim() ?? "";
+    const city = profile.address?.city?.trim() ?? "";
+    const state = profile.address?.state?.trim() ?? "";
+    if (!street || !city || !profileHasPhone(phoneNumber)) return;
+
+    setReturnPickupAddress({
+      contactName: profile.user?.name?.trim() ?? "",
+      phoneNumber,
+      street,
+      city,
+      state,
+      instructions: "",
+    });
+  }, [
+    hasReturnShippingLeg,
+    returnPickupAddress,
+    profile,
+    hasDeliveryAddress,
+    resolvedProfilePhone,
+  ]);
+
   useEffect(() => {
     if (
       !hasReturnShippingLeg ||
@@ -451,6 +544,7 @@ export default function CheckoutPage() {
       } else {
         window = deriveDefaultDispatchWindow(outboundBaseDate, {
           allowRollForward: false,
+          type: "OUTBOUND",
         });
       }
       outboundDerived = window;
@@ -484,6 +578,7 @@ export default function CheckoutPage() {
       } else {
         window = deriveDefaultDispatchWindow(returnBaseDate, {
           allowRollForward: false,
+          type: "RETURN",
         });
       }
       contexts.push({
@@ -534,6 +629,7 @@ export default function CheckoutPage() {
         const anchor = hasClosetResale ? closetDispatchAnchorDate() : new Date();
         resaleSuggested = deriveDefaultDispatchWindow(anchor, {
           allowRollForward: true,
+          type: "RESALE",
         });
       }
 
@@ -777,11 +873,7 @@ export default function CheckoutPage() {
       return city || state || "";
     };
 
-    const groups: Array<{
-      groupHeading: string | null;
-      listerLocation?: string;
-      rows: Array<{ title: string; range: string }>;
-    }> = [];
+    const groups: CheckoutDispatchPreviewGroup[] = [];
     for (const b of bucketsChronological) {
       const groupKey = bucketGroupKey(b);
       const severalLegsForGroup =
@@ -825,7 +917,9 @@ export default function CheckoutPage() {
       if (bucketRows.length > 0) {
         const listerLocation = formatListerLocation(b);
         groups.push({
+          bucketIndex: b.bucketIndex,
           groupHeading,
+          productIds: b.productIds,
           ...(listerLocation ? { listerLocation } : {}),
           rows: bucketRows,
         });
@@ -835,6 +929,9 @@ export default function CheckoutPage() {
   }, [orderSummaryQuery.data?.data?.shipmentBuckets, productLabelById]);
 
   const checkoutBlockingIssues: string[] = [];
+  if (!hasDeliveryAddress) {
+    checkoutBlockingIssues.push("Add a delivery address to finish checkout.");
+  }
 
   const selectedTierData = useMemo(
     () =>
@@ -852,15 +949,43 @@ export default function CheckoutPage() {
     [returnShippingTiers, selectedReturnShippingTier],
   );
 
+  const goToCheckoutStep = useCallback(
+    (step: CheckoutStep) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (step === 1) {
+        params.delete("step");
+      } else {
+        params.set("step", String(step));
+      }
+      const q = params.toString();
+      router.push(q ? `/shop/cart/checkout?${q}` : "/shop/cart/checkout");
+    },
+    [router, searchParams],
+  );
+
   return (
-    <div className="mx-auto px-4 sm:px-0 py-[70px] sm:py-[100px] container">
+    <div className="mx-auto px-4 sm:px-0 pt-[70px] sm:pt-[100px] pb-36 xl:pb-[100px] container">
       <div className="mb-4">
         <Breadcrumbs items={path} />
       </div>
-      <Header1Plus className="mb-8 uppercase">CHECKOUT</Header1Plus>
-      <div className="gap-4 sm:gap-8 xl:gap-16 grid grid-cols-1 xl:grid-cols-3">
-        <div className="xl:col-span-2 min-w-0">
+      <Header1Plus className="mb-5 uppercase">CHECKOUT</Header1Plus>
+      <CheckoutStepper
+        currentStep={checkoutStep}
+        onStepChange={goToCheckoutStep}
+      />
+      <div
+        className={`gap-4 sm:gap-8 xl:gap-16 grid grid-cols-1 ${
+          checkoutStep === 2 ? "max-w-xl mx-auto" : "xl:grid-cols-3"
+        }`}
+      >
+        <div
+          className={`min-w-0 xl:col-span-2 xl:order-1 order-1 ${
+            checkoutStep === 2 ? "hidden" : ""
+          }`}
+        >
           <CheckoutContactAndPayment
+            checkoutStep={checkoutStep}
+            onCheckoutStepChange={goToCheckoutStep}
             orderSummary={orderSummaryQuery.data}
             onShippingTierSelected={setSelectedShippingTier}
             shippingTiers={shippingTiers}
@@ -894,34 +1019,29 @@ export default function CheckoutPage() {
             onReturnPickupChange={handleReturnPickupAddressChange}
             checkoutBlockingIssues={checkoutBlockingIssues}
             summaryDispatchPreview={summaryDispatchPreview}
+            hasDeliveryAddress={hasDeliveryAddress}
             orderSummaryError={orderSummaryErrorMessage}
+            dispatchReschedules={dispatchReschedules}
             shippingQuoteWarnings={shippingQuoteWarnings}
             onRefetchOrderSummary={() => {
               void orderSummaryQuery.refetch();
             }}
-            isResaleOnly={
-              (cartItems?.length ?? 0) > 0 &&
-              cartItems!.every((item) =>
-                isCheckoutResalePurchaseLine(
-                  {
-                    cartItemId: item.id,
-                    rentalDays: item.days,
-                    productDetail: {
-                      listingType: item.product?.listingType as
-                        | "RENTAL"
-                        | "RESALE"
-                        | "RENT_OR_RESALE"
-                        | undefined,
-                    },
-                  },
-                  cartItems,
-                ),
-              )
-            }
+            onAddressSaved={() => {
+              void handleAddressSaved();
+            }}
+            isResaleOnly={!hasReturnShippingLeg}
+            listerGroups={listerGroups}
           />
         </div>
-        <div className="xl:col-span-1 min-w-0">
+        <div
+          className={`min-w-0 ${
+            checkoutStep === 2
+              ? ""
+              : "hidden xl:block xl:col-span-1 xl:order-2 order-2"
+          }`}
+        >
           <FinalOrderSummaryCard
+            checkoutStep={checkoutStep}
             listerGroups={listerGroups}
             isLoading={isLoading || cartIsLoading}
             error={error instanceof Error ? error : null}
@@ -938,7 +1058,9 @@ export default function CheckoutPage() {
             returnPickupAddress={returnPickupAddress}
             orderSummary={orderSummaryQuery.data}
             orderSummaryLoading={orderSummaryQuery.isLoading}
+            hasDeliveryAddress={hasDeliveryAddress}
             orderSummaryError={orderSummaryErrorMessage}
+            dispatchReschedules={dispatchReschedules}
             onRefetchOrderSummary={() => {
               void orderSummaryQuery.refetch();
             }}

@@ -12,6 +12,7 @@ import {
 } from "react-icons/hi2";
 import * as Yup from "yup";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
 import { useLogin, useResendOtp } from "@/lib/mutations";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
 import { useUserStore } from "@/store/useUserStore";
@@ -36,8 +37,8 @@ export default function AdminSignInForm() {
     /verify|verification|inbox/i.test(msg);
 
   return (
-    <div className="font-sans-">
-      <div className="bg-white p-4 md:p-8 pb-[100px] sm:pb-0 sm:rounded-3xl w-full sm:w-[500px] text-gray-600 max-">
+    <div className="font-sans">
+      <div className="w-full max-w-[500px] bg-white p-4 pb-[100px] text-gray-600 sm:rounded-3xl sm:pb-0 md:p-8">
         {/* Header */}
         <div className="flex flex-col justify-center items-center mb-8 text-center">
           <img src="/images/logo1.svg" alt="" className="mb-4 w-10 h-10" />
@@ -148,7 +149,7 @@ export default function AdminSignInForm() {
               <button
                 type="submit"
                 disabled={login.isPending}
-                className="bg-black disabled:opacity-50 py-4 rounded-lg w-full font-semibold text-white"
+                className={`${buttonPrimaryFull} py-4`}
               >
                 {login.isPending ? "Signing in..." : "Sign in"}
               </button>

@@ -513,7 +513,12 @@ export const rentersApi = {
   }) =>
     apiFetch<{
       success: boolean;
-      data: { orders: RenterDashboardOrder[]; total: number };
+      data: {
+        orders: RenterDashboardOrder[];
+        totalOrders: number;
+        page: number;
+        totalPages: number;
+      };
     }>("/api/renters/orders", { method: "GET", ...(params && { params }) }),
 
   getOrderDetails: (orderId: string) =>
@@ -1016,7 +1021,7 @@ export const rentersApi = {
     rentalEndDate: string | null;
     rentalDays: number;
     estimatedRentalPrice: number;
-    deliveryAddressId: string;
+    deliveryAddressId?: string;
     autoPay: boolean;
     currency: string;
     cartItemId?: string;

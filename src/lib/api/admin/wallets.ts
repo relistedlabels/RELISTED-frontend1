@@ -1,8 +1,18 @@
-import { apiFetch } from "../http";
+import { apiDownloadFile, apiFetch } from "../http";
+
+export interface WalletMonthFinanceMetrics {
+  revenue: number;
+  completedOrders: number;
+  payoutsToListers: number;
+  serviceFees: number;
+  vat: number;
+  monthStart: string;
+}
 
 export interface WalletStats {
+  /** Sum of mainBalance and collateralBalance across eligible wallets. */
   totalWalletBalance: number;
-  /** Funds in order escrow records (lister payouts), not wallet collateral */
+  /** Outstanding order-escrow amounts, excluding renter collateral held in wallets. */
   totalEscrowBalance: number;
   /** Sum of wallet.collateralBalance (renter deposits), matches wallet table column */
   totalCollateralLocked?: number;
@@ -15,6 +25,10 @@ export interface WalletStats {
   platformServiceFees?: number;
   /** Sum of order VAT fields for the same order set, NGN. */
   totalVatCollected?: number;
+  monthComparison?: {
+    currentMonth: WalletMonthFinanceMetrics;
+    previousMonth: WalletMonthFinanceMetrics;
+  };
   orderAnalyticsCutoff?: string;
   excludesTestAccounts?: boolean;
 }
@@ -63,19 +77,18 @@ export interface Escrow {
 
 export interface WalletTransaction {
   id: string;
-  transactionId: string;
-  userId: string;
-  userName: string;
-  userAvatar: string;
-  type: "deposit" | "withdrawal" | "transfer";
+  walletId: string;
   amount: number;
-  previousBalance: number;
-  newBalance: number;
-  description: string;
-  date: string;
-  time: string;
-  timestamp: string;
-  status: "completed" | "pending" | "failed";
+  type?: string;
+  status: string;
+  note?: string;
+  createdAt: string;
+  wallet?: {
+    user?: {
+      name?: string;
+      email?: string;
+    };
+  };
 }
 
 export interface WithdrawalRequest {
@@ -143,12 +156,7 @@ interface TransactionListParams {
 
 interface WithdrawalListParams {
   search?: string;
-  page?: number;
-  limit?: number;
-}
-
-interface PayoutListParams {
-  search?: string;
+  status?: string;
   page?: number;
   limit?: number;
 }
@@ -183,14 +191,7 @@ function buildTransactionParams(params: TransactionListParams): string {
 function buildWithdrawalParams(params: WithdrawalListParams): string {
   const searchParams = new URLSearchParams();
   if (params.search) searchParams.append("search", params.search);
-  if (params.page) searchParams.append("page", params.page.toString());
-  if (params.limit) searchParams.append("limit", params.limit.toString());
-  return searchParams.toString();
-}
-
-function buildPayoutParams(params: PayoutListParams): string {
-  const searchParams = new URLSearchParams();
-  if (params.search) searchParams.append("search", params.search);
+  if (params.status) searchParams.append("status", params.status);
   if (params.page) searchParams.append("page", params.page.toString());
   if (params.limit) searchParams.append("limit", params.limit.toString());
   return searchParams.toString();
@@ -254,12 +255,11 @@ export const walletsApi = {
       };
     }>(`/api/admin/wallets/transactions?${buildTransactionParams(params)}`),
 
-  exportWallets: (format: "csv" | "pdf", dataType: string, filters?: any) =>
-    apiFetch(`/api/admin/wallets/export`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ format, dataType, filters }),
-    }),
+  exportTransactions: () =>
+    apiDownloadFile(
+      `/api/admin/wallets/transactions/export`,
+      `relisted-transactions-${new Date().toISOString().slice(0, 10)}.csv`,
+    ),
 
   getWithdrawalRequests: (params: WithdrawalListParams) =>
     apiFetch<{
@@ -303,18 +303,4 @@ export const walletsApi = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ trackingId }),
     }),
-
-  getPayouts: (params: PayoutListParams) =>
-    apiFetch<{
-      success: true;
-      data: {
-        payouts: Payout[];
-        pagination: {
-          total: number;
-          page: number;
-          limit: number;
-          pages: number;
-        };
-      };
-    }>(`/api/admin/wallets/payouts?${buildPayoutParams(params)}`),
 };

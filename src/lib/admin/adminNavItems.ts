@@ -1,8 +1,17 @@
+export type AdminNavCountKey =
+  | "pendingListings"
+  | "pendingAvailabilityRequests"
+  | "activeOrders"
+  | "pendingShipments"
+  | "pendingWithdrawals"
+  | "pendingDisputes";
+
 export type AdminNavItemDefinition = {
   id: string;
   label: string;
   getHref: (adminId: string) => string;
   showNewBadge?: boolean;
+  countKey?: AdminNavCountKey;
 };
 
 /** Serializable admin sidebar entries (icons are attached in AdminSidebar). */
@@ -14,6 +23,11 @@ export function getAdminNavItemDefinitions(): AdminNavItemDefinition[] {
       getHref: (id) => `/admin/${id}/dashboard`,
     },
     {
+      id: "insights",
+      label: "Insights",
+      getHref: (id) => `/admin/${id}/insights`,
+    },
+    {
       id: "users",
       label: "Users",
       getHref: (id) => `/admin/${id}/users`,
@@ -22,28 +36,32 @@ export function getAdminNavItemDefinitions(): AdminNavItemDefinition[] {
       id: "listings",
       label: "Listings",
       getHref: (id) => `/admin/${id}/listings`,
+      countKey: "pendingListings",
     },
     {
       id: "shop",
-      label: "Shop",
+      label: "Brands",
       getHref: (id) => `/admin/${id}/shop`,
       showNewBadge: true,
     },
     {
       id: "requests",
-      label: "Requests",
+      label: "Availability Requests",
       getHref: (id) => `/admin/${id}/requests`,
       showNewBadge: true,
+      countKey: "pendingAvailabilityRequests",
     },
     {
       id: "orders",
       label: "Orders",
       getHref: (id) => `/admin/${id}/orders`,
+      countKey: "activeOrders",
     },
     {
       id: "shipments",
       label: "Shipments",
       getHref: (id) => `/admin/${id}/shipments`,
+      countKey: "pendingShipments",
     },
     {
       id: "closets",
@@ -58,13 +76,20 @@ export function getAdminNavItemDefinitions(): AdminNavItemDefinition[] {
     },
     {
       id: "wallet",
-      label: "Payments & balances",
+      label: "Finances",
       getHref: (id) => `/admin/${id}/wallets`,
+      countKey: "pendingWithdrawals",
     },
     {
       id: "dispute",
       label: "Dispute",
       getHref: (id) => `/admin/${id}/disputes`,
+      countKey: "pendingDisputes",
+    },
+    {
+      id: "reviews",
+      label: "Reviews",
+      getHref: (id) => `/admin/${id}/reviews`,
     },
     {
       id: "settings",

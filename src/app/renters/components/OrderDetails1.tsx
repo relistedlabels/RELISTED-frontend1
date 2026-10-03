@@ -3,10 +3,18 @@
 
 "use client";
 
-import React, { useEffect, useState, type ComponentProps } from "react";
+import React, { useEffect, useMemo, useState, type ComponentProps } from "react";
 import { X, ArrowLeft, CheckCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
+import {
+  slidePanelBackdrop,
+  slidePanelFooter,
+  slidePanelHeader,
+  slidePanelSheet,
+  slidePanelTitle,
+} from "@/common/ui/dashboardClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import ProductCuratorDetails from "./ProductCuratorDetails";
 import OrderProgressTimeline from "./OrderProgressTimeline";
@@ -15,6 +23,8 @@ import OrderDetailSummaryBar from "./OrderDetailSummaryBar";
 import ResaleDeliveryConfirmBanner from "./ResaleDeliveryConfirmBanner";
 import RentalDeliveryConfirmBanner from "./RentalDeliveryConfirmBanner";
 import StartReturnAction from "./StartReturnAction";
+import ReturnDueBanner from "./ReturnDueBanner";
+import { shouldPromoteReturnOnDetail } from "@/lib/orders/returnDueUrgency";
 import {
   useOrderDetails,
   useOrderProgress,
@@ -34,6 +44,8 @@ import {
 import { resolveRenterStartReturn } from "@/lib/orders/renterStartReturn";
 import { useConfirmResaleDelivery } from "@/lib/mutations/renters/useConfirmResaleDelivery";
 import { useConfirmRentalDelivery } from "@/lib/mutations/renters/useConfirmRentalDelivery";
+import LeaveReviewModal from "./LeaveReviewModal";
+import { isReviewPromptSkipped } from "@/lib/reviews/reviewPromptStorage";
 
 type RenterOrderProgressPayload = ComponentProps<
   typeof OrderProgressTimeline
@@ -60,6 +72,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
 }) => {
   const confirmResaleDelivery = useConfirmResaleDelivery();
   const confirmRentalDelivery = useConfirmRentalDelivery();
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
 
   const resaleOnlyOrder = orderData
     ? isListerResaleOrder(orderData)
@@ -116,11 +129,55 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
       })
     : { showStartReturn: false, returnShipmentId: null };
 
+  const returnPromotion = shouldPromoteReturnOnDetail({
+    status: String(orderData?.status ?? ""),
+    showStartReturn: startReturn.showStartReturn,
+    returnSubmitted,
+    items: (orderData?.items as Array<{
+      name?: string;
+      imageUrl?: string | null;
+      returnDueDate?: string | null;
+      rentalEndDate?: string | null;
+    }>) ?? [],
+  });
+
+  const returnPackageItems =
+    ((orderData?.items as Array<{
+      name?: string;
+      imageUrl?: string | null;
+    }>) ?? [])
+      .filter((line) => Boolean(line?.name))
+      .map((line) => ({
+        name: line.name ?? "Item",
+        imageUrl: line.imageUrl ?? null,
+      }));
+
+  const returnProductLabel =
+    returnPackageItems.length === 1
+      ? returnPackageItems[0]?.name
+      : returnPackageItems.length > 1
+        ? `${returnPackageItems.length} items`
+        : undefined;
+
   const showFooterReturn =
     !resaleOnlyOrder &&
     startReturn.showStartReturn &&
     !returnSubmitted &&
+    !returnPromotion.promote &&
     !!displayOrderId;
+
+  const reviewProductLabel = useMemo(() => {
+    const items =
+      (orderData?.items as Array<{ name?: string }> | undefined) ?? [];
+    if (items.length === 1) return items[0]?.name?.trim() || null;
+    if (items.length > 1) return `${items.length} items`;
+    return null;
+  }, [orderData]);
+
+  const maybeOpenReviewModal = () => {
+    if (!displayOrderId || isReviewPromptSkipped(displayOrderId)) return;
+    setReviewModalOpen(true);
+  };
 
   const handleConfirmResale = (shipmentId: string) => {
     confirmResaleDelivery.mutate(
@@ -133,6 +190,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
                 ? "Order completed. Thank you for confirming."
                 : "Delivery confirmed for this package."),
           );
+          maybeOpenReviewModal();
         },
         onError: (err) => {
           toast.error(
@@ -156,6 +214,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
                 ? "Rental confirmed. Enjoy your rental!"
                 : "Delivery confirmed for this package."),
           );
+          maybeOpenReviewModal();
         },
         onError: (err) => {
           toast.error(
@@ -169,17 +228,18 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
   };
 
   return (
+    <>
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-99 bg-black/70 backdrop-blur-sm"
+          className={slidePanelBackdrop}
           onClick={onClose}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="fixed top-0 right-0 flex h-screen w-full flex-col bg-white px-4 shadow-2xl sm:w-114"
+            className={slidePanelSheet}
             role="dialog"
             aria-modal="true"
             aria-label="Order details"
@@ -189,7 +249,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-gray-100 bg-white pb-4 pt-6">
+            <div className={slidePanelHeader}>
               <button
                 type="button"
                 onClick={onClose}
@@ -198,9 +258,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
               >
                 <ArrowLeft size={20} />
               </button>
-              <Paragraph1 className="font-bold uppercase tracking-widest text-gray-800">
-                Order details
-              </Paragraph1>
+              <Paragraph1 className={slidePanelTitle}>Order details</Paragraph1>
               <button
                 type="button"
                 onClick={onClose}
@@ -247,6 +305,16 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
                         Return submitted
                       </Paragraph1>
                     </div>
+                  ) : returnPromotion.promote ? (
+                    <ReturnDueBanner
+                      orderId={displayOrderId}
+                      shipmentId={startReturn.returnShipmentId}
+                      headline={returnPromotion.headline}
+                      isDueToday={returnPromotion.isDueToday}
+                      isOverdue={returnPromotion.isOverdue}
+                      productLabel={returnProductLabel}
+                      items={returnPackageItems}
+                    />
                   ) : null}
 
                   {showRentalConfirm ? (
@@ -290,7 +358,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
               )}
             </div>
 
-            <div className="sticky bottom-0 shrink-0 border-t border-gray-100 bg-white py-3">
+            <div className={slidePanelFooter}>
               <div className="flex gap-2">
                 {showFooterReturn ? (
                   <StartReturnAction
@@ -302,16 +370,14 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
                 <button
                   type="button"
                   onClick={onClose}
-                  className={`rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-800 transition hover:bg-gray-50 ${
-                    showFooterReturn ? "px-3" : "flex-1"
-                  }`}
+                  className={`${buttonSecondary} ${showFooterReturn ? "" : "flex-1"}`}
                 >
                   Close
                 </button>
                 {!showFooterReturn ? (
                   <a
                     href="mailto:support@relisted.com"
-                    className="flex-1 rounded-lg bg-black px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-gray-900"
+                    className={`${buttonPrimary} flex-1`}
                   >
                     Contact support
                   </a>
@@ -322,6 +388,14 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
         </motion.div>
       )}
     </AnimatePresence>
+    <LeaveReviewModal
+      isOpen={reviewModalOpen}
+      onClose={() => setReviewModalOpen(false)}
+      orderId={displayOrderId}
+      itemLabel={reviewProductLabel}
+      context="delivery"
+    />
+    </>
   );
 };
 
@@ -346,9 +420,9 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, autoOpen }) => {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="w-full rounded-sm bg-black px-4 py-2 text-white transition-colors hover:bg-gray-800 sm:w-fit"
+        className={`${buttonPrimary} w-full sm:w-auto`}
       >
-        <Paragraph1>View details</Paragraph1>
+        View details
       </button>
 
       <OrderDetailsPanel

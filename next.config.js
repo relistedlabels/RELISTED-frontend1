@@ -1,6 +1,7 @@
 // next.config.js
 
 const path = require("path");
+const { withSerwist } = require("@serwist/turbopack");
 
 const nextConfig = {
   images: {
@@ -76,13 +77,11 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
-
 // Injected content via Sentry wizard below
 
 const { withSentryConfig } = require("@sentry/nextjs");
 
-module.exports = withSentryConfig(module.exports, {
+module.exports = withSentryConfig(withSerwist(nextConfig), {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 

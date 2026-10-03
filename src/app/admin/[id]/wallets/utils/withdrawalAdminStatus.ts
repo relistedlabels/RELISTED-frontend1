@@ -1,5 +1,7 @@
 /** Normalize admin withdrawal list status for comparisons (API may send mixed case). */
-export function normalizeAdminWithdrawalStatus(status: string | undefined): string {
+export function normalizeAdminWithdrawalStatus(
+  status: string | undefined,
+): string {
   return String(status ?? "")
     .trim()
     .toLowerCase()

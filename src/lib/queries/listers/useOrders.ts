@@ -18,10 +18,12 @@ export function useOrders(
   page: number = 1,
   limit: number = 20,
   sort: string = "-createdAt",
+  options?: { enabled?: boolean },
 ) {
   return useQuery({
     queryKey: ["listers", "orders", status ?? "all", page, limit, sort],
     queryFn: () => getOrders(status, page, limit, sort),
     staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: options?.enabled !== false,
   });
 }

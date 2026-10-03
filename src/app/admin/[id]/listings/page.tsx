@@ -1,49 +1,51 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
-  Search,
-  Download,
-  Globe,
-  CheckCircle,
   AlertCircle,
-  XCircle,
+  CheckCircle,
   ChevronLeft,
   ChevronRight,
+  Download,
+  Globe,
   Power,
   RotateCcw,
+  Search,
+  XCircle,
 } from "lucide-react";
-import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
-import { useQueryClient } from "@tanstack/react-query";
+import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { TableSkeleton, StatCardSkeleton } from "@/common/ui/SkeletonLoaders";
-import ListingDetailModal from "./components/ListingDetailModal";
-import PendingListingsTable from "./components/PendingListingsTable";
-import ActiveListingsTable from "./components/ActiveListingsTable";
-import SoldListingsTable from "./components/SoldListingsTable";
-import RejectedListingsTable from "./components/RejectedListingsTable";
-import ManagementPanel from "./components/ManagementPanel";
+import AdminPageHeader from "@/app/admin/components/AdminPageHeader";
 import ListingFilterPanel, {
   ListingFilterButton,
 } from "@/app/shop/components/ListingFilterPanel";
-import type { ListingFilterValues } from "@/lib/shop/listingFilters";
-import { pickerFiltersToApiParams } from "@/lib/shop/listingFilters";
-import { countActiveListingFilters } from "@/lib/shop/countActiveListingFilters";
+import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
+import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import { type Product, ProductDetail } from "@/lib/api/admin/listings";
 import {
-  useListingsStatistics,
-  useApproveListing,
-  useRejectListing,
-  useSendProductToPending,
-  useSetAvailability,
-  usePendingProducts,
   useActiveProducts,
-  useRentedProducts,
-  useInactiveProducts,
-  useRejectedProducts,
+  useApproveListing,
   useBulkDeactivate,
   useBulkReactivate,
+  useInactiveProducts,
+  useListingsStatistics,
+  usePendingProducts,
+  useRejectedProducts,
+  useRejectListing,
+  useRentedProducts,
+  useSendProductToPending,
+  useSetAvailability,
 } from "@/lib/queries/admin/useListings";
-import { Product, ProductDetail } from "@/lib/api/admin/listings";
+import { countActiveListingFilters } from "@/lib/shop/countActiveListingFilters";
+import type { ListingFilterValues } from "@/lib/shop/listingFilters";
+import { pickerFiltersToApiParams } from "@/lib/shop/listingFilters";
+import { AdminSectionTabs } from "../../components/AdminSectionTabs";
+import ActiveListingsTable from "./components/ActiveListingsTable";
+import ListingDetailModal from "./components/ListingDetailModal";
+import ManagementPanel from "./components/ManagementPanel";
+import PendingListingsTable from "./components/PendingListingsTable";
+import RejectedListingsTable from "./components/RejectedListingsTable";
+import SoldListingsTable from "./components/SoldListingsTable";
 
 type TabType =
   | "Pending"
@@ -105,6 +107,43 @@ export default function ListingsPage() {
 
   // Get stats data from the response
   const stats = statsResponse?.data;
+  const listingStats = [
+    {
+      label: "Total Listings",
+      value: stats?.getTotalProducts?.count || 0,
+      icon: Globe,
+      iconColor: "text-gray-700",
+      iconBackground: "bg-gray-100",
+    },
+    {
+      label: "Pending Review",
+      value: stats?.getPendingProducts?.count || 0,
+      icon: AlertCircle,
+      iconColor: "text-yellow-600",
+      iconBackground: "bg-yellow-50",
+    },
+    {
+      label: "Active",
+      value: stats?.getActiveProducts?.count || 0,
+      icon: CheckCircle,
+      iconColor: "text-blue-600",
+      iconBackground: "bg-blue-50",
+    },
+    {
+      label: "Approved",
+      value: stats?.getApprovedProducts?.count || 0,
+      icon: CheckCircle,
+      iconColor: "text-green-600",
+      iconBackground: "bg-green-50",
+    },
+    {
+      label: "Rejected",
+      value: stats?.getRejectedProducts?.count || 0,
+      icon: XCircle,
+      iconColor: "text-red-600",
+      iconBackground: "bg-red-50",
+    },
+  ];
 
   if (statsError) {
     console.error("Failed to load product statistics:", statsError);
@@ -482,12 +521,14 @@ export default function ListingsPage() {
     bulkDeactivateMutation.mutate([productId], {
       onSuccess: (response) => {
         setDeactivatingProductId(null);
-        toast.success(response.message || 'Listing deactivated successfully');
+        toast.success(response.message || "Listing deactivated successfully");
       },
       onError: (error: any) => {
         setDeactivatingProductId(null);
         const errorMessage =
-          error?.response?.data?.message || error?.message || 'Failed to deactivate listing';
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to deactivate listing";
         toast.error(errorMessage);
       },
     });
@@ -495,10 +536,10 @@ export default function ListingsPage() {
 
   const handleBulkDeactivate = () => {
     if (selectedIds.size === 0) return;
-    
+
     if (
       !window.confirm(
-        `Deactivate ${selectedIds.size} listing${selectedIds.size > 1 ? 's' : ''}? You can reactivate them from the Inactive tab.`,
+        `Deactivate ${selectedIds.size} listing${selectedIds.size > 1 ? "s" : ""}? You can reactivate them from the Inactive tab.`,
       )
     ) {
       return;
@@ -506,12 +547,14 @@ export default function ListingsPage() {
 
     bulkDeactivateMutation.mutate(Array.from(selectedIds), {
       onSuccess: (response) => {
-        toast.success(response.message || 'Listings deactivated successfully');
+        toast.success(response.message || "Listings deactivated successfully");
         setSelectedIds(new Set());
       },
       onError: (error: any) => {
         const errorMessage =
-          error?.response?.data?.message || error?.message || 'Failed to deactivate listings';
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to deactivate listings";
         toast.error(errorMessage);
       },
     });
@@ -528,10 +571,10 @@ export default function ListingsPage() {
 
   const handleBulkReactivate = () => {
     if (selectedIds.size === 0) return;
-    
+
     if (
       !window.confirm(
-        `Reactivate ${selectedIds.size} listing${selectedIds.size > 1 ? 's' : ''}?`,
+        `Reactivate ${selectedIds.size} listing${selectedIds.size > 1 ? "s" : ""}?`,
       )
     ) {
       return;
@@ -539,12 +582,14 @@ export default function ListingsPage() {
 
     bulkReactivateMutation.mutate(Array.from(selectedIds), {
       onSuccess: (response) => {
-        toast.success(response.message || 'Listings reactivated successfully');
+        toast.success(response.message || "Listings reactivated successfully");
         setSelectedIds(new Set());
       },
       onError: (error: any) => {
         const errorMessage =
-          error?.response?.data?.message || error?.message || 'Failed to reactivate listings';
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to reactivate listings";
         toast.error(errorMessage);
       },
     });
@@ -555,11 +600,7 @@ export default function ListingsPage() {
       inactiveProducts.find((item) => item.id === productId) ??
       rejectedProducts.find((item) => item.id === productId);
     const productName = product?.name || "this listing";
-    if (
-      !window.confirm(
-        `Reactivate "${productName}"?`,
-      )
-    ) {
+    if (!window.confirm(`Reactivate "${productName}"?`)) {
       return;
     }
 
@@ -567,12 +608,14 @@ export default function ListingsPage() {
     bulkReactivateMutation.mutate([productId], {
       onSuccess: (response) => {
         setReactivatingProductId(null);
-        toast.success(response.message || 'Listing reactivated successfully');
+        toast.success(response.message || "Listing reactivated successfully");
       },
       onError: (error: any) => {
         setReactivatingProductId(null);
         const errorMessage =
-          error?.response?.data?.message || error?.message || 'Failed to reactivate listing';
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to reactivate listing";
         toast.error(errorMessage);
       },
     });
@@ -623,37 +666,36 @@ export default function ListingsPage() {
       )}
 
       {/* Header */}
-      <div className="mb-6">
-        <Paragraph2 className="text-2xl font-extrabold text-gray-900 tracking-tight mb-2">
-          Listings
-        </Paragraph2>
-        <Paragraph1 className="text-sm text-gray-600">
-          Manage and review all curator-submitted listings.
-        </Paragraph1>
-      </div>
+      <AdminPageHeader
+        title="Listings"
+        description="Review and manage submitted listings."
+      />
 
-      <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        {/* Search */}
-        <div className="relative w-full sm:w-64">
-          <Search
-            size={18}
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-          />
-          <input
-            type="text"
-            placeholder="Search listings..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
+      <div className="mb-6 flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
+        <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto sm:flex-1">
+          <div className="relative min-w-0 flex-1 sm:max-w-64">
+            <Search
+              size={18}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+            <input
+              type="text"
+              placeholder="Search listings..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-11 w-full rounded-xl border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm text-gray-900 transition placeholder:text-gray-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+            />
+          </div>
+          <ListingFilterButton
+            onClick={() => setIsFilterOpen(true)}
+            activeCount={countActiveListingFilters(listingFilters)}
+            compactOnMobile
+            className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-0 text-sm font-semibold text-gray-900 transition hover:border-gray-400 hover:bg-gray-50 focus:border-black focus:outline-none focus:ring-1 focus:ring-black sm:w-auto sm:px-4"
           />
         </div>
 
         {/* Category Dropdown and Export */}
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <ListingFilterButton
-            onClick={() => setIsFilterOpen(true)}
-            activeCount={countActiveListingFilters(listingFilters)}
-          />
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
           {supportsBulkSelection && selectedIds.size > 0 && (
             <>
               {activeTab === "Active" && (
@@ -684,116 +726,51 @@ export default function ListingsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-        {statsLoading || statsError ? (
-          <>
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-          </>
-        ) : (
-          <>
-            {/* Total Listings */}
-            <div className="bg-white p-6 rounded-lg border border-gray-200">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <Globe size={24} className="text-gray-700" />
+      <div className="mb-6 grid grid-cols-2 gap-3 lg:mb-8 lg:grid-cols-5 lg:gap-4">
+        {statsLoading || statsError
+          ? Array.from({ length: 5 }, (_, index) => (
+              <div
+                key={index}
+                className="flex h-[76px] animate-pulse items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 lg:h-24 lg:p-4"
+              >
+                <div className="h-10 w-10 shrink-0 rounded-lg bg-gray-200" />
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="h-3 w-20 rounded bg-gray-200" />
+                  <div className="h-5 w-12 rounded bg-gray-200" />
                 </div>
               </div>
-              <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                Total Listings
-              </Paragraph1>
-              <Paragraph3 className="text-3xl font-bold text-gray-900">
-                {stats?.getTotalProducts?.count || 0}
-              </Paragraph3>
-            </div>
-
-            {/* Pending Review */}
-            <div className="bg-white p-6 rounded-lg border border-gray-200">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="bg-yellow-50 p-3 rounded-lg">
-                  <AlertCircle size={24} className="text-yellow-600" />
+            ))
+          : listingStats.map((stat) => (
+              <div
+                key={stat.label}
+                className="flex min-w-0 items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 lg:flex-col lg:items-start lg:p-6"
+              >
+                <div
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg lg:mb-3 lg:h-12 lg:w-12 ${stat.iconBackground}`}
+                >
+                  <stat.icon size={20} className={stat.iconColor} />
+                </div>
+                <div className="min-w-0">
+                  <Paragraph1 className="truncate text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">
+                    {stat.label}
+                  </Paragraph1>
+                  <Paragraph3 className="mt-0.5 text-xl font-bold text-gray-900 lg:text-3xl">
+                    {stat.value}
+                  </Paragraph3>
                 </div>
               </div>
-              <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                Pending Review
-              </Paragraph1>
-              <Paragraph3 className="text-3xl font-bold text-gray-900">
-                {stats?.getPendingProducts?.count || 0}
-              </Paragraph3>
-            </div>
-
-            {/* Active */}
-            <div className="bg-white p-6 rounded-lg border border-gray-200">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="bg-blue-50 p-3 rounded-lg">
-                  <CheckCircle size={24} className="text-blue-600" />
-                </div>
-              </div>
-              <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                Active
-              </Paragraph1>
-              <Paragraph3 className="text-3xl font-bold text-gray-900">
-                {stats?.getActiveProducts?.count || 0}
-              </Paragraph3>
-            </div>
-
-            {/* Approved */}
-            <div className="bg-white p-6 rounded-lg border border-gray-200">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="bg-green-50 p-3 rounded-lg">
-                  <CheckCircle size={24} className="text-green-600" />
-                </div>
-              </div>
-              <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                Approved
-              </Paragraph1>
-              <Paragraph3 className="text-3xl font-bold text-gray-900">
-                {stats?.getApprovedProducts?.count || 0}
-              </Paragraph3>
-            </div>
-
-            {/* Rejected */}
-            <div className="bg-white p-6 rounded-lg border border-gray-200">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="bg-red-50 p-3 rounded-lg">
-                  <XCircle size={24} className="text-red-600" />
-                </div>
-              </div>
-              <Paragraph1 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                Rejected
-              </Paragraph1>
-              <Paragraph3 className="text-3xl font-bold text-gray-900">
-                {stats?.getRejectedProducts?.count || 0}
-              </Paragraph3>
-            </div>
-          </>
-        )}
+            ))}
       </div>
 
-      {/* Tabs */}
-      <div className="mb-6 border-b border-gray-200">
-        <div className="flex gap-8">
-          {TABS.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => {
-                setActiveTab(tab);
-                setSelectedIds(new Set());
-              }}
-              className={`py-4 px-0 font-medium text-sm transition-colors border-b-2 ${
-                activeTab === tab
-                  ? "text-gray-900 border-black"
-                  : "text-gray-500 border-transparent hover:text-gray-700"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-      </div>
+      <AdminSectionTabs
+        className="mb-6"
+        tabs={TABS.map((tab) => ({ id: tab, label: tab }))}
+        activeTab={activeTab}
+        onChange={(tab) => {
+          setActiveTab(tab as TabType);
+          setSelectedIds(new Set());
+        }}
+      />
 
       {/* Listings Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">

@@ -1,20 +1,23 @@
 // ENDPOINTS: GET /api/admin/orders/:orderId
 "use client";
 
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
+import { slidePanelBackdrop } from "@/common/ui/dashboardClasses";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import type { OrderDetail } from "@/lib/api/admin/orders";
+import { useCancelOrder } from "@/lib/mutations/admin";
+import { getAdminOrderStatusLabel } from "@/lib/orders/shipmentAndOrderLabels";
+import { useOrderById } from "@/lib/queries/admin/useOrders";
+import ReturnRequestSection from "../../../components/ReturnRequestSection";
+import CancelOrderModal from "./CancelOrderModal";
+import OrderItemsSection from "./OrderItemsSection";
 import OrderSection2 from "./OrderSection2";
 import OrderSection3 from "./OrderSection3";
-import OrderItemsSection from "./OrderItemsSection";
-import CancelOrderModal from "./CancelOrderModal";
-import { useOrderById } from "@/lib/queries/admin/useOrders";
-import { useCancelOrder } from "@/lib/mutations/admin";
-import type { OrderDetail } from "@/lib/api/admin/orders";
-import { getAdminOrderStatusLabel } from "@/lib/orders/shipmentAndOrderLabels";
-import ReturnRequestSection from "../../../components/ReturnRequestSection";
+import OrderShipmentsSection from "./OrderShipmentsSection";
 
 interface OrderDetailModalProps {
   isOpen: boolean;
@@ -65,13 +68,25 @@ export default function OrderDetailModal({
   orderId,
 }: OrderDetailModalProps) {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { data, isLoading, isError } = useOrderById(orderId ?? "", isOpen);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const cancelOrder = useCancelOrder();
   const order = data?.data as OrderDetail | undefined;
 
-  const statusLabel = order
-    ? getAdminOrderStatusLabel(order.status)
-    : "—";
+  const statusLabel = order ? getAdminOrderStatusLabel(order.status) : "—";
+  const listingType = String(order?.listingType ?? "").toUpperCase();
+  const isPurchaseOrder = Boolean(
+    order &&
+      (listingType === "RESALE" ||
+        listingType === "PURCHASE" ||
+        (listingType === "RENT_OR_RESALE" &&
+          order.items_details.length > 0 &&
+          order.items_details.every((item) => item.rentalDays === 0))),
+  );
   const canCancel =
     !!order && CANCELLABLE_STATUSES.has(String(order.status).toUpperCase());
 
@@ -95,7 +110,9 @@ export default function OrderDetailModal({
     }
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && orderId && (
         <>
@@ -104,7 +121,7 @@ export default function OrderDetailModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="z-40 fixed inset-0 bg-black/50"
+            className={slidePanelBackdrop}
           />
 
           <motion.div
@@ -112,51 +129,56 @@ export default function OrderDetailModal({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="top-0 right-0 bottom-0 z-50 fixed bg-white shadow-lg w-full md:w-3/4 overflow-y-auto"
+            className="fixed inset-0 z-[100] flex h-[100dvh] w-full max-w-full flex-col overflow-y-auto bg-white shadow-2xl hide-scrollbar md:inset-y-0 md:left-auto md:w-[min(100%,48rem)] lg:w-3/4"
           >
-            <div className="top-0 sticky bg-white p-6 border-gray-200 border-b">
-              <div className="flex justify-between items-start gap-4">
+            <div className="top-0 sticky bg-white border-gray-200 border-b p-4 sm:p-6">
+              <div className="flex items-start gap-3">
                 <button
                   onClick={onClose}
                   className="shrink-0 -ml-1 p-1 text-gray-400 hover:text-gray-600 transition"
+                  aria-label="Close order details"
                 >
                   <X size={20} />
                 </button>
 
-                <div className="flex-1">
-                  <Paragraph3 className="mb-1 font-bold text-gray-900 text-lg">
-                    Order details
-                  </Paragraph3>
-                  <Paragraph1 className="text-gray-500 text-xs">
-                    {orderId}
-                    {order?.date ? ` · ${order.date}` : ""}
-                  </Paragraph1>
-                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <Paragraph3 className="mb-1 font-bold text-gray-900 text-lg">
+                        Order details
+                      </Paragraph3>
+                      <Paragraph1 className="break-all text-gray-500 text-xs">
+                        {orderId}
+                        {order?.date ? ` · ${order.date}` : ""}
+                      </Paragraph1>
+                    </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  {!isLoading && order && (
-                    <span
-                      className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                        statusLabel,
-                      )}`}
-                    >
-                      {statusLabel}
-                    </span>
-                  )}
-                  {canCancel && (
-                    <button
-                      type="button"
-                      onClick={() => setCancelModalOpen(true)}
-                      className="px-3 py-1 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition"
-                    >
-                      Cancel order
-                    </button>
-                  )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {!isLoading && order && (
+                        <span
+                          className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(
+                            statusLabel,
+                          )}`}
+                        >
+                          {statusLabel}
+                        </span>
+                      )}
+                      {canCancel && (
+                        <button
+                          type="button"
+                          onClick={() => setCancelModalOpen(true)}
+                          className="rounded-lg bg-red-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-red-700"
+                        >
+                          Cancel order
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-6 p-6">
+            <div className="space-y-4 px-4 py-4 sm:space-y-6 sm:px-6 sm:py-6">
               {isLoading && (
                 <Paragraph1 className="text-gray-500 text-sm">
                   Loading order details…
@@ -176,7 +198,6 @@ export default function OrderDetailModal({
                     returnDue={order.returnDue ?? "N/A"}
                     paymentReference={order.paymentReference ?? "N/A"}
                     paymentStatus={order.payment?.paymentStatus}
-                    trackingNumber={order.trackingNumber}
                     rentalPeriod={order.shipping?.rentalPeriod}
                     lister={{
                       name: order.lister?.name ?? "N/A",
@@ -205,6 +226,11 @@ export default function OrderDetailModal({
                     formatMoney={formatMoney}
                   />
 
+                  <OrderShipmentsSection
+                    orderId={orderId}
+                    isPurchaseOrder={isPurchaseOrder}
+                  />
+
                   <ReturnRequestSection returnRequest={order.returnRequest} />
 
                   <OrderSection3
@@ -212,12 +238,14 @@ export default function OrderDetailModal({
                     serviceFee={formatMoney(order.payment?.serviceFee ?? 0)}
                     deliveryFee={formatMoney(order.payment?.deliveryFee ?? 0)}
                     vat={formatMoney(order.payment?.vat ?? 0)}
-                    total={formatMoney(order.payment?.total ?? order.total ?? 0)}
+                    total={formatMoney(
+                      order.payment?.total ?? order.total ?? 0,
+                    )}
                     paymentStatus={order.payment?.paymentStatus}
                   />
 
                   {(order.escrows?.length ?? 0) > 0 && (
-                    <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 sm:p-6">
                       <Paragraph3 className="text-base font-bold text-gray-900 mb-4">
                         Escrow
                       </Paragraph3>
@@ -251,6 +279,7 @@ export default function OrderDetailModal({
           />
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

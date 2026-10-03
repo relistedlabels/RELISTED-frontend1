@@ -1,12 +1,6 @@
 import { useState, useEffect } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
-import { ChevronDown } from "lucide-react";
-
-const COUNTRIES = [
-  { name: "Nigeria", code: "+234", iso: "NG" },
-  { name: "Ghana", code: "+233", iso: "GH" },
-  { name: "Kenya", code: "+254", iso: "KE" },
-];
+import { NIGERIA_PHONE_CODE } from "@/lib/phone";
 
 export function PhoneInput({
   value,
@@ -15,21 +9,11 @@ export function PhoneInput({
   value: string;
   onChange: (val: string) => void;
 }) {
-  const [country, setCountry] = useState(COUNTRIES[0]);
   const [number, setNumber] = useState("");
-  const [open, setOpen] = useState(false);
 
-  /**
-   * 🔁 Sync UI from store value
-   */
   useEffect(() => {
     if (!value) return;
-
-    const match = COUNTRIES.find((c) => value.startsWith(c.code));
-    const selectedCountry = match ?? COUNTRIES[0];
-
-    setCountry(selectedCountry);
-    setNumber(value.replace(selectedCountry.code, ""));
+    setNumber(value.replace(NIGERIA_PHONE_CODE, ""));
   }, [value]);
 
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,8 +23,9 @@ export function PhoneInput({
       raw = raw.replace(/^0+/, "");
     }
 
+    raw = raw.slice(0, 10);
     setNumber(raw);
-    onChange(`${country.code}${raw}`);
+    onChange(`${NIGERIA_PHONE_CODE}${raw}`);
   };
 
   return (
@@ -52,14 +37,9 @@ export function PhoneInput({
       </label>
 
       <div className="relative flex border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-black">
-        <button
-          type="button"
-          onClick={() => setOpen(!open)}
-          className="flex items-center px-4 gap-2 border-r border-gray-300"
-        >
-          <span>{country.code}</span>
-          <ChevronDown className="w-4 h-4" />
-        </button>
+        <span className="flex items-center px-4 border-r border-gray-300 text-gray-900">
+          {NIGERIA_PHONE_CODE}
+        </span>
 
         <input
           type="tel"
@@ -67,27 +47,9 @@ export function PhoneInput({
           value={number}
           onChange={handleNumberChange}
           placeholder="8080808080"
+          maxLength={11}
           className="w-full p-4 outline-none"
         />
-
-        {open && (
-          <div className="absolute top-full left-0 mt-1 w-40 bg-white border rounded-lg shadow z-10">
-            {COUNTRIES.map((c) => (
-              <button
-                key={c.iso}
-                type="button"
-                onClick={() => {
-                  setCountry(c);
-                  onChange(`${c.code}${number}`);
-                  setOpen(false);
-                }}
-                className="w-full text-left px-4 py-2 hover:bg-gray-100"
-              >
-                {c.name} ({c.code})
-              </button>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

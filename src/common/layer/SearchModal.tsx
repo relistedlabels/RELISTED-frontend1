@@ -1,18 +1,25 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Search, Clock, X, ArrowRight } from "lucide-react";
 import ProductCard from "@/common/ui/ProductCard";
 import { useBrowseStore } from "@/store/useBrowseStore";
-import { Paragraph1 } from "@/common/ui/Text";
+import { Paragraph1, ParagraphLink1 } from "@/common/ui/Text";
 import { usePublicSearch } from "@/lib/queries/search/usePublicSearch";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { isShopRentMode } from "@/lib/shop/shopBrowse";
+import { mergePreservedShopParams } from "@/lib/shop/listingFilters";
+import { productDetailHref } from "@/lib/shop/productDetailLinks";
 import Image from "next/image";
 import Link from "next/link";
 import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
-export default function SearchModal() {
+type SearchModalProps = {
+  showLabel?: boolean;
+};
+
+export default function SearchModal({ showLabel = false }: SearchModalProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
@@ -25,6 +32,8 @@ export default function SearchModal() {
   const addViewed = useBrowseStore((s) => s.addViewed);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const shopBuyMode = !isShopRentMode(searchParams);
 
   const {
     data: results,
@@ -49,20 +58,33 @@ export default function SearchModal() {
     return { products, listers };
   }, [results]);
 
-  // Persist current query as search term before navigating to recent searches
+  const goToFullResults = (term?: string) => {
+    const trimmed = (term ?? query).trim();
+    if (!trimmed) return;
+    addSearch(trimmed);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("search", trimmed);
+    mergePreservedShopParams(params, searchParams);
+    params.delete("page");
+    setOpen(false);
+    router.push(`/shop?${params.toString()}#shop-all-listings`);
+  };
+
   const handleRecentSearchClick = (term: string) => {
-    setQuery(term); // Reset input to clicked term
-    // Query automatically runs
+    goToFullResults(term);
   };
 
   return (
     <>
-      <div
+      <button
+        type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center space-x-2 cursor-pointer"
+        className={`flex items-center cursor-pointer ${showLabel ? "gap-1.5" : ""}`}
+        aria-label="Search"
       >
-        <Search className="w-5 h-5" />
-      </div>
+        <Search className="w-5 h-5" aria-hidden />
+        {showLabel ? <ParagraphLink1>Search</ParagraphLink1> : null}
+      </button>
 
       <AnimatePresence>
         {open && (
@@ -95,8 +117,10 @@ export default function SearchModal() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && query.trim())
-                      addSearch(query.trim());
+                    if (e.key === "Enter" && query.trim()) {
+                      e.preventDefault();
+                      goToFullResults();
+                    }
                   }}
                   placeholder="Search products and brands..."
                   className="py-3 pr-4 pl-10 border border-gray-400 rounded-xl outline-none w-full"
@@ -148,7 +172,10 @@ export default function SearchModal() {
                           key={item.id}
                           className="min-w-[200px] max-w-[200px] shrink-0"
                         >
-                          <ProductCard {...item} />
+                          <ProductCard
+                            {...item}
+                            priceFocus={shopBuyMode ? "buy" : "rent"}
+                          />
                         </div>
                       ))}
                     </div>
@@ -182,7 +209,12 @@ export default function SearchModal() {
                               onClick={() => {
                                 if (query.trim()) addSearch(query.trim());
                                 setOpen(false);
-                                router.push(`/shop/product-details/${item.id}`);
+                                router.push(
+                                  productDetailHref(
+                                    item.id,
+                                    shopBuyMode ? "buy" : undefined,
+                                  ),
+                                );
                               }}
                               className="flex items-center gap-3 hover:bg-gray-100 p-3 rounded-lg transition cursor-pointer"
                             >
@@ -271,6 +303,17 @@ export default function SearchModal() {
                           No results found for "{query}"
                         </Paragraph1>
                       )}
+
+                    {query.trim() ? (
+                      <button
+                        type="button"
+                        onClick={() => goToFullResults()}
+                        className="flex justify-between items-center hover:bg-gray-100 mt-2 p-3 border border-gray-200 rounded-lg w-full font-semibold text-sm transition cursor-pointer"
+                      >
+                        View all results
+                        <ArrowRight className="rotate-225 shrink-0" />
+                      </button>
+                    ) : null}
                   </div>
                 )}
               </div>

@@ -1,44 +1,50 @@
 "use client";
 
-import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  X,
-  Check,
+  Activity,
   AlertCircle,
+  Calendar,
+  Check,
   CheckCircle,
-  XCircle,
   ChevronLeft,
   ChevronRight,
-  Power,
-  Edit,
-  ShoppingBag,
-  Calendar,
-  Activity,
-  Package,
-  Loader,
   Clock,
+  Edit,
+  Loader,
+  Package,
+  Power,
+  ShoppingBag,
+  X,
+  XCircle,
 } from "lucide-react";
-import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
-import { Product, ProductDetail } from "@/lib/api/admin/listings";
-import AvailabilityTab from "./AvailabilityTab";
-import RentalHistoryTab from "./RentalHistoryTab";
-import ActivityTab from "./ActivityTab";
-import { useListingDetail } from "@/lib/queries/admin/useListings";
-import { ItemImageUploader } from "@/app/listers/components/ItemImageUploader";
-import { BasicInformationForm } from "@/app/listers/components/BasicInformationForm";
-import { TagSelector } from "@/app/listers/components/TagSelector";
-import { ItemDescription } from "@/app/listers/components/ItemDescription";
-import { useProductDraftStore } from "@/store/useProductDraftStore";
-import { useUpdateProduct } from "@/lib/mutations/product/useUpdateProduct";
+import React from "react";
 import { toast } from "sonner";
-import { orderedProductImageUrls } from "@/lib/product/sortProductAttachmentUploads";
-
-import DeleteProductButton from "./DeleteProductButton";
+import { BasicInformationForm } from "@/app/listers/components/BasicInformationForm";
 import { CategorySelector } from "@/app/listers/components/CategorySelector";
-import ItemTypeBadge from "./ItemTypeBadge";
-import { listingPriceDisplay } from "@/lib/product/listingPriceDisplay";
+import { ItemDescription } from "@/app/listers/components/ItemDescription";
+import { ItemImageUploader } from "@/app/listers/components/ItemImageUploader";
+import { TagSelector } from "@/app/listers/components/TagSelector";
+import { buttonSecondary } from "@/common/ui/buttonClasses";
+import {
+  dialogBackdrop,
+  dialogCard,
+  slidePanelBackdrop,
+  slidePanelSheet,
+} from "@/common/ui/dashboardClasses";
+import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { canDeactivateListing } from "@/lib/admin/listingDeactivate";
+import type { Product, ProductDetail } from "@/lib/api/admin/listings";
+import { useUpdateProduct } from "@/lib/mutations/product/useUpdateProduct";
+import { listingPriceDisplay } from "@/lib/product/listingPriceDisplay";
+import { orderedProductImageUrls } from "@/lib/product/sortProductAttachmentUploads";
+import { useListingDetail } from "@/lib/queries/admin/useListings";
+import { useProductDraftStore } from "@/store/useProductDraftStore";
+import ActivityTab from "./ActivityTab";
+import AvailabilityTab from "./AvailabilityTab";
+import DeleteProductButton from "./DeleteProductButton";
+import ItemTypeBadge from "./ItemTypeBadge";
+import RentalHistoryTab from "./RentalHistoryTab";
 
 interface ListingDetailModalProps {
   isOpen: boolean;
@@ -214,7 +220,7 @@ export default function ListingDetailModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="z-40 fixed inset-0 bg-black/50"
+            className={slidePanelBackdrop}
           />
 
           {/* Modal */}
@@ -223,7 +229,7 @@ export default function ListingDetailModal({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="top-0 right-0 bottom-0 z-50 fixed bg-white shadow-lg w-full md:w-3/4 overflow-y-auto"
+            className={`${slidePanelSheet} z-[100] md:w-3/4`}
           >
             {/* Header */}
             <div className="top-0 z-50 sticky bg-white p-6 border-gray-200 border-b">
@@ -673,67 +679,69 @@ export default function ListingDetailModal({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onClick={() => setShowApproveModal(false)}
-                  className="z-50 fixed inset-0 bg-black/50"
-                />
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                  transition={{ type: "spring", duration: 0.3 }}
-                  className="top-1/2 left-1/2 z-50 fixed bg-white shadow-lg mx-4 rounded-xl w-full max-w-md -translate-x-1/2 -translate-y-1/2"
+                  className={`${dialogBackdrop} z-[60]`}
                 >
-                  <button
-                    onClick={() => setShowApproveModal(false)}
-                    className="top-4 right-4 absolute text-gray-400 hover:text-gray-600"
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                    transition={{ type: "spring", duration: 0.3 }}
+                    className={`${dialogCard} relative mx-4 shadow-lg`}
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <X size={24} />
-                  </button>
-                  <div className="p-8">
-                    <div className="flex justify-center mb-6">
-                      <div className="flex justify-center items-center bg-green-100 rounded-full w-16 h-16">
-                        <CheckCircle size={32} className="text-green-600" />
+                    <button
+                      onClick={() => setShowApproveModal(false)}
+                      className="top-4 right-4 absolute text-gray-400 hover:text-gray-600"
+                    >
+                      <X size={24} />
+                    </button>
+                    <div className="p-8">
+                      <div className="flex justify-center mb-6">
+                        <div className="flex justify-center items-center bg-green-100 rounded-full w-16 h-16">
+                          <CheckCircle size={32} className="text-green-600" />
+                        </div>
+                      </div>
+                      <Paragraph3 className="mb-2 text-gray-900 text-center">
+                        Approve Product?
+                      </Paragraph3>
+                      <Paragraph1 className="mb-8 text-gray-700 text-center">
+                        Move "{displayProduct.name}" to active listings. This
+                        item will be available for rental.
+                      </Paragraph1>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => setShowApproveModal(false)}
+                          disabled={isApproving}
+                          className={`${buttonSecondary} flex-1 py-3 disabled:cursor-not-allowed`}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (onApprove) {
+                              onApprove(displayProduct.id);
+                              setShowApproveModal(false);
+                              onClose();
+                            }
+                          }}
+                          disabled={isApproving}
+                          className="flex flex-1 justify-center items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 px-4 py-3 rounded-lg font-medium text-white transition disabled:cursor-not-allowed"
+                        >
+                          {isApproving ? (
+                            <>
+                              <div className="border-2 border-white border-t-transparent rounded-full w-4 h-4 animate-spin" />
+                              Approving...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle size={18} />
+                              Approve
+                            </>
+                          )}
+                        </button>
                       </div>
                     </div>
-                    <Paragraph3 className="mb-2 text-gray-900 text-center">
-                      Approve Product?
-                    </Paragraph3>
-                    <Paragraph1 className="mb-8 text-gray-700 text-center">
-                      Move "{displayProduct.name}" to active listings. This item
-                      will be available for rental.
-                    </Paragraph1>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => setShowApproveModal(false)}
-                        disabled={isApproving}
-                        className="flex-1 hover:bg-gray-50 disabled:opacity-50 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 transition disabled:cursor-not-allowed"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (onApprove) {
-                            onApprove(displayProduct.id);
-                            setShowApproveModal(false);
-                            onClose();
-                          }
-                        }}
-                        disabled={isApproving}
-                        className="flex flex-1 justify-center items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 px-4 py-3 rounded-lg font-medium text-white transition disabled:cursor-not-allowed"
-                      >
-                        {isApproving ? (
-                          <>
-                            <div className="border-2 border-white border-t-transparent rounded-full w-4 h-4 animate-spin" />
-                            Approving...
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle size={18} />
-                            Approve
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
+                  </motion.div>
                 </motion.div>
               </>
             )}
@@ -748,82 +756,84 @@ export default function ListingDetailModal({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onClick={() => setShowRejectModal(false)}
-                  className="z-50 fixed inset-0 bg-black/50"
-                />
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                  transition={{ type: "spring", duration: 0.3 }}
-                  className="top-1/2 left-1/2 z-50 fixed bg-white shadow-lg mx-4 rounded-xl w-full max-w-md -translate-x-1/2 -translate-y-1/2"
+                  className={`${dialogBackdrop} z-[60]`}
                 >
-                  <button
-                    onClick={() => setShowRejectModal(false)}
-                    className="top-4 right-4 absolute text-gray-400 hover:text-gray-600"
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                    transition={{ type: "spring", duration: 0.3 }}
+                    className={`${dialogCard} relative mx-4 shadow-lg`}
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <X size={24} />
-                  </button>
-                  <div className="p-8">
-                    <div className="flex justify-center mb-6">
-                      <div className="flex justify-center items-center bg-red-100 rounded-full w-16 h-16">
-                        <XCircle size={32} className="text-red-600" />
+                    <button
+                      onClick={() => setShowRejectModal(false)}
+                      className="top-4 right-4 absolute text-gray-400 hover:text-gray-600"
+                    >
+                      <X size={24} />
+                    </button>
+                    <div className="p-8">
+                      <div className="flex justify-center mb-6">
+                        <div className="flex justify-center items-center bg-red-100 rounded-full w-16 h-16">
+                          <XCircle size={32} className="text-red-600" />
+                        </div>
                       </div>
-                    </div>
-                    <Paragraph3 className="mb-2 text-gray-900 text-center">
-                      Reject Product?
-                    </Paragraph3>
-                    <Paragraph1 className="mb-4 text-gray-600 text-center">
-                      "{displayProduct.name}" will be moved to rejected
-                      listings.
-                    </Paragraph1>
-                    <div className="mb-6">
-                      <label className="block mb-2 font-medium text-gray-700 text-sm">
-                        Rejection Reason*
-                      </label>
-                      <textarea
-                        value={rejectionComment}
-                        onChange={(e) => setRejectionComment(e.target.value)}
-                        placeholder="Enter reason for rejection..."
-                        className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 w-full min-h-24 text-sm"
-                      />
-                    </div>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => {
-                          setShowRejectModal(false);
-                          setRejectionComment("");
-                        }}
-                        disabled={isRejecting}
-                        className="flex-1 hover:bg-gray-50 disabled:opacity-50 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 transition disabled:cursor-not-allowed"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (onReject && rejectionComment.trim()) {
-                            onReject(displayProduct.id, rejectionComment);
+                      <Paragraph3 className="mb-2 text-gray-900 text-center">
+                        Reject Product?
+                      </Paragraph3>
+                      <Paragraph1 className="mb-4 text-gray-600 text-center">
+                        "{displayProduct.name}" will be moved to rejected
+                        listings.
+                      </Paragraph1>
+                      <div className="mb-6">
+                        <label className="block mb-2 font-medium text-gray-700 text-sm">
+                          Rejection Reason*
+                        </label>
+                        <textarea
+                          value={rejectionComment}
+                          onChange={(e) => setRejectionComment(e.target.value)}
+                          placeholder="Enter reason for rejection..."
+                          className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 w-full min-h-24 text-sm"
+                        />
+                      </div>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => {
                             setShowRejectModal(false);
                             setRejectionComment("");
-                            onClose();
-                          }
-                        }}
-                        disabled={!rejectionComment.trim() || isRejecting}
-                        className="flex flex-1 justify-center items-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 px-4 py-3 rounded-lg font-medium text-white transition disabled:cursor-not-allowed"
-                      >
-                        {isRejecting ? (
-                          <>
-                            <div className="border-2 border-white border-t-transparent rounded-full w-4 h-4 animate-spin" />
-                            Rejecting...
-                          </>
-                        ) : (
-                          <>
-                            <XCircle size={18} />
-                            Reject
-                          </>
-                        )}
-                      </button>
+                          }}
+                          disabled={isRejecting}
+                          className={`${buttonSecondary} flex-1 py-3 disabled:cursor-not-allowed`}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (onReject && rejectionComment.trim()) {
+                              onReject(displayProduct.id, rejectionComment);
+                              setShowRejectModal(false);
+                              setRejectionComment("");
+                              onClose();
+                            }
+                          }}
+                          disabled={!rejectionComment.trim() || isRejecting}
+                          className="flex flex-1 justify-center items-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 px-4 py-3 rounded-lg font-medium text-white transition disabled:cursor-not-allowed"
+                        >
+                          {isRejecting ? (
+                            <>
+                              <div className="border-2 border-white border-t-transparent rounded-full w-4 h-4 animate-spin" />
+                              Rejecting...
+                            </>
+                          ) : (
+                            <>
+                              <XCircle size={18} />
+                              Reject
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  </motion.div>
                 </motion.div>
               </>
             )}
@@ -838,66 +848,68 @@ export default function ListingDetailModal({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onClick={() => setShowSendToPendingModal(false)}
-                  className="z-50 fixed inset-0 bg-black/50"
-                />
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                  transition={{ type: "spring", duration: 0.3 }}
-                  className="top-1/2 left-1/2 z-50 fixed bg-white shadow-lg mx-4 rounded-xl w-full max-w-md -translate-x-1/2 -translate-y-1/2"
+                  className={`${dialogBackdrop} z-[60]`}
                 >
-                  <button
-                    onClick={() => setShowSendToPendingModal(false)}
-                    className="top-4 right-4 absolute text-gray-400 hover:text-gray-600"
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                    transition={{ type: "spring", duration: 0.3 }}
+                    className={`${dialogCard} relative mx-4 shadow-lg`}
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <X size={24} />
-                  </button>
-                  <div className="p-8">
-                    <div className="flex justify-center mb-6">
-                      <div className="flex justify-center items-center bg-amber-100 rounded-full w-16 h-16">
-                        <Clock size={32} className="text-amber-600" />
+                    <button
+                      onClick={() => setShowSendToPendingModal(false)}
+                      className="top-4 right-4 absolute text-gray-400 hover:text-gray-600"
+                    >
+                      <X size={24} />
+                    </button>
+                    <div className="p-8">
+                      <div className="flex justify-center mb-6">
+                        <div className="flex justify-center items-center bg-amber-100 rounded-full w-16 h-16">
+                          <Clock size={32} className="text-amber-600" />
+                        </div>
+                      </div>
+                      <Paragraph3 className="mb-2 text-gray-900 text-center">
+                        Revert to pending?
+                      </Paragraph3>
+                      <Paragraph1 className="mb-8 text-gray-700 text-center">
+                        "{displayProduct.name}" will be removed from active
+                        listings and moved back to the pending queue.
+                      </Paragraph1>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => setShowSendToPendingModal(false)}
+                          disabled={isSendingToPending}
+                          className={`${buttonSecondary} flex-1 py-3 disabled:cursor-not-allowed`}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (onSendToPending) {
+                              onSendToPending(displayProduct.id);
+                              setShowSendToPendingModal(false);
+                            }
+                          }}
+                          disabled={isSendingToPending}
+                          className="flex flex-1 justify-center items-center gap-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 px-4 py-3 rounded-lg font-medium text-white whitespace-nowrap transition disabled:cursor-not-allowed"
+                        >
+                          {isSendingToPending ? (
+                            <>
+                              <div className="border-2 border-white border-t-transparent rounded-full w-4 h-4 animate-spin" />
+                              Reverting...
+                            </>
+                          ) : (
+                            <>
+                              <Clock size={18} />
+                              Revert to Pending
+                            </>
+                          )}
+                        </button>
                       </div>
                     </div>
-                    <Paragraph3 className="mb-2 text-gray-900 text-center">
-                      Revert to pending?
-                    </Paragraph3>
-                    <Paragraph1 className="mb-8 text-gray-700 text-center">
-                      "{displayProduct.name}" will be removed from active
-                      listings and moved back to the pending queue.
-                    </Paragraph1>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => setShowSendToPendingModal(false)}
-                        disabled={isSendingToPending}
-                        className="flex-1 hover:bg-gray-50 disabled:opacity-50 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 transition disabled:cursor-not-allowed"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (onSendToPending) {
-                            onSendToPending(displayProduct.id);
-                            setShowSendToPendingModal(false);
-                          }
-                        }}
-                        disabled={isSendingToPending}
-                        className="flex flex-1 justify-center items-center gap-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 px-4 py-3 rounded-lg font-medium text-white whitespace-nowrap transition disabled:cursor-not-allowed"
-                      >
-                        {isSendingToPending ? (
-                          <>
-                            <div className="border-2 border-white border-t-transparent rounded-full w-4 h-4 animate-spin" />
-                            Reverting...
-                          </>
-                        ) : (
-                          <>
-                            <Clock size={18} />
-                            Revert to Pending
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
+                  </motion.div>
                 </motion.div>
               </>
             )}

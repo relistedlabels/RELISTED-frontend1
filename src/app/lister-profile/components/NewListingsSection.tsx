@@ -91,21 +91,26 @@ export default function NewListingsSection({
             <div className="gap-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
               {products.map((product) => {
                 const status = (product as { status?: string }).status;
+                const brand =
+                  typeof product.brand === "string"
+                    ? product.brand
+                    : product.brand?.name || "";
                 return (
-                <ProductCard
-                  id={product.id}
-                  image={product.image}
-                  brand={product.brand?.name || "BRAND"}
-                  name={product.name}
-                  price={`₦${(product.originalValue || 0).toLocaleString()}`}
-                  dailyPrice={product.dailyPrice}
-                  resalePrice={product.resalePrice}
-                  listingType={product.listingType}
-                  size={product.measurement}
-                  isSold={status === "SOLD"}
-                  isRentedOut={status === "RENTED"}
-                />
-              );
+                  <ProductCard
+                    key={product.id}
+                    id={product.id}
+                    image={product.image}
+                    brand={brand}
+                    name={product.name}
+                    price={`₦${(product.originalValue || 0).toLocaleString()}`}
+                    dailyPrice={product.dailyPrice}
+                    resalePrice={product.resalePrice}
+                    listingType={product.listingType}
+                    size={product.measurement}
+                    isSold={status === "SOLD"}
+                    isRentedOut={status === "RENTED"}
+                  />
+                );
               })}
             </div>
 

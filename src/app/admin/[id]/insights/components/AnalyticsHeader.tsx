@@ -1,0 +1,359 @@
+// ENDPOINTS: GET /api/admin/analytics/stats (with timeframe filters)
+"use client";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
+import { HiOutlineDownload } from "react-icons/hi";
+import {
+  HiOutlineAcademicCap,
+  HiOutlineChevronDown,
+  HiOutlineClock,
+  HiOutlineMapPin,
+  HiOutlineScale,
+} from "react-icons/hi2";
+import AdminPageHeader from "@/app/admin/components/AdminPageHeader";
+import { Paragraph1 } from "@/common/ui/Text";
+
+interface AnalyticsHeaderProps {
+  timeframeType: "all_time" | "year" | "month";
+  selectedYear: number;
+  selectedMonth: number;
+  onTimeframeChange: (type: "all_time" | "year" | "month") => void;
+  onYearChange: (year: number) => void;
+  onMonthChange: (month: number) => void;
+}
+
+interface StatItemProps {
+  icon: React.ElementType;
+  label: string;
+}
+
+const StatItem: React.FC<StatItemProps> = ({ icon: Icon, label }) => (
+  <div className="flex items-center gap-2 px-4 first:pl-0 border-r border-gray-200 last:border-0">
+    <Icon className="w-4 h-4 text-yellow-600" />
+    <Paragraph1 className="text-xs font-semibold text-gray-700">
+      {label}
+    </Paragraph1>
+  </div>
+);
+
+type TimeframeType = "all_time" | "year" | "month";
+
+const months = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+const getYears = () => {
+  const currentYear = new Date().getFullYear();
+  return Array.from({ length: 10 }, (_, i) => currentYear - i);
+};
+
+const TimeframeDropdown: React.FC<{
+  timeframeType: TimeframeType;
+  selectedYear: number;
+  selectedMonth: number;
+  onTimeframeChange: (type: TimeframeType) => void;
+  onYearChange: (year: number) => void;
+  onMonthChange: (month: number) => void;
+}> = ({
+  timeframeType,
+  selectedYear,
+  selectedMonth,
+  onTimeframeChange,
+  onYearChange,
+  onMonthChange,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isYearOpen, setIsYearOpen] = useState(false);
+  const [isMonthOpen, setIsMonthOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+        setIsYearOpen(false);
+        setIsMonthOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const getDisplayLabel = () => {
+    if (timeframeType === "all_time") return "All Time";
+    if (timeframeType === "year") return `Year ${selectedYear}`;
+    if (timeframeType === "month")
+      return `${months[selectedMonth]} ${selectedYear}`;
+    return "Select Period";
+  };
+
+  return (
+    <div ref={dropdownRef} className="flex items-center gap-2">
+      {/* Main Timeframe Dropdown */}
+      <div className="relative">
+        <button type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center justify-between px-4 py-2 border border-gray-200 rounded-lg bg-white cursor-pointer hover:bg-gray-50 transition-colors min-w-[180px]"
+        >
+          <Paragraph1 className="text-sm font-medium text-gray-700">
+            {getDisplayLabel()}
+          </Paragraph1>
+          <HiOutlineChevronDown
+            className={`w-4 h-4 text-gray-400 transition-transform ${
+              isOpen ? "rotate-180" : ""
+            }`}
+          />
+        </button>
+
+        {isOpen && (
+          <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+            <button type="button"
+              onClick={() => {
+                onTimeframeChange("all_time");
+                setIsOpen(false);
+              }}
+              className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
+            >
+              <Paragraph1
+                className={`text-sm font-medium ${
+                  timeframeType === "all_time"
+                    ? "text-yellow-600"
+                    : "text-gray-700"
+                }`}
+              >
+                All Time
+              </Paragraph1>
+            </button>
+            <button type="button"
+              onClick={() => {
+                onTimeframeChange("year");
+                setIsOpen(false);
+              }}
+              className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
+            >
+              <Paragraph1
+                className={`text-sm font-medium ${
+                  timeframeType === "year" ? "text-yellow-600" : "text-gray-700"
+                }`}
+              >
+                By Year
+              </Paragraph1>
+            </button>
+            <button type="button"
+              onClick={() => {
+                onTimeframeChange("month");
+                setIsOpen(false);
+              }}
+              className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
+            >
+              <Paragraph1
+                className={`text-sm font-medium ${
+                  timeframeType === "month"
+                    ? "text-yellow-600"
+                    : "text-gray-700"
+                }`}
+              >
+                By Month
+              </Paragraph1>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Year Dropdown - Show when "year" is selected */}
+      {timeframeType === "year" && (
+        <div className="relative">
+          <button type="button"
+            onClick={() => setIsYearOpen(!isYearOpen)}
+            className="flex items-center justify-between px-4 py-2 border border-yellow-300 rounded-lg bg-yellow-50 cursor-pointer hover:bg-yellow-100 transition-colors min-w-[140px]"
+          >
+            <Paragraph1 className="text-sm font-medium text-gray-700">
+              {selectedYear}
+            </Paragraph1>
+            <HiOutlineChevronDown
+              className={`w-4 h-4 text-yellow-600 transition-transform ${
+                isYearOpen ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+
+          {isYearOpen && (
+            <div className="absolute top-full left-0 mt-2 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
+              {getYears().map((year) => (
+                <button type="button"
+                  key={year}
+                  onClick={() => {
+                    onYearChange(year);
+                    setIsYearOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 hover:bg-yellow-50 transition-colors border-b border-gray-100 last:border-0"
+                >
+                  <Paragraph1
+                    className={`text-sm font-medium ${
+                      selectedYear === year
+                        ? "text-yellow-600"
+                        : "text-gray-700"
+                    }`}
+                  >
+                    {year}
+                  </Paragraph1>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Month & Year Dropdowns - Show when "month" is selected */}
+      {timeframeType === "month" && (
+        <>
+          <div className="relative">
+            <button type="button"
+              onClick={() => setIsMonthOpen(!isMonthOpen)}
+              className="flex items-center justify-between px-4 py-2 border border-yellow-300 rounded-lg bg-yellow-50 cursor-pointer hover:bg-yellow-100 transition-colors min-w-[140px]"
+            >
+              <Paragraph1 className="text-sm font-medium text-gray-700">
+                {months[selectedMonth]}
+              </Paragraph1>
+              <HiOutlineChevronDown
+                className={`w-4 h-4 text-yellow-600 transition-transform ${
+                  isMonthOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {isMonthOpen && (
+              <div className="absolute top-full left-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
+                {months.map((month, index) => (
+                  <button type="button"
+                    key={month}
+                    onClick={() => {
+                      onMonthChange(index);
+                      setIsMonthOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-yellow-50 transition-colors border-b border-gray-100 last:border-0"
+                  >
+                    <Paragraph1
+                      className={`text-sm font-medium ${
+                        selectedMonth === index
+                          ? "text-yellow-600"
+                          : "text-gray-700"
+                      }`}
+                    >
+                      {month}
+                    </Paragraph1>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="relative">
+            <button type="button"
+              onClick={() => setIsYearOpen(!isYearOpen)}
+              className="flex items-center justify-between px-4 py-2 border border-yellow-300 rounded-lg bg-yellow-50 cursor-pointer hover:bg-yellow-100 transition-colors min-w-[140px]"
+            >
+              <Paragraph1 className="text-sm font-medium text-gray-700">
+                {selectedYear}
+              </Paragraph1>
+              <HiOutlineChevronDown
+                className={`w-4 h-4 text-yellow-600 transition-transform ${
+                  isYearOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {isYearOpen && (
+              <div className="absolute top-full left-0 mt-2 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
+                {getYears().map((year) => (
+                  <button type="button"
+                    key={year}
+                    onClick={() => {
+                      onYearChange(year);
+                      setIsYearOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-yellow-50 transition-colors border-b border-gray-100 last:border-0"
+                  >
+                    <Paragraph1
+                      className={`text-sm font-medium ${
+                        selectedYear === year
+                          ? "text-yellow-600"
+                          : "text-gray-700"
+                      }`}
+                    >
+                      {year}
+                    </Paragraph1>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+const AnalyticsHeader: React.FC<AnalyticsHeaderProps> = ({
+  timeframeType,
+  selectedYear,
+  selectedMonth,
+  onTimeframeChange,
+  onYearChange,
+  onMonthChange,
+}) => {
+  return (
+    <div className="w-full ">
+      {/* Top Row: Title and Actions */}
+      <AdminPageHeader
+        title="Marketplace insights"
+        action={
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Timeframe Selection */}
+            <TimeframeDropdown
+              timeframeType={timeframeType}
+              selectedYear={selectedYear}
+              selectedMonth={selectedMonth}
+              onTimeframeChange={onTimeframeChange}
+              onYearChange={onYearChange}
+              onMonthChange={onMonthChange}
+            />
+
+            {/* Export Button */}
+            <button type="button" className="flex- hidden items-center gap-2 px-5 py-2 bg-yellow-600 hover:bg-yellow-700 transition-colors rounded-lg text-white shadow-sm">
+              <HiOutlineDownload className="w-4 h-4" />
+              <Paragraph1 className="text-sm font-bold">
+                Export Report
+              </Paragraph1>
+            </button>
+          </div>
+        }
+      />
+
+      {/* Bottom Row: Inline Stats */}
+      <div className="flex- hidden items-center py-4 border-y border-gray-300">
+        <StatItem icon={HiOutlineAcademicCap} label="Chanel" />
+        <StatItem icon={HiOutlineMapPin} label="Lagos" />
+        <StatItem icon={HiOutlineScale} label="2.3%" />
+        <StatItem icon={HiOutlineClock} label="1.1 days" />
+      </div>
+    </div>
+  );
+};
+
+export default AnalyticsHeader;

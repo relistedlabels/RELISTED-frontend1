@@ -10,10 +10,22 @@ import {
   ShoppingBagIcon,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
+import {
+  slidePanelBackdrop,
+  slidePanelBody,
+  slidePanelFooter,
+  slidePanelHeader,
+  slidePanelSheetPinned,
+  slidePanelTitle,
+} from "@/common/ui/dashboardClasses";
 import { Paragraph1, Paragraph2 } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
 import Link from "next/link";
 import RentalCartSummary from "@/app/shop/cart/components/RentalCartSummary";
+import { useNavbarCartCount } from "@/lib/queries/renters/useNavbarCartCount";
+import { useUserStore } from "@/store/useUserStore";
+import MobileGuestAuthSheet from "./MobileGuestAuthSheet";
 
 // --------------------
 // Slide-in Filter Panel
@@ -21,11 +33,15 @@ import RentalCartSummary from "@/app/shop/cart/components/RentalCartSummary";
 interface RentalCartViewPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  isAuthenticated: boolean;
+  onRequireAuth: () => void;
 }
 
 const RentalCartViewPanel: React.FC<RentalCartViewPanelProps> = ({
   isOpen,
   onClose,
+  isAuthenticated,
+  onRequireAuth,
 }) => {
   const minPrice = 50000;
   const maxPrice = 200000;
@@ -39,14 +55,14 @@ const RentalCartViewPanel: React.FC<RentalCartViewPanelProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-99 bg-black/70 backdrop--blur-sm"
+          className={slidePanelBackdrop}
           onClick={onClose}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="fixed top-0 right-0 h-screen hide-scrollbar overflow-y-auto bg-white shadow-2xl px-4  flex flex-col w-full sm:w-114"
+            className={slidePanelSheetPinned}
             role="dialog"
             aria-modal="true"
             aria-label="Product RentalCartView"
@@ -58,7 +74,7 @@ const RentalCartViewPanel: React.FC<RentalCartViewPanelProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex justify-between sticky top-0 items-center pb-4 border-b border-gray-100 pt-6 z-10  bg-white">
+            <div className={slidePanelHeader}>
               <button
                 onClick={onClose}
                 className="text-gray-500 xl:hidden hover:text-black p-1 rounded-full transition"
@@ -67,9 +83,7 @@ const RentalCartViewPanel: React.FC<RentalCartViewPanelProps> = ({
                 <ArrowLeft size={20} />
               </button>
 
-              <Paragraph1 className=" font-bold uppercase tracking-widest text-gray-800">
-                Your Cart{" "}
-              </Paragraph1>
+              <Paragraph1 className={slidePanelTitle}>Your Cart </Paragraph1>
               <button
                 onClick={onClose}
                 className="text-gray-500  hover:text-black p-1 rounded-full transition"
@@ -80,24 +94,34 @@ const RentalCartViewPanel: React.FC<RentalCartViewPanelProps> = ({
             </div>
 
             {/* Content */}
-            <div className="grow pt-4 pb-20 space-y-8">
+            <div className={`${slidePanelBody} space-y-8 pt-4`}>
               <RentalCartSummary />
             </div>
 
             {/* Footer */}
-            <div className="mt-auto py-2 text-black bg-white flex flex-col gap-4 sticky bottom-0">
-              <Link
-                onClick={onClose}
-                href="/shop/cart"
-                className="flex-1 flex justify-center px-4 py-3 text-sm font-semibold border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-              >
-                <Paragraph1>View Cart </Paragraph1>
-              </Link>
+            <div className={`${slidePanelFooter} flex flex-col gap-4`}>
+              {isAuthenticated ? (
+                <Link
+                  onClick={onClose}
+                  href="/shop/cart"
+                  className={`${buttonSecondary} w-full`}
+                >
+                  <Paragraph1>View Cart </Paragraph1>
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onRequireAuth();
+                  }}
+                  className={`${buttonSecondary} w-full`}
+                >
+                  <Paragraph1>View Cart </Paragraph1>
+                </button>
+              )}
 
-              <button
-                onClick={onClose}
-                className="flex-1 px-4 py-3 text-sm font-semibold bg-black text-white rounded-lg hover:bg-gray-900 transition flex items-center justify-center gap-2"
-              >
+              <button type="button" onClick={onClose} className={`${buttonPrimary} w-full`}>
                 <Paragraph1>Continue Shopping</Paragraph1>
               </button>
             </div>
@@ -113,19 +137,51 @@ const RentalCartViewPanel: React.FC<RentalCartViewPanelProps> = ({
 // --------------------
 const RentalCartView: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const cartCount = useNavbarCartCount();
+  const token = useUserStore((s) => s.token);
+  const isAuthenticated = Boolean(token);
+
+  const openCartOrAuth = () => {
+    if (!isAuthenticated) {
+      setAuthOpen(true);
+      return;
+    }
+    setIsOpen(true);
+  };
 
   return (
     <>
       {/* Toggle Button */}
       <button
-        onClick={() => setIsOpen(true)}
-        className="flex rounded-lg whitespace-nowrap bg-black text-white  items-center  gap-1 cursor-pointer  transition "
+        type="button"
+        onClick={openCartOrAuth}
+        className="flex items-center gap-1.5 rounded-lg whitespace-nowrap bg-black px-2 py-1 text-white cursor-pointer transition"
+        aria-label={
+          cartCount > 0 ? `Cart, ${cartCount} items` : "Open cart preview"
+        }
       >
-        <ShoppingBagIcon className="w-6 h-6" /> <Paragraph1> 0</Paragraph1>
+        <ShoppingBagIcon className="w-5 h-5 shrink-0" aria-hidden />
+        <Paragraph1 className="text-sm font-medium">Cart</Paragraph1>
+        {cartCount > 0 ? (
+          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold leading-none text-black">
+            {cartCount > 99 ? "99+" : cartCount}
+          </span>
+        ) : null}
       </button>
 
-      {/* Filter Panel */}
-      <RentalCartViewPanel isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <RentalCartViewPanel
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        isAuthenticated={isAuthenticated}
+        onRequireAuth={() => setAuthOpen(true)}
+      />
+
+      <MobileGuestAuthSheet
+        isOpen={authOpen}
+        onClose={() => setAuthOpen(false)}
+        redirectUrl="/shop/cart"
+      />
     </>
   );
 };

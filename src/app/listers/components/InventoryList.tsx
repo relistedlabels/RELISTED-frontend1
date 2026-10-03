@@ -19,6 +19,7 @@ import ClosetInfoCard from "./ClosetInfoCard";
 import CreateClosetModal from "./CreateClosetModal";
 import InventoryItemCard, { type InventoryItem } from "./InventoryItemCard";
 import InventoryTabsAndSearch from "./InventoryTabsAndSearch";
+import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
 
 const formatStatusLabel = (
   status:
@@ -205,14 +206,14 @@ const InventoryList: React.FC<{
               <button
                 type="button"
                 onClick={() => setCreateClosetOpen(true)}
-                className="px-4 py-2 rounded-lg border border-gray-300 font-semibold text-gray-900 text-sm hover:bg-gray-50 transition duration-150"
+                className={buttonSecondary}
               >
                 Create closet
               </button>
             ) : null}
             <Link
               href="/listers/inventory/product-upload"
-              className="flex items-center space-x-2 bg-black hover:bg-gray-800 px-4 py-2 rounded-lg font-semibold text-white text-sm transition duration-150"
+              className={`${buttonPrimary} space-x-2`}
             >
               <Plus className="w-4 h-4" />
               <Paragraph1>Add New Item</Paragraph1>

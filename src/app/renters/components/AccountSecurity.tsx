@@ -3,6 +3,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { buttonPrimary } from "@/common/ui/buttonClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import { HiOutlineEye, HiEyeSlash } from "react-icons/hi2";
 
@@ -138,7 +139,7 @@ const AccountSecurity: React.FC = () => {
   };
   return (
     <div className="font-sans ">
-      <Paragraph1 className="text-xl uppercase font-bold text-gray-900 mb-6">
+      <Paragraph1 className="mb-6 font-bold text-gray-900 text-lg">
         Security
       </Paragraph1>
 
@@ -198,7 +199,7 @@ const AccountSecurity: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting || isPending}
-            className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 disabled:opacity-50 transition duration-150"
+            className={buttonPrimary}
           >
             {isSubmitting || isPending ? "Updating..." : "Update Password"}
           </button>

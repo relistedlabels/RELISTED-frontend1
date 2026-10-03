@@ -25,6 +25,9 @@ export interface ListingTag {
 export interface ListingBrand {
   id: string;
   name: string;
+  isShopVisible?: boolean;
+  isShopPrioritized?: boolean;
+  shopPriorityOrder?: number | null;
 }
 
 export interface Curator {
@@ -378,6 +381,14 @@ export const productsApi = {
   deleteBrand: (brandId: string) =>
     apiFetch<{ success: true; message: string }>(`/brands/${brandId}`, {
       method: "DELETE",
+    }),
+
+  getBrandDeleteImpact: (brandId: string) =>
+    apiFetch<{
+      success: true;
+      data: { brandId: string; productCount: number };
+    }>(`/brands/${brandId}/delete-impact`, {
+      method: "GET",
     }),
 
   // 28. POST /api/admin/products/bulk/deactivate

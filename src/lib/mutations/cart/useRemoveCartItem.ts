@@ -58,6 +58,7 @@ export const useRemoveCartItem = () => {
       queryClient.invalidateQueries({
         queryKey: ["renters", "cart", "summary"],
       });
+      queryClient.invalidateQueries({ queryKey: ["orderSummary"] });
     },
   });
 };

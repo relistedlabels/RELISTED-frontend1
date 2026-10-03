@@ -1,0 +1,970 @@
+[
+  {
+    "label": "Home — first paint",
+    "url": "http://localhost:3000/",
+    "title": "RELISTED LABELS is a peer-to-peer rental platform redefining how women access fashion across Africa.",
+    "headings": [
+      "Endless Style",
+      "Popular Categories",
+      "VACATION OUTFITS",
+      "BLACK TIE OUTFITS ",
+      "Become a Lister",
+      "RELISTED"
+    ],
+    "heroText": "Endless Style\nshort plans, long compliments\n\nFind Your Next Fit\n\nList Items",
+    "buttons": [
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop?title=Shop&description=Browse+all+collections"
+      },
+      {
+        "tag": "a",
+        "text": "Style Spotlight",
+        "href": "/style-spotlight"
+      },
+      {
+        "tag": "a",
+        "text": "How it works",
+        "href": "/how-it-works"
+      },
+      {
+        "tag": "a",
+        "text": "",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/renters/favorites"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/shop/cart"
+      },
+      {
+        "tag": "a",
+        "text": "Sign In",
+        "href": "/auth/sign-in?redirect=%2F"
+      },
+      {
+        "tag": "a",
+        "text": "Sign Up",
+        "href": "/auth/create-account?redirect=%2F"
+      },
+      {
+        "tag": "a",
+        "text": "Find Your Next Fit",
+        "href": "/shop"
+      },
+      {
+        "tag": "button",
+        "text": "List Items",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "Browse All →",
+        "href": "/style-spotlight"
+      },
+      {
+        "tag": "a",
+        "text": "Night OutIrresistible looks designed to turn heads, spark chemistry, and leave a",
+        "href": "/shop?tags=Night%20Out&title=Night%20Out&description=Irresistible%20looks%20designed%20to%20turn%20heads%2C%20spark%20chemistry%2C%20and%20leave%20a%20lasting%20impression."
+      },
+      {
+        "tag": "a",
+        "text": "Brunch OutfitsEffortlessly chic styles made for slow mornings, good vibes, and I",
+        "href": "/shop?tags=Brunch%20Outfits&title=Brunch%20Outfits&description=Effortlessly%20chic%20styles%20made%20for%20slow%20mornings%2C%20good%20vibes%2C%20and%20Instagram-worthy%20moments."
+      },
+      {
+        "tag": "a",
+        "text": "Special OccasionsElevated pieces crafted for moments that matter — when looking ",
+        "href": "/shop?tags=Special%20Occasions&title=Special%20Occasions&description=Elevated%20pieces%20crafted%20for%20moments%20that%20matter%20%E2%80%94%20when%20looking%20unforgettable%20is%20non-negotiable."
+      },
+      {
+        "tag": "a",
+        "text": "Corporate ClosetPower dressing redefined. Polished, confident silhouettes for th",
+        "href": "/shop?tags=Corporate%20Closet&title=Corporate%20Closet&description=Power%20dressing%20redefined.%20Polished%2C%20confident%20silhouettes%20for%20the%20modern%20professional%20woman."
+      },
+      {
+        "tag": "a",
+        "text": "Learn More About Delivery",
+        "href": "/how-it-works#delivery"
+      },
+      {
+        "tag": "button",
+        "text": "Start Listing",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "About",
+        "href": "/about"
+      },
+      {
+        "tag": "a",
+        "text": "Contact",
+        "href": "/contact-us"
+      },
+      {
+        "tag": "a",
+        "text": "Privacy Policy",
+        "href": "/privacy-policy"
+      },
+      {
+        "tag": "a",
+        "text": "Terms & Conditions",
+        "href": "/terms-and-conditions"
+      },
+      {
+        "tag": "a",
+        "text": "Browse all",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "All Listers",
+        "href": "/listers-marketplace"
+      },
+      {
+        "tag": "a",
+        "text": "Support",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Support%20Request"
+      },
+      {
+        "tag": "a",
+        "text": "Partnerships",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Partnership%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Press",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Press%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Careers",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Career%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Instagram",
+        "href": "https://www.instagram.com/relistedlabels?igsh=ZDZybGdwaGY5YWs5"
+      },
+      {
+        "tag": "a",
+        "text": "TikTok",
+        "href": "https://www.tiktok.com/@relistedlabels?_r=1&_t=ZS-94Ux8kvQOwf"
+      },
+      {
+        "tag": "button",
+        "text": "SUBSCRIBE",
+        "href": ""
+      }
+    ]
+  },
+  {
+    "label": "After clicking Find Your Next Fit",
+    "url": "http://localhost:3000/shop",
+    "title": "RELISTED LABELS is a peer-to-peer rental platform redefining how women access fashion across Africa.",
+    "headings": [
+      "Available Listings",
+      "RELISTED"
+    ],
+    "heroText": "Shop amazing\n\nStyle Brands",
+    "buttons": [
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop?title=Shop&description=Browse+all+collections"
+      },
+      {
+        "tag": "a",
+        "text": "Style Spotlight",
+        "href": "/style-spotlight"
+      },
+      {
+        "tag": "a",
+        "text": "How it works",
+        "href": "/how-it-works"
+      },
+      {
+        "tag": "a",
+        "text": "",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/renters/favorites"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/shop/cart"
+      },
+      {
+        "tag": "a",
+        "text": "Sign In",
+        "href": "/auth/sign-in?redirect=%2Fshop"
+      },
+      {
+        "tag": "a",
+        "text": "Sign Up",
+        "href": "/auth/create-account?redirect=%2Fshop"
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "About",
+        "href": "/about"
+      },
+      {
+        "tag": "a",
+        "text": "Contact",
+        "href": "/contact-us"
+      },
+      {
+        "tag": "a",
+        "text": "Privacy Policy",
+        "href": "/privacy-policy"
+      },
+      {
+        "tag": "a",
+        "text": "Terms & Conditions",
+        "href": "/terms-and-conditions"
+      },
+      {
+        "tag": "a",
+        "text": "Browse all",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "All Listers",
+        "href": "/listers-marketplace"
+      },
+      {
+        "tag": "a",
+        "text": "Support",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Support%20Request"
+      },
+      {
+        "tag": "a",
+        "text": "Partnerships",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Partnership%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Press",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Press%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Careers",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Career%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Instagram",
+        "href": "https://www.instagram.com/relistedlabels?igsh=ZDZybGdwaGY5YWs5"
+      },
+      {
+        "tag": "a",
+        "text": "TikTok",
+        "href": "https://www.tiktok.com/@relistedlabels?_r=1&_t=ZS-94Ux8kvQOwf"
+      },
+      {
+        "tag": "button",
+        "text": "SUBSCRIBE",
+        "href": ""
+      }
+    ],
+    "action": "Clicked Find Your Next Fit"
+  },
+  {
+    "label": "Shop — scrolled to listings",
+    "url": "http://localhost:3000/shop",
+    "title": "RELISTED LABELS is a peer-to-peer rental platform redefining how women access fashion across Africa.",
+    "headings": [
+      "Available Listings",
+      "RELISTED"
+    ],
+    "heroText": "Shop amazing\n\nStyle Brands",
+    "buttons": [
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop?title=Shop&description=Browse+all+collections"
+      },
+      {
+        "tag": "a",
+        "text": "Style Spotlight",
+        "href": "/style-spotlight"
+      },
+      {
+        "tag": "a",
+        "text": "How it works",
+        "href": "/how-it-works"
+      },
+      {
+        "tag": "a",
+        "text": "",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/renters/favorites"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/shop/cart"
+      },
+      {
+        "tag": "a",
+        "text": "Sign In",
+        "href": "/auth/sign-in?redirect=%2Fshop"
+      },
+      {
+        "tag": "a",
+        "text": "Sign Up",
+        "href": "/auth/create-account?redirect=%2Fshop"
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "About",
+        "href": "/about"
+      },
+      {
+        "tag": "a",
+        "text": "Contact",
+        "href": "/contact-us"
+      },
+      {
+        "tag": "a",
+        "text": "Privacy Policy",
+        "href": "/privacy-policy"
+      },
+      {
+        "tag": "a",
+        "text": "Terms & Conditions",
+        "href": "/terms-and-conditions"
+      },
+      {
+        "tag": "a",
+        "text": "Browse all",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "All Listers",
+        "href": "/listers-marketplace"
+      },
+      {
+        "tag": "a",
+        "text": "Support",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Support%20Request"
+      },
+      {
+        "tag": "a",
+        "text": "Partnerships",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Partnership%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Press",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Press%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Careers",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Career%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Instagram",
+        "href": "https://www.instagram.com/relistedlabels?igsh=ZDZybGdwaGY5YWs5"
+      },
+      {
+        "tag": "a",
+        "text": "TikTok",
+        "href": "https://www.tiktok.com/@relistedlabels?_r=1&_t=ZS-94Ux8kvQOwf"
+      },
+      {
+        "tag": "button",
+        "text": "SUBSCRIBE",
+        "href": ""
+      }
+    ]
+  },
+  {
+    "label": "Home — nav Shop area",
+    "url": "http://localhost:3000/",
+    "title": "RELISTED LABELS is a peer-to-peer rental platform redefining how women access fashion across Africa.",
+    "headings": [
+      "Endless Style",
+      "Popular Categories",
+      "VACATION OUTFITS",
+      "BLACK TIE OUTFITS ",
+      "Become a Lister",
+      "RELISTED"
+    ],
+    "heroText": "Endless Style\nshort plans, long compliments\n\nFind Your Next Fit\n\nList Items",
+    "buttons": [
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop?title=Shop&description=Browse+all+collections"
+      },
+      {
+        "tag": "a",
+        "text": "Brands",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "Style Spotlight",
+        "href": "/style-spotlight"
+      },
+      {
+        "tag": "a",
+        "text": "How it works",
+        "href": "/how-it-works"
+      },
+      {
+        "tag": "a",
+        "text": "",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/renters/favorites"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/shop/cart"
+      },
+      {
+        "tag": "a",
+        "text": "Sign In",
+        "href": "/auth/sign-in?redirect=%2F"
+      },
+      {
+        "tag": "a",
+        "text": "Sign Up",
+        "href": "/auth/create-account?redirect=%2F"
+      },
+      {
+        "tag": "a",
+        "text": "Find Your Next Fit",
+        "href": "/shop"
+      },
+      {
+        "tag": "button",
+        "text": "List Items",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "Browse All →",
+        "href": "/style-spotlight"
+      },
+      {
+        "tag": "a",
+        "text": "Night OutIrresistible looks designed to turn heads, spark chemistry, and leave a",
+        "href": "/shop?tags=Night%20Out&title=Night%20Out&description=Irresistible%20looks%20designed%20to%20turn%20heads%2C%20spark%20chemistry%2C%20and%20leave%20a%20lasting%20impression."
+      },
+      {
+        "tag": "a",
+        "text": "Brunch OutfitsEffortlessly chic styles made for slow mornings, good vibes, and I",
+        "href": "/shop?tags=Brunch%20Outfits&title=Brunch%20Outfits&description=Effortlessly%20chic%20styles%20made%20for%20slow%20mornings%2C%20good%20vibes%2C%20and%20Instagram-worthy%20moments."
+      },
+      {
+        "tag": "a",
+        "text": "Special OccasionsElevated pieces crafted for moments that matter — when looking ",
+        "href": "/shop?tags=Special%20Occasions&title=Special%20Occasions&description=Elevated%20pieces%20crafted%20for%20moments%20that%20matter%20%E2%80%94%20when%20looking%20unforgettable%20is%20non-negotiable."
+      },
+      {
+        "tag": "a",
+        "text": "Corporate ClosetPower dressing redefined. Polished, confident silhouettes for th",
+        "href": "/shop?tags=Corporate%20Closet&title=Corporate%20Closet&description=Power%20dressing%20redefined.%20Polished%2C%20confident%20silhouettes%20for%20the%20modern%20professional%20woman."
+      },
+      {
+        "tag": "a",
+        "text": "Learn More About Delivery",
+        "href": "/how-it-works#delivery"
+      },
+      {
+        "tag": "button",
+        "text": "Start Listing",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "About",
+        "href": "/about"
+      },
+      {
+        "tag": "a",
+        "text": "Contact",
+        "href": "/contact-us"
+      },
+      {
+        "tag": "a",
+        "text": "Privacy Policy",
+        "href": "/privacy-policy"
+      },
+      {
+        "tag": "a",
+        "text": "Terms & Conditions",
+        "href": "/terms-and-conditions"
+      },
+      {
+        "tag": "a",
+        "text": "Browse all",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "All Listers",
+        "href": "/listers-marketplace"
+      },
+      {
+        "tag": "a",
+        "text": "Support",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Support%20Request"
+      },
+      {
+        "tag": "a",
+        "text": "Partnerships",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Partnership%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Press",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Press%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Careers",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Career%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Instagram",
+        "href": "https://www.instagram.com/relistedlabels?igsh=ZDZybGdwaGY5YWs5"
+      },
+      {
+        "tag": "a",
+        "text": "TikTok",
+        "href": "https://www.tiktok.com/@relistedlabels?_r=1&_t=ZS-94Ux8kvQOwf"
+      },
+      {
+        "tag": "button",
+        "text": "SUBSCRIBE",
+        "href": ""
+      }
+    ]
+  },
+  {
+    "label": "Shop via nav link",
+    "url": "http://localhost:3000/shop?title=Shop&description=Browse+all+collections",
+    "title": "RELISTED LABELS is a peer-to-peer rental platform redefining how women access fashion across Africa.",
+    "headings": [
+      "Available Listings",
+      "RELISTED"
+    ],
+    "heroText": "Shop\n\nBrowse all collections",
+    "buttons": [
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop?title=Shop&description=Browse+all+collections"
+      },
+      {
+        "tag": "a",
+        "text": "Brands",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "Style Spotlight",
+        "href": "/style-spotlight"
+      },
+      {
+        "tag": "a",
+        "text": "How it works",
+        "href": "/how-it-works"
+      },
+      {
+        "tag": "a",
+        "text": "",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/renters/favorites"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/shop/cart"
+      },
+      {
+        "tag": "a",
+        "text": "Sign In",
+        "href": "/auth/sign-in?redirect=%2Fshop%3Ftitle%3DShop%26description%3DBrowse%2Ball%2Bcollections"
+      },
+      {
+        "tag": "a",
+        "text": "Sign Up",
+        "href": "/auth/create-account?redirect=%2Fshop%3Ftitle%3DShop%26description%3DBrowse%2Ball%2Bcollections"
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "About",
+        "href": "/about"
+      },
+      {
+        "tag": "a",
+        "text": "Contact",
+        "href": "/contact-us"
+      },
+      {
+        "tag": "a",
+        "text": "Privacy Policy",
+        "href": "/privacy-policy"
+      },
+      {
+        "tag": "a",
+        "text": "Terms & Conditions",
+        "href": "/terms-and-conditions"
+      },
+      {
+        "tag": "a",
+        "text": "Browse all",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "All Listers",
+        "href": "/listers-marketplace"
+      },
+      {
+        "tag": "a",
+        "text": "Support",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Support%20Request"
+      },
+      {
+        "tag": "a",
+        "text": "Partnerships",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Partnership%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Press",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Press%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Careers",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Career%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Instagram",
+        "href": "https://www.instagram.com/relistedlabels?igsh=ZDZybGdwaGY5YWs5"
+      },
+      {
+        "tag": "a",
+        "text": "TikTok",
+        "href": "https://www.tiktok.com/@relistedlabels?_r=1&_t=ZS-94Ux8kvQOwf"
+      },
+      {
+        "tag": "button",
+        "text": "SUBSCRIBE",
+        "href": ""
+      }
+    ]
+  },
+  {
+    "label": "Sign in page",
+    "url": "http://localhost:3000/auth/sign-in",
+    "title": "RELISTED LABELS is a peer-to-peer rental platform redefining how women access fashion across Africa.",
+    "headings": [],
+    "heroText": "",
+    "buttons": [
+      {
+        "tag": "a",
+        "text": "Forgot password?",
+        "href": "/auth/forgot-password"
+      },
+      {
+        "tag": "button",
+        "text": "Sign in",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Sign Up",
+        "href": ""
+      }
+    ]
+  },
+  {
+    "label": "Create account — choose role",
+    "url": "http://localhost:3000/auth/create-account",
+    "title": "RELISTED LABELS is a peer-to-peer rental platform redefining how women access fashion across Africa.",
+    "headings": [],
+    "heroText": "",
+    "buttons": [
+      {
+        "tag": "button",
+        "text": "Continue as a Renter or Buyer",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Continue as a Lister",
+        "href": ""
+      }
+    ]
+  },
+  {
+    "label": "How it works",
+    "url": "http://localhost:3000/how-it-works",
+    "title": "RELISTED LABELS is a peer-to-peer rental platform redefining how women access fashion across Africa.",
+    "headings": [
+      "ACCESS. EARN. ELEVATE.",
+      "ELEVATE YOUR STYLEWITHOUT THE COMMITMENT.",
+      "TURN YOUR CLOSETINTO A STREAM OF INCOME.",
+      "DELIVEREDACROSS LAGOS",
+      "FAQ",
+      "RELISTED"
+    ],
+    "heroText": "HOW IT WORKS\n\nACCESS. EARN. ELEVATE.\n\nRelisted makes fashion circular connecting those who want to wear standout pieces with those who own them. Whether you are here to rent for a moment or earn from your wardrobe, we have made it seamless.\n\nExplore\n\nList Items",
+    "buttons": [
+      {
+        "tag": "a",
+        "text": "Shop",
+        "href": "/shop?title=Shop&description=Browse+all+collections"
+      },
+      {
+        "tag": "a",
+        "text": "Style Spotlight",
+        "href": "/style-spotlight"
+      },
+      {
+        "tag": "a",
+        "text": "How it works",
+        "href": "/how-it-works"
+      },
+      {
+        "tag": "a",
+        "text": "",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/renters/favorites"
+      },
+      {
+        "tag": "a",
+        "text": "0",
+        "href": "/shop/cart"
+      },
+      {
+        "tag": "a",
+        "text": "Sign In",
+        "href": "/auth/sign-in?redirect=%2Fhow-it-works"
+      },
+      {
+        "tag": "a",
+        "text": "Sign Up",
+        "href": "/auth/create-account?redirect=%2Fhow-it-works"
+      },
+      {
+        "tag": "a",
+        "text": "Explore",
+        "href": "/shop"
+      },
+      {
+        "tag": "button",
+        "text": "List Items",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "Start Shopping",
+        "href": "/shop"
+      },
+      {
+        "tag": "button",
+        "text": "Become a Lister",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "Start Shopping",
+        "href": "/shop"
+      },
+      {
+        "tag": "button",
+        "text": "What is Relisted Labels?",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Who can use Relisted Labels?",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "What types of items can be listed?",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Is this like Airbnb for clothes?",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "What if someone damages my item?",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Can I rent something at the last minute?",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Do brands or vendors actually make money from this?",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Is renting cheaper than buying?",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Are you based in Lagos?",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Do you have a physical store?",
+        "href": ""
+      },
+      {
+        "tag": "button",
+        "text": "Show More",
+        "href": ""
+      },
+      {
+        "tag": "a",
+        "text": "Home",
+        "href": "/"
+      },
+      {
+        "tag": "a",
+        "text": "About",
+        "href": "/about"
+      },
+      {
+        "tag": "a",
+        "text": "Contact",
+        "href": "/contact-us"
+      },
+      {
+        "tag": "a",
+        "text": "Privacy Policy",
+        "href": "/privacy-policy"
+      },
+      {
+        "tag": "a",
+        "text": "Terms & Conditions",
+        "href": "/terms-and-conditions"
+      },
+      {
+        "tag": "a",
+        "text": "Browse all",
+        "href": "/shop"
+      },
+      {
+        "tag": "a",
+        "text": "All Listers",
+        "href": "/listers-marketplace"
+      },
+      {
+        "tag": "a",
+        "text": "Support",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Support%20Request"
+      },
+      {
+        "tag": "a",
+        "text": "Partnerships",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Partnership%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Press",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Press%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Careers",
+        "href": "mailto:relistedlabels.contact@gmail.com?subject=Career%20Inquiry"
+      },
+      {
+        "tag": "a",
+        "text": "Instagram",
+        "href": "https://www.instagram.com/relistedlabels?igsh=ZDZybGdwaGY5YWs5"
+      },
+      {
+        "tag": "a",
+        "text": "TikTok",
+        "href": "https://www.tiktok.com/@relistedlabels?_r=1&_t=ZS-94Ux8kvQOwf"
+      },
+      {
+        "tag": "button",
+        "text": "SUBSCRIBE",
+        "href": ""
+      }
+    ]
+  }
+]

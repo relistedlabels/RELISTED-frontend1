@@ -5,6 +5,10 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text";
+import {
+  ResponsiveDataTable,
+  type ResponsiveColumnDef,
+} from "@/common/ui/ResponsiveDataTable";
 import { TableSkeleton } from "@/common/ui/SkeletonLoaders";
 import { Eye, X } from "lucide-react";
 import { useAdmins } from "@/lib/queries/admin/useSettings";
@@ -31,6 +35,77 @@ export default function AdminManagementTab() {
   // API Mutation
   const { mutate: suspendAdmin, isPending: isSuspending } = useSuspendAdmin();
 
+  type AdminRow = (typeof admins)[0];
+  const adminColumns: ResponsiveColumnDef<AdminRow>[] = [
+    {
+      id: "name",
+      header: "Admin Name",
+      mobile: "primary",
+      render: (admin) => (
+        <Paragraph1 className="font-medium text-gray-900">{admin.name}</Paragraph1>
+      ),
+    },
+    {
+      id: "email",
+      header: "Email",
+      mobile: "detail",
+      render: (admin) => (
+        <Paragraph1 className="text-gray-600">{admin.email}</Paragraph1>
+      ),
+    },
+    {
+      id: "role",
+      header: "Role",
+      mobile: "detail",
+      render: (admin) => (
+        <Paragraph1 className="font-medium text-gray-900">{admin.role}</Paragraph1>
+      ),
+    },
+    {
+      id: "status",
+      header: "Status",
+      mobile: "badge",
+      render: (admin) => (
+        <span
+          className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${
+            admin.isSuspended
+              ? "bg-red-100 text-red-700"
+              : "bg-green-100 text-green-700"
+          }`}
+        >
+          {admin.isSuspended ? "Suspended" : "Active"}
+        </span>
+      ),
+    },
+    {
+      id: "lastActive",
+      header: "Last Active",
+      mobile: "detail",
+      render: (admin) => (
+        <Paragraph1 className="text-gray-600">
+          {new Date(admin.updatedAt).toLocaleDateString()}
+        </Paragraph1>
+      ),
+    },
+    {
+      id: "action",
+      header: "Action",
+      mobile: "action",
+      render: (admin) => (
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedAdmin(admin);
+            setShowAdminProfile(true);
+          }}
+          className="text-gray-600 transition-colors hover:text-gray-900"
+        >
+          <Eye size={20} />
+        </button>
+      ),
+    },
+  ];
+
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
@@ -46,105 +121,16 @@ export default function AdminManagementTab() {
       {showSkeleton ? (
         <TableSkeleton rows={5} columns={6} />
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-300">
-                <th className="text-left py-4 px-4">
-                  <Paragraph1 className="text-gray-900 font-bold">
-                    ADMIN NAME
-                  </Paragraph1>
-                </th>
-                <th className="text-left py-4 px-4">
-                  <Paragraph1 className="text-gray-900 font-bold">
-                    EMAIL
-                  </Paragraph1>
-                </th>
-                <th className="text-left py-4 px-4">
-                  <Paragraph1 className="text-gray-900 font-bold">
-                    ROLE
-                  </Paragraph1>
-                </th>
-                <th className="text-left py-4 px-4">
-                  <Paragraph1 className="text-gray-900 font-bold">
-                    STATUS
-                  </Paragraph1>
-                </th>
-                <th className="text-left py-4 px-4">
-                  <Paragraph1 className="text-gray-900 font-bold">
-                    LAST ACTIVE
-                  </Paragraph1>
-                </th>
-                <th className="text-left py-4 px-4">
-                  <Paragraph1 className="text-gray-900 font-bold">
-                    ACTION
-                  </Paragraph1>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {admins.length > 0 ? (
-                admins.map((admin) => (
-                  <tr
-                    key={admin.id}
-                    className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="py-4 px-4">
-                      <Paragraph1 className="text-gray-900 font-medium">
-                        {admin.name}
-                      </Paragraph1>
-                    </td>
-                    <td className="py-4 px-4">
-                      <Paragraph1 className="text-gray-600">
-                        {admin.email}
-                      </Paragraph1>
-                    </td>
-                    <td className="py-4 px-4">
-                      <Paragraph1 className="text-gray-900 font-medium">
-                        {admin.role}
-                      </Paragraph1>
-                    </td>
-                    <td className="py-4 px-4">
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                          admin.isSuspended
-                            ? "bg-red-100 text-red-700"
-                            : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {admin.isSuspended ? "Suspended" : "Active"}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4">
-                      <Paragraph1 className="text-gray-600">
-                        {new Date(admin.updatedAt).toLocaleDateString()}
-                      </Paragraph1>
-                    </td>
-                    <td className="py-4 px-4">
-                      <button
-                        onClick={() => {
-                          setSelectedAdmin(admin);
-                          setShowAdminProfile(true);
-                        }}
-                        className="text-gray-600 hover:text-gray-900 transition-colors"
-                      >
-                        <Eye size={20} />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="py-8 px-4 text-center">
-                    <Paragraph1 className="text-gray-500">
-                      No admins found
-                    </Paragraph1>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <ResponsiveDataTable
+          rows={admins}
+          columns={adminColumns}
+          getRowKey={(admin) => admin.id}
+          emptyState={
+            <Paragraph1 className="py-8 text-center text-gray-500">
+              No admins found
+            </Paragraph1>
+          }
+        />
       )}
 
       {/* Admin Profile Modal */}

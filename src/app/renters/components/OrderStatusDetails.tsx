@@ -1,22 +1,11 @@
 "use client";
 
-import React from "react";
-import {
-  ExternalLink,
-  Copy,
-  ChevronDown,
-} from "lucide-react";
+import React, { useMemo } from "react";
+import { ChevronDown } from "lucide-react";
 import { Paragraph1 } from "@/common/ui/Text";
 import DispatchWindowsDisplay, {
   type DispatchWindow,
 } from "@/app/listers/components/DispatchWindowsDisplay";
-import { toast } from "sonner";
-import { ReturnPackageItems } from "@/lib/orders/returnPackageItems";
-
-const copyToClipboard = (text: string) => {
-  navigator.clipboard.writeText(text);
-  toast.success("Copied to clipboard");
-};
 
 function CollapsibleSection({
   title,
@@ -39,12 +28,35 @@ function CollapsibleSection({
   );
 }
 
-type ReturnLegDetail = {
-  shipmentId: string;
-  windowSummary?: string | null;
+function DetailSubsection({
+  title,
+  children,
+  bordered = false,
+}: {
+  title: string;
+  children: React.ReactNode;
+  bordered?: boolean;
+}) {
+  return (
+    <section className={bordered ? "border-t border-gray-100 pt-3" : ""}>
+      <Paragraph1 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+        {title}
+      </Paragraph1>
+      {children}
+    </section>
+  );
+}
+
+type ShipmentLeg = {
+  type?: string;
   trackingId?: string | null;
   providerTrackingUrl?: string | null;
-  items?: Array<{ name: string; imageUrl?: string | null }>;
+};
+
+type ReturnLegDetail = {
+  shipmentId: string;
+  trackingId?: string | null;
+  providerTrackingUrl?: string | null;
   returnRequest?: {
     status?: string;
     trackingNumber?: string | null;
@@ -76,100 +88,62 @@ export default function OrderStatusDetails({
       String(leg.returnRequest.status).toUpperCase() !== "REJECTED",
   );
 
-  const hasDispatchWindows =
-    dispatchWindows && dispatchWindows.length > 0;
+  const hasDispatchWindows = Boolean(dispatchWindows?.length);
   const hasShippingAddress = Boolean(orderData.shippingAddress);
-  const hasReturnPickup = activeReturnLegs.some(
-    (leg) =>
-      leg.windowSummary ||
-      leg.returnRequest?.trackingNumber ||
-      leg.trackingId ||
-      leg.providerTrackingUrl,
-  );
 
-  if (!hasDispatchWindows && !hasShippingAddress && !hasReturnPickup) {
+  const trackingByType = useMemo(() => {
+    const shipments = (
+      Array.isArray(orderData.shipments) ? orderData.shipments : []
+    ) as ShipmentLeg[];
+    const outbound = shipments.find((s) => s.type === "OUTBOUND");
+    const returnLeg = activeReturnLegs[0];
+
+    const map: Partial<
+      Record<DispatchWindow["type"], { trackingId?: string | null; providerTrackingUrl?: string | null }>
+    > = {};
+
+    if (outbound?.providerTrackingUrl || outbound?.trackingId) {
+      map.OUTBOUND = {
+        trackingId: outbound.trackingId,
+        providerTrackingUrl: outbound.providerTrackingUrl,
+      };
+    }
+    if (returnLeg?.providerTrackingUrl || returnLeg?.trackingId || returnLeg?.returnRequest?.trackingNumber) {
+      map.RETURN = {
+        trackingId:
+          returnLeg.returnRequest?.trackingNumber ?? returnLeg.trackingId,
+        providerTrackingUrl: returnLeg.providerTrackingUrl,
+      };
+    }
+
+    return Object.keys(map).length > 0 ? map : undefined;
+  }, [activeReturnLegs, orderData.shipments]);
+
+  if (!hasDispatchWindows && !hasShippingAddress) {
     return null;
   }
 
   return (
-    <div className="space-y-2">
-      {hasReturnPickup ? (
-        <CollapsibleSection
-          title={activeReturnLegs.length > 1 ? "Return pickups" : "Return pickup"}
-        >
-          <div className="space-y-3 text-sm">
-            {activeReturnLegs.map((leg, idx) => (
-              <div
-                key={leg.shipmentId}
-                className={
-                  idx > 0 ? "space-y-2 border-t border-gray-100 pt-3" : "space-y-2"
-                }
-              >
-                {activeReturnLegs.length > 1 ? (
-                  <Paragraph1 className="text-xs font-semibold text-gray-700">
-                    Package {idx + 1}
-                  </Paragraph1>
-                ) : null}
-                <ReturnPackageItems items={leg.items ?? []} />
-                {leg.windowSummary ? (
-                  <Paragraph1 className="text-xs text-gray-800">
-                    {leg.windowSummary}
-                  </Paragraph1>
-                ) : null}
-                {(leg.returnRequest?.trackingNumber || leg.trackingId) && (
-                  <div className="flex items-center gap-2">
-                    <Paragraph1 className="font-mono text-xs font-semibold text-gray-900">
-                      {leg.returnRequest?.trackingNumber ?? leg.trackingId}
-                    </Paragraph1>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        copyToClipboard(
-                          String(
-                            leg.returnRequest?.trackingNumber ?? leg.trackingId,
-                          ),
-                        )
-                      }
-                      className="text-gray-500 hover:text-gray-800"
-                      aria-label="Copy tracking number"
-                    >
-                      <Copy size={14} />
-                    </button>
-                  </div>
-                )}
-                {leg.providerTrackingUrl ? (
-                  <a
-                    href={leg.providerTrackingUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600"
-                  >
-                    <ExternalLink size={14} />
-                    Track return
-                  </a>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        </CollapsibleSection>
-      ) : null}
+    <CollapsibleSection title="Delivery & returns">
+      <div className="space-y-3 text-sm">
+        {hasShippingAddress ? (
+          <DetailSubsection title="Shipping address">
+            <AddressBlock address={orderData.shippingAddress as Record<string, string>} />
+          </DetailSubsection>
+        ) : null}
 
-      {hasDispatchWindows ? (
-        <CollapsibleSection title="Delivery schedule">
-          <DispatchWindowsDisplay
-            dispatchWindows={dispatchWindows}
-            orderData={orderData}
-            sectionTitle=""
-          />
-        </CollapsibleSection>
-      ) : null}
-
-      {hasShippingAddress ? (
-        <CollapsibleSection title="Shipping address">
-          <AddressBlock address={orderData.shippingAddress as Record<string, string>} />
-        </CollapsibleSection>
-      ) : null}
-    </div>
+        {hasDispatchWindows ? (
+          <DetailSubsection title="Delivery schedule" bordered={hasShippingAddress}>
+            <DispatchWindowsDisplay
+              dispatchWindows={dispatchWindows}
+              orderData={orderData}
+              sectionTitle=""
+              trackingByType={trackingByType}
+            />
+          </DetailSubsection>
+        ) : null}
+      </div>
+    </CollapsibleSection>
   );
 }
 

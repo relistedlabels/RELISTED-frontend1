@@ -1,24 +1,26 @@
 "use client";
+
 // ENDPOINTS: GET /api/listers/orders/:orderId (payment & escrow summary)
 
-import React from "react";
-import { Lock } from "lucide-react";
+import type React from "react";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
   isListerResaleOrder,
   isResaleItem,
 } from "@/lib/listers/listerOrderRow";
+import {
+  computePlatformFee,
+  LISTER_PLATFORM_FEE_PERCENT,
+} from "@/lib/listers/platformFee";
 
 interface OrderSummaryEscrowProps {
   rentalFeeTotal?: string;
-  escrowValueHeld?: string;
   orderData?: any;
   clickedItem?: any;
 }
 
 const OrderSummaryEscrow: React.FC<OrderSummaryEscrowProps> = ({
   rentalFeeTotal: propRentalFeeTotal,
-  escrowValueHeld: propEscrowValueHeld,
   orderData,
   clickedItem,
 }) => {
@@ -35,19 +37,60 @@ const OrderSummaryEscrow: React.FC<OrderSummaryEscrowProps> = ({
       orderData?.escrow?.rentalFeeTotal ||
       orderData?.totalAmount ||
       propRentalFeeTotal;
-  /** For rentals, escrow held = collateral deposit only (not full item value / order total). */
-  const escrowValueHeld = isResale
-    ? clickedItem?.purchasePrice ||
-      orderData?.escrow?.purchasePrice ||
-      orderData?.totalAmount ||
-      propEscrowValueHeld
-    : clickedItem?.itemValueHeld ??
-      orderData?.escrow?.itemValueHeld ??
-      propEscrowValueHeld ??
-      0;
-  const releaseCondition =
-    orderData?.escrow?.releaseCondition || "return confirmation";
-
+  const cleaningFeesTotal =
+    Number(
+      clickedItem?.cleaningFee ??
+        orderData?.listerMerchandise?.cleaningFeesTotal ??
+        orderData?.escrow?.cleaningFeeTotal ??
+        0,
+    ) || 0;
+  const orderPlatformFee = orderData?.platformFee;
+  const platformFeeRate = Number(
+    orderPlatformFee?.ratePercent ?? LISTER_PLATFORM_FEE_PERCENT,
+  );
+  const fallbackPlatformFeeBase = clickedItem
+    ? Number(rentalFeeTotal)
+    : Number(
+        orderData?.listerMerchandise?.rentalSubtotal ?? rentalFeeTotal ?? 0,
+      ) + Number(orderData?.listerMerchandise?.resaleSubtotal ?? 0);
+  const earningsBase = fallbackPlatformFeeBase + cleaningFeesTotal;
+  // An order-level fee must not be reused for every item in the item detail view.
+  const itemHasPlatformFee = clickedItem?.platformFee != null;
+  const platformFee =
+    clickedItem && itemHasPlatformFee
+      ? clickedItem.platformFee
+      : clickedItem
+        ? undefined
+        : orderPlatformFee;
+  const platformFeeBaseValue = Number(
+    platformFee?.baseAmount ??
+      platformFee?.grossEarnings ??
+      platformFee?.grossAmount ??
+      fallbackPlatformFeeBase,
+  );
+  const platformFeeBase = Number.isFinite(platformFeeBaseValue)
+    ? platformFeeBaseValue
+    : 0;
+  const reportedFeeBase =
+    platformFee?.baseAmount ??
+    platformFee?.grossEarnings ??
+    platformFee?.grossAmount;
+  const netEarningsBase =
+    reportedFeeBase != null && Number.isFinite(Number(reportedFeeBase))
+      ? Number(reportedFeeBase) + cleaningFeesTotal
+      : earningsBase;
+  const reportedFeeAmount = Number(platformFee?.amount);
+  const platformFeeAmount =
+    platformFee?.amount != null && Number.isFinite(reportedFeeAmount)
+      ? reportedFeeAmount
+      : computePlatformFee(platformFeeBase, platformFeeRate);
+  const reportedNetEarnings = Number(platformFee?.netEarnings);
+  const netEarnings =
+    (!clickedItem || itemHasPlatformFee) &&
+    platformFee?.netEarnings != null &&
+    Number.isFinite(reportedNetEarnings)
+      ? reportedNetEarnings
+      : Math.max(0, netEarningsBase - platformFeeAmount);
   // Format currency for display
   const formatCurrency = (value: any) => {
     if (typeof value === "string") return value;
@@ -57,57 +100,51 @@ const OrderSummaryEscrow: React.FC<OrderSummaryEscrowProps> = ({
     return "₦0";
   };
   return (
-    <div className="bg-white p-4 border border-gray-300 rounded-2xl w-full">
-      <Paragraph1 className="mb-4 font-bold text-black text-xl uppercase">
-        {clickedItem ? "Item Summary" : "Order Summary"}
+    <section className="w-full rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
+      <Paragraph1 className="mb-4 font-semibold text-gray-900 text-sm">
+        {clickedItem ? "Item amounts" : "Order amounts"}
       </Paragraph1>
 
       {/* Financial Totals */}
-      <div className="space-y-4 mb-4">
-        <div className="flex justify-between items-center">
-          <Paragraph1 className="font-bold text-black text-lg">
-            {isResale ? "Price Total:" : "Rental Fee Total:"}
+      <div className="mb-4 space-y-3">
+        <div className="flex items-start justify-between gap-4">
+          <Paragraph1 className="text-sm text-gray-600">
+            {isResale ? "Purchase price" : "Rental fee"}
           </Paragraph1>
-          <Paragraph1 className="font-bold text-black text-2xl">
+          <Paragraph1 className="text-right text-sm font-semibold tabular-nums text-gray-900">
             {formatCurrency(rentalFeeTotal)}
           </Paragraph1>
         </div>
 
-        <div className="flex justify-between items-center">
-          <Paragraph1 className="font-bold text-black text-lg">
-            Escrow Value Held:
-          </Paragraph1>
-          <Paragraph1 className="font-bold text-black text-2xl">
-            {formatCurrency(escrowValueHeld)}
-          </Paragraph1>
-        </div>
+        {!isResale && cleaningFeesTotal > 0 && (
+          <div className="flex items-start justify-between gap-4">
+            <Paragraph1 className="text-sm text-gray-600">
+              Cleaning fee
+            </Paragraph1>
+            <Paragraph1 className="text-right text-sm font-semibold tabular-nums text-gray-900">
+              {formatCurrency(cleaningFeesTotal)}
+            </Paragraph1>
+          </div>
+        )}
       </div>
 
-      {/* Escrow Informational Box */}
-      <div className="flex items-start space-x-4 bg-[#FFFCEB] p-4 border border-[#FFEB82] rounded-xl">
-        <div className="mt-1 shrink-0">
-          <div className="bg-[#FFD700] p-1.5 rounded-md">
-            <Lock className="fill-current w-4 h-4 text-white" />
-          </div>
-        </div>
-
-        <div className="flex flex-col space-y-1">
-          <div className="flex items-center space-x-2">
-            <span className="font-bold text-black text-base">
-              {formatCurrency(escrowValueHeld)}
-            </span>
-            <span className="font-medium text-black text-base">
-              locked in escrow
+      {!isResale && (
+        <div className="mb-4 space-y-2 border-t border-gray-100 pt-3 text-sm">
+          <div className="flex justify-between gap-4 text-gray-600">
+            <span>Platform fee ({platformFeeRate}%)</span>
+            <span className="text-right tabular-nums">
+              -{formatCurrency(platformFeeAmount)}
             </span>
           </div>
-          <Paragraph1 className="text-gray-700 text-sm leading-relaxed">
-            Funds move to your wallet after{" "}
-            {isResale ? "delivery confirmation" : releaseCondition}
-            , per escrow rules for this order.
-          </Paragraph1>
+          <div className="flex justify-between gap-4 font-semibold text-gray-900">
+            <span>You earn</span>
+            <span className="text-right tabular-nums">
+              {formatCurrency(netEarnings)}
+            </span>
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </section>
   );
 };
 

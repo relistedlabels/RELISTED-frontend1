@@ -4,10 +4,11 @@
 
 import React, { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { buttonPrimary, buttonSecondary } from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 import { Paragraph1 } from "@/common/ui/Text";
 import {
   HiOutlineUser,
-  HiOutlinePhone,
   HiOutlineCube,
   HiOutlineHome,
   HiOutlinePencil,
@@ -26,6 +27,8 @@ import {
 import { StateSelect } from "@/app/auth/profile-setup/components/StateSelect";
 import { CityLGASelect } from "@/app/auth/profile-setup/components/CityLGASelect";
 import { toast } from "sonner";
+import { PhoneInput } from "@/app/auth/profile-setup/components/PhoneInput";
+import { validatePhoneNumber } from "@/lib/phone";
 
 const AccountProfileDetails: React.FC = () => {
   const queryClient = useQueryClient();
@@ -98,15 +101,16 @@ const AccountProfileDetails: React.FC = () => {
 
   // ✅ Handle update profile - uses PUT /api/renters/profile
   const handleUpdateProfile = () => {
-    if (!formData.fullName.trim() || !formData.phone.trim()) {
-      toast.error("Please fill in all required fields");
+    const phoneError = validatePhoneNumber(formData.phone);
+    if (!formData.fullName.trim() || phoneError) {
+      toast.error(phoneError ?? "Please fill in all required fields");
       return;
     }
 
     updateProfileMutation.mutate(
       {
         fullName: formData.fullName,
-        phone: formData.phone,
+        phone: formData.phone.trim(),
       },
       {
         onSuccess: () => {
@@ -291,15 +295,10 @@ const AccountProfileDetails: React.FC = () => {
               <Paragraph1 className="text-sm font-medium text-gray-900 mb-2">
                 Phone Number
               </Paragraph1>
-              <div className="relative">
-                <HiOutlinePhone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange("phone", e.target.value)}
-                  className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition duration-150"
-                />
-              </div>
+              <PhoneInput
+                value={formData.phone || "+234"}
+                onChange={(value) => handleInputChange("phone", value)}
+              />
             </div>
 
             {/* Role */}
@@ -370,7 +369,7 @@ const AccountProfileDetails: React.FC = () => {
       <div className="flex flex-col w-full gap-3 sm:flex-row justify-end pt-4">
         <button
           type="button"
-          className="flex items-center justify-center space-x-1 px-4 py-2 text-sm font-semibold text-black border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150"
+          className={buttonSecondary}
           onClick={() => setIsAddressModalOpen(true)}
         >
           <HiOutlinePlus className="w-4 h-4" />
@@ -380,7 +379,7 @@ const AccountProfileDetails: React.FC = () => {
           type="button"
           onClick={handleUpdateProfile}
           disabled={updateProfileMutation.isPending || isProfileLoading}
-          className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 disabled:opacity-50 transition duration-150"
+          className={buttonPrimary}
         >
           {updateProfileMutation.isPending ? "Updating..." : "Update Profile"}
         </button>
@@ -396,10 +395,10 @@ const AccountProfileDetails: React.FC = () => {
 
       {/* --- Address Modal --- */}
       {isAddressModalOpen && (
-        <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-lg">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">
-              Add New Address
+        <div className={dialogBackdrop}>
+          <div className={dialogCard}>
+            <h2 className="mb-4 font-bold text-gray-900 text-lg">
+              Add new address
             </h2>
 
             <div className="space-y-4">
@@ -523,7 +522,7 @@ const AccountProfileDetails: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsAddressModalOpen(false)}
-                className="flex-1 px-4 py-2 text-sm font-semibold text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                className={`${buttonSecondary} flex-1`}
               >
                 Cancel
               </button>
@@ -531,7 +530,7 @@ const AccountProfileDetails: React.FC = () => {
                 type="button"
                 onClick={handleAddAddress}
                 disabled={addAddressMutation.isPending}
-                className="flex-1 px-4 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 disabled:opacity-50 transition"
+                className={`${buttonPrimary} flex-1`}
               >
                 {addAddressMutation.isPending ? "Adding..." : "Add Address"}
               </button>

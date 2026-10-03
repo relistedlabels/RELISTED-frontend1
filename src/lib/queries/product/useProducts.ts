@@ -17,7 +17,7 @@ type ProductFilters = {
   brand?: string[];
   priceMin?: number;
   priceMax?: number;
-  condition?: "Excellent" | "Good" | "Fair";
+  condition?: string;
   gender?: "Woman" | "Man" | "Unisex";
   search?: string;
   size?: string;
@@ -31,6 +31,9 @@ type ProductFilters = {
   onlyWithCloset?: boolean;
   /** Filter to a shop sale campaign (slug). */
   sale?: string;
+  /** Comma-separated listing types, e.g. RENTAL,RENT_OR_RESALE */
+  listingType?: string;
+  lister?: string[];
 };
 
 export const useProducts = (

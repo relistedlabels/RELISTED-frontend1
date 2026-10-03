@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { useUpgradeLister } from "@/lib/mutations/listers/useUpgradeLister";
 import { ToolInfo } from "@/common/ui/ToolInfo";
 import { toast } from "sonner";
+import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
 
 interface StepTwoBusinessDetailsProps {
   onNext: () => void;
@@ -231,10 +232,8 @@ const StepTwoBusinessDetails: React.FC<StepTwoBusinessDetailsProps> = ({
         <button
           type="submit"
           disabled={isLoading}
-          className={`w-full py-3 rounded-lg text-white flex items-center justify-center gap-2 transition ${
-            isLoading
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-black hover:bg-gray-800"
+          className={`${buttonPrimaryFull} py-3 gap-2 ${
+            isLoading ? "bg-gray-400 cursor-not-allowed hover:bg-gray-400" : ""
           }`}
         >
           {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}

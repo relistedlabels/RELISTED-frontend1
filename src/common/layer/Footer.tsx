@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Header1, Header1Plus, ParagraphLink2 } from "../ui/Text";
+import { Header1, ParagraphLink2 } from "../ui/Text";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { shouldShowNavBar } from "@/lib/navbarRoutes";

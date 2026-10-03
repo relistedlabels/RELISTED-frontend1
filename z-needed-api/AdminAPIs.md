@@ -844,27 +844,23 @@ DELETE /api/admin/brands/brand_001
 
 ### 1. GET /api/admin/analytics/stats
 
-**Location:** `src/app/admin/[id]/dashboard/`
+**Location:** `src/app/admin/[id]/insights/`
 
 - Components: AnalyticsHeader, AnalyticsStats
 
 **UX Explanation:**
-Admins need real-time metrics to monitor platform health and performance. This endpoint provides KPI cards that display:
-
-- Total rentals processed
-- Total revenue generated
-- Active product listings
-- Ongoing disputes count
-- Active user count
-- Average delivery time
+This endpoint provides period-based order value, order counts, user engagement,
+and delivery metrics, alongside current listing and dispute snapshots. Order
+metrics exclude cancelled and rejected orders. `totalRevenue` is gross order
+value (`totalAmountPaid`), not net platform earnings. `previousPeriod` is
+included for selected year/month views when an equivalent post-launch period
+exists; a current year/month compares only the elapsed portion of the period.
 
 The header dropdown allows filtering by timeframe:
 
 - **All Time** → Shows cumulative statistics
-- **1 Year** → Shows stats for the past 12 months (with secondary dropdown to select specific year)
-- **1 Month** → Shows stats for current/selected month (with secondary dropdown to select specific month & year)
-
-This helps admins track growth trends, identify peak periods, and monitor platform health over different time periods.
+- **Year** → Shows the selected calendar year.
+- **Month** → Shows the selected calendar month.
 
 **Request Format:**
 
@@ -880,14 +876,19 @@ GET /api/admin/analytics/stats?timeframe=month&month=02&year=2026
 {
   "success": true,
   "data": {
-    "totalRentals": 2847,
-    "totalRevenue": 12400000, // in naira
+    "totalOrders": 2847,
+    "totalRevenue": 12400000,
+    "previousPeriod": null,
     "activeListings": 1234,
     "activeDisputes": 23,
     "activeUsers": 5692,
-    "avgDeliveryTime": 3.2, // in days
+    "avgDeliveryTime": 3.2,
+    "avgDeliveryTimeMinutes": 4608,
+    "deliveryTimeSampleSize": 120,
+    "ordersWithDisputes": 35,
+    "disputeRate": 0.0123,
     "timeframe": "all_time",
-    "period": "All Time"
+    "period": "all_time"
   }
 }
 ```
@@ -896,22 +897,12 @@ GET /api/admin/analytics/stats?timeframe=month&month=02&year=2026
 
 ### 2. GET /api/admin/analytics/rentals-revenue-trend
 
-**Location:** `src/app/admin/[id]/dashboard/components/RentalsRevenueTrend.tsx`
+**Location:** `src/app/admin/[id]/insights/components/RentalsRevenueTrend.tsx`
 
 **UX Explanation:**
-Admins need to visualize platform activity trends over time to understand seasonal patterns, growth trajectories, and revenue correlations with rental volume. This dual-axis chart shows:
-
-- **Left axis:** Number of rentals (area chart in light color)
-- **Right axis:** Revenue in thousands (line chart in amber/orange)
-
-This helps admins identify:
-
-- Peak rental seasons
-- Revenue correlation with rental volume
-- Anomalies or drop-offs in activity
-- Business health trends
-
-Data should match the timeframe selection from the analytics header.
+Returns period-matched order counts and gross order value. Monthly views bucket
+by day; yearly views by month; all-time views by month with year in each label.
+The UI plots these on separate charts/scales so the units are not conflated.
 
 **Request Format:**
 
@@ -929,19 +920,19 @@ GET /api/admin/analytics/rentals-revenue-trend?timeframe=month&month=02&year=202
   "data": {
     "trend": [
       {
-        "month": "Dec",
-        "rentals": 500,
-        "revenue": 3.5 // in millions
-      },
-      {
         "month": "Jan",
-        "rentals": 700,
-        "revenue": 4.5
+        "orders": 500,
+        "revenue": 3500000
       },
       {
         "month": "Feb",
-        "rentals": 730,
-        "revenue": 5.5
+        "orders": 700,
+        "revenue": 4500000
+      },
+      {
+        "month": "Mar",
+        "orders": 730,
+        "revenue": 5500000
       }
       // ... more months
     ],
@@ -955,17 +946,12 @@ GET /api/admin/analytics/rentals-revenue-trend?timeframe=month&month=02&year=202
 
 ### 3. GET /api/admin/analytics/category-breakdown
 
-**Location:** `src/app/admin/[id]/dashboard/components/CategoryBreakdown.tsx`
+**Location:** `src/app/admin/[id]/insights/components/CategoryBreakdown.tsx`
 
 **UX Explanation:**
-Admins need to understand which product categories are most popular by **quantity** (number of products listed and rented), not revenue. This bar chart helps:
-
-- Identify which categories drive the most activity
-- Decide on category-specific support, promotions, or features
-- Allocate resources based on category demand
-- Spot underperforming categories that need attention
-
-The chart displays quantity of products per category to help inventory and curation decisions.
+Compares current live, verified listings (supply snapshot) with availability
+requests opened during the selected period (demand signal). A request is an
+interest signal, not proof that a renter could not find an item.
 
 **Request Format:**
 
@@ -980,31 +966,18 @@ GET /api/admin/analytics/category-breakdown?timeframe=month&month=02&year=2026
 ```json
 {
   "success": true,
-  "data": {
-    "breakdown": [
-      {
-        "category": "Dresses",
-        "quantity": 1300 // Total products in this category
-      },
-      {
-        "category": "Bags",
-        "quantity": 700
-      },
-      {
-        "category": "Shoes",
-        "quantity": 550
-      },
-      {
-        "category": "Jewelry",
-        "quantity": 280
-      },
-      {
-        "category": "Accessories",
-        "quantity": 100
-      }
-    ],
-    "timeframe": "all_time"
-  }
+  "data": [
+    {
+      "category": "Dresses",
+      "activeListings": 130,
+      "availabilityRequests": 56
+    },
+    {
+      "category": "Bags",
+      "activeListings": 70,
+      "availabilityRequests": 31
+    }
+  ]
 }
 ```
 
@@ -1012,21 +985,12 @@ GET /api/admin/analytics/category-breakdown?timeframe=month&month=02&year=2026
 
 ### 4. GET /api/admin/analytics/revenue-by-category
 
-**Location:** `src/app/admin/[id]/dashboard/components/RevenueByCategory.tsx`
+**Location:** `src/app/admin/[id]/insights/components/RevenueByCategory.tsx`
 
 **UX Explanation:**
-Admins need to understand **revenue distribution** across categories to make pricing, commission, and strategic decisions. This pie chart shows:
-
-- What percentage of total revenue comes from each category
-- Which categories are most profitable
-- Revenue concentration (whether revenue is diversified or concentrated in few categories)
-
-This data helps with:
-
-- Category-specific commission or fee strategies
-- Marketing spend allocation
-- Partnership prioritization
-- Business strategy decisions
+Returns rental amounts attributed to product categories from rental records.
+This is rental value, not net platform revenue, and does not include resale
+revenue.
 
 **Request Format:**
 
@@ -1045,27 +1009,22 @@ GET /api/admin/analytics/revenue-by-category?timeframe=month&month=02&year=2026
     "revenue": [
       {
         "category": "Dresses",
-        "percentage": 42,
-        "amount": 5208000 // in naira
+        "amount": 5208000
       },
       {
         "category": "Bags",
-        "percentage": 28,
         "amount": 3472000
       },
       {
         "category": "Shoes",
-        "percentage": 18,
         "amount": 2232000
       },
       {
         "category": "Jewelry",
-        "percentage": 4,
         "amount": 496000
       },
       {
         "category": "Accessories",
-        "percentage": 8,
         "amount": 992000
       }
     ],
@@ -1079,25 +1038,17 @@ GET /api/admin/analytics/revenue-by-category?timeframe=month&month=02&year=2026
 
 ### 5. GET /api/admin/analytics/top-curators
 
-**Location:** `src/app/admin/[id]/dashboard/components/TopCurators.tsx`
+**Location:** `src/app/admin/[id]/insights/components/TopCurators.tsx`
 
 **UX Explanation:**
-Show the highest-performing curators (listers) on the platform ranked by:
-
-- Number of successful rentals completed
-- Total revenue generated
-
-This helps admins identify:
-
-- Most trusted and active sellers
-- Performance trends
-- Potential influencers/ambassadors
-- Users for case studies or featured listings
+Returns listers ranked by rental count within the selected period, with rental
+value for those rentals. The lister's product count is a current catalog
+snapshot.
 
 **Request Format:**
 
 ```json
-GET /api/admin/analytics/top-curators?limit=5
+GET /api/admin/analytics/top-curators?limit=5&timeframe=month&month=02&year=2026
 ```
 
 **Response Format:**
@@ -1105,51 +1056,48 @@ GET /api/admin/analytics/top-curators?limit=5
 ```json
 {
   "success": true,
-  "data": {
-    "topCurators": [
+  "data": [
       {
         "id": "curator_001",
         "name": "Anita Cole",
         "avatar": "https://...",
-        "rentals": 132,
-        "revenue": 820000,
-        "rating": 4.8
+        "totalRentals": 132,
+        "totalProducts": 10,
+        "revenue": 820000
       },
       {
         "id": "curator_002",
         "name": "Blessing Okafor",
         "avatar": "https://...",
-        "rentals": 118,
-        "revenue": 745000,
-        "rating": 4.7
+        "totalRentals": 118,
+        "totalProducts": 9,
+        "revenue": 745000
       },
       {
         "id": "curator_003",
         "name": "Chioma Eze",
         "avatar": "https://...",
-        "rentals": 97,
-        "revenue": 680000,
-        "rating": 4.6
+        "totalRentals": 97,
+        "totalProducts": 8,
+        "revenue": 680000
       },
       {
         "id": "curator_004",
         "name": "Fatima Bello",
         "avatar": "https://...",
-        "rentals": 89,
-        "revenue": 590000,
-        "rating": 4.5
+        "totalRentals": 89,
+        "totalProducts": 7,
+        "revenue": 590000
       },
       {
         "id": "curator_005",
         "name": "Grace Adebayo",
         "avatar": "https://...",
-        "rentals": 76,
-        "revenue": 520000,
-        "rating": 4.4
+        "totalRentals": 76,
+        "totalProducts": 6,
+        "revenue": 520000
       }
-    ],
-    "generatedAt": "2026-02-08T10:30:00Z"
-  }
+    ]
 }
 ```
 
@@ -1157,25 +1105,17 @@ GET /api/admin/analytics/top-curators?limit=5
 
 ### 6. GET /api/admin/analytics/top-items
 
-**Location:** `src/app/admin/[id]/dashboard/components/TopItems.tsx`
+**Location:** `src/app/admin/[id]/insights/components/TopItems.tsx`
 
 **UX Explanation:**
-Display the most popular and profitable items on the platform:
-
-- Item name and category
-- Total earnings generated from that item being rented
-
-This helps admins:
-
-- Understand product demand and trends
-- Identify high-value categories
-- Make recommendations to curators about what to list
-- Plan marketing campaigns around bestsellers
+Returns items ranked by rental count within the selected period. `earnings` is
+the sum of recorded rental amounts for the item, not an estimate based on its
+current daily price.
 
 **Request Format:**
 
 ```json
-GET /api/admin/analytics/top-items?limit=5
+GET /api/admin/analytics/top-items?limit=5&timeframe=year&year=2026
 ```
 
 **Response Format:**
@@ -1183,76 +1123,15 @@ GET /api/admin/analytics/top-items?limit=5
 ```json
 {
   "success": true,
-  "data": {
-    "topItems": [
-      {
-        "id": "item_001",
-        "name": "Fendi Arco Boots",
-        "category": "Shoes",
-        "image": "https://...",
-        "totalEarnings": 230000,
-        "rentals": 45,
-        "rating": 4.9,
-        "curator": {
-          "id": "curator_002",
-          "name": "Blessing Okafor"
-        }
-      },
-      {
-        "id": "item_002",
-        "name": "Chanel Classic Flap",
-        "category": "Bags",
-        "image": "https://...",
-        "totalEarnings": 420000,
-        "rentals": 78,
-        "rating": 4.8,
-        "curator": {
-          "id": "curator_001",
-          "name": "Anita Cole"
-        }
-      },
-      {
-        "id": "item_003",
-        "name": "Versace Silk Dress",
-        "category": "Dresses",
-        "image": "https://...",
-        "totalEarnings": 385000,
-        "rentals": 62,
-        "rating": 4.7,
-        "curator": {
-          "id": "curator_003",
-          "name": "Chioma Eze"
-        }
-      },
-      {
-        "id": "item_004",
-        "name": "Gucci Loafers",
-        "category": "Shoes",
-        "image": "https://...",
-        "totalEarnings": 195000,
-        "rentals": 38,
-        "rating": 4.6,
-        "curator": {
-          "id": "curator_004",
-          "name": "Fatima Bello"
-        }
-      },
-      {
-        "id": "item_005",
-        "name": "Dior Saddle Bag",
-        "category": "Bags",
-        "image": "https://...",
-        "totalEarnings": 340000,
-        "rentals": 55,
-        "rating": 4.8,
-        "curator": {
-          "id": "curator_005",
-          "name": "Grace Adebayo"
-        }
-      }
-    ],
-    "generatedAt": "2026-02-08T10:30:00Z"
-  }
+  "data": [
+    {
+      "id": "item_001",
+      "name": "Fendi Arco Boots",
+      "brand": "Fendi",
+      "rentalsCount": 45,
+      "earnings": 230000
+    }
+  ]
 }
 ```
 

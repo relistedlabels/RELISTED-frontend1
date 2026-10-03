@@ -17,6 +17,10 @@ const body_Font_Bold = localFont({
   src: "../fonts/Big_Caslon_CC/Big_Caslon_CC_Bold.otf",
 });
 
+const body_Font_Italic = localFont({
+  src: "../fonts/Big_Caslon_CC/Big_Caslon_CC_Italic.otf",
+});
+
 const body_p_regular = localFont({
   src: "../fonts/Poppins/Poppins-Regular.ttf",
 });
@@ -108,6 +112,20 @@ export const HeaderAny: React.FC<{
   className?: string;
 }> = ({ children, className = "" }) => (
   <h4 className={` ${body_Font_Regular.className} ${className}`}>{children}</h4>
+);
+
+export const FashionDisplay: React.FC<{
+  children: React.ReactNode;
+  className?: string;
+}> = ({ children, className = "" }) => (
+  <h1 className={`${body_Font_Italic.className} ${className}`}>{children}</h1>
+);
+
+export const FashionLead: React.FC<{
+  children: React.ReactNode;
+  className?: string;
+}> = ({ children, className = "" }) => (
+  <p className={`${body_Font_Regular.className} ${className}`}>{children}</p>
 );
 
 export const SpecialH1: React.FC<{

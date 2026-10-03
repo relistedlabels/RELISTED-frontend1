@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api/http";
+import { clearAuthenticatedClientSession } from "@/lib/auth/clearAuthenticatedClientSession";
 import { useAdminIdStore } from "@/store/useAdminIdStore";
+import { useSessionStore } from "@/store/useSessionStore";
 import { useUserStore } from "@/store/useUserStore";
 
 export function useLogout() {
@@ -9,10 +11,15 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: () => apiFetch("/auth/logout", { method: "POST" }),
-    onSettled: () => {
-      clearUser();
+    onMutate: () => {
+      useSessionStore.getState().setSessionExpired(false);
       useAdminIdStore.getState().clearAdminId();
-      qc.removeQueries({ queryKey: ["auth", "me"] });
+    },
+    onSettled: async () => {
+      await clearUser();
+      useAdminIdStore.getState().clearAdminId();
+      useSessionStore.getState().setSessionExpired(false);
+      clearAuthenticatedClientSession(qc);
     },
   });
 }

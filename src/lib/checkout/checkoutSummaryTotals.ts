@@ -72,7 +72,7 @@ export function computeDisplayReturnShipping(args: {
   selectedReturnTierTotal?: number;
   summaryReturnTotal?: number;
 }): number {
-  if (!args.hasReturnShippingLeg) return args.summaryReturnTotal ?? 0;
+  if (!args.hasReturnShippingLeg) return 0;
   if (args.usePerBucketReturn) {
     return sumPerBucketShipping(
       args.returnShippingByBucket,
@@ -99,6 +99,51 @@ export function computeCheckoutGrandTotal(
     (summary.serviceCharge ?? 0) +
     (summary.vatAmount ?? 0)
   );
+}
+
+export type CheckoutStickySummaryLine = {
+  label: string;
+  amount: number;
+};
+
+/** Compact payment breakdown rows for the mobile sticky checkout bar. */
+export function buildCheckoutStickySummaryLines(args: {
+  summary: OrderSummaryTotalsInput;
+  displayOutboundShipping: number;
+  displayReturnShipping: number;
+  hasReturnShippingLeg: boolean;
+}): CheckoutStickySummaryLine[] {
+  const { summary, displayOutboundShipping, displayReturnShipping, hasReturnShippingLeg } =
+    args;
+  const lines: CheckoutStickySummaryLine[] = [];
+  const purchaseTotal = summary.purchaseTotal ?? 0;
+  const rentalTotal = summary.rentalTotal ?? 0;
+  const hasRentalItems = hasReturnShippingLeg && rentalTotal > 0;
+
+  if (purchaseTotal > 0) {
+    lines.push({ label: "Purchase", amount: purchaseTotal });
+  }
+  if (hasRentalItems) {
+    lines.push({ label: "Rental", amount: rentalTotal });
+    lines.push({
+      label: "Security deposit",
+      amount: summary.collateralTotal ?? 0,
+    });
+    lines.push({ label: "Cleaning", amount: summary.cleaningTotal ?? 0 });
+  }
+  lines.push({ label: "Delivery", amount: displayOutboundShipping });
+  if (hasReturnShippingLeg && displayReturnShipping > 0) {
+    lines.push({ label: "Return pickup", amount: displayReturnShipping });
+  }
+  const serviceCharge = summary.serviceCharge ?? 0;
+  if (serviceCharge > 0) {
+    lines.push({ label: "Service charge", amount: serviceCharge });
+  }
+  const vatAmount = summary.vatAmount ?? 0;
+  if (vatAmount > 0) {
+    lines.push({ label: "VAT", amount: vatAmount });
+  }
+  return lines;
 }
 
 export function computeListerSubtotal(breakdown: {

@@ -4,12 +4,22 @@ import ProductCard from "@/common/ui/ProductCard";
 import { motion, useAnimation, useMotionValue } from "framer-motion";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import { useEffect, useRef, useState } from "react";
-import { useProducts } from "@/lib/queries/product/useProducts";
+import { useSimilarProducts } from "@/lib/queries/product/useSimilarProducts";
 import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import { firstProductAttachmentImageUrl } from "@/lib/product/sortProductAttachmentUploads";
 
-export default function TopListingSection() {
-  const { data: products = [], isLoading, error } = useProducts();
+type TopListingSectionProps = {
+  productId: string;
+};
+
+export default function TopListingSection({
+  productId,
+}: TopListingSectionProps) {
+  const {
+    data: products = [],
+    isLoading,
+    error,
+  } = useSimilarProducts(productId, { limit: 20 });
 
   // Duplicate items for seamless scroll
   const duplicatedProducts = [...products, ...products];
@@ -22,9 +32,9 @@ export default function TopListingSection() {
   const [autoScrolling, setAutoScrolling] = useState(true);
   const [speed, setSpeed] = useState(30);
 
-  // Detect screen + adjust speed
+  // Detect screen + adjust speed (duration in seconds — higher is slower)
   useEffect(() => {
-    const checkScreen = () => setSpeed(window.innerWidth < 768 ? 40 : 120);
+    const checkScreen = () => setSpeed(window.innerWidth < 768 ? 80 : 220);
     checkScreen();
     window.addEventListener("resize", checkScreen);
     return () => window.removeEventListener("resize", checkScreen);
@@ -59,7 +69,7 @@ export default function TopListingSection() {
     }
   }, [autoScrolling, distance, speed]);
 
-  if (isLoading || error) {
+  if (isLoading) {
     return (
       <section className="bg-white px-4 sm:px-0 py-12">
         <div className="mx-auto container">
@@ -72,6 +82,10 @@ export default function TopListingSection() {
         </div>
       </section>
     );
+  }
+
+  if (error || products.length === 0) {
+    return null;
   }
 
   const handleDragStart = () => {

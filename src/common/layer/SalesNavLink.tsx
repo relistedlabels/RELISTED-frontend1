@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useEffect, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Tag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ParagraphLink1, Paragraph1 } from "../ui/Text";
 import { usePublicSiteFeatures } from "@/lib/queries/site/useSiteFeatures";
@@ -44,7 +44,8 @@ export function DesktopSalesNavLink() {
   if (sales.length === 1) {
     const sale = sales[0]!;
     return (
-      <Link href={buildSaleShopHref(sale)}>
+      <Link href={buildSaleShopHref(sale)} className="flex items-center gap-1.5">
+        <Tag className="h-5 w-5 shrink-0" aria-hidden />
         <ParagraphLink1>{saleNavLabel(sale)}</ParagraphLink1>
       </Link>
     );
@@ -68,12 +69,13 @@ export function DesktopSalesNavLink() {
     >
       <button
         type="button"
-        className="flex items-center gap-1 p-2 hover:text-gray-300 transition-colors"
+        className="flex items-center gap-1.5 p-2 hover:text-gray-300 transition-colors"
         aria-expanded={open}
         aria-haspopup="true"
       >
+        <Tag className="h-5 w-5 shrink-0" aria-hidden />
         <ParagraphLink1>Sales</ParagraphLink1>
-        <ChevronDown className="w-3 h-3 transition-transform duration-200" />
+        <ChevronDown className="h-3 w-3 transition-transform duration-200" />
       </button>
 
       <AnimatePresence>
@@ -118,7 +120,12 @@ export function MobileSalesNavLink({ onNavigate }: MobileSalesNavLinkProps) {
   if (sales.length === 1) {
     const sale = sales[0]!;
     return (
-      <Link href={buildSaleShopHref(sale)} onClick={onNavigate}>
+      <Link
+        href={buildSaleShopHref(sale)}
+        onClick={onNavigate}
+        className="flex items-center gap-3"
+      >
+        <Tag className="h-5 w-5 shrink-0 text-gray-400" aria-hidden />
         <Paragraph1>{saleNavLabel(sale)}</Paragraph1>
       </Link>
     );
@@ -132,7 +139,10 @@ export function MobileSalesNavLink({ onNavigate }: MobileSalesNavLinkProps) {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
-        <Paragraph1>Sales</Paragraph1>
+        <span className="flex items-center gap-3">
+          <Tag className="h-5 w-5 shrink-0 text-gray-400" aria-hidden />
+          <Paragraph1>Sales</Paragraph1>
+        </span>
         <ChevronDown
           className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`}
         />

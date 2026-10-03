@@ -10,6 +10,7 @@ import Link from "next/link";
 import { primaryProductHeroImage } from "@/lib/product/primaryProductHeroImage";
 import { useFeaturedShopSale } from "@/lib/queries/shop/useShopSale";
 import { buildSaleShopHref } from "@/lib/api/shopSale";
+import { useClosetShopFeatureEnabled } from "@/lib/queries/site/useClosetShopFeatureEnabled";
 
 function formatSaleAvailabilityLabel(startsAt: string, endsAt: string) {
   const start = new Date(startsAt);
@@ -23,6 +24,7 @@ function formatSaleAvailabilityLabel(startsAt: string, endsAt: string) {
 
 export default function FeaturedShopSaleSection() {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const { enabled: closetFeatureEnabled } = useClosetShopFeatureEnabled();
   const { data: featuredRes, isLoading: saleLoading } = useFeaturedShopSale();
   const sale = featuredRes?.data;
 
@@ -52,7 +54,7 @@ export default function FeaturedShopSaleSection() {
     showSection && !isLoading && !error && displayProducts.length > 0,
   );
 
-  if (saleLoading || !showSection || !sale) {
+  if (!closetFeatureEnabled || saleLoading || !showSection || !sale) {
     return null;
   }
 
@@ -100,14 +102,6 @@ export default function FeaturedShopSaleSection() {
           <Paragraph1 className="max-w-[280px] sm:max-w-[480px] text-gray-600">
             {sectionDescription}
           </Paragraph1>
-          <Link
-            href={browseShopHref}
-            className="hover:opacity-70 mt-4 border-b font-bold text-sm transition-opacity"
-          >
-            {sale.shopAccessEnabled
-              ? `${browseCtaLabel} →`
-              : browseCtaLabel}
-          </Link>
         </div>
 
         {displayProducts.length === 0 ? (
@@ -133,7 +127,7 @@ export default function FeaturedShopSaleSection() {
                   <ProductCard
                     id={product.id}
                     image={primaryProductHeroImage(product)}
-                    brand={product.brand?.name || "BRAND"}
+                    brand={product.brand?.name || ""}
                     name={product.name}
                     price={`₦${(product.originalValue || 0).toLocaleString()}`}
                     dailyPrice={product.dailyPrice}

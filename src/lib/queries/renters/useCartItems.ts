@@ -1,4 +1,4 @@
-import { useQuery, UseQueryResult } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { getCartItemsApi, CartData } from "@/lib/api/cart";
 import { useUserStore } from "@/store/useUserStore";
 
@@ -9,10 +9,10 @@ export type CartItemsData = CartData & {
 /**
  * Query hook for fetching cart items (GET /cart-items)
  */
-export const useCartItems = (): UseQueryResult<CartItemsData, Error> => {
+export const useCartItems = () => {
   const token = useUserStore((s) => s.token);
 
-  return useQuery<CartItemsData, Error>({
+  const query = useQuery<CartItemsData, Error>({
     queryKey: ["cart", "items"],
     queryFn: async () => {
       const cartData = await getCartItemsApi();
@@ -28,4 +28,9 @@ export const useCartItems = (): UseQueryResult<CartItemsData, Error> => {
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: token !== null,
   });
+
+  return {
+    ...query,
+    data: token !== null ? query.data : undefined,
+  };
 };

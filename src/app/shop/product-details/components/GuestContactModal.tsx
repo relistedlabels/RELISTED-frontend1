@@ -1,0 +1,213 @@
+"use client";
+
+import { AnimatePresence, motion } from "framer-motion";
+import { Calendar, Loader2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { HiOutlineEnvelope, HiOutlineUser } from "react-icons/hi2";
+import { toast } from "sonner";
+import { PhoneInput } from "@/app/auth/profile-setup/components/PhoneInput";
+import { buttonPrimaryFull } from "@/common/ui/buttonClasses";
+import {
+  bottomSheetBackdrop,
+  bottomSheetPanel,
+} from "@/common/ui/dashboardClasses";
+import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import {
+  readGuestContact,
+  saveGuestContact,
+} from "@/lib/guest/guestContactStorage";
+import { validatePhoneNumber } from "@/lib/phone";
+
+type GuestContactModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: {
+    firstName: string;
+    email: string;
+    whatsappPhone?: string;
+  }) => void;
+  isSubmitting?: boolean;
+};
+
+export default function GuestContactModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  isSubmitting = false,
+}: GuestContactModalProps) {
+  const [firstName, setFirstName] = useState("");
+  const [email, setEmail] = useState("");
+  const [whatsappPhone, setWhatsappPhone] = useState("");
+  const wasOpenRef = useRef(false);
+
+  useEffect(() => {
+    const justOpened = isOpen && !wasOpenRef.current;
+    wasOpenRef.current = isOpen;
+
+    if (!justOpened) return;
+
+    const saved = readGuestContact();
+    setFirstName(saved?.firstName ?? "");
+    setEmail(saved?.email ?? "");
+    setWhatsappPhone(saved?.whatsappPhone ?? "");
+  }, [isOpen]);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const firstNameValue = String(
+      new FormData(form).get("firstName") ?? "",
+    ).trim();
+    const emailValue = String(new FormData(form).get("email") ?? "").trim();
+    const whatsappValue = String(
+      new FormData(form).get("whatsappPhone") ?? "",
+    ).trim();
+
+    const phoneError = validatePhoneNumber(whatsappValue);
+    if (!firstNameValue) {
+      toast.error("Please enter your first name.");
+      return;
+    }
+    if (!emailValue) {
+      toast.error("Please enter your email address.");
+      return;
+    }
+    if (phoneError) {
+      toast.error(phoneError);
+      return;
+    }
+
+    const contact = {
+      firstName: firstNameValue,
+      email: emailValue,
+      whatsappPhone: whatsappValue,
+    };
+    saveGuestContact(contact);
+    onSubmit(contact);
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          className={`${bottomSheetBackdrop} z-[110] sm:items-center sm:p-4`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+        >
+          <motion.form
+            onClick={(e) => e.stopPropagation()}
+            onSubmit={handleSubmit}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="guest-contact-title"
+            className={`${bottomSheetPanel} relative w-full max-w-md px-6 pt-8 shadow-2xl sm:rounded-3xl sm:px-8 sm:pt-10 sm:pb-10`}
+            initial={{ y: 48, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 48, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 320, damping: 28 }}
+          >
+            <button
+              type="button"
+              onClick={onClose}
+              className="top-4 right-4 absolute hover:bg-gray-100 p-2 rounded-full text-gray-500 hover:text-black transition"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex flex-col items-center mb-8 text-center">
+              <img
+                src="/images/logo1.svg"
+                alt="Relisted"
+                className="mb-5 w-10 h-10"
+              />
+              <div id="guest-contact-title">
+                <Paragraph3 className="mb-2 font-bold text-black text-2xl">
+                  Almost there
+                </Paragraph3>
+              </div>
+              <Paragraph1 className="max-w-[320px] text-gray-600 text-sm leading-relaxed">
+                We will notify you when the lister confirms. No sign up needed.
+              </Paragraph1>
+            </div>
+
+            <div className="space-y-5">
+              <div>
+                <Paragraph1 className="mb-2 font-medium text-gray-900 text-sm">
+                  First name
+                </Paragraph1>
+                <div className="relative">
+                  <HiOutlineUser className="top-1/2 left-4 absolute w-5 h-5 text-gray-400 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    name="firstName"
+                    placeholder="Enter your first name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    autoComplete="given-name"
+                    className="w-full rounded-xl border border-gray-300 py-3.5 pr-4 pl-12 text-base text-gray-900 placeholder:text-gray-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Paragraph1 className="mb-2 font-medium text-gray-900 text-sm">
+                  Email address
+                </Paragraph1>
+                <div className="relative">
+                  <HiOutlineEnvelope className="top-1/2 left-4 absolute w-5 h-5 text-gray-400 -translate-y-1/2" />
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
+                    className="w-full rounded-xl border border-gray-300 py-3.5 pr-4 pl-12 text-base text-gray-900 placeholder:text-gray-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Paragraph1 className="mb-2 font-medium text-gray-900 text-sm">
+                  WhatsApp number
+                </Paragraph1>
+                <input
+                  type="hidden"
+                  name="whatsappPhone"
+                  value={whatsappPhone}
+                />
+                <PhoneInput
+                  value={whatsappPhone || "+234"}
+                  onChange={setWhatsappPhone}
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`${buttonPrimaryFull} mt-8 gap-2 rounded-xl py-4 text-base disabled:opacity-60`}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
+                  Sending…
+                </>
+              ) : (
+                <>
+                  <Calendar className="w-4 h-4" aria-hidden />
+                  Check Availability{" "}
+                </>
+              )}
+            </button>
+          </motion.form>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}

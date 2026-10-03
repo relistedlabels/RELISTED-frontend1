@@ -8,6 +8,10 @@ export interface Order {
     name: string;
     avatar?: string | null;
   };
+  itemPreview?: {
+    name: string;
+    image?: string | null;
+  } | null;
   renter?: {
     id: string;
     name: string;

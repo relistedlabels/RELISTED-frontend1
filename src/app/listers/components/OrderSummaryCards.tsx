@@ -1,11 +1,11 @@
 "use client";
+
 // ENDPOINTS: GET /api/listers/orders/:orderId (product/dresser summary data)
 
-import React from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
-import { Calendar } from "lucide-react";
+import type React from "react";
 import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
+import { formatLagosDate } from "@/lib/checkout/dispatchWindows";
 import { isResaleItem } from "@/lib/listers/listerOrderRow";
 import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
 
@@ -25,29 +25,24 @@ const OrderSummaryCards: React.FC<OrderSummaryCardsProps> = ({
   const rentalFee = isResale
     ? product?.purchasePrice || 0
     : product?.rentalFee || 0;
-  const itemValue = product?.itemValue || 0;
-
+  const formatScheduleDate = (value?: string | null) => {
+    if (!value) return "To be scheduled";
+    const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
+    const parsed = dateOnly
+      ? new Date(`${value}T12:00:00+01:00`)
+      : new Date(value);
+    return Number.isNaN(parsed.getTime())
+      ? "To be scheduled"
+      : formatLagosDate(parsed, { includeWeekday: true });
+  };
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={{
-        visible: { transition: { staggerChildren: 0.15 } },
-      }}
-      className="space-y-4 w-full max-w-md"
-    >
+    <div className="space-y-4 w-full">
       {/* 1. Product Brief Card */}
       {product && (
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, x: 20 },
-            visible: { opacity: 1, x: 0 },
-          }}
-          className="bg-white p-2 border border-gray-300 rounded-2xl"
-        >
-          <div className="flex space-x-4">
+        <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+          <div className="flex gap-4 p-3 sm:p-4">
             {/* Image Container */}
-            <div className="relative bg-[#F6F6F6] rounded-xl w-32 h-44 overflow-hidden shrink-0">
+            <div className="relative h-32 w-24 shrink-0 overflow-hidden rounded-xl bg-gray-100 sm:h-40 sm:w-32">
               <Image
                 src={
                   cloudinaryOptimizedImageUrl(product.image, {
@@ -62,52 +57,24 @@ const OrderSummaryCards: React.FC<OrderSummaryCardsProps> = ({
             </div>
 
             {/* Product Specs */}
-            <div className="flex-1 p-2">
+            <div className="min-w-0 flex-1 py-1">
               <div className="flex justify-between items-start">
-                <Paragraph3 className="font-bold text-black text-lg">
+                <Paragraph3 className="break-words font-bold text-gray-900 text-base sm:text-lg">
                   {product.name || "Item"}
                 </Paragraph3>
               </div>
-              {product.color && (
-                <Paragraph1 className="mb-2 text-gray-400 text-xs">
-                  {product.color}
-                </Paragraph1>
-              )}
+              <Paragraph1 className="mt-1 text-xs text-gray-500">
+                {[product.size, product.color].filter(Boolean).join(" · ") ||
+                  "Size and color not provided"}
+              </Paragraph1>
 
-              <div className="gap-y-4 grid grid-cols-2 py-2 border-gray-300 border-t">
+              <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-gray-100 pt-3">
                 <div>
-                  <Paragraph1 className="block text-[10px] text-gray-400">
-                    Size
-                  </Paragraph1>
-                  <Paragraph1 className="font-bold text-black text-sm">
-                    {product.size || "N/A"}
-                  </Paragraph1>
-                </div>
-                <div>
-                  <Paragraph1 className="block text-[10px] text-gray-400">
-                    Color
-                  </Paragraph1>
-                  <Paragraph1 className="font-bold text-black text-sm">
-                    {product.color || "N/A"}
-                  </Paragraph1>
-                </div>
-              </div>
-
-              <div className="gap-y-4 grid grid-cols-2 pt-2 border-gray-300 border-t">
-                <div>
-                  <Paragraph1 className="block text-[10px] text-gray-400">
+                  <Paragraph1 className="block text-[10px] text-gray-500">
                     {isResale ? "Price" : "Rental Fee"}
                   </Paragraph1>
-                  <Paragraph1 className="font-bold text-black text-sm">
-                    ₦{Number(rentalFee || 0).toLocaleString() || "0"}
-                  </Paragraph1>
-                </div>
-                <div>
-                  <Paragraph1 className="block text-[10px] text-gray-400">
-                    Item Value
-                  </Paragraph1>
-                  <Paragraph1 className="font-bold text-black text-sm">
-                    ₦{itemValue?.toLocaleString() || "0"}
+                  <Paragraph1 className="font-semibold text-gray-900 text-sm">
+                    ₦{Number(rentalFee || 0).toLocaleString()}
                   </Paragraph1>
                 </div>
                 {!isResale &&
@@ -115,10 +82,10 @@ const OrderSummaryCards: React.FC<OrderSummaryCardsProps> = ({
                     (product as { cleaningFee?: number }).cleaningFee ?? 0,
                   ) > 0 && (
                     <div className="col-span-2">
-                      <Paragraph1 className="block text-[10px] text-gray-400">
-                        Cleaning fee (this item)
+                      <Paragraph1 className="block text-[10px] text-gray-500">
+                        Cleaning fee
                       </Paragraph1>
-                      <Paragraph1 className="font-bold text-black text-sm">
+                      <Paragraph1 className="font-semibold text-gray-900 text-sm">
                         ₦
                         {Number(
                           (product as { cleaningFee?: number }).cleaningFee,
@@ -129,61 +96,38 @@ const OrderSummaryCards: React.FC<OrderSummaryCardsProps> = ({
               </div>
             </div>
           </div>
-        </motion.div>
+        </section>
       )}
 
       {/* 2. Rental Period Card - hide for resale */}
       {!isResale && timeline && (
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, x: 20 },
-            visible: { opacity: 1, x: 0 },
-          }}
-          className="bg-white p-4 border border-gray-300 rounded-2xl"
-        >
-          <div className="border-gray-50 border-b">
-            <Paragraph1 className="font-bold text-black text-sm uppercase">
-              Rental Period
-            </Paragraph1>
-          </div>
-
-          <hr className="my-2 text-gray-300" />
-
-          <div className="flex justify-between items-start">
-            <div className="space-y-2">
-              <Paragraph1 className="font-bold text-black text-base">
-                {(product as { rentalStartDate?: string }).rentalStartDate &&
-                (product as { rentalEndDate?: string }).rentalEndDate
-                  ? `${(product as { rentalStartDate: string }).rentalStartDate} to ${(product as { rentalEndDate: string }).rentalEndDate}`
-                  : "Dates pending"}
+        <section className="rounded-2xl border border-gray-200 bg-white p-4">
+          <Paragraph1 className="mb-3 text-sm font-semibold text-gray-900">
+            Rental schedule
+          </Paragraph1>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl bg-gray-50 p-3">
+              <Paragraph1 className="text-xs text-gray-500">Pickup</Paragraph1>
+              <Paragraph1 className="mt-1 text-sm font-medium text-gray-900">
+                {formatScheduleDate(
+                  (product as { rentalStartDate?: string }).rentalStartDate,
+                )}
               </Paragraph1>
-              <div className="flex items-center space-x-2 text-gray-400">
-                <div className="bg-gray-50 p-1.5 rounded-md">
-                  <Calendar className="w-4 h-4 text-black" />
-                </div>
-                <Paragraph1 className="font-medium text-xs">
-                  {Number(
-                    (product as { rentalDays?: number; days?: number })
-                      .rentalDays ??
-                      (product as { days?: number }).days ??
-                      0,
-                  )}{" "}
-                  day
-                  {Number(
-                    (product as { rentalDays?: number; days?: number })
-                      .rentalDays ??
-                      (product as { days?: number }).days ??
-                      0,
-                  ) !== 1
-                    ? "s"
-                    : ""}
-                </Paragraph1>
-              </div>
+            </div>
+            <div className="rounded-xl bg-gray-50 p-3">
+              <Paragraph1 className="text-xs text-gray-500">Return</Paragraph1>
+              <Paragraph1 className="mt-1 text-sm font-medium text-gray-900">
+                {formatScheduleDate(
+                  (product as { rentalEndDate?: string; returnDue?: string })
+                    .rentalEndDate ??
+                    (product as { returnDue?: string }).returnDue,
+                )}
+              </Paragraph1>
             </div>
           </div>
-        </motion.div>
+        </section>
       )}
-    </motion.div>
+    </div>
   );
 };
 

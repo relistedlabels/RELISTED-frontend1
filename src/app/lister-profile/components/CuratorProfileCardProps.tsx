@@ -6,7 +6,7 @@ import React from "react";
 import { Paragraph1, Paragraph2, Paragraph3 } from "@/common/ui/Text"; // Using your custom text component
 import { HiOutlineShare, HiOutlineChevronLeft } from "react-icons/hi2";
 import { TiTick } from "react-icons/ti"; // Using the Tick icon for the Verified badge
-import { FaInstagram, FaGlobe } from "react-icons/fa"; // Using Fa icons for social media
+import { FaGlobe } from "react-icons/fa";
 import BackButton from "@/common/ui/BackButton";
 import { usePublicUserById } from "@/lib/queries/user/usePublicUserById";
 import { ProfileCardSkeleton } from "@/common/ui/SkeletonLoaders";
@@ -44,7 +44,7 @@ const CuratorProfileCard: React.FC<CuratorProfileCardProps> = ({ userId }) => {
 
   // Share message
   const shareMsg = encodeURIComponent(
-    `Check out this luxury fashion curator on RELISTED! ✨\n${profileUrl}`,
+    `Check out this lister on RELISTED!\n${profileUrl}`,
   );
 
   // Share options
@@ -103,7 +103,7 @@ const CuratorProfileCard: React.FC<CuratorProfileCardProps> = ({ userId }) => {
     {
       label: "Email",
       icon: <img src="/icons/gmail.png" alt="gmail" className="w-5 h-5" />,
-      href: `mailto:?subject=Check%20out%20this%20curator%20on%20RELISTED!&body=${shareMsg}`,
+      href: `mailto:?subject=Check%20out%20this%20lister%20on%20RELISTED!&body=${shareMsg}`,
     },
   ];
 
@@ -177,25 +177,51 @@ const CuratorProfileCard: React.FC<CuratorProfileCardProps> = ({ userId }) => {
                 </button>
               </div>
 
-              <Paragraph1 className="text-sm text-gray-300 leading-relaxed mb-4">
-                {user.bio || user.shopDescription || "Luxury fashion curator"}
-              </Paragraph1>
+              {(user.bio || user.shopDescription) && (
+                <Paragraph1 className="text-sm text-gray-300 leading-relaxed mb-4">
+                  {user.bio || user.shopDescription}
+                </Paragraph1>
+              )}
+
+              {user.website && (
+                <a
+                  href={
+                    user.website.startsWith("http")
+                      ? user.website
+                      : `https://${user.website}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-gray-300 hover:text-white mb-4"
+                >
+                  <FaGlobe className="w-4 h-4" />
+                  {user.website.replace(/^https?:\/\//, "")}
+                </a>
+              )}
 
               <hr className="border-gray-700 my-4" />
 
               {/* Stats */}
               <div className="flex flex-wrap items-center gap-4 text-sm">
-                <div className="flex items-center gap-1">
-                  {renderStars(user.rating)}
-                  <Paragraph1 className="text-sm font-semibold text-white ml-1">
-                    {user.rating.toFixed(1)}
+                {user.reviewCount > 0 ? (
+                  <>
+                    <div className="flex items-center gap-1">
+                      {renderStars(user.rating)}
+                      <Paragraph1 className="text-sm font-semibold text-white ml-1">
+                        {user.rating.toFixed(1)}
+                      </Paragraph1>
+                    </div>
+                    <Paragraph1 className="text-sm text-gray-400">
+                      ({user.reviewCount} reviews)
+                    </Paragraph1>
+                  </>
+                ) : (
+                  <Paragraph1 className="text-sm text-gray-400">
+                    No reviews yet
                   </Paragraph1>
-                </div>
-                <Paragraph1 className="text-sm text-gray-400">
-                  ({user.reviewCount} reviews)
-                </Paragraph1>
+                )}
                 <Paragraph1 className="text-sm font-medium text-white bg-gray-800 px-3 py-1 rounded-full">
-                  {user.itemCount} Rentals
+                  {user.itemCount} {user.itemCount === 1 ? "Item" : "Items"}
                 </Paragraph1>
               </div>
             </div>

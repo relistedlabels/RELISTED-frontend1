@@ -7,12 +7,13 @@ import { Paragraph1, Paragraph3 } from "@/common/ui/Text";
 import { useUpdateListerProfileMutation } from "@/lib/queries/listers/useUpdateListerProfileMutation";
 import { useUpload } from "@/lib/queries/renters/useUpload";
 import { useUploadNinDocument } from "@/lib/queries/listers/useUploadNinDocument";
+import { buttonPrimary, buttonPrimaryFull, buttonSecondary } from "@/common/ui/buttonClasses";
+import { dialogBackdrop, dialogCard } from "@/common/ui/dashboardClasses";
 
 interface VerificationModalListersProps {
   isOpen: boolean;
   onClose: () => void;
   onVerified: () => void;
-  currentBvn?: string | null;
 }
 
 type VerificationStep = "welcome" | "input" | "submitting";
@@ -21,10 +22,8 @@ export default function VerificationModalListers({
   isOpen,
   onClose,
   onVerified,
-  currentBvn,
 }: VerificationModalListersProps) {
   const [step, setStep] = useState<VerificationStep>("welcome");
-  const [bvn, setBvn] = useState("");
   const [nin, setNin] = useState("");
   const [ninDocument, setNinDocument] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string>("");
@@ -79,71 +78,67 @@ export default function VerificationModalListers({
     }
   };
 
-  const handleVerify = async () => {
-    if (!bvn.trim() || !nin.trim() || !ninDocument || !uploadId) {
-      setError("Please fill in all fields and upload NIN document");
-      return;
-    }
+   const handleVerify = async () => {
+     if (!nin.trim() || !ninDocument || !uploadId) {
+       setError("Please fill in all fields and upload NIN document");
+       return;
+     }
 
-    setError("");
-    setIsSubmitting(true);
-    setStep("submitting");
+     setError("");
+     setIsSubmitting(true);
+     setStep("submitting");
 
-    try {
-      // Update BVN/NIN via profile endpoint so VA creation follows backend flow.
-      const promises = [];
+     try {
+       // Update NIN via profile endpoint so VA creation follows backend flow.
+       const promises = [];
 
-      promises.push(
-        updateListerProfileMutation.mutateAsync({
-          bvn: bvn.trim(),
-          nin,
-        }),
-      );
+       promises.push(
+         updateListerProfileMutation.mutateAsync({
+           nin,
+         }),
+       );
 
-      // POST /api/listers/verifications/id (uploadId + idType)
-      promises.push(
-        uploadNinMutation.mutateAsync({
-          uploadId,
-          idType: "NIN",
-        }),
-      );
+       // POST /api/listers/verifications/id (uploadId + idType)
+       promises.push(
+         uploadNinMutation.mutateAsync({
+           uploadId,
+           idType: "NIN",
+         }),
+       );
 
-      await Promise.all(promises);
+       await Promise.all(promises);
 
-      // Show success message
-      alert("Submission Successful! Processing your document...");
+       // Show success message
+       alert("Submission Successful! Processing your document...");
 
-      // Close modal and start countdown
-      onVerified();
-      onClose();
-    } catch (err) {
-      console.error("Verification error:", err);
-      setError("Submission failed. Please try again.");
-      setStep("input");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+       // Close modal and start countdown
+       onVerified();
+       onClose();
+     } catch (err) {
+       console.error("Verification error:", err);
+       setError("Submission failed. Please try again.");
+       setStep("input");
+     } finally {
+       setIsSubmitting(false);
+     }
+   };
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
+        <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 h-screen bg-opacity-50 z-40"
-          />
-
-          {/* Modal */}
+            className={`${dialogBackdrop} z-40`}
+          >
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl p-8 max-w-md w-full max-h-[90vh] overflow-y-auto z-50"
+            className={`${dialogCard} relative max-h-[90vh] overflow-y-auto rounded-2xl p-8`}
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Close button */}
             <button
@@ -170,7 +165,7 @@ export default function VerificationModalListers({
                     Let's Verify Your Account! 🎉
                   </Paragraph3>
                   <Paragraph1 className="text-gray-600 text-sm leading-relaxed">
-                    To start listing items and build trust with renters, we need
+                    To start listing items and build trust with shoppers, we need
                     to verify your identity. It takes less than 2 minutes!
                   </Paragraph1>
                 </div>
@@ -192,7 +187,7 @@ export default function VerificationModalListers({
 
                 <button
                   onClick={handleProceed}
-                  className="w-full bg-black text-white py-3 rounded-lg font-bold hover:bg-gray-900 transition-colors"
+                  className={buttonPrimaryFull}
                 >
                   Proceed to Verification
                 </button>
@@ -211,18 +206,7 @@ export default function VerificationModalListers({
                     Verify Your Identity
                   </Paragraph3>
                   <Paragraph1 className="text-sm text-gray-600">
-                    Enter your BVN and NIN to verify your identity
-                  </Paragraph1>
-                </div>
-
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <Paragraph1 className="text-xs font-medium text-amber-900 mb-1">
-                    ⚠️ Important: Use your correct BVN
-                  </Paragraph1>
-                  <Paragraph1 className="text-xs text-amber-800">
-                    Ensure the BVN you provide is accurate. An incorrect BVN
-                    will prevent you from making purchases and delay your
-                    verification.
+                    Enter your NIN to verify your identity
                   </Paragraph1>
                 </div>
 
@@ -233,21 +217,6 @@ export default function VerificationModalListers({
                     </Paragraph1>
                   </div>
                 )}
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    BVN (Bank Verification Number)
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Enter your 11-digit BVN"
-                    value={bvn}
-                    onChange={(e) => setBvn(e.target.value.replace(/\D/g, ""))}
-                    maxLength={11}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                  />
-                </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -421,21 +390,20 @@ export default function VerificationModalListers({
                   <button
                     onClick={onClose}
                     disabled={isSubmitting}
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-bold hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    className={`${buttonSecondary} flex-1 py-3 font-bold`}
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleVerify}
-                    disabled={
-                      !bvn.trim() ||
-                      !nin.trim() ||
-                      !ninDocument ||
-                      !uploadId ||
-                      isUploadingFile ||
-                      isSubmitting
-                    }
-                    className="flex-1 px-4 py-3 bg-black text-white rounded-lg font-bold hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                     disabled={
+                       !nin.trim() ||
+                       !ninDocument ||
+                       !uploadId ||
+                       isUploadingFile ||
+                       isSubmitting
+                     }
+                    className={`${buttonPrimary} flex-1 py-3 font-bold`}
                   >
                     {isSubmitting && (
                       <Loader size={16} className="animate-spin" />
@@ -471,7 +439,7 @@ export default function VerificationModalListers({
               </motion.div>
             )}
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );

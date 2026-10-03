@@ -2,22 +2,30 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
-import { Calendar, Package } from "lucide-react";
-import { Paragraph1 } from "@/common/ui/Text";
-import OrderDetails from "./OrderDetails1";
-import DashboardStartReturnButton from "./DashboardStartReturnButton";
-import { useOrders } from "@/lib/queries/renters/useOrders";
-import { resolveRenterStartReturn } from "@/lib/orders/renterStartReturn";
+import { Calendar, Package, Store, Truck } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { segmentTabActive, segmentTabIdle } from "@/common/ui/buttonClasses";
+import { Paragraph1 } from "@/common/ui/Text";
+import { formatItemCount } from "@/lib/formatItemCount";
+import { resolveRenterStartReturn } from "@/lib/orders/renterStartReturn";
+import {
+  isReturnDueUrgentOnListOrder,
+  shouldPromoteReturnOnListOrder,
+} from "@/lib/orders/returnDueUrgency";
+import { useOrders } from "@/lib/queries/renters/useOrders";
 import {
   getRenterOrderBadgeClassName,
   getRenterOrderStatusLabel,
 } from "@/lib/renters/renterOrderStatus";
+import DashboardStartReturnButton from "./DashboardStartReturnButton";
+import OrderDetails from "./OrderDetails1";
 
 export default function DashboardOrderList() {
   const searchParams = useSearchParams();
   const deepLinkedOrderId = (searchParams.get("orderId") || "").trim();
+  const startReturnRequested = searchParams.get("startReturn") === "1";
+  const deepLinkedShipmentId = (searchParams.get("shipmentId") || "").trim();
   const [orderView, setOrderView] = useState<"active" | "completed">("active");
   const [deepLinkFallbackTried, setDeepLinkFallbackTried] = useState(false);
 
@@ -66,7 +74,7 @@ export default function DashboardOrderList() {
     const label = getRenterOrderStatusLabel(status);
     return (
       <span
-        className={`px-4 py-1 font-bold rounded-sm text-xs ${getRenterOrderBadgeClassName(label)}`}
+        className={`rounded-full px-3 py-1 text-xs font-semibold ${getRenterOrderBadgeClassName(label)}`}
       >
         {label}
       </span>
@@ -78,8 +86,8 @@ export default function DashboardOrderList() {
       <div className="w-full animate-pulse">
         <div className="h-20 bg-gray-300 rounded mb-4"></div>
         <div className="space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-32 bg-gray-300 rounded"></div>
+          {["first", "second", "third"].map((key) => (
+            <div key={key} className="h-32 bg-gray-300 rounded"></div>
           ))}
         </div>
       </div>
@@ -95,33 +103,23 @@ export default function DashboardOrderList() {
   }
 
   return (
-    <div className=" w-full">
-      <div className="flex w-fit border rounded-sm p-1 border-gray-300  mb-6 ">
+    <div className="w-full">
+      <div className="mb-6 inline-flex rounded-xl border border-gray-200 bg-gray-50 p-1">
         <button
+          type="button"
           onClick={() => setOrderView("active")}
-          className={`
-                        px-8 py-2 font-semibold text-sm transition-colors duration-150
-                        ${
-                          orderView === "active"
-                            ? "bg-black text-white rounded-sm"
-                            : "text-gray-700  hover:bg-gray-100 rounded-sm"
-                        }
-                    `}
+          className={orderView === "active" ? segmentTabActive : segmentTabIdle}
         >
-          <Paragraph1>Ongoing</Paragraph1>
+          Ongoing
         </button>
         <button
+          type="button"
           onClick={() => setOrderView("completed")}
-          className={`
-                        px-8 py-2 font-semibold text-sm transition-colors duration-150
-                        ${
-                          orderView === "completed"
-                            ? "bg-black text-white rounded-sm"
-                            : "text-gray-700 hover:bg-gray-100  "
-                        }
-                    `}
+          className={
+            orderView === "completed" ? segmentTabActive : segmentTabIdle
+          }
         >
-          <Paragraph1>Completed</Paragraph1>
+          Completed
         </button>
       </div>
 
@@ -133,45 +131,111 @@ export default function DashboardOrderList() {
             showStartReturn: order.showStartReturn,
             startReturnShipmentId: order.startReturnShipmentId,
           });
+          const startReturnShipmentId =
+            order.orderId === deepLinkedOrderId && deepLinkedShipmentId
+              ? deepLinkedShipmentId
+              : startReturn.returnShipmentId;
+          const returnPromoted = shouldPromoteReturnOnListOrder({
+            status: order.status,
+            showStartReturn: startReturn.showStartReturn,
+          });
+          const returnDueNow = isReturnDueUrgentOnListOrder({
+            status: order.status,
+            showStartReturn: startReturn.showStartReturn,
+          });
 
           return (
             <div
-            key={order.orderId}
-            className="bg-white p-4 rounded-sm border border-gray-300 "
-          >
-            <div>
-              <div className="flex items-center justify-between space-x-3 mb-3">
-                <Paragraph1 className="font-bold text-gray-900 tracking-wider">
+              key={order.orderId}
+              className={`rounded-xl border bg-white p-4 ${
+                returnPromoted
+                  ? returnDueNow
+                    ? "border-amber-300 bg-amber-50/40"
+                    : "border-gray-300 bg-gray-50/60"
+                  : "border-gray-200"
+              }`}
+            >
+              {returnPromoted ? (
+                <div
+                  className={`mb-3 flex items-start gap-2 rounded-lg border px-3 py-2 ${
+                    returnDueNow
+                      ? "border-amber-200 bg-amber-50"
+                      : "border-gray-200 bg-white"
+                  }`}
+                >
+                  <Truck
+                    size={16}
+                    className={`mt-0.5 shrink-0 ${
+                      returnDueNow ? "text-amber-900" : "text-gray-800"
+                    }`}
+                  />
+                  <div>
+                    <Paragraph1
+                      className={`text-sm font-semibold ${
+                        returnDueNow ? "text-amber-950" : "text-gray-900"
+                      }`}
+                    >
+                      {returnDueNow
+                        ? "Return due today"
+                        : "Ready to start your return"}
+                    </Paragraph1>
+                    <Paragraph1
+                      className={`text-xs ${
+                        returnDueNow ? "text-amber-900/90" : "text-gray-600"
+                      }`}
+                    >
+                      Start your return request to schedule pickup.
+                    </Paragraph1>
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <Paragraph1 className="font-semibold text-gray-900 text-sm tracking-wide">
                   {order.orderId}
                 </Paragraph1>
-                <Paragraph1> {getStatusBadge(order.status)}</Paragraph1>
+                {getStatusBadge(order.status)}
               </div>
 
-              <div className="flex items-center text-xs text-gray-500 mb-3 space-x-2 flex-wrap">
-                <Package size={14} className="shrink-0" />
-                <span>{order.items.length} item(s)</span>
-                <Package size={14} className="shrink-0" />
-                <span className="text-xs text-gray-700 font-semibold">
-                  {order.listerName}
+              <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-600">
+                <span className="inline-flex items-center gap-1.5">
+                  <Package size={14} className="shrink-0 text-gray-400" />
+                  {formatItemCount(order.items.length)}
                 </span>
-                <Calendar size={14} className="shrink-0" />
-                <span>{new Date(order.date).toLocaleDateString()}</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Store size={14} className="shrink-0 text-gray-400" />
+                  <span className="font-medium text-gray-800">
+                    {order.listerName || "Unknown seller"}
+                  </span>
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Calendar size={14} className="shrink-0 text-gray-400" />
+                  {new Date(order.date).toLocaleDateString()}
+                </span>
               </div>
-              <hr className="text-gray-300" />
-              <div className="flex pt-3 flex-col sm:flex-row justify-between gap-3 sm:items-center">
-                <div className="text-lg font-bold text-gray-900">
-                  <Paragraph1> Total Amount</Paragraph1>{" "}
-                  <Paragraph1>
-                    {" "}
+
+              <hr className="border-gray-200" />
+
+              <div className="flex flex-col justify-between gap-4 pt-4 sm:flex-row sm:items-center">
+                <div>
+                  <Paragraph1 className="text-gray-500 text-xs">
+                    Total amount
+                  </Paragraph1>
+                  <Paragraph1 className="font-bold text-gray-900 text-lg">
                     {currency}
                     {formatCurrency(order.totalAmount)}
-                  </Paragraph1>{" "}
+                  </Paragraph1>
                 </div>
-                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-stretch">
                   {startReturn.showStartReturn ? (
                     <DashboardStartReturnButton
                       orderId={order.orderId}
-                      shipmentId={startReturn.returnShipmentId}
+                      shipmentId={startReturnShipmentId}
+                      urgent={returnPromoted}
+                      autoOpen={
+                        order.orderId === deepLinkedOrderId &&
+                        startReturnRequested
+                      }
                     />
                   ) : null}
                   <OrderDetails
@@ -181,7 +245,6 @@ export default function DashboardOrderList() {
                 </div>
               </div>
             </div>
-          </div>
           );
         })}
       </div>
