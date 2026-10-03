@@ -101,7 +101,7 @@ export default function NavDropdown({
                 const isListingType = listingType !== undefined;
                 const expanded = expandedListingType === listingType;
                 const allItemsHref = isListingType
-                  ? `/shop?listingType=${listingType === "rent" ? "RENTAL,RENT_OR_RESALE" : "RESALE,RENT_OR_RESALE"}`
+                  ? `/shop?listingType=${listingType === "rent" ? "rental,rent_or_resale" : "resale,rent_or_resale"}`
                   : item.href;
                 return (
                   <li key={item.href} className="relative">
@@ -178,8 +178,8 @@ export default function NavDropdown({
                               params.set(
                                 "listingType",
                                 listingType === "rent"
-                                  ? "RENTAL,RENT_OR_RESALE"
-                                  : "RESALE,RENT_OR_RESALE",
+                                  ? "rental,rent_or_resale"
+                                  : "resale,rent_or_resale",
                               );
                               params.set("category", category.id);
                               return (
