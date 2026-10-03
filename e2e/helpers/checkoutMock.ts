@@ -151,6 +151,25 @@ export async function mockCheckoutScenario(
       return;
     }
 
+    if (
+      /\/api\/renters\/orders\/[^/?]+(?:\?.*)?$/.test(url) &&
+      method === "GET"
+    ) {
+      const orderId = new URL(url).pathname.split("/").pop() ?? "ORD-E2E-123";
+      await json(route, {
+        success: true,
+        data: {
+          order: {
+            id: orderId,
+            orderId,
+            status: "confirmed",
+            createdAt: new Date().toISOString(),
+          },
+        },
+      });
+      return;
+    }
+
     if (url.includes("/api/renters/orders") && method === "GET") {
       await json(route, {
         success: true,
@@ -225,24 +244,6 @@ export async function mockCheckoutScenario(
           user: {
             id: userId,
             name: listerNames[userId] ?? "Lister",
-          },
-        },
-      });
-      return;
-    }
-
-    if (/\/api\/renters\/orders\/[^/?]+$/.test(url) && method === "GET") {
-      const orderId =
-        url.split("/api/renters/orders/")[1]?.split("?")[0]?.trim() ??
-        "ORD-E2E-123";
-      await json(route, {
-        success: true,
-        data: {
-          order: {
-            id: orderId,
-            orderId,
-            status: "confirmed",
-            createdAt: new Date().toISOString(),
           },
         },
       });
