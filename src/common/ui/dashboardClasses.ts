@@ -1,6 +1,5 @@
 /** Slide-in panel backdrop (orders, disputes, wallet). */
-export const slidePanelBackdrop =
-  "fixed inset-0 z-[99] bg-black/70 backdrop-blur-sm";
+export const slidePanelBackdrop = "fixed inset-0 z-[99] bg-black/45";
 
 /** Right-side slide-in sheet. */
 export const slidePanelSheet =
@@ -11,8 +10,7 @@ export const slidePanelSheetPinned =
   "fixed inset-y-0 right-0 flex h-[100dvh] w-full flex-col overflow-hidden hide-scrollbar bg-white px-4 shadow-2xl sm:w-[28.5rem]";
 
 /** Scrollable panel body (use inside sheets with pinned footers). */
-export const slidePanelBody =
-  "min-h-0 flex-1 overflow-y-auto hide-scrollbar";
+export const slidePanelBody = "min-h-0 flex-1 overflow-y-auto hide-scrollbar";
 
 /** Pinned action row for filter-style panels. */
 export const slidePanelActionsFooter =
@@ -46,8 +44,7 @@ export const dialogCard =
   "w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl";
 
 /** Standard dashboard card shell. */
-export const dashboardCard =
-  "rounded-xl border border-gray-200 bg-white";
+export const dashboardCard = "rounded-xl border border-gray-200 bg-white";
 
 /** Segmented control container (tabs). */
 export const segmentContainer =

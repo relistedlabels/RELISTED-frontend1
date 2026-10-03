@@ -3,20 +3,16 @@
 
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import DashboardLayout from "../../components/DashboardLayout";
-import BackHeader from "@/common/ui/BackHeader";
 import OrderDetailsCard from "../../components/OrderDetailsCard";
-import OrderItemList from "../../components/OrderItemList";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     orderId: string;
-  };
+  }>;
 }
 
-export default function Page({ params }: PageProps) {
-  const { orderId } = params;
-  console.log("Order page orderId (final):", orderId);
-
+export default async function Page({ params }: PageProps) {
+  const { orderId } = await params;
   const path = [
     { label: "Dashboard", href: "/listers/dashboard" },
     { label: "Orders", href: "/listers/orders" },
