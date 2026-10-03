@@ -127,7 +127,7 @@ test.describe("Checkout (mocked API)", () => {
     await gotoCheckoutConfirmStep(page);
 
     await expect(page.getByText("Grand Total:")).toBeVisible();
-    await expect(page.getByText("99,250")).toBeVisible();
+    await expect(page.getByText("₦99,250", { exact: true })).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Complete Order" }),
     ).toBeVisible();
