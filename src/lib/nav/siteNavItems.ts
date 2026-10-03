@@ -19,6 +19,7 @@ export type SiteNavItem = {
   label: string;
   href: string;
   icon: LucideIcon;
+  listingType?: "rent" | "resale";
 };
 
 export const SHOP_NAV_ITEMS: SiteNavItem[] = [
@@ -26,11 +27,13 @@ export const SHOP_NAV_ITEMS: SiteNavItem[] = [
     label: "Rent",
     href: "/shop?listingType=RENTAL,RENT_OR_RESALE",
     icon: Shirt,
+    listingType: "rent",
   },
   {
     label: "Shop Resale",
     href: "/shop?listingType=RESALE,RENT_OR_RESALE",
     icon: ShoppingBag,
+    listingType: "resale",
   },
   {
     label: "New In",
@@ -80,9 +83,7 @@ export function getMyRelistedNavItems(options: {
   isLister: boolean;
 }): SiteNavItem[] {
   const { isLoggedIn, isLister } = options;
-  const listingsHref = isLister
-    ? "/listers/inventory"
-    : "/auth/create-account";
+  const listingsHref = isLister ? "/listers/inventory" : "/auth/create-account";
 
   return [
     {

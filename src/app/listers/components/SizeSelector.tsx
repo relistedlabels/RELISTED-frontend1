@@ -1,27 +1,15 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
 import { ChevronDown } from "lucide-react";
+import type React from "react";
+import { useMemo, useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
+import {
+  APPAREL_SIZE_OPTIONS,
+  APPAREL_SIZE_UNITS,
+  type ApparelSizeUnit,
+} from "@/lib/product/apparelSizes";
 import { useProductDraftStore } from "@/store/useProductDraftStore";
-
-const SIZE_MAP: Record<string, string[]> = {
-  EU: Array.from({ length: 39 }, (_, i) => {
-    const size = 32 + Math.floor(i / 2);
-    return i % 2 === 0 ? String(size) : String(size) + ".5";
-  }),
-  UK: Array.from({ length: 35 }, (_, i) => {
-    const size = 1 + Math.floor(i / 2);
-    return i % 2 === 0 ? String(size) : String(size) + ".5";
-  }),
-  US: Array.from({ length: 35 }, (_, i) => {
-    const size = 2 + Math.floor(i / 2);
-    return i % 2 === 0 ? String(size) : String(size) + ".5";
-  }),
-};
-
-const UNITS = ["EU", "UK", "US"] as const;
-type Unit = (typeof UNITS)[number];
 
 export const SizeSelector: React.FC = () => {
   const [open, setOpen] = useState(false);
@@ -31,20 +19,22 @@ export const SizeSelector: React.FC = () => {
   // 👇 extract from store (measurement format: "size-unit", e.g. "38-EU")
   const parsed = useMemo(() => {
     if (!data.measurement?.includes("-")) {
-      return { size: null, unit: "UK" as Unit };
+      return { size: null, unit: "UK" as ApparelSizeUnit };
     }
     const [size, unit] = data.measurement.split("-");
     const validUnit =
-      unit && UNITS.includes(unit as Unit) ? (unit as Unit) : "UK";
+      unit && APPAREL_SIZE_UNITS.includes(unit as ApparelSizeUnit)
+        ? (unit as ApparelSizeUnit)
+        : "UK";
     return { size: size || null, unit: validUnit };
   }, [data.measurement]);
 
   const sizes = useMemo(
-    () => SIZE_MAP[parsed.unit] ?? SIZE_MAP["UK"],
+    () => APPAREL_SIZE_OPTIONS[parsed.unit] ?? APPAREL_SIZE_OPTIONS.UK,
     [parsed.unit],
   );
 
-  const commit = (size: string, unit: Unit) => {
+  const commit = (size: string, unit: ApparelSizeUnit) => {
     setField("measurement", `${size}-${unit}`);
     setOpen(false);
   };
@@ -70,8 +60,9 @@ export const SizeSelector: React.FC = () => {
         <div className="absolute z-40 mt-2 w-full rounded-lg border border-gray-300 bg-white shadow-lg">
           {/* Unit selector */}
           <div className="grid grid-cols-2 gap-1 border-b border-gray-200 bg-gray-50 p-1 sm:flex">
-            {UNITS.map((u) => {
-              const targetSizes = SIZE_MAP[u] ?? SIZE_MAP["UK"];
+            {APPAREL_SIZE_UNITS.map((u) => {
+              const targetSizes =
+                APPAREL_SIZE_OPTIONS[u] ?? APPAREL_SIZE_OPTIONS.UK;
               return (
                 <button
                   key={u}
