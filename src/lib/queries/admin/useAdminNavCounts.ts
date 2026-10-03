@@ -36,11 +36,6 @@ export function useAdminNavCounts(): Record<AdminNavCountKey, number> {
     page: 1,
     limit: 1,
   });
-  const shipmentCancelled = useShipments({
-    status: "CANCELLED",
-    page: 1,
-    limit: 1,
-  });
 
   const disputePending = useDisputes({ status: "pending", page: 1, limit: 1 });
   const disputeInReview = useDisputes({
@@ -79,7 +74,6 @@ export function useAdminNavCounts(): Record<AdminNavCountKey, number> {
       shipmentDispatchFailed.data,
       shipmentDispatched.data,
       shipmentInTransit.data,
-      shipmentCancelled.data,
     ].reduce((sum, d) => sum + (d?.data?.total ?? 0), 0),
     pendingWithdrawals: pendingWithdrawals.data?.data?.pagination?.total ?? 0,
     pendingDisputes: [
