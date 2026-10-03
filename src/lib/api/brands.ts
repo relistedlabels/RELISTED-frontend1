@@ -8,8 +8,7 @@ export type Brand = {
   fullText?: string;
   createdAt?: string;
   logo?: string;
-  isActive?: boolean | 0 | 1;
-  isShopVisible?: boolean | 0 | 1;
+  isShopVisible?: boolean;
 };
 
 /** Get all brands */
