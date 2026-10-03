@@ -15,6 +15,7 @@ export type Brand = {
 export const getBrands = () =>
   apiFetch<Brand[]>("/api/public/brands", {
     method: "GET",
+    cache: "no-store",
   });
 
 /** Create brand */

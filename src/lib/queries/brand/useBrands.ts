@@ -7,6 +7,8 @@ export const useBrands = () => {
     queryKey: ["brands"],
     queryFn: getBrands,
     retry: false,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 };
 
