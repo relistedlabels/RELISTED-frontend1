@@ -17,7 +17,7 @@ export default function BrandLogosCarousel() {
     <div className="w-full container px-4 sm:px-0 mx-auto py-4 sm:py-[17px] bg-whit ">
       <div className="flex sm:justify-center text-gray-600 overflow-hidden overflow-x-auto hide-scrollbar scrollbar-hide gap-1 sm:gap-14 px-">
         {brands
-          ?.filter((brand) => brand.isActive !== false)
+          ?.filter((brand) => brand.isShopVisible === true)
           .slice(0, 10)
           .map((brand) => (
             <Link
