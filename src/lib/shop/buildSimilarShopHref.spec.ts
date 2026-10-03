@@ -12,7 +12,7 @@ describe("buildSimilarShopHref", () => {
     });
 
     expect(href).toBe(
-      "/shop?listingType=RENTAL%2CRENT_OR_RESALE&category=cat-dresses&brand=Zara&color=Black&size=M&tags=Evening",
+      "/shop?listingType=rental%2Crent_or_resale&category=cat-dresses&brand=Zara&color=Black&size=M&tags=Evening",
     );
     expect(href).not.toContain("title=");
     expect(href).not.toContain("description=");
@@ -25,13 +25,13 @@ describe("buildSimilarShopHref", () => {
     });
 
     expect(href).toBe(
-      "/shop?listingType=RESALE%2CRENT_OR_RESALE&brand=Gucci",
+      "/shop?listingType=resale%2Crent_or_resale&brand=Gucci",
     );
   });
 
   test("falls back to listing type only when no product context exists", () => {
     expect(buildSimilarShopHref()).toBe(
-      "/shop?listingType=RENTAL%2CRENT_OR_RESALE",
+      "/shop?listingType=rental%2Crent_or_resale",
     );
   });
 });

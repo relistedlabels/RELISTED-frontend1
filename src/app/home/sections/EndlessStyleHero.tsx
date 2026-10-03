@@ -8,8 +8,8 @@ import { useUserStore } from "@/store/useUserStore";
 import { useMe } from "@/lib/queries/auth/useMe";
 import { useListerProfile } from "@/lib/queries/listers/useListerProfile";
 
-const RENT_SHOP_HREF = "/shop?listingType=RENTAL,RENT_OR_RESALE";
-const BUY_SHOP_HREF = "/shop?listingType=RESALE,RENT_OR_RESALE";
+const RENT_SHOP_HREF = "/shop?listingType=rental,rent_or_resale";
+const BUY_SHOP_HREF = "/shop?listingType=resale,rent_or_resale";
 
 export default function EndlessStyleHero() {
   const token = useUserStore((s) => s.token);

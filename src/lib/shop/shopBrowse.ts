@@ -19,8 +19,8 @@ export const SHOP_SORT_OPTIONS: { value: ShopSortValue; label: string }[] = [
   { value: "price_high", label: "Price: high to low" },
 ];
 
-export const RENT_LISTING_TYPES = "RENTAL,RENT_OR_RESALE";
-export const BUY_LISTING_TYPES = "RESALE,RENT_OR_RESALE";
+export const RENT_LISTING_TYPES = "rental,rent_or_resale";
+export const BUY_LISTING_TYPES = "resale,rent_or_resale";
 
 export function shopSortFromSearchParams(
   searchParams: URLSearchParams | ReadonlyURLSearchParams,
@@ -43,7 +43,7 @@ export function isShopRentMode(
 ): boolean {
   const listingType = searchParams.get("listingType") ?? "";
   if (!listingType) return true;
-  return listingType.startsWith("RENTAL");
+  return listingType.toUpperCase().startsWith("RENTAL");
 }
 
 /** Listing types for shop API calls (URL param or Rent/Buy default). */
@@ -51,10 +51,10 @@ export function shopListingTypesParam(
   searchParams: URLSearchParams | ReadonlyURLSearchParams,
 ): string {
   const fromUrl = searchParams.get("listingType");
-  if (fromUrl) return fromUrl;
+  if (fromUrl) return fromUrl.toUpperCase();
   return isShopRentMode(searchParams)
-    ? RENT_LISTING_TYPES
-    : BUY_LISTING_TYPES;
+    ? RENT_LISTING_TYPES.toUpperCase()
+    : BUY_LISTING_TYPES.toUpperCase();
 }
 
 export function isShopDefaultSort(

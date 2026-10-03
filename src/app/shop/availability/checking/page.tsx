@@ -227,7 +227,7 @@ export default function AvailabilityCheckingPage() {
             View similar pieces
           </Link>
           <Link
-            href="/shop?listingType=RENTAL,RENT_OR_RESALE"
+            href="/shop?listingType=rental,rent_or_resale"
             className="inline-flex flex-1 items-center justify-center rounded-lg border border-gray-300 px-4 py-3 text-sm font-semibold transition hover:bg-gray-50"
           >
             Continue shopping

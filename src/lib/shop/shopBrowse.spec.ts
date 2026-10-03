@@ -13,12 +13,19 @@ import {
 describe("shopListingTypesParam", () => {
   test("defaults to rent listing types when param is missing", () => {
     const params = new URLSearchParams();
-    expect(shopListingTypesParam(params)).toBe(RENT_LISTING_TYPES);
+    expect(shopListingTypesParam(params)).toBe(RENT_LISTING_TYPES.toUpperCase());
   });
 
   test("defaults to buy listing types when buy mode is active", () => {
     const params = new URLSearchParams(`listingType=${BUY_LISTING_TYPES}`);
-    expect(shopListingTypesParam(params)).toBe(BUY_LISTING_TYPES);
+    expect(shopListingTypesParam(params)).toBe(BUY_LISTING_TYPES.toUpperCase());
+  });
+
+  test("accepts lowercase URL listing types for API filters", () => {
+    const params = new URLSearchParams(
+      "listingType=rental,rent_or_resale",
+    );
+    expect(shopListingTypesParam(params)).toBe("RENTAL,RENT_OR_RESALE");
   });
 });
 

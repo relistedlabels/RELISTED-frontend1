@@ -117,7 +117,7 @@ export default function AvailabilityAvailablePage() {
           {requestMagicLink.isPending ? "Please wait…" : "Continue to checkout"}
         </button>
         <Link
-          href="/shop?listingType=RENTAL,RENT_OR_RESALE"
+          href="/shop?listingType=rental,rent_or_resale"
           className="flex-1 inline-flex items-center justify-center rounded-lg border border-gray-300 px-4 py-3 text-sm font-semibold hover:bg-gray-50"
         >
           Continue shopping
