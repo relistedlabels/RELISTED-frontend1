@@ -49,7 +49,8 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
       <section
         id={`accordion-content-${title.replace(/\s/g, "")}`}
         aria-label={formattedTitle}
-        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+        inert={!isOpen}
+        className={`transition-[grid-template-rows,opacity] duration-300 ease-in-out ${isOpen ? "grid grid-rows-[1fr] opacity-100" : "hidden grid-rows-[0fr] opacity-0"}`}
       >
         <div className="min-h-0 overflow-hidden">
           <div className="pb-4 text-sm text-gray-700">{children}</div>
