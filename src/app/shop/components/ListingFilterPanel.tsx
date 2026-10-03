@@ -199,8 +199,8 @@ export default function ListingFilterPanel({
     const other: string[] = [];
     for (const rawSize of filterOptions.sizes) {
       const parsed = parseApparelSize(rawSize);
-      if (parsed.region) {
-        apiSizesByRegion.get(parsed.region)?.add(parsed.value);
+      if (parsed.unit) {
+        apiSizesByRegion.get(parsed.unit)?.add(parsed.size);
       } else {
         other.push(rawSize);
       }
