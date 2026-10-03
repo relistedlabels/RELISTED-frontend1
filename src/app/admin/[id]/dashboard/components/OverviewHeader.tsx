@@ -26,7 +26,7 @@ const OverviewHeader = () => {
         {greetingForHour(now.getHours())}, {firstName} 👋
       </Paragraph2>
       <Paragraph1 className="mt-1 text-sm leading-5 text-gray-500">
-        {dateLabel} · Needs your attention today.
+        {dateLabel}
       </Paragraph1>
     </div>
   );
