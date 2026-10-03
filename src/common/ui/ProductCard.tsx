@@ -24,6 +24,7 @@ interface ProductCardProps {
   brand: string;
   name: string;
   price: string;
+  retailPrice?: number;
   dailyPrice?: number;
   resalePrice?: number | null;
   listingType?: "RENTAL" | "RESALE" | "RENT_OR_RESALE";
@@ -43,11 +44,25 @@ function formatNaira(amount: number) {
   return `₦${amount.toLocaleString()}`;
 }
 
-function PriceRow({ label, value }: { label: string; value: string }) {
+function PriceRow({
+  label,
+  value,
+  valueClassName,
+  labelClassName,
+}: {
+  label: string;
+  value: string;
+  valueClassName?: string;
+  labelClassName?: string;
+}) {
   return (
     <div className="flex items-start justify-between gap-2">
-      <Paragraph1 className="text-gray-700">{label}</Paragraph1>
-      <Paragraph1 className="shrink-0 font-semibold text-black tabular-nums">
+      <Paragraph1 className={`text-gray-700 ${labelClassName ?? ""}`}>
+        {label}
+      </Paragraph1>
+      <Paragraph1
+        className={`shrink-0 font-semibold text-black tabular-nums ${valueClassName ?? ""}`}
+      >
         {value}
       </Paragraph1>
     </div>
@@ -60,6 +75,7 @@ export default function ProductCard({
   brand,
   name,
   price,
+  retailPrice,
   dailyPrice,
   resalePrice,
   listingType,
@@ -238,6 +254,14 @@ export default function ProductCard({
               ) : null}
             </>
           )}
+          {retailPrice != null && retailPrice > 0 ? (
+            <PriceRow
+              label="RRP:"
+              value={formatNaira(retailPrice)}
+              labelClassName="text-gray-600"
+              valueClassName="font-semibold text-gray-600 line-through"
+            />
+          ) : null}
         </div>
       </div>
     </div>

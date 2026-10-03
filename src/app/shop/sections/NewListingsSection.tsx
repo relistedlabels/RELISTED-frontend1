@@ -198,6 +198,7 @@ export default function NewListingsSection({
                   brand={product.brand?.name || ""}
                   name={product.name}
                   price={`₦${product.originalValue.toLocaleString()}`}
+                  retailPrice={product.originalValue}
                   dailyPrice={product.dailyPrice}
                   resalePrice={product.resalePrice}
                   listingType={product.listingType}
