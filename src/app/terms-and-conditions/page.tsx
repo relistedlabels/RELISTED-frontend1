@@ -15,6 +15,9 @@ export default function TermsAndConditions() {
           <Paragraph1 className="text-gray-300">
             Last updated: October 2026
           </Paragraph1>
+          <Paragraph1 className="text-gray-300">
+            These Terms and Conditions are provided by RELISTED LABELS LIMITED.
+          </Paragraph1>
         </div>
       </section>
 
