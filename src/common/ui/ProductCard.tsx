@@ -256,7 +256,7 @@ export default function ProductCard({
           )}
           {retailPrice != null && retailPrice > 0 ? (
             <PriceRow
-              label="RRP:"
+              label="RRP"
               value={formatNaira(retailPrice)}
               labelClassName="text-gray-600"
               valueClassName="font-semibold text-gray-600 line-through"
