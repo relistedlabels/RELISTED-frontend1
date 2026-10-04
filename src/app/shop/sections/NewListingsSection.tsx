@@ -2,14 +2,18 @@
 
 "use client";
 
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import ProductCard from "@/common/ui/ProductCard";
+import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import { primaryProductHeroImage } from "@/lib/product/primaryProductHeroImage";
 import { useProductsQuery } from "@/lib/queries/product/useProductsQuery";
-import { isShopRentMode, shopResultCountLabel } from "@/lib/shop/shopBrowse";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { ProductCardSkeleton } from "@/common/ui/SkeletonLoaders";
+import {
+  BUY_LISTING_TYPES,
+  isShopRentMode,
+  shopResultCountLabel,
+} from "@/lib/shop/shopBrowse";
 
 const LISTINGS_ANCHOR_ID = "shop-all-listings";
 
@@ -92,6 +96,31 @@ export default function NewListingsSection({
   const priceFocus = isShopRentMode(searchParams) ? "rent" : "buy";
   const pageParam = searchParams.get("page") ?? "1";
   const prevPageParam = useRef(pageParam);
+
+  useEffect(() => {
+    if (
+      isFetching ||
+      error ||
+      !isShopRentMode(searchParams) ||
+      !searchParams.get("brand") ||
+      filteredProducts.length > 0 ||
+      pagination?.total !== 0
+    ) {
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("listingType", BUY_LISTING_TYPES);
+    params.delete("page");
+    router.replace(`/shop?${params.toString()}`, { scroll: false });
+  }, [
+    error,
+    filteredProducts.length,
+    isFetching,
+    pagination?.total,
+    router,
+    searchParams,
+  ]);
 
   useEffect(() => {
     if (loading) return;
