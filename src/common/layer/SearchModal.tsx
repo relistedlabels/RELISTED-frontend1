@@ -1,19 +1,19 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Search, Clock, X, ArrowRight } from "lucide-react";
-import ProductCard from "@/common/ui/ProductCard";
-import { useBrowseStore } from "@/store/useBrowseStore";
-import { Paragraph1, ParagraphLink1 } from "@/common/ui/Text";
-import { usePublicSearch } from "@/lib/queries/search/usePublicSearch";
-import { useRouter, useSearchParams } from "next/navigation";
-import { isShopRentMode } from "@/lib/shop/shopBrowse";
-import { mergePreservedShopParams } from "@/lib/shop/listingFilters";
-import { productDetailHref } from "@/lib/shop/productDetailLinks";
+import { ArrowRight, Clock, Search, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
+import ProductCard from "@/common/ui/ProductCard";
+import { Paragraph1, ParagraphLink1 } from "@/common/ui/Text";
 import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
+import { usePublicSearch } from "@/lib/queries/search/usePublicSearch";
+import { mergePreservedShopParams } from "@/lib/shop/listingFilters";
+import { productDetailHref } from "@/lib/shop/productDetailLinks";
+import { isShopBuyMode } from "@/lib/shop/shopBrowse";
+import { useBrowseStore } from "@/store/useBrowseStore";
 
 type SearchModalProps = {
   showLabel?: boolean;
@@ -33,7 +33,7 @@ export default function SearchModal({ showLabel = false }: SearchModalProps) {
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const shopBuyMode = !isShopRentMode(searchParams);
+  const shopBuyMode = isShopBuyMode(searchParams);
 
   const {
     data: results,

@@ -21,6 +21,7 @@ export const SHOP_SORT_OPTIONS: { value: ShopSortValue; label: string }[] = [
 
 export const RENT_LISTING_TYPES = "rental,rent_or_resale";
 export const BUY_LISTING_TYPES = "resale,rent_or_resale";
+export const ALL_LISTING_TYPES = "rental,resale,rent_or_resale";
 
 export function shopSortFromSearchParams(
   searchParams: URLSearchParams | ReadonlyURLSearchParams,
@@ -41,20 +42,30 @@ export function shopSortFromSearchParams(
 export function isShopRentMode(
   searchParams: URLSearchParams | ReadonlyURLSearchParams,
 ): boolean {
-  const listingType = searchParams.get("listingType") ?? "";
-  if (!listingType) return true;
-  return listingType.toUpperCase().startsWith("RENTAL");
+  const listingType = (searchParams.get("listingType") ?? "").toUpperCase();
+  return (
+    listingType !== ALL_LISTING_TYPES.toUpperCase() &&
+    listingType.startsWith("RENTAL")
+  );
 }
 
-/** Listing types for shop API calls (URL param or Rent/Buy default). */
+export function isShopBuyMode(
+  searchParams: URLSearchParams | ReadonlyURLSearchParams,
+): boolean {
+  const listingType = (searchParams.get("listingType") ?? "").toUpperCase();
+  return (
+    listingType !== ALL_LISTING_TYPES.toUpperCase() &&
+    listingType.startsWith("RESALE")
+  );
+}
+
+/** Listing types for shop API calls (URL param or All default). */
 export function shopListingTypesParam(
   searchParams: URLSearchParams | ReadonlyURLSearchParams,
 ): string {
   const fromUrl = searchParams.get("listingType");
   if (fromUrl) return fromUrl.toUpperCase();
-  return isShopRentMode(searchParams)
-    ? RENT_LISTING_TYPES.toUpperCase()
-    : BUY_LISTING_TYPES.toUpperCase();
+  return ALL_LISTING_TYPES.toUpperCase();
 }
 
 export function isShopDefaultSort(
@@ -106,7 +117,7 @@ export function syncShopHeadingParams(params: URLSearchParams): void {
   }
 }
 
-/** Browse rails show when no product-discovery filters are active (Rent/Buy mode alone is OK). */
+/** Browse rails show when no product-discovery filters are active (listing mode alone is OK). */
 export function isShopBrowseMode(
   searchParams: URLSearchParams | ReadonlyURLSearchParams,
 ): boolean {
@@ -273,9 +284,12 @@ export function shopResultCountLabel(
 ): string {
   if (total === 0) return "No items found";
   const noun = total === 1 ? "item" : "items";
-  const mode = isShopRentMode(searchParams) ? "for rent" : "for sale";
-  const hasListingMode = Boolean(searchParams.get("listingType"));
-  if (hasListingMode && isShopBrowseMode(searchParams)) {
+  const mode = isShopRentMode(searchParams)
+    ? "for rent"
+    : isShopBuyMode(searchParams)
+      ? "for sale"
+      : "";
+  if (mode && isShopBrowseMode(searchParams)) {
     return `${total.toLocaleString()} ${noun} ${mode}`;
   }
   return `${total.toLocaleString()} ${noun}`;
