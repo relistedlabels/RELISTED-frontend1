@@ -1,30 +1,49 @@
 import { describe, expect, test } from "bun:test";
 import {
+  ALL_LISTING_TYPES,
   BUY_LISTING_TYPES,
+  isShopBuyMode,
   isShopDefaultSort,
-  removeShopFilterChip,
+  isShopRentMode,
   RENT_LISTING_TYPES,
-  shouldPreserveShopHeading,
+  removeShopFilterChip,
   shopListingTypesParam,
   shopSortFromSearchParams,
+  shouldPreserveShopHeading,
   syncShopHeadingParams,
 } from "./shopBrowse";
 
 describe("shopListingTypesParam", () => {
-  test("defaults to rent listing types when param is missing", () => {
+  test("defaults to all listing types when param is missing", () => {
     const params = new URLSearchParams();
-    expect(shopListingTypesParam(params)).toBe(RENT_LISTING_TYPES.toUpperCase());
+    expect(shopListingTypesParam(params)).toBe(ALL_LISTING_TYPES.toUpperCase());
   });
 
   test("defaults to buy listing types when buy mode is active", () => {
     const params = new URLSearchParams(`listingType=${BUY_LISTING_TYPES}`);
     expect(shopListingTypesParam(params)).toBe(BUY_LISTING_TYPES.toUpperCase());
+    expect(isShopBuyMode(params)).toBe(true);
+    expect(isShopRentMode(params)).toBe(false);
+  });
+
+  test("recognizes explicit rent mode", () => {
+    const params = new URLSearchParams(`listingType=${RENT_LISTING_TYPES}`);
+    expect(shopListingTypesParam(params)).toBe(
+      RENT_LISTING_TYPES.toUpperCase(),
+    );
+    expect(isShopRentMode(params)).toBe(true);
+    expect(isShopBuyMode(params)).toBe(false);
+  });
+
+  test("supports an explicit all listing mode", () => {
+    const params = new URLSearchParams(`listingType=${ALL_LISTING_TYPES}`);
+    expect(shopListingTypesParam(params)).toBe(ALL_LISTING_TYPES.toUpperCase());
+    expect(isShopRentMode(params)).toBe(false);
+    expect(isShopBuyMode(params)).toBe(false);
   });
 
   test("accepts lowercase URL listing types for API filters", () => {
-    const params = new URLSearchParams(
-      "listingType=rental,rent_or_resale",
-    );
+    const params = new URLSearchParams("listingType=rental,rent_or_resale");
     expect(shopListingTypesParam(params)).toBe("RENTAL,RENT_OR_RESALE");
   });
 });

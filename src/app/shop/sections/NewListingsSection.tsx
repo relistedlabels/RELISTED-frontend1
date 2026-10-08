@@ -11,6 +11,7 @@ import { primaryProductHeroImage } from "@/lib/product/primaryProductHeroImage";
 import { useProductsQuery } from "@/lib/queries/product/useProductsQuery";
 import {
   BUY_LISTING_TYPES,
+  isShopBuyMode,
   isShopRentMode,
   shopResultCountLabel,
 } from "@/lib/shop/shopBrowse";
@@ -93,7 +94,7 @@ export default function NewListingsSection({
   } = useProductsQuery();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const priceFocus = isShopRentMode(searchParams) ? "rent" : "buy";
+  const priceFocus = isShopBuyMode(searchParams) ? "buy" : "rent";
   const pageParam = searchParams.get("page") ?? "1";
   const prevPageParam = useRef(pageParam);
 
