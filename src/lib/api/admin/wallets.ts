@@ -1,12 +1,16 @@
 import { apiDownloadFile, apiFetch } from "../http";
 
 export interface WalletMonthFinanceMetrics {
-  revenue: number;
+  grossOrderValue: number;
   completedOrders: number;
-  payoutsToListers: number;
+  platformEarnings: number;
   serviceFees: number;
+  listerPlatformFees: number;
   vat: number;
-  monthStart: string;
+  pendingPayouts: { listers: number; renters: number };
+  paidPayouts: { listers: number; renters: number };
+  from: string;
+  to: string;
 }
 
 export interface WalletStats {
@@ -20,9 +24,12 @@ export interface WalletStats {
   totalReleasedToListers: number;
   /** @deprecated Same as totalReleasedToListers; older API name. */
   totalReleasedToCurators?: number;
-  /** Sum of order service fees (non-cancelled / non-rejected orders), NGN. */
+  /** Combined renter service fees and lister platform fees, NGN. */
   platformEarnings: number;
   platformServiceFees?: number;
+  listerPlatformFees?: number;
+  period?: WalletMonthFinanceMetrics;
+  previousPeriod?: WalletMonthFinanceMetrics;
   /** Sum of order VAT fields for the same order set, NGN. */
   totalVatCollected?: number;
   monthComparison?: {
@@ -198,8 +205,12 @@ function buildWithdrawalParams(params: WithdrawalListParams): string {
 }
 
 export const walletsApi = {
-  getStats: () =>
-    apiFetch<{ success: true; data: WalletStats }>(`/api/admin/wallets/stats`),
+  getStats: (from: string, to: string) => {
+    const params = new URLSearchParams({ from, to });
+    return apiFetch<{ success: true; data: WalletStats }>(
+      `/api/admin/wallets/stats?${params.toString()}`,
+    );
+  },
 
   getWallets: (params: WalletListParams) =>
     apiFetch<{

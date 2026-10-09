@@ -1,5 +1,5 @@
-import React from "react";
 import localFont from "next/font/local";
+import type React from "react";
 
 const body_Font_Medium = localFont({
   src: "../fonts/Big_Caslon_CC/Big_Caslon_CC_Black.otf",
@@ -24,6 +24,8 @@ const body_Font_Italic = localFont({
 const body_p_regular = localFont({
   src: "../fonts/Poppins/Poppins-Regular.ttf",
 });
+
+export const poppinsRegularClassName = body_p_regular.className;
 
 const body_p_light = localFont({
   src: "../fonts/Poppins/Poppins-Light.ttf",
