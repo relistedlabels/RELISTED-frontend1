@@ -33,10 +33,10 @@ interface WithdrawalListParams {
   enabled?: boolean;
 }
 
-export const useWalletStats = () =>
+export const useWalletStats = (from: string, to: string) =>
   useQuery({
-    queryKey: ["admin", "wallets", "stats"],
-    queryFn: () => walletsApi.getStats(),
+    queryKey: ["admin", "wallets", "stats", from, to],
+    queryFn: () => walletsApi.getStats(from, to),
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
