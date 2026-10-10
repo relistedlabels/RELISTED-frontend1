@@ -2,17 +2,22 @@
 
 import { useSearchParams } from "next/navigation";
 import { Header1Plus } from "@/common/ui/Text";
-import { isShopBrowseMode, isShopRentMode } from "@/lib/shop/shopBrowse";
+import {
+  isShopBrowseMode,
+  isShopBuyMode,
+  isShopRentMode,
+} from "@/lib/shop/shopBrowse";
+import NewListingsSection from "../sections/NewListingsSection";
+import ShopClosetParamsGuard from "./ShopClosetParamsGuard";
+import ShopFilterBar from "./ShopFilterBar";
 import ShopRentBuyToggle from "./ShopRentBuyToggle";
 import ShopToolbar from "./ShopToolbar";
-import ShopFilterBar from "./ShopFilterBar";
-import ShopClosetParamsGuard from "./ShopClosetParamsGuard";
-import NewListingsSection from "../sections/NewListingsSection";
 
 export default function ShopBrowseSection() {
   const searchParams = useSearchParams();
   const browseMode = isShopBrowseMode(searchParams);
   const rentMode = isShopRentMode(searchParams);
+  const buyMode = isShopBuyMode(searchParams);
 
   const pageTitle = searchParams.get("title");
   const pageDescription = searchParams.get("description");
@@ -36,7 +41,9 @@ export default function ShopBrowseSection() {
                 <p className="mt-1 hidden text-sm text-gray-600 sm:block">
                   {rentMode
                     ? "Rent pieces for your next moment."
-                    : "Buy pieces you want to keep."}
+                    : buyMode
+                      ? "Buy pieces you want to keep."
+                      : "Rent or buy pieces for your next moment."}
                 </p>
               ) : null}
             </div>
