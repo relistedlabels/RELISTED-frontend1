@@ -66,7 +66,7 @@ export default function MetricsCard({
             </div>
             {hasTrend || trendLabel ? (
               <span
-                className={`mt-5 mb-2.5 inline-flex max-w-full items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1.5 text-[10px] font-medium leading-none ${trendColor}`}
+                className={`mt-5 mb-2.5 inline-flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-1 rounded-full px-2.5 py-1.5 text-[10px] font-medium leading-none ${trendColor}`}
               >
                 {trendPercent !== null ? (
                   isUp ? (
