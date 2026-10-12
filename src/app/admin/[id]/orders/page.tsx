@@ -23,6 +23,7 @@ import {
   DISPATCH_FILTER_OPTIONS,
   type DispatchFilter,
 } from "@/lib/admin/adminListFilters";
+import { parseFinanceOrderDetails } from "@/lib/admin/financeOrderDetails";
 import type { Order, Return } from "@/lib/api/admin/orders";
 import type { ShipmentType } from "@/lib/api/shipments";
 import { adminOrderListStatusToApiParam } from "@/lib/orders/adminOrderListFilters";
@@ -126,12 +127,22 @@ export default function OrdersPage() {
   const [selectedReturn, setSelectedReturn] = useState<any>(null);
   const [isReturnDetailModalOpen, setIsReturnDetailModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [financeContext, setFinanceContext] = useState(false);
+
+  useEffect(() => {
+    const financeDetails = parseFinanceOrderDetails(window.location.search);
+    if (!financeDetails.isFinanceContext) return;
+    setFinanceContext(financeDetails.isFinanceContext);
+    setDateFrom(financeDetails.dateFrom ?? "");
+    setDateTo(financeDetails.dateTo ?? "");
+  }, []);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 350);
     return () => clearTimeout(t);
   }, [searchQuery]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Reset pagination whenever a filter changes.
   useEffect(() => {
     setCurrentPage(1);
   }, [
@@ -168,7 +179,7 @@ export default function OrdersPage() {
   } = useOrders({
     page: currentPage,
     limit: ORDERS_PAGE_SIZE,
-    tab: isReturnsView ? undefined : activeTab,
+    tab: isReturnsView || financeContext ? undefined : activeTab,
     status: adminOrderListStatusToApiParam(statusFilter),
     search: debouncedSearch || undefined,
     type: typeFilter === "All" ? undefined : typeFilter,
@@ -244,50 +255,68 @@ export default function OrdersPage() {
       <div className="min-h-screen">
         {/* Header */}
         <AdminPageHeader
-          title="Orders"
-          description="Manage orders, returns, and fulfillment."
+          title={financeContext ? "Finance order detail" : "Orders"}
+          description={
+            financeContext
+              ? "Review orders and payment details for the selected finance dates."
+              : "Manage orders, returns, and fulfillment."
+          }
         />
+        {financeContext ? (
+          <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <h2 className="text-sm font-semibold text-emerald-900">
+              Finance order detail
+            </h2>
+            <p className="mt-1 text-xs leading-relaxed text-emerald-800">
+              Orders created from {dateFrom || "any date"} through{" "}
+              {dateTo || "any date"}. Use the filters to narrow the list and
+              select an order to inspect its payment breakdown.
+            </p>
+          </div>
+        ) : null}
 
         {/* Stats Cards */}
-        <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3 lg:gap-4">
-          {statsLoading ? (
-            <>
-              {[...Array(3)].map((_, index) => (
-                <div
-                  key={index}
-                  className="flex h-[76px] animate-pulse items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 lg:h-24 lg:flex-col lg:items-start lg:p-6"
-                >
-                  <div className="h-10 w-10 shrink-0 rounded-lg bg-gray-200" />
-                  <div className="min-w-0 flex-1 space-y-2">
-                    <div className="h-3 w-20 rounded bg-gray-200" />
-                    <div className="h-5 w-12 rounded bg-gray-200" />
+        {!financeContext ? (
+          <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3 lg:gap-4">
+            {statsLoading
+              ? [
+                  "stats-skeleton-1",
+                  "stats-skeleton-2",
+                  "stats-skeleton-3",
+                ].map((key) => (
+                  <div
+                    key={key}
+                    className="flex h-[76px] animate-pulse items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 lg:h-24 lg:flex-col lg:items-start lg:p-6"
+                  >
+                    <div className="h-10 w-10 shrink-0 rounded-lg bg-gray-200" />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="h-3 w-20 rounded bg-gray-200" />
+                      <div className="h-5 w-12 rounded bg-gray-200" />
+                    </div>
                   </div>
-                </div>
-              ))}
-            </>
-          ) : (
-            statCards.map((card, index) => (
-              <div
-                key={index}
-                className="flex min-w-0 items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 lg:flex-col lg:items-start lg:p-6"
-              >
-                <div
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg lg:mb-3 lg:h-12 lg:w-12 ${card.bgColor}`}
-                >
-                  <card.icon size={20} className="text-gray-700" />
-                </div>
-                <div className="min-w-0">
-                  <Paragraph1 className="text-[10px] font-semibold uppercase leading-tight tracking-wide text-gray-500 sm:text-xs">
-                    {card.label}
-                  </Paragraph1>
-                  <Paragraph3 className="mt-0.5 text-xl font-bold text-gray-900 lg:text-3xl">
-                    {card.value}
-                  </Paragraph3>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+                ))
+              : statCards.map((card) => (
+                  <div
+                    key={card.label}
+                    className="flex min-w-0 items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 lg:flex-col lg:items-start lg:p-6"
+                  >
+                    <div
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg lg:mb-3 lg:h-12 lg:w-12 ${card.bgColor}`}
+                    >
+                      <card.icon size={20} className="text-gray-700" />
+                    </div>
+                    <div className="min-w-0">
+                      <Paragraph1 className="text-[10px] font-semibold uppercase leading-tight tracking-wide text-gray-500 sm:text-xs">
+                        {card.label}
+                      </Paragraph1>
+                      <Paragraph3 className="mt-0.5 text-xl font-bold text-gray-900 lg:text-3xl">
+                        {card.value}
+                      </Paragraph3>
+                    </div>
+                  </div>
+                ))}
+          </div>
+        ) : null}
 
         <div className="bg-white mb-6 border border-gray-200 rounded-lg overflow-hidden">
           <div className="flex items-end gap-2 border-b border-gray-200 px-4 py-4 sm:px-6">
@@ -312,38 +341,40 @@ export default function OrdersPage() {
             />
           </div>
 
-          <AdminTabBar className="px-4 sm:px-6">
-            <AdminTabButton
-              active={activeTab === "active"}
-              onClick={() => {
-                setActiveTab("active");
-                if (statusFilter === "Returns") {
-                  setStatusFilter("All");
-                }
-              }}
-              label="Active"
-            />
-            <AdminTabButton
-              active={activeTab === "completed"}
-              onClick={() => {
-                setActiveTab("completed");
-                if (statusFilter === "Returns") {
-                  setStatusFilter("All");
-                }
-              }}
-              label="Completed"
-            />
-            <AdminTabButton
-              active={activeTab === "rejected"}
-              onClick={() => {
-                setActiveTab("rejected");
-                if (statusFilter === "Returns") {
-                  setStatusFilter("All");
-                }
-              }}
-              label="Rejected"
-            />
-          </AdminTabBar>
+          {!financeContext ? (
+            <AdminTabBar className="px-4 sm:px-6">
+              <AdminTabButton
+                active={activeTab === "active"}
+                onClick={() => {
+                  setActiveTab("active");
+                  if (statusFilter === "Returns") {
+                    setStatusFilter("All");
+                  }
+                }}
+                label="Active"
+              />
+              <AdminTabButton
+                active={activeTab === "completed"}
+                onClick={() => {
+                  setActiveTab("completed");
+                  if (statusFilter === "Returns") {
+                    setStatusFilter("All");
+                  }
+                }}
+                label="Completed"
+              />
+              <AdminTabButton
+                active={activeTab === "rejected"}
+                onClick={() => {
+                  setActiveTab("rejected");
+                  if (statusFilter === "Returns") {
+                    setStatusFilter("All");
+                  }
+                }}
+                label="Rejected"
+              />
+            </AdminTabBar>
+          ) : null}
 
           <AdminFilterDrawer
             isOpen={filtersOpen}
