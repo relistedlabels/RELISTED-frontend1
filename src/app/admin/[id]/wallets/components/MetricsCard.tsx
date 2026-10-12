@@ -118,13 +118,13 @@ export default function MetricsCard({
           </button>
           {isBreakdownOpen ? (
             <div id={breakdownId} className="pt-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3">
                 {breakdown.map((item) => (
                   <div key={item.label} className="min-w-0">
-                    <span className="block truncate text-[11px] font-medium text-gray-500">
+                    <span className="block whitespace-normal text-[11px] leading-snug font-medium text-gray-500">
                       {item.label}
                     </span>
-                    <span className="mt-0.5 block truncate text-sm font-semibold text-gray-800">
+                    <span className="mt-0.5 block break-words text-sm font-semibold text-gray-800 tabular-nums">
                       {item.value}
                     </span>
                   </div>
