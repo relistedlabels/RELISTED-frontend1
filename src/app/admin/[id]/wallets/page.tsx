@@ -271,16 +271,16 @@ function WalletsPageInner() {
     ? [
         {
           label: "Total revenue",
-          value: formatCurrency(currentPeriod?.grossOrderValue ?? 0),
+          value: formatCurrency(currentPeriod?.netOrderValue ?? 0),
           currency: "₦",
           icon: <TrendingUp className="h-5 w-5" />,
-          detail: "Order payments, including renter deposits.",
+          detail: "Order payments, excluding refundable renter collateral.",
           cardBg: "bg-emerald-50 border-emerald-100",
           iconBg: "bg-emerald-100",
           iconText: "text-emerald-700",
           ...periodTrend(
-            currentPeriod?.grossOrderValue ?? 0,
-            previousPeriod?.grossOrderValue ?? 0,
+            currentPeriod?.netOrderValue ?? 0,
+            previousPeriod?.netOrderValue ?? 0,
           ),
         },
         {

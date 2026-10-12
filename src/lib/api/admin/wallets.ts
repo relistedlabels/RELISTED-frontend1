@@ -2,6 +2,10 @@ import { apiDownloadFile, apiFetch } from "../http";
 
 export interface WalletMonthFinanceMetrics {
   grossOrderValue: number;
+  /** Gross order value less renter collateral for the same period. */
+  netOrderValue: number;
+  /** Renter collateral included in grossOrderValue for the same period. */
+  renterCollateralAmount: number;
   completedOrders: number;
   platformEarnings: number;
   serviceFees: number;
