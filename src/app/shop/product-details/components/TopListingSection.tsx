@@ -73,8 +73,8 @@ export default function TopListingSection({
     return (
       <section className="bg-white px-4 sm:px-0 py-12">
         <div className="mx-auto container">
-          <div className="mb-12 text-center">
-            <Header1Plus className="uppercase tracking-wide">
+          <div className="mb-8">
+            <Header1Plus className="text-2xl uppercase tracking-wide sm:text-3xl">
               You might also like
             </Header1Plus>
           </div>
@@ -104,8 +104,8 @@ export default function TopListingSection({
     <section className="bg-white px-4 sm:px-0 py-12">
       <div className="mx-auto container">
         {/* Header */}
-        <div className="mb-12">
-          <Header1Plus className="uppercase tracking-wide">
+        <div className="mb-8">
+          <Header1Plus className="text-2xl uppercase tracking-wide sm:text-3xl">
             You might also like
           </Header1Plus>
         </div>

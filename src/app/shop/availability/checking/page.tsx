@@ -143,7 +143,13 @@ export default function AvailabilityCheckingPage() {
 
   return (
     <div>
-      <div className="flex min-h-[55vh] flex-col items-center justify-center px-6 py-16 text-center">
+      <div
+        className={`flex flex-col items-center justify-center px-6 py-16 text-center ${
+          isApprovedForShopper
+            ? "min-h-[70vh]"
+            : "min-h-[52vh] bg-[#fafaf9] sm:py-16"
+        }`}
+      >
         <div
           className={`mb-6 flex h-16 w-16 items-center justify-center rounded-full ${
             isApprovedForShopper
@@ -164,7 +170,7 @@ export default function AvailabilityCheckingPage() {
 
         <Header1Plus className="mb-3">
           {isApprovedForShopper
-            ? "Availability confirmed"
+            ? "It's available!"
             : isLoading && !status
               ? "Loading…"
               : isDatesPassed
@@ -178,9 +184,7 @@ export default function AvailabilityCheckingPage() {
 
         <Paragraph1 className="max-w-md text-gray-600 leading-relaxed">
           {isApprovedForShopper &&
-            (isPurchase
-              ? `${productName} is available to buy. Continue to complete your order.`
-              : `${productName} is available for your dates. Continue to complete your order.`)}
+            `${productName} is available ${isPurchase ? "to buy" : "for your dates"}. Continue to checkout to complete your order.`}
           {isDatesPassed &&
             (isPurchase
               ? `These dates are no longer valid for ${productName}. Check again if you would still like to buy it.`
@@ -204,38 +208,46 @@ export default function AvailabilityCheckingPage() {
         </Paragraph1>
 
         {isApprovedForShopper ? (
-          <div className="mt-8 flex w-full max-w-sm flex-col gap-3">
+          <div className="mt-8 flex w-full max-w-sm flex-col gap-3 sm:flex-row">
             <Link
-              href={completeRentalUrl ??
+              href={
+                completeRentalUrl ??
                 (isAuthenticatedRequester
                   ? "/shop/cart/checkout"
-                  : `/shop/availability/available?requestId=${encodeURIComponent(requestId)}${token ? `&token=${encodeURIComponent(token)}` : ""}`)}
-              className="inline-flex w-full items-center justify-center rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-900"
+                  : `/shop/availability/available?requestId=${encodeURIComponent(requestId)}${token ? `&token=${encodeURIComponent(token)}` : ""}`)
+              }
+              className="inline-flex flex-1 items-center justify-center rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-900"
             >
-              Complete your order
+              Continue to checkout
+            </Link>
+            <Link
+              href="/shop?listingType=rental,rent_or_resale"
+              className="inline-flex flex-1 items-center justify-center rounded-lg border border-gray-300 px-4 py-3 text-sm font-semibold transition hover:bg-gray-50"
+            >
+              Continue shopping
             </Link>
           </div>
-        ) : null}
-
-        <div className="mt-8 flex w-full max-w-sm flex-col gap-3 sm:flex-row">
-          <Link
-            href={similarShopHref}
-            className={`inline-flex items-center justify-center rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-900 ${
-              isApprovedForShopper ? "w-full" : "flex-1"
-            }`}
-          >
-            View similar pieces
-          </Link>
-          <Link
-            href="/shop?listingType=rental,rent_or_resale"
-            className="inline-flex flex-1 items-center justify-center rounded-lg border border-gray-300 px-4 py-3 text-sm font-semibold transition hover:bg-gray-50"
-          >
-            Continue shopping
-          </Link>
-        </div>
+        ) : (
+          <div className="mt-8 flex w-full max-w-sm flex-col gap-3 sm:flex-row">
+            <Link
+              href={similarShopHref}
+              className="inline-flex flex-1 items-center justify-center rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-900"
+            >
+              View similar pieces
+            </Link>
+            <Link
+              href="/shop?listingType=rental,rent_or_resale"
+              className="inline-flex flex-1 items-center justify-center rounded-lg border border-gray-300 px-4 py-3 text-sm font-semibold transition hover:bg-gray-50"
+            >
+              Continue shopping
+            </Link>
+          </div>
+        )}
       </div>
 
-      {productId ? <TopListingSection productId={productId} /> : null}
+      {!isApprovedForShopper && productId ? (
+        <TopListingSection productId={productId} />
+      ) : null}
     </div>
   );
 }
