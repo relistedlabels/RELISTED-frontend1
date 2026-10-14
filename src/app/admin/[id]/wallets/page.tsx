@@ -26,6 +26,7 @@ import {
 import AdminPageHeader from "@/app/admin/components/AdminPageHeader";
 import { MetricCardsSkeleton } from "@/common/ui/SkeletonLoaders";
 import { poppinsRegularClassName } from "@/common/ui/Text";
+import { buildFinanceOrdersHref } from "@/lib/admin/financeOrderDetails";
 import { walletsApi } from "@/lib/api/admin/";
 import {
   useEscrows,
@@ -74,6 +75,7 @@ interface MetricData {
   trendPercent?: number | null;
   trendLabel?: string;
   breakdown?: Array<{ label: string; value: string }>;
+  detailsHref?: string;
 }
 
 const formatCurrency = (amount: number): string =>
@@ -270,11 +272,27 @@ function WalletsPageInner() {
   const periodMetrics: MetricData[] = stats
     ? [
         {
-          label: "Total revenue",
+          label: "Net order revenue",
           value: formatCurrency(currentPeriod?.netOrderValue ?? 0),
           currency: "₦",
           icon: <TrendingUp className="h-5 w-5" />,
-          detail: "Order payments, excluding refundable renter collateral.",
+          breakdown: [
+            {
+              label: "Order payments",
+              value: `₦${formatCurrency(currentPeriod?.grossOrderValue ?? 0)}`,
+            },
+            {
+              label: "Refundable collateral held",
+              value: `₦${formatCurrency(currentPeriod?.renterCollateralAmount ?? 0)}`,
+            },
+          ],
+          detail:
+            "Collateral is held separately and excluded from net order revenue.",
+          detailsHref: buildFinanceOrdersHref(
+            adminId,
+            financeRange.from,
+            financeRange.to,
+          ),
           cardBg: "bg-emerald-50 border-emerald-100",
           iconBg: "bg-emerald-100",
           iconText: "text-emerald-700",
@@ -298,6 +316,12 @@ function WalletsPageInner() {
               value: `₦${formatCurrency(currentPeriod?.listerPlatformFees ?? 0)}`,
             },
           ],
+          detail: "Included in net order revenue, not additional revenue.",
+          detailsHref: buildFinanceOrdersHref(
+            adminId,
+            financeRange.from,
+            financeRange.to,
+          ),
           cardBg: "bg-emerald-50 border-emerald-100",
           iconBg: "bg-emerald-100",
           iconText: "text-emerald-700",
@@ -504,6 +528,11 @@ function WalletsPageInner() {
                 ))}
               </div>
             )}
+            <p className="mt-3 text-xs leading-relaxed text-gray-500">
+              Activity is based on orders created during the selected dates.
+              Payouts are attributed to those orders, regardless of when the
+              payout was paid.
+            </p>
           </section>
           <section className="mb-6 border-t border-gray-200 pt-7">
             <div className="mb-4">
