@@ -2,23 +2,24 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import type React from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { buttonPrimary } from "@/common/ui/buttonClasses";
+import { Paragraph1 } from "@/common/ui/Text";
+import { useNewsletterSubscribe } from "@/lib/mutations/newsletter/useNewsletterSubscribe";
+import { useNewsletterUnsubscribe } from "@/lib/mutations/newsletter/useNewsletterUnsubscribe";
 import {
   useNotificationPreferences,
   useUpdateNotificationPreferences,
 } from "@/lib/queries/renters/useNotifications";
-import { useNewsletterSubscribe } from "@/lib/mutations/newsletter/useNewsletterSubscribe";
-import { useNewsletterUnsubscribe } from "@/lib/mutations/newsletter/useNewsletterUnsubscribe";
 import { useUserStore } from "@/store/useUserStore";
-import { buttonPrimary } from "@/common/ui/buttonClasses";
-import { Paragraph1 } from "@/common/ui/Text";
-import { toast } from "sonner";
 
 interface NotificationSettingProps {
   title: string;
   description: string;
-  initialEnabled: boolean;
+  enabled: boolean;
   settingKey: string;
   onToggle?: (key: string, enabled: boolean) => void;
 }
@@ -35,34 +36,26 @@ interface NotificationPreference {
 const NotificationSetting: React.FC<NotificationSettingProps> = ({
   title,
   description,
-  initialEnabled,
+  enabled,
   settingKey,
   onToggle,
 }) => {
-  const [isEnabled, setIsEnabled] = useState(initialEnabled);
-
-  const handleToggle = () => {
-    const newValue = !isEnabled;
-    setIsEnabled(newValue);
-    onToggle?.(settingKey, newValue);
-  };
-
   // Simple toggle switch component structure
   const ToggleSwitch: React.FC = () => (
     <button
       type="button"
-      onClick={handleToggle}
-      aria-checked={isEnabled}
+      onClick={() => onToggle?.(settingKey, !enabled)}
+      aria-checked={enabled}
       role="switch"
       className={`relative inline-flex shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black ${
-        isEnabled ? "bg-black" : "bg-gray-200"
+        enabled ? "bg-black" : "bg-gray-200"
       }`}
     >
       <span className="sr-only">Toggle {title}</span>
       <span
         aria-hidden="true"
         className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200 ${
-          isEnabled ? "translate-x-5" : "translate-x-0"
+          enabled ? "translate-x-5" : "translate-x-0"
         }`}
       />
     </button>
@@ -99,18 +92,11 @@ const NOTIFICATION_PREFERENCES: NotificationPreference[] = [
     default: false,
   },
   {
-    key: "orderUpdates",
-    alternateKeys: ["order_updates"],
-    title: "Order Updates",
-    description: "Notifications when order status changes",
-    default: true,
-  },
-  {
-    key: "rentalReminders",
-    alternateKeys: ["rental_reminders"],
-    title: "Rental Reminders",
-    description: "Reminders for upcoming return dates",
-    default: true,
+    key: "whatsapp",
+    alternateKeys: ["whatsappOptIn"],
+    title: "WhatsApp Updates",
+    description: "Receive order and service updates on WhatsApp",
+    default: false,
   },
   {
     key: "marketingEmails",
@@ -208,15 +194,10 @@ const AccountNotifications: React.FC = () => {
   const handleSavePreferences = async () => {
     console.log("💾 Local preferences (flat):", preferences);
 
-    // Transform component keys to backend expected format
-    // emailAlerts -> emailAlertsEnabled, smsUpdates -> smsUpdatesEnabled
-    // marketingEmails -> marketingEmailsEnabled, orderUpdates -> orderUpdatesEnabled
-    // rentalReminders -> rentalRemindersEnabled
     const payloadForBackend: Record<string, boolean> = {};
     Object.entries(preferences).forEach(([key, value]) => {
-      // Transform key to backend format by adding "Enabled" suffix
-      // emailAlerts -> emailAlertsEnabled (keep first letter lowercase)
-      const backendKey = key + "Enabled";
+      if (key === "newsletter") return;
+      const backendKey = key === "whatsapp" ? "whatsappOptIn" : key;
       payloadForBackend[backendKey] = value;
     });
 
@@ -225,7 +206,7 @@ const AccountNotifications: React.FC = () => {
       JSON.stringify(payloadForBackend, null, 2),
     );
 
-    updateMutation.mutate(payloadForBackend as any, {
+    updateMutation.mutate(payloadForBackend, {
       onSuccess: () => {
         setHasChanges(false);
         toast.success("Notification preferences saved!");
@@ -234,7 +215,7 @@ const AccountNotifications: React.FC = () => {
           queryKey: ["renter-notification-preferences"],
         });
       },
-      onError: (error: any) => {
+      onError: (error: Error) => {
         console.error("❌ Save error:", error);
         toast.error(error?.message || "Failed to save preferences");
       },
@@ -262,7 +243,8 @@ const AccountNotifications: React.FC = () => {
         NOTIFICATIONS
       </Paragraph1>
       <Paragraph1 className="text-sm text-gray-500 mb-6">
-        Manage your communication preferences.
+        Manage your communication preferences. You can opt out of email and
+        WhatsApp updates here.
       </Paragraph1>
 
       <div className="space-y-2">
@@ -271,7 +253,7 @@ const AccountNotifications: React.FC = () => {
             key={pref.key}
             title={pref.title}
             description={pref.description}
-            initialEnabled={preferences[pref.key] ?? pref.default}
+            enabled={preferences[pref.key] ?? pref.default}
             settingKey={pref.key}
             onToggle={handleTogglePref}
           />
