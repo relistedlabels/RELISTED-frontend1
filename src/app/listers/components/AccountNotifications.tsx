@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import type React from "react";
+import { useEffect, useState } from "react";
 import { Paragraph1 } from "@/common/ui/Text";
-import { useNotificationPreferences } from "@/lib/queries/listers/useNotificationPreferences";
 import { useUpdateNotificationPreferences } from "@/lib/mutations/listers/useUpdateNotificationPreferences";
+import { useNotificationPreferences } from "@/lib/queries/listers/useNotificationPreferences";
 
 interface NotificationSettingProps {
   /** The main title of the setting (e.g., "Email Alerts") */
@@ -28,6 +29,7 @@ const NotificationSetting: React.FC<NotificationSettingProps> = ({
   // Simple toggle switch component structure
   const ToggleSwitch: React.FC = () => (
     <button
+      type="button"
       onClick={() => onToggle(settingKey, !enabled)}
       aria-checked={enabled}
       role="switch"
@@ -65,7 +67,8 @@ const AccountNotifications: React.FC = () => {
   const [toggles, setToggles] = useState({
     emailAlerts: true,
     smsUpdates: false,
-    productRecommendations: true,
+    whatsapp: false,
+    marketingEmails: true,
   });
 
   useEffect(() => {
@@ -74,7 +77,8 @@ const AccountNotifications: React.FC = () => {
     setToggles({
       emailAlerts: prefs.emailAlerts?.enabled ?? true,
       smsUpdates: prefs.smsUpdates?.enabled ?? false,
-      productRecommendations: prefs.productRecommendations?.enabled ?? true,
+      whatsapp: prefs.whatsapp?.enabled ?? false,
+      marketingEmails: prefs.marketingEmails?.enabled ?? true,
     });
   }, [data]);
 
@@ -86,7 +90,8 @@ const AccountNotifications: React.FC = () => {
     updatePreferencesMutation.mutate({
       emailAlerts: toggles.emailAlerts,
       smsUpdates: toggles.smsUpdates,
-      productRecommendations: toggles.productRecommendations,
+      whatsappOptIn: toggles.whatsapp,
+      marketingEmails: toggles.marketingEmails,
     });
   };
 
@@ -96,7 +101,8 @@ const AccountNotifications: React.FC = () => {
         NOTIFICATIONS
       </Paragraph1>
       <Paragraph1 className="text-sm text-gray-500 mb-6">
-        Manage your communication preferences.
+        Manage your communication preferences. You can opt out of email and
+        WhatsApp updates here.
       </Paragraph1>
 
       <div className="space-y-2">
@@ -118,12 +124,20 @@ const AccountNotifications: React.FC = () => {
           onToggle={handleToggle}
         />
 
-        {/* Product Recommendations */}
+        {/* WhatsApp Updates */}
         <NotificationSetting
-          title="Product Recommendations"
-          description="Receive personalized product suggestions and exclusive offers based on your preferences"
-          enabled={toggles.productRecommendations}
-          settingKey="productRecommendations"
+          title="WhatsApp Updates"
+          description="Receive order and service updates on WhatsApp"
+          enabled={toggles.whatsapp}
+          settingKey="whatsapp"
+          onToggle={handleToggle}
+        />
+
+        <NotificationSetting
+          title="Marketing Emails"
+          description="Receive promotional emails and offers"
+          enabled={toggles.marketingEmails}
+          settingKey="marketingEmails"
           onToggle={handleToggle}
         />
       </div>
@@ -131,6 +145,7 @@ const AccountNotifications: React.FC = () => {
       {/* Save Button */}
       <div className="flex justify-end pt-6">
         <button
+          type="button"
           onClick={handleSave}
           disabled={updatePreferencesMutation.isPending}
           className="px-6 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-800 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed"

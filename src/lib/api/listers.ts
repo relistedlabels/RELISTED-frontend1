@@ -1,5 +1,5 @@
-import { createUploadFormData } from "./upload";
 import { apiFetch } from "./http";
+import { createUploadFormData } from "./upload";
 
 // ============================================================================
 // DASHBOARD ENDPOINTS
@@ -1438,10 +1438,10 @@ export interface NotificationPreferences {
     enabled: boolean;
     categories?: string[];
   };
-  productRecommendations: {
+  whatsapp: {
     enabled: boolean;
-    frequency?: string;
   };
+  marketingEmails: { enabled: boolean };
 }
 
 export interface NotificationPreferencesResponse {
@@ -1453,7 +1453,7 @@ export interface NotificationPreferencesResponse {
 }
 
 export async function getNotificationPreferences(): Promise<NotificationPreferencesResponse> {
-  return apiFetch("/api/listers/notifications/preferences", {
+  return apiFetch("/api/renters/notifications/preferences", {
     method: "GET",
   });
 }
@@ -1461,7 +1461,8 @@ export async function getNotificationPreferences(): Promise<NotificationPreferen
 export interface UpdateNotificationPreferencesPayload {
   emailAlerts: boolean;
   smsUpdates: boolean;
-  productRecommendations: boolean;
+  whatsappOptIn: boolean;
+  marketingEmails?: boolean;
 }
 
 export interface UpdateNotificationPreferencesResponse {
@@ -1471,7 +1472,8 @@ export interface UpdateNotificationPreferencesResponse {
     preferences: {
       emailAlerts: boolean;
       smsUpdates: boolean;
-      productRecommendations: boolean;
+      whatsapp: boolean;
+      marketingEmails: boolean;
     };
     savedAt: string;
   };
@@ -1480,7 +1482,7 @@ export interface UpdateNotificationPreferencesResponse {
 export async function updateNotificationPreferences(
   data: UpdateNotificationPreferencesPayload,
 ): Promise<UpdateNotificationPreferencesResponse> {
-  return apiFetch("/api/listers/notifications/preferences", {
+  return apiFetch("/api/renters/notifications/preferences", {
     method: "PUT",
     body: JSON.stringify(data),
   });
