@@ -20,6 +20,8 @@ export interface WalletMonthFinanceMetrics {
 export interface WalletStats {
   /** Sum of mainBalance and collateralBalance across eligible wallets. */
   totalWalletBalance: number;
+  walletBalanceByRole?: { listers: number; renters: number };
+  pendingPayouts?: { listers: number; renters: number };
   /** Outstanding order-escrow amounts, excluding renter collateral held in wallets. */
   totalEscrowBalance: number;
   /** Sum of wallet.collateralBalance (renter deposits), matches wallet table column */
@@ -148,6 +150,8 @@ interface WalletListParams {
   search?: string;
   page?: number;
   limit?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
 }
 
 interface EscrowListParams {
@@ -177,6 +181,8 @@ function buildWalletParams(params: WalletListParams): string {
   if (params.search) searchParams.append("search", params.search);
   if (params.page) searchParams.append("page", params.page.toString());
   if (params.limit) searchParams.append("limit", params.limit.toString());
+  if (params.sortBy) searchParams.append("sortBy", params.sortBy);
+  if (params.sortOrder) searchParams.append("sortOrder", params.sortOrder);
   return searchParams.toString();
 }
 

@@ -2,10 +2,10 @@
 
 // ENDPOINTS: GET /api/admin/wallets?search=&page=1&limit=20
 
-import { ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import React from "react";
+import { useState } from "react";
 import {
   type ResponsiveColumnDef,
   ResponsiveDataTable,
@@ -36,6 +36,15 @@ type WalletRow = {
     avatar?: string | null;
   };
 };
+
+type WalletSortField =
+  | "userName"
+  | "mainBalance"
+  | "availableBalance"
+  | "collateralBalance"
+  | "createdAt";
+
+type WalletSort = { field: WalletSortField; order: "asc" | "desc" };
 
 const formatCurrency = (amount: number): string =>
   new Intl.NumberFormat("en-NG", {
@@ -76,7 +85,28 @@ const getInitials = (name: string): string =>
 
 function buildWalletColumns(
   adminSegment: string,
+  sort: WalletSort,
+  onSort: (field: WalletSortField) => void,
 ): ResponsiveColumnDef<WalletRow>[] {
+  const sortableHeader = (label: string, field: WalletSortField) => (
+    <button
+      type="button"
+      onClick={() => onSort(field)}
+      aria-label={`Sort by ${label}`}
+      aria-pressed={sort.field === field}
+      className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-gray-600 hover:text-gray-900"
+    >
+      {label}
+      {sort.field === field ? (
+        sort.order === "asc" ? (
+          <ChevronUp aria-hidden size={14} />
+        ) : (
+          <ChevronDown aria-hidden size={14} />
+        )
+      ) : null}
+    </button>
+  );
+
   return [
     {
       id: "walletId",
@@ -90,7 +120,7 @@ function buildWalletColumns(
     },
     {
       id: "user",
-      header: "User",
+      header: sortableHeader("User", "userName"),
       mobile: "primary",
       render: (wallet) => (
         <div className="flex items-center gap-3">
@@ -116,7 +146,7 @@ function buildWalletColumns(
     },
     {
       id: "mainBalance",
-      header: "Total Balance",
+      header: sortableHeader("Total Balance", "mainBalance"),
       mobile: "detail",
       render: (wallet) => (
         <Paragraph1 className="font-semibold text-gray-900">
@@ -126,7 +156,7 @@ function buildWalletColumns(
     },
     {
       id: "availableBalance",
-      header: "Available",
+      header: sortableHeader("Available", "availableBalance"),
       mobile: "detail",
       render: (wallet) => (
         <Paragraph1 className="font-medium text-green-600">
@@ -136,7 +166,7 @@ function buildWalletColumns(
     },
     {
       id: "collateralBalance",
-      header: "Collateral",
+      header: sortableHeader("Collateral", "collateralBalance"),
       mobile: "detail",
       render: (wallet) => (
         <Paragraph1 className="font-medium text-orange-600">
@@ -158,7 +188,7 @@ function buildWalletColumns(
     },
     {
       id: "lastUpdated",
-      header: "Last Updated",
+      header: sortableHeader("Created", "createdAt"),
       mobile: "detail",
       render: (wallet) => (
         <Paragraph1 className="text-gray-600">
@@ -194,11 +224,28 @@ export default function WalletTable({ searchQuery }: WalletTableProps) {
   const params = useParams<{ id: string }>();
   const adminSegment = params?.id ?? "";
   const { page, setPage, limit } = useWalletTablePage(searchQuery);
-  const walletsQuery = useWallets({ search: searchQuery, page, limit });
+  const [sort, setSort] = useState<WalletSort>({
+    field: "availableBalance",
+    order: "desc",
+  });
+  const walletsQuery = useWallets({
+    search: searchQuery,
+    page,
+    limit,
+    sortBy: sort.field,
+    sortOrder: sort.order,
+  });
   const wallets = walletsQuery.data?.data?.wallets ?? [];
   const pagination =
     walletsQuery.data?.data?.pagination ?? EMPTY_WALLET_PAGINATION;
-  const columns = buildWalletColumns(adminSegment);
+  const columns = buildWalletColumns(adminSegment, sort, (field) => {
+    setSort((current) => ({
+      field,
+      order:
+        current.field === field && current.order === "desc" ? "asc" : "desc",
+    }));
+    setPage(1);
+  });
 
   return (
     <div>
