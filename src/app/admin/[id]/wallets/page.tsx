@@ -75,6 +75,7 @@ interface MetricData {
   trendPercent?: number | null;
   trendLabel?: string;
   breakdown?: Array<{ label: string; value: string }>;
+  collapsibleBreakdown?: boolean;
   detailsHref?: string;
 }
 
@@ -282,12 +283,12 @@ function WalletsPageInner() {
               value: `₦${formatCurrency(currentPeriod?.grossOrderValue ?? 0)}`,
             },
             {
-              label: "Refundable collateral held",
+              label: "Refundable collateral",
               value: `₦${formatCurrency(currentPeriod?.renterCollateralAmount ?? 0)}`,
             },
           ],
-          detail:
-            "Collateral is held separately and excluded from net order revenue.",
+          collapsibleBreakdown: true,
+          detail: "Order payments received, excluding renter collateral.",
           detailsHref: buildFinanceOrdersHref(
             adminId,
             financeRange.from,
@@ -316,7 +317,8 @@ function WalletsPageInner() {
               value: `₦${formatCurrency(currentPeriod?.listerPlatformFees ?? 0)}`,
             },
           ],
-          detail: "Included in net order revenue, not additional revenue.",
+          collapsibleBreakdown: true,
+          detail: "Service fees and lister commissions earned on orders.",
           detailsHref: buildFinanceOrdersHref(
             adminId,
             financeRange.from,
@@ -352,6 +354,7 @@ function WalletsPageInner() {
           ),
           currency: "₦",
           icon: <Landmark className="h-5 w-5" />,
+          detail: "Lister and renter payouts completed during this date range.",
           breakdown: [
             {
               label: "Listers",
@@ -389,21 +392,23 @@ function WalletsPageInner() {
   const currentMetrics: MetricData[] = stats
     ? [
         {
-          label: "Payouts awaiting payment",
+          label: "Pending payouts",
           value: formatCurrency(
-            (currentPeriod?.pendingPayouts.listers ?? 0) +
-              (currentPeriod?.pendingPayouts.renters ?? 0),
+            (stats.pendingPayouts?.listers ?? 0) +
+              (stats.pendingPayouts?.renters ?? 0),
           ),
           currency: "₦",
           icon: <Landmark className="h-5 w-5" />,
+          detail:
+            "Renter collateral and lister payments requested but not yet paid.",
           breakdown: [
             {
               label: "Listers",
-              value: `₦${formatCurrency(currentPeriod?.pendingPayouts.listers ?? 0)}`,
+              value: `₦${formatCurrency(stats.pendingPayouts?.listers ?? 0)}`,
             },
             {
               label: "Renters",
-              value: `₦${formatCurrency(currentPeriod?.pendingPayouts.renters ?? 0)}`,
+              value: `₦${formatCurrency(stats.pendingPayouts?.renters ?? 0)}`,
             },
           ],
           cardBg: "bg-violet-50 border-violet-100",
@@ -415,10 +420,20 @@ function WalletsPageInner() {
           value: formatCurrency(stats.totalWalletBalance || 0),
           currency: "₦",
           icon: <Wallet className="h-5 w-5" />,
-          detail: "Combined funds held across all wallets.",
-          cardBg: "bg-slate-50 border-slate-200",
-          iconBg: "bg-slate-200",
-          iconText: "text-slate-700",
+          breakdown: [
+            {
+              label: "Listers",
+              value: `₦${formatCurrency(stats.walletBalanceByRole?.listers ?? 0)}`,
+            },
+            {
+              label: "Renters",
+              value: `₦${formatCurrency(stats.walletBalanceByRole?.renters ?? 0)}`,
+            },
+          ],
+          detail: "Available funds in renter and lister wallets.",
+          cardBg: "bg-cyan-50 border-cyan-100",
+          iconBg: "bg-cyan-100",
+          iconText: "text-cyan-700",
         },
         {
           label: "Funds held for orders",

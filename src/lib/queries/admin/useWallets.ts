@@ -5,6 +5,8 @@ interface WalletListParams {
   search?: string;
   page?: number;
   limit?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
   enabled?: boolean;
 }
 
@@ -43,7 +45,15 @@ export const useWalletStats = (from: string, to: string) =>
 
 export const useWallets = (params: WalletListParams = {}) =>
   useQuery({
-    queryKey: ["admin", "wallets", params.search, params.page, params.limit],
+    queryKey: [
+      "admin",
+      "wallets",
+      params.search,
+      params.page,
+      params.limit,
+      params.sortBy,
+      params.sortOrder,
+    ],
     queryFn: () => walletsApi.getWallets(params),
     staleTime: 5 * 60 * 1000,
     retry: 1,

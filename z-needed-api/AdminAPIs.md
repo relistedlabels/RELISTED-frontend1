@@ -3437,14 +3437,17 @@ List all user wallets with support for:
 - Status indicator (Active/Inactive)
 - Last updated timestamp
 - View Details action to see individual wallet history
+- Sort by user name, total balance, available balance, collateral balance, or creation date
 
 Admins use this to track user funds, identify inactive accounts, or investigate wallet issues.
 
 **Request Format:**
 
 ```json
-GET /api/admin/wallets?search=&page=1&limit=20
+GET /api/admin/wallets?search=&page=1&limit=20&sortBy=availableBalance&sortOrder=desc
 ```
+
+`sortBy` accepts `userName`, `mainBalance`, `availableBalance`, `collateralBalance`, or `createdAt`. `sortOrder` accepts `asc` or `desc`; when omitted or invalid, the endpoint uses its default ordering.
 
 **Response Format:**
 
