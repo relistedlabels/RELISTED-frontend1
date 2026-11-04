@@ -1,4 +1,5 @@
 // lib/api/public.ts - Public API endpoints (no authentication required)
+import type { OperationsPauseRaw } from "@/lib/operations/operationsPause";
 import { apiFetch } from "./http";
 
 // ============================================================================
@@ -300,11 +301,7 @@ export type PublicSiteFeaturesResponse = {
   success: boolean;
   data: {
     headerClosetsShopNavEnabled: boolean;
-    operationsPause?: {
-      active: boolean;
-      resumeLabel: string;
-      closedFromLabel?: string;
-    };
+    operationsPause?: OperationsPauseRaw & { active: boolean; resumeLabel: string };
   };
 };
 

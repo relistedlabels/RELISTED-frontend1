@@ -7,6 +7,14 @@ export type OperationsPauseState = {
   closedFromLabel: string;
 };
 
+/** Shape from public site-features API or env (fields optional). */
+export type OperationsPauseRaw = {
+  active?: boolean;
+  resumeLabel?: string;
+  closedFromLabel?: string;
+  closedFrom?: string;
+};
+
 export const DEFAULT_OPERATIONS_PAUSE_RESUME_LABEL = "January 2027";
 export const DEFAULT_OPERATIONS_PAUSE_CLOSED_FROM = "November 5";
 
@@ -32,10 +40,7 @@ export function pauseResumeLabel(pause: OperationsPauseState): string {
 }
 
 export function normalizeOperationsPause(
-  raw:
-    | (OperationsPauseState & { closedFromLabel?: string })
-    | undefined
-    | null,
+  raw: OperationsPauseRaw | undefined | null,
 ): OperationsPauseState {
   const resumeLabel =
     raw?.resumeLabel?.trim() || DEFAULT_OPERATIONS_PAUSE_RESUME_LABEL;
