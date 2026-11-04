@@ -12,6 +12,10 @@ import ShopClosetParamsGuard from "./ShopClosetParamsGuard";
 import ShopFilterBar from "./ShopFilterBar";
 import ShopRentBuyToggle from "./ShopRentBuyToggle";
 import ShopToolbar from "./ShopToolbar";
+import {
+  SITE_FIXED_HEADER_PT,
+  SITE_FIXED_HEADER_STICKY_TOP,
+} from "@/lib/layout/siteNavOffset";
 
 export default function ShopBrowseSection() {
   const searchParams = useSearchParams();
@@ -24,9 +28,11 @@ export default function ShopBrowseSection() {
   const heading = pageTitle ?? "Shop";
 
   return (
-    <div className="bg-white pt-[70px] sm:pt-[100px]">
+    <div className={`bg-white ${SITE_FIXED_HEADER_PT}`}>
       <ShopClosetParamsGuard />
-      <section className="sticky top-[70px] z-30 border-b border-gray-100 bg-white/95 backdrop-blur-sm sm:top-[100px]">
+      <section
+        className={`sticky z-30 border-b border-gray-100 bg-white/95 backdrop-blur-sm ${SITE_FIXED_HEADER_STICKY_TOP}`}
+      >
         <div className="mx-auto container px-4 py-3 sm:px-10 sm:py-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1 pr-2">

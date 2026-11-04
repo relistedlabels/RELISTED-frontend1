@@ -1,6 +1,7 @@
 "use client";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { SITE_FIXED_HEADER_PT } from "@/lib/layout/siteNavOffset";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
@@ -60,6 +61,8 @@ import {
 } from "@/lib/shopSale/productSale";
 import type { CheckoutDispatchPreviewGroup } from "@/lib/checkout/checkoutFlow";
 import { parseCheckoutStep } from "@/lib/checkout/parseCheckoutStep";
+import { OperationsPauseCheckoutBlock } from "@/common/layer/OperationsPauseCheckoutBlock";
+import { useOperationsPause } from "@/lib/queries/site/useOperationsPause";
 
 const RETURN_PICKUP_SUMMARY_DEBOUNCE_MS = 1000;
 
@@ -128,6 +131,8 @@ export default function CheckoutPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const checkoutStep = parseCheckoutStep(searchParams.get("step"));
+  const { active: operationsPauseActive, isLoading: operationsPauseLoading } =
+    useOperationsPause();
 
   const [selectedShippingTier, setSelectedShippingTier] = useState<string>("");
   const [selectedReturnShippingTier, setSelectedReturnShippingTier] =
@@ -963,8 +968,20 @@ export default function CheckoutPage() {
     [router, searchParams],
   );
 
+  if (!operationsPauseLoading && operationsPauseActive) {
+    return (
+      <div
+        className={`mx-auto px-4 sm:px-0 ${SITE_FIXED_HEADER_PT} pb-36 xl:pb-[100px] container`}
+      >
+        <OperationsPauseCheckoutBlock className="mt-8" />
+      </div>
+    );
+  }
+
   return (
-    <div className="mx-auto px-4 sm:px-0 pt-[70px] sm:pt-[100px] pb-36 xl:pb-[100px] container">
+    <div
+      className={`mx-auto px-4 sm:px-0 ${SITE_FIXED_HEADER_PT} pb-36 xl:pb-[100px] container`}
+    >
       <div className="mb-4">
         <Breadcrumbs items={path} />
       </div>

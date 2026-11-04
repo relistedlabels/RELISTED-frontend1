@@ -4,6 +4,7 @@ import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import React from "react";
 import CuratorProfileCard from "../components/CuratorProfileCardProps";
 import ProfileTabs from "../components/ProfileTabs";
+import { SITE_FIXED_HEADER_PT } from "@/lib/layout/siteNavOffset";
 
 interface ListerProfilePageProps {
   params: Promise<{
@@ -24,7 +25,7 @@ export default async function ListerProfilePage({
 
   return (
     <div>
-      <div className=" py-[70px] sm:py-[100px]">
+      <div className={`${SITE_FIXED_HEADER_PT} pb-[70px] sm:pb-[100px]`}>
         <div className=" container px-4 sm:px-0 mx-auto">
           {" "}
           <Breadcrumbs items={path} />

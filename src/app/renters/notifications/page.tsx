@@ -2,6 +2,7 @@
 
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import UserDashboardLayout from "../components/UserDashboardLayout";
+import { SITE_FIXED_HEADER_PT } from "@/lib/layout/siteNavOffset";
 import NotificationsList from "@/components/notifications/NotificationsList";
 
 export default function RenterNotificationsPage() {
@@ -12,7 +13,7 @@ export default function RenterNotificationsPage() {
   ];
 
   return (
-    <div className="container mx-auto pt-[70px] sm:pt-[100px]">
+    <div className={`container mx-auto ${SITE_FIXED_HEADER_PT}`}>
       <div className="mb-4 px-4 sm:px-0">
         <Breadcrumbs items={path} />
       </div>

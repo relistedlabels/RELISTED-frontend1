@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { SITE_FIXED_HEADER_PT } from "@/lib/layout/siteNavOffset";
 import { motion } from "framer-motion";
 import { Header1, Header3, Header4, Header5, HeaderAny, Paragraph1, ParagraphAny, SpecialH1 } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
@@ -14,7 +15,9 @@ export default function EndlessStyleHero() {
   const pageTitle = searchParams.get("title") || "Shop amazing";
   const pageDescription = searchParams.get("description") || "Style Brands";
   return (
-    <section className="w-full  pt-[70px] sm:pt-[100px] px-4 md:px-10 bg-white py-4 ">
+    <section
+      className={`w-full ${SITE_FIXED_HEADER_PT} px-4 md:px-10 bg-white py-4`}
+    >
       {/* Title */}
       <motion.div
         variants={{

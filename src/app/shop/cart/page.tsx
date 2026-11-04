@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 
+import { SITE_FIXED_HEADER_PT } from "@/lib/layout/siteNavOffset";
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import { Header1, Header1Plus } from "@/common/ui/Text";
 import CheckoutProductList from "./components/CheckoutProductList";
@@ -236,7 +237,9 @@ export default function CartPage() {
   );
 
   return (
-    <div className="container mx-auto px-4 py-[70px] sm:py-[100px] sm:px-0">
+    <div
+      className={`container mx-auto px-4 ${SITE_FIXED_HEADER_PT} pb-[70px] sm:pb-[100px] sm:px-0`}
+    >
       <div className="mb-4">
         <Breadcrumbs items={path} />
       </div>

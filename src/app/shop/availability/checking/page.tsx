@@ -15,6 +15,8 @@ import {
 import { usePublicProductById } from "@/lib/queries/product/usePublicProductById";
 import { buildSimilarShopHref } from "@/lib/shop/buildSimilarShopHref";
 import { useUserStore } from "@/store/useUserStore";
+import { useOperationsPause } from "@/lib/queries/site/useOperationsPause";
+import { operationsPauseCopy } from "@/lib/operations/operationsPauseCopy";
 
 export default function AvailabilityCheckingPage() {
   const searchParams = useSearchParams();
@@ -25,6 +27,8 @@ export default function AvailabilityCheckingPage() {
   const signedInEmail = useUserStore((state) => state.email);
   const signedInRole = useUserStore((state) => state.role);
   const productIdFromUrl = searchParams.get("productId") ?? "";
+  const { transactionsBlocked, blockTransaction, ...pause } =
+    useOperationsPause();
   const getStatus = () => {
     if (token) return getPublicAvailabilityStatus(requestId, token);
     if (signedInUserId) return getAuthenticatedAvailabilityStatus(requestId);
@@ -209,17 +213,27 @@ export default function AvailabilityCheckingPage() {
 
         {isApprovedForShopper ? (
           <div className="mt-8 flex w-full max-w-sm flex-col gap-3 sm:flex-row">
-            <Link
-              href={
-                completeRentalUrl ??
-                (isAuthenticatedRequester
-                  ? "/shop/cart/checkout"
-                  : `/shop/availability/available?requestId=${encodeURIComponent(requestId)}${token ? `&token=${encodeURIComponent(token)}` : ""}`)
-              }
-              className="inline-flex flex-1 items-center justify-center rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-900"
-            >
-              Continue to checkout
-            </Link>
+            {transactionsBlocked ? (
+              <button
+                type="button"
+                onClick={() => blockTransaction()}
+                className="inline-flex flex-1 items-center justify-center rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-900"
+              >
+                {operationsPauseCopy.ctaPaused(pause)}
+              </button>
+            ) : (
+              <Link
+                href={
+                  completeRentalUrl ??
+                  (isAuthenticatedRequester
+                    ? "/shop/cart/checkout"
+                    : `/shop/availability/available?requestId=${encodeURIComponent(requestId)}${token ? `&token=${encodeURIComponent(token)}` : ""}`)
+                }
+                className="inline-flex flex-1 items-center justify-center rounded-lg bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-900"
+              >
+                Continue to checkout
+              </Link>
+            )}
             <Link
               href="/shop?listingType=rental,rent_or_resale"
               className="inline-flex flex-1 items-center justify-center rounded-lg border border-gray-300 px-4 py-3 text-sm font-semibold transition hover:bg-gray-50"

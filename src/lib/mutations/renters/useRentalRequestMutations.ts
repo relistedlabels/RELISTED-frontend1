@@ -1,12 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rentersApi } from "@/lib/api/renters";
 import type { DispatchWindowsPayload } from "@/lib/checkout/dispatchWindows";
+import { useOperationsPause } from "@/lib/queries/site/useOperationsPause";
 
 /**
  * Submit a rental request (availability check)
  */
 export const useSubmitRentalRequest = () => {
   const queryClient = useQueryClient();
+  const { blockTransaction } = useOperationsPause();
 
   return useMutation({
     mutationFn: (data: {
@@ -21,7 +23,12 @@ export const useSubmitRentalRequest = () => {
       currency: string;
       cartItemId?: string;
       dispatchWindows?: DispatchWindowsPayload;
-    }) => rentersApi.submitRentalRequest(data),
+    }) => {
+      if (blockTransaction()) {
+        return Promise.reject(new Error("operations_pause"));
+      }
+      return rentersApi.submitRentalRequest(data);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["renters", "rental-requests"],

@@ -300,6 +300,11 @@ export type PublicSiteFeaturesResponse = {
   success: boolean;
   data: {
     headerClosetsShopNavEnabled: boolean;
+    operationsPause?: {
+      active: boolean;
+      resumeLabel: string;
+      closedFromLabel?: string;
+    };
   };
 };
 

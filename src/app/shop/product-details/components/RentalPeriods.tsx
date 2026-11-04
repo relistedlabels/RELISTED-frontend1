@@ -45,6 +45,8 @@ import {
   productHasActiveSale,
 } from "@/lib/shopSale/productSale";
 import { useUrlOverlay } from "@/hooks/useUrlOverlay";
+import { useOperationsPause } from "@/lib/queries/site/useOperationsPause";
+import { operationsPauseCopy } from "@/lib/operations/operationsPauseCopy";
 
 /** URL flag while the rental dates panel is open (`?select-dates=1`). */
 export const RENTAL_DATES_OVERLAY_PARAM = "select-dates";
@@ -92,6 +94,7 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
 }) => {
   const { data: user } = useMe();
   const router = useRouter();
+  const { blockTransaction } = useOperationsPause();
   const [isGuestModalOpen, setIsGuestModalOpen] = useState(false);
   const [pendingGuestSubmit, setPendingGuestSubmit] = useState(false);
   const [dispatchWindowsPayload, setDispatchWindowsPayload] = useState<
@@ -202,6 +205,8 @@ const RentalPeriodsPanel: React.FC<RentalPeriodsPanelProps> = ({
     email: string;
     whatsappPhone?: string;
   }) => {
+    if (blockTransaction()) return;
+
     if (!Number.isFinite(startDate.getTime())) {
       toast.error("Invalid rental start date.");
       return;
@@ -458,16 +463,27 @@ const RentalPeriods: React.FC<RentalPeriodsProps> = ({
   closetPrimaryCtaOverride,
 }) => {
   const { isOpen, open, close } = useUrlOverlay(RENTAL_DATES_OVERLAY_PARAM);
-  const primaryLabel = closetPrimaryCtaOverride?.trim() || "Check Availability";
+  const { transactionsBlocked, blockTransaction, ...pause } =
+    useOperationsPause();
+  const primaryLabel = transactionsBlocked
+    ? operationsPauseCopy.ctaPaused(pause)
+    : closetPrimaryCtaOverride?.trim() || "Check Availability";
   const useVaultClosetCtaStyle = Boolean(closetPrimaryCtaOverride?.trim());
+
+  const handleOpen = () => {
+    if (blockTransaction()) return;
+    open();
+  };
 
   return (
     <>
       {/* Toggle Button */}
       <button
         type="button"
-        onClick={open}
+        onClick={handleOpen}
         className={`flex w-full cursor-pointer items-center justify-center gap-1 rounded-lg border border-black bg-black font-semibold text-white transition hover:bg-gray-100 hover:text-black ${
+          transactionsBlocked ? "opacity-80" : ""
+        } ${
           useVaultClosetCtaStyle
             ? "px-2 py-2.5 sm:px-3"
             : "px-4 py-2 text-sm"
