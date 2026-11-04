@@ -12,7 +12,8 @@ type OperationsPauseCheckoutBlockProps = {
 export function OperationsPauseCheckoutBlock({
   className = "",
 }: OperationsPauseCheckoutBlockProps) {
-  const { active, isLoading, ...pause } = useOperationsPause();
+  const pause = useOperationsPause();
+  const { active, isLoading } = pause;
   const copy = operationsPauseCopy.checkout;
 
   if (isLoading || !active) return null;
