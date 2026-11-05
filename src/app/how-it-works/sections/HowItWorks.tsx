@@ -7,6 +7,10 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowRight, ShoppingBag, Sparkles } from "lucide-react";
 import { useListerNavigation } from "@/app/how-it-works/hooks/useListerNavigation";
+import {
+  SITE_FIXED_HEADER_PT_AT_SM,
+  SITE_FIXED_HEADER_PT_LOOSE,
+} from "@/lib/layout/siteNavOffset";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -35,7 +39,7 @@ export default function HowItWorks() {
       whileInView="visible"
       viewport={{ once: true }}
       variants={containerVariants}
-      className="bg-white px-4 py-12 pt-[85px] sm:pt-[100px] md:px-0"
+      className={`bg-white px-4 py-12 md:px-0 ${SITE_FIXED_HEADER_PT_LOOSE} ${SITE_FIXED_HEADER_PT_AT_SM}`}
     >
       <div className="container mx-auto grid grid-cols-1 items-center md:grid-cols-2">
         <div className="hidden w-full md:flex md:order-1">

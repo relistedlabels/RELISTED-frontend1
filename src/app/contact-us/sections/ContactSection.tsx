@@ -7,6 +7,10 @@ import Image from "next/image";
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import Button from "@/common/ui/Button";
 import { useContactSubmit } from "@/lib/queries/contact/useContactSubmit";
+import {
+  SITE_FIXED_HEADER_PT_AT_SM,
+  SITE_FIXED_HEADER_PT_LOOSE,
+} from "@/lib/layout/siteNavOffset";
 
 export default function ContactSection() {
   const [formData, setFormData] = useState({
@@ -63,7 +67,9 @@ export default function ContactSection() {
   };
 
   return (
-    <section className="w-full bg-gray-100  pt-[85px] sm:pt-[100px] ">
+    <section
+      className={`w-full bg-gray-100 ${SITE_FIXED_HEADER_PT_LOOSE} ${SITE_FIXED_HEADER_PT_AT_SM}`}
+    >
       <div className="grid grid-cols-1 md:grid-cols-2 justify-center items-center gap-10 ">
         {/* Image - hidden on mobile */}
         <div className="relative w-full h-screen hidden md:block">

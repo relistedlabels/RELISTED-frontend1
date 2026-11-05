@@ -2,10 +2,16 @@
 
 import { Header1Plus, Paragraph1 } from "@/common/ui/Text";
 import Image from "next/image";
+import {
+  SITE_FIXED_HEADER_PT_AT_SM,
+  SITE_FIXED_HEADER_PT_LOOSE,
+} from "@/lib/layout/siteNavOffset";
 
 export default function AboutUsSection() {
   return (
-    <section className=" pt-[85px] sm:pt-[100px] px-4 md:px-0  py-12 bg-white">
+    <section
+      className={`px-4 md:px-0 py-12 bg-white ${SITE_FIXED_HEADER_PT_LOOSE} ${SITE_FIXED_HEADER_PT_AT_SM}`}
+    >
       <div className="grid grid-cols-1 md:grid-cols-2 container mx-auto items-center">
         {" "}
         {/* Image (on mobile this becomes second) */}

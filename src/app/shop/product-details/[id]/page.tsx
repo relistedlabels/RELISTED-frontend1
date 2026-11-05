@@ -8,6 +8,7 @@ import ProductAccordion from "../components/ProductAccordion";
 import ProductMediaGallery from "../components/ProductMediaGallery";
 import Breadcrumbs from "@/common/ui/BreadcrumbItem";
 import TopListingSection from "../components/TopListingSection";
+import { SITE_FIXED_HEADER_PT } from "@/lib/layout/siteNavOffset";
 
 interface ProductDetailsPageProps {
   params: Promise<{
@@ -30,13 +31,17 @@ export default async function ProductDetailsPage({
   return (
     <div>
       <div className=" grid xl:grid-cols-2 ">
-        <div className="sm:py-[100px] pt-[70px]  sm:px-[100px] p-4 ">
+        <div
+          className={`p-4 sm:px-[100px] sm:pb-[100px] ${SITE_FIXED_HEADER_PT}`}
+        >
           <div className=" mb-4">
             <Breadcrumbs items={path} />{" "}
           </div>
           <ProductMediaGallery productId={id} />
         </div>
-        <div className="flex flex-col gap-2 bg-white p-4 sm:gap-4 sm:py-[100px] sm:px-[100px]">
+        <div
+          className={`flex flex-col gap-2 bg-white p-4 sm:gap-4 sm:px-[100px] sm:pb-[100px] ${SITE_FIXED_HEADER_PT}`}
+        >
           <TitleProductCard productId={id} />
           <ProductDetailsTabsClient productId={id} />
           <ProductAccordion productId={id} />

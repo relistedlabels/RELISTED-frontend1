@@ -30,6 +30,8 @@ import {
 } from "@/lib/vaultClosetSaleDates";
 import { getProductPreSaleCta } from "@/lib/shopSale/productSale";
 import { cloudinaryOptimizedImageUrl } from "@/lib/media/cloudinaryOptimizedImageUrl";
+import { useOperationsPause } from "@/lib/queries/site/useOperationsPause";
+import { operationsPauseCopy } from "@/lib/operations/operationsPauseCopy";
 
 interface UserProfileProps {
   name: string;
@@ -126,6 +128,8 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
   const [isFavorited, setIsFavorited] = useState(false);
   const [isRequesting, setIsRequesting] = useState(false);
   const [isGuestModalOpen, setIsGuestModalOpen] = useState(false);
+  const { transactionsBlocked, blockTransaction, ...pause } =
+    useOperationsPause();
 
   useEffect(() => {
     if (favoritesData?.favorites && product) {
@@ -254,6 +258,7 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
   };
 
   const handleCheckAvailability = () => {
+    if (blockTransaction()) return;
     void submitPurchaseAvailability();
   };
 
@@ -355,6 +360,10 @@ const ResaleDetailsCard: React.FC<ResaleDetailsCardProps> = ({ productId }) => {
                       Checking…
                     </Paragraph1>
                   </>
+                ) : transactionsBlocked ? (
+                  <Paragraph1 className="m-0 text-white text-sm text-center">
+                    {operationsPauseCopy.ctaPaused(pause)}
+                  </Paragraph1>
                 ) : closetPrimaryCtaOverride ? (
                   <Paragraph1 className="m-0 max-w-full text-[11px] text-inherit sm:text-xs text-center leading-snug">
                     {closetPrimaryCtaOverride}
