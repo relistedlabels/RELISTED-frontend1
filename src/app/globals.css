@@ -11,6 +11,8 @@
   /* Fixed SiteHeader (nav); updated when pause banner is shown. */
   --site-fixed-header-height: 70px;
   --site-header-content-gap: 12px;
+
+  --operations-pause-banner-height: 0px;
 }
 
 @media (min-width: 640px) {

@@ -16,11 +16,14 @@ import { OperationsPauseBanner } from "./OperationsPauseBanner";
 
 type OperationsPauseSiteLayerProps = {
   children: ReactNode;
+  /** Use `fixed` for lister/admin layouts with their own top bars. */
+  bannerPlacement?: "inline" | "fixed";
 };
 
 /** Break announcement strip (in header) + first-visit modal. */
 export function OperationsPauseSiteLayer({
   children,
+  bannerPlacement = "inline",
 }: OperationsPauseSiteLayerProps) {
   const searchParams = useSearchParams();
   const heroPreview = isOperationsPauseHeroPreviewEnabled(searchParams);
@@ -58,12 +61,22 @@ export function OperationsPauseSiteLayer({
     setModalOpen(true);
   }, []);
 
+  const showBanner = showPauseChrome && !heroPreview;
+  const contentOffsetClass =
+    showBanner && bannerPlacement === "fixed"
+      ? "pt-[var(--operations-pause-banner-height,0px)]"
+      : undefined;
+
   return (
     <>
-      {showPauseChrome && !heroPreview ? (
-        <OperationsPauseBanner pause={pause} onOpenAnnouncement={openModal} />
+      {showBanner ? (
+        <OperationsPauseBanner
+          pause={pause}
+          onOpenAnnouncement={openModal}
+          placement={bannerPlacement}
+        />
       ) : null}
-      {children}
+      <div className={contentOffsetClass}>{children}</div>
       {showPauseChrome ? (
         <OperationsPauseAnnouncementModal
           open={modalOpen}

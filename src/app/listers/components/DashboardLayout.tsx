@@ -31,6 +31,7 @@ import { useBusinessProfile } from "@/lib/queries/listers/useBusinessProfile";
 import { useOpenAvailabilityRequestsCount } from "@/lib/queries/listers/useOpenAvailabilityRequestsCount";
 import { useActiveOrdersCount } from "@/lib/queries/listers/useActiveOrdersCount";
 import NotificationBell from "@/components/notifications/NotificationBell";
+import { OperationsPauseSiteLayer } from "@/common/layer/OperationsPauseSiteLayer";
 import { UserProfileBadge } from "./UserProfileBadge";
 import { UserProfileBadge2 } from "./UserProfileBadge2";
 
@@ -256,6 +257,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const toggleMobile = () => setMobileOpen((p) => !p);
 
   return (
+    <OperationsPauseSiteLayer bannerPlacement="fixed">
     <div className="flex min-h-screen w-full bg-gray-50">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-72 shrink-0 flex-col h-screen overflow-hidden hide-scrollbar overflow-y-auto bg-[#241F20] text-white p-6 sticky top-0">
@@ -406,6 +408,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         )}
       </AnimatePresence>
     </div>
+    </OperationsPauseSiteLayer>
   );
 };
 
